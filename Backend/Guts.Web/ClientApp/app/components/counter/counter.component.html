@@ -1,0 +1,17 @@
+<h1>Counter</h1>
+
+<p>This is a simple example of an Angular component.</p>
+
+<p>Current count: <strong>{{ currentCount }}</strong></p>
+
+<button (click)="incrementCounter()">Increment</button>
+
+<h3>Chart</h3>
+<div style="display: block">
+    <canvas baseChart
+            [data]="doughnutChartData"
+            [labels]="doughnutChartLabels"
+            [chartType]="doughnutChartType"
+            (chartHover)="chartHovered($event)"
+            (chartClick)="chartClicked($event)"></canvas>
+</div>
