@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="TestTools\ButtonBaseExtensions.cs" />
     <Compile Include="Models\Exercise.cs" />
+    <Compile Include="TestTools\CodeCleaner.cs" />
     <Compile Include="TestTools\Solution.cs" />
     <Compile Include="TestTools\TestWindow.cs" />
     <Compile Include="Utility\AuthorizationHandler.cs" />

@@ -37,27 +37,32 @@ namespace Exercise05.Tests
             Assert.That(_canvas.Children.Count, Is.EqualTo(0), () => "At the start, the canvas should be empty.");
         }
 
-        [MonitoredTest("Should draw stuff on the canvas after the draw button is clicked"), Order(2)]
-        public void _2_ShouldDrawStuffOnTheCanvasAfterTheButtonIsClicked()
+        [MonitoredTest("Should make use of the Polygon class"), Order(2)]
+        public void _2_ShouldMakeUseOfThePolygonclass()
+        {
+            var sourceCode = Solution.Current.GetFileContent(@"Exercise05\MainWindow.xaml.cs");
+            sourceCode = CodeCleaner.StripComments(sourceCode);
+
+            Assert.That(sourceCode, Contains.Substring("new Polygon();"), () => "No code found where an instance of the Polygon class is created.");
+            Assert.That(sourceCode, Contains.Substring(".Points.Add("), () => "No code found where points are added to the Polygon instance.");
+            Assert.That(sourceCode, Contains.Substring("new Point("), () => "No code found where instances op the Point class are created.");
+        }
+
+        [MonitoredTest("Should draw triangles and rectangles on the canvas after the draw button is clicked"), Order(3)]
+        public void _3_ShouldDrawTrianglesAndRectanglesOnTheCanvasAfterTheButtonIsClicked()
         {
             AssertButtonAndCanvasArePresent();
 
             _button.FireClickEvent();
 
             var allChildren = _canvas.Children.Cast<object>().ToList();
-            Assert.That(allChildren, Has.Some.TypeOf<Rectangle>(), () => "Could not find any rectangles.");
-            Assert.That(allChildren, Has.Some.TypeOf<Polygon>(), () => "Could not find any polygons.");
-            
-        }
+            var polygons = allChildren.OfType<Polygon>().ToList();
+            var rectangles = allChildren.OfType<Rectangle>().ToList();
 
-        [MonitoredTest("Should make use of the Polygon class"), Order(3)]
-        public void _3_ShouldMakeUseOfThePolygonclass()
-        {
-            var sourceCode = Solution.Current.GetFileContent(@"Exercise05\MainWindow.xaml.cs");
-
-            Assert.That(sourceCode, Contains.Substring("new Polygon();"), () => "No code found where an instance of the Polygon class is created.");
-            Assert.That(sourceCode, Contains.Substring(".Points.Add("), () => "No code found where points are added to the Polygon instance.");
-            Assert.That(sourceCode, Contains.Substring("new Point("), () => "No code found where instances op the Point class are created.");
+            Assert.That(rectangles.Count, Is.GreaterThan(0), () => "Could not find any rectangles.");
+            Assert.That(polygons.Count, Is.GreaterThan(0), () => "Could not find any polygons.");
+            Assert.That(polygons, Has.All.With.Matches((Polygon p) => p.Points.Count == 3), () => "Could not find some polygons but they don't all have 3 points.");
+            Assert.That(polygons, Has.All.With.Matches((Polygon p) => p.Stroke != null || p.Fill != null), () => "All polygons should have their 'Stroke' (and / or 'Fill') property set. Otherwise they are invisible.");
         }
 
         private void AssertButtonAndCanvasArePresent()
