@@ -4,6 +4,7 @@ using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
+using Guts.Business.Converters;
 using Guts.Business.Security;
 using Guts.Business.Services;
 using Guts.Data;
@@ -50,15 +51,20 @@ namespace Guts.Api.Extensions
             // Add application services.
             container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
             container.Register<IChapterConverter, ChapterConverter>(Lifestyle.Singleton);
+            container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
+
             container.Register<IExerciseService, ExerciseService>(Lifestyle.Scoped);
             container.Register<IChapterService, ChapterService>(Lifestyle.Scoped);
             container.Register<ITestRunService, TestRunService>(Lifestyle.Scoped);
+
             container.Register<ITestRepository, TestDbRepository>(Lifestyle.Scoped);
             container.Register<ITestRunRepository, TestRunDbRepository>(Lifestyle.Scoped);
             container.Register<IExerciseRepository, ExerciseDbRepository>(Lifestyle.Scoped);
             container.Register<IChapterRepository, ChapterDbRepository>(Lifestyle.Scoped);
             container.Register<ICourseRepository, CourseDbRepository>(Lifestyle.Scoped);
             container.Register<IPeriodRepository, PeriodDbRepository>(Lifestyle.Scoped);
+            container.Register<ITestResultRepository, TestResultDbRepository>(Lifestyle.Scoped);
+
             container.Register<ICaptchaValidator>(() =>
             {
                 var captchaSection = configuration.GetSection("Captcha");

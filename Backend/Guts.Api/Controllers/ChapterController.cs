@@ -1,14 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Guts.Api.Models.Converters;
-using Guts.Business;
 using Guts.Business.Services;
 using Guts.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/chapters")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ChapterController : ControllerBase
     {
         private readonly IChapterService _chapterService;
@@ -31,12 +35,18 @@ namespace Guts.Api.Controllers
             try
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var model = _chapterConverter.ToChapterContentsModel(chapter);
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, UserId);
+                var model = _chapterConverter.ToChapterContentsModel(chapter, userExerciseResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)
             {
                 return NotFound();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+                throw;
             }
         }
     }

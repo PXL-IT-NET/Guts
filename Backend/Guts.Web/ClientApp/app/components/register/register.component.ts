@@ -13,7 +13,7 @@ export class RegisterComponent {
     public error = '';
     public registered = false;
 
-    @ViewChild(RecaptchaComponent) public captcha: RecaptchaComponent;
+    @ViewChild(RecaptchaComponent) public captcha?: RecaptchaComponent;
 
     constructor(
         private router: Router,
@@ -46,7 +46,7 @@ export class RegisterComponent {
                 } else {
                     // registration failed
                     this.error = result.message || 'Registration failed';
-                    this.captcha.reset();
+                    if (this.captcha) this.captcha.reset();
                 }
                 this.loading = false;
             });

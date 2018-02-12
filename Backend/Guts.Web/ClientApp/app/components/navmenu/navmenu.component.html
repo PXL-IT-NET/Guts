@@ -23,6 +23,11 @@
                     </a>
                 </li>
                 <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">
+                    <a [routerLink]="['/chapteroverview']">
+                        <span class='glyphicon glyphicon-education'></span> Chapter
+                    </a>
+                </li>
+                <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">
                     <a [routerLink]="['/counter']">
                         <span class='glyphicon glyphicon-education'></span> Counter
                     </a>

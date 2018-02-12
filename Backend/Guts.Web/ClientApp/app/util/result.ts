@@ -1,10 +1,20 @@
-﻿import { Response } from '@angular/http';
+﻿import { HttpResponse } from '@angular/common/http';
 
 export class Result {
     public success: boolean;
     public message?: string;
 
-    public static fromHttpResponse(response: Response): Result {
+    constructor() {
+        this.success = false;
+    }
+
+    public static success(): Result {
+        return {
+            success: true
+        };
+    }
+
+    public static fromHttpResponse(response: HttpResponse<any>): Result {
 
         var result: Result = {
             success: response.ok
@@ -12,7 +22,7 @@ export class Result {
 
         if (result.success) return result;
 
-        var message = response.text();
+        let message = response.body || '';
         var messageContainer = this.tryParseJson(message);
         if (messageContainer) {
             message = '';

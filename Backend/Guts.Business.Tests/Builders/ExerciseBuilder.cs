@@ -15,8 +15,8 @@ namespace Guts.Business.Tests.Builders
             _random = new Random();
             _exercise = new Exercise
             {
-                Id = RandomExtensions.NextPositive(_random),
-                ChapterId = RandomExtensions.NextPositive(_random),
+                Id = _random.NextPositive(),
+                ChapterId = _random.NextPositive(),
                 Tests = new List<Test>()
             };
         }
@@ -36,20 +36,6 @@ namespace Guts.Business.Tests.Builders
             _exercise.Tests = tests;
             return this;
         }
-
-        //public ExerciseBuilder WithTestsMatching(IEnumerable<TestResultModel> testResultModels)
-        //{
-        //    foreach (var testResultModel in testResultModels)
-        //    {
-        //        var test = new Test
-        //        {
-        //            Id = RandomExtensions.NextPositive(_random),
-        //            TestName = testResultModel.TestName
-        //        };
-        //        _exercise.Tests.Add(test);
-        //    }
-        //    return this;
-        //}
 
         public Exercise Build()
         {

@@ -57,7 +57,7 @@ namespace Guts.Business.Tests.Builders
             for (int i = 0; i < numberOfExercises; i++)
             {
                 var numberOfTests = _random.Next(0, maxNumberOfTestsPerExercise + 1);
-                var exercise = new ExerciseBuilder().Build();
+                var exercise = new ExerciseBuilder().WithRandomTests(numberOfTests).Build();
 
                 _chapter.Exercises.Add(exercise);
             }

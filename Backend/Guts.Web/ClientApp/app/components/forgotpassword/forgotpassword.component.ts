@@ -13,7 +13,7 @@ export class ForgotPasswordComponent {
     public error = '';
     public success = false;
 
-    @ViewChild(RecaptchaComponent) public captcha: RecaptchaComponent;
+    @ViewChild(RecaptchaComponent) public captcha?: RecaptchaComponent;
 
     constructor(
         private router: Router,
@@ -39,7 +39,7 @@ export class ForgotPasswordComponent {
                 } else {
                     // sending mail failed
                     this.error = result.message || 'Sending reset password mail failed';
-                    this.captcha.reset();
+                    if(this.captcha) this.captcha.reset();
                 }
                 this.loading = false;
             });

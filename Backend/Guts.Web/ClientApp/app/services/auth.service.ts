@@ -1,7 +1,6 @@
 ﻿import { Injectable } from '@angular/core';
-import { Http, Response } from '@angular/http';
+import { HttpClient, HttpResponse} from '@angular/common/http';
 import { Observable } from 'rxjs';
-import 'rxjs/add/operator/map'
 import { LoginModel } from '../models/login.model';
 import { TokenModel } from '../models/token.model';
 import { RegisterModel } from '../models/register.model';
@@ -18,32 +17,41 @@ import { ResetPasswordModel } from '../models/resetpassword.model';
 export class AuthService {
     private apiBaseUrl: string;
 
-    public tokenModel: TokenModel | null;
+    private tokenModel: TokenModel | null;
 
-    constructor(private http: Http,
+    constructor(private http: HttpClient,
         private settingsService: ClientSettingsService,
         private localStorageService: LocalStorageService) {
+
+        this.apiBaseUrl = '';
+
         // set token if saved in local storage
-        var currentToken = JSON.parse(String(this.localStorageService.get(LocalStorageKeys.currentToken)));
-        console.log(currentToken);
-        this.tokenModel = currentToken && currentToken.token;
+        this.tokenModel = JSON.parse(String(this.localStorageService.get(LocalStorageKeys.currentToken)));
+    }
+
+    public getToken(): string | null {
+        if (this.tokenModel) {
+            return this.tokenModel.token;
+        }
+        return null;
     }
 
     public login(model: LoginModel): Observable<Result> {
+
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
+
             return this.http.post(settings.apiBaseUrl + 'api/auth/token', model)
-                .map((response: Response) => {
-                    // login successful if there's a jwt token in the response
-                    let returnedTokenModel: TokenModel = response.json();
-                    if (returnedTokenModel && returnedTokenModel.token) {
+                .map((object: Object) => {
+                    var tokenModel = object as TokenModel;
+                    if (tokenModel && tokenModel.token) {
                         // set token property
-                        this.tokenModel = returnedTokenModel;
+                        this.tokenModel = tokenModel;
 
                         // store username and jwt token in local storage to keep user logged in between page refreshes
-                        this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(returnedTokenModel));
+                        this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
 
                         // return true to indicate successful login
-                        return Result.fromHttpResponse(response);
+                        return Result.success();
                     } else {
                         // return false to indicate failed login
                         return {
@@ -51,7 +59,7 @@ export class AuthService {
                             message: 'No token present in returned token model'
                         };
                     }
-                }).catch((errorResponse: Response) => {
+                }).catch((errorResponse: HttpResponse<any>) => {
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });;
         });
@@ -66,10 +74,10 @@ export class AuthService {
     public register(model: RegisterModel): Observable<Result> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http.post(settings.apiBaseUrl + 'api/auth/register', model)
-                .map((response: Response) => {
-                    return Result.fromHttpResponse(response);
+                .map(() => {
+                    return Result.success();
                 })
-                .catch((errorResponse: Response) => {
+                .catch((errorResponse: HttpResponse<any>) => {
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });
         });
@@ -78,9 +86,10 @@ export class AuthService {
     public confirmEmail(model: ConfirmEmailModel): Observable<Result> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http.post(settings.apiBaseUrl + 'api/auth/confirmemail', model)
-                .map((response: Response) => {
+                .map((responseObject: Object) => {
+                    var response = responseObject as HttpResponse<any>;
                     return Result.fromHttpResponse(response);
-                }).catch((errorResponse: Response) => {
+                }).catch((errorResponse: HttpResponse<any>) => {
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });;
         });
@@ -89,9 +98,9 @@ export class AuthService {
     public sendForgotPasswordMail(model: ForgotPasswordModel): Observable<Result> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http.post(settings.apiBaseUrl + 'api/auth/forgotpassword', model)
-                .map((response: Response) => {
-                    return Result.fromHttpResponse(response);
-                }).catch((errorResponse: Response) => {
+                .map(() => {
+                    return Result.success();
+                }).catch((errorResponse: HttpResponse<any>) => {
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });;
         });
@@ -100,9 +109,9 @@ export class AuthService {
     public resetPassword(model: ResetPasswordModel): Observable<Result> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http.post(settings.apiBaseUrl + 'api/auth/resetpassword', model)
-                .map((response: Response) => {
-                    return Result.fromHttpResponse(response);
-                }).catch((errorResponse: Response) => {
+                .map(() => {
+                    return Result.success();
+                }).catch((errorResponse: HttpResponse<any>) => {
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });;
         });

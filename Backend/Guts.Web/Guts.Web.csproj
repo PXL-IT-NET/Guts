@@ -23,37 +23,47 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\app\components\chapteroverview\chapteroverview.component.ts" />
     <None Remove="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
     <None Remove="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
     <None Remove="ClientApp\app\components\login\login.component.ts" />
     <None Remove="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
+    <None Remove="ClientApp\app\models\chaptercontents.model.ts" />
     <None Remove="ClientApp\app\models\confirmemail.model.ts" />
+    <None Remove="ClientApp\app\models\exercisesummary.model.ts" />
     <None Remove="ClientApp\app\models\forgotpassword.model.ts" />
     <None Remove="ClientApp\app\models\register.model.ts" />
     <None Remove="ClientApp\app\models\result.model.ts" />
     <None Remove="ClientApp\app\models\token.model.ts" />
+    <None Remove="ClientApp\app\services\chapter.service.ts" />
     <None Remove="ClientApp\app\services\client.settings.service.ts" />
     <None Remove="ClientApp\app\services\client.settings.ts" />
     <None Remove="ClientApp\app\util\localstorage.keys.ts" />
+    <None Remove="ClientApp\app\util\tokeninterceptor.ts" />
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\app\components\chapteroverview\chapteroverview.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\login\login.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\guards\auth.guard.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\register\register.component.ts" />
+    <TypeScriptCompile Include="ClientApp\app\models\chaptercontents.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\models\confirmemail.model.ts" />
+    <TypeScriptCompile Include="ClientApp\app\models\exercisesummary.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\models\forgotpassword.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\models\login.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\models\register.model.ts" />
+    <TypeScriptCompile Include="ClientApp\app\services\chapter.service.ts" />
     <TypeScriptCompile Include="ClientApp\app\util\result.ts" />
     <TypeScriptCompile Include="ClientApp\app\models\token.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\services\auth.service.ts" />
     <TypeScriptCompile Include="ClientApp\app\services\client.settings.service.ts" />
     <TypeScriptCompile Include="ClientApp\app\services\client.settings.ts" />
     <TypeScriptCompile Include="ClientApp\app\util\localstorage.keys.ts" />
+    <TypeScriptCompile Include="ClientApp\app\util\tokeninterceptor.ts" />
   </ItemGroup>
 
   <ItemGroup>

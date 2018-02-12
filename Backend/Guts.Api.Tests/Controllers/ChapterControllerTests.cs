@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
@@ -43,8 +44,12 @@ namespace Guts.Api.Tests.Controllers
             //Arrange
             var existingChapter = new Chapter();
             var chapterContents = new ChapterContentsModel();
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(existingChapter);
-            _chapterConverterMock.Setup(converter => converter.ToChapterContentsModel(It.IsAny<Chapter>()))
+            var exerciseResults = new List<ExerciseResultDto>();
+            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(existingChapter);
+            _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(exerciseResults);
+            _chapterConverterMock.Setup(converter => converter.ToChapterContentsModel(It.IsAny<Chapter>(), It.IsAny<IList<ExerciseResultDto>>()))
                 .Returns(chapterContents);
 
             var courseId = _random.NextPositive();
@@ -56,7 +61,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapter), Times.Once);
-            _chapterConverterMock.Verify(converter => converter.ToChapterContentsModel(existingChapter), Times.Once);
+            _chapterConverterMock.Verify(converter => converter.ToChapterContentsModel(existingChapter, exerciseResults), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(chapterContents));
         }
 

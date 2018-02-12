@@ -5,5 +5,6 @@ namespace Guts.Api.Models
         public int ExerciseId { get; set; }
         public int Number { get; set; }
         public int NumberOfTests { get; set; }
+        public int NumberOfPassedTests { get; set; }
     }
 }

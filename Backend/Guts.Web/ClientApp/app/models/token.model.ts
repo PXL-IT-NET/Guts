@@ -1,4 +1,9 @@
 ﻿export class TokenModel {
-    token: string;
-    expiration: string;
+    public token: string;
+    public expiration: string;
+
+    constructor() {
+        this.token = '';
+        this.expiration = '';
+    }
 }
