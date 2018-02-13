@@ -4,13 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories
 {
-    public class CourseDbRepository : ICourseRepository
+    public class CourseDbRepository : BaseDbRepository<Course>, ICourseRepository
     {
-        private readonly GutsContext _context;
-
-        public CourseDbRepository(GutsContext context)
+        public CourseDbRepository(GutsContext context) : base(context)
         {
-            _context = context;
         }
 
         public async Task<Course> GetSingleAsync(string courseCode)

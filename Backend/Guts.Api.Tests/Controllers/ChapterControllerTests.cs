@@ -5,6 +5,7 @@ using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Services;
+using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Data;
 using Guts.Domain;
@@ -36,6 +37,44 @@ namespace Guts.Api.Tests.Controllers
         public void ShouldInheritFromControllerBase()
         {
             Assert.That(_controller, Is.InstanceOf<ControllerBase>());
+        }
+
+        [Test]
+        public void GetChaptersOfCourseShouldReturnBadRequestForInvalidCourseId()
+        {
+            //Arrange
+            var courseId = -1;
+
+            //Act
+            var actionResult = _controller.GetChaptersOfCourse(courseId).Result as BadRequestResult;
+
+            //Assert
+            Assert.That(actionResult, Is.Not.Null);
+        }
+
+        [Test]
+        public void GetChaptersOfCourseShouldGetTheChaptersFromTheRepositoryAndConvertThemToModels()
+        {
+            //Arrange
+            var existingChapters = new List<Chapter>
+            {
+                new ChapterBuilder().Build(),
+                new ChapterBuilder().Build(),
+            };
+            _chapterServiceMock.Setup(service => service.GetChaptersOfCourseAsync(It.IsAny<int>())).ReturnsAsync(existingChapters);
+            var courseId = _random.NextPositive();
+
+            //Act
+            var actionResult = _controller.GetChaptersOfCourse(courseId).Result as OkObjectResult;
+
+            //Assert
+            Assert.That(actionResult, Is.Not.Null);
+            _chapterServiceMock.Verify(service => service.GetChaptersOfCourseAsync(courseId), Times.Once);
+            foreach (var existingChapter in existingChapters)
+            {
+                _chapterConverterMock.Verify(converter => converter.ToChapterModel(existingChapter), Times.Once);
+            }
+            Assert.That(actionResult.Value, Has.Count.EqualTo(existingChapters.Count));
         }
 
         [Test]

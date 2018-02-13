@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain;
 
@@ -7,5 +8,6 @@ namespace Guts.Data.Repositories
     {
         Task<T> AddAsync(T newEntity);
         Task<T> GetByIdAsync(int id);
+        Task<IList<T>> GetAllAsync();
     }
 }

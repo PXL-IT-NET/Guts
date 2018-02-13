@@ -10,7 +10,7 @@ using Guts.Domain;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Business.Tests
+namespace Guts.Business.Tests.Services
 {
     [TestFixture]
     public class ExerciseServiceTests

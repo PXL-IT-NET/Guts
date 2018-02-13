@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain;
 
@@ -7,5 +8,6 @@ namespace Guts.Data.Repositories
     {
         Task<Chapter> GetSingleAsync(string courseCode, int number, int periodId);
         Task<Chapter> LoadWithExercisesAndTestsAsync(int courseId, int number, int periodId);
+        Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId);
     }
 }

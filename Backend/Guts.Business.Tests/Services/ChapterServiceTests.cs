@@ -11,7 +11,7 @@ using Guts.Domain;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Business.Tests
+namespace Guts.Business.Tests.Services
 {
     [TestFixture]
     public class ChapterServiceTests
@@ -41,6 +41,45 @@ namespace Guts.Business.Tests
                 _periodRepositoryMock.Object, 
                 _testResultRepositoryMock.Object,
                 _testResultConverterMock.Object);
+        }
+
+        [Test]
+        public void GetChaptersOfCourseAsyncShouldReturnEmptyListWhenNotCurrentPeriodIsFound()
+        {
+            //Arrange
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).Throws<DataNotFoundException>();
+
+            //Act
+            var result = _service.GetChaptersOfCourseAsync(courseId).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _chapterRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+            
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public void GetChaptersOfCourseAsyncShouldReturnChaptersFromRepository()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+
+            var chaptersOfCourse = new List<Chapter>();
+            _chapterRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(chaptersOfCourse);
+
+            //Act
+            var result = _service.GetChaptersOfCourseAsync(courseId).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _chapterRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(courseId, existingPeriod.Id), Times.Once);
+
+            Assert.That(result, Is.EqualTo(chaptersOfCourse));
         }
 
         [Test]

@@ -3,7 +3,7 @@ using Guts.Domain;
 
 namespace Guts.Data.Repositories
 {
-    public interface ICourseRepository
+    public interface ICourseRepository: IBasicRepository<Course>
     {
         Task<Course> GetSingleAsync(string courseCode);
     }

@@ -67,5 +67,20 @@ namespace Guts.Business.Services
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults);
         }
+
+        public async Task<IList<Chapter>> GetChaptersOfCourseAsync(int courseId)
+        {
+            Period currentPeriod;
+            try
+            {
+                currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            }
+            catch (DataNotFoundException)
+            {
+                return new List<Chapter>();
+            }
+
+            return await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
+        }
     }
 }

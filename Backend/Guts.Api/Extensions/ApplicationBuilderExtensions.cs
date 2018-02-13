@@ -56,6 +56,7 @@ namespace Guts.Api.Extensions
             container.Register<IExerciseService, ExerciseService>(Lifestyle.Scoped);
             container.Register<IChapterService, ChapterService>(Lifestyle.Scoped);
             container.Register<ITestRunService, TestRunService>(Lifestyle.Scoped);
+            container.Register<ICourseService, CourseService>(Lifestyle.Scoped);
 
             container.Register<ITestRepository, TestDbRepository>(Lifestyle.Scoped);
             container.Register<ITestRunRepository, TestRunDbRepository>(Lifestyle.Scoped);

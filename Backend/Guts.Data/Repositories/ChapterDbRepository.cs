@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
@@ -34,6 +35,13 @@ namespace Guts.Data.Repositories
                 throw new DataNotFoundException();
             }
             return chapter;
+        }
+
+        public async Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId)
+        {
+            var query = _context.Chapters.Where(ch => ch.CourseId == courseId && ch.PeriodId == periodId);
+
+            return await query.ToListAsync();
         }
     }
 }

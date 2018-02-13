@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
@@ -24,6 +23,20 @@ namespace Guts.Api.Controllers
             _chapterConverter = chapterConverter;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetChaptersOfCourse(int courseId)
+        {
+            if (courseId < 1)
+            {
+                return BadRequest();
+            }
+
+            var chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
+            var models = chapters.Select(chapter => _chapterConverter.ToChapterModel(chapter)).ToList();
+
+            return Ok(models);
+        }
+
         [HttpGet("{chapterNumber}")]
         public async Task<IActionResult> GetChapterContents(int courseId, int chapterNumber)
         {
@@ -42,11 +55,6 @@ namespace Guts.Api.Controllers
             catch (DataNotFoundException)
             {
                 return NotFound();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
-                throw;
             }
         }
     }

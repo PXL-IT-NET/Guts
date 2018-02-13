@@ -42,5 +42,14 @@ namespace Guts.Api.Models.Converters
             }
             return model;
         }
+
+        public ChapterModel ToChapterModel(Chapter chapter)
+        {
+            return new ChapterModel
+            {
+                Id = chapter.Id,
+                Number = chapter.Number
+            };
+        }
     }
 }

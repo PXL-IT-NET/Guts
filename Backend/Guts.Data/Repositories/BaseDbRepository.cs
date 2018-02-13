@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories
 {
@@ -33,6 +36,11 @@ namespace Guts.Data.Repositories
             var entry = await _context.Set<T>().AddAsync(newEntity);
             await _context.SaveChangesAsync();
             return entry.Entity;
+        }
+
+        public async Task<IList<T>> GetAllAsync()
+        {
+            return await _context.Set<T>().AsNoTracking().ToListAsync();
         }
     }
 }
