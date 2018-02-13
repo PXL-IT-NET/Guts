@@ -1,7 +1,7 @@
 ﻿import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { ForgotPasswordModel } from '../../models/forgotpassword.model';
+import { ForgotPasswordModel } from '../../viewmodels/forgotpassword.model';
 import { RecaptchaComponent } from 'ng-recaptcha';
 
 @Component({

@@ -34,8 +34,8 @@ namespace Guts.Api.Models.Converters
                 var matchingResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
                 if (matchingResult != null)
                 {
-                    exerciseSummaryModel.NumberOfPassedTests =
-                        matchingResult.TestResults.Count(result => result.Passed);
+                    exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
+                    exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
                 }
 
                 model.Exercises.Add(exerciseSummaryModel);

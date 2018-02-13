@@ -6,5 +6,6 @@ namespace Guts.Api.Models
         public int Number { get; set; }
         public int NumberOfTests { get; set; }
         public int NumberOfPassedTests { get; set; }
+        public int NumberOfFailedTests { get; set; }
     }
 }

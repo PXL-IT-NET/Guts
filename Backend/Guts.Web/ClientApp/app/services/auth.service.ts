@@ -1,17 +1,17 @@
 ﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse} from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LoginModel } from '../models/login.model';
-import { TokenModel } from '../models/token.model';
-import { RegisterModel } from '../models/register.model';
+import { LoginModel } from '../viewmodels/login.model';
+import { TokenModel } from '../viewmodels/token.model';
+import { RegisterModel } from '../viewmodels/register.model';
 import { ClientSettingsService } from './client.settings.service';
 import { ClientSettings } from './client.settings';
 import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
 import { Result } from '../util/result';
-import { ConfirmEmailModel } from '../models/confirmemail.model';
-import { ForgotPasswordModel } from '../models/forgotpassword.model';
-import { ResetPasswordModel } from '../models/resetpassword.model';
+import { ConfirmEmailModel } from '../viewmodels/confirmemail.model';
+import { ForgotPasswordModel } from '../viewmodels/forgotpassword.model';
+import { ResetPasswordModel } from '../viewmodels/resetpassword.model';
 
 @Injectable()
 export class AuthService {

@@ -1,4 +1,18 @@
 ﻿<div class="col-md-10 col-md-offset-1">
-    <h2>Chapter overview</h2>
-    <pre class="alert alert-success">{{result}}</pre>
+    <h2>Chapter 5</h2>
+    <div class="panel panel-info" *ngFor="let exercise of model.exercises">
+        <div class="panel-heading">
+            <h3>Exercise {{exercise.number}} <small>{{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests</small></h3>
+        </div>
+        <div class="panel-body">
+            <div style="width: 400px; height: 200px;">
+                <canvas baseChart
+                        [data]="exercise.chartData.data"
+                        [labels]="exercise.chartData.labels"
+                        [colors]="exercise.chartData.colors"
+                        chartType="doughnut"></canvas>
+            </div>
+            
+        </div>
+    </div>
 </div>

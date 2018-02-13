@@ -1,7 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { Params, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { ResetPasswordModel } from '../../models/resetpassword.model';
+import { ResetPasswordModel } from '../../viewmodels/resetpassword.model';
 
 
 @Component({

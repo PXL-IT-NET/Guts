@@ -1,7 +1,7 @@
 ﻿import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { RegisterModel } from '../../models/register.model';
+import { RegisterModel } from '../../viewmodels/register.model';
 import { RecaptchaComponent } from 'ng-recaptcha';
 
 @Component({

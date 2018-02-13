@@ -49,15 +49,13 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public ChapterBuilder WithExercises(int maxNumberOfExercises, int maxNumberOfTestsPerExercise)
+        public ChapterBuilder WithExercises(int numberOfExercises, int numberOfTestsPerExercise)
         {
             _chapter.Exercises = new List<Exercise>();
-            var numberOfExercises = _random.Next(1, maxNumberOfExercises + 1);
 
             for (int i = 0; i < numberOfExercises; i++)
             {
-                var numberOfTests = _random.Next(0, maxNumberOfTestsPerExercise + 1);
-                var exercise = new ExerciseBuilder().WithRandomTests(numberOfTests).Build();
+                var exercise = new ExerciseBuilder().WithRandomTests(numberOfTestsPerExercise).Build();
 
                 _chapter.Exercises.Add(exercise);
             }

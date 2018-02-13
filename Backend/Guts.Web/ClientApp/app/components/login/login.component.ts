@@ -2,7 +2,7 @@
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
-import { LoginModel } from '../../models/login.model';
+import { LoginModel } from '../../viewmodels/login.model';
 
 
 @Component({
