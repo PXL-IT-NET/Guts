@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import 'rxjs/add/operator/map'
 import { ClientSettingsService } from './client.settings.service';
 import { ClientSettings } from './client.settings';
-import { IChapterContentsModel, ChapterContentsModel } from "../viewmodels/chaptercontents.model"
+import { IChapterContentsModel, ChapterContentsModel } from "../viewmodels/chapter.model"
 
 @Injectable()
 export class ChapterService {
@@ -15,10 +15,10 @@ export class ChapterService {
         this.apiBaseUrl = '';
     }
 
-    public getChapterSummary(courseId: number, chapterId: number): Observable<ChapterContentsModel> {
+    public getChapterSummary(courseId: number, chapterNumber: number): Observable<ChapterContentsModel> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http
-                .get<IChapterContentsModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterId)
+                .get<IChapterContentsModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber)
                 .map((chapterContents: IChapterContentsModel) => {
                     return new ChapterContentsModel(chapterContents);
                 });

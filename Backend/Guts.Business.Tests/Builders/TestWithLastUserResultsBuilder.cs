@@ -27,9 +27,8 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public TestWithLastUserResultsBuilder WithUserResults(int maxNumberOfUsers)
+        public TestWithLastUserResultsBuilder WithUserResults(int numberOfUsers)
         {
-            var numberOfUsers = _random.Next(1, maxNumberOfUsers + 1);
             var results = new List<TestResult>();
             for (int i = 0; i < numberOfUsers; i++)
             {

@@ -1,6 +1,7 @@
 ﻿import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse} from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Subject } from 'rxjs/Subject';
 import { LoginModel } from '../viewmodels/login.model';
 import { TokenModel } from '../viewmodels/token.model';
 import { RegisterModel } from '../viewmodels/register.model';
@@ -16,13 +17,14 @@ import { ResetPasswordModel } from '../viewmodels/resetpassword.model';
 @Injectable()
 export class AuthService {
     private apiBaseUrl: string;
-
     private tokenModel: TokenModel | null;
+    private loggedInState: Subject<boolean>;
 
     constructor(private http: HttpClient,
         private settingsService: ClientSettingsService,
         private localStorageService: LocalStorageService) {
 
+        this.loggedInState = new Subject<boolean>(); 
         this.apiBaseUrl = '';
 
         // set token if saved in local storage
@@ -34,6 +36,11 @@ export class AuthService {
             return this.tokenModel.token;
         }
         return null;
+    }
+
+    public clearToken(): void {
+        this.tokenModel = null;
+        this.localStorageService.remove(LocalStorageKeys.currentToken);
     }
 
     public login(model: LoginModel): Observable<Result> {
@@ -51,18 +58,25 @@ export class AuthService {
                         this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
 
                         // return true to indicate successful login
+                        this.loggedInState.next(true);
                         return Result.success();
                     } else {
                         // return false to indicate failed login
+                        this.loggedInState.next(false);
                         return {
                             success: false,
                             message: 'No token present in returned token model'
                         };
                     }
                 }).catch((errorResponse: HttpResponse<any>) => {
+                    this.loggedInState.next(false);
                     return Observable.from([Result.fromHttpResponse(errorResponse)]);
                 });;
         });
+    }
+
+    public getLoggedInState(): Observable<boolean> {
+        return this.loggedInState.asObservable();
     }
 
     public logout(): void {

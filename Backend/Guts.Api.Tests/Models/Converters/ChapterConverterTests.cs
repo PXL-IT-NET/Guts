@@ -29,24 +29,34 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapter = new ChapterBuilder().WithId().WithExercises(5, numberOfTests).Build();
-            var exerciseResults = GenerateExerciseResults(chapter, numberOfPassingTests, numberOfFailingTests);
+            var userExerciseResults = GenerateExerciseResults(chapter, numberOfPassingTests, numberOfFailingTests);
+            var averageExerciseResults = GenerateExerciseResults(chapter, numberOfTests, 0);
 
             //Act
-            var model = _converter.ToChapterContentsModel(chapter, exerciseResults);
+            var model = _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
 
             //Assert
             Assert.That(model, Is.Not.Null);
-            Assert.That(model.Exercises, Is.Not.Null);
-            Assert.That(model.Exercises.Count, Is.EqualTo(chapter.Exercises.Count));
+            Assert.That(model.Id, Is.EqualTo(chapter.Id));
+            Assert.That(model.Number, Is.EqualTo(chapter.Number));
+            Assert.That(model.UserExerciseSummaries, Is.Not.Null);
+            Assert.That(model.UserExerciseSummaries.Count, Is.EqualTo(chapter.Exercises.Count));
 
             foreach (var exercise in chapter.Exercises)
             {
-                var exerciseSummary = model.Exercises.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
-                Assert.That(exerciseSummary, Is.Not.Null);
-                Assert.That(exerciseSummary.Number, Is.EqualTo(exercise.Number));
-                Assert.That(exerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
-                Assert.That(exerciseSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
-                Assert.That(exerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
+                var userExerciseSummary = model.UserExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
+                Assert.That(userExerciseSummary, Is.Not.Null);
+                Assert.That(userExerciseSummary.Number, Is.EqualTo(exercise.Number));
+                Assert.That(userExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
+                Assert.That(userExerciseSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
+                Assert.That(userExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
+
+                var averageExerciseSummary = model.AverageExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
+                Assert.That(averageExerciseSummary, Is.Not.Null);
+                Assert.That(averageExerciseSummary.Number, Is.EqualTo(exercise.Number));
+                Assert.That(averageExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfTests));
+                Assert.That(averageExerciseSummary.NumberOfFailedTests, Is.EqualTo(0));
+                Assert.That(averageExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
             }
         }
 
@@ -56,10 +66,11 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var chapter = new ChapterBuilder().Build();
             chapter.Exercises = null;
-            var exerciseResults = new List<ExerciseResultDto>();
+            var userExerciseResults = new List<ExerciseResultDto>();
+            var averageExerciseResults = new List<ExerciseResultDto>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterContentsModel(chapter, exerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
@@ -68,10 +79,11 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var chapter = new ChapterBuilder().WithExercises(1, 1).Build();
             chapter.Exercises.First().Tests = null;
-            var exerciseResults = new List<ExerciseResultDto>();
+            var userExerciseResults = new List<ExerciseResultDto>();
+            var averageExerciseResults = new List<ExerciseResultDto>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterContentsModel(chapter, exerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
         private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter, int numberOfPassingTests, int numberOfFailingTests)

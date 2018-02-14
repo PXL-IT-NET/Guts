@@ -18,5 +18,10 @@ namespace Guts.Business.Services
         {
             return await _courseRepository.GetAllAsync();
         }
+
+        public async Task<Course> GetCourseByIdAsync(int courseId)
+        {
+            return await _courseRepository.GetByIdAsync(courseId);
+        }
     }
 }

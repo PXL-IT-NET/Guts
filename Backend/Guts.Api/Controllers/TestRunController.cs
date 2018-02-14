@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business;
 using Guts.Business.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;

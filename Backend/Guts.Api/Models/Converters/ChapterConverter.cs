@@ -8,7 +8,9 @@ namespace Guts.Api.Models.Converters
 {
     public class ChapterConverter : IChapterConverter
     {
-        public ChapterContentsModel ToChapterContentsModel(Chapter chapter, IList<ExerciseResultDto> exerciseResults)
+        public ChapterContentsModel ToChapterContentsModel(Chapter chapter, 
+            IList<ExerciseResultDto> userExerciseResults,
+            IList<ExerciseResultDto> averageExerciseResults)
         {
             if (chapter.Exercises == null)
             {
@@ -20,27 +22,41 @@ namespace Guts.Api.Models.Converters
                 throw new ArgumentException("All exercises of the chapter should have their tests loaded", nameof(chapter));
             }
 
-            var model = new ChapterContentsModel {Exercises = new List<ExerciseSummaryModel>()};
+            var model = new ChapterContentsModel
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                UserExerciseSummaries = new List<ExerciseSummaryModel>(),
+                AverageExerciseSummaries = new List<ExerciseSummaryModel>()
+            };
 
             foreach (var exercise in chapter.Exercises)
             {
-                var exerciseSummaryModel = new ExerciseSummaryModel
-                {
-                    ExerciseId = exercise.Id,
-                    Number = exercise.Number,
-                    NumberOfTests = exercise.Tests.Count
-                };
+                var userExerciseSummaryModel = CreateExerciseSummaryModel(exercise, userExerciseResults);
+                model.UserExerciseSummaries.Add(userExerciseSummaryModel);
 
-                var matchingResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
-                if (matchingResult != null)
-                {
-                    exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
-                    exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
-                }
-
-                model.Exercises.Add(exerciseSummaryModel);
+                var averageExerciseSummaryModel = CreateExerciseSummaryModel(exercise, averageExerciseResults);
+                model.AverageExerciseSummaries.Add(averageExerciseSummaryModel);
             }
             return model;
+        }
+
+        private ExerciseSummaryModel CreateExerciseSummaryModel(Exercise exercise, IList<ExerciseResultDto> exerciseResults)
+        {
+            var exerciseSummaryModel = new ExerciseSummaryModel
+            {
+                ExerciseId = exercise.Id,
+                Number = exercise.Number,
+                NumberOfTests = exercise.Tests.Count
+            };
+
+            var matchingUserResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
+            if (matchingUserResult != null)
+            {
+                exerciseSummaryModel.NumberOfPassedTests = matchingUserResult.TestResults.Count(result => result.Passed);
+                exerciseSummaryModel.NumberOfFailedTests = matchingUserResult.TestResults.Count(result => !result.Passed);
+            }
+            return exerciseSummaryModel;
         }
 
         public ChapterModel ToChapterModel(Chapter chapter)

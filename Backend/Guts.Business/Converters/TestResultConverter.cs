@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Data;
 
@@ -23,16 +24,22 @@ namespace Guts.Business.Converters
 
                 foreach (var testWithLastUserResults in exerciseGroup)
                 {
-                    foreach (var testResult in testWithLastUserResults.ResultsOfUsers)
+                    var numberOfUsersThatPassTheTest =
+                        testWithLastUserResults.ResultsOfUsers.Count(result => result.Passed);
+                    var passedOnAverage = (int)Math.Round(numberOfUsersThatPassTheTest / (double) testWithLastUserResults.NumberOfUsers) == 1;
+                    var mostOccuringMessage = (from userResult in testWithLastUserResults.ResultsOfUsers
+                        group userResult by userResult.Message
+                        into messageGroup
+                        orderby messageGroup.Count() descending
+                        select messageGroup.Key).FirstOrDefault();
+
+                    var testResultDto = new TestResultDto
                     {
-                        var testResultDto = new TestResultDto
-                        {
-                            TestName = testWithLastUserResults.Test.TestName,
-                            Passed = testResult.Passed,
-                            Message = testResult.Message
-                        };
-                        resultDto.TestResults.Add(testResultDto);
-                    }
+                        TestName = testWithLastUserResults.Test.TestName,
+                        Passed = passedOnAverage,
+                        Message = mostOccuringMessage
+                    };
+                    resultDto.TestResults.Add(testResultDto);
                 }
 
                 results.Add(resultDto);

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Guts.Business.Services;
 
 namespace Guts.Business
 {

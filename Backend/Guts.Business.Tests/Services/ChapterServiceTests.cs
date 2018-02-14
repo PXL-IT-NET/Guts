@@ -61,7 +61,7 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
-        public void GetChaptersOfCourseAsyncShouldReturnChaptersFromRepository()
+        public void GetChaptersOfCourseAsyncShouldRetrieveChaptersFromRepository()
         {
             //Arrange
             var existingPeriod = new Period { Id = _random.NextPositive() };
@@ -78,8 +78,31 @@ namespace Guts.Business.Tests.Services
             //Assert
             _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
             _chapterRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(courseId, existingPeriod.Id), Times.Once);
+            Assert.That(result, Is.Not.Null);
+        }
 
-            Assert.That(result, Is.EqualTo(chaptersOfCourse));
+        [Test]
+        public void GetChaptersOfCourseAsyncShouldSortChaptersByNumber()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+
+            var chaptersOfCourse = new List<Chapter>
+            {
+                new ChapterBuilder().WithNumber(2).Build(),
+                new ChapterBuilder().WithNumber(1).Build()
+            };
+            _chapterRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(chaptersOfCourse);
+
+            //Act
+            var results = _service.GetChaptersOfCourseAsync(courseId).Result;
+
+            //Assert
+            Assert.That(results.Count, Is.EqualTo(chaptersOfCourse.Count));
+            Assert.That(results.ElementAt(0).Number, Is.LessThan(results.ElementAt(1).Number));
         }
 
         [Test]
@@ -133,11 +156,7 @@ namespace Guts.Business.Tests.Services
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
 
-            var existingCourse = new Course
-            {
-                Id = _random.NextPositive(),
-                Code = Guid.NewGuid().ToString(),
-            };
+            var existingCourse = new CourseBuilder().WithId().Build();
 
             _courseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>())).ReturnsAsync(existingCourse);
 
@@ -234,6 +253,31 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Is.EqualTo(exerciseResultDtos));
             _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfChapterAsync(chapterId, userId), Times.Once);
+            _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
+        }
+
+        [Test]
+        public void GetAverageResultsAsyncShouldRetrieveLastTestsResultsForAllUsersAndConvertThemToExerciseResultDtos()
+        {
+            //Arrange
+            var chapterId = _random.NextPositive();
+            IList<TestWithLastUserResults> existingLastTestResults = new List<TestWithLastUserResults>();
+
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfChapterAsync(It.IsAny<int>(), It.IsAny<int?>()))
+                .ReturnsAsync(existingLastTestResults);
+
+            var exerciseResultDtos = new List<ExerciseResultDto>();
+
+            _testResultConverterMock
+                .Setup(converter => converter.ToExerciseResultDto(It.IsAny<IList<TestWithLastUserResults>>()))
+                .Returns(exerciseResultDtos);
+
+            //Act
+            var results = _service.GetAverageResultsAsync(chapterId).Result;
+
+            //Assert
+            Assert.That(results, Is.EqualTo(exerciseResultDtos));
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfChapterAsync(chapterId, null), Times.Once);
             _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
         }
     }

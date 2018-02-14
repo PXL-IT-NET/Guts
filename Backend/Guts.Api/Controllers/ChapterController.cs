@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Data;
@@ -23,20 +22,6 @@ namespace Guts.Api.Controllers
             _chapterConverter = chapterConverter;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetChaptersOfCourse(int courseId)
-        {
-            if (courseId < 1)
-            {
-                return BadRequest();
-            }
-
-            var chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
-            var models = chapters.Select(chapter => _chapterConverter.ToChapterModel(chapter)).ToList();
-
-            return Ok(models);
-        }
-
         [HttpGet("{chapterNumber}")]
         public async Task<IActionResult> GetChapterContents(int courseId, int chapterNumber)
         {
@@ -49,7 +34,8 @@ namespace Guts.Api.Controllers
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
                 var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, UserId);
-                var model = _chapterConverter.ToChapterContentsModel(chapter, userExerciseResults);
+                var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
+                var model = _chapterConverter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)

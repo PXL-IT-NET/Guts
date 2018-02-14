@@ -43,10 +43,12 @@ namespace Guts.Business.Tests.Converters
         {
             //Arrange
             var converter = new TestResultConverter();
-            var testWithLastUserResults = new TestWithLastUserResultsBuilder().WithUserResults(10).Build();
+            var numberOfUsers = 5;
+            var exerciseId = new Random().NextPositive();
             var testsWithLastUserResults = new List<TestWithLastUserResults>
             {
-                testWithLastUserResults
+                new TestWithLastUserResultsBuilder().WithExerciseId(exerciseId).WithUserResults(numberOfUsers).Build(),
+                new TestWithLastUserResultsBuilder().WithExerciseId(exerciseId).WithUserResults(numberOfUsers).Build()
             };
 
             //Act
@@ -54,17 +56,17 @@ namespace Guts.Business.Tests.Converters
 
             //Assert
             Assert.That(results, Is.Not.Null);
-            Assert.That(results.Count, Is.EqualTo(1));
+            Assert.That(results.Count, Is.EqualTo(1)); //one exercise, so one result is expected
 
             var exerciseResultDto = results.First();
-            Assert.That(exerciseResultDto.TestResults, Has.All.Matches((TestResultDto dto) => dto.TestName == testWithLastUserResults.Test.TestName));
+            Assert.That(exerciseResultDto.TestResults.Count, Is.EqualTo(testsWithLastUserResults.Count));
 
-            foreach (var testResult in testWithLastUserResults.ResultsOfUsers)
+            //TODO: test if averages are calculated correctly
+
+            foreach (var testWithUserResults in testsWithLastUserResults)
             {
-                Assert.That(exerciseResultDto.TestResults, Has.Some.Matches((TestResultDto dto) => dto.Message == testResult.Message));
-                Assert.That(exerciseResultDto.TestResults, Has.Some.Matches((TestResultDto dto) => dto.Passed == testResult.Passed));
+                Assert.That(exerciseResultDto.TestResults, Has.Some.Matches((TestResultDto dto) => dto.TestName == testWithUserResults.Test.TestName));
             }
         }
-
     }
 }

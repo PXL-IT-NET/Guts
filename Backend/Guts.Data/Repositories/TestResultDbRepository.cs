@@ -34,6 +34,7 @@ namespace Guts.Data.Repositories
                 select new TestWithLastUserResults
                 {
                     Test = test,
+                    NumberOfUsers = testGroup.GroupBy(g => g.testRun.UserId).Count(),
                     ResultsOfUsers = testGroup.Select(g => g.testResult)
                 };
 

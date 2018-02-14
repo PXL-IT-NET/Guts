@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Guts.Api.Models.Converters;
-using Guts.Business;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Converters;
@@ -49,8 +48,9 @@ namespace Guts.Api.Extensions
             container.RegisterMvcViewComponents(app);
 
             // Add application services.
-            container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
+            container.Register<ICourseConverter, CourseConverter>(Lifestyle.Singleton);
             container.Register<IChapterConverter, ChapterConverter>(Lifestyle.Singleton);
+            container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
             container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
 
             container.Register<IExerciseService, ExerciseService>(Lifestyle.Scoped);

@@ -4,7 +4,6 @@ using System.Net;
 using System.Security.Claims;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
-using Guts.Business;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Security;

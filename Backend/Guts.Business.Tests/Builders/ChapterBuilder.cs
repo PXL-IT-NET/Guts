@@ -30,14 +30,15 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
+        public ChapterBuilder WithCourseId(int courseId)
+        {
+            _chapter.CourseId = courseId;
+            return this;
+        }
+
         public ChapterBuilder WithCourse(string courseCode)
         {
-            _chapter.Course = new Course
-            {
-                Id = _random.NextPositive(),
-                Code = courseCode,
-                Name = Guid.NewGuid().ToString()
-            };
+            _chapter.Course = new CourseBuilder().WithId().WithCourse(courseCode).Build();
             _chapter.CourseId = _chapter.Course.Id;
             return this;
         }
@@ -63,11 +64,15 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
+        public ChapterBuilder WithNumber(int number)
+        {
+            _chapter.Number = number;
+            return this;
+        }
+
         public Chapter Build()
         {
             return _chapter;
         }
-
-        
     }
 }

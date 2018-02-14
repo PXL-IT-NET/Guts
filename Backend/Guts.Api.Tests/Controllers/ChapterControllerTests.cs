@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
+using Guts.Api.Tests.Builders;
 using Guts.Business;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
@@ -23,14 +24,20 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterConverter> _chapterConverterMock;
         private ChapterController _controller;
         private Random _random;
+        private int _userId;
 
         [SetUp]
         public void Setup()
         {
+            _random = new Random();
+            _userId = _random.NextPositive();
             _chapterServiceMock = new Mock<IChapterService>();
             _chapterConverterMock = new Mock<IChapterConverter>();
-            _controller = new ChapterController(_chapterServiceMock.Object, _chapterConverterMock.Object);
-            _random = new Random();
+            _controller = new ChapterController(_chapterServiceMock.Object, _chapterConverterMock.Object)
+            {
+                ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).Build()
+            };
+           
         }
 
         [Test]
@@ -40,67 +47,35 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetChaptersOfCourseShouldReturnBadRequestForInvalidCourseId()
-        {
-            //Arrange
-            var courseId = -1;
-
-            //Act
-            var actionResult = _controller.GetChaptersOfCourse(courseId).Result as BadRequestResult;
-
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-        }
-
-        [Test]
-        public void GetChaptersOfCourseShouldGetTheChaptersFromTheRepositoryAndConvertThemToModels()
-        {
-            //Arrange
-            var existingChapters = new List<Chapter>
-            {
-                new ChapterBuilder().Build(),
-                new ChapterBuilder().Build(),
-            };
-            _chapterServiceMock.Setup(service => service.GetChaptersOfCourseAsync(It.IsAny<int>())).ReturnsAsync(existingChapters);
-            var courseId = _random.NextPositive();
-
-            //Act
-            var actionResult = _controller.GetChaptersOfCourse(courseId).Result as OkObjectResult;
-
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.GetChaptersOfCourseAsync(courseId), Times.Once);
-            foreach (var existingChapter in existingChapters)
-            {
-                _chapterConverterMock.Verify(converter => converter.ToChapterModel(existingChapter), Times.Once);
-            }
-            Assert.That(actionResult.Value, Has.Count.EqualTo(existingChapters.Count));
-        }
-
-        [Test]
         public void GetChapterContentsShouldReturnContentsIfParamatersAreValid()
         {
             //Arrange
-            var existingChapter = new Chapter();
+            var existingChapter = new ChapterBuilder().WithId().Build();
             var chapterContents = new ChapterContentsModel();
-            var exerciseResults = new List<ExerciseResultDto>();
+            var userExerciseResults = new List<ExerciseResultDto>();
+            var averageExerciseResults = new List<ExerciseResultDto>();
             _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(existingChapter);
             _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync(exerciseResults);
-            _chapterConverterMock.Setup(converter => converter.ToChapterContentsModel(It.IsAny<Chapter>(), It.IsAny<IList<ExerciseResultDto>>()))
+                .ReturnsAsync(userExerciseResults);
+            _chapterServiceMock.Setup(service => service.GetAverageResultsAsync(It.IsAny<int>()))
+                .ReturnsAsync(averageExerciseResults);
+            _chapterConverterMock.Setup(converter => converter.ToChapterContentsModel(It.IsAny<Chapter>(), 
+                It.IsAny<IList<ExerciseResultDto>>(), 
+                It.IsAny<IList<ExerciseResultDto>>()))
                 .Returns(chapterContents);
 
-            var courseId = _random.NextPositive();
-            var chapter = _random.NextPositive();
-
             //Act
-            var actionResult = _controller.GetChapterContents(courseId, chapter).Result as OkObjectResult;
+            var actionResult = _controller.GetChapterContents(existingChapter.CourseId, existingChapter.Number).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapter), Times.Once);
-            _chapterConverterMock.Verify(converter => converter.ToChapterContentsModel(existingChapter, exerciseResults), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Number), Times.Once);
+
+            _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter.Id, _userId), Times.Once);
+            _chapterServiceMock.Verify(service => service.GetAverageResultsAsync(existingChapter.Id), Times.Once);
+
+            _chapterConverterMock.Verify(converter => converter.ToChapterContentsModel(existingChapter, userExerciseResults, averageExerciseResults), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(chapterContents));
         }
 

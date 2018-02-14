@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
-using Guts.Business;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Security;

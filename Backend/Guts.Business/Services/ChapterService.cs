@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Converters;
 using Guts.Data;
@@ -68,6 +69,13 @@ namespace Guts.Business.Services
             return _testResultConverter.ToExerciseResultDto(lastTestResults);
         }
 
+        public async Task<IList<ExerciseResultDto>> GetAverageResultsAsync(int chapterId)
+        {
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, null);
+
+            return _testResultConverter.ToExerciseResultDto(lastTestResults);
+        }
+
         public async Task<IList<Chapter>> GetChaptersOfCourseAsync(int courseId)
         {
             Period currentPeriod;
@@ -80,7 +88,8 @@ namespace Guts.Business.Services
                 return new List<Chapter>();
             }
 
-            return await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
+            var chapters = await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
+            return chapters.OrderBy(chapter => chapter.Number).ToList();
         }
     }
 }

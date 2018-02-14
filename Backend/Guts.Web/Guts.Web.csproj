@@ -23,13 +23,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="ClientApp\app\components\chapteroverview\chapteroverview.component.ts" />
+    <None Remove="ClientApp\app\components\chaptercontents\chaptercontents.component.ts" />
     <None Remove="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
+    <None Remove="ClientApp\app\components\coursecontents\coursecontents.component.ts" />
     <None Remove="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
     <None Remove="ClientApp\app\components\login\login.component.ts" />
     <None Remove="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
-    <None Remove="ClientApp\app\viewmodels\chaptercontents.model.ts" />
+    <None Remove="ClientApp\app\services\course.service.ts" />
+    <None Remove="ClientApp\app\viewmodels\chapter.model.ts" />
     <None Remove="ClientApp\app\viewmodels\confirmemail.model.ts" />
+    <None Remove="ClientApp\app\viewmodels\course.model.ts" />
     <None Remove="ClientApp\app\viewmodels\exercisesummary.model.ts" />
     <None Remove="ClientApp\app\viewmodels\forgotpassword.model.ts" />
     <None Remove="ClientApp\app\viewmodels\register.model.ts" />
@@ -43,15 +46,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptCompile Include="ClientApp\app\components\chapteroverview\chapteroverview.component.ts" />
+    <TypeScriptCompile Include="ClientApp\app\components\coursecontents\coursecontents.component.ts" />
+    <TypeScriptCompile Include="ClientApp\app\components\chaptercontents\chaptercontents.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\login\login.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\guards\auth.guard.ts" />
     <TypeScriptCompile Include="ClientApp\app\components\register\register.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\chaptercontents.model.ts" />
+    <TypeScriptCompile Include="ClientApp\app\services\course.service.ts" />
+    <TypeScriptCompile Include="ClientApp\app\viewmodels\chapter.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\viewmodels\confirmemail.model.ts" />
+    <TypeScriptCompile Include="ClientApp\app\viewmodels\course.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\viewmodels\exercisesummary.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\viewmodels\forgotpassword.model.ts" />
     <TypeScriptCompile Include="ClientApp\app\viewmodels\login.model.ts" />

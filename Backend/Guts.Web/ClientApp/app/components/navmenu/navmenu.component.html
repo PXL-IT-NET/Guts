@@ -22,19 +22,10 @@
                         <span class='glyphicon glyphicon-log-in'></span> Log in
                     </a>
                 </li>
-                <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">
-                    <a [routerLink]="['/chapteroverview']">
-                        <span class='glyphicon glyphicon-education'></span> Chapter
-                    </a>
-                </li>
-                <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">
-                    <a [routerLink]="['/counter']">
-                        <span class='glyphicon glyphicon-education'></span> Counter
-                    </a>
-                </li>
-                <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">
-                    <a [routerLink]="['/fetch-data']">
-                        <span class='glyphicon glyphicon-th-list'></span> Fetch data
+
+                <li [routerLinkActive]="['link-active']" *ngFor="let course of courses">
+                    <a [routerLink]="['/courses', course.id]">
+                        <span class='glyphicon glyphicon-book'></span> {{course.name}}
                     </a>
                 </li>
                 <li [routerLinkActive]="['link-active']" *ngIf="isLoggedIn()">

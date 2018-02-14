@@ -1,0 +1,65 @@
+﻿<div class="col-md-10 col-md-offset-1">
+    <h2>Chapter {{model.number}}</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3>Your test outcomes</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="list-group">
+                        <div class="list-group-item" *ngFor="let exercise of model.userExerciseSummaries">
+                            <h4 class="list-group-item-heading">
+                                Exercise {{exercise.number}} <small>{{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests</small>
+                            </h4>
+                            <div class="list-group-item-text">
+                                <div style="width: 400px; height: 200px;">
+                                    <canvas baseChart
+                                            [data]="exercise.chartData.data"
+                                            [labels]="exercise.chartData.labels"
+                                            [colors]="exercise.chartData.colors"
+                                            chartType="doughnut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3>Average test outcomes of other students</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="list-group">
+                        <div class="list-group-item" *ngFor="let exercise of model.averageExerciseSummaries">
+                            <h4 class="list-group-item-heading">
+                                Exercise {{exercise.number}} <small>{{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests</small>
+                            </h4>
+                            <div class="list-group-item-text">
+                                <div style="width: 400px; height: 200px;">
+                                    <canvas baseChart
+                                            [data]="exercise.chartData.data"
+                                            [labels]="exercise.chartData.labels"
+                                            [colors]="exercise.chartData.colors"
+                                            chartType="doughnut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <a [routerLink]="['/courses', courseId]">
+                <span class='glyphicon glyphicon-book'></span> Back to list of chapters
+            </a>
+        </div>
+    </div>
+</div>

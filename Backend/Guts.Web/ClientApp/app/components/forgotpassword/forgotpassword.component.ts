@@ -1,5 +1,4 @@
 ﻿import { Component, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ForgotPasswordModel } from '../../viewmodels/forgotpassword.model';
 import { RecaptchaComponent } from 'ng-recaptcha';
@@ -15,9 +14,7 @@ export class ForgotPasswordComponent {
 
     @ViewChild(RecaptchaComponent) public captcha?: RecaptchaComponent;
 
-    constructor(
-        private router: Router,
-        private authenticationService: AuthService) {
+    constructor(private authenticationService: AuthService) {
         this.model = {
             email: '',
             captchaToken: ''
