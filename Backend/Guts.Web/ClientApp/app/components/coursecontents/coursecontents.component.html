@@ -2,7 +2,7 @@
     <h2>Course {{course.name}}</h2>   
     <div class="list-group">
         <a [routerLink]="['/courses', course.id, 'chapters', chapter.number]" class="list-group-item" *ngFor="let chapter of course.chapters">
-            <span class='glyphicon glyphicon-asterisk'></span> Chapter {{chapter.number}}
+            <span class='oi oi-caret-right'></span> Chapter {{chapter.number}}
         </a>
     </div>
 </div>

@@ -40,6 +40,7 @@
     "ng-recaptcha": "^3.0.3",
     "ng2-charts": "^1.6.0",
     "ng2-recaptcha": "^1.7.0",
+    "open-iconic": "^1.1.1",
     "popper.js": "1.13.0",
     "preboot": "6.0.0-beta.2",
     "raw-loader": "0.5.1",

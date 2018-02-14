@@ -12,23 +12,23 @@
         <ul class="navbar-nav mr-auto">
             <li class="nav-item">
                 <a [routerLink]="['/home']" [routerLinkActive]="['active']" class="nav-link">
-                    <span class='glyphicon glyphicon-home'></span> Home
+                    <span class='oi oi-home'></span> Home
                 </a>
             </li>
             <li class="nav-item" *ngIf="!isLoggedIn()">
                 <a [routerLink]="['/login']" [routerLinkActive]="['active']" class="nav-link">
-                    <span class='glyphicon glyphicon-log-in'></span> Log in
+                    <span class='oi oi-account-login'></span> Log in
                 </a>
             </li>
 
             <li class="nav-item" *ngFor="let course of courses">
                 <a [routerLink]="['/courses', course.id]" [routerLinkActive]="['active']" class="nav-link">
-                    <span class='glyphicon glyphicon-book'></span> {{course.name}}
+                    <span class='oi oi-book'></span> {{course.name}}
                 </a>
             </li>
             <li class="nav-item" *ngIf="isLoggedIn()">
                 <a href="#" (click)="logout()" [routerLinkActive]="['active']" class="nav-link">
-                    <span class='glyphicon glyphicon-log-out'></span> Log out
+                    <span class='oi oi-account-logout'></span> Log out
                 </a>
             </li>
         </ul>

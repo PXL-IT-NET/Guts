@@ -17,6 +17,7 @@ const treeShakableModules = [
 const nonTreeShakableModules = [
     'bootstrap',
     'bootstrap/dist/css/bootstrap.css',
+    'open-iconic/font/css/open-iconic-bootstrap.css',
     'es6-promise',
     'es6-shim',
     'event-source-polyfill',
@@ -33,7 +34,7 @@ module.exports = (env) => {
         resolve: { extensions: [ '.js' ] },
         module: {
             rules: [
-                { test: /\.(png|woff|woff2|eot|ttf|svg)(\?|$)/, use: 'url-loader?limit=100000' }
+                { test: /\.(png|woff|woff2|eot|ttf|svg|otf)(\?|$)/, use: 'url-loader?limit=100000' }
             ]
         },
         output: {
