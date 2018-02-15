@@ -17,7 +17,7 @@ namespace Guts.Data.Repositories
             var lastTestRunOfUsersQuery = from exercise in _context.Exercises
                 from testRun in exercise.TestRuns
                 where (userId == null || testRun.UserId == userId.Value)
-                group testRun by testRun.UserId into userTestRunGroup
+                group testRun by new {testRun.UserId, testRun.ExerciseId} into userTestRunGroup
                 select userTestRunGroup.OrderByDescending(g => g.CreateDateTime).FirstOrDefault();
 
             var query = from exercise in _context.Exercises
@@ -39,7 +39,7 @@ namespace Guts.Data.Repositories
                 };
 
             //Could not use ToListAsync here because it generates a strange error...
-            return Task.FromResult<IList<TestWithLastUserResults>>(query.AsNoTracking().ToList());
+            return Task.FromResult<IList<TestWithLastUserResults>>(query.ToList());
         }
     }
 }

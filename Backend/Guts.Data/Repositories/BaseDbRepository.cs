@@ -39,7 +39,7 @@ namespace Guts.Data.Repositories
 
         public async Task<IList<T>> GetAllAsync()
         {
-            return await _context.Set<T>().AsNoTracking().ToListAsync();
+            return await _context.Set<T>().ToListAsync();
         }
     }
 }

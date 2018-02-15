@@ -3,4 +3,5 @@ dotnet restore
 dotnet publish -c Release
 gcloud config set project guts-web
 gcloud app deploy .\bin\Release\netcoreapp2.0\publish\app.yaml
+Y
 gcloud app browse

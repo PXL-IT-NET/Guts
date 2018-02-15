@@ -29,7 +29,7 @@ namespace Guts.Data.Repositories
 
             query = query.Include(ch => ch.Exercises).ThenInclude(ex => ex.Tests);
 
-            var chapter = await query.AsNoTracking().FirstOrDefaultAsync();
+            var chapter = await query.FirstOrDefaultAsync();
             if (chapter == null)
             {
                 throw new DataNotFoundException();
