@@ -14,32 +14,27 @@ namespace Guts.Data.Repositories
 
         public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId)
         {
-            var lastTestRunOfUsersQuery = from exercise in _context.Exercises
-                from testRun in exercise.TestRuns
-                where (userId == null || testRun.UserId == userId.Value)
-                group testRun by new {testRun.UserId, testRun.ExerciseId} into userTestRunGroup
-                select userTestRunGroup.OrderByDescending(g => g.CreateDateTime).FirstOrDefault();
 
-            var query = from exercise in _context.Exercises
-                from test in exercise.Tests
-                from testRun in lastTestRunOfUsersQuery
-                from testResult in testRun.TestResults
-                where (exercise.ChapterId == chapterId) 
-                    && (testResult.TestId == test.Id) 
-                    && (testRun.ExerciseId == exercise.Id)
-                orderby exercise.Number, test.TestName
-                group new {test, testRun, testResult} by test.Id
+            var lastUserTestResultsQuery = from exercise in _context.Exercises
+                          from test in exercise.Tests
+                          from testResult in test.Results
+                          where (userId == null || testResult.UserId == userId.Value)
+                                && (exercise.ChapterId == chapterId)
+                          group new {testResult, test} by new {testResult.UserId, test.Id} into userTestRunGroup
+                          select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();
+
+            var query = from testWithLastUserResult in lastUserTestResultsQuery
+                group testWithLastUserResult by testWithLastUserResult.test.Id
                 into testGroup
                 let test = testGroup.FirstOrDefault().test
                 select new TestWithLastUserResults
                 {
                     Test = test,
-                    NumberOfUsers = testGroup.GroupBy(g => g.testRun.UserId).Count(),
                     ResultsOfUsers = testGroup.Select(g => g.testResult)
                 };
 
             //Could not use ToListAsync here because it generates a strange error...
-            return Task.FromResult<IList<TestWithLastUserResults>>(query.ToList());
+            return Task.FromResult<IList<TestWithLastUserResults>>(query.AsNoTracking().ToList());
         }
     }
 }

@@ -14,9 +14,6 @@ namespace Guts.Domain
         public virtual User User { get; set; }
         public int UserId { get; set; }
 
-        [Range(1, int.MaxValue)]
-        public int Index { get; set; }
-
         public DateTime CreateDateTime { get; set; }
 
         public virtual ICollection<TestResult> TestResults { get; set; }

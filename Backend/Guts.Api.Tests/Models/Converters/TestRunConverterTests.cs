@@ -49,7 +49,8 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
             Assert.That(testRun.ExerciseId, Is.EqualTo(exercise.Id));
-            Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));
+            Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.Now).Within(5).Seconds);
+            Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
 
             for (int i = 0; i < _createModel.Results.Count(); i++)
             {
@@ -60,21 +61,9 @@ namespace Guts.Api.Tests.Models.Converters
                 Assert.That(testResult.TestId, Is.EqualTo(test.Id));
                 Assert.That(testResult.Passed, Is.EqualTo(testResultModel.Passed));
                 Assert.That(testResult.Message, Is.EqualTo(testResultModel.Message));
+                Assert.That(testResult.UserId, Is.EqualTo(_userId));
+                Assert.That(testResult.CreateDateTime, Is.EqualTo(DateTime.Now).Within(5).Seconds);
             }    
-        }
-
-        [Test]
-        public void From_ShouldSetCreationDate()
-        {
-            //Assert
-            var exercise = new ExerciseBuilder().Build();
-
-            //Act
-            var testRun = _converter.From(_createModel.Results, _userId, exercise);
-
-            //Assert
-            Assert.That(testRun, Is.Not.Null);
-            Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.Now).Within(10).Seconds);
         }
 
         [Test]

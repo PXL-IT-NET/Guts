@@ -30,7 +30,9 @@ namespace Guts.Api.Models.Converters
                 {
                     TestId = test.Id,
                     Passed = testResultModel.Passed,
-                    Message = testResultModel.Message
+                    Message = testResultModel.Message,
+                    UserId = userId,
+                    CreateDateTime = DateTime.Now
                 };
                 testRun.TestResults.Add(testResult);
             }

@@ -1,3 +1,5 @@
+using System;
+
 namespace Guts.Domain
 {
     public class TestResult : IDomainObject
@@ -13,5 +15,10 @@ namespace Guts.Domain
         public bool Passed { get; set; }
 
         public string Message { get; set; }
+
+        public virtual User User { get; set; }
+        public int UserId { get; set; }
+
+        public DateTime CreateDateTime { get; set; }
     }
 }

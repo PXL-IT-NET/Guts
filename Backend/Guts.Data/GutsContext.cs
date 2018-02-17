@@ -3,6 +3,12 @@ using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Guts.Data
 {
@@ -18,6 +24,9 @@ namespace Guts.Data
 
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
+            var contextServices = ((IInfrastructure<IServiceProvider>)this).Instance;
+            var loggerFactory = contextServices.GetRequiredService<ILoggerFactory>();
+            loggerFactory.AddConsole(LogLevel.Debug);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -60,6 +69,23 @@ namespace Guts.Data
             Periods.AddIfNotExists(p => p.Description, testPeriod);
 
             SaveChanges();
+        }
+    }
+
+    /// <summary>
+    /// Used when creating migrations
+    /// </summary>
+    public class GutsContextFactory : IDesignTimeDbContextFactory<GutsContext>
+    {
+        public GutsContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<GutsContext>();
+            optionsBuilder.UseMySql("server=localhost;database=Guts;user id=Guts;Password=Q*ED&Yv9nK", sqlOptions =>
+            {
+                sqlOptions.MigrationsAssembly("Guts.Data");
+            });
+
+            return new GutsContext(optionsBuilder.Options);
         }
     }
 }

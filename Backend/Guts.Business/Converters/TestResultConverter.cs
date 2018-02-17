@@ -24,9 +24,10 @@ namespace Guts.Business.Converters
 
                 foreach (var testWithLastUserResults in exerciseGroup)
                 {
+                    var numberOfUsers = testWithLastUserResults.ResultsOfUsers.Count();
                     var numberOfUsersThatPassTheTest =
                         testWithLastUserResults.ResultsOfUsers.Count(result => result.Passed);
-                    var passedOnAverage = (int)Math.Round(numberOfUsersThatPassTheTest / (double) testWithLastUserResults.NumberOfUsers) == 1;
+                    var passedOnAverage = (int)Math.Round(numberOfUsersThatPassTheTest / (double) numberOfUsers) == 1;
                     var mostOccuringMessage = (from userResult in testWithLastUserResults.ResultsOfUsers
                         group userResult by userResult.Message
                         into messageGroup

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
 using Guts.Business.Captcha;
@@ -15,6 +16,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -112,21 +115,43 @@ namespace Guts.Api.Extensions
                 var loggerFactory = serviceScope.ServiceProvider.GetService<ILoggerFactory>();
                 var logger = loggerFactory.CreateLogger("Startup");
 
+                var dbContext = serviceScope.ServiceProvider.GetRequiredService<GutsContext>();
+
+                var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+                if (pendingMigrations.Any())
+                {
+                    ExecuteMigration(dbContext, pendingMigrations, logger);
+                }
+            }
+        }
+
+        private static void ExecuteMigration(GutsContext dbContext, List<string> pendingMigrations, ILogger logger)
+        {
+            var lastMigration = dbContext.Database.GetAppliedMigrations().LastOrDefault();
+            var targetMigration = pendingMigrations.Last();
+            var migrator = dbContext.GetService<IMigrator>();
+
+            logger.LogInformation($"Trying to migrate from '{lastMigration}' to '{targetMigration}'...");
+
+            var migrateSql = migrator.GenerateScript(lastMigration, targetMigration);
+
+            using (var transaction = dbContext.Database.BeginTransaction())
+            {
                 try
                 {
-                    var dbContext = serviceScope.ServiceProvider.GetRequiredService<GutsContext>();
+                    dbContext.Database.ExecuteSqlCommand(migrateSql);
+                    dbContext.Seed();
 
-                    if (dbContext.Database.GetPendingMigrations().Any())
-                    {
-                        dbContext.Database.Migrate();
-                        dbContext.Seed();
-                    }
+                    transaction.Commit();
+                    logger.LogInformation("Migration succeeded");
                 }
                 catch (Exception e)
                 {
                     logger.LogCritical(e, "Error when trying to migrate database.");
+                    transaction.Rollback();
                 }
             }
         }
     }
 }
+

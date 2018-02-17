@@ -11,9 +11,10 @@ using System;
 namespace Guts.Data.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    partial class GutsContextModelSnapshot : ModelSnapshot
+    [Migration("20180216165637_MoreTestResultData")]
+    partial class MoreTestResultData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

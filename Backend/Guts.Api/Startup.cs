@@ -44,11 +44,10 @@ namespace Guts.Api
 
             services.AddDbContext<GutsContext>(options =>
             {
-                options.UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"),
-                    sqlOptions =>
-                    {
-                        sqlOptions.MigrationsAssembly("Guts.Data");
-                    });
+                options.UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"), sqlOptions =>
+                {
+                    sqlOptions.MigrationsAssembly("Guts.Data");
+                });
 
                 //options.UseSqlServer(Configuration.GetConnectionString("GutsDatabase"),
                 //    sqlOptions => sqlOptions.MigrationsAssembly("Guts.Data"));
@@ -91,7 +90,7 @@ namespace Guts.Api
                 builder.AddDebug();
                 builder.AddConfiguration(Configuration.GetSection("Logging"));
                 builder.AddEventSourceLogger();
-                builder.AddAzureWebAppDiagnostics();
+               // builder.AddAzureWebAppDiagnostics();
             });
 
             services.AddMvc(options =>
