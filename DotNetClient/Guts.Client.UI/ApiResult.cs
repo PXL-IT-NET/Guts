@@ -1,6 +1,4 @@
-﻿using System.CodeDom;
-
-namespace Guts.Client.UI
+﻿namespace Guts.Client.UI
 {
     public class ApiResult
     {

@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace Guts.Client.TestTools
+namespace Guts.Client.TestTools.WPF
 {
     public static class DependencyObjectExtensions
     {

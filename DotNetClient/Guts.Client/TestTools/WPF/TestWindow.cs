@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Guts.Client.TestTools
+namespace Guts.Client.TestTools.WPF
 {
     public class TestWindow<TWindow> : IDisposable where TWindow : Window, new()
     {

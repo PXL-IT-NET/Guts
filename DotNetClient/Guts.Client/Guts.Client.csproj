@@ -52,12 +52,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TestTools\ButtonBaseExtensions.cs" />
+    <Compile Include="TestTools\WPF\ButtonBaseExtensions.cs" />
     <Compile Include="Models\Exercise.cs" />
     <Compile Include="TestTools\CodeCleaner.cs" />
-    <Compile Include="TestTools\DependencyObjectExtensions.cs" />
+    <Compile Include="TestTools\WPF\DependencyObjectExtensions.cs" />
     <Compile Include="TestTools\Solution.cs" />
-    <Compile Include="TestTools\TestWindow.cs" />
+    <Compile Include="TestTools\WPF\TestWindow.cs" />
     <Compile Include="Utility\AuthorizationHandler.cs" />
     <Compile Include="Utility\HttpClientToHttpHandlerAdapter.cs" />
     <Compile Include="Utility\IAuthorizationHandler.cs" />

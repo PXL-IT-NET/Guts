@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls.Primitives;
 
-namespace Guts.Client.TestTools
+namespace Guts.Client.TestTools.WPF
 {
     public static class ButtonBaseExtensions
     {
