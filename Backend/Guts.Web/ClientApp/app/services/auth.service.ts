@@ -1,5 +1,5 @@
 ﻿import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse} from '@angular/common/http';
+import { HttpClient, HttpErrorResponse} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { LoginModel } from '../viewmodels/login.model';
@@ -68,9 +68,9 @@ export class AuthService {
                             message: 'No token present in returned token model'
                         };
                     }
-                }).catch((errorResponse: HttpResponse<any>) => {
+                }).catch((errorResponse: HttpErrorResponse) => {
                     this.loggedInState.next(false);
-                    return Observable.from([Result.fromHttpResponse(errorResponse)]);
+                    return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
                 });;
         });
     }
@@ -91,8 +91,8 @@ export class AuthService {
                 .map(() => {
                     return Result.success();
                 })
-                .catch((errorResponse: HttpResponse<any>) => {
-                    return Observable.from([Result.fromHttpResponse(errorResponse)]);
+                .catch((errorResponse: HttpErrorResponse) => {
+                    return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
                 });
         });
     }
@@ -100,11 +100,10 @@ export class AuthService {
     public confirmEmail(model: ConfirmEmailModel): Observable<Result> {
         return this.settingsService.get().mergeMap((settings: ClientSettings) => {
             return this.http.post(settings.apiBaseUrl + 'api/auth/confirmemail', model)
-                .map((responseObject: Object) => {
-                    var response = responseObject as HttpResponse<any>;
-                    return Result.fromHttpResponse(response);
-                }).catch((errorResponse: HttpResponse<any>) => {
-                    return Observable.from([Result.fromHttpResponse(errorResponse)]);
+                .map(() => {
+                    return Result.success();
+                }).catch((errorResponse: HttpErrorResponse) => {
+                    return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
                 });;
         });
     }
@@ -114,8 +113,8 @@ export class AuthService {
             return this.http.post(settings.apiBaseUrl + 'api/auth/forgotpassword', model)
                 .map(() => {
                     return Result.success();
-                }).catch((errorResponse: HttpResponse<any>) => {
-                    return Observable.from([Result.fromHttpResponse(errorResponse)]);
+                }).catch((errorResponse: HttpErrorResponse) => {
+                    return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
                 });;
         });
     }
@@ -125,8 +124,8 @@ export class AuthService {
             return this.http.post(settings.apiBaseUrl + 'api/auth/resetpassword', model)
                 .map(() => {
                     return Result.success();
-                }).catch((errorResponse: HttpResponse<any>) => {
-                    return Observable.from([Result.fromHttpResponse(errorResponse)]);
+                }).catch((errorResponse: HttpErrorResponse) => {
+                    return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
                 });;
         });
     }

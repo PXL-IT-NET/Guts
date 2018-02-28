@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace Guts.Client.TestTools
 {
@@ -20,14 +19,7 @@ namespace Guts.Client.TestTools
 
         public T GetPrivateField<T>(Func<FieldInfo, bool> filterFunc) where T : class
         {
-            var windowType = typeof(TWindow);
-            var fields = windowType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
-
-            var theField = fields.FirstOrDefault(filterFunc);
-
-            if (theField == null) return null;
-
-            return (T)theField.GetValue(_windowToTest);
+            return GetPrivateFields<T>(filterFunc).FirstOrDefault();
         }
 
         public T GetPrivateField<T>() where T : class
@@ -35,39 +27,39 @@ namespace Guts.Client.TestTools
             return GetPrivateField<T>(field => true);
         }
 
+        public IList<T> GetPrivateFields<T>(Func<FieldInfo, bool> filterFunc) where T : class
+        {
+            var windowType = typeof(TWindow);
+            var fields = windowType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+
+            var values = new List<T>();
+            foreach (var field in fields)
+            {
+                values.Add((T)field.GetValue(_windowToTest));
+            }
+
+            return values;
+        }
+
+        public IList<T> GetPrivateFields<T>() where T : class
+        {
+            return GetPrivateFields<T>(field => true);
+        }
+
         public IList<T> GetUIElements<T>() where T : UIElement
         {
-            return FindVisualChildren<T>(_windowToTest).ToList();
+            return _windowToTest.FindVisualChildren<T>().ToList();
         }
 
         public T GetContentControlByPartialContentText<T>(string contentTextPart) where T : ContentControl
         {
-            var contentControls = FindVisualChildren<T>(_windowToTest).ToList();
+            var contentControls = _windowToTest.FindVisualChildren<T>().ToList();
             return contentControls.FirstOrDefault(c =>
             {
                 var contentText = c.Content as string;
                 return !string.IsNullOrEmpty(contentText) && contentText.ToLower().Contains(contentTextPart.ToLower());
             });
 
-        }
-
-        private IEnumerable<T> FindVisualChildren<T>(DependencyObject dependencyObject) where T : DependencyObject
-        {
-            if (dependencyObject == null) yield break;
-
-            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(dependencyObject); i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(dependencyObject, i);
-                if (child is T tChild)
-                {
-                    yield return tChild;
-                }
-
-                foreach (T childOfChild in FindVisualChildren<T>(child))
-                {
-                    yield return childOfChild;
-                }
-            }
         }
 
         #region IDisposable Support

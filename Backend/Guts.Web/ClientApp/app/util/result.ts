@@ -1,4 +1,4 @@
-﻿import { HttpResponse } from '@angular/common/http';
+﻿import { HttpErrorResponse } from '@angular/common/http';
 
 export class Result {
     public success: boolean;
@@ -14,18 +14,16 @@ export class Result {
         };
     }
 
-    public static fromHttpResponse(response: HttpResponse<any>): Result {
+    public static fromHttpErrorResponse(response: HttpErrorResponse): Result {
 
         var result: Result = {
-            success: response.ok
+            success: false
         };
 
-        if (result.success) return result;
+        let message = '';
 
-        let message = response.body || '';
-        var messageContainer = this.tryParseJson(message);
-        if (messageContainer) {
-            message = '';
+        if (response.error instanceof Object) {
+            var messageContainer = response.error as Object;
             for (var propertyName in messageContainer) {
                 if (messageContainer.hasOwnProperty(propertyName)) {
                     if (propertyName === '0') {
@@ -39,16 +37,11 @@ export class Result {
                     }
                 }
             }
+        } else if (response.error instanceof String) {
+            message = response.error as string;
         }
+
         result.message = message;
         return result;
-    }
-
-    private static tryParseJson(json: string): any {
-        try {
-            return JSON.parse(json);
-        } catch (e) {
-            return null;
-        }
     }
 }
