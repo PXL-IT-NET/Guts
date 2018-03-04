@@ -30,7 +30,9 @@ namespace Guts.Client.TestTools.WPF
         public IList<T> GetPrivateFields<T>(Func<FieldInfo, bool> filterFunc) where T : class
         {
             var windowType = typeof(TWindow);
-            var fields = windowType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+            var fields = windowType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(field => field.FieldType == typeof(T))
+                .Where(filterFunc);
 
             var values = new List<T>();
             foreach (var field in fields)
