@@ -4,6 +4,7 @@
     numberOfTests: number;
     numberOfPassedTests: number;
     numberOfFailedTests: number;
+    numberOfUsers: number;
 }
 
 export class ExerciseSummaryModel implements IExerciseSummaryModel {
@@ -12,6 +13,7 @@ export class ExerciseSummaryModel implements IExerciseSummaryModel {
     public numberOfTests: number;
     public numberOfPassedTests: number;
     public numberOfFailedTests: number;
+    public numberOfUsers: number;
 
     constructor(source: IExerciseSummaryModel) {
         this.exerciseId = source.exerciseId;
@@ -19,6 +21,7 @@ export class ExerciseSummaryModel implements IExerciseSummaryModel {
         this.numberOfTests = source.numberOfTests;
         this.numberOfPassedTests = source.numberOfPassedTests;
         this.numberOfFailedTests = source.numberOfFailedTests;
+        this.numberOfUsers = source.numberOfUsers;
     }
 
     private _chartData: Object | null = null;

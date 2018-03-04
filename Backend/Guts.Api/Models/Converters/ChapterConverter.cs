@@ -50,11 +50,12 @@ namespace Guts.Api.Models.Converters
                 NumberOfTests = exercise.Tests.Count
             };
 
-            var matchingUserResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
-            if (matchingUserResult != null)
+            var matchingResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
+            if (matchingResult != null)
             {
-                exerciseSummaryModel.NumberOfPassedTests = matchingUserResult.TestResults.Count(result => result.Passed);
-                exerciseSummaryModel.NumberOfFailedTests = matchingUserResult.TestResults.Count(result => !result.Passed);
+                exerciseSummaryModel.NumberOfUsers = matchingResult.UserCount;
+                exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
+                exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
             }
             return exerciseSummaryModel;
         }

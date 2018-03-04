@@ -22,15 +22,18 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        [TestCase(5, 5, 0)]
-        [TestCase(5, 0, 5)]
-        [TestCase(5, 1, 1)]
-        public void ToChapterContentsModel_ShouldCorrectlyConvertValidChapter(int numberOfTests, int numberOfPassingTests, int numberOfFailingTests)
+        [TestCase(5, 5, 0, 10)]
+        [TestCase(5, 0, 5, 1)]
+        [TestCase(5, 1, 1, 10)]
+        public void ToChapterContentsModel_ShouldCorrectlyConvertValidChapter(int numberOfTests, 
+            int numberOfPassingTests, 
+            int numberOfFailingTests,
+            int numberOfUsers)
         {
             //Arrange
             var chapter = new ChapterBuilder().WithId().WithExercises(5, numberOfTests).Build();
-            var userExerciseResults = GenerateExerciseResults(chapter, numberOfPassingTests, numberOfFailingTests);
-            var averageExerciseResults = GenerateExerciseResults(chapter, numberOfTests, 0);
+            var userExerciseResults = GenerateExerciseResults(chapter, numberOfPassingTests, numberOfFailingTests, 1);
+            var averageExerciseResults = GenerateExerciseResults(chapter, numberOfTests, 0, numberOfUsers);
 
             //Act
             var model = _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
@@ -50,6 +53,7 @@ namespace Guts.Api.Tests.Models.Converters
                 Assert.That(userExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
                 Assert.That(userExerciseSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
                 Assert.That(userExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
+                Assert.That(userExerciseSummary.NumberOfUsers, Is.EqualTo(1));
 
                 var averageExerciseSummary = model.AverageExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
                 Assert.That(averageExerciseSummary, Is.Not.Null);
@@ -57,6 +61,7 @@ namespace Guts.Api.Tests.Models.Converters
                 Assert.That(averageExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfTests));
                 Assert.That(averageExerciseSummary.NumberOfFailedTests, Is.EqualTo(0));
                 Assert.That(averageExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
+                Assert.That(averageExerciseSummary.NumberOfUsers, Is.EqualTo(numberOfUsers));
             }
         }
 
@@ -86,20 +91,31 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
-        private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter, int numberOfPassingTests, int numberOfFailingTests)
+        private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter, 
+            int numberOfPassingTests, 
+            int numberOfFailingTests,
+            int numberOfUsers)
         {
             var exerciseResults = new List<ExerciseResultDto>();
             foreach (var exercise in chapter.Exercises)
             {
-                var exerciseResult = GenerateExerciseResult(exercise, numberOfPassingTests, numberOfFailingTests);
+                var exerciseResult = GenerateExerciseResult(exercise, numberOfPassingTests, numberOfFailingTests, numberOfUsers);
                 exerciseResults.Add(exerciseResult);
             }
             return exerciseResults;
         }
 
-        private ExerciseResultDto GenerateExerciseResult(Exercise exercise, int numberOfPassingTests, int numberOfFailingTests)
+        private ExerciseResultDto GenerateExerciseResult(Exercise exercise, 
+            int numberOfPassingTests, 
+            int numberOfFailingTests,
+            int numberOfUsers)
         {
-            var exerciseResult = new ExerciseResultDto { ExerciseId = exercise.Id, TestResults = new List<TestResultDto>() };
+            var exerciseResult = new ExerciseResultDto
+            {
+                ExerciseId = exercise.Id,
+                UserCount = numberOfUsers,
+                TestResults = new List<TestResultDto>()
+            };
             foreach (var test in exercise.Tests)
             {
                 if (numberOfPassingTests <= 0 && numberOfFailingTests <= 0) continue;

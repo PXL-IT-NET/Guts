@@ -22,12 +22,14 @@ namespace Guts.Business.Converters
                     TestResults = new List<TestResultDto>()
                 };
 
+                var exerciseUserCount = 0;
+
                 foreach (var testWithLastUserResults in exerciseGroup)
                 {
-                    var numberOfUsers = testWithLastUserResults.ResultsOfUsers.Count();
+                    var numberOfUsersForTest = testWithLastUserResults.ResultsOfUsers.Count();
                     var numberOfUsersThatPassTheTest =
                         testWithLastUserResults.ResultsOfUsers.Count(result => result.Passed);
-                    var passedOnAverage = (int)Math.Round(numberOfUsersThatPassTheTest / (double) numberOfUsers) == 1;
+                    var passedOnAverage = (int)Math.Round(numberOfUsersThatPassTheTest / (double) numberOfUsersForTest) == 1;
                     var mostOccuringMessage = (from userResult in testWithLastUserResults.ResultsOfUsers
                         group userResult by userResult.Message
                         into messageGroup
@@ -41,8 +43,11 @@ namespace Guts.Business.Converters
                         Message = mostOccuringMessage
                     };
                     resultDto.TestResults.Add(testResultDto);
+
+                    exerciseUserCount = Math.Max(exerciseUserCount, numberOfUsersForTest);
                 }
 
+                resultDto.UserCount = exerciseUserCount;
                 results.Add(resultDto);
             }
             return results;

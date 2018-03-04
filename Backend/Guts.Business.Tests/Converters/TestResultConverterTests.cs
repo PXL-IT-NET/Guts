@@ -68,5 +68,30 @@ namespace Guts.Business.Tests.Converters
                 Assert.That(exerciseResultDto.TestResults, Has.Some.Matches((TestResultDto dto) => dto.TestName == testWithUserResults.Test.TestName));
             }
         }
+
+        [Test]
+        public void ToExerciseResultDtoShouldCountUsersPerExercise()
+        {
+            //Arrange
+            var converter = new TestResultConverter();
+            var numberOfUsersForFirstTest = 5;
+            var numberOfUsersForSecondTest = numberOfUsersForFirstTest + 1;
+            var exerciseId = new Random().NextPositive();
+            var testsWithLastUserResults = new List<TestWithLastUserResults>
+            {
+                new TestWithLastUserResultsBuilder().WithExerciseId(exerciseId).WithUserResults(numberOfUsersForFirstTest).Build(),
+                new TestWithLastUserResultsBuilder().WithExerciseId(exerciseId).WithUserResults(numberOfUsersForSecondTest).Build()
+            };
+
+            //Act
+            var results = converter.ToExerciseResultDto(testsWithLastUserResults);
+
+            //Assert
+            Assert.That(results, Is.Not.Null);
+            Assert.That(results.Count, Is.EqualTo(1)); //one exercise, so one result is expected
+
+            var exerciseResultDto = results.First();
+            Assert.That(exerciseResultDto.UserCount, Is.EqualTo(numberOfUsersForSecondTest));
+        }
     }
 }

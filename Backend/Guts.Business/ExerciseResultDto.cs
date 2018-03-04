@@ -6,5 +6,6 @@ namespace Guts.Business
     {
         public int ExerciseId { get; set; }
         public IList<TestResultDto> TestResults { get; set; }
+        public int UserCount { get; set; }
     }
 }
