@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Web.UI.WebControls.WebParts;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -22,22 +23,37 @@ namespace Guts.Client.TestTools.WPF
             return GetPrivateFields<T>(filterFunc).FirstOrDefault();
         }
 
+        public object GetPrivateField(Type fieldType, Func<FieldInfo, bool> filterFunc)
+        {
+            return GetPrivateFields(fieldType, filterFunc).FirstOrDefault();
+        }
+
         public T GetPrivateField<T>() where T : class
         {
             return GetPrivateField<T>(field => true);
         }
 
+        public object GetPrivateField(Type fieldType)
+        {
+            return GetPrivateField(fieldType, field => true);
+        }
+
         public IList<T> GetPrivateFields<T>(Func<FieldInfo, bool> filterFunc) where T : class
+        {
+            return GetPrivateFields(typeof(T), filterFunc).OfType<T>().ToList();
+        }
+
+        public IList<object> GetPrivateFields(Type fieldType, Func<FieldInfo, bool> filterFunc)
         {
             var windowType = typeof(TWindow);
             var fields = windowType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-                .Where(field => field.FieldType == typeof(T))
+                .Where(field => field.FieldType == fieldType)
                 .Where(filterFunc);
 
-            var values = new List<T>();
+            var values = new List<object>();
             foreach (var field in fields)
             {
-                values.Add((T)field.GetValue(_windowToTest));
+                values.Add(field.GetValue(_windowToTest));
             }
 
             return values;
