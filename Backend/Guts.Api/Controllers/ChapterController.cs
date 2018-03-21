@@ -33,7 +33,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, UserId);
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, GetUserId());
                 var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
                 var model = _chapterConverter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
                 return Ok(model);

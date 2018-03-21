@@ -5,17 +5,16 @@ namespace Guts.Business.Tests.Builders
 {
     public class ExerciseDtoBuilder
     {
-        private readonly Random _random;
         private readonly ExerciseDto _dto;
 
         public ExerciseDtoBuilder()
         {
-            _random = new Random();
+            var random = new Random();
             _dto = new ExerciseDto
             {
                 CourseCode = Guid.NewGuid().ToString(),
-                ChapterNumber = RandomExtensions.NextPositive(_random),
-                ExerciseNumber = RandomExtensions.NextPositive(_random),
+                ChapterNumber = random.NextPositive(),
+                ExerciseNumber = random.NextPositive(),
             };
         }
 

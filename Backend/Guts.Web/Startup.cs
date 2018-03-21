@@ -33,11 +33,6 @@ namespace Guts.Web
                     HotModuleReplacement = true
                 });
             }
-            //else
-            //{
-            //    app.UseExceptionHandler("/Home/Error");
-            //}
-            // app.UseDeveloperExceptionPage();
 
             app.UseStaticFiles();
 

@@ -49,9 +49,6 @@ namespace Guts.Api
                 {
                     sqlOptions.MigrationsAssembly("Guts.Data");
                 });
-
-                //options.UseSqlServer(Configuration.GetConnectionString("GutsDatabase"),
-                //    sqlOptions => sqlOptions.MigrationsAssembly("Guts.Data"));
             });
 
             services.AddIdentity<User, Role>(options =>
@@ -91,7 +88,6 @@ namespace Guts.Api
                 builder.AddDebug();
                 builder.AddConfiguration(Configuration.GetSection("Logging"));
                 builder.AddEventSourceLogger();
-               // builder.AddAzureWebAppDiagnostics();
             });
 
             services.AddMvc(options =>

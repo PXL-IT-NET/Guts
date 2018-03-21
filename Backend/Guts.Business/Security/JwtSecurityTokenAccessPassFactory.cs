@@ -34,7 +34,7 @@ namespace Guts.Business.Security
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
             }.Union(currentUserClaims);
 
-            var keyBytes = Encoding.UTF8.GetBytes((string) _key);
+            var keyBytes = Encoding.UTF8.GetBytes(_key);
             var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 

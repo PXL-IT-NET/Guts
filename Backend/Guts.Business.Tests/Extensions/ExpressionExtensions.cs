@@ -13,7 +13,7 @@ namespace Guts.Business.Tests.Extensions
 
         public static bool BodyContains<T>(this Expression<T> expression, params string[] texts)
         {
-            return texts.All(text => BodyContains(expression, (string) text));
+            return texts.All(text => BodyContains(expression, text));
         }
 
         public static bool IsTrueFor<T>(this Expression<Func<T, bool>> filterExpression, T target)

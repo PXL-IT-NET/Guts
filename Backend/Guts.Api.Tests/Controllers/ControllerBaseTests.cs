@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Authentication;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
 using NUnit.Framework;
@@ -33,7 +34,7 @@ namespace Guts.Api.Tests.Controllers
             _controller.ControllerContext = new ControllerContextBuilder().WithUserWithoutNameIdentifier().Build();
 
             //Act + Assert
-            Assert.That(() => _controller.GetUserId(), Throws.TypeOf<ApplicationException>());
+            Assert.That(() => _controller.GetUserId(), Throws.TypeOf<AuthenticationException>());
         }
 
         [Test]
@@ -46,14 +47,14 @@ namespace Guts.Api.Tests.Controllers
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(invalidNameIdentifier).Build();
 
             //Act + Assert
-            Assert.That(() => _controller.GetUserId(), Throws.TypeOf<ApplicationException>());
+            Assert.That(() => _controller.GetUserId(), Throws.TypeOf<AuthenticationException>());
         }
 
         private class TestableControllerBase : ControllerBase
         {
-            public int GetUserId()
+            public new int GetUserId()
             {
-                return UserId;
+                return base.GetUserId();
             }
         }
     }

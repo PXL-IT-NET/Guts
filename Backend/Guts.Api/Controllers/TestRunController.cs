@@ -47,7 +47,7 @@ namespace Guts.Api.Controllers
             var testNames = model.Results.Select(testResult => testResult.TestName);
             await _exerciseService.LoadOrCreateTestsForExerciseAsync(exercise, testNames);
 
-            var testRun = _testRunConverter.From(model.Results, UserId, exercise);
+            var testRun = _testRunConverter.From(model.Results, GetUserId(), exercise);
             var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
 
             var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);

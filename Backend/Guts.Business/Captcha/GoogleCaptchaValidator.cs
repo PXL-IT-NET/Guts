@@ -26,7 +26,7 @@ namespace Guts.Business.Captcha
                 new KeyValuePair<string, string>("response", captchaToken),
                 new KeyValuePair<string, string>("remoteip", clientIpAddress.ToString())
             });
-            var googleVerifyResponse = await httpClient.PostAsync((string) _validationUrl, formContent);
+            var googleVerifyResponse = await httpClient.PostAsync(_validationUrl, formContent);
             var json = await googleVerifyResponse.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<CaptchaVerificationResult>(json);
         }
