@@ -119,6 +119,9 @@
       <Key>S2201</Key>
     </Rule>
     <Rule>
+      <Key>S1110</Key>
+    </Rule>
+    <Rule>
       <Key>S2681</Key>
     </Rule>
     <Rule>
@@ -366,6 +369,12 @@
     </Rule>
     <Rule>
       <Key>S2068</Key>
+      <Parameters>
+        <Parameter>
+          <Key>credentialWords</Key>
+          <Value>password, passwd, pwd</Value>
+        </Parameter>
+      </Parameters>
     </Rule>
     <Rule>
       <Key>S112</Key>
@@ -562,6 +571,10 @@
         <Parameter>
           <Key>max</Key>
           <Value>2</Value>
+        </Parameter>
+        <Parameter>
+          <Key>maxMethod</Key>
+          <Value>3</Value>
         </Parameter>
       </Parameters>
     </Rule>

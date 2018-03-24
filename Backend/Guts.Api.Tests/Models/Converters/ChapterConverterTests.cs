@@ -91,6 +91,21 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
+        [Test]
+        public void ToChapterModel_ShouldCorrectlyCovertValidChapter()
+        {
+            //Arrange
+            var chapter = new ChapterBuilder().WithId().Build();
+
+            //Act
+            var model = _converter.ToChapterModel(chapter);
+
+            //Assert
+            Assert.That(model, Is.Not.Null);
+            Assert.That(model.Id, Is.EqualTo(chapter.Id));
+            Assert.That(model.Number, Is.EqualTo(chapter.Number));
+        }
+
         private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter, 
             int numberOfPassingTests, 
             int numberOfFailingTests,

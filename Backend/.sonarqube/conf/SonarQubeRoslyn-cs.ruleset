@@ -30,6 +30,7 @@
     <Rule Id="S3897" Action="Warning" />
     <Rule Id="S2688" Action="Warning" />
     <Rule Id="S2201" Action="Warning" />
+    <Rule Id="S1110" Action="Warning" />
     <Rule Id="S2681" Action="Warning" />
     <Rule Id="S2328" Action="Warning" />
     <Rule Id="S1118" Action="Warning" />
@@ -250,6 +251,7 @@
     <Rule Id="S122" Action="None" />
     <Rule Id="S1309" Action="None" />
     <Rule Id="S3967" Action="None" />
+    <Rule Id="S113" Action="None" />
     <Rule Id="S2070" Action="None" />
     <Rule Id="S4226" Action="None" />
     <Rule Id="S1994" Action="None" />

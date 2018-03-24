@@ -96,6 +96,7 @@ namespace Guts.Client.TestTools.WPF
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
         #endregion
     }

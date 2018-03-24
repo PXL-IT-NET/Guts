@@ -2,7 +2,7 @@
 
 namespace Guts.Client.TestTools
 {
-    public class CodeCleaner
+    public static class CodeCleaner
     {
         public static string StripComments(string code)
         {

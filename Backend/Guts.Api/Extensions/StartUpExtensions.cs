@@ -27,7 +27,7 @@ using SimpleInjector.Lifestyles;
 
 namespace Guts.Api.Extensions
 {
-    internal static class StartUpExtensions
+    public static class StartUpExtensions
     {
         public static void AddSimpleInjector(this IServiceCollection services, Container container)
         {
@@ -68,23 +68,29 @@ namespace Guts.Api.Extensions
             container.Register<ICourseRepository, CourseDbRepository>(Lifestyle.Scoped);
             container.Register<IPeriodRepository, PeriodDbRepository>(Lifestyle.Scoped);
             container.Register<ITestResultRepository, TestResultDbRepository>(Lifestyle.Scoped);
-
+            container.Register<IHttpClient, HttpClientAdapter>(Lifestyle.Scoped);
             container.Register<ICaptchaValidator>(() =>
             {
                 var captchaSection = configuration.GetSection("Captcha");
                 var secret = captchaSection.GetValue<string>("secret");
                 var validationUrl = captchaSection.GetValue<string>("validationUrl");
-                return new GoogleCaptchaValidator(validationUrl, secret);
+                return new GoogleCaptchaValidator(validationUrl, secret, container.GetInstance<IHttpClient>());
             }, Lifestyle.Singleton);
-            container.Register<IMailSender>(() =>
+            container.Register<ISmtpClient>(() =>
             {
                 var mailSection = configuration.GetSection("Mail");
                 var smtpHost = mailSection.GetValue<string>("host");
                 var port = mailSection.GetValue<int>("port");
                 var fromEmail = mailSection.GetValue<string>("from");
                 var password = mailSection.GetValue<string>("password");
+                return new SmtpClientAdapter(smtpHost,port,fromEmail, password);
+            });
+            container.Register<IMailSender>(() =>
+            {
+                var mailSection = configuration.GetSection("Mail");
+                var fromEmail = mailSection.GetValue<string>("from");
                 var webAppBaseUrl = mailSection.GetValue<string>("webappbaseurl");
-                return new MailSender(smtpHost, port, fromEmail, password, webAppBaseUrl);
+                return new MailSender(container.GetInstance<ISmtpClient>(), fromEmail, webAppBaseUrl);
             }, Lifestyle.Scoped);
             container.Register<ITokenAccessPassFactory>(() =>
             {

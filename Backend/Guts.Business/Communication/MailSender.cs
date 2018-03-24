@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,21 +9,14 @@ namespace Guts.Business.Communication
     public class MailSender : IMailSender
     {
         private readonly Uri _webAppBaseUri;
-        private readonly SmtpClient _smtpClient;
+        private readonly ISmtpClient _smtpClient;
         private readonly string _fromEmail;
 
-        public MailSender(string smtpHost, int port, string fromEmail, string password, string webAppBaseUrl)
+        public MailSender(ISmtpClient smtpClient, string fromEmail, string webAppBaseUrl)
         {
             _webAppBaseUri = new Uri(webAppBaseUrl);
             _fromEmail = fromEmail;
-            _smtpClient = new SmtpClient(smtpHost)
-            {
-                Port = port,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(fromEmail, password),
-                Timeout = 7 * 1000 // 7 seconds
-            };
+            _smtpClient = smtpClient;
         }
 
         public async Task SendConfirmUserEmailMessageAsync(User user, string confirmationToken)

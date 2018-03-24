@@ -18,6 +18,7 @@ namespace Guts.Client
 
         public void BeforeTest(ITest test)
         {
+            //do nothing before
         }
 
         public void AfterTest(ITest test)

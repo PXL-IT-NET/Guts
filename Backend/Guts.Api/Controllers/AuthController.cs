@@ -167,40 +167,30 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
+            var user = await _userManager.FindByNameAsync(model.Email);
+            if (user == null)
             {
-                var user = await _userManager.FindByNameAsync(model.Email);
-                if (user == null)
-                {
-                    return Unauthorized();
-                }
-
-                if (_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) != PasswordVerificationResult.Success)
-                {
-                    return Unauthorized();
-                }
-
-                if (!user.EmailConfirmed)
-                {
-                    await SendConfirmUserEmailMessage(user);
-
-                    ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");
-                    return BadRequest(ModelState);
-                }
-
-                var currentClaims = await _userManager.GetClaimsAsync(user);
-                var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims);
-
-                return Ok(tokenAccessPass);
+                return Unauthorized();
             }
-            catch (Exception ex)
+
+            if (_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) != PasswordVerificationResult.Success)
             {
-                Debug.WriteLine(ex);
-                return StatusCode((int)HttpStatusCode.InternalServerError, "Error while creating token");
+                return Unauthorized();
             }
+
+            if (!user.EmailConfirmed)
+            {
+                await SendConfirmUserEmailMessage(user);
+
+                ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");
+                return BadRequest(ModelState);
+            }
+
+            var currentClaims = await _userManager.GetClaimsAsync(user);
+            var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims);
+
+            return Ok(tokenAccessPass);
         }
-
-
 
         private async Task SendConfirmUserEmailMessage(User user)
         {
