@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Business.Captcha;
@@ -13,7 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
 {
-
+    /// <summary>
+    /// Register and confirm users, authenticate users (bearer token).
+    /// </summary>
     [Produces("application/json")]
     [Route("api/Auth")]
     public class AuthController : Controller
@@ -37,9 +37,15 @@ namespace Guts.Api.Controllers
             _tokenAccessPassFactory = tokenAccessPassFactory;
         }
 
+        /// <summary>
+        /// Registers a new user in the system.
+        /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
+        /// </summary>
         [HttpPost]
         [AllowAnonymous]
         [Route("register")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -76,9 +82,14 @@ namespace Guts.Api.Controllers
             return BadRequest(ModelState);
         }
 
+        /// <summary>
+        /// Confirms the email address of a registered user by providing the token that was send to the users email adres.
+        /// </summary>
         [HttpPost]
         [AllowAnonymous]
         [Route("confirmemail")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -104,9 +115,14 @@ namespace Guts.Api.Controllers
             return BadRequest(ModelState);
         }
 
+        /// <summary>
+        /// Sends an email to a user with a token (link) that can be used to reset the password of the user.
+        /// </summary>
         [HttpPost]
         [AllowAnonymous]
         [Route("forgotpassword")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> SendForgotPasswordMail([FromBody] ForgotPasswordModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -132,9 +148,16 @@ namespace Guts.Api.Controllers
             return Ok();
         }
 
+        
+
+        /// <summary>
+        /// Resets the password of a user using a token that was sent to the users email address.
+        /// </summary>
         [HttpPost]
         [AllowAnonymous]
         [Route("resetpassword")]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -160,9 +183,15 @@ namespace Guts.Api.Controllers
             return BadRequest(ModelState);
         }
 
+        /// <summary>
+        /// Request a (bearer) token that can be used to authenticate yourself in future requests.
+        /// </summary>
         [HttpPost(nameof(CreateToken))]
         [AllowAnonymous]
         [Route("token")]
+        [ProducesResponseType(typeof(TokenAccessPass), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> CreateToken([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

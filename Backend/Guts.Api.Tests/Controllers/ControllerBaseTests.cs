@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Authentication;
+﻿using System.Security.Authentication;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
 using NUnit.Framework;

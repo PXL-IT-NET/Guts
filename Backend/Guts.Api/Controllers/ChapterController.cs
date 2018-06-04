@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Net;
+using System.Threading.Tasks;
+using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Data;
@@ -22,7 +24,16 @@ namespace Guts.Api.Controllers
             _chapterConverter = chapterConverter;
         }
 
+        /// <summary>
+        /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
+        /// The overview contains testresults for the authorized user and the average results of all users.
+        /// </summary>
+        /// <param name="courseId">Identifier of the course in the database.</param>
+        /// <param name="chapterNumber">Sequence number of the chapter</param>
         [HttpGet("{chapterNumber}")]
+        [ProducesResponseType(typeof(ChapterContentsModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> GetChapterContents(int courseId, int chapterNumber)
         {
             if (courseId < 1 || chapterNumber < 1)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Text;
 using Guts.Api.Extensions;
 using Guts.Data;
@@ -13,6 +14,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NJsonSchema;
+using NSwag;
+using NSwag.AspNetCore;
+using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
 
 namespace Guts.Api
@@ -115,6 +120,33 @@ namespace Guts.Api
             });
 
             app.UseStaticFiles();
+
+            // Enable the Swagger UI middleware and the Swagger generator
+            app.UseSwaggerUi3(typeof(Startup).GetTypeInfo().Assembly, settings =>
+            {
+                settings.SwaggerRoute = "/swagger";
+                settings.SwaggerUiRoute = "/docs";
+                settings.GeneratorSettings.IsAspNetCore = true;
+                settings.GeneratorSettings.DefaultPropertyNameHandling = PropertyNameHandling.CamelCase;
+
+                settings.PostProcess = document =>
+                {
+                    document.Info.Title = "GUTS Api";
+                    document.Info.Description =
+                        "Service that collects and queries data about runs of automated tests in programming exercises.";
+
+                };
+
+                settings.GeneratorSettings.OperationProcessors.Add(new OperationSecurityScopeProcessor("Bearer Token"));
+                settings.GeneratorSettings.DocumentProcessors.Add(new SecurityDefinitionAppender("Bearer Token",
+                    new SwaggerSecurityScheme
+                    {
+                        Type = SwaggerSecuritySchemeType.ApiKey,
+                        Name = "Authorization",
+                        Description = "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
+                        In = SwaggerSecurityApiKeyLocation.Header
+                    }));
+            });
 
             app.UseCors(GutsOriginsPolicy);
 

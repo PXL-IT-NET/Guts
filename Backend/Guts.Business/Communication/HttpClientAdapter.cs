@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Guts.Business.Captcha;
 using Newtonsoft.Json;
 
 namespace Guts.Business.Communication

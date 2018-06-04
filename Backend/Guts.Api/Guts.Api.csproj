@@ -5,6 +5,14 @@
     <UserSecretsId>3b8574b3-f5fc-4eb7-8a3a-a21391aa7bf3</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netcoreapp2.0\Guts.Api.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netcoreapp2.0\Guts.Api.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Migrations\**" />
     <Content Remove="Migrations\**" />
@@ -17,6 +25,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.2" />
+    <PackageReference Include="NSwag.AspNetCore" Version="11.17.12" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc" Version="4.0.12" />
   </ItemGroup>
 
