@@ -10,12 +10,12 @@ namespace Guts.Client.TestTools.WPF
 {
     public class TestWindow<TWindow> : IDisposable where TWindow : Window, new()
     {
-        private readonly TWindow _windowToTest;
+        public TWindow Window { get; }
 
         public TestWindow()
         {
-            _windowToTest = new TWindow();
-            _windowToTest.Show();
+            Window = new TWindow();
+            Window.Show();
         }
 
         public T GetPrivateField<T>(Func<FieldInfo, bool> filterFunc) where T : class
@@ -53,7 +53,7 @@ namespace Guts.Client.TestTools.WPF
             var values = new List<object>();
             foreach (var field in fields)
             {
-                values.Add(field.GetValue(_windowToTest));
+                values.Add(field.GetValue(Window));
             }
 
             return values;
@@ -66,12 +66,12 @@ namespace Guts.Client.TestTools.WPF
 
         public IList<T> GetUIElements<T>() where T : UIElement
         {
-            return _windowToTest.FindVisualChildren<T>().ToList();
+            return Window.FindVisualChildren<T>().ToList();
         }
 
         public T GetContentControlByPartialContentText<T>(string contentTextPart) where T : ContentControl
         {
-            var contentControls = _windowToTest.FindVisualChildren<T>().ToList();
+            var contentControls = Window.FindVisualChildren<T>().ToList();
             return contentControls.FirstOrDefault(c =>
             {
                 var contentText = c.Content as string;
@@ -88,7 +88,7 @@ namespace Guts.Client.TestTools.WPF
             if (_disposed) return;
             if (disposing)
             {
-                _windowToTest?.Close();
+                Window?.Close();
             }
             _disposed = true;
         }

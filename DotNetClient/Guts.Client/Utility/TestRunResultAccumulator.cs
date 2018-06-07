@@ -19,7 +19,7 @@ namespace Guts.Client.Utility
 
         public void AddTestResult(TestResult result)
         {
-            if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated tests)
+            if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated) tests
 
             TestResults.Add(result);
         }
