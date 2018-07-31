@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Guts.Client.UI
+namespace Guts.Client.Classic.UI
 {
     /// <summary>
     /// Interaction logic for App.xaml

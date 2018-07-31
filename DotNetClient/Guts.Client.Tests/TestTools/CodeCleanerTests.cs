@@ -1,4 +1,4 @@
-﻿using Guts.Client.TestTools;
+﻿using Guts.Client.Shared.TestTools;
 using NUnit.Framework;
 
 namespace Guts.Client.Tests.TestTools
