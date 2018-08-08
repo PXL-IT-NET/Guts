@@ -5,101 +5,51 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <IsPackable>false</IsPackable>
-    <UserSecretsId>729678b9-f5f8-4f38-8acc-fdf659d36fd5</UserSecretsId>
+    <SpaRoot>ClientApp\</SpaRoot>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+
+    <!-- Set this to true if you enable server-side prerendering -->
+    <BuildServerSideRenderer>false</BuildServerSideRenderer>
+    <ApplicationIcon />
+    <OutputType>Exe</OutputType>
+    <StartupObject />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.2" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Files not to publish (note that the 'dist' subfolders are re-added below) -->
-    <Content Remove="ClientApp\**" />
+    <!-- Don't publish the SPA source files, but do show them in the project files list -->
+    <Content Remove="$(SpaRoot)**" />
+    <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Remove="ClientApp\app\components\chaptercontents\chaptercontents.component.ts" />
-    <None Remove="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
-    <None Remove="ClientApp\app\components\coursecontents\coursecontents.component.ts" />
-    <None Remove="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
-    <None Remove="ClientApp\app\components\login\login.component.ts" />
-    <None Remove="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
-    <None Remove="ClientApp\app\services\course.service.ts" />
-    <None Remove="ClientApp\app\viewmodels\chapter.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\confirmemail.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\course.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\exercisesummary.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\forgotpassword.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\register.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\result.model.ts" />
-    <None Remove="ClientApp\app\viewmodels\token.model.ts" />
-    <None Remove="ClientApp\app\services\chapter.service.ts" />
-    <None Remove="ClientApp\app\services\client.settings.service.ts" />
-    <None Remove="ClientApp\app\services\client.settings.ts" />
-    <None Remove="ClientApp\app\util\localstorage.keys.ts" />
-    <None Remove="ClientApp\app\util\tokeninterceptor.ts" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <TypeScriptCompile Include="ClientApp\app\components\coursecontents\coursecontents.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\chaptercontents\chaptercontents.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\resetpassword\resetpassword.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\confirmemail\confirmemail.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\login\login.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\forgotpassword\forgotpassword.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\guards\auth.guard.ts" />
-    <TypeScriptCompile Include="ClientApp\app\components\register\register.component.ts" />
-    <TypeScriptCompile Include="ClientApp\app\services\course.service.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\chapter.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\confirmemail.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\course.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\exercisesummary.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\forgotpassword.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\login.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\register.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\services\chapter.service.ts" />
-    <TypeScriptCompile Include="ClientApp\app\util\result.ts" />
-    <TypeScriptCompile Include="ClientApp\app\viewmodels\token.model.ts" />
-    <TypeScriptCompile Include="ClientApp\app\services\auth.service.ts" />
-    <TypeScriptCompile Include="ClientApp\app\services\client.settings.service.ts" />
-    <TypeScriptCompile Include="ClientApp\app\services\client.settings.ts" />
-    <TypeScriptCompile Include="ClientApp\app\util\localstorage.keys.ts" />
-    <TypeScriptCompile Include="ClientApp\app\util\tokeninterceptor.ts" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="app.yaml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Dockerfile">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">
+  <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
     </Exec>
     <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
-
-    <!-- In development, the dist files won't exist on the first run or when cloning to
-         a different machine, so rebuild them if not already present. -->
-    <Message Importance="high" Text="Performing first-run Webpack build..." />
-    <Exec Command="node node_modules/webpack/bin/webpack.js --config webpack.config.vendor.js" />
-    <Exec Command="node node_modules/webpack/bin/webpack.js" />
+    <Message Importance="high" Text="Restoring dependencies using 'npm'. This may take several minutes..." />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
   </Target>
 
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
-    <Exec Command="npm install" />
-    <Exec Command="node node_modules/webpack/bin/webpack.js --config webpack.config.vendor.js --env.prod" />
-    <Exec Command="node node_modules/webpack/bin/webpack.js --env.prod" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --prod" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --prod" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
 
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
-      <DistFiles Include="wwwroot\dist\**; ClientApp\dist\**" />
+      <DistFiles Include="$(SpaRoot)dist\**; $(SpaRoot)dist-server\**" />
+      <DistFiles Include="$(SpaRoot)node_modules\**" Condition="'$(BuildServerSideRenderer)' == 'true'" />
       <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>%(DistFiles.Identity)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
