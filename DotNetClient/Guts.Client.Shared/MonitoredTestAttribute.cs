@@ -1,10 +1,8 @@
-﻿
-using Guts.Client.Shared.Utility;
+﻿using Guts.Client.Shared.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 
-namespace Guts.Client.Classic
+namespace Guts.Client.Shared
 {
 
     public class MonitoredTestAttribute : TestAttribute, ITestAction

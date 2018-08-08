@@ -3,14 +3,14 @@ using System.Threading.Tasks;
 
 namespace Guts.Client.Shared.Utility
 {
-    public delegate Task<LoginResult> CredentialsProvidedHandler(string username, string password);
+    public delegate void TokenRetrievedHandler(string token);
 
     public interface ILoginWindow
     {
-        event CredentialsProvidedHandler CredentialsProvided;
+        event TokenRetrievedHandler TokenRetrieved;
         event EventHandler Closed;
 
-        void Start();
+        Task StartLoginProcedureAsync();
     }
 
     public interface ILoginWindowFactory

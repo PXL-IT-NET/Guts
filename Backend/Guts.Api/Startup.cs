@@ -2,13 +2,16 @@
 using System.Reflection;
 using System.Text;
 using Guts.Api.Extensions;
+using Guts.Api.Hubs;
 using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +43,13 @@ namespace Guts.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
+
             services.AddCors(options =>
             {
                 options.AddPolicy(GutsOriginsPolicy, builder =>
@@ -101,7 +111,9 @@ namespace Guts.Api
                 {
                     options.SslPort = 44318;
                 }
-            });
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -113,6 +125,13 @@ namespace Guts.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -120,6 +139,8 @@ namespace Guts.Api
             });
 
             app.UseStaticFiles();
+
+            app.UseCookiePolicy();
 
             // Enable the Swagger UI middleware and the Swagger generator
             app.UseSwaggerUi3(typeof(Startup).GetTypeInfo().Assembly, settings =>
@@ -153,6 +174,11 @@ namespace Guts.Api
             app.UseSimpleInjector(_container, Configuration);
 
             app.UseAuthentication();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<AuthHub>("/authHub");
+            });
 
             app.UseMvc();
 

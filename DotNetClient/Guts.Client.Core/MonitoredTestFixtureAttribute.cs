@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Configuration;
-using Guts.Client.Classic.UI;
 using Guts.Client.Shared.Models;
 using Guts.Client.Shared.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Classic
+namespace Guts.Client.Core
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class MonitoredTestFixtureAttribute : TestFixtureAttribute, ITestAction
@@ -24,15 +22,15 @@ namespace Guts.Client.Classic
             _chapter = chapter;
             _exercise = exercise;
 
-            string apiBaseUrl = ConfigurationManager.AppSettings["GutsApiUri"];
-            if (string.IsNullOrEmpty(apiBaseUrl))
-            {
-                throw new ConfigurationErrorsException($"Could not find an appsetting 'GutsApiUri' that contains a valid Api url.");
-            }
+            string apiBaseUrl = "";//TODO: get api url somehow. Old way: ConfigurationManager.AppSettings["GutsApiUri"];
+            //if (string.IsNullOrEmpty(apiBaseUrl))
+            //{
+            //    throw new ConfigurationErrorsException($"Could not find an appsetting 'GutsApiUri' that contains a valid Api url.");
+            //}
 
             var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
 
-            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler));
+            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory());
             _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
         }
 

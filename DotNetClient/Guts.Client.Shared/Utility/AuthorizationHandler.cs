@@ -9,23 +9,10 @@ namespace Guts.Client.Shared.Utility
 {
     public class AuthorizationHandler : IAuthorizationHandler
     {
-        private class TokenResponse
-        {
-            public string Token { get; set; }
-        }
-
-        private class TokenRequest
-        {
-            public string Email { get; set; }
-            public string Password { get; set; }
-        }
-
-        private readonly IHttpHandler _httpHandler;
         private readonly ILoginWindowFactory _loginWindowFactory;
 
-        public AuthorizationHandler(IHttpHandler httpHandler, ILoginWindowFactory loginWindowFactory)
+        public AuthorizationHandler(ILoginWindowFactory loginWindowFactory)
         {
-            _httpHandler = httpHandler;
             _loginWindowFactory = loginWindowFactory;
         }
 
@@ -37,66 +24,25 @@ namespace Guts.Client.Shared.Utility
         public async Task<string> RetrieveRemoteAccessTokenAsync()
         {
             var retrieveTokenTaskCompletionSource = new TaskCompletionSource<string>();
-            Thread thread = new Thread(() =>
+
+            Thread thread = new Thread(async () =>
             {
                 try
                 {
                     var loginWindow = _loginWindowFactory.Create();
 
-                    var token = string.Empty;
-
-                    loginWindow.CredentialsProvided += async (username, password) =>
+                    loginWindow.TokenRetrieved += token =>
                     {
-                        var tokenRequest = new TokenRequest
-                        {
-                            Email = username,
-                            Password = password
-                        };
-
-                        try
-                        {
-                            var tokenResponse =
-                                await _httpHandler.PostAsJsonAsync<TokenRequest, TokenResponse>("api/auth/token",
-                                    tokenRequest);
-                            token = tokenResponse.Token;
-                            StoreTokenLocally(token);
-
-                            return LoginResult.CreateSuccess();
-                        }
-                        catch (HttpRequestException requestException)
-                        {
-                            return LoginResult.CreateError(requestException.Message);
-                        }
-                        catch (HttpResponseException responseException)
-                        {
-                            if (!string.IsNullOrEmpty(responseException.Message))
-                            {
-                                return LoginResult.CreateError(responseException.Message);
-                            }
-
-                            if (responseException.ResponseStatusCode == HttpStatusCode.Unauthorized)
-                            {
-                                return LoginResult.CreateError("Invalid email / password combination.");
-                            }
-
-                            return LoginResult.CreateError("Unknown error");
-                        }
-                        
+                        StoreTokenLocally(token);
+                        retrieveTokenTaskCompletionSource.SetResult(token);
                     };
 
                     loginWindow.Closed += (sender, e) =>
                     {
-                        if (!string.IsNullOrEmpty(token))
-                        {
-                            retrieveTokenTaskCompletionSource.SetResult(token);
-                        }
-                        else
-                        {
-                            retrieveTokenTaskCompletionSource.SetCanceled();
-                        }
+                        retrieveTokenTaskCompletionSource.SetCanceled();
                     };
 
-                    loginWindow.Start();
+                    await loginWindow.StartLoginProcedureAsync();
                 }
                 catch (Exception ex)
                 {

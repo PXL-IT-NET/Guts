@@ -58,7 +58,6 @@
     <Compile Include="TestTools\WPF\DependencyObjectExtensions.cs" />
     <Compile Include="TestTools\WPF\TestWindow.cs" />
     <Compile Include="MonitoredTestFixtureAttribute.cs" />
-    <Compile Include="MonitoredTestAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

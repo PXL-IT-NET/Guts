@@ -14,8 +14,8 @@ namespace Guts.Client.Tests.Utility
         public void CheckIfLoginWindowOpens()
         {
             var httpHandlerMock = new Mock<IHttpHandler>();
-            var loginWindowFactory = new LoginWindowFactory();
-            var authorizationHandler = new AuthorizationHandler(httpHandlerMock.Object, loginWindowFactory);
+            var loginWindowFactory = new LoginWindowFactory(httpHandlerMock.Object);
+            var authorizationHandler = new AuthorizationHandler(loginWindowFactory);
 
             var token = authorizationHandler.RetrieveRemoteAccessTokenAsync().Result;
         }
