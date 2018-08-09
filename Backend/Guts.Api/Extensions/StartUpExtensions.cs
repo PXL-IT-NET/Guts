@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Guts.Api.Models.Converters;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
@@ -11,6 +12,7 @@ using Guts.Data;
 using Guts.Data.Repositories;
 using Guts.Domain;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -21,6 +23,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SimpleInjector;
 using SimpleInjector.Integration.AspNetCore.Mvc;
 using SimpleInjector.Lifestyles;
@@ -83,7 +86,7 @@ namespace Guts.Api.Extensions
                 var port = mailSection.GetValue<int>("port");
                 var fromEmail = mailSection.GetValue<string>("from");
                 var password = mailSection.GetValue<string>("password");
-                return new SmtpClientAdapter(smtpHost,port,fromEmail, password);
+                return new SmtpClientAdapter(smtpHost, port, fromEmail, password);
             });
             container.Register<IMailSender>(() =>
             {
@@ -157,6 +160,28 @@ namespace Guts.Api.Extensions
                     transaction.Rollback();
                 }
             }
+        }
+
+        public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)
+        {
+            app.UseExceptionHandler(
+                options =>
+                {
+                    options.Run(
+                        async context =>
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                            context.Response.ContentType = "application/json";
+                            var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+                            //Place a breakpoint here to inspect the unhandled exception...
+                            if (exception != null)
+                            {
+                                var json = JsonConvert.SerializeObject(exception);
+                                await context.Response.WriteAsync(json).ConfigureAwait(false);
+                            }
+                        });
+                }
+            );
         }
     }
 }

@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Guts.Api.Extensions;
 using Guts.Api.Hubs;
 using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -17,6 +20,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using NJsonSchema;
 using NSwag;
 using NSwag.AspNetCore;
@@ -123,7 +127,8 @@ namespace Guts.Api
 
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //  app.UseDeveloperExceptionPage();
+                app.UseDeveloperExceptionJsonResponse();
             }
             else
             {

@@ -24,7 +24,7 @@ import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
-
+import 'rxjs/Rx';
 
 @NgModule({
   declarations: [
