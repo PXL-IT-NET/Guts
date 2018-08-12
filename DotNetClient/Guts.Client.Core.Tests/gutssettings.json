@@ -1,0 +1,6 @@
+{
+  "Guts": {
+    "apiBaseUrl": "https://localhost:44318/",
+    "webAppBaseUrl": "https://localhost:44376/"
+  }
+}

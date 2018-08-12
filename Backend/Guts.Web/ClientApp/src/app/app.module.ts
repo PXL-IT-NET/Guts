@@ -18,6 +18,7 @@ import { CourseContentsComponent } from './components/coursecontents/courseconte
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
+import { AuthHubService } from './services/authhub.service';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
@@ -65,6 +66,7 @@ import 'rxjs/Rx';
   providers: [
     AuthGuard,
     AuthService,
+    AuthHubService,
     CourseService,
     ChapterService,
     ClientSettingsService,

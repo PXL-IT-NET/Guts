@@ -1,0 +1,6 @@
+{
+  "Guts": {
+    "apiBaseUrl": "https://guts-api.appspot.com/",
+    "webAppBaseUrl": "https://guts-web.appspot.com/"
+  }
+}

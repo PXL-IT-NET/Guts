@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.Shared", "Guts.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.Core", "Guts.Client.Core\Guts.Client.Core.csproj", "{09083AD7-9505-4095-9657-BBA364588CE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Guts.Client.Core.Tests", "Guts.Client.Core.Tests\Guts.Client.Core.Tests.csproj", "{351E1CB6-AC02-4C76-8E22-4C97BCACB2AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.Core.Tests", "Guts.Client.Core.Tests\Guts.Client.Core.Tests.csproj", "{351E1CB6-AC02-4C76-8E22-4C97BCACB2AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

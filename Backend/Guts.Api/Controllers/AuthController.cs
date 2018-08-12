@@ -148,8 +148,6 @@ namespace Guts.Api.Controllers
             return Ok();
         }
 
-        
-
         /// <summary>
         /// Resets the password of a user using a token that was sent to the users email address.
         /// </summary>

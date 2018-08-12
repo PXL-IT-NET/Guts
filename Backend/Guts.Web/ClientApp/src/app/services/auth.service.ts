@@ -13,6 +13,7 @@ import { Result } from '../util/result';
 import { ConfirmEmailModel } from '../viewmodels/confirmemail.model';
 import { ForgotPasswordModel } from '../viewmodels/forgotpassword.model';
 import { ResetPasswordModel } from '../viewmodels/resetpassword.model';
+import * as signalR from "@aspnet/signalr";
 
 @Injectable()
 export class AuthService {

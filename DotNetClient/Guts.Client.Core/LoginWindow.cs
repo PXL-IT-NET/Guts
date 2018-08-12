@@ -24,14 +24,18 @@ namespace Guts.Client.Core
     public class LoginWindow : ILoginWindow
     {
         private readonly ISessionIdGenerator _sessionIdGenerator;
+        private readonly string _apiBaseUrl;
+        private readonly string _webAppBaseUrl;
         private HubConnection _gutsHubConnection;
 
         public event TokenRetrievedHandler TokenRetrieved;
         public event EventHandler Closed;
 
-        public LoginWindow(ISessionIdGenerator sessionIdGenerator)
+        public LoginWindow(ISessionIdGenerator sessionIdGenerator, string apiBaseUrl, string webAppBaseUrl)
         {
             _sessionIdGenerator = sessionIdGenerator;
+            _apiBaseUrl = apiBaseUrl;
+            _webAppBaseUrl = webAppBaseUrl;
         }
 
         public async Task StartLoginProcedureAsync()
@@ -46,13 +50,13 @@ namespace Guts.Client.Core
                 throw new FieldAccessException($"No handler set for {nameof(Closed)} event.");
             }
 
-            //TODO: set up signalR connection with Guts website, let the user login and recieve a notification (containing the token)
             var sessionId = _sessionIdGenerator.NewId();
-            var loginUrl = $"https://guts-web.appspot.com/login?s={sessionId}";
 
             //connect to the hub
+            Uri apiBaseUri = new Uri(_apiBaseUrl);
+            Uri hubUri = new Uri(apiBaseUri, "authhub");
             _gutsHubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:44318/authhub")
+                .WithUrl(hubUri.AbsoluteUri)
                 .Build();
 
             _gutsHubConnection.On<string>("ReceiveToken", token =>
@@ -70,7 +74,9 @@ namespace Guts.Client.Core
             await _gutsHubConnection.SendAsync("StartLoginSession", sessionId);
 
             //open login window
-            OpenUrlInBrowser(loginUrl); 
+            Uri webAppBaseUri = new Uri(_webAppBaseUrl);
+            Uri loginPageUri = new Uri(webAppBaseUri, $"login?s={sessionId}");
+            OpenUrlInBrowser(loginPageUri.AbsoluteUri); 
         }
 
         private void OpenUrlInBrowser(string url)

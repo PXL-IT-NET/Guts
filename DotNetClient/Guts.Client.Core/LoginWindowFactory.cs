@@ -1,4 +1,5 @@
 ﻿using Guts.Client.Shared.Utility;
+using Microsoft.Extensions.Configuration;
 
 namespace Guts.Client.Core
 {
@@ -6,7 +7,15 @@ namespace Guts.Client.Core
     {
         public ILoginWindow Create()
         {
-            return new LoginWindow(new GuidSessionIdGenerator());
+            var gutsSettingsConfig = new ConfigurationBuilder()
+                .AddJsonFile("gutssettings.json", optional: false, reloadOnChange: false)
+                .Build();
+
+            var gutsSection = gutsSettingsConfig.GetSection("Guts");
+            var apiBaseUrl = gutsSection.GetValue<string>("apiBaseUrl");
+            var webAppBaseUrl = gutsSection.GetValue<string>("webAppBaseUrl");
+
+            return new LoginWindow(new GuidSessionIdGenerator(), apiBaseUrl, webAppBaseUrl);
         }
     }
 }

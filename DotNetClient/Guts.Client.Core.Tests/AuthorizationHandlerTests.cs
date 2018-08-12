@@ -1,6 +1,5 @@
 using System;
 using Guts.Client.Shared.Utility;
-using Microsoft.AspNetCore.SignalR.Client;
 using Moq;
 using NUnit.Framework;
 
@@ -11,31 +10,21 @@ namespace Guts.Client.Core.Tests
     {
         [Test]
         [Ignore("This test opens a browser window")]
-        public void CheckIfLoginWindowOpens()
+        public void CheckIfTokenCanBeRetrievedFromBrowserLoginPage()
         {
             var usedSessionId = Guid.NewGuid().ToString();
             var sessionIdGeneratorMock = new Mock<ISessionIdGenerator>();
             sessionIdGeneratorMock.Setup(generator => generator.NewId()).Returns(usedSessionId);
             var loginWindowFactoryMock = new Mock<ILoginWindowFactory>();
-            loginWindowFactoryMock.Setup(factory => factory.Create()).Returns(() => new LoginWindow(sessionIdGeneratorMock.Object));
-
+            loginWindowFactoryMock.Setup(factory => factory.Create()).Returns(() => new LoginWindow(sessionIdGeneratorMock.Object, "https://localhost:44318/", "https://localhost:44376/"));
 
             var authorizationHandler = new AuthorizationHandler(loginWindowFactoryMock.Object);
 
-            var expectedToken = Guid.NewGuid().ToString();
-
             var retrieveTokenTask = authorizationHandler.RetrieveRemoteAccessTokenAsync();
-
-            //Simulate a token being sent from the opened browser
-            var gutsHubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:44318/authhub")
-                .Build();
-            gutsHubConnection.StartAsync().Wait();
-            gutsHubConnection.SendAsync("SendToken", usedSessionId, expectedToken).Wait();
 
             var retrievedToken = retrieveTokenTask.Result;
 
-            Assert.That(retrievedToken, Is.EqualTo(expectedToken));
+            Assert.That(retrievedToken, Is.Not.Empty);
         }
     }
 }
