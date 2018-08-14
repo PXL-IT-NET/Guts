@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Company>PXL</Company>
-    <Description>Utilities to write unit tests and send the results to the Guts API (.NET Standard)</Description>
+    <Description>Utilities to write unit tests and send the results to the Guts API (.NET Standard).
+This package is used by the packages Guts.Client (classic .NET) and Guts.Client.Core (.NET core). You probably want to install one of those two packages. This package will then automatically be included as a dependency.</Description>
     <Copyright>Copyright ©  2018</Copyright>
     <PackageTags>Guts Unit Test Client</PackageTags>
   </PropertyGroup>
