@@ -23,9 +23,15 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
-        public RegisterModelBuilder WithValidEmail()
+        public RegisterModelBuilder WithValidStudentEmail()
         {
             _model.Email = string.Concat(Guid.NewGuid().ToString(), "@student.pxl.be");
+            return this;
+        }
+
+        public RegisterModelBuilder WithValidLectorEmail()
+        {
+            _model.Email = string.Concat(Guid.NewGuid().ToString(), "@pxl.be");
             return this;
         }
 

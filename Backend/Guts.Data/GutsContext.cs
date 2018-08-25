@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -48,26 +50,7 @@ namespace Guts.Data
             builder.Entity<Test>().HasMany(test => test.Results).WithOne(result => result.Test)
                 .OnDelete(DeleteBehavior.Cascade);
         }
-
-        public void Seed()
-        {
-            var dotNetEssentialsCourse = new Course
-            {
-                Code = "dotNet1",
-                Name = ".NET Essentials"
-            };
-            Courses.AddIfNotExists(c => c.Code, dotNetEssentialsCourse);
-
-            var testPeriod = new Period
-            {
-                Description = "Test period",
-                From = new DateTime(2017, 11, 1),
-                Until = new DateTime(2018, 2, 1)
-            };
-            Periods.AddIfNotExists(p => p.Description, testPeriod);
-
-            SaveChanges();
-        }
+        
     }
 
     /// <summary>

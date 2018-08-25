@@ -31,6 +31,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\app\components\login\login.component.spec.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\src\app\components\login\login.component.spec.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="app.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

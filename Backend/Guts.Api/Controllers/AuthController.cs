@@ -71,6 +71,8 @@ namespace Guts.Api.Controllers
 
             if (result.Succeeded)
             {
+                var role = user.Email.ToLower().EndsWith("student.pxl.be") ? Role.Constants.Student : Role.Constants.Lector;
+                await _userManager.AddToRoleAsync(user, role);
                 await SendConfirmUserEmailMessage(user);
                 return Ok();
             }

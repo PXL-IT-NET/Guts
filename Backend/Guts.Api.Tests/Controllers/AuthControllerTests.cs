@@ -90,7 +90,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void RegisterShouldReturnBadRequestForNonPxlEmailAdres()
+        public void RegisterShouldReturnBadRequestForNonPxlEmailAddress()
         {
             //Arrange
             var model = new RegisterModelBuilder().WithEmail("invalid@nottrusted.be").Build();
@@ -109,7 +109,7 @@ namespace Guts.Api.Tests.Controllers
         public void RegisterShouldCreateUserAndSendConfirmationMail()
         {
             //Arrange
-            var model = new RegisterModelBuilder().WithValidEmail().Build();
+            var model = new RegisterModelBuilder().WithValidStudentEmail().Build();
 
             var confirmationToken = Guid.NewGuid().ToString();
             _userManagerMock.Setup(manager => manager.GenerateEmailConfirmationTokenAsync(It.IsAny<User>()))
@@ -138,10 +138,46 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
+        public void RegisterShouldAssignStudentRoleForStudentPxlEmailAddress()
+        {
+            //Arrange
+            var model = new RegisterModelBuilder().WithValidStudentEmail().Build();
+
+            var identityResult = IdentityResult.Success;
+            _userManagerMock.Setup(manager => manager.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(identityResult);
+
+            //Act
+            var result = _controller.Register(model).Result as OkResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _userManagerMock.Verify(manager => manager.AddToRoleAsync(It.Is<User>(user => user.Email == model.Email), Role.Constants.Student), Times.Once);
+        }
+
+        [Test]
+        public void RegisterShouldAssignLectorRoleForPxlEmailAddress()
+        {
+            //Arrange
+            var model = new RegisterModelBuilder().WithValidLectorEmail().Build();
+
+            var identityResult = IdentityResult.Success;
+            _userManagerMock.Setup(manager => manager.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(identityResult);
+
+            //Act
+            var result = _controller.Register(model).Result as OkResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _userManagerMock.Verify(manager => manager.AddToRoleAsync(It.Is<User>(user => user.Email == model.Email), Role.Constants.Lector), Times.Once);
+        }
+
+        [Test]
         public void RegisterShouldReturnBadRequestIfCreatingUserFails()
         {
             //Arrange
-            var model = new RegisterModelBuilder().WithValidEmail().Build();
+            var model = new RegisterModelBuilder().WithValidStudentEmail().Build();
 
             var errorCode = Guid.NewGuid().ToString();
             var identityResult = IdentityResult.Failed(new IdentityError
@@ -174,7 +210,7 @@ namespace Guts.Api.Tests.Controllers
         public void RegisterShouldValidateCaptcha()
         {
             //Arrange
-            var model = new RegisterModelBuilder().WithValidEmail().Build();
+            var model = new RegisterModelBuilder().WithValidStudentEmail().Build();
 
             //Act
             var result = _controller.Register(model).Result;
@@ -188,7 +224,7 @@ namespace Guts.Api.Tests.Controllers
         public void RegisterShouldReturnBadRequestIfCaptchaIsInvalid()
         {
             //Arrange
-            var model = new RegisterModelBuilder().WithValidEmail().Build();
+            var model = new RegisterModelBuilder().WithValidStudentEmail().Build();
             var expectedCaptchaResult = new CaptchaVerificationResult { Success = false };
             _captchaValidatorMock.Setup(validator => validator.Validate(It.IsAny<string>(), It.IsAny<IPAddress>()))
                 .ReturnsAsync(expectedCaptchaResult);

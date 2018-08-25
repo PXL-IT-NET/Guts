@@ -1,6 +1,6 @@
 <div class="col-md-6 col-md-offset-3">
   <h2>Login</h2>
-  <p *ngIf="sessionId.length > 0">
+  <p *ngIf="sessionId && sessionId.length > 0">
     Please login to send the results of the tests you have just carried out to the GUTS service...
   </p>
   <form name="form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>

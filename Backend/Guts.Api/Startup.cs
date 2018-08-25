@@ -184,8 +184,6 @@ namespace Guts.Api
             });
 
             app.UseMvc();
-
-            app.DoAutomaticMigrations();
         }
     }
 }

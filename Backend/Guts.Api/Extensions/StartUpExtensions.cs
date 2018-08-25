@@ -110,56 +110,12 @@ namespace Guts.Api.Extensions
 
             // Cross-wire ASP.NET services.
             container.CrossWire<UserManager<User>>(app);
+            container.CrossWire<RoleManager<Role>>(app);
             container.CrossWire<SignInManager<User>>(app);
             container.CrossWire<RoleManager<User>>(app);
             container.CrossWire<IPasswordHasher<User>>(app);
             container.CrossWire<ILoggerFactory>(app);
             container.CrossWire<GutsContext>(app);
-        }
-
-        public static void DoAutomaticMigrations(this IApplicationBuilder app)
-        {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-            {
-                var loggerFactory = serviceScope.ServiceProvider.GetService<ILoggerFactory>();
-                var logger = loggerFactory.CreateLogger("Startup");
-
-                var dbContext = serviceScope.ServiceProvider.GetRequiredService<GutsContext>();
-
-                var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
-                if (pendingMigrations.Any())
-                {
-                    ExecuteMigration(dbContext, pendingMigrations, logger);
-                }
-            }
-        }
-
-        private static void ExecuteMigration(GutsContext dbContext, List<string> pendingMigrations, ILogger logger)
-        {
-            var lastMigration = dbContext.Database.GetAppliedMigrations().LastOrDefault();
-            var targetMigration = pendingMigrations.Last();
-            var migrator = dbContext.GetService<IMigrator>();
-
-            logger.LogInformation($"Trying to migrate from '{lastMigration}' to '{targetMigration}'...");
-
-            var migrateSql = migrator.GenerateScript(lastMigration, targetMigration);
-
-            using (var transaction = dbContext.Database.BeginTransaction())
-            {
-                try
-                {
-                    dbContext.Database.ExecuteSqlCommand(migrateSql);
-                    dbContext.Seed();
-
-                    transaction.Commit();
-                    logger.LogInformation("Migration succeeded");
-                }
-                catch (Exception e)
-                {
-                    logger.LogCritical(e, "Error when trying to migrate database.");
-                    transaction.Rollback();
-                }
-            }
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)
