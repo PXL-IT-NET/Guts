@@ -1,5 +1,6 @@
 ﻿using System.Security.Authentication;
 using System.Security.Claims;
+using Guts.Domain;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
@@ -23,5 +24,25 @@ namespace Guts.Api.Controllers
 
             throw new AuthenticationException($"The NameIdentifier ('{nameIdentifierClaim.Value}') of the user should be a positive integer.");
         }
+
+        protected bool IsStudent()
+        {
+            if (User == null) return false;
+
+            return User.IsInRole(Role.Constants.Student);
+        }
+
+        protected bool IsLector()
+        {
+            if (User == null) return false;
+
+            return User.IsInRole(Role.Constants.Lector);
+        }
+
+        protected bool IsOwnUserId(int userId)
+        {
+            return GetUserId() == userId;
+        }
+
     }
 }

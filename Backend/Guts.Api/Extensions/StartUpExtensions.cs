@@ -56,6 +56,7 @@ namespace Guts.Api.Extensions
             // Add application services.
             container.Register<ICourseConverter, CourseConverter>(Lifestyle.Singleton);
             container.Register<IChapterConverter, ChapterConverter>(Lifestyle.Singleton);
+            container.Register<IExerciseConverter, ExerciseConverter>(Lifestyle.Singleton);
             container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
             container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
 

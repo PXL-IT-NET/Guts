@@ -36,5 +36,28 @@ namespace Guts.Data.Repositories
             //Could not use ToListAsync here because it generates a strange error...
             return Task.FromResult<IList<TestWithLastUserResults>>(query.AsNoTracking().ToList());
         }
+
+        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfExerciseAsync(int exerciseId, int userId)
+        {
+            var lastUserTestResultsQuery = from test in _context.Tests
+                from testResult in test.Results
+                where testResult.UserId == userId
+                      && (test.ExerciseId == exerciseId)
+                group new { testResult, test } by new { testResult.UserId, test.Id } into userTestRunGroup
+                select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();
+
+            var query = from testWithLastUserResult in lastUserTestResultsQuery
+                group testWithLastUserResult by testWithLastUserResult.test.Id
+                into testGroup
+                let test = testGroup.FirstOrDefault().test
+                select new TestWithLastUserResults
+                {
+                    Test = test,
+                    ResultsOfUsers = testGroup.Select(g => g.testResult)
+                };
+
+            //Could not use ToListAsync here because it generates a strange error...
+            return Task.FromResult<IList<TestWithLastUserResults>>(query.AsNoTracking().ToList());
+        }
     }
 }

@@ -8,5 +8,7 @@ namespace Guts.Business.Services
     {
         Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto);
         Task LoadOrCreateTestsForExerciseAsync(Exercise exercise, IEnumerable<string> testNames);
+
+        Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId);
     }
 }

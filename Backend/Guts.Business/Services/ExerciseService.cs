@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Business.Converters;
 using Guts.Data;
 using Guts.Data.Repositories;
 using Guts.Domain;
@@ -12,12 +14,20 @@ namespace Guts.Business.Services
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IChapterService _chapterService;
         private readonly ITestRepository _testRepository;
+        private readonly ITestResultRepository _testResultRepository;
+        private readonly ITestResultConverter _testResultConverter;
 
-        public ExerciseService(IExerciseRepository exerciseRepository, IChapterService chapterService, ITestRepository testRepository)
+        public ExerciseService(IExerciseRepository exerciseRepository, 
+            IChapterService chapterService, 
+            ITestRepository testRepository,
+            ITestResultRepository testResultRepository, 
+            ITestResultConverter testResultConverter)
         {
             _exerciseRepository = exerciseRepository;
             _chapterService = chapterService;
             _testRepository = testRepository;
+            _testResultRepository = testResultRepository;
+            _testResultConverter = testResultConverter;
         }
 
         public async Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto)
@@ -61,6 +71,13 @@ namespace Guts.Business.Services
             }
             exercise.Tests = exerciseTests;
 
+        }
+
+        public async Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId)
+        {
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId);
+
+            return _testResultConverter.ToExerciseResultDto(lastTestResults).FirstOrDefault();
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +17,7 @@ namespace Guts.Api.Tests.Builders
         {
             _random = new Random();
             _context = new ControllerContext { HttpContext = new DefaultHttpContext() };
+            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
         }
 
         public ControllerContextBuilder WithUser(string nameIdentifier)
@@ -24,7 +26,17 @@ namespace Guts.Api.Tests.Builders
             {
                 new Claim(ClaimTypes.NameIdentifier, nameIdentifier)
             };
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims));
+            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+            return this;
+        }
+
+        public ControllerContextBuilder WithRole(string role)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Role, role)
+            };
+            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
             return this;
         }
 
