@@ -16,7 +16,11 @@ export class ExerciseDetailComponent {
       number: 0,
       chapterNumber: 0,
       courseName: '',
-      testResults: []
+      courseId: 0,
+      testResults: [],
+      firstRun: '',
+      lastRun: '',
+      numberOfRuns: 0
     };
   }
 
