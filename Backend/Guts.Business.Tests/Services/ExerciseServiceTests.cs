@@ -23,6 +23,8 @@ namespace Guts.Business.Tests.Services
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
         private Mock<ITestResultConverter> _testResultConverterMock;
+        private Mock<ITestRunRepository> _testRunRepositoryMock
+            ;
 
         [SetUp]
         public void Setup()
@@ -32,13 +34,15 @@ namespace Guts.Business.Tests.Services
             _testRepositoryMock = new Mock<ITestRepository>();
             _chapterServiceMock = new Mock<IChapterService>();
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
+            _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _testResultConverterMock = new Mock<ITestResultConverter>();
 
             _service = new ExerciseService(_exerciseRepositoryMock.Object, 
                 _chapterServiceMock.Object, 
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
-                _testResultConverterMock.Object);
+                _testResultConverterMock.Object, 
+                _testRunRepositoryMock.Object);
         }
 
         [Test]

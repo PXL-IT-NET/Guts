@@ -24,7 +24,7 @@ namespace Guts.Business.Security
             _expirationTimeInMinutes = expirationTimeInMinutes;
         }
 
-        public TokenAccessPass Create(User user, IList<Claim> currentUserClaims)
+        public TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles)
         {
             var allClaims = new[]
             {
@@ -32,7 +32,13 @@ namespace Guts.Business.Security
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            }.Union(currentUserClaims);
+            }.Union(currentUserClaims).ToList();
+
+            foreach (var role in userRoles)
+            {
+                var roleClaim = new Claim(ClaimTypes.Role, role);
+                allClaims.Add(roleClaim);
+            }
 
             var keyBytes = Encoding.UTF8.GetBytes(_key);
             var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);

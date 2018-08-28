@@ -1,0 +1,54 @@
+<h2>{{model.courseName}}, chapter {{model.chapterNumber}}, exercise {{model.number}}</h2>
+<div class="col-md-10 col-md-offset-1">
+
+  <div class="form-group row">
+    <label for="firstrun" class="col-sm-2 col-form-label">First test run</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" readonly id="firstrun" value="{{model.firstRun}}">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="lastrun" class="col-sm-2 col-form-label">Last test run</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" readonly id="lastrun" value="{{model.lastRun}}">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="numberofruns" class="col-sm-2 col-form-label">Number of test runs</label>
+    <div class="col-sm-10">
+      <input type="number" class="form-control" readonly id="numberofruns" value="{{model.numberOfRuns}}">
+    </div>
+  </div>
+
+  <div class="row">
+    <h4>Testresults</h4>
+    <table class="table">
+      <thead class="thead-light">
+      <tr>
+        <th>Test</th>
+        <th>Message</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let testResult of model.testResults">
+        <td>
+          <span *ngIf="testResult.passed" class="fa fa-check-circle text-success"></span>
+          <span *ngIf="!testResult.passed" class="fa fa-times-circle text-danger"></span>
+          <span class="">{{testResult.testName}}</span>
+        </td>
+        <td>
+          <pre class="text-danger">{{testResult.message}}</pre>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <a [routerLink]="['/courses', model.courseId, 'chapters', model.chapterNumber]">
+        <span class="fa fa-pie-chart"></span> Back to chapter overview
+      </a>
+    </div>
+  </div>
+</div>
+

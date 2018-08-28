@@ -367,11 +367,14 @@ namespace Guts.Api.Tests.Controllers
                 Token = Guid.NewGuid().ToString()
             };
             _accessPassFactoryMock
-                .Setup(factory => factory.Create(It.IsAny<User>(), It.IsAny<IList<Claim>>()))
+                .Setup(factory => factory.Create(It.IsAny<User>(), It.IsAny<IList<Claim>>(), It.IsAny<IList<string>>()))
                 .Returns(createdAccesPass);
 
             var existingClaims = new List<Claim>();
             _userManagerMock.Setup(manager => manager.GetClaimsAsync(It.IsAny<User>())).ReturnsAsync(existingClaims);
+
+            var existingRoles = new List<string>();
+            _userManagerMock.Setup(manager => manager.GetRolesAsync(It.IsAny<User>())).ReturnsAsync(existingRoles);
 
             //Act
             var result = _controller.CreateToken(model).Result as OkObjectResult;
@@ -383,7 +386,7 @@ namespace Guts.Api.Tests.Controllers
             _passwordHasherMock.Verify(hasher => hasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, model.Password), Times.Once);
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
             _userManagerMock.Verify(manager => manager.GetClaimsAsync(existingUser), Times.Once);
-            _accessPassFactoryMock.Verify(factory => factory.Create(existingUser, existingClaims), Times.Once);
+            _accessPassFactoryMock.Verify(factory => factory.Create(existingUser, existingClaims, existingRoles), Times.Once);
 
             Assert.That(result.Value, Is.SameAs(createdAccesPass));
         }

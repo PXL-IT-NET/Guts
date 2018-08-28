@@ -23,10 +23,11 @@ namespace Guts.Business.Tests.Security
             var factory = new JwtSecurityTokenAccessPassFactory(key, issuer, audience, expirationTimeInMinutes);
             var user = new User{ Id = random.NextPositive(), UserName = Guid.NewGuid().ToString(), Email = "someEmail@test.com"};
             var claims = new List<Claim>();
+            var roles = new List<string>();
             var expectedExpirationDate = DateTime.UtcNow.AddMinutes(expirationTimeInMinutes);
 
             //Act
-            var accessPass = factory.Create(user, claims);
+            var accessPass = factory.Create(user, claims, roles);
 
             //Assert
             Assert.That(accessPass.Token, Is.Not.Null.Or.Empty);

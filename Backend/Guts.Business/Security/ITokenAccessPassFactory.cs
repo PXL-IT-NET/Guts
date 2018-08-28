@@ -6,6 +6,6 @@ namespace Guts.Business.Security
 {
     public interface ITokenAccessPassFactory
     {
-        TokenAccessPass Create(User user, IList<Claim> currentUserClaims);
+        TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles);
     }
 }

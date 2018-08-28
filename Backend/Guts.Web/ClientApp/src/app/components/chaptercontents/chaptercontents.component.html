@@ -1,63 +1,64 @@
-﻿<div class="col-md-10 col-md-offset-1">
-    <h2>Chapter {{model.number}}</h2>
-    <div class="row">
-        <div class="col-md-6">          
-            <div class="card">
-                <h5 class="card-header">
-                    Your test outcomes
-                </h5>
-                <div class="card-body">
-                    <div class="list-group">
-                        <div class="list-group-item" *ngFor="let exercise of model.userExerciseSummaries">
-                            <h4 class="list-group-item-heading">
-                                Exercise {{exercise.number}} <small>({{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests)</small>
-                            </h4>
-                            <div class="list-group-item-text">
-                                <div style="width: 400px; height: 200px;">
-                                    <canvas baseChart
-                                            [data]="exercise.chartData.data"
-                                            [labels]="exercise.chartData.labels"
-                                            [colors]="exercise.chartData.colors"
-                                            chartType="doughnut"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="col-md-10 col-md-offset-1">
+  <h2>Chapter {{model.number}}</h2>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <h5 class="card-header">
+          Your test outcomes
+        </h5>
+        <div class="card-body">
+          <div class="list-group">
+            <div class="list-group-item" *ngFor="let exercise of model.userExerciseSummaries">
+              <h4 class="list-group-item-heading">
+                Exercise {{exercise.number}} <small>({{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests)</small>
+              </h4>
+              <div class="list-group-item-text">
+                <div style="width: 400px; height: 200px;">
+                  <canvas baseChart
+                          [data]="exercise.chartData.data"
+                          [labels]="exercise.chartData.labels"
+                          [colors]="exercise.chartData.colors"
+                          chartType="doughnut"></canvas>
                 </div>
+                <button class="btn btn-outline-secondary btn-sm" [routerLink]="['/exercises', exercise.exerciseId]">Detail</button>
+              </div>
             </div>
+          </div>
         </div>
-        <div class="col-md-6">
-            
-            <div class="card">
-                <h5 class="card-header">
-                    Average test outcomes of other students
-                </h5>
-                <div class="card-body">
-                    <div class="list-group">
-                        <div class="list-group-item" *ngFor="let exercise of model.averageExerciseSummaries">
-                            <h4 class="list-group-item-heading">
-                                Exercise {{exercise.number}} <small>({{exercise.numberOfUsers}} students, {{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests)</small>
-                            </h4>
-                            <div class="list-group-item-text">
-                                <div style="width: 400px; height: 200px;">
-                                    <canvas baseChart
-                                            [data]="exercise.chartData.data"
-                                            [labels]="exercise.chartData.labels"
-                                            [colors]="exercise.chartData.colors"
-                                            chartType="doughnut"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+
+      <div class="card">
+        <h5 class="card-header">
+          Average test outcomes of other students
+        </h5>
+        <div class="card-body">
+          <div class="list-group">
+            <div class="list-group-item" *ngFor="let exercise of model.averageExerciseSummaries">
+              <h4 class="list-group-item-heading">
+                Exercise {{exercise.number}} <small>({{exercise.numberOfUsers}} students, {{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests)</small>
+              </h4>
+              <div class="list-group-item-text">
+                <div style="width: 400px; height: 200px;">
+                  <canvas baseChart
+                          [data]="exercise.chartData.data"
+                          [labels]="exercise.chartData.labels"
+                          [colors]="exercise.chartData.colors"
+                          chartType="doughnut"></canvas>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <a [routerLink]="['/courses', courseId]">
-                <span class='oi oi-book'></span> Back to list of chapters
-            </a>
-        </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <a [routerLink]="['/courses', courseId]">
+        <span class="fa fa-book"></span> Back to list of chapters
+      </a>
     </div>
+  </div>
 </div>

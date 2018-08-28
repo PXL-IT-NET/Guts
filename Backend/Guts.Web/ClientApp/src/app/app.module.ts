@@ -15,6 +15,7 @@ import { ForgotPasswordComponent } from './components/forgotpassword/forgotpassw
 import { ResetPasswordComponent } from './components/resetpassword/resetpassword.component';
 import { ChapterContentsComponent } from './components/chaptercontents/chaptercontents.component';
 import { CourseContentsComponent } from './components/coursecontents/coursecontents.component';
+import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
@@ -23,6 +24,7 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
+import { ExerciseService } from './services/exercise.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
 import 'rxjs/Rx';
@@ -38,7 +40,8 @@ import 'rxjs/Rx';
     ForgotPasswordComponent,
     ResetPasswordComponent,
     ChapterContentsComponent,
-    CourseContentsComponent
+    CourseContentsComponent,
+    ExerciseDetailComponent
   ],
   imports: [
     ChartsModule,
@@ -55,6 +58,7 @@ import 'rxjs/Rx';
       { path: 'home', component: HomeComponent },
       { path: 'courses/:courseId', component: CourseContentsComponent, canActivate: [AuthGuard] },
       { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterContentsComponent, canActivate: [AuthGuard] },
+      { path: 'exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
       { path: '**', redirectTo: 'home' }
     ]),
     LocalStorageModule.withConfig({
@@ -69,6 +73,7 @@ import 'rxjs/Rx';
     AuthHubService,
     CourseService,
     ChapterService,
+    ExerciseService,
     ClientSettingsService,
     LocalStorageService,
     {

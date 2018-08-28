@@ -31,6 +31,12 @@ namespace Guts.Api.Controllers
             _exerciseConverter = exerciseConverter;
         }
 
+        [HttpGet("{exerciseId}")]
+        public async Task<IActionResult> GetExerciseResults(int exerciseId)
+        {
+            return await GetExerciseResultsForUser(exerciseId, GetUserId());
+        }
+
         [HttpGet("{exerciseId}/resultsforuser/{userId}")]
         public async Task<IActionResult> GetExerciseResultsForUser(int exerciseId, int userId)
         {
@@ -46,9 +52,11 @@ namespace Guts.Api.Controllers
 
             var exercise = await _exerciseRepository.GetSingleWithChapterAndCourseAsync(exerciseId);
 
+            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId);
+
             var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId);
 
-            var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto);
+            var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
 
             return Ok(model);
         }

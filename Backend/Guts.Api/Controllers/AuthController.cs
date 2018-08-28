@@ -216,7 +216,8 @@ namespace Guts.Api.Controllers
             }
 
             var currentClaims = await _userManager.GetClaimsAsync(user);
-            var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims);
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims, userRoles);
 
             return Ok(tokenAccessPass);
         }

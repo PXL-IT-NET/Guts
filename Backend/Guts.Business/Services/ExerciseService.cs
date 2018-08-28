@@ -16,18 +16,21 @@ namespace Guts.Business.Services
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestResultConverter _testResultConverter;
+        private readonly ITestRunRepository _testRunRepository;
 
         public ExerciseService(IExerciseRepository exerciseRepository, 
             IChapterService chapterService, 
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
-            ITestResultConverter testResultConverter)
+            ITestResultConverter testResultConverter,
+            ITestRunRepository testRunRepository)
         {
             _exerciseRepository = exerciseRepository;
             _chapterService = chapterService;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testResultConverter = testResultConverter;
+            _testRunRepository = testRunRepository;
         }
 
         public async Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto)
@@ -78,6 +81,22 @@ namespace Guts.Business.Services
             var lastTestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId);
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults).FirstOrDefault();
+        }
+
+        public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId)
+        {
+            //TODO: write unit test
+            var testRunInfo = new ExerciseTestRunInfoDto();
+
+            var testRuns = await _testRunRepository.GetUserTestRunsForExercise(exerciseId, userId);
+            if (testRuns.Any())
+            {
+                testRunInfo.FirstRunDateTime = testRuns.First().CreateDateTime;
+                testRunInfo.LastRunDateTime = testRuns.Last().CreateDateTime;
+                testRunInfo.NumberOfRuns = testRuns.Count;
+            }
+
+            return testRunInfo;
         }
     }
 }
