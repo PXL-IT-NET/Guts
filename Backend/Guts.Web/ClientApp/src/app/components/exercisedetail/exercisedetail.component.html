@@ -32,8 +32,9 @@
       <tbody>
       <tr *ngFor="let testResult of model.testResults">
         <td>
-          <span *ngIf="testResult.passed" class="fa fa-check-circle text-success"></span>
-          <span *ngIf="!testResult.passed" class="fa fa-times-circle text-danger"></span>
+          <span *ngIf="!testResult.runned" class="fa fa-circle text-warning"></span>
+          <span *ngIf="testResult.runned && testResult.passed" class="fa fa-check-circle text-success"></span>
+          <span *ngIf="testResult.runned &&!testResult.passed" class="fa fa-times-circle text-danger"></span>
           <span class="">{{testResult.testName}}</span>
         </td>
         <td>

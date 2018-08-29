@@ -38,6 +38,7 @@ namespace Guts.Business.Converters
 
                     var testResultDto = new TestResultDto
                     {
+                        TestId = testWithLastUserResults.Test.Id,
                         TestName = testWithLastUserResults.Test.TestName,
                         Passed = passedOnAverage,
                         Message = mostOccuringMessage

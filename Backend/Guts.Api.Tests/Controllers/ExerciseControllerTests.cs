@@ -51,7 +51,7 @@ namespace Guts.Api.Tests.Controllers
             var existingExercise = new ExerciseBuilder().Build();
             var userId = _random.NextPositive();
 
-            _exerciseRepositoryMock.Setup(repo => repo.GetSingleWithChapterAndCourseAsync(It.IsAny<int>()))
+            _exerciseRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()))
                 .ReturnsAsync(existingExercise);
 
             var returnedExerciseResultDto = new ExerciseResultDto();
@@ -77,7 +77,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             Assert.That(actionResult.Value, Is.EqualTo(returnedModel));
-            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithChapterAndCourseAsync(existingExercise.Id), Times.Once);
+            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(existingExercise.Id), Times.Once);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(existingExercise.Id, userId), Times.Once);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(existingExercise, returnedExerciseResultDto, returnedTestRunInfo), Times.Once);
         }
@@ -97,7 +97,7 @@ namespace Guts.Api.Tests.Controllers
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithChapterAndCourseAsync(It.IsAny<int>()), Times.Never);
+            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }
@@ -116,7 +116,7 @@ namespace Guts.Api.Tests.Controllers
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithChapterAndCourseAsync(It.IsAny<int>()), Times.Never);
+            _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }

@@ -50,7 +50,7 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
-            var exercise = await _exerciseRepository.GetSingleWithChapterAndCourseAsync(exerciseId);
+            var exercise = await _exerciseRepository.GetSingleWithTestsAndCourseAsync(exerciseId);
 
             var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId);
 

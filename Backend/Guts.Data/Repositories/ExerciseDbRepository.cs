@@ -22,9 +22,12 @@ namespace Guts.Data.Repositories
             return exercise;
         }
 
-        public async Task<Exercise> GetSingleWithChapterAndCourseAsync(int exerciseId)
+        public async Task<Exercise> GetSingleWithTestsAndCourseAsync(int exerciseId)
         {
-            var exercise = await _context.Exercises.Where(ex => ex.Id == exerciseId).Include(ex => ex.Chapter.Course).FirstOrDefaultAsync();
+            var exercise = await _context.Exercises.Where(ex => ex.Id == exerciseId)
+                .Include(ex => ex.Chapter.Course)
+                .Include(ex => ex.Tests)
+                .FirstOrDefaultAsync();
             if (exercise == null)
             {
                 throw new DataNotFoundException();

@@ -10,7 +10,7 @@ namespace Guts.Api.Models
         public int ChapterNumber { get; set; }
         public string CourseName { get; set; }
         public int CourseId { get; set; }
-        public IList<TestResultDto> TestResults { get; set; }
+        public IList<TestResultModel> TestResults { get; set; }
         public string FirstRun { get; set; }
         public string LastRun { get; set; }
         public int NumberOfRuns { get; set; }
