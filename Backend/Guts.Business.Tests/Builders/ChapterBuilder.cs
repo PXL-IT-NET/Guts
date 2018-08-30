@@ -36,10 +36,23 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
+        public ChapterBuilder WithCourse()
+        {
+            _chapter.Course = new CourseBuilder().WithId().Build();
+            _chapter.CourseId = _chapter.Course.Id;
+            return this;
+        }
+
         public ChapterBuilder WithCourse(string courseCode)
         {
-            _chapter.Course = new CourseBuilder().WithId().WithCourse(courseCode).Build();
+            _chapter.Course = new CourseBuilder().WithId().WithCourseCode(courseCode).Build();
             _chapter.CourseId = _chapter.Course.Id;
+            return this;
+        }
+
+        public ChapterBuilder WithoutCourseLoaded()
+        {
+            _chapter.Course = null;
             return this;
         }
 

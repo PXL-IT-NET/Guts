@@ -26,7 +26,7 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public CourseBuilder WithCourse(string courseCode)
+        public CourseBuilder WithCourseCode(string courseCode)
         {
             _course.Code = courseCode;
             return this;

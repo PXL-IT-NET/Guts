@@ -21,10 +21,10 @@ namespace Guts.Business.Tests.Builders
             };
         }
 
-        public ExerciseBuilder WithRandomTests(int numberOfTestResults)
+        public ExerciseBuilder WithRandomTests(int numberOfTests)
         {
             var tests = new List<Test>();
-            for (int i = 0; i < numberOfTestResults; i++)
+            for (int i = 0; i < numberOfTests; i++)
             {
                 var test = new Test
                 {
@@ -34,6 +34,26 @@ namespace Guts.Business.Tests.Builders
                 tests.Add(test);
             }
             _exercise.Tests = tests;
+            return this;
+        }
+
+        public ExerciseBuilder WithChapter(Chapter chapter)
+        {
+            _exercise.Chapter = chapter;
+            _exercise.ChapterId = chapter.Id;
+            return this;
+        }
+
+
+        public ExerciseBuilder WithoutChapterLoaded()
+        {
+            _exercise.Chapter = null;
+            return this;
+        }
+
+        public ExerciseBuilder WithoutTestsLoaded()
+        {
+            _exercise.Tests = null;
             return this;
         }
 

@@ -10,9 +10,19 @@ namespace Guts.Api.Models.Converters
     {
         public ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, ExerciseResultDto results, ExerciseTestRunInfoDto testRunInfo)
         {
-            if (exercise.Chapter == null  || exercise.Chapter.Course == null)
+            if (exercise.Chapter?.Course == null)
             {
                 throw new ArgumentException("Exercise should have chapter and course loaded", nameof(exercise));
+            }
+
+            if (exercise.Tests == null)
+            {
+                throw new ArgumentException("Exercise should have tests loaded", nameof(exercise));
+            }
+
+            if (testRunInfo == null)
+            {
+                throw new ArgumentNullException(nameof(testRunInfo));
             }
 
             var model = new ExerciseDetailModel
@@ -38,7 +48,7 @@ namespace Guts.Api.Models.Converters
                     Message = string.Empty
                 };
 
-                var matchingResult = results?.TestResults.FirstOrDefault(r => r.TestId == test.Id);
+                var matchingResult = results?.TestResults?.FirstOrDefault(r => r.TestId == test.Id);
                 if (matchingResult != null)
                 {
                     testResultModel.Runned = true;

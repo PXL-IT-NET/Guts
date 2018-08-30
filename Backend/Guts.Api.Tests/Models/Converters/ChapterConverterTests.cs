@@ -9,7 +9,6 @@ using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters
 {
-
     [TestFixture]
     internal class ChapterConverterTests
     {
@@ -25,8 +24,8 @@ namespace Guts.Api.Tests.Models.Converters
         [TestCase(5, 5, 0, 10)]
         [TestCase(5, 0, 5, 1)]
         [TestCase(5, 1, 1, 10)]
-        public void ToChapterContentsModel_ShouldCorrectlyConvertValidChapter(int numberOfTests, 
-            int numberOfPassingTests, 
+        public void ToChapterContentsModel_ShouldCorrectlyConvertValidChapter(int numberOfTests,
+            int numberOfPassingTests,
             int numberOfFailingTests,
             int numberOfUsers)
         {
@@ -106,8 +105,8 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(model.Number, Is.EqualTo(chapter.Number));
         }
 
-        private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter, 
-            int numberOfPassingTests, 
+        private IList<ExerciseResultDto> GenerateExerciseResults(Chapter chapter,
+            int numberOfPassingTests,
             int numberOfFailingTests,
             int numberOfUsers)
         {
@@ -120,8 +119,8 @@ namespace Guts.Api.Tests.Models.Converters
             return exerciseResults;
         }
 
-        private ExerciseResultDto GenerateExerciseResult(Exercise exercise, 
-            int numberOfPassingTests, 
+        private ExerciseResultDto GenerateExerciseResult(Exercise exercise,
+            int numberOfPassingTests,
             int numberOfFailingTests,
             int numberOfUsers)
         {
