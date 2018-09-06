@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.AccessControl;
 using Guts.Business;
 
 namespace Guts.Api.Models
@@ -11,5 +12,7 @@ namespace Guts.Api.Models
 
         [Required]
         public IEnumerable<TestResultModel> Results { get; set; }
+
+        public string SourceCode { get; set; }
     }
 }

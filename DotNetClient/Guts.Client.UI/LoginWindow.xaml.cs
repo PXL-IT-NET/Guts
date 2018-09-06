@@ -15,14 +15,13 @@ namespace Guts.Client.Classic.UI
 
         public event TokenRetrievedHandler TokenRetrieved;
 
-        public async Task StartLoginProcedureAsync()
+        public Task StartLoginProcedureAsync()
         {
-            await Task.Run(() =>
-            {
-                Show();
-                Focus();
-                System.Windows.Threading.Dispatcher.Run();
-            });
+            Show();
+            Focus();
+            System.Windows.Threading.Dispatcher.Run();
+
+            return Task.CompletedTask;
         }
 
         public LoginWindow(IHttpHandler httpHandler)

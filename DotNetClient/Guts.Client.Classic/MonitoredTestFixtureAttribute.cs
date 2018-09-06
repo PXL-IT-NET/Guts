@@ -14,6 +14,7 @@ namespace Guts.Client.Classic
         private readonly string _courseCode;
         private readonly int _chapter;
         private readonly int _exercise;
+        private readonly string _sourceCodeRelativeFilePaths;
         private readonly TestRunResultSender _resultSender;
 
         public ActionTargets Targets => ActionTargets.Suite;
@@ -34,6 +35,11 @@ namespace Guts.Client.Classic
 
             var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler));
             _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
+        }
+
+        public MonitoredTestFixtureAttribute(string courseCode, int chapter, int exercise, string sourceCodeRelativeFilePaths) : this(courseCode, chapter, exercise)
+        {
+            _sourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
         }
 
         public void BeforeTest(ITest test)
@@ -58,7 +64,8 @@ namespace Guts.Client.Classic
                 var testRun = new TestRun()
                 {
                     Exercise = exercise,
-                    Results = results
+                    Results = results,
+                    SourceCode = SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths)
                 };
 
                 TestContext.Progress.WriteLine("Test run completed. Trying to send results...");

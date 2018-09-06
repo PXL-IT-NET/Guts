@@ -12,12 +12,13 @@
     <copyright>Copyright 2017</copyright>
     <tags>Guts Unit Test Client</tags>
     <dependencies>
-      <dependency id="Guts.Client.Shared" version="1.0.0" />
+      <dependency id="Guts.Client.Shared" version="1.0.1" />
       <dependency id="NUnit3TestAdapter" version="3.10.0" />
     </dependencies>
   </metadata>
   <files>
     <file src="bin/Release/Guts.Client.Classic.UI.dll" target="lib/net461"></file>
+    <!--<file src="empty.app.config" target="content/app.config"></file>-->
     <file src="app.config.install.xdt" target="content"></file>
     <file src="app.config.uninstall.xdt" target="content"></file>
   </files>

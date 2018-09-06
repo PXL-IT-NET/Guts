@@ -19,13 +19,21 @@ namespace Guts.Api.Tests.Builders
             _model = new CreateTestRunModel
             {
                 Exercise = new ExerciseDtoBuilder().Build(),
-                Results = new List<TestResultModel>()
+                Results = new List<TestResultModel>(),
+                SourceCode = null
             };
         }
 
         public CreateTestRunModelBuilder WithExercise(ExerciseDto exerciseDto)
         {
             _model.Exercise = exerciseDto;
+
+            return this;
+        }
+
+        public CreateTestRunModelBuilder WithSourceCode()
+        {
+            _model.SourceCode = Guid.NewGuid().ToString();
 
             return this;
         }

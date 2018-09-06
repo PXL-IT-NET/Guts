@@ -40,15 +40,19 @@ namespace Guts.Api.Tests.Models.Converters
             var numberOfTests = 2;
 
             var exercise = new ExerciseBuilder().WithRandomTests(numberOfTests).Build();
-            _createModel = new CreateTestRunModelBuilder().WithRandomTestResultModelsFor(exercise.Tests).Build();
+            _createModel = new CreateTestRunModelBuilder()
+                .WithSourceCode()
+                .WithRandomTestResultModelsFor(exercise.Tests)
+                .Build();
 
             //Act
-            var testRun = _converter.From(_createModel.Results, _userId, exercise);
+            var testRun = _converter.From(_createModel.Results, _createModel.SourceCode, _userId, exercise);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
             Assert.That(testRun.ExerciseId, Is.EqualTo(exercise.Id));
+            Assert.That(testRun.SourceCode, Is.EqualTo(_createModel.SourceCode));
             Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.Now).Within(5).Seconds);
             Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
 
@@ -70,7 +74,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void From_ShouldThrowExceptionIfExerciseIsNotProvided()
         {
             //Act + Assert
-            Assert.That(() => _converter.From(_createModel.Results, _userId, null), Throws.ArgumentNullException);
+            Assert.That(() => _converter.From(_createModel.Results, null, _userId, null), Throws.ArgumentNullException);
         }
 
         [Test]
@@ -81,7 +85,7 @@ namespace Guts.Api.Tests.Models.Converters
             _createModel = new CreateTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
             //Act + Assert
-            Assert.That(() => _converter.From(_createModel.Results, _userId, exercise), Throws.ArgumentException);
+            Assert.That(() => _converter.From(_createModel.Results, null, _userId, exercise), Throws.ArgumentException);
         }
 
         [Test]
@@ -92,7 +96,7 @@ namespace Guts.Api.Tests.Models.Converters
             _createModel = new CreateTestRunModelBuilder().WithTestResultModels(null).Build();
 
             //Act
-            var testRun = _converter.From(_createModel.Results, _userId, exercise);
+            var testRun = _converter.From(_createModel.Results, null, _userId, exercise);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);

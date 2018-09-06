@@ -7,7 +7,7 @@ namespace Guts.Api.Models.Converters
 {
     public class TestRunConverter : ITestRunConverter
     {
-        public TestRun From(IEnumerable<TestResultModel> testResultModels, int userId, Exercise exercise)
+        public TestRun From(IEnumerable<TestResultModel> testResultModels, string sourceCode, int userId, Exercise exercise)
         {
             if(exercise == null) throw new ArgumentNullException(nameof(exercise));
 
@@ -15,6 +15,7 @@ namespace Guts.Api.Models.Converters
             {
                 UserId = userId,
                 ExerciseId = exercise.Id,
+                SourceCode = sourceCode,
                 CreateDateTime = DateTime.Now,
                 TestResults = new List<TestResult>()
             };

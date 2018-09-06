@@ -16,5 +16,7 @@ namespace Guts.Domain
         public DateTime CreateDateTime { get; set; }
 
         public virtual ICollection<TestResult> TestResults { get; set; }
+
+        public string SourceCode { get; set; }
     }
 }

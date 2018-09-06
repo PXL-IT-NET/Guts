@@ -63,7 +63,7 @@ namespace Guts.Api.Tests.Controllers
 
             var convertedTestRun = new TestRun();
             _testResultConverterMock
-                .Setup(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<int>(), It.IsAny<Exercise>()))
+                .Setup(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()))
                 .Returns(convertedTestRun);
 
             var savedTestRun = new TestRun();
@@ -77,14 +77,17 @@ namespace Guts.Api.Tests.Controllers
                 .Returns(savedTestRunModel);
 
             var exerciseDto = new ExerciseDtoBuilder().WithNumber(exercise.Number).Build();
-            var postedModel = new CreateTestRunModelBuilder().WithExercise(exerciseDto).Build();
+            var postedModel = new CreateTestRunModelBuilder()
+                .WithSourceCode()
+                .WithExercise(exerciseDto)
+                .Build();
 
             //Act
             var createdResult = _controller.PostTestRun(postedModel).Result as CreatedAtActionResult;
 
             //Assert
             Assert.That(createdResult, Is.Not.Null);
-            _testResultConverterMock.Verify(converter => converter.From(postedModel.Results, _userId, exercise), Times.Once);
+            _testResultConverterMock.Verify(converter => converter.From(postedModel.Results, postedModel.SourceCode, _userId, exercise), Times.Once);
             _exerciseServiceMock.Verify(service => service.GetOrCreateExerciseAsync(postedModel.Exercise), Times.Once);
             _exerciseServiceMock.Verify(
                 service => service.LoadOrCreateTestsForExerciseAsync(exercise,
@@ -114,7 +117,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
-            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
+            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
         }
 

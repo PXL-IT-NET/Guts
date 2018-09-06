@@ -7,6 +7,7 @@
 This package is used by the packages Guts.Client (classic .NET) and Guts.Client.Core (.NET core). You probably want to install one of those two packages. This package will then automatically be included as a dependency.</Description>
     <Copyright>Copyright ©  2018</Copyright>
     <PackageTags>Guts Unit Test Client</PackageTags>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
