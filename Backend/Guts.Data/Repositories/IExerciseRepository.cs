@@ -8,5 +8,6 @@ namespace Guts.Data.Repositories
     {
         Task<Exercise> GetSingleAsync(int chapterId, int number);
         Task<Exercise> GetSingleWithTestsAndCourseAsync(int exerciseId);
+        Task<IList<User>> GetExerciseUsersAsync(int exerciseId);
     }
 }

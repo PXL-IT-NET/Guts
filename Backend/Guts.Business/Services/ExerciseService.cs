@@ -91,8 +91,11 @@ namespace Guts.Business.Services
             var testRuns = await _testRunRepository.GetUserTestRunsForExercise(exerciseId, userId);
             if (testRuns.Any())
             {
-                testRunInfo.FirstRunDateTime = testRuns.First().CreateDateTime;
-                testRunInfo.LastRunDateTime = testRuns.Last().CreateDateTime;
+                var firstTestRun = testRuns.First();
+                var lastTestRun = testRuns.Last();
+                testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
+                testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
+                testRunInfo.SourceCode = lastTestRun.SourceCode;
                 testRunInfo.NumberOfRuns = testRuns.Count;
             }
 

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Guts.Business;
 
 namespace Guts.Api.Models
 {
@@ -14,5 +13,6 @@ namespace Guts.Api.Models
         public string FirstRun { get; set; }
         public string LastRun { get; set; }
         public int NumberOfRuns { get; set; }
+        public string SourceCode { get; set; }
     }
 }

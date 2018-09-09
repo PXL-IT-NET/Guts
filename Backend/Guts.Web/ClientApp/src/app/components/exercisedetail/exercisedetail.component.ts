@@ -20,14 +20,17 @@ export class ExerciseDetailComponent {
       testResults: [],
       firstRun: '',
       lastRun: '',
-      numberOfRuns: 0
+      numberOfRuns: 0,
+      sourceCode: ''
     };
   }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
       let exerciseId = +params['exerciseId']; // (+) converts 'exerciseId' to a number
-      this.exerciseService.getExerciseDetail(exerciseId).subscribe((exerciseDetail: IExerciseDetailModel) => {
+      let userId = 0;
+      if (params['userId']) userId = +params['userId'];
+      this.exerciseService.getExerciseDetail(exerciseId, userId).subscribe((exerciseDetail: IExerciseDetailModel) => {
         this.model = exerciseDetail;
       });
     });

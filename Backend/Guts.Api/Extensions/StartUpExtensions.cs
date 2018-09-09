@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using Guts.Api.Models.Converters;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
@@ -17,9 +14,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -59,6 +53,7 @@ namespace Guts.Api.Extensions
             container.Register<IExerciseConverter, ExerciseConverter>(Lifestyle.Singleton);
             container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
             container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
+            container.Register<IUserConverter, UserConverter>(Lifestyle.Singleton);
 
             container.Register<IExerciseService, ExerciseService>(Lifestyle.Scoped);
             container.Register<IChapterService, ChapterService>(Lifestyle.Scoped);

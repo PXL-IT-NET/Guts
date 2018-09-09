@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
@@ -24,6 +25,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IExerciseService> _exerciseServiceMock;
         private Mock<IExerciseRepository> _exerciseRepositoryMock;
         private Mock<IExerciseConverter> _exerciseConverterMock;
+        private Mock<IUserConverter> _userConverterMock;
 
         [SetUp]
         public void Setup()
@@ -32,10 +34,15 @@ namespace Guts.Api.Tests.Controllers
             _exerciseServiceMock = new Mock<IExerciseService>();
             _exerciseRepositoryMock = new Mock<IExerciseRepository>();
             _exerciseConverterMock = new Mock<IExerciseConverter>();
-            
+            _userConverterMock = new Mock<IUserConverter>();
+
             _controller = new ExerciseController(_exerciseServiceMock.Object, 
                 _exerciseRepositoryMock.Object, 
-                _exerciseConverterMock.Object);
+                _exerciseConverterMock.Object, 
+                _userConverterMock.Object);
+
+            _exerciseRepositoryMock.Setup(repo => repo.GetExerciseUsersAsync(It.IsAny<int>()))
+                .ReturnsAsync(new List<User>());
         }
 
         [Test]
@@ -119,6 +126,35 @@ namespace Guts.Api.Tests.Controllers
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
+        }
+
+        [Test]
+        public void GetExerciseStudentsShouldReturnUsersWithStudentRoleThatHaveTestResultsForTheExercise()
+        {
+            //Arrange
+            var exerciseId = _random.NextPositive();
+            var userId = _random.NextPositive();
+            var usersForExercise = new List<User>
+            {
+                new User()
+            };
+            var convertedUser = new UserModel();
+
+            _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Lector).Build();
+            _exerciseRepositoryMock.Setup(repo => repo.GetExerciseUsersAsync(It.IsAny<int>()))
+                .ReturnsAsync(usersForExercise);
+            _userConverterMock.Setup(converter => converter.FromUser(It.IsAny<User>())).Returns(convertedUser);
+
+
+            //Act
+            var okObjectResult = _controller.GetExerciseStudents(exerciseId).Result as OkObjectResult;
+
+            //Assert
+            Assert.That(okObjectResult, Is.Not.Null);
+            Assert.That(okObjectResult.Value, Is.EquivalentTo(new List<UserModel>{convertedUser}));
+            
+            _exerciseRepositoryMock.Verify(repo => repo.GetExerciseUsersAsync(exerciseId), Times.Once);
+            _userConverterMock.Verify(converter => converter.FromUser(It.IsIn<User>(usersForExercise)), Times.Exactly(usersForExercise.Count));
         }
     }
 }

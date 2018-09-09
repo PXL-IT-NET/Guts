@@ -35,7 +35,8 @@ namespace Guts.Api.Models.Converters
                 TestResults = new List<TestResultModel>(),
                 FirstRun = testRunInfo.FirstRunDateTime?.ToString("dd/MM/yyyy HH:mm"),
                 LastRun = testRunInfo.LastRunDateTime?.ToString("dd/MM/yyyy HH:mm"),
-                NumberOfRuns = testRunInfo.NumberOfRuns
+                NumberOfRuns = testRunInfo.NumberOfRuns,
+                SourceCode = testRunInfo.SourceCode
             };
 
             foreach (var test in exercise.Tests)

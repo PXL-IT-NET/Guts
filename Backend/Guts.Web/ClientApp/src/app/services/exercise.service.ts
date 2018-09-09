@@ -4,20 +4,29 @@ import { Observable } from 'rxjs';
 import 'rxjs/add/operator/mergeMap';
 import { ClientSettingsService } from './client.settings.service';
 import { ClientSettings } from './client.settings';
-import { IExerciseDetailModel } from "../viewmodels/exercisedetail.model"
+import { IExerciseDetailModel } from "../viewmodels/exercisedetail.model";
+import { IUserModel } from "../viewmodels/user.model";
 
 @Injectable()
 export class ExerciseService {
-  private apiBaseUrl: string;
 
   constructor(private http: HttpClient,
     private settingsService: ClientSettingsService) {
-    this.apiBaseUrl = '';
   }
 
-  public getExerciseDetail(exerciseId: number): Observable<IExerciseDetailModel> {
+  public getExerciseDetail(exerciseId: number, userId?: number): Observable<IExerciseDetailModel> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.get<IExerciseDetailModel>(settings.apiBaseUrl + 'api/exercises/' + exerciseId);
+      let url = settings.apiBaseUrl + 'api/exercises/' + exerciseId;
+      if (userId && userId > 0) {
+        url += '/foruser/' + userId;
+      }
+      return this.http.get<IExerciseDetailModel>(url);
+    });
+  }
+
+  public getExerciseStudents(exerciseId: number): Observable<IUserModel[]> {
+    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
+      return this.http.get<IUserModel[]>(settings.apiBaseUrl + 'api/exercises/' + exerciseId + '/students');
     });
   }
 }

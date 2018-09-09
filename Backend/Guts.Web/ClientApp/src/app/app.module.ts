@@ -16,6 +16,7 @@ import { ResetPasswordComponent } from './components/resetpassword/resetpassword
 import { ChapterContentsComponent } from './components/chaptercontents/chaptercontents.component';
 import { CourseContentsComponent } from './components/coursecontents/coursecontents.component';
 import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
+import { ExerciseStudentsComponent } from './components/exercisestudents/exercisestudents.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
@@ -41,7 +42,8 @@ import 'rxjs/Rx';
     ResetPasswordComponent,
     ChapterContentsComponent,
     CourseContentsComponent,
-    ExerciseDetailComponent
+    ExerciseDetailComponent,
+    ExerciseStudentsComponent
   ],
   imports: [
     ChartsModule,
@@ -59,6 +61,8 @@ import 'rxjs/Rx';
       { path: 'courses/:courseId', component: CourseContentsComponent, canActivate: [AuthGuard] },
       { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterContentsComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
+      { path: 'exercises/:exerciseId/ofuser/:userId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
+      { path: 'exercises/:exerciseId/students', component: ExerciseStudentsComponent, canActivate: [AuthGuard] },
       { path: '**', redirectTo: 'home' }
     ]),
     LocalStorageModule.withConfig({

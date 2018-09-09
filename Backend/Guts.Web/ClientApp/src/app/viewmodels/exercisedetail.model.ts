@@ -10,4 +10,5 @@ export interface IExerciseDetailModel {
   firstRun: string;
   lastRun: string;
   numberOfRuns: number;
+  sourceCode: string;
 }
