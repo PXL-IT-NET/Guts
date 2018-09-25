@@ -77,7 +77,7 @@ namespace Guts.Client.Classic
             catch (Exception ex)
             {
                 TestContext.Error.WriteLine("Something went wrong while sending the test results.");
-                TestContext.Error.WriteLine($"Something went wrong while sending the test results. Exception: {ex}");
+                TestContext.Error.WriteLine($"Exception: {ex}");
             }
         }
     }

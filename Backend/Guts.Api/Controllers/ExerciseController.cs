@@ -22,17 +22,14 @@ namespace Guts.Api.Controllers
         private readonly IExerciseService _exerciseService;
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IExerciseConverter _exerciseConverter;
-        private readonly IUserConverter _userConverter;
 
         public ExerciseController(IExerciseService exerciseService, 
             IExerciseRepository exerciseRepository, 
-            IExerciseConverter exerciseConverter,
-            IUserConverter userConverter)
+            IExerciseConverter exerciseConverter)
         {
             _exerciseService = exerciseService;
             _exerciseRepository = exerciseRepository;
             _exerciseConverter = exerciseConverter;
-            _userConverter = userConverter;
         }
 
         [HttpGet("{exerciseId}")]
@@ -65,11 +62,11 @@ namespace Guts.Api.Controllers
             return Ok(model);
         }
 
-        [HttpGet("{exerciseId}/students"), Authorize(Roles = Role.Constants.Lector)]
-        public async Task<IActionResult> GetExerciseStudents(int exerciseId)
-        {
-            var users = await _exerciseRepository.GetExerciseUsersAsync(exerciseId);
-            return Ok(users.Select(user => _userConverter.FromUser(user)));
-        }
+        //[HttpGet("{exerciseId}/students"), Authorize(Roles = Role.Constants.Lector)]
+        //public async Task<IActionResult> GetExerciseStudents(int exerciseId)
+        //{
+        //    var users = await _exerciseRepository.GetExerciseUsersAsync(exerciseId);
+        //    return Ok(users.Select(user => _userConverter.FromUser(user)));
+        //}
     }
 }

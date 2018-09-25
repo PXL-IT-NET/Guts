@@ -53,6 +53,15 @@ namespace Guts.Business.Services
             return chapter;
         }
 
+        public async Task<Chapter> LoadChapterAsync(int courseId, int chapterNumber)
+        {
+            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+
+            var chapter = await _chapterRepository.LoadWithExercisesAsync(courseId, chapterNumber, currentPeriod.Id);
+
+            return chapter;
+        }
+
         public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, int chapterNumber)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();

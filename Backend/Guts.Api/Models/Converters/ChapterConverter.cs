@@ -8,7 +8,14 @@ namespace Guts.Api.Models.Converters
 {
     public class ChapterConverter : IChapterConverter
     {
-        public ChapterContentsModel ToChapterContentsModel(Chapter chapter, 
+        private readonly IUserConverter _userConverter;
+
+        public ChapterConverter(IUserConverter userConverter)
+        {
+            _userConverter = userConverter;
+        }
+
+        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, 
             IList<ExerciseResultDto> userExerciseResults,
             IList<ExerciseResultDto> averageExerciseResults)
         {
@@ -22,7 +29,7 @@ namespace Guts.Api.Models.Converters
                 throw new ArgumentException("All exercises of the chapter should have their tests loaded", nameof(chapter));
             }
 
-            var model = new ChapterContentsModel
+            var model = new ChapterSummaryModel
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
@@ -66,6 +73,21 @@ namespace Guts.Api.Models.Converters
             {
                 Id = chapter.Id,
                 Number = chapter.Number
+            };
+        }
+
+        public ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers)
+        {
+            return new ChapterDetailModel
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                Exercises = chapter.Exercises.Select(exercise => new ExerciseModel
+                {
+                    ExerciseId = exercise.Id,
+                    Number = exercise.Number
+                }).ToList(),
+                Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };
         }
     }

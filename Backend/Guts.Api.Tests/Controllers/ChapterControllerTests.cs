@@ -9,8 +9,11 @@ using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Data;
+using Guts.Data.Repositories;
 using Guts.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using ControllerBase = Guts.Api.Controllers.ControllerBase;
@@ -25,6 +28,8 @@ namespace Guts.Api.Tests.Controllers
         private ChapterController _controller;
         private Random _random;
         private int _userId;
+        private Mock<UserManager<User>> _userManagerMock;
+        private Mock<IChapterRepository> _chapterRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -32,8 +37,30 @@ namespace Guts.Api.Tests.Controllers
             _random = new Random();
             _userId = _random.NextPositive();
             _chapterServiceMock = new Mock<IChapterService>();
+            _chapterRepositoryMock = new Mock<IChapterRepository>();
             _chapterConverterMock = new Mock<IChapterConverter>();
-            _controller = new ChapterController(_chapterServiceMock.Object, _chapterConverterMock.Object)
+
+            var userStoreMock = new Mock<IUserStore<User>>();
+            var passwordHasherMock = new Mock<IPasswordHasher<User>>();
+            var lookupNormalizerMock = new Mock<ILookupNormalizer>();
+            var errorsMock = new Mock<IdentityErrorDescriber>();
+            var loggerMock = new Mock<ILogger<UserManager<User>>>();
+
+            _userManagerMock = new Mock<UserManager<User>>(
+                userStoreMock.Object,
+                null,
+                passwordHasherMock.Object,
+                null,
+                null,
+                lookupNormalizerMock.Object,
+                errorsMock.Object,
+                null,
+                loggerMock.Object);
+
+            _controller = new ChapterController(_chapterServiceMock.Object, 
+                _chapterRepositoryMock.Object, 
+                _chapterConverterMock.Object, 
+                _userManagerMock.Object)
             {
                 ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).Build()
             };
@@ -47,11 +74,11 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetChapterContentsShouldReturnContentsIfParamatersAreValid()
+        public void GetChapterSummaryShouldReturnContentsIfParamatersAreValid()
         {
             //Arrange
             var existingChapter = new ChapterBuilder().WithId().Build();
-            var chapterContents = new ChapterContentsModel();
+            var chapterContents = new ChapterSummaryModel();
             var userExerciseResults = new List<ExerciseResultDto>();
             var averageExerciseResults = new List<ExerciseResultDto>();
             _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>()))
@@ -60,13 +87,14 @@ namespace Guts.Api.Tests.Controllers
                 .ReturnsAsync(userExerciseResults);
             _chapterServiceMock.Setup(service => service.GetAverageResultsAsync(It.IsAny<int>()))
                 .ReturnsAsync(averageExerciseResults);
-            _chapterConverterMock.Setup(converter => converter.ToChapterContentsModel(It.IsAny<Chapter>(), 
+            _chapterConverterMock.Setup(converter => converter.ToChapterSummaryModel(It.IsAny<Chapter>(), 
                 It.IsAny<IList<ExerciseResultDto>>(), 
                 It.IsAny<IList<ExerciseResultDto>>()))
                 .Returns(chapterContents);
 
             //Act
-            var actionResult = _controller.GetChapterContents(existingChapter.CourseId, existingChapter.Number).Result as OkObjectResult;
+            //TODO: arrange proper dummy user
+            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Number, 1).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
@@ -75,7 +103,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter.Id, _userId), Times.Once);
             _chapterServiceMock.Verify(service => service.GetAverageResultsAsync(existingChapter.Id), Times.Once);
 
-            _chapterConverterMock.Verify(converter => converter.ToChapterContentsModel(existingChapter, userExerciseResults, averageExerciseResults), Times.Once);
+            _chapterConverterMock.Verify(converter => converter.ToChapterSummaryModel(existingChapter, userExerciseResults, averageExerciseResults), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(chapterContents));
         }
 
@@ -84,10 +112,10 @@ namespace Guts.Api.Tests.Controllers
         [TestCase(1, 0)]
         [TestCase(-1, 1)]
         [TestCase(1, -1)]
-        public void GetChapterContentsShouldReturnBadRequestOnInvalidInput(int courseId, int chapterNumber)
+        public void GetChapterSummaryShouldReturnBadRequestOnInvalidInput(int courseId, int chapterNumber)
         {
             //Act
-            var actionResult = _controller.GetChapterContents(courseId, chapterNumber).Result as BadRequestResult;
+            var actionResult = _controller.GetChapterSummary(courseId, chapterNumber, 0).Result as BadRequestResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
@@ -95,7 +123,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetChapterContentsShouldReturnNotFoundWhenServiceCannotFindChapter()
+        public void GetChapterSummaryShouldReturnNotFoundWhenServiceCannotFindChapter()
         {
             //Arrange
             _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>()))
@@ -105,7 +133,7 @@ namespace Guts.Api.Tests.Controllers
             var chapter = _random.NextPositive();
 
             //Act
-            var actionResult = _controller.GetChapterContents(courseId, chapter).Result as NotFoundResult;
+            var actionResult = _controller.GetChapterSummary(courseId, chapter, 1).Result as NotFoundResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);

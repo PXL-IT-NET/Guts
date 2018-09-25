@@ -13,7 +13,10 @@ import { RegisterComponent } from './components/register/register.component';
 import { ConfirmEmailComponent } from './components/confirmemail/confirmemail.component';
 import { ForgotPasswordComponent } from './components/forgotpassword/forgotpassword.component';
 import { ResetPasswordComponent } from './components/resetpassword/resetpassword.component';
-import { ChapterContentsComponent } from './components/chaptercontents/chaptercontents.component';
+
+import { CourseComponent } from './components/course/course.component';
+import { ChapterComponent } from "./components/chapter/chapter.component";
+import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
 import { CourseContentsComponent } from './components/coursecontents/coursecontents.component';
 import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
 import { ExerciseStudentsComponent } from './components/exercisestudents/exercisestudents.component';
@@ -40,7 +43,10 @@ import 'rxjs/Rx';
     ConfirmEmailComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
-    ChapterContentsComponent,
+
+    CourseComponent,
+    ChapterComponent,
+    ChapterSummaryComponent,
     CourseContentsComponent,
     ExerciseDetailComponent,
     ExerciseStudentsComponent
@@ -58,8 +64,20 @@ import 'rxjs/Rx';
       { path: 'forgotpassword', component: ForgotPasswordComponent },
       { path: 'resetpassword', component: ResetPasswordComponent },
       { path: 'home', component: HomeComponent },
-      { path: 'courses/:courseId', component: CourseContentsComponent, canActivate: [AuthGuard] },
-      { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterContentsComponent, canActivate: [AuthGuard] },
+      {
+        path: 'courses/:courseId', component: CourseComponent, canActivate: [AuthGuard],
+        children: [
+          {
+            path: 'chapters/:chapterNumber', component: ChapterComponent,
+            children: [
+              { path: 'users/:userId', redirectTo: 'users/:userId/summary' },
+              { path: 'users/:userId/summary', component: ChapterSummaryComponent },
+              { path: 'users/:userId/exercises/:exerciseId', component: ExerciseDetailComponent }
+            ]
+          }
+        ]
+      },
+      { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterSummaryComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId/ofuser/:userId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId/students', component: ExerciseStudentsComponent, canActivate: [AuthGuard] },

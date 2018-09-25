@@ -52,7 +52,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterContentsModel_ShouldThrowArgumentExceptionWhenCourseIsMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenCourseIsMissing()
         {
             //Arrange
             var chapters = new List<Chapter>();
@@ -62,7 +62,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterContentsModel_ShouldThrowArgumentExceptionWhenChaptersAreMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenChaptersAreMissing()
         {
             //Arrange
             var course = new CourseBuilder().WithId().Build();

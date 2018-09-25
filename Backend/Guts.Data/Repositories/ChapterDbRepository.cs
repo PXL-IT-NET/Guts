@@ -22,19 +22,22 @@ namespace Guts.Data.Repositories
             return chapter;
         }
 
+        public async Task<Chapter> LoadWithExercisesAsync(int courseId, int number, int periodId)
+        {
+            var query = GetChapterQuery(courseId, number, periodId);
+
+            query = query.Include(ch => ch.Exercises);
+
+            return await ExecuteChapterQuery(query);
+        }
+
         public async Task<Chapter> LoadWithExercisesAndTestsAsync(int courseId, int number, int periodId)
         {
-            var query = _context.Chapters.Where(ch =>
-                ch.CourseId == courseId && ch.Number == number && ch.PeriodId == periodId);
+            var query = GetChapterQuery(courseId, number, periodId);
 
             query = query.Include(ch => ch.Exercises).ThenInclude(ex => ex.Tests);
 
-            var chapter = await query.FirstOrDefaultAsync();
-            if (chapter == null)
-            {
-                throw new DataNotFoundException();
-            }
-            return chapter;
+            return await ExecuteChapterQuery(query);
         }
 
         public async Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId)
@@ -42,6 +45,34 @@ namespace Guts.Data.Repositories
             var query = _context.Chapters.Where(ch => ch.CourseId == courseId && ch.PeriodId == periodId);
 
             return await query.ToListAsync();
+        }
+
+        public async Task<IList<User>> GetUsersOfChapterAsync(int chapterId)
+        {
+            var query = from testRun in _context.TestResults
+                where testRun.Test.Exercise.ChapterId == chapterId
+                group testRun by testRun.User
+                into userGroups
+                select userGroups.Key;
+            return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
+        }
+
+        private async Task<Chapter> ExecuteChapterQuery(IQueryable<Chapter> query)
+        {
+            var chapter = await query.FirstOrDefaultAsync();
+            if (chapter == null)
+            {
+                throw new DataNotFoundException();
+            }
+
+            return chapter;
+        }
+
+        private IQueryable<Chapter> GetChapterQuery(int courseId, int number, int periodId)
+        {
+            var query = _context.Chapters.Where(ch =>
+                ch.CourseId == courseId && ch.Number == number && ch.PeriodId == periodId);
+            return query;
         }
     }
 }

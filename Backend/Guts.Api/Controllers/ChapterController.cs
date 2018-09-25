@@ -1,11 +1,16 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Data;
+using Guts.Data.Repositories;
+using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
@@ -16,12 +21,19 @@ namespace Guts.Api.Controllers
     public class ChapterController : ControllerBase
     {
         private readonly IChapterService _chapterService;
+        private readonly IChapterRepository _chapterRepository;
         private readonly IChapterConverter _chapterConverter;
+        private readonly UserManager<User> _userManager;
 
-        public ChapterController(IChapterService chapterService, IChapterConverter chapterConverter)
+        public ChapterController(IChapterService chapterService, 
+            IChapterRepository chapterRepository,
+            IChapterConverter chapterConverter, 
+            UserManager<User> userManager)
         {
             _chapterService = chapterService;
+            _chapterRepository = chapterRepository;
             _chapterConverter = chapterConverter;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -31,10 +43,10 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterNumber">Sequence number of the chapter</param>
         [HttpGet("{chapterNumber}")]
-        [ProducesResponseType(typeof(ChapterContentsModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ChapterDetailModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterContents(int courseId, int chapterNumber)
+        public async Task<IActionResult> GetChapterDetails(int courseId, int chapterNumber)
         {
             if (courseId < 1 || chapterNumber < 1)
             {
@@ -43,10 +55,63 @@ namespace Guts.Api.Controllers
 
             try
             {
+                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterNumber);
+
+                List<User> chapterUsers = new List<User>();
+                if (IsLector())
+                {
+                    chapterUsers.AddRange(await _chapterRepository.GetUsersOfChapterAsync(chapter.Id));
+                }
+
+                if (!chapterUsers.Any()) //add the own user
+                {
+                    chapterUsers.Add(await _userManager.GetUserAsync(User));
+                }
+
+
+                var model = _chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
+                return Ok(model);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        /// <summary>
+        /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
+        /// The overview contains testresults for the authorized user and the average results of all users.
+        /// </summary>
+        /// <param name="courseId">Identifier of the course in the database.</param>
+        /// <param name="chapterNumber">Sequence number of the chapter.</param>
+        /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
+        [HttpGet("{chapterNumber}/users/{userId}/summary")]
+        [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> GetChapterSummary(int courseId, int chapterNumber, int userId)
+        {
+            if (courseId < 1 || chapterNumber < 1 || userId < 1)
+            {
+                return BadRequest();
+            }
+
+            if (IsStudent())
+            {
+                //students can only see their own chapter summary
+                if (!IsOwnUserId(userId)) return Forbid();
+            }
+            else if (!IsLector())
+            {
+                return Forbid();
+            }
+
+            try
+            {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, GetUserId());
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId);
                 var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
-                var model = _chapterConverter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
+                var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)

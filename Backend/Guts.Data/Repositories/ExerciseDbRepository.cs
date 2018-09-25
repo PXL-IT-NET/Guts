@@ -35,14 +35,14 @@ namespace Guts.Data.Repositories
             return exercise;
         }
 
-        public async Task<IList<User>> GetExerciseUsersAsync(int exerciseId)
-        {
-            var query = from testRun in _context.TestResults
-                where testRun.Test.ExerciseId == exerciseId
-                group testRun by testRun.User
-                into userGroups
-                select userGroups.Key;
-            return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
-        }
+        //public async Task<IList<User>> GetExerciseUsersAsync(int exerciseId)
+        //{
+        //    var query = from testRun in _context.TestResults
+        //        where testRun.Test.ExerciseId == exerciseId
+        //        group testRun by testRun.User
+        //        into userGroups
+        //        select userGroups.Key;
+        //    return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
+        //}
     }
 }

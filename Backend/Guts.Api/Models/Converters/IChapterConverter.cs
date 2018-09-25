@@ -6,9 +6,10 @@ namespace Guts.Api.Models.Converters
 {
     public interface IChapterConverter
     {
-        ChapterContentsModel ToChapterContentsModel(Chapter chapter, 
+        ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, 
             IList<ExerciseResultDto> userExerciseResults,
             IList<ExerciseResultDto> averageExerciseResults);
         ChapterModel ToChapterModel(Chapter chapter);
+        ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers);
     }
 }

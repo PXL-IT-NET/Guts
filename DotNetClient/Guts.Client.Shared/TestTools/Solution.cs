@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using NUnit.Framework;
+using System;
+using System.IO;
 using System.Reflection;
-using NUnit.Framework;
+using System.Security.Cryptography;
 
 namespace Guts.Client.Shared.TestTools
 {
@@ -40,6 +42,30 @@ namespace Guts.Client.Shared.TestTools
         {
             var sourceCodePath = System.IO.Path.Combine(Path, relativeFilePath);
             return File.ReadAllText(sourceCodePath);
+        }
+
+        /// <summary>
+        /// Calculates a MD5 hash from the (trimmed) content of a file in the solution
+        /// </summary>
+        /// <param name="relativeFilePath">
+        /// The path to the file relative to the root folder of the solution.
+        /// <example>@"ProjectName\MainWindow.xaml.cs"</example>
+        /// </param>
+        /// <returns>The hash of the file content</returns>
+        public string GetFileHash(string relativeFilePath)
+        {
+            var content = GetFileContent(relativeFilePath);
+            if (string.IsNullOrEmpty(content))
+            {
+                return string.Empty;
+            }
+            content = content.Trim('\r', '\n', ' ');
+
+            byte[] fileBytes = new byte[content.Length * sizeof(char)];
+            Buffer.BlockCopy(content.ToCharArray(), 0, fileBytes, 0, fileBytes.Length);
+
+            var hashBytes = MD5.Create().ComputeHash(fileBytes);
+            return BitConverter.ToString(hashBytes);
         }
     }
 }

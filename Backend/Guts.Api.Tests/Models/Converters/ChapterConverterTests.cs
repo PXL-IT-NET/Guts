@@ -5,6 +5,7 @@ using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Tests.Builders;
 using Guts.Domain;
+using Moq;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters
@@ -17,14 +18,15 @@ namespace Guts.Api.Tests.Models.Converters
         [SetUp]
         public void Setup()
         {
-            _converter = new ChapterConverter();
+            var userConverterMock = new Mock<IUserConverter>();
+            _converter = new ChapterConverter(userConverterMock.Object);
         }
 
         [Test]
         [TestCase(5, 5, 0, 10)]
         [TestCase(5, 0, 5, 1)]
         [TestCase(5, 1, 1, 10)]
-        public void ToChapterContentsModel_ShouldCorrectlyConvertValidChapter(int numberOfTests,
+        public void ToChapterSummaryModel_ShouldCorrectlyConvertValidChapter(int numberOfTests,
             int numberOfPassingTests,
             int numberOfFailingTests,
             int numberOfUsers)
@@ -35,7 +37,7 @@ namespace Guts.Api.Tests.Models.Converters
             var averageExerciseResults = GenerateExerciseResults(chapter, numberOfTests, 0, numberOfUsers);
 
             //Act
-            var model = _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults);
+            var model = _converter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults);
 
             //Assert
             Assert.That(model, Is.Not.Null);
@@ -65,7 +67,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterContentsModel_ShouldThrowArgumentExceptionWhenExercisesAreMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenExercisesAreMissing()
         {
             //Arrange
             var chapter = new ChapterBuilder().Build();
@@ -74,11 +76,11 @@ namespace Guts.Api.Tests.Models.Converters
             var averageExerciseResults = new List<ExerciseResultDto>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
-        public void ToChapterContentsModel_ShouldThrowArgumentExceptionWhenTestsOfExercisesAreMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenTestsOfExercisesAreMissing()
         {
             //Arrange
             var chapter = new ChapterBuilder().WithExercises(1, 1).Build();
@@ -87,7 +89,7 @@ namespace Guts.Api.Tests.Models.Converters
             var averageExerciseResults = new List<ExerciseResultDto>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterContentsModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]

@@ -2,7 +2,7 @@
 
 namespace Guts.Api.Models
 {
-    public class ChapterContentsModel
+    public class ChapterSummaryModel
     {
         public int Id { get; set; }
         public int Number { get; set; }
