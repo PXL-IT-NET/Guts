@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,14 +13,15 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId)
+        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId, DateTime? date)
         {
 
             var lastUserTestResultsQuery = from exercise in _context.Exercises
                           from test in exercise.Tests
                           from testResult in test.Results
                           where (userId == null || testResult.UserId == userId.Value)
-                                && (exercise.ChapterId == chapterId)
+                                && (exercise.ChapterId == chapterId) 
+                                && (date == null || testResult.CreateDateTime <= date)
                           group new {testResult, test} by new {testResult.UserId, test.Id} into userTestRunGroup
                           select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();
 
