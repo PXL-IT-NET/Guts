@@ -100,13 +100,6 @@ namespace Guts.Api
                     };
                 });
 
-            services.AddLogging(builder =>
-            {
-                builder.AddDebug();
-                builder.AddConfiguration(Configuration.GetSection("Logging"));
-                builder.AddEventSourceLogger();
-            });
-
             services.AddMvc(options =>
             {
                 if (!_currentHostingEnvironment.IsProduction())

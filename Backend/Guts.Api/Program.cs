@@ -1,11 +1,11 @@
-﻿using System;
-using Guts.Data;
+﻿using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Guts.Api
 {
@@ -34,11 +34,22 @@ namespace Guts.Api
                 {
                     logger.LogError(ex, "An error occurred while seeding the database.");
                 }
-            };
+            }
+
+
 
             host.Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) => WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            return WebHost.CreateDefaultBuilder(args).ConfigureLogging((hostingContext, logging) =>
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                logging.AddEventSourceLogger();
+                logging.AddConsole();
+                logging.AddDebug();
+            }).UseStartup<Startup>();
+        }
     }
 }
