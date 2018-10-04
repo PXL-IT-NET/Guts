@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Converters;
@@ -71,16 +72,16 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<IList<ExerciseResultDto>> GetResultsForUserAsync(int chapterId, int userId)
+        public async Task<IList<ExerciseResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? date)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId);
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, date);
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults);
         }
 
         public async Task<IList<ExerciseResultDto>> GetAverageResultsAsync(int chapterId)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, null);
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, null, null);
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults);
         }

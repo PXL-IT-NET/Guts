@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Text;
-using Guts.Api.Extensions;
+﻿using Guts.Api.Extensions;
 using Guts.Api.Hubs;
 using Guts.Data;
 using Guts.Domain;
@@ -22,6 +19,10 @@ using NSwag;
 using NSwag.AspNetCore;
 using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
+using System;
+using System.Reflection;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace Guts.Api
 {
@@ -101,12 +102,12 @@ namespace Guts.Api
                 });
 
             services.AddMvc(options =>
-            {
-                if (!_currentHostingEnvironment.IsProduction())
                 {
-                    options.SslPort = 44318;
-                }
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                    if (!_currentHostingEnvironment.IsProduction())
+                    {
+                        options.SslPort = 44318;
+                    }
+                }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddSignalR();
         }

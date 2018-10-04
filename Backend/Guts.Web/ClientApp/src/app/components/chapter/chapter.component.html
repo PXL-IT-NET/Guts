@@ -13,7 +13,7 @@
           </select>
         </div>
 
-        <label for="exercises" class="col-sm-2 col-lg-1 col-form-label">User</label>
+        <label for="users" class="col-sm-2 col-lg-1 col-form-label">User</label>
         <div class="col-sm-10 col-lg-2">
           <select name="users" class="form-control" [(ngModel)]="selectedUserId" (ngModelChange)="onSelectionChanged()">
             <option *ngFor="let user of model.users" [ngValue]="user.id">
@@ -21,6 +21,11 @@
             </option>
           </select>
         </div>
+
+        <!--<label for="date" class="col-sm-2 col-lg-1 col-form-label">Date (time)</label>
+        <div class="col-sm-10 col-lg-2">
+          <input type="datetime-local" id="date" name="selectedDate" class="form-control" [(ngModel)]="selectedDate" (ngModelChange)="selectedDate = $event" />
+        </div>-->
 
       </div>
     </form>

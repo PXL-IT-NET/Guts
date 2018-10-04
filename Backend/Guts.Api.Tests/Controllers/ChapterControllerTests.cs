@@ -83,7 +83,7 @@ namespace Guts.Api.Tests.Controllers
             var averageExerciseResults = new List<ExerciseResultDto>();
             _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(existingChapter);
-            _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()))
+            _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(userExerciseResults);
             _chapterServiceMock.Setup(service => service.GetAverageResultsAsync(It.IsAny<int>()))
                 .ReturnsAsync(averageExerciseResults);
@@ -94,13 +94,13 @@ namespace Guts.Api.Tests.Controllers
 
             //Act
             //TODO: arrange proper dummy user
-            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Number, 1).Result as OkObjectResult;
+            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Number, 1, null).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Number), Times.Once);
 
-            _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter.Id, _userId), Times.Once);
+            _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter.Id, _userId, null), Times.Once);
             _chapterServiceMock.Verify(service => service.GetAverageResultsAsync(existingChapter.Id), Times.Once);
 
             _chapterConverterMock.Verify(converter => converter.ToChapterSummaryModel(existingChapter, userExerciseResults, averageExerciseResults), Times.Once);
@@ -115,7 +115,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetChapterSummaryShouldReturnBadRequestOnInvalidInput(int courseId, int chapterNumber)
         {
             //Act
-            var actionResult = _controller.GetChapterSummary(courseId, chapterNumber, 0).Result as BadRequestResult;
+            var actionResult = _controller.GetChapterSummary(courseId, chapterNumber, 0, null).Result as BadRequestResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
@@ -133,7 +133,7 @@ namespace Guts.Api.Tests.Controllers
             var chapter = _random.NextPositive();
 
             //Act
-            var actionResult = _controller.GetChapterSummary(courseId, chapter, 1).Result as NotFoundResult;
+            var actionResult = _controller.GetChapterSummary(courseId, chapter, 1, null).Result as NotFoundResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);

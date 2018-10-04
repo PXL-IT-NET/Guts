@@ -51,6 +51,5 @@ export class ChapterComponent {
     } else {
       this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
     }
-   
   }
 }

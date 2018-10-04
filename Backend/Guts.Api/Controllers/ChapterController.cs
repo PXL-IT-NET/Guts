@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -85,11 +86,12 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterNumber">Sequence number of the chapter.</param>
         /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
+        /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
         [HttpGet("{chapterNumber}/users/{userId}/summary")]
         [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterSummary(int courseId, int chapterNumber, int userId)
+        public async Task<IActionResult> GetChapterSummary(int courseId, int chapterNumber, int userId, [FromQuery] DateTime? date)
         {
             if (courseId < 1 || chapterNumber < 1 || userId < 1)
             {
@@ -109,7 +111,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId);
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId, date);
                 var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
                 var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults);
                 return Ok(model);
