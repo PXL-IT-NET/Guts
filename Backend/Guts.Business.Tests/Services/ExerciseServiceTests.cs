@@ -174,7 +174,7 @@ namespace Guts.Business.Tests.Services
             var userId = _random.NextPositive();
             IList<TestWithLastUserResults> existingLastTestResults = new List<TestWithLastUserResults>();
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(existingLastTestResults);
 
             var exerciseResultDto = new ExerciseResultDto();
@@ -185,11 +185,11 @@ namespace Guts.Business.Tests.Services
                 .Returns(exerciseResultDtos);
 
             //Act
-            var result = _service.GetResultsForUserAsync(exerciseId, userId).Result;
+            var result = _service.GetResultsForUserAsync(exerciseId, userId, null).Result;
 
             //Assert
             Assert.That(result, Is.EqualTo(exerciseResultDto));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfExerciseAsync(exerciseId, userId), Times.Once);
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfExerciseAsync(exerciseId, userId, null), Times.Once);
             _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
         }
     }

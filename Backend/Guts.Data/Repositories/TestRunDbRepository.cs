@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +13,13 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<IList<TestRun>> GetUserTestRunsForExercise(int exerciseId, int userId)
+        public async Task<IList<TestRun>> GetUserTestRunsForExercise(int exerciseId, int userId, DateTime? date)
         {
             var query = from exercise in _context.Exercises
                 from testrun in exercise.TestRuns
-                where exercise.Id == exerciseId && testrun.UserId == userId
+                where (exercise.Id == exerciseId) && 
+                      (testrun.UserId == userId) &&
+                      (date == null || testrun.CreateDateTime <= date)
                 orderby testrun.CreateDateTime
                 select testrun;
 

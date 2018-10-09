@@ -1,18 +1,24 @@
 import { Component } from '@angular/core';
 import { ChapterService } from '../../services/chapter.service';
+import { ChapterContextProvider, ChapterContext } from '../../services/chapter.context.provider';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
 
+
 @Component({
-  templateUrl: './chapter.component.html'
+  templateUrl: './chapter.component.html',
+  providers: [ChapterContextProvider]
 })
 export class ChapterComponent {
 
   public model: IChapterDetailsModel;
   public selectedExerciseId: number;
   public selectedUserId: number;
+  public context: ChapterContext;
+  public datePickerSettings: any;
 
   constructor(private chapterService: ChapterService,
+    private chapterContextProvider: ChapterContextProvider,
     private router: Router,
     private route: ActivatedRoute) {
 
@@ -24,6 +30,12 @@ export class ChapterComponent {
     };
     this.selectedExerciseId = 0;
     this.selectedUserId = 0;
+    this.context = this.chapterContextProvider.context;
+    this.datePickerSettings = {
+      bigBanner: true,
+      timePicker: true,
+      format: 'dd-MM-yyyy HH:mm'
+    }
   }
 
   ngOnInit() {
@@ -37,7 +49,7 @@ export class ChapterComponent {
           this.model = chapterDetails;
           this.selectedExerciseId = 0;
           this.selectedUserId = chapterDetails.users[0].id;
-          this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
+          this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });      
         });
 
       });
@@ -45,11 +57,19 @@ export class ChapterComponent {
   }
 
   public onSelectionChanged() {
+    var navigationPromise: Promise<boolean>;
     if (this.selectedExerciseId > 0) {
-      this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedExerciseId],
-        { relativeTo: this.route });
+      navigationPromise = this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedExerciseId], { relativeTo: this.route });
     } else {
-      this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
+      navigationPromise = this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
     }
+
+    navigationPromise.then(() => {
+      this.onContextChanged();
+    });
+  }
+
+  public onContextChanged() {
+    this.chapterContextProvider.announceContextChange();
   }
 }

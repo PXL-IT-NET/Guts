@@ -19,7 +19,6 @@ import { ChapterComponent } from "./components/chapter/chapter.component";
 import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
 import { CourseContentsComponent } from './components/coursecontents/coursecontents.component';
 import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
-import { ExerciseStudentsComponent } from './components/exercisestudents/exercisestudents.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
@@ -28,10 +27,13 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
+import { ChapterContextProvider as ChapterContextService } from './services/chapter.context.service';
 import { ExerciseService } from './services/exercise.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
 import 'rxjs/Rx';
+
+import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 
 @NgModule({
   declarations: [
@@ -48,8 +50,7 @@ import 'rxjs/Rx';
     ChapterComponent,
     ChapterSummaryComponent,
     CourseContentsComponent,
-    ExerciseDetailComponent,
-    ExerciseStudentsComponent
+    ExerciseDetailComponent
   ],
   imports: [
     ChartsModule,
@@ -80,14 +81,14 @@ import 'rxjs/Rx';
       { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterSummaryComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
       { path: 'exercises/:exerciseId/ofuser/:userId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
-      { path: 'exercises/:exerciseId/students', component: ExerciseStudentsComponent, canActivate: [AuthGuard] },
       { path: '**', redirectTo: 'home' }
     ]),
     LocalStorageModule.withConfig({
       prefix: 'guts',
       storageType: 'localStorage'
     }),
-    RecaptchaModule.forRoot()
+    RecaptchaModule.forRoot(),
+    AngularDateTimePickerModule
   ],
   providers: [
     AuthGuard,

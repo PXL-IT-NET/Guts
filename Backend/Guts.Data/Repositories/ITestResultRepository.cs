@@ -8,6 +8,6 @@ namespace Guts.Data.Repositories
     public interface ITestResultRepository : IBasicRepository<TestRun>
     {
         Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId, DateTime? date);
-        Task<IList<TestWithLastUserResults>> GetLastTestResultsOfExerciseAsync(int exerciseId, int userId);
+        Task<IList<TestWithLastUserResults>> GetLastTestResultsOfExerciseAsync(int exerciseId, int userId, DateTime? date);
     }
 }

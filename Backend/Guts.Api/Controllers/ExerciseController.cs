@@ -33,13 +33,13 @@ namespace Guts.Api.Controllers
         }
 
         [HttpGet("{exerciseId}")]
-        public async Task<IActionResult> GetExerciseResults(int exerciseId)
+        public async Task<IActionResult> GetExerciseResults(int exerciseId, [FromQuery] DateTime? date)
         {
-            return await GetExerciseResultsForUser(exerciseId, GetUserId());
+            return await GetExerciseResultsForUser(exerciseId, GetUserId(), date);
         }
 
         [HttpGet("{exerciseId}/foruser/{userId}")]
-        public async Task<IActionResult> GetExerciseResultsForUser(int exerciseId, int userId)
+        public async Task<IActionResult> GetExerciseResultsForUser(int exerciseId, int userId, [FromQuery] DateTime? date)
         {
             if (IsStudent())
             {
@@ -53,9 +53,9 @@ namespace Guts.Api.Controllers
 
             var exercise = await _exerciseRepository.GetSingleWithTestsAndCourseAsync(exerciseId);
 
-            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId);
+            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId, date);
 
-            var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId);
+            var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId, date);
 
             var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
 

@@ -25,4 +25,8 @@ Teachers can get more insights into the progress of their students and detect pr
 ## Colleges
 This project was set up by university college [PXL](http://www.pxl.be), but other colleges and universities are welcome to contribute to this project.
 
+The following courses within PXL-IT have exercises that are backed up by automated tests:
+- .NET Essentials: https://github.com/PXL-IT-NET/Guts-DotNetEssentials
+- .NET Advanced: https://github.com/PXL-IT-NET/Guts-DotNetAdvanced
+
 

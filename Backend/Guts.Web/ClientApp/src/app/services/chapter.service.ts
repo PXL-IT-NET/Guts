@@ -19,10 +19,14 @@ export class ChapterService {
     });
   }
 
-  public getChapterSummary(courseId: number, chapterNumber: number, userId: number): Observable<ChapterSummaryModel> {
+  public getChapterSummary(courseId: number, chapterNumber: number, userId: number, date?: Date): Observable<ChapterSummaryModel> {
     return this.settingsService.get().mergeMap<ClientSettings, ChapterSummaryModel>((settings: ClientSettings) => {
+      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber + '/users/' + userId + '/summary';
+      if (date) {
+        apiUrl += '?date=' + date.toISOString();
+      }
       return this.http
-        .get<IChapterSummaryModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber + '/users/' + userId + '/summary')
+        .get<IChapterSummaryModel>(apiUrl)
         .map((chapterContents: IChapterSummaryModel) => {
           return new ChapterSummaryModel(chapterContents);
         });

@@ -26,6 +26,7 @@
     "@aspnet/signalr": "^1.0.2",
     "@nguniversal/module-map-ngfactory-loader": "^5.0.0-beta.5",
     "angular-2-local-storage": "^1.0.1",
+    "angular2-datetimepicker": "^1.1.1",
     "aspnet-prerendering": "^3.0.1",
     "bootstrap": "^4.0.0",
     "chart.js": "^2.7.1",

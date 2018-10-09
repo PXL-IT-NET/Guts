@@ -34,12 +34,14 @@
     <None Remove="ClientApp\src\app\components\chapter\chapter.component.ts" />
     <None Remove="ClientApp\src\app\components\course\course.component.ts" />
     <None Remove="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <None Remove="ClientApp\src\app\services\chapter.context.provider.ts" />
   </ItemGroup>
 
   <ItemGroup>
     <TypeScriptCompile Include="ClientApp\src\app\components\chapter\chapter.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\course\course.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\services\chapter.context.provider.ts" />
   </ItemGroup>
 
   <ItemGroup>

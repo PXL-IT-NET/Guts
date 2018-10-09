@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain;
 
@@ -8,7 +9,7 @@ namespace Guts.Business.Services
     {
         Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto);
         Task LoadOrCreateTestsForExerciseAsync(Exercise exercise, IEnumerable<string> testNames);
-        Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId);
-        Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId);
+        Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? date);
+        Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? date);
     }
 }

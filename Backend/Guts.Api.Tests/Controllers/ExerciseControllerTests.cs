@@ -56,12 +56,12 @@ namespace Guts.Api.Tests.Controllers
                 .ReturnsAsync(existingExercise);
 
             var returnedExerciseResultDto = new ExerciseResultDto();
-            _exerciseServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()))
+            _exerciseServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(returnedExerciseResultDto);
 
             var returnedTestRunInfo = new ExerciseTestRunInfoDto();
             _exerciseServiceMock
-                .Setup(service => service.GetUserTestRunInfoForExercise(It.IsAny<int>(), It.IsAny<int>()))
+                .Setup(service => service.GetUserTestRunInfoForExercise(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(returnedTestRunInfo);
 
             var returnedModel = new ExerciseDetailModel();
@@ -73,13 +73,13 @@ namespace Guts.Api.Tests.Controllers
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
 
             //Act
-            var actionResult = _controller.GetExerciseResultsForUser(existingExercise.Id, userId).Result as OkObjectResult;
+            var actionResult = _controller.GetExerciseResultsForUser(existingExercise.Id, userId, null).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             Assert.That(actionResult.Value, Is.EqualTo(returnedModel));
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(existingExercise.Id), Times.Once);
-            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(existingExercise.Id, userId), Times.Once);
+            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(existingExercise.Id, userId, null), Times.Once);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(existingExercise, returnedExerciseResultDto, returnedTestRunInfo), Times.Once);
         }
 
@@ -94,12 +94,12 @@ namespace Guts.Api.Tests.Controllers
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
 
             //Act
-            var actionResult = _controller.GetExerciseResultsForUser(exerciseId, otherUserId).Result as ForbidResult;
+            var actionResult = _controller.GetExerciseResultsForUser(exerciseId, otherUserId, null).Result as ForbidResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
-            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }
 
@@ -113,12 +113,12 @@ namespace Guts.Api.Tests.Controllers
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).Build();
 
             //Act
-            var actionResult = _controller.GetExerciseResultsForUser(exerciseId, userId).Result as ForbidResult;
+            var actionResult = _controller.GetExerciseResultsForUser(exerciseId, userId, null).Result as ForbidResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
-            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+            _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), null), Times.Never);
             _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }
 

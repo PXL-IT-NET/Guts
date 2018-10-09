@@ -2,15 +2,20 @@ import { Component } from '@angular/core';
 import { ExerciseService } from '../../services/exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { IExerciseDetailModel } from '../../viewmodels/exercisedetail.model';
+import { ChapterContextProvider } from '../../services/chapter.context.provider';
 
 @Component({
   templateUrl: './exercisedetail.component.html'
 })
 export class ExerciseDetailComponent {
+  private exerciseId: number;
+  private userId: number;
+
   public model: IExerciseDetailModel;
 
   constructor(private route: ActivatedRoute,
-    private exerciseService: ExerciseService) {
+    private exerciseService: ExerciseService,
+    private chapterContextProvider: ChapterContextProvider) {
     this.model = {
       exerciseId: 0,
       number: 0,
@@ -23,16 +28,26 @@ export class ExerciseDetailComponent {
       numberOfRuns: 0,
       sourceCode: ''
     };
+
+    this.exerciseId = 0;
+    this.userId = 0;
+
+    this.chapterContextProvider.contextChanged$.subscribe(() => {
+        this.loadExercise();
+    });
   }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      let exerciseId = +params['exerciseId']; // (+) converts 'exerciseId' to a number
-      let userId = 0;
-      if (params['userId']) userId = +params['userId'];
-      this.exerciseService.getExerciseDetail(exerciseId, userId).subscribe((exerciseDetail: IExerciseDetailModel) => {
-        this.model = exerciseDetail;
-      });
+      this.exerciseId = +params['exerciseId']; // (+) converts 'exerciseId' to a number
+      if (params['userId']) this.userId = +params['userId'];
+      this.loadExercise();
+    });
+  }
+
+  private loadExercise() {
+    this.exerciseService.getExerciseDetail(this.exerciseId, this.userId, this.chapterContextProvider.context.statusDate).subscribe((exerciseDetail: IExerciseDetailModel) => {
+      this.model = exerciseDetail;
     });
   }
 }
