@@ -16,7 +16,7 @@ namespace Guts.Api.Models.Converters
                 UserId = userId,
                 ExerciseId = exercise.Id,
                 SourceCode = sourceCode,
-                CreateDateTime = DateTime.Now,
+                CreateDateTime = DateTime.Now.ToUniversalTime(),
                 TestResults = new List<TestResult>()
             };
 
@@ -33,7 +33,7 @@ namespace Guts.Api.Models.Converters
                     Passed = testResultModel.Passed,
                     Message = testResultModel.Message,
                     UserId = userId,
-                    CreateDateTime = DateTime.Now
+                    CreateDateTime = DateTime.Now.ToUniversalTime()
                 };
                 testRun.TestResults.Add(testResult);
             }

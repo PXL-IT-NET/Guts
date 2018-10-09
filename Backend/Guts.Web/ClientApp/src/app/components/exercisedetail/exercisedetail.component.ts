@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ExerciseService } from '../../services/exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { IExerciseDetailModel } from '../../viewmodels/exercisedetail.model';
+import { IExerciseDetailModel, ExerciseDetailModel } from '../../viewmodels/exercisedetail.model';
 import { ChapterContextProvider } from '../../services/chapter.context.provider';
 
 @Component({
@@ -11,7 +11,7 @@ export class ExerciseDetailComponent {
   private exerciseId: number;
   private userId: number;
 
-  public model: IExerciseDetailModel;
+  public model: ExerciseDetailModel;
 
   constructor(private route: ActivatedRoute,
     private exerciseService: ExerciseService,
@@ -47,7 +47,7 @@ export class ExerciseDetailComponent {
 
   private loadExercise() {
     this.exerciseService.getExerciseDetail(this.exerciseId, this.userId, this.chapterContextProvider.context.statusDate).subscribe((exerciseDetail: IExerciseDetailModel) => {
-      this.model = exerciseDetail;
+      this.model = new ExerciseDetailModel(exerciseDetail);
     });
   }
 }

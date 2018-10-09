@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Guts.Api.Models
@@ -10,8 +11,8 @@ namespace Guts.Api.Models
         public string CourseName { get; set; }
         public int CourseId { get; set; }
         public IList<TestResultModel> TestResults { get; set; }
-        public string FirstRun { get; set; }
-        public string LastRun { get; set; }
+        public DateTime? FirstRun { get; set; }
+        public DateTime? LastRun { get; set; }
         public int NumberOfRuns { get; set; }
         public string SourceCode { get; set; }
     }
