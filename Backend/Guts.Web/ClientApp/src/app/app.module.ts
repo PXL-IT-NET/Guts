@@ -27,7 +27,6 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
-import { ChapterContextProvider as ChapterContextService } from './services/chapter.context.service';
 import { ExerciseService } from './services/exercise.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';

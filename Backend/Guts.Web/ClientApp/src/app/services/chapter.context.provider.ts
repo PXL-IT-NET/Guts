@@ -5,7 +5,7 @@ import { Subject, Observable } from 'rxjs';
 export class ChapterContext {
 
   private _statusDate: Date;
-  public get statusDate(): Date {
+  public get statusDate() {
     return this._statusDate;
   }
   public set statusDate(date: any) {
