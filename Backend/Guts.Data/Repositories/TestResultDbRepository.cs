@@ -13,7 +13,7 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId, DateTime? date)
+        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfChapterAsync(int chapterId, int? userId, DateTime? dateUtc)
         {
 
             var lastUserTestResultsQuery = from exercise in _context.Exercises
@@ -21,7 +21,7 @@ namespace Guts.Data.Repositories
                                            from testResult in test.Results
                                            where (userId == null || testResult.UserId == userId.Value)
                                                  && (exercise.ChapterId == chapterId)
-                                                 && (date == null || testResult.CreateDateTime <= date)
+                                                 && (dateUtc == null || testResult.CreateDateTime <= dateUtc)
                                            group new { testResult, test } by new { testResult.UserId, test.Id } into userTestRunGroup
                                            select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();
 
@@ -39,13 +39,13 @@ namespace Guts.Data.Repositories
             return Task.FromResult<IList<TestWithLastUserResults>>(query.AsNoTracking().ToList());
         }
 
-        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfExerciseAsync(int exerciseId, int userId, DateTime? date)
+        public Task<IList<TestWithLastUserResults>> GetLastTestResultsOfExerciseAsync(int exerciseId, int userId, DateTime? dateUtc)
         {
             var lastUserTestResultsQuery = from test in _context.Tests
                 from testResult in test.Results
                 where testResult.UserId == userId
                       && (test.ExerciseId == exerciseId)
-                      && (date == null || testResult.CreateDateTime <= date)
+                      && (dateUtc == null || testResult.CreateDateTime <= dateUtc)
                 group new {testResult, test} by new {testResult.UserId, test.Id}
                 into userTestRunGroup
                 select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();

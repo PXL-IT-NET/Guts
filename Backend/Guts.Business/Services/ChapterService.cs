@@ -72,9 +72,9 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<IList<ExerciseResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? date)
+        public async Task<IList<ExerciseResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? dateUtc)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, date);
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, dateUtc);
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults);
         }

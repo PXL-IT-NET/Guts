@@ -108,10 +108,12 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
+            var dateUtc = date?.ToUniversalTime();
+
             try
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId, date);
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId, dateUtc);
                 var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
                 var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults);
                 return Ok(model);

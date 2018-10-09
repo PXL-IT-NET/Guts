@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Security.AccessControl;
 using Guts.Business;
 
 namespace Guts.Api.Models

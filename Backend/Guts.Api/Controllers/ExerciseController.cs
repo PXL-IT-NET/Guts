@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Data.Repositories;
-using Guts.Domain;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
@@ -53,20 +48,15 @@ namespace Guts.Api.Controllers
 
             var exercise = await _exerciseRepository.GetSingleWithTestsAndCourseAsync(exerciseId);
 
-            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId, date);
+            var dateUtc = date?.ToUniversalTime();
 
-            var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId, date);
+            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId, dateUtc);
+
+            var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId, dateUtc);
 
             var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
 
             return Ok(model);
         }
-
-        //[HttpGet("{exerciseId}/students"), Authorize(Roles = Role.Constants.Lector)]
-        //public async Task<IActionResult> GetExerciseStudents(int exerciseId)
-        //{
-        //    var users = await _exerciseRepository.GetExerciseUsersAsync(exerciseId);
-        //    return Ok(users.Select(user => _userConverter.FromUser(user)));
-        //}
     }
 }

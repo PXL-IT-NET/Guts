@@ -76,19 +76,19 @@ namespace Guts.Business.Services
 
         }
 
-        public async Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? date)
+        public async Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, date);
+            var lastTestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc);
 
             return _testResultConverter.ToExerciseResultDto(lastTestResults).FirstOrDefault();
         }
 
-        public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? date)
+        public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc)
         {
             //TODO: write unit test
             var testRunInfo = new ExerciseTestRunInfoDto();
 
-            var testRuns = await _testRunRepository.GetUserTestRunsForExercise(exerciseId, userId, date);
+            var testRuns = await _testRunRepository.GetUserTestRunsForExercise(exerciseId, userId, dateUtc);
             if (testRuns.Any())
             {
                 var firstTestRun = testRuns.First();

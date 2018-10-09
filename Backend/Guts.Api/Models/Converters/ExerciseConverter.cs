@@ -33,8 +33,8 @@ namespace Guts.Api.Models.Converters
                 CourseName = exercise.Chapter.Course.Name,
                 CourseId= exercise.Chapter.CourseId,
                 TestResults = new List<TestResultModel>(),
-                FirstRun = testRunInfo.FirstRunDateTime?.ToString("dd/MM/yyyy HH:mm"),
-                LastRun = testRunInfo.LastRunDateTime?.ToString("dd/MM/yyyy HH:mm"),
+                FirstRun = testRunInfo.FirstRunDateTime?.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+                LastRun = testRunInfo.LastRunDateTime?.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
                 NumberOfRuns = testRunInfo.NumberOfRuns,
                 SourceCode = testRunInfo.SourceCode
             };
