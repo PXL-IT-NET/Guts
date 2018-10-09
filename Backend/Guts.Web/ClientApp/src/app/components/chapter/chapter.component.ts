@@ -57,16 +57,11 @@ export class ChapterComponent {
   }
 
   public onSelectionChanged() {
-    var navigationPromise: Promise<boolean>;
     if (this.selectedExerciseId > 0) {
-      navigationPromise = this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedExerciseId], { relativeTo: this.route });
+      this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedExerciseId], { relativeTo: this.route });
     } else {
-      navigationPromise = this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
+      this.router.navigate(['users', this.selectedUserId], { relativeTo: this.route });
     }
-
-    navigationPromise.then(() => {
-      this.onContextChanged();
-    });
   }
 
   public onContextChanged() {
