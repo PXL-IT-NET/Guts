@@ -47,16 +47,16 @@ namespace Guts.Data.Repositories
             return await query.ToListAsync();
         }
 
-        //TODO: change to getUsersOfCourse (and take the period into account)
         public async Task<IList<User>> GetUsersOfChapterAsync(int chapterId)
         {
-            var query = from testRun in _context.TestResults
-                from chapter in _context.Chapters
+            var query = from chapter in _context.Chapters
                 from exercise in chapter.Exercises
-                where chapter.Id == chapterId && testRun.Test.AssignmentId == exercise.Id
+                from testRun in exercise.TestRuns
+                where chapter.Id == chapterId
                 group testRun by testRun.User
                 into userGroups
                 select userGroups.Key;
+
             return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
         }
 
