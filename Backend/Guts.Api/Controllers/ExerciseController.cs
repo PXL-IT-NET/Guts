@@ -14,15 +14,15 @@ namespace Guts.Api.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ExerciseController : ControllerBase
     {
-        private readonly IExerciseService _exerciseService;
+        private readonly IAssignmentService _assignmentService;
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IExerciseConverter _exerciseConverter;
 
-        public ExerciseController(IExerciseService exerciseService, 
+        public ExerciseController(IAssignmentService assignmentService, 
             IExerciseRepository exerciseRepository, 
             IExerciseConverter exerciseConverter)
         {
-            _exerciseService = exerciseService;
+            _assignmentService = assignmentService;
             _exerciseRepository = exerciseRepository;
             _exerciseConverter = exerciseConverter;
         }
@@ -50,9 +50,9 @@ namespace Guts.Api.Controllers
 
             var dateUtc = date?.ToUniversalTime();
 
-            var testRunInfo = await _exerciseService.GetUserTestRunInfoForExercise(exerciseId, userId, dateUtc);
+            var testRunInfo = await _assignmentService.GetUserTestRunInfoForExercise(exerciseId, userId, dateUtc);
 
-            var resultDto = await _exerciseService.GetResultsForUserAsync(exerciseId, userId, dateUtc);
+            var resultDto = await _assignmentService.GetResultsForUserAsync(exerciseId, userId, dateUtc);
 
             var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
 

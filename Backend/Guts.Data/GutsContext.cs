@@ -1,14 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using Guts.Domain;
+﻿using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Query.Expressions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Guts.Data
 {
@@ -18,6 +12,8 @@ namespace Guts.Data
         public DbSet<Course> Courses { get; set; }
         public DbSet<Chapter> Chapters { get; set; }
         public DbSet<Project> Projects { get; set; }
+        public DbSet<ProjectTeam> ProjectTeams { get; set; }
+        public DbSet<ProjectComponent> ProjectComponents { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }
@@ -35,6 +31,7 @@ namespace Guts.Data
             base.OnModelCreating(builder);
 
             builder.Entity<Assignment>().ToTable("Assignments");
+            builder.Entity<ProjectTeamUser>().ToTable("ProjectTeamUsers");
             builder.Entity<User>().ToTable("Users");
             builder.Entity<Role>().ToTable("Roles");
             builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");

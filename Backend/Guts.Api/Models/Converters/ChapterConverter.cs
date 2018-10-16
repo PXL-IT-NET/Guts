@@ -37,7 +37,7 @@ namespace Guts.Api.Models.Converters
                 AverageExerciseSummaries = new List<ExerciseSummaryModel>()
             };
 
-            foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Number))
+            foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Code))
             {
                 var userExerciseSummaryModel = CreateExerciseSummaryModel(exercise, userExerciseResults);
                 model.UserExerciseSummaries.Add(userExerciseSummaryModel);
@@ -53,7 +53,7 @@ namespace Guts.Api.Models.Converters
             var exerciseSummaryModel = new ExerciseSummaryModel
             {
                 ExerciseId = exercise.Id,
-                Number = exercise.Number,
+                Code = exercise.Code,
                 NumberOfTests = exercise.Tests.Count
             };
 
@@ -85,7 +85,7 @@ namespace Guts.Api.Models.Converters
                 Exercises = chapter.Exercises.Select(exercise => new ExerciseModel
                 {
                     ExerciseId = exercise.Id,
-                    Number = exercise.Number
+                    Code = exercise.Code
                 }).ToList(),
                 Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };

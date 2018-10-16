@@ -12,9 +12,9 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<IList<Test>> FindByExercise(int exerciseId)
+        public async Task<IList<Test>> FindByAssignmentId(int assignmentId)
         {
-            return await _context.Tests.Where(t => t.AssignmentId == exerciseId).ToListAsync();
+            return await _context.Tests.Where(t => t.AssignmentId == assignmentId).ToListAsync();
         }
     }
 }

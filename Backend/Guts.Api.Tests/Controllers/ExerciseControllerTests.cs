@@ -22,7 +22,7 @@ namespace Guts.Api.Tests.Controllers
     {
         private ExerciseController _controller;
         private Random _random;
-        private Mock<IExerciseService> _exerciseServiceMock;
+        private Mock<IAssignmentService> _exerciseServiceMock;
         private Mock<IExerciseRepository> _exerciseRepositoryMock;
         private Mock<IExerciseConverter> _exerciseConverterMock;
 
@@ -30,7 +30,7 @@ namespace Guts.Api.Tests.Controllers
         public void Setup()
         {
             _random = new Random();
-            _exerciseServiceMock = new Mock<IExerciseService>();
+            _exerciseServiceMock = new Mock<IAssignmentService>();
             _exerciseRepositoryMock = new Mock<IExerciseRepository>();
             _exerciseConverterMock = new Mock<IExerciseConverter>();
 

@@ -4,7 +4,5 @@ namespace Guts.Domain
     {
         public virtual Chapter Chapter { get; set; }
         public int ChapterId { get; set; }
-
-        public int Number { get; set; }
     }
 }

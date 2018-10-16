@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
@@ -20,15 +21,15 @@ namespace Guts.Api.Controllers
     {
         private readonly ITestRunConverter _testRunConverter;
         private readonly ITestRunService _testRunService;
-        private readonly IExerciseService _exerciseService;
+        private readonly IAssignmentService _assignmentService;
 
         public TestRunController(ITestRunConverter testRunConverter, 
             ITestRunService testRunService, 
-            IExerciseService exerciseService)
+            IAssignmentService assignmentService)
         {
             _testRunConverter = testRunConverter;
             _testRunService = testRunService;
-            _exerciseService = exerciseService;
+            _assignmentService = assignmentService;
         }
 
         /// <summary>
@@ -53,16 +54,16 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> PostTestRun([FromBody] CreateTestRunModel model)
+        public async Task<IActionResult> PostExerciseTestRun([FromBody] ExerciseCreateTestRunModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var exercise = await _exerciseService.GetOrCreateExerciseAsync(model.Exercise);
+            var exercise = await _assignmentService.GetOrCreateExerciseAsync(model.Exercise);
             var testNames = model.Results.Select(testResult => testResult.TestName);
-            await _exerciseService.LoadOrCreateTestsForExerciseAsync(exercise, testNames);
+            await _assignmentService.LoadOrCreateTestsForAssignmentAsync(exercise, testNames);
 
             var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), exercise);
             var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
@@ -70,6 +71,11 @@ namespace Guts.Api.Controllers
             var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
 
             return CreatedAtAction(nameof(GetTestRun), new {id = savedModel.Id}, savedModel);
+        }
+
+        public async Task<IActionResult> PostProjectTestRun([FromBody] CreateProjectTestRunModel model)
+        {
+            throw new NotImplementedException();
         }
     }
 }

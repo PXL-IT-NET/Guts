@@ -6,6 +6,6 @@ namespace Guts.Data.Repositories
 {
     public interface ITestRepository : IBasicRepository<Test>
     {
-        Task<IList<Test>> FindByExercise(int exerciseId);
+        Task<IList<Test>> FindByAssignmentId(int assignmentId);
     }
 }

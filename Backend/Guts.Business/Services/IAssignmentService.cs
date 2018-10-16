@@ -5,10 +5,10 @@ using Guts.Domain;
 
 namespace Guts.Business.Services
 {
-    public interface IExerciseService
+    public interface IAssignmentService
     {
         Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto);
-        Task LoadOrCreateTestsForExerciseAsync(Exercise exercise, IEnumerable<string> testNames);
+        Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames);
         Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
         Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc);
     }

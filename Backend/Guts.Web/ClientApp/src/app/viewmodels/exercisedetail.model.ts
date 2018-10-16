@@ -15,7 +15,7 @@ export interface IExerciseDetailModel extends IExerciseModel {
 
 export class ExerciseDetailModel implements IExerciseDetailModel {
   public exerciseId: number;
-  public number: number;
+  public code: string;
   public chapterNumber: number;
   public courseName: string;
   public courseId: number;
@@ -27,7 +27,7 @@ export class ExerciseDetailModel implements IExerciseDetailModel {
 
   constructor(source: ExerciseDetailModel) {
     this.exerciseId = source.exerciseId;
-    this.number = source.number;
+    this.code = source.code;
     this.chapterNumber = source.chapterNumber;
     this.courseName = source.courseName;
     this.courseId = source.courseId;

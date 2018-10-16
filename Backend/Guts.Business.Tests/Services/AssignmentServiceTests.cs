@@ -14,17 +14,16 @@ using NUnit.Framework;
 namespace Guts.Business.Tests.Services
 {
     [TestFixture]
-    public class ExerciseServiceTests
+    public class AssignmentServiceTests
     {
-        private ExerciseService _service;
+        private AssignmentService _service;
         private Random _random;
         private Mock<IExerciseRepository> _exerciseRepositoryMock;
         private Mock<ITestRepository> _testRepositoryMock;
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
         private Mock<ITestResultConverter> _testResultConverterMock;
-        private Mock<ITestRunRepository> _testRunRepositoryMock
-            ;
+        private Mock<ITestRunRepository> _testRunRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -37,7 +36,7 @@ namespace Guts.Business.Tests.Services
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _testResultConverterMock = new Mock<ITestResultConverter>();
 
-            _service = new ExerciseService(_exerciseRepositoryMock.Object, 
+            _service = new AssignmentService(_exerciseRepositoryMock.Object, 
                 _chapterServiceMock.Object, 
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
@@ -61,16 +60,16 @@ namespace Guts.Business.Tests.Services
             var existingExercise = new Exercise
             {
                 Id = _random.NextPositive(),
-                Number = exerciseDto.ExerciseNumber
+                Code = Convert.ToString(exerciseDto.ExerciseNumber)
             };
 
-            _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(existingExercise);
+            _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingExercise);
 
             //Act
             var result = _service.GetOrCreateExerciseAsync(exerciseDto).Result;
 
             //Assert
-            _exerciseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, exerciseDto.ExerciseNumber), Times.Once());
+            _exerciseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, existingExercise.Code), Times.Once());
             _exerciseRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Exercise>()), Times.Never);
             Assert.That(result, Is.EqualTo(existingExercise));
         }
@@ -93,23 +92,23 @@ namespace Guts.Business.Tests.Services
             var addedExercise = new Exercise
             {
                 Id = _random.NextPositive(),
-                Number = exerciseDto.ChapterNumber
+                Code = Convert.ToString(exerciseDto.ExerciseNumber)
             };
 
-            _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<int>())).Throws<DataNotFoundException>();
+            _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();
             _exerciseRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Exercise>())).ReturnsAsync(addedExercise);
 
             //Act
             var result = _service.GetOrCreateExerciseAsync(exerciseDto).Result;
 
             //Assert
-            _exerciseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, exerciseDto.ExerciseNumber), Times.Once());
+            _exerciseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, addedExercise.Code), Times.Once());
             _exerciseRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Exercise>()), Times.Once);
             Assert.That(result, Is.EqualTo(addedExercise));
         }
 
         [Test]
-        public void LoadOrCreateTestsForExerciseAsync_ShouldCreateNonExistingTests()
+        public void LoadOrCreateTestsForAssignmentAsync_ShouldCreateNonExistingTests()
         {
             //Arrange
             var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
@@ -118,7 +117,7 @@ namespace Guts.Business.Tests.Services
                 Id = _random.NextPositive(),
             };
 
-            _testRepositoryMock.Setup(repo => repo.FindByExercise(It.IsAny<int>())).ReturnsAsync(new List<Test>());
+            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>());
             _testRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Test>())).ReturnsAsync((Test test) =>
             {
                 test.Id = _random.NextPositive();
@@ -126,10 +125,10 @@ namespace Guts.Business.Tests.Services
             });
 
             //Act
-            _service.LoadOrCreateTestsForExerciseAsync(exercise, testNames).Wait();
+            _service.LoadOrCreateTestsForAssignmentAsync(exercise, testNames).Wait();
 
             //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByExercise(exercise.Id), Times.Once);
+            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(exercise.Id), Times.Once);
             _testRepositoryMock.Verify(repo => repo.AddAsync(It.Is<Test>(test => testNames.Contains(test.TestName))), Times.Exactly(testNames.Count));
             Assert.That(exercise.Tests, Is.Not.Null);
             Assert.That(exercise.Tests.Count, Is.EqualTo(testNames.Count));
@@ -139,7 +138,7 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
-        public void LoadOrCreateTestsForExerciseAsync_ShouldLoadExistingTests()
+        public void LoadOrCreateTestsForAssignmentAsync_ShouldLoadExistingTests()
         {
             //Arrange
             var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
@@ -154,13 +153,13 @@ namespace Guts.Business.Tests.Services
                 Id = _random.NextPositive(),
             };
 
-            _testRepositoryMock.Setup(repo => repo.FindByExercise(It.IsAny<int>())).ReturnsAsync(existingTests);
+            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
 
             //Act
-            _service.LoadOrCreateTestsForExerciseAsync(exercise, testNames).Wait();
+            _service.LoadOrCreateTestsForAssignmentAsync(exercise, testNames).Wait();
 
             //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByExercise(exercise.Id), Times.Once);
+            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(exercise.Id), Times.Once);
             _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
             Assert.That(exercise.Tests, Is.Not.Null);
             Assert.That(exercise.Tests, Is.EquivalentTo(existingTests));

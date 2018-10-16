@@ -6,7 +6,7 @@ namespace Guts.Data.Repositories
 {
     public interface IExerciseRepository : IBasicRepository<Exercise>
     {
-        Task<Exercise> GetSingleAsync(int chapterId, int number);
+        Task<Exercise> GetSingleAsync(int chapterId, string code);
         Task<Exercise> GetSingleWithTestsAndCourseAsync(int exerciseId);
     }
 }

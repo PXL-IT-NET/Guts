@@ -1,14 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Guts.Business;
 
 namespace Guts.Api.Models
 {
-    public class CreateTestRunModel
+    public abstract class CreateTestRunModelBase
     {
-        [Required]
-        public ExerciseDto Exercise { get; set; }
-
         [Required]
         public IEnumerable<TestResultModel> Results { get; set; }
 

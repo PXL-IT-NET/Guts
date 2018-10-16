@@ -9,7 +9,7 @@ using Guts.Domain;
 
 namespace Guts.Business.Services
 {
-    public class ExerciseService : IExerciseService
+    public class AssignmentService : IAssignmentService
     {
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IChapterService _chapterService;
@@ -18,7 +18,7 @@ namespace Guts.Business.Services
         private readonly ITestResultConverter _testResultConverter;
         private readonly ITestRunRepository _testRunRepository;
 
-        public ExerciseService(IExerciseRepository exerciseRepository, 
+        public AssignmentService(IExerciseRepository exerciseRepository, 
             IChapterService chapterService, 
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
@@ -40,14 +40,14 @@ namespace Guts.Business.Services
             Exercise exercise;
             try
             {
-                exercise = await _exerciseRepository.GetSingleAsync(chapter.Id, exerciseDto.ExerciseNumber);
+                exercise = await _exerciseRepository.GetSingleAsync(chapter.Id, Convert.ToString(exerciseDto.ExerciseNumber));
             }
             catch (DataNotFoundException)
             {
                 exercise = new Exercise
                 {
                     ChapterId = chapter.Id,
-                    Number = exerciseDto.ExerciseNumber
+                    Code = Convert.ToString(exerciseDto.ExerciseNumber)
                 };
                 exercise = await _exerciseRepository.AddAsync(exercise);
             }
@@ -55,25 +55,24 @@ namespace Guts.Business.Services
             return exercise;
         }
 
-        public async Task LoadOrCreateTestsForExerciseAsync(Exercise exercise, IEnumerable<string> testNames)
+        public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames)
         {
-            var exerciseTests = await _testRepository.FindByExercise(exercise.Id);
+            var assignmentTests = await _testRepository.FindByAssignmentId(assignment.Id);
 
             foreach (var testName in testNames)
             {
-                if (exerciseTests.All(test => test.TestName != testName))
+                if (assignmentTests.All(test => test.TestName != testName))
                 {
                     var newTest = new Test
                     {
-                        AssignmentId = exercise.Id,
+                        AssignmentId = assignment.Id,
                         TestName = testName
                     };
                     var savedTest = await _testRepository.AddAsync(newTest);
-                    exerciseTests.Add(savedTest);
+                    assignmentTests.Add(savedTest);
                 }
             }
-            exercise.Tests = exerciseTests;
-
+            assignment.Tests = assignmentTests;
         }
 
         public async Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)

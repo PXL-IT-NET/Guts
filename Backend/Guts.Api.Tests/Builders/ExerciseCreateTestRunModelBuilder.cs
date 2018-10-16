@@ -8,15 +8,15 @@ using Guts.Domain;
 
 namespace Guts.Api.Tests.Builders
 {
-    internal class CreateTestRunModelBuilder
+    internal class ExerciseCreateTestRunModelBuilder
     {
         private readonly Random _random;
-        private readonly CreateTestRunModel _model;
+        private readonly ExerciseCreateTestRunModel _model;
 
-        public CreateTestRunModelBuilder()
+        public ExerciseCreateTestRunModelBuilder()
         {
             _random = new Random();
-            _model = new CreateTestRunModel
+            _model = new ExerciseCreateTestRunModel
             {
                 Exercise = new ExerciseDtoBuilder().Build(),
                 Results = new List<TestResultModel>(),
@@ -24,21 +24,21 @@ namespace Guts.Api.Tests.Builders
             };
         }
 
-        public CreateTestRunModelBuilder WithExercise(ExerciseDto exerciseDto)
+        public ExerciseCreateTestRunModelBuilder WithExercise(ExerciseDto exerciseDto)
         {
             _model.Exercise = exerciseDto;
 
             return this;
         }
 
-        public CreateTestRunModelBuilder WithSourceCode()
+        public ExerciseCreateTestRunModelBuilder WithSourceCode()
         {
             _model.SourceCode = Guid.NewGuid().ToString();
 
             return this;
         }
 
-        public CreateTestRunModelBuilder WithRandomTestResultModels(int numberOfTestResults)
+        public ExerciseCreateTestRunModelBuilder WithRandomTestResultModels(int numberOfTestResults)
         {
             var testResultModels = new List<TestResultModel>();
             for (int i = 0; i < numberOfTestResults; i++)
@@ -55,13 +55,13 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
-        public CreateTestRunModelBuilder WithTestResultModels(IEnumerable<TestResultModel> testResultModels)
+        public ExerciseCreateTestRunModelBuilder WithTestResultModels(IEnumerable<TestResultModel> testResultModels)
         {
             _model.Results = testResultModels;
             return this;
         }
 
-        public CreateTestRunModelBuilder WithRandomTestResultModelsFor(IEnumerable<Test> tests)
+        public ExerciseCreateTestRunModelBuilder WithRandomTestResultModelsFor(IEnumerable<Test> tests)
         {
             var results = new List<TestResultModel>();
             foreach (var test in tests)
@@ -79,7 +79,7 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
-        public CreateTestRunModel Build()
+        public ExerciseCreateTestRunModel Build()
         {
             return _model;
         }

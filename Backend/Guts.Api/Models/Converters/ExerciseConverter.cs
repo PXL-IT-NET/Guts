@@ -28,7 +28,7 @@ namespace Guts.Api.Models.Converters
             var model = new ExerciseDetailModel
             {
                 ChapterNumber = exercise.Chapter.Number,
-                Number = exercise.Number,
+                Code = exercise.Code,
                 ExerciseId = exercise.Id,
                 CourseName = exercise.Chapter.Course.Name,
                 CourseId= exercise.Chapter.CourseId,

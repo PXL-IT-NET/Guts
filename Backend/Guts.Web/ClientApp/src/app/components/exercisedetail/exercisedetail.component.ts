@@ -18,7 +18,7 @@ export class ExerciseDetailComponent {
     private chapterContextProvider: ChapterContextProvider) {
     this.model = {
       exerciseId: 0,
-      number: 0,
+      code: '',
       chapterNumber: 0,
       courseName: '',
       courseId: 0,

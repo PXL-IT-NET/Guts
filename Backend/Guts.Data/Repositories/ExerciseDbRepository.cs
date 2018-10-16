@@ -12,9 +12,9 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<Exercise> GetSingleAsync(int chapterId, int number)
+        public async Task<Exercise> GetSingleAsync(int chapterId, string code)
         {
-            var exercise = await _context.Exercises.FirstOrDefaultAsync(ex => ex.ChapterId == chapterId && ex.Number == number);
+            var exercise = await _context.Exercises.FirstOrDefaultAsync(ex => ex.ChapterId == chapterId && ex.Code == code);
             if (exercise == null)
             {
                 throw new DataNotFoundException();

@@ -55,7 +55,7 @@ namespace Guts.Api.Extensions
             container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
             container.Register<IUserConverter, UserConverter>(Lifestyle.Singleton);
 
-            container.Register<IExerciseService, ExerciseService>(Lifestyle.Scoped);
+            container.Register<IAssignmentService, AssignmentService>(Lifestyle.Scoped);
             container.Register<IChapterService, ChapterService>(Lifestyle.Scoped);
             container.Register<ITestRunService, TestRunService>(Lifestyle.Scoped);
             container.Register<ICourseService, CourseService>(Lifestyle.Scoped);

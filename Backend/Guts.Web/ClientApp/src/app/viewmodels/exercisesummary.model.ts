@@ -1,6 +1,6 @@
-﻿export interface IExerciseSummaryModel {
+export interface IExerciseSummaryModel {
     exerciseId: number;
-    number: number;
+    code: string;
     numberOfTests: number;
     numberOfPassedTests: number;
     numberOfFailedTests: number;
@@ -9,7 +9,7 @@
 
 export class ExerciseSummaryModel implements IExerciseSummaryModel {
     public exerciseId: number;
-    public number: number;
+    public code: string;
     public numberOfTests: number;
     public numberOfPassedTests: number;
     public numberOfFailedTests: number;
@@ -17,7 +17,7 @@ export class ExerciseSummaryModel implements IExerciseSummaryModel {
 
     constructor(source: IExerciseSummaryModel) {
         this.exerciseId = source.exerciseId;
-        this.number = source.number;
+        this.code = source.code;
         this.numberOfTests = source.numberOfTests;
         this.numberOfPassedTests = source.numberOfPassedTests;
         this.numberOfFailedTests = source.numberOfFailedTests;

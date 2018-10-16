@@ -6,7 +6,7 @@ namespace Guts.Api.Models
     public class ExerciseDetailModel
     {
         public int ExerciseId { get; set; }
-        public int Number { get; set; }
+        public string Code { get; set; }
         public int ChapterNumber { get; set; }
         public string CourseName { get; set; }
         public int CourseId { get; set; }

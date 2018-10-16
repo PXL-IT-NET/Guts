@@ -14,13 +14,13 @@ namespace Guts.Business.Tests.Builders
             {
                 CourseCode = Guid.NewGuid().ToString(),
                 ChapterNumber = random.NextPositive(),
-                ExerciseNumber = random.NextPositive(),
+                ExerciseNumber = random.NextPositive()
             };
         }
 
-        public ExerciseDtoBuilder WithNumber(int exerciseNumber)
+        public ExerciseDtoBuilder WithExerciseNumber(int number)
         {
-            _dto.ExerciseNumber = exerciseNumber;
+            _dto.ExerciseNumber = number;
             return this;
         }
 

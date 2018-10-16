@@ -11,7 +11,6 @@ namespace Guts.Business
         [Range(1, int.MaxValue)]
         public int ChapterNumber { get; set; }
 
-        [Range(1, int.MaxValue)]
         public int ExerciseNumber { get; set; }
     }
 }

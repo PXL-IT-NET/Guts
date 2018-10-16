@@ -24,7 +24,7 @@ namespace Guts.Api.Tests.Controllers
         private Random _random;
         private Mock<ITestRunService> _testRunServiceMock;
         private Mock<ITestRunConverter> _testResultConverterMock;
-        private Mock<IExerciseService> _exerciseServiceMock;
+        private Mock<IAssignmentService> _exerciseServiceMock;
        
         private int _userId;
 
@@ -34,7 +34,7 @@ namespace Guts.Api.Tests.Controllers
             _random = new Random();
             _testResultConverterMock = new Mock<ITestRunConverter>();
             _testRunServiceMock = new Mock<ITestRunService>();
-            _exerciseServiceMock = new Mock<IExerciseService>();
+            _exerciseServiceMock = new Mock<IAssignmentService>();
             _userId = _random.Next(1, int.MaxValue);
             _controller =
                 new TestRunController(_testResultConverterMock.Object, _testRunServiceMock.Object, _exerciseServiceMock.Object)
@@ -50,13 +50,13 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void PostTestRunModelShouldSaveItInTheRepository()
+        public void PostExerciseTestRun_ShouldSaveItInTheRepository()
         {
             //Arrange
             var exercise = new Exercise
             {
                 Id = _random.NextPositive(),
-                Number = _random.NextPositive()
+                Code = _random.NextPositive().ToString()
             };
             _exerciseServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
                 .ReturnsAsync(exercise);
@@ -76,21 +76,21 @@ namespace Guts.Api.Tests.Controllers
             _testResultConverterMock.Setup(converter => converter.ToTestRunModel(It.IsAny<TestRun>()))
                 .Returns(savedTestRunModel);
 
-            var exerciseDto = new ExerciseDtoBuilder().WithNumber(exercise.Number).Build();
-            var postedModel = new CreateTestRunModelBuilder()
+            var exerciseDto = new ExerciseDtoBuilder().WithExerciseNumber(Convert.ToInt32(exercise.Code)).Build();
+            var postedModel = new ExerciseCreateTestRunModelBuilder()
                 .WithSourceCode()
                 .WithExercise(exerciseDto)
                 .Build();
 
             //Act
-            var createdResult = _controller.PostTestRun(postedModel).Result as CreatedAtActionResult;
+            var createdResult = _controller.PostExerciseTestRun(postedModel).Result as CreatedAtActionResult;
 
             //Assert
             Assert.That(createdResult, Is.Not.Null);
             _testResultConverterMock.Verify(converter => converter.From(postedModel.Results, postedModel.SourceCode, _userId, exercise), Times.Once);
             _exerciseServiceMock.Verify(service => service.GetOrCreateExerciseAsync(postedModel.Exercise), Times.Once);
             _exerciseServiceMock.Verify(
-                service => service.LoadOrCreateTestsForExerciseAsync(exercise,
+                service => service.LoadOrCreateTestsForAssignmentAsync(exercise,
                     It.Is<IEnumerable<string>>(testNames => testNames.All(testName =>
                         postedModel.Results.Any(testResult => testResult.TestName == testName)))), Times.Once);
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun), Times.Once);
@@ -101,7 +101,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void PostTestRunShouldReturnBadRequestIfPostedModelIsInvalid()
+        public void PostExerciseTestRun_ShouldReturnBadRequestIfPostedModelIsInvalid()
         {
             //Arrange
             var errorKey = Guid.NewGuid().ToString();
@@ -109,10 +109,10 @@ namespace Guts.Api.Tests.Controllers
             _controller.ModelState.AddModelError(errorKey, errorMessage);
 
             var exerciseDto = new ExerciseDtoBuilder().Build();
-            var postedModel = new CreateTestRunModelBuilder().WithExercise(exerciseDto).Build();
+            var postedModel = new ExerciseCreateTestRunModelBuilder().WithExercise(exerciseDto).Build();
 
             //Act
-            var badRequestResult = _controller.PostTestRun(postedModel).Result as BadRequestObjectResult;
+            var badRequestResult = _controller.PostExerciseTestRun(postedModel).Result as BadRequestObjectResult;
 
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
@@ -122,7 +122,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetTestRunModelShouldRetrieveItFromTheServiceAndReturnAModel()
+        public void GetTestRun_ShouldRetrieveItFromTheServiceAndReturnAModel()
         {
             //Arrange
             var storedTestRun = new TestRun

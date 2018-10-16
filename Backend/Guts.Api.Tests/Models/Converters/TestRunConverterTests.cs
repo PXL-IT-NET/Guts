@@ -18,7 +18,7 @@ namespace Guts.Api.Tests.Models.Converters
         private TestRunConverter _converter;
         private readonly Random _random;
         private int _userId;
-        private CreateTestRunModel _createModel;
+        private ExerciseCreateTestRunModel _exerciseCreateTestRunModel;
 
         public TestRunConverterTests()
         {
@@ -30,7 +30,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             _converter = new TestRunConverter();
             _userId = _random.NextPositive();
-            _createModel = new CreateTestRunModelBuilder().Build();
+            _exerciseCreateTestRunModel = new ExerciseCreateTestRunModelBuilder().Build();
         }
 
         [Test]
@@ -40,26 +40,26 @@ namespace Guts.Api.Tests.Models.Converters
             var numberOfTests = 2;
 
             var exercise = new ExerciseBuilder().WithRandomTests(numberOfTests).Build();
-            _createModel = new CreateTestRunModelBuilder()
+            _exerciseCreateTestRunModel = new ExerciseCreateTestRunModelBuilder()
                 .WithSourceCode()
                 .WithRandomTestResultModelsFor(exercise.Tests)
                 .Build();
 
             //Act
-            var testRun = _converter.From(_createModel.Results, _createModel.SourceCode, _userId, exercise);
+            var testRun = _converter.From(_exerciseCreateTestRunModel.Results, _exerciseCreateTestRunModel.SourceCode, _userId, exercise);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
             Assert.That(testRun.AssignmentId, Is.EqualTo(exercise.Id));
-            Assert.That(testRun.SourceCode, Is.EqualTo(_createModel.SourceCode));
+            Assert.That(testRun.SourceCode, Is.EqualTo(_exerciseCreateTestRunModel.SourceCode));
             Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.Now).Within(5).Seconds);
             Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
 
-            for (int i = 0; i < _createModel.Results.Count(); i++)
+            for (int i = 0; i < _exerciseCreateTestRunModel.Results.Count(); i++)
             {
                 var testResult = testRun.TestResults.ElementAt(i);
-                var testResultModel = _createModel.Results.ElementAt(i);
+                var testResultModel = _exerciseCreateTestRunModel.Results.ElementAt(i);
                 var test = exercise.Tests.ElementAt(i);
 
                 Assert.That(testResult.TestId, Is.EqualTo(test.Id));
@@ -74,7 +74,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void From_ShouldThrowExceptionIfExerciseIsNotProvided()
         {
             //Act + Assert
-            Assert.That(() => _converter.From(_createModel.Results, null, _userId, null), Throws.ArgumentNullException);
+            Assert.That(() => _converter.From(_exerciseCreateTestRunModel.Results, null, _userId, null), Throws.ArgumentNullException);
         }
 
         [Test]
@@ -82,10 +82,10 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Assert
             var exercise = new ExerciseBuilder().Build();
-            _createModel = new CreateTestRunModelBuilder().WithRandomTestResultModels(1).Build();
+            _exerciseCreateTestRunModel = new ExerciseCreateTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
             //Act + Assert
-            Assert.That(() => _converter.From(_createModel.Results, null, _userId, exercise), Throws.ArgumentException);
+            Assert.That(() => _converter.From(_exerciseCreateTestRunModel.Results, null, _userId, exercise), Throws.ArgumentException);
         }
 
         [Test]
@@ -93,10 +93,10 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var exercise = new ExerciseBuilder().Build();
-            _createModel = new CreateTestRunModelBuilder().WithTestResultModels(null).Build();
+            _exerciseCreateTestRunModel = new ExerciseCreateTestRunModelBuilder().WithTestResultModels(null).Build();
 
             //Act
-            var testRun = _converter.From(_createModel.Results, null, _userId, exercise);
+            var testRun = _converter.From(_exerciseCreateTestRunModel.Results, null, _userId, exercise);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);

@@ -23,6 +23,10 @@ namespace Guts.Data.Migrations
                 name: "PK_Exercises",
                 table: "Exercises");
 
+            //migrationBuilder.DropColumn(
+            //    name: "Number",
+            //    table: "Exercises");
+
             migrationBuilder.RenameTable(
                 name: "Exercises",
                 newName: "Assignments");
@@ -53,16 +57,31 @@ namespace Guts.Data.Migrations
                 newName: "IX_Assignments_ChapterId");
 
             migrationBuilder.AlterColumn<int>(
-                name: "Number",
-                table: "Assignments",
-                nullable: true,
-                oldClrType: typeof(int));
-
-            migrationBuilder.AlterColumn<int>(
                 name: "ChapterId",
                 table: "Assignments",
                 nullable: true,
                 oldClrType: typeof(int));
+
+            migrationBuilder.AddColumn<string>(
+                name: "Code",
+                table: "Assignments",
+                maxLength: 20,
+                nullable: false,
+                defaultValue: "");
+
+            //copy Number to Code
+            migrationBuilder.Sql("update Assignments " +
+                                 "set Code = CONVERT(Number, CHAR);");
+
+
+            migrationBuilder.DropColumn(
+                name: "Number",
+                table: "Assignments");
+
+            migrationBuilder.AddColumn<string>(
+                name: "Description",
+                table: "Assignments",
+                nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "Discriminator",
@@ -78,17 +97,7 @@ namespace Guts.Data.Migrations
                 nullable: false);
 
             migrationBuilder.AddColumn<int>(
-                name: "CourseId",
-                table: "Assignments",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Name",
-                table: "Assignments",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "PeriodId",
+                name: "ProjectId",
                 table: "Assignments",
                 nullable: true);
 
@@ -98,7 +107,35 @@ namespace Guts.Data.Migrations
                 column: "Id");
 
             migrationBuilder.CreateTable(
-                name: "ProjectTeam",
+                name: "Projects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Code = table.Column<string>(maxLength: 20, nullable: false),
+                    Description = table.Column<string>(nullable: false),
+                    CourseId = table.Column<int>(nullable: false),
+                    PeriodId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Projects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Projects_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Projects_Periods_PeriodId",
+                        column: x => x.PeriodId,
+                        principalTable: "Periods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProjectTeams",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -107,17 +144,17 @@ namespace Guts.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjectTeam", x => x.Id);
+                    table.PrimaryKey("PK_ProjectTeams", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProjectTeam_Assignments_ProjectId",
+                        name: "FK_ProjectTeams_Projects_ProjectId",
                         column: x => x.ProjectId,
-                        principalTable: "Assignments",
+                        principalTable: "Projects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProjectTeamUser",
+                name: "ProjectTeamUsers",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -127,15 +164,15 @@ namespace Guts.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjectTeamUser", x => x.Id);
+                    table.PrimaryKey("PK_ProjectTeamUsers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProjectTeamUser_ProjectTeam_ProjectTeamId",
+                        name: "FK_ProjectTeamUsers_ProjectTeams_ProjectTeamId",
                         column: x => x.ProjectTeamId,
-                        principalTable: "ProjectTeam",
+                        principalTable: "ProjectTeams",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProjectTeamUser_Users_UserId",
+                        name: "FK_ProjectTeamUsers_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -143,28 +180,33 @@ namespace Guts.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Assignments_CourseId",
+                name: "IX_Assignments_ProjectId",
                 table: "Assignments",
-                column: "CourseId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Assignments_PeriodId",
-                table: "Assignments",
-                column: "PeriodId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProjectTeam_ProjectId",
-                table: "ProjectTeam",
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectTeamUser_ProjectTeamId",
-                table: "ProjectTeamUser",
+                name: "IX_Projects_CourseId",
+                table: "Projects",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Projects_PeriodId",
+                table: "Projects",
+                column: "PeriodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProjectTeams_ProjectId",
+                table: "ProjectTeams",
+                column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProjectTeamUsers_ProjectTeamId",
+                table: "ProjectTeamUsers",
                 column: "ProjectTeamId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectTeamUser_UserId",
-                table: "ProjectTeamUser",
+                name: "IX_ProjectTeamUsers_UserId",
+                table: "ProjectTeamUsers",
                 column: "UserId");
 
             migrationBuilder.AddForeignKey(
@@ -176,18 +218,10 @@ namespace Guts.Data.Migrations
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Assignments_Courses_CourseId",
+                name: "FK_Assignments_Projects_ProjectId",
                 table: "Assignments",
-                column: "CourseId",
-                principalTable: "Courses",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Assignments_Periods_PeriodId",
-                table: "Assignments",
-                column: "PeriodId",
-                principalTable: "Periods",
+                column: "ProjectId",
+                principalTable: "Projects",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
@@ -215,11 +249,7 @@ namespace Guts.Data.Migrations
                 table: "Assignments");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Assignments_Courses_CourseId",
-                table: "Assignments");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Assignments_Periods_PeriodId",
+                name: "FK_Assignments_Projects_ProjectId",
                 table: "Assignments");
 
             migrationBuilder.DropForeignKey(
@@ -231,21 +261,28 @@ namespace Guts.Data.Migrations
                 table: "Tests");
 
             migrationBuilder.DropTable(
-                name: "ProjectTeamUser");
+                name: "ProjectTeamUsers");
 
             migrationBuilder.DropTable(
-                name: "ProjectTeam");
+                name: "ProjectTeams");
+
+            migrationBuilder.DropTable(
+                name: "Projects");
 
             migrationBuilder.DropPrimaryKey(
                 name: "PK_Assignments",
                 table: "Assignments");
 
             migrationBuilder.DropIndex(
-                name: "IX_Assignments_CourseId",
+                name: "IX_Assignments_ProjectId",
                 table: "Assignments");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Assignments_PeriodId",
+            migrationBuilder.DropColumn(
+                name: "Code",
+                table: "Assignments");
+
+            migrationBuilder.DropColumn(
+                name: "Description",
                 table: "Assignments");
 
             migrationBuilder.DropColumn(
@@ -253,15 +290,7 @@ namespace Guts.Data.Migrations
                 table: "Assignments");
 
             migrationBuilder.DropColumn(
-                name: "CourseId",
-                table: "Assignments");
-
-            migrationBuilder.DropColumn(
-                name: "Name",
-                table: "Assignments");
-
-            migrationBuilder.DropColumn(
-                name: "PeriodId",
+                name: "ProjectId",
                 table: "Assignments");
 
             migrationBuilder.RenameTable(
@@ -294,18 +323,17 @@ namespace Guts.Data.Migrations
                 newName: "IX_Exercises_ChapterId");
 
             migrationBuilder.AlterColumn<int>(
-                name: "Number",
-                table: "Exercises",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldNullable: true);
-
-            migrationBuilder.AlterColumn<int>(
                 name: "ChapterId",
                 table: "Exercises",
                 nullable: false,
                 oldClrType: typeof(int),
                 oldNullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "Number",
+                table: "Exercises",
+                nullable: false,
+                defaultValue: 0);
 
             migrationBuilder.AddPrimaryKey(
                 name: "PK_Exercises",

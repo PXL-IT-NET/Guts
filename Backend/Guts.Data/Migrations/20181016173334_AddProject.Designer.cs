@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Guts.Data.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    [Migration("20181016112505_AddProject")]
+    [Migration("20181016173334_AddProject")]
     partial class AddProject
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,12 @@ namespace Guts.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20);
+
+                    b.Property<string>("Description");
 
                     b.Property<string>("Discriminator")
                         .IsRequired();
@@ -88,6 +94,31 @@ namespace Guts.Data.Migrations
                     b.ToTable("Periods");
                 });
 
+            modelBuilder.Entity("Guts.Domain.Project", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20);
+
+                    b.Property<int>("CourseId");
+
+                    b.Property<string>("Description")
+                        .IsRequired();
+
+                    b.Property<int>("PeriodId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("Projects");
+                });
+
             modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
                 {
                     b.Property<int>("Id")
@@ -99,7 +130,7 @@ namespace Guts.Data.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("ProjectTeam");
+                    b.ToTable("ProjectTeams");
                 });
 
             modelBuilder.Entity("Guts.Domain.ProjectTeamUser", b =>
@@ -117,7 +148,7 @@ namespace Guts.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectTeamUser");
+                    b.ToTable("ProjectTeamUsers");
                 });
 
             modelBuilder.Entity("Guts.Domain.Role", b =>
@@ -353,8 +384,6 @@ namespace Guts.Data.Migrations
 
                     b.Property<int>("ChapterId");
 
-                    b.Property<int>("Number");
-
                     b.HasIndex("ChapterId");
 
                     b.ToTable("Exercise");
@@ -362,26 +391,33 @@ namespace Guts.Data.Migrations
                     b.HasDiscriminator().HasValue("Exercise");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Project", b =>
+            modelBuilder.Entity("Guts.Domain.ProjectComponent", b =>
                 {
                     b.HasBaseType("Guts.Domain.Assignment");
 
-                    b.Property<int>("CourseId");
+                    b.Property<int>("ProjectId");
 
-                    b.Property<string>("Name");
+                    b.HasIndex("ProjectId");
 
-                    b.Property<int>("PeriodId");
+                    b.ToTable("ProjectComponent");
 
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("PeriodId");
-
-                    b.ToTable("Project");
-
-                    b.HasDiscriminator().HasValue("Project");
+                    b.HasDiscriminator().HasValue("ProjectComponent");
                 });
 
             modelBuilder.Entity("Guts.Domain.Chapter", b =>
+                {
+                    b.HasOne("Guts.Domain.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Guts.Domain.Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Guts.Domain.Project", b =>
                 {
                     b.HasOne("Guts.Domain.Course", "Course")
                         .WithMany()
@@ -507,16 +543,11 @@ namespace Guts.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Guts.Domain.Project", b =>
+            modelBuilder.Entity("Guts.Domain.ProjectComponent", b =>
                 {
-                    b.HasOne("Guts.Domain.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Guts.Domain.Period", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
+                    b.HasOne("Guts.Domain.Project", "Project")
+                        .WithMany("Components")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

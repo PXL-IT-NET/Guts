@@ -50,7 +50,7 @@ namespace Guts.Api.Tests.Models.Converters
             {
                 var userExerciseSummary = model.UserExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
                 Assert.That(userExerciseSummary, Is.Not.Null);
-                Assert.That(userExerciseSummary.Number, Is.EqualTo(exercise.Number));
+                Assert.That(userExerciseSummary.Code, Is.EqualTo(exercise.Code));
                 Assert.That(userExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
                 Assert.That(userExerciseSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
                 Assert.That(userExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
@@ -58,7 +58,7 @@ namespace Guts.Api.Tests.Models.Converters
 
                 var averageExerciseSummary = model.AverageExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
                 Assert.That(averageExerciseSummary, Is.Not.Null);
-                Assert.That(averageExerciseSummary.Number, Is.EqualTo(exercise.Number));
+                Assert.That(averageExerciseSummary.Code, Is.EqualTo(exercise.Code));
                 Assert.That(averageExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfTests));
                 Assert.That(averageExerciseSummary.NumberOfFailedTests, Is.EqualTo(0));
                 Assert.That(averageExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
