@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Logging;
 
 namespace Guts.Data
@@ -29,9 +26,16 @@ namespace Guts.Data
         public void DoAutomaticMigrations()
         {
             var pendingMigrations = _context.Database.GetPendingMigrations().ToList();
-            if (pendingMigrations.Any())
+            if (!pendingMigrations.Any()) return;
+
+            try
             {
-                ExecuteMigration(pendingMigrations);
+                _context.Database.Migrate();
+                _logger.LogInformation("Migration succeeded");
+            }
+            catch (Exception e)
+            {
+                _logger.LogCritical(e, "Error when trying to migrate database.");
             }
         }
 
@@ -55,33 +59,6 @@ namespace Guts.Data
             _context.Periods.AddIfNotExists(p => p.Description, testPeriod);
 
             _context.SaveChanges();
-        }
-
-        private void ExecuteMigration(List<string> pendingMigrations)
-        {
-            var lastMigration = _context.Database.GetAppliedMigrations().LastOrDefault();
-            var targetMigration = pendingMigrations.Last();
-            var migrator = _context.GetService<IMigrator>();
-
-            _logger.LogInformation($"Trying to migrate from '{lastMigration}' to '{targetMigration}'...");
-
-            var migrateSql = migrator.GenerateScript(lastMigration, targetMigration);
-
-            using (var transaction = _context.Database.BeginTransaction())
-            {
-                try
-                {
-                    _context.Database.ExecuteSqlCommand(migrateSql);
-
-                    transaction.Commit();
-                    _logger.LogInformation("Migration succeeded");
-                }
-                catch (Exception e)
-                {
-                    _logger.LogCritical(e, "Error when trying to migrate database.");
-                    transaction.Rollback();
-                }
-            }
         }
 
         private async Task AddRolesIfNotExists()

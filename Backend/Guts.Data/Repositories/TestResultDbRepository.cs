@@ -44,7 +44,7 @@ namespace Guts.Data.Repositories
             var lastUserTestResultsQuery = from test in _context.Tests
                 from testResult in test.Results
                 where testResult.UserId == userId
-                      && (test.ExerciseId == exerciseId)
+                      && (test.AssignmentId == exerciseId)
                       && (dateUtc == null || testResult.CreateDateTime <= dateUtc)
                 group new {testResult, test} by new {testResult.UserId, test.Id}
                 into userTestRunGroup

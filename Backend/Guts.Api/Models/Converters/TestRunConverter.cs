@@ -14,7 +14,7 @@ namespace Guts.Api.Models.Converters
             var testRun = new TestRun
             {
                 UserId = userId,
-                ExerciseId = exercise.Id,
+                AssignmentId = exercise.Id,
                 SourceCode = sourceCode,
                 CreateDateTime = DateTime.Now.ToUniversalTime(),
                 TestResults = new List<TestResult>()
@@ -47,7 +47,7 @@ namespace Guts.Api.Models.Converters
             var model = new SavedTestRunModel
             {
                 Id = testRun.Id,
-                ExerciseId = testRun.ExerciseId,
+                ExerciseId = testRun.AssignmentId,
                 TestResults = new List<SavedTestResultModel>()
             };
 

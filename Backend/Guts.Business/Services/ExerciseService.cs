@@ -65,7 +65,7 @@ namespace Guts.Business.Services
                 {
                     var newTest = new Test
                     {
-                        ExerciseId = exercise.Id,
+                        AssignmentId = exercise.Id,
                         TestName = testName
                     };
                     var savedTest = await _testRepository.AddAsync(newTest);

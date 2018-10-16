@@ -12,7 +12,7 @@ namespace Guts.Business.Converters
             var results = new List<ExerciseResultDto>();
 
             var exerciseGroups = from testWithLastUserResults in testsWithLastUserResults
-                group testWithLastUserResults by testWithLastUserResults.Test.ExerciseId;
+                group testWithLastUserResults by testWithLastUserResults.Test.AssignmentId;
 
             foreach (var exerciseGroup in exerciseGroups)
             {

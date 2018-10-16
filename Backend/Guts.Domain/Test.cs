@@ -10,8 +10,8 @@ namespace Guts.Domain
         [Required]
         public string TestName { get; set; }
 
-        public virtual Exercise Exercise { get; set; }
-        public int ExerciseId { get; set; }
+        public virtual Assignment Assignment { get; set; }
+        public int AssignmentId { get; set; }
 
         public virtual ICollection<TestResult> Results { get; set; }
     }

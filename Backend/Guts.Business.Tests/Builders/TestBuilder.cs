@@ -16,7 +16,7 @@ namespace Guts.Business.Tests.Builders
             _test = new Test
             {
                 Id = 0,
-                ExerciseId = _random.NextPositive(),
+                AssignmentId = _random.NextPositive(),
                 Results = new List<TestResult>(),
                 TestName = Guid.NewGuid().ToString()
             };
@@ -30,7 +30,7 @@ namespace Guts.Business.Tests.Builders
 
         public TestBuilder WithExerciseId(int exerciseId)
         {
-            _test.ExerciseId = exerciseId;
+            _test.AssignmentId = exerciseId;
             return this;
         }
 

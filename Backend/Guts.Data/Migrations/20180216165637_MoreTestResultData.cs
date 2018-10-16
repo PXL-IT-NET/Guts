@@ -35,7 +35,7 @@ namespace Guts.Data.Migrations
             //copy users and dates from TestRun to TestResults
             migrationBuilder.Sql("update TestResults " +
                                  "inner join TestRuns on TestRuns.Id = TestResults.TestRunId " +
-                                 "set TestResults.CreateDateTime = TestRuns.CreateDateTime, TestResults.UserId = TestRuns.UserId");
+                                 "set TestResults.CreateDateTime = TestRuns.CreateDateTime, TestResults.UserId = TestRuns.UserId;");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",

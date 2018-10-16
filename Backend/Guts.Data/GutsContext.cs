@@ -17,6 +17,7 @@ namespace Guts.Data
         public DbSet<Period> Periods { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Chapter> Chapters { get; set; }
+        public DbSet<Project> Projects { get; set; }
         public DbSet<Exercise> Exercises { get; set; }
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }
@@ -24,15 +25,16 @@ namespace Guts.Data
 
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
-            var contextServices = ((IInfrastructure<IServiceProvider>)this).Instance;
-            var loggerFactory = contextServices.GetRequiredService<ILoggerFactory>();
-            loggerFactory.AddConsole(LogLevel.Debug);
+            //var contextServices = ((IInfrastructure<IServiceProvider>)this).Instance;
+            //var loggerFactory = contextServices.GetRequiredService<ILoggerFactory>();
+            //loggerFactory.AddConsole(LogLevel.Debug);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<Assignment>().ToTable("Assignments");
             builder.Entity<User>().ToTable("Users");
             builder.Entity<Role>().ToTable("Roles");
             builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");

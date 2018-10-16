@@ -23,7 +23,7 @@ namespace Guts.Business.Tests.Builders
 
         public TestWithLastUserResultsBuilder WithExerciseId(int exerciseId)
         {
-            _testWithUserResults.Test.ExerciseId = exerciseId;
+            _testWithUserResults.Test.AssignmentId = exerciseId;
             return this;
         }
 

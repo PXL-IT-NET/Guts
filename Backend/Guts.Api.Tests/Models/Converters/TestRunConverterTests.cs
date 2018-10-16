@@ -51,7 +51,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
-            Assert.That(testRun.ExerciseId, Is.EqualTo(exercise.Id));
+            Assert.That(testRun.AssignmentId, Is.EqualTo(exercise.Id));
             Assert.That(testRun.SourceCode, Is.EqualTo(_createModel.SourceCode));
             Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.Now).Within(5).Seconds);
             Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
@@ -112,7 +112,7 @@ namespace Guts.Api.Tests.Models.Converters
             {
                 Id = _random.NextPositive(),
                 CreateDateTime = DateTime.Now,
-                ExerciseId = _random.NextPositive(),
+                AssignmentId = _random.NextPositive(),
                 TestResults = new List<TestResult>
                 {
                     new TestResult
@@ -130,7 +130,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(testRun.Id));
-            Assert.That(model.ExerciseId, Is.EqualTo(testRun.ExerciseId));
+            Assert.That(model.ExerciseId, Is.EqualTo(testRun.AssignmentId));
             Assert.That(model.TestResults, Is.Not.Null);
             Assert.That(model.TestResults.Count, Is.EqualTo(testRun.TestResults.Count));
             var firstResult = model.TestResults.First();
