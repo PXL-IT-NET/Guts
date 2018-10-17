@@ -24,6 +24,8 @@ namespace Guts.Business.Tests.Services
         private Mock<ITestResultRepository> _testResultRepositoryMock;
         private Mock<ITestResultConverter> _testResultConverterMock;
         private Mock<ITestRunRepository> _testRunRepositoryMock;
+        private Mock<IProjectService> _projectServiceMock;
+        private Mock<IProjectComponentRepository> _projectComponentRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -35,9 +37,13 @@ namespace Guts.Business.Tests.Services
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _testResultConverterMock = new Mock<ITestResultConverter>();
+            _projectServiceMock = new Mock<IProjectService>();
+            _projectComponentRepositoryMock = new Mock<IProjectComponentRepository>();
 
             _service = new AssignmentService(_exerciseRepositoryMock.Object, 
                 _chapterServiceMock.Object, 
+                _projectServiceMock.Object,
+                _projectComponentRepositoryMock.Object,
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
                 _testResultConverterMock.Object, 
@@ -86,7 +92,7 @@ namespace Guts.Business.Tests.Services
                 Number = exerciseDto.ChapterNumber
             };
 
-            _chapterServiceMock.Setup(repo => repo.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<int>()))
+            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(existingChapter);
 
             var addedExercise = new Exercise
@@ -105,6 +111,67 @@ namespace Guts.Business.Tests.Services
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, addedExercise.Code), Times.Once());
             _exerciseRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Exercise>()), Times.Once);
             Assert.That(result, Is.EqualTo(addedExercise));
+        }
+
+        [Test]
+        public void GetOrCreateProjectComponentAsync_ShouldReturnComponentIfItExists()
+        {
+            //Arrange
+            var projectComponentDto = new ProjectComponentDtoBuilder().Build();
+            var existingProject = new Project
+            {
+                Id = _random.NextPositive(),
+                Code = projectComponentDto.ProjectCode
+            };
+
+            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingProject);
+
+            var existingComponent = new ProjectComponent
+            {
+                Id = _random.NextPositive(),
+                Code = projectComponentDto.ComponentCode
+            };
+
+            _projectComponentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingComponent);
+
+            //Act
+            var result = _service.GetOrCreateProjectComponentAsync(projectComponentDto).Result;
+
+            //Assert
+            _projectComponentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingProject.Id, existingComponent.Code), Times.Once());
+            _projectComponentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<ProjectComponent>()), Times.Never);
+            Assert.That(result, Is.EqualTo(existingComponent));
+        }
+
+        [Test]
+        public void GetOrCreateProjectComponentAsync_ShouldCreateComponentIfItDoesNotExist()
+        {
+            //Arrange
+            var projectComponentDto = new ProjectComponentDtoBuilder().Build();
+            var existingProject = new Project
+            {
+                Id = _random.NextPositive(),
+                Code = projectComponentDto.ProjectCode
+            };
+
+            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingProject);
+
+            var addedComponent = new ProjectComponent
+            {
+                Id = _random.NextPositive(),
+                Code = projectComponentDto.ComponentCode
+            };
+
+            _projectComponentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();
+            _projectComponentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<ProjectComponent>())).ReturnsAsync(addedComponent);
+
+            //Act
+            var result = _service.GetOrCreateProjectComponentAsync(projectComponentDto).Result;
+
+            //Assert
+            _projectComponentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingProject.Id, addedComponent.Code), Times.Once());
+            _projectComponentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<ProjectComponent>()), Times.Once);
+            Assert.That(result, Is.EqualTo(addedComponent));
         }
 
         [Test]

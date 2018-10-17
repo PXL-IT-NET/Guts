@@ -93,12 +93,12 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var chapter = new ChapterBuilder().WithCourse().Build();
             var exercise = new ExerciseBuilder().WithChapter(chapter).Build();
-            var now = DateTime.Now;
+            var utcNow = DateTime.UtcNow;
 
             var testRunInfo = new ExerciseTestRunInfoDto
             {
-                FirstRunDateTime = now.AddDays(-1),
-                LastRunDateTime = now,
+                FirstRunDateTime = utcNow.AddDays(-1),
+                LastRunDateTime = utcNow,
                 NumberOfRuns = _random.NextPositive()
             };
 
@@ -107,8 +107,8 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Assert
             Assert.That(model, Is.Not.Null);
-            Assert.That(model.FirstRun, Is.EqualTo(testRunInfo.FirstRunDateTime.Value.ToString("dd/MM/yyyy HH:mm")));
-            Assert.That(model.LastRun, Is.EqualTo(testRunInfo.LastRunDateTime.Value.ToString("dd/MM/yyyy HH:mm")));
+            Assert.That(model.FirstRun, Is.EqualTo(testRunInfo.FirstRunDateTime));
+            Assert.That(model.LastRun, Is.EqualTo(testRunInfo.LastRunDateTime));
             Assert.That(model.NumberOfRuns, Is.EqualTo(testRunInfo.NumberOfRuns));
         }
 

@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
+using System.Reflection;
 using Guts.Api.Models.Converters;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
@@ -47,26 +49,16 @@ namespace Guts.Api.Extensions
             container.RegisterMvcControllers(app);
             container.RegisterMvcViewComponents(app);
 
-            // Add application services.
-            container.Register<ICourseConverter, CourseConverter>(Lifestyle.Singleton);
-            container.Register<IChapterConverter, ChapterConverter>(Lifestyle.Singleton);
-            container.Register<IExerciseConverter, ExerciseConverter>(Lifestyle.Singleton);
-            container.Register<ITestRunConverter, TestRunConverter>(Lifestyle.Singleton);
-            container.Register<ITestResultConverter, TestResultConverter>(Lifestyle.Singleton);
-            container.Register<IUserConverter, UserConverter>(Lifestyle.Singleton);
+            //register converters
+            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(CourseConverter).Assembly, Lifestyle.Singleton);
 
-            container.Register<IAssignmentService, AssignmentService>(Lifestyle.Scoped);
-            container.Register<IChapterService, ChapterService>(Lifestyle.Scoped);
-            container.Register<ITestRunService, TestRunService>(Lifestyle.Scoped);
-            container.Register<ICourseService, CourseService>(Lifestyle.Scoped);
+            //register services
+            RegisterTypesWhoseNameEndsWith("Service", container, typeof(CourseService).Assembly, Lifestyle.Scoped);
 
-            container.Register<ITestRepository, TestDbRepository>(Lifestyle.Scoped);
-            container.Register<ITestRunRepository, TestRunDbRepository>(Lifestyle.Scoped);
-            container.Register<IExerciseRepository, ExerciseDbRepository>(Lifestyle.Scoped);
-            container.Register<IChapterRepository, ChapterDbRepository>(Lifestyle.Scoped);
-            container.Register<ICourseRepository, CourseDbRepository>(Lifestyle.Scoped);
-            container.Register<IPeriodRepository, PeriodDbRepository>(Lifestyle.Scoped);
-            container.Register<ITestResultRepository, TestResultDbRepository>(Lifestyle.Scoped);
+            //register repositories
+            RegisterTypesWhoseNameEndsWith("DbRepository", container, typeof(CourseDbRepository).Assembly, Lifestyle.Scoped);
+
+
             container.Register<IHttpClient, HttpClientAdapter>(Lifestyle.Scoped);
             container.Register<ICaptchaValidator>(() =>
             {
@@ -75,6 +67,7 @@ namespace Guts.Api.Extensions
                 var validationUrl = captchaSection.GetValue<string>("validationUrl");
                 return new GoogleCaptchaValidator(validationUrl, secret, container.GetInstance<IHttpClient>());
             }, Lifestyle.Singleton);
+
             container.Register<ISmtpClient>(() =>
             {
                 var mailSection = configuration.GetSection("Mail");
@@ -84,6 +77,7 @@ namespace Guts.Api.Extensions
                 var password = mailSection.GetValue<string>("password");
                 return new SmtpClientAdapter(smtpHost, port, fromEmail, password);
             });
+
             container.Register<IMailSender>(() =>
             {
                 var mailSection = configuration.GetSection("Mail");
@@ -91,6 +85,7 @@ namespace Guts.Api.Extensions
                 var webAppBaseUrl = mailSection.GetValue<string>("webappbaseurl");
                 return new MailSender(container.GetInstance<ISmtpClient>(), fromEmail, webAppBaseUrl);
             }, Lifestyle.Scoped);
+
             container.Register<ITokenAccessPassFactory>(() =>
             {
                 var tokenSection = configuration.GetSection("Tokens");
@@ -134,6 +129,21 @@ namespace Guts.Api.Extensions
                         });
                 }
             );
+        }
+
+        private static void RegisterTypesWhoseNameEndsWith(string classNameEndsWith,
+            Container container,
+            Assembly targetAssembly,
+            Lifestyle lifestyle)
+        {
+            var registrations = from type in targetAssembly.GetExportedTypes()
+                where type.Name.EndsWith(classNameEndsWith) && type.GetInterfaces().Any()
+                select new { ServiceType = type.GetInterfaces().First(), ImplementationType = type };
+
+            foreach (var registration in registrations)
+            {
+                container.Register(registration.ServiceType, registration.ImplementationType, lifestyle);
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ using Guts.Business;
 
 namespace Guts.Api.Models
 {
-    public class ExerciseCreateTestRunModel : CreateTestRunModelBase
+    public class CreateExerciseTestRunModel : CreateTestRunModelBase
     {
         [Required]
         public ExerciseDto Exercise { get; set; }

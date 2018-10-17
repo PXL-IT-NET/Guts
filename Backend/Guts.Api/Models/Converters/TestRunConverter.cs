@@ -7,16 +7,16 @@ namespace Guts.Api.Models.Converters
 {
     public class TestRunConverter : ITestRunConverter
     {
-        public TestRun From(IEnumerable<TestResultModel> testResultModels, string sourceCode, int userId, Exercise exercise)
+        public TestRun From(IEnumerable<TestResultModel> testResultModels, string sourceCode, int userId, Assignment assignment)
         {
-            if(exercise == null) throw new ArgumentNullException(nameof(exercise));
+            if(assignment == null) throw new ArgumentNullException(nameof(assignment));
 
             var testRun = new TestRun
             {
                 UserId = userId,
-                AssignmentId = exercise.Id,
+                AssignmentId = assignment.Id,
                 SourceCode = sourceCode,
-                CreateDateTime = DateTime.Now.ToUniversalTime(),
+                CreateDateTime = DateTime.UtcNow,
                 TestResults = new List<TestResult>()
             };
 
@@ -24,7 +24,7 @@ namespace Guts.Api.Models.Converters
 
             foreach (var testResultModel in testResultModels)
             {
-                var test = exercise.Tests.FirstOrDefault(t => t.TestName.ToLower() == testResultModel.TestName.ToLower());
+                var test = assignment.Tests.FirstOrDefault(t => t.TestName.ToLower() == testResultModel.TestName.ToLower());
                 if(test == null) throw new ArgumentException($"No test found that has the name '{testResultModel.TestName}'.");
 
                 var testResult = new TestResult
@@ -33,7 +33,7 @@ namespace Guts.Api.Models.Converters
                     Passed = testResultModel.Passed,
                     Message = testResultModel.Message,
                     UserId = userId,
-                    CreateDateTime = DateTime.Now.ToUniversalTime()
+                    CreateDateTime = DateTime.UtcNow
                 };
                 testRun.TestResults.Add(testResult);
             }

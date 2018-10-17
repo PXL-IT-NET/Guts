@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
+using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,7 +55,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> PostExerciseTestRun([FromBody] ExerciseCreateTestRunModel model)
+        public async Task<IActionResult> PostExerciseTestRun([FromBody] CreateExerciseTestRunModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -62,31 +63,39 @@ namespace Guts.Api.Controllers
             }
 
             var exercise = await _assignmentService.GetOrCreateExerciseAsync(model.Exercise);
-            var testNames = model.Results.Select(testResult => testResult.TestName);
-            await _assignmentService.LoadOrCreateTestsForAssignmentAsync(exercise, testNames);
-
-            var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), exercise);
-            var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
-
-            var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
-
+            var savedModel = await SaveTestRunForAssignment(model, exercise);
             return CreatedAtAction(nameof(GetTestRun), new {id = savedModel.Id}, savedModel);
         }
 
+        /// <summary>
+        /// Saves a testrun for a component of a project. The testrun may contain results for one, multiple or all tests of that component.
+        /// If the component (or its project) does noet exists yet (for the current period) a new component / project is created for the current period.
+        /// </summary>
+        [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> PostProjectTestRun([FromBody] CreateProjectTestRunModel model)
         {
-            //TODO: var component = await _assignmentService.GetOrCreateComponentAsync(model.ProjectComponent);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
+            var component = await _assignmentService.GetOrCreateProjectComponentAsync(model.ProjectComponent);
+            var savedModel = await SaveTestRunForAssignment(model, component);
+            return CreatedAtAction(nameof(GetTestRun), new { id = savedModel.Id }, savedModel);
+        }
+
+        private async Task<SavedTestRunModel> SaveTestRunForAssignment(CreateTestRunModelBase model, Assignment assignment)
+        {
             var testNames = model.Results.Select(testResult => testResult.TestName);
-            //TODO: await _assignmentService.LoadOrCreateTestsForAssignmentAsync(component, testNames);
+            await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
 
-            //TODO: var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), component);
-            //TODO: var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
+            var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), assignment);
+            var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
 
-            //TODO: var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
-
-            //TODO: return CreatedAtAction(nameof(GetTestRun), new { id = savedModel.Id }, savedModel);
-            throw new NotImplementedException();
+            var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
+            return savedModel;
         }
     }
 }

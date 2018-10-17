@@ -62,7 +62,7 @@ namespace Guts.Api.Tests.Controllers
                 _chapterConverterMock.Object, 
                 _userManagerMock.Object)
             {
-                ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).Build()
+                ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(Role.Constants.Student).Build()
             };
            
         }
@@ -93,8 +93,7 @@ namespace Guts.Api.Tests.Controllers
                 .Returns(chapterContents);
 
             //Act
-            //TODO: arrange proper dummy user
-            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Number, 1, null).Result as OkObjectResult;
+            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Number, _userId, null).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
@@ -133,7 +132,7 @@ namespace Guts.Api.Tests.Controllers
             var chapter = _random.NextPositive();
 
             //Act
-            var actionResult = _controller.GetChapterSummary(courseId, chapter, 1, null).Result as NotFoundResult;
+            var actionResult = _controller.GetChapterSummary(courseId, chapter, _userId, null).Result as NotFoundResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);

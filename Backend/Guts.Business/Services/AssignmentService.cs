@@ -13,13 +13,17 @@ namespace Guts.Business.Services
     {
         private readonly IExerciseRepository _exerciseRepository;
         private readonly IChapterService _chapterService;
+        private readonly IProjectService _projectService;
+        private readonly IProjectComponentRepository _projectComponentRepository;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestResultConverter _testResultConverter;
         private readonly ITestRunRepository _testRunRepository;
 
         public AssignmentService(IExerciseRepository exerciseRepository, 
-            IChapterService chapterService, 
+            IChapterService chapterService,
+            IProjectService projectService,
+            IProjectComponentRepository projectComponentRepository,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
             ITestResultConverter testResultConverter,
@@ -27,6 +31,8 @@ namespace Guts.Business.Services
         {
             _exerciseRepository = exerciseRepository;
             _chapterService = chapterService;
+            _projectService = projectService;
+            _projectComponentRepository = projectComponentRepository;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testResultConverter = testResultConverter;
@@ -53,6 +59,29 @@ namespace Guts.Business.Services
             }
 
             return exercise;
+        }
+
+        public async Task<ProjectComponent> GetOrCreateProjectComponentAsync(ProjectComponentDto componentDto)
+        {
+            var project =
+                await _projectService.GetOrCreateProjectAsync(componentDto.CourseCode, componentDto.ProjectCode);
+
+            ProjectComponent component;
+            try
+            {
+                component = await _projectComponentRepository.GetSingleAsync(project.Id, componentDto.ComponentCode);
+            }
+            catch (DataNotFoundException)
+            {
+                component = new ProjectComponent
+                {
+                    ProjectId = project.Id,
+                    Code = componentDto.ComponentCode
+                };
+                component = await _projectComponentRepository.AddAsync(component);
+            }
+
+            return component;
         }
 
         public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames)
