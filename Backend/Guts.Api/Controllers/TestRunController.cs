@@ -75,6 +75,17 @@ namespace Guts.Api.Controllers
 
         public async Task<IActionResult> PostProjectTestRun([FromBody] CreateProjectTestRunModel model)
         {
+            //TODO: var component = await _assignmentService.GetOrCreateComponentAsync(model.ProjectComponent);
+
+            var testNames = model.Results.Select(testResult => testResult.TestName);
+            //TODO: await _assignmentService.LoadOrCreateTestsForAssignmentAsync(component, testNames);
+
+            //TODO: var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), component);
+            //TODO: var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
+
+            //TODO: var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
+
+            //TODO: return CreatedAtAction(nameof(GetTestRun), new { id = savedModel.Id }, savedModel);
             throw new NotImplementedException();
         }
     }

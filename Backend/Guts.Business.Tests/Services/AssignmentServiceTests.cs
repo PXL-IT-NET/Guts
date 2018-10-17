@@ -60,7 +60,7 @@ namespace Guts.Business.Tests.Services
             var existingExercise = new Exercise
             {
                 Id = _random.NextPositive(),
-                Code = Convert.ToString(exerciseDto.ExerciseNumber)
+                Code = exerciseDto.ExerciseCode
             };
 
             _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingExercise);
@@ -92,7 +92,7 @@ namespace Guts.Business.Tests.Services
             var addedExercise = new Exercise
             {
                 Id = _random.NextPositive(),
-                Code = Convert.ToString(exerciseDto.ExerciseNumber)
+                Code = exerciseDto.ExerciseCode
             };
 
             _exerciseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();

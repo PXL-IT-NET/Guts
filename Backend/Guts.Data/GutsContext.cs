@@ -1,8 +1,13 @@
-﻿using Guts.Domain;
+﻿using System;
+using System.Linq.Expressions;
+using System.Reflection;
+using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Guts.Data
 {
@@ -49,7 +54,13 @@ namespace Guts.Data
             builder.Entity<Test>().HasMany(test => test.Results).WithOne(result => result.Test)
                 .OnDelete(DeleteBehavior.Cascade);
         }
-        
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            //Make sure datetimes returned from the database are UTC datetimes
+            optionsBuilder.ReplaceService<IEntityMaterializerSource, UtcAwareEntityMaterializerSource>();
+        }
+
     }
 
     /// <summary>
@@ -66,6 +77,31 @@ namespace Guts.Data
             });
 
             return new GutsContext(optionsBuilder.Options);
+        }
+    }
+
+    public static class DateTimeMapper
+    {
+        public static DateTime SetKindToUtc(DateTime value)
+        {
+            return DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
+    }
+
+    public class UtcAwareEntityMaterializerSource : EntityMaterializerSource
+    {
+        private static readonly MethodInfo SetKindToUtcMethod = typeof(DateTimeMapper).GetTypeInfo().GetMethod(nameof(DateTimeMapper.SetKindToUtc));
+
+        public override Expression CreateReadValueExpression(Expression valueBuffer, Type type, int index, IPropertyBase property)
+        {
+            if (type == typeof(DateTime))
+            {
+                return Expression.Call(
+                    SetKindToUtcMethod,
+                    base.CreateReadValueExpression(valueBuffer, type, index, property)
+                );
+            }
+            return base.CreateReadValueExpression(valueBuffer, type, index, property);
         }
     }
 }

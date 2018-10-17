@@ -40,14 +40,14 @@ namespace Guts.Business.Services
             Exercise exercise;
             try
             {
-                exercise = await _exerciseRepository.GetSingleAsync(chapter.Id, Convert.ToString(exerciseDto.ExerciseNumber));
+                exercise = await _exerciseRepository.GetSingleAsync(chapter.Id, exerciseDto.ExerciseCode);
             }
             catch (DataNotFoundException)
             {
                 exercise = new Exercise
                 {
                     ChapterId = chapter.Id,
-                    Code = Convert.ToString(exerciseDto.ExerciseNumber)
+                    Code = exerciseDto.ExerciseCode
                 };
                 exercise = await _exerciseRepository.AddAsync(exercise);
             }
