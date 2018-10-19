@@ -25,7 +25,7 @@ namespace Guts.Api.Models.Converters
             foreach (var testResultModel in testResultModels)
             {
                 var test = assignment.Tests.FirstOrDefault(t => t.TestName.ToLower() == testResultModel.TestName.ToLower());
-                if(test == null) throw new ArgumentException($"No test found that has the name '{testResultModel.TestName}'.");
+                if (test == null) continue;
 
                 var testResult = new TestResult
                 {
@@ -39,8 +39,6 @@ namespace Guts.Api.Models.Converters
             }
             return testRun;
         }
-
-        
 
         public SavedTestRunModel ToTestRunModel(TestRun testRun)
         {

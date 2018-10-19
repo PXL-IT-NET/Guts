@@ -108,6 +108,8 @@ namespace Guts.Api
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddSignalR();
+
+            services.AddSwagger();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -138,11 +140,11 @@ namespace Guts.Api
             app.UseCookiePolicy();
 
             // Enable the Swagger UI middleware and the Swagger generator
-            app.UseSwaggerUi3(typeof(Startup).GetTypeInfo().Assembly, settings =>
+            app.UseSwaggerUi3WithApiExplorer(settings =>
             {
+                //typeof(Startup).GetTypeInfo().Assembly,
                 settings.SwaggerRoute = "/swagger";
                 settings.SwaggerUiRoute = "/docs";
-                settings.GeneratorSettings.IsAspNetCore = true;
                 settings.GeneratorSettings.DefaultPropertyNameHandling = PropertyNameHandling.CamelCase;
 
                 settings.PostProcess = document =>

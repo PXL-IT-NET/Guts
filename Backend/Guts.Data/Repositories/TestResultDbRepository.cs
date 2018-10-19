@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Guts.Data.Repositories
 {
-    public class TestResultDbRepository : BaseDbRepository<TestRun>, ITestResultRepository
+    public class TestResultDbRepository : BaseDbRepository<TestResult>, ITestResultRepository
     {
         public TestResultDbRepository(GutsContext context) : base(context)
         {

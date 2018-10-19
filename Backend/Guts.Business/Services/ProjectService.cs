@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Guts.Data;
 using Guts.Data.Repositories;
 using Guts.Domain;
 
@@ -19,9 +21,34 @@ namespace Guts.Business.Services
             _periodRepository = periodRepository;
         }
 
-        public Task<Project> GetOrCreateProjectAsync(string courseCode, string projectCode)
+        public async Task<Project> GetProjectAsync(string courseCode, string projectCode)
         {
-            throw new System.NotImplementedException();
+            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            return await _projectRepository.GetSingleAsync(courseCode, projectCode, currentPeriod.Id);
+        }
+
+        public async Task<Project> GetOrCreateProjectAsync(string courseCode, string projectCode)
+        {
+            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+
+            Project project;
+            try
+            {
+                project = await _projectRepository.GetSingleAsync(courseCode, projectCode, currentPeriod.Id);
+            }
+            catch (DataNotFoundException)
+            {
+                var course = await _courseRepository.GetSingleAsync(courseCode);
+                project = new Project
+                {
+                    Code = projectCode,
+                    CourseId = course.Id,
+                    PeriodId = currentPeriod.Id
+                };
+                project = await _projectRepository.AddAsync(project);
+            }
+
+            return project;
         }
     }
 }

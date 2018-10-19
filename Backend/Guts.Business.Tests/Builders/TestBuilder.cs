@@ -28,7 +28,7 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public TestBuilder WithExerciseId(int exerciseId)
+        public TestBuilder WithAssignmentId(int exerciseId)
         {
             _test.AssignmentId = exerciseId;
             return this;

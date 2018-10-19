@@ -84,6 +84,12 @@ namespace Guts.Business.Services
             return component;
         }
 
+        public async Task LoadTestsForAssignmentAsync(Assignment assignment)
+        {
+            var assignmentTests = await _testRepository.FindByAssignmentId(assignment.Id);
+            assignment.Tests = assignmentTests;
+        }
+
         public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames)
         {
             var assignmentTests = await _testRepository.FindByAssignmentId(assignment.Id);

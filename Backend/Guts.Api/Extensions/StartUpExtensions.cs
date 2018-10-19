@@ -49,14 +49,17 @@ namespace Guts.Api.Extensions
             container.RegisterMvcControllers(app);
             container.RegisterMvcViewComponents(app);
 
-            //register converters
+            //register converters in api project
             RegisterTypesWhoseNameEndsWith("Converter", container, typeof(CourseConverter).Assembly, Lifestyle.Singleton);
+
+            //register converters in business project
+            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(TestResultConverter).Assembly, Lifestyle.Singleton);
 
             //register services
             RegisterTypesWhoseNameEndsWith("Service", container, typeof(CourseService).Assembly, Lifestyle.Scoped);
 
             //register repositories
-            RegisterTypesWhoseNameEndsWith("DbRepository", container, typeof(CourseDbRepository).Assembly, Lifestyle.Scoped);
+            RegisterTypesWhoseNameEndsWith("Repository", container, typeof(CourseDbRepository).Assembly, Lifestyle.Scoped);
 
 
             container.Register<IHttpClient, HttpClientAdapter>(Lifestyle.Scoped);
@@ -131,14 +134,14 @@ namespace Guts.Api.Extensions
             );
         }
 
-        private static void RegisterTypesWhoseNameEndsWith(string classNameEndsWith,
+        private static void RegisterTypesWhoseNameEndsWith(string classAndInterfaceNameEndsWith,
             Container container,
             Assembly targetAssembly,
             Lifestyle lifestyle)
         {
             var registrations = from type in targetAssembly.GetExportedTypes()
-                where type.Name.EndsWith(classNameEndsWith) && type.GetInterfaces().Any()
-                select new { ServiceType = type.GetInterfaces().First(), ImplementationType = type };
+                where type.Name.EndsWith(classAndInterfaceNameEndsWith) && type.GetInterfaces().Any() && !type.IsInterface
+                select new { ServiceType = type.GetInterfaces().First(i => i.Name.EndsWith(classAndInterfaceNameEndsWith)), ImplementationType = type };
 
             foreach (var registration in registrations)
             {

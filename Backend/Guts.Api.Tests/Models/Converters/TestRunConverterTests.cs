@@ -78,14 +78,18 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void From_ShouldThrowExceptionIfThereAreResultsForNonExisingTests()
+        public void From_ShouldIgnoreNonExisingTests()
         {
             //Assert
             var exercise = new ExerciseBuilder().Build();
             _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
-            //Act + Assert
-            Assert.That(() => _converter.From(_createExerciseTestRunModel.Results, null, _userId, exercise), Throws.ArgumentException);
+            //Act
+            var result = _converter.From(_createExerciseTestRunModel.Results, null, _userId, exercise);
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.TestResults, Has.Count.Zero);
         }
 
         [Test]

@@ -175,6 +175,32 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
+        public void LoadTestsForAssignmentAsync_ShouldLoadExistingTests()
+        {
+            //Arrange
+            var assignment = new Exercise
+            {
+                Id = _random.NextPositive(),
+            };
+
+            var existingTests = new List<Test>
+            {
+                new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build(),
+                new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build()
+            };
+
+            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
+
+            //Act
+            _service.LoadTestsForAssignmentAsync(assignment).Wait();
+
+            //Assert
+            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+            Assert.That(assignment.Tests, Is.Not.Null);
+            Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
+        }
+
+        [Test]
         public void LoadOrCreateTestsForAssignmentAsync_ShouldCreateNonExistingTests()
         {
             //Arrange

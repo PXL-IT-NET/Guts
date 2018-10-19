@@ -51,7 +51,8 @@ namespace Guts.Api.Controllers
         /// Saves a testrun for an exercise. The testrun may contain results for one, multiple or all tests.
         /// If the exercise (or its chapter) does not exists yet (for the current period) a new exercise / chapter is created for the current period. 
         /// </summary>
-        [HttpPost]
+        [HttpPost] //keep for backwards compatibility
+        [HttpPost("forexercise")]
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -64,13 +65,15 @@ namespace Guts.Api.Controllers
 
             var exercise = await _assignmentService.GetOrCreateExerciseAsync(model.Exercise);
             var savedModel = await SaveTestRunForAssignment(model, exercise);
-            return CreatedAtAction(nameof(GetTestRun), new {id = savedModel.Id}, savedModel);
+            
+            return CreatedAtAction(nameof(GetTestRun), new {id = savedModel?.Id}, savedModel);
         }
 
         /// <summary>
         /// Saves a testrun for a component of a project. The testrun may contain results for one, multiple or all tests of that component.
         /// If the component (or its project) does noet exists yet (for the current period) a new component / project is created for the current period.
         /// </summary>
+        [HttpPost("forproject")]
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -89,7 +92,15 @@ namespace Guts.Api.Controllers
         private async Task<SavedTestRunModel> SaveTestRunForAssignment(CreateTestRunModelBase model, Assignment assignment)
         {
             var testNames = model.Results.Select(testResult => testResult.TestName);
-            await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
+
+            if (IsLector())
+            {
+                await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
+            }
+            else
+            {
+                await _assignmentService.LoadTestsForAssignmentAsync(assignment);
+            }
 
             var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), assignment);
             var savedTestRun = await _testRunService.RegisterRunAsync(testRun);

@@ -37,11 +37,7 @@ namespace Guts.Api.Tests.Controllers
             _testRunServiceMock = new Mock<ITestRunService>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _userId = _random.Next(1, int.MaxValue);
-            _controller =
-                new TestRunController(_testResultConverterMock.Object, _testRunServiceMock.Object, _assignmentServiceMock.Object)
-                {
-                    ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).Build()
-                };
+            _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
         }
 
         [Test]
@@ -92,6 +88,36 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
             _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+        }
+
+        [Test]
+        public void PostExerciseTestRun_ShouldNotCreateNewTestsIfUserIsAStudent()
+        {
+            //Arrange
+            var exercise = new Exercise
+            {
+                Id = _random.NextPositive(),
+                Code = Guid.NewGuid().ToString()
+            };
+            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
+                .ReturnsAsync(exercise);
+
+            var exerciseDto = new ExerciseDtoBuilder().WithExerciseCode(exercise.Code).Build();
+            var postedModel = new CreateExerciseTestRunModelBuilder()
+                .WithExercise(exerciseDto)
+                .WithSourceCode()
+                .Build();
+
+            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
+
+            //Act
+            _controller.PostExerciseTestRun(postedModel).Wait();
+
+            //Assert
+            _assignmentServiceMock.Verify(service => service.LoadTestsForAssignmentAsync(exercise), Times.Once);
+            _assignmentServiceMock.Verify(
+                service => service.LoadOrCreateTestsForAssignmentAsync(It.IsAny<Assignment>(),
+                    It.IsAny<IEnumerable<string>>()), Times.Never);
         }
 
         [Test]
@@ -199,6 +225,14 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(createdResult.ActionName, Is.EqualTo(nameof(_controller.GetTestRun)));
             Assert.That(createdResult.RouteValues["id"], Is.EqualTo(savedTestRunModel.Id));
             Assert.That(createdResult.Value, Is.EqualTo(savedTestRunModel));
+        }
+
+        private TestRunController CreateControllerWithUserInContext(string role)
+        {
+            return new TestRunController(_testResultConverterMock.Object, _testRunServiceMock.Object, _assignmentServiceMock.Object)
+            {
+                ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()
+            };
         }
     }
 }

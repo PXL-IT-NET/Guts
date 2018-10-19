@@ -10,6 +10,7 @@ namespace Guts.Business.Services
         Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto);
         Task<ProjectComponent> GetOrCreateProjectComponentAsync(ProjectComponentDto componentDto);
 
+        Task LoadTestsForAssignmentAsync(Assignment assignment);
         Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames);
 
         Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
