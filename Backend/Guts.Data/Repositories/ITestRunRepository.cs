@@ -8,5 +8,7 @@ namespace Guts.Data.Repositories
     public interface ITestRunRepository : IBasicRepository<TestRun>
     {
         Task<IList<TestRun>> GetUserTestRunsForExercise(int exerciseId, int userId, DateTime? date);
+
+        Task<IList<TestRun>> GetLastTestRunForExerciseOfAllUsers(int exerciseId);
     }
 }

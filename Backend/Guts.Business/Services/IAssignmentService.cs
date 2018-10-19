@@ -14,5 +14,7 @@ namespace Guts.Business.Services
 
         Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
         Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc);
+
+        Task<IList<ExerciseSourceDto>> GetAllSourceCodes(int exerciseId);
     }
 }

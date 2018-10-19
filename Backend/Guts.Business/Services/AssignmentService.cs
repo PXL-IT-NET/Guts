@@ -129,5 +129,17 @@ namespace Guts.Business.Services
 
             return testRunInfo;
         }
+
+        public async Task<IList<ExerciseSourceDto>> GetAllSourceCodes(int exerciseId)
+        {
+            var testRunsWithUser = await _testRunRepository.GetLastTestRunForExerciseOfAllUsers(exerciseId);
+
+            return testRunsWithUser.Select(testrun => new ExerciseSourceDto
+            {
+                Source = testrun.SourceCode,
+                UserId = testrun.UserId,
+                UserFullName = $"{testrun.User.FirstName} {testrun.User.LastName}".Trim()
+            }).OrderBy(dto => dto.UserFullName).ToList();
+        }
     }
 }

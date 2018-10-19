@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
@@ -57,6 +59,38 @@ namespace Guts.Api.Controllers
             var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
 
             return Ok(model);
+        }
+
+        [HttpGet("{exerciseId}/getsourcecodezip")]
+        public async Task<IActionResult> DownloadSourceCodesAsZip(int exerciseId)
+        {
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
+            var sourceCodes = await _exerciseService.GetAllSourceCodes(exerciseId);
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var sourceCode in sourceCodes)
+                    {
+                        var entry = zipArchive.CreateEntry($@"{sourceCode.UserFullName}\source.txt");
+                        using (StreamWriter writer = new StreamWriter(entry.Open()))
+                        {
+                            await writer.WriteAsync(sourceCode.Source);
+                        }
+                    }
+                }
+
+                memoryStream.Position = 0;
+                var result = new FileContentResult(memoryStream.ToArray(), "application/zip")
+                {
+                    FileDownloadName = $"Exercise_{exerciseId}_sources.zip"
+                };
+                return result;
+            }
         }
     }
 }
