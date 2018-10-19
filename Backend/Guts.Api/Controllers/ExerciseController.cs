@@ -69,7 +69,7 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
-            var sourceCodes = await _exerciseService.GetAllSourceCodes(exerciseId);
+            var sourceCodes = await _assignmentService.GetAllSourceCodes(exerciseId);
             using (var memoryStream = new MemoryStream())
             {
                 using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
