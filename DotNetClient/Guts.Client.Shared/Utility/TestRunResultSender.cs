@@ -15,21 +15,28 @@ namespace Guts.Client.Shared.Utility
             _authorizationHandler = authorizationHandler;
         }
 
-        public async Task<bool> SendAsync(TestRun testRun)
+        public async Task<bool> SendAsync(TestRunBase testRun)
         {
-            //TODO handle exceptions
-
             await RefreshAccessToken();
 
-            var webApiExercisesUrl = "api/testruns";
+            var webApiTestRunsUrl = "api/testruns";
+            switch (testRun)
+            {
+                case ExerciseTestRun _:
+                    webApiTestRunsUrl += "/forexercise";
+                    break;
+                case ProjectComponentTestRun _:
+                    webApiTestRunsUrl += "/forproject";
+                    break;
+            }
 
-            var response = await _httpHandler.PostAsJsonAsync(webApiExercisesUrl, testRun);
+            var response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 //retry with token retrieved remotely
                 await RefreshAccessToken(allowCachedToken: false);
-                response = await _httpHandler.PostAsJsonAsync(webApiExercisesUrl, testRun);
+                response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
             }
 
             return response.IsSuccessStatusCode;

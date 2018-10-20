@@ -53,11 +53,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MonitoredTestFixtureAttribute.cs" />
+    <Compile Include="MonitoredTestFixtureBaseAttribute.cs" />
+    <Compile Include="ProjectComponentTestFixtureAttribute.cs" />
     <Compile Include="TestTools\WPF\ButtonBaseExtensions.cs" />
     <Compile Include="TestTools\WPF\ControlExtensions.cs" />
     <Compile Include="TestTools\WPF\DependencyObjectExtensions.cs" />
     <Compile Include="TestTools\WPF\TestWindow.cs" />
-    <Compile Include="MonitoredTestFixtureAttribute.cs" />
+    <Compile Include="ExerciseTestFixtureAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

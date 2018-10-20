@@ -2,10 +2,8 @@
 
 namespace Guts.Client.Shared.Models
 {
-    public class TestRun
+    public abstract class TestRunBase
     {
-        public Exercise Exercise { get; set; }
-
         public IEnumerable<TestResult> Results { get; set; }
 
         public string SourceCode { get; set; }

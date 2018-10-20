@@ -9,7 +9,7 @@ namespace Guts.Client.Core.Tests
     public class AuthorizationHandlerTests
     {
         [Test]
-        [Ignore("This test opens a browser window")]
+      //  [Ignore("This test opens a browser window")]
         public void CheckIfTokenCanBeRetrievedFromBrowserLoginPage()
         {
             var usedSessionId = Guid.NewGuid().ToString();

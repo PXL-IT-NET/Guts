@@ -1,11 +1,9 @@
 ﻿namespace Guts.Client.Shared.Models
 {
-    public class Exercise
+    public class Exercise : AssignmentBase
     {
-        public string CourseCode { get; set; }
-
         public int ChapterNumber { get; set; }
 
-        public int ExerciseNumber { get; set; }
+        public string ExerciseCode { get; set; }
     }
 }

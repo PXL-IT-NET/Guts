@@ -1,21 +1,21 @@
 ﻿using Guts.Client.Shared.Utility;
-using Microsoft.Extensions.Configuration;
 
 namespace Guts.Client.Core
 {
     public class LoginWindowFactory : ILoginWindowFactory
     {
+        private readonly string _apiBaseUrl;
+        private readonly string _webAppBaseUrl;
+
+        public LoginWindowFactory(string apiBaseUrl, string webAppBaseUrl)
+        {
+            _apiBaseUrl = apiBaseUrl;
+            _webAppBaseUrl = webAppBaseUrl;
+        }
+
         public ILoginWindow Create()
         {
-            var gutsSettingsConfig = new ConfigurationBuilder()
-                .AddJsonFile("gutssettings.json", optional: false, reloadOnChange: false)
-                .Build();
-
-            var gutsSection = gutsSettingsConfig.GetSection("Guts");
-            var apiBaseUrl = gutsSection.GetValue<string>("apiBaseUrl");
-            var webAppBaseUrl = gutsSection.GetValue<string>("webAppBaseUrl");
-
-            return new LoginWindow(new GuidSessionIdGenerator(), apiBaseUrl, webAppBaseUrl);
+            return new LoginWindow(new GuidSessionIdGenerator(), _apiBaseUrl, _webAppBaseUrl);
         }
     }
 }
