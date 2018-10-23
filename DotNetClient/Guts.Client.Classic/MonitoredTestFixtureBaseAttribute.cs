@@ -47,9 +47,17 @@ namespace Guts.Client.Classic
             {
                 TestContext.Progress.WriteLine("Test run completed. Trying to send results...");
 
-                var success = _resultSender.SendAsync(testRun).Result;
+                var result = _resultSender.SendAsync(testRun).Result;
 
-                TestContext.Progress.WriteLine(success ? "Results succesfully sent." : "Sending results failed.");
+                if (result.Success)
+                {
+                    TestContext.Progress.WriteLine("Results succesfully sent.");
+                }
+                else
+                {
+                    TestContext.Progress.WriteLine("Sending results failed.");
+                    TestContext.Progress.WriteLine(result.Message);
+                }
             }
             catch (AggregateException ex)
             {

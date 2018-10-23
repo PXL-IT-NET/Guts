@@ -43,7 +43,8 @@ namespace Guts.Business.Services
                 {
                     Code = projectCode,
                     CourseId = course.Id,
-                    PeriodId = currentPeriod.Id
+                    PeriodId = currentPeriod.Id,
+                    Description = string.Empty
                 };
                 project = await _projectRepository.AddAsync(project);
             }

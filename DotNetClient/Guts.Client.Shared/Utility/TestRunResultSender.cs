@@ -15,7 +15,7 @@ namespace Guts.Client.Shared.Utility
             _authorizationHandler = authorizationHandler;
         }
 
-        public async Task<bool> SendAsync(TestRunBase testRun)
+        public async Task<Result> SendAsync(TestRunBase testRun)
         {
             await RefreshAccessToken();
 
@@ -39,7 +39,13 @@ namespace Guts.Client.Shared.Utility
                 response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
             }
 
-            return response.IsSuccessStatusCode;
+            var result = new Result(response.IsSuccessStatusCode);
+            if (!result.Success)
+            {
+                result.Message = await response.Content.ReadAsStringAsync();
+            }
+
+            return result;
         }
 
         private async Task RefreshAccessToken(bool allowCachedToken = true)

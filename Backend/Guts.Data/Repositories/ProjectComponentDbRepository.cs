@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Guts.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories
 {
@@ -9,9 +10,14 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public Task<ProjectComponent> GetSingleAsync(int projectId, string componentCode)
+        public async Task<ProjectComponent> GetSingleAsync(int projectId, string componentCode)
         {
-            throw new System.NotImplementedException();
+            var component = await _context.ProjectComponents.FirstOrDefaultAsync(c => c.ProjectId == projectId && c.Code == componentCode);
+            if (component == null)
+            {
+                throw new DataNotFoundException();
+            }
+            return component;
         }
     }
 }
