@@ -21,6 +21,7 @@ using SimpleInjector;
 using System;
 using System.Reflection;
 using System.Text;
+using Microsoft.AspNetCore.Http.Connections;
 
 namespace Guts.Api
 {
@@ -107,7 +108,10 @@ namespace Guts.Api
                     }
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
 
             services.AddSwagger();
         }
@@ -174,7 +178,10 @@ namespace Guts.Api
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<AuthHub>("/authHub");
+                routes.MapHub<AuthHub>("/authHub", options =>
+                {
+                    options.Transports = HttpTransportType.WebSockets | HttpTransportType.LongPolling;
+                });
             });
 
             app.UseMvc();

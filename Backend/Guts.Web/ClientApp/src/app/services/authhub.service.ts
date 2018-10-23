@@ -7,20 +7,18 @@ import * as signalR from "@aspnet/signalr";
 
 @Injectable()
 export class AuthHubService {
-  private apiBaseUrl: string;
   private _connection: signalR.HubConnection;
 
   constructor(private settingsService: ClientSettingsService) {
 
     this._connection = null;
-    this.apiBaseUrl = '';
   }
 
   private get connectionObservable(): Observable<signalR.HubConnection> {
     if (!this._connection) {
       return this.settingsService.get().mergeMap<ClientSettings, signalR.HubConnection>((settings: ClientSettings) => {
         this._connection = new signalR.HubConnectionBuilder()
-          .withUrl(settings.apiBaseUrl + '/authHub')
+          .withUrl(settings.apiBaseUrl + 'authHub')
           .build();       
         return [this._connection];
       });

@@ -21,12 +21,13 @@ namespace Guts.Client.Core
         {
             _courseCode = courseCode;
 
-            var executingFolder = new DirectoryInfo(Assembly.GetExecutingAssembly().Location);
-            var projectFolder = executingFolder.Parent?.Parent?.Parent?.Parent;
-            Assert.That(projectFolder, Is.Not.Null, () => "Technical error: could not find the path of the project.");
+            //var executingFolder = new DirectoryInfo(AppContext.BaseDirectory);
+            //var projectFolder = executingFolder.Parent?.Parent?.Parent;
+            //Assert.That(projectFolder, Is.Not.Null, () => "Technical error: could not find the path of the project.");
 
-            var gutsConfig = new ConfigurationBuilder().SetBasePath(projectFolder.FullName)
-                .AddJsonFile("gutssettings.json", optional: false).Build();
+
+            //.SetBasePath(projectFolder.FullName)
+            var gutsConfig = new ConfigurationBuilder().AddJsonFile("gutssettings.json", optional: false).Build();
             var gutsSection = gutsConfig.GetSection("Guts");
 
             string apiBaseUrl = gutsSection.GetValue("apiBaseUrl", string.Empty);

@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Guts.Client.Shared.Utility;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Guts.Client.Shared.Utility;
-using Microsoft.AspNetCore.SignalR.Client;
 
 
 namespace Guts.Client.Core
@@ -57,6 +58,11 @@ namespace Guts.Client.Core
             Uri hubUri = new Uri(apiBaseUri, "authhub");
             _gutsHubConnection = new HubConnectionBuilder()
                 .WithUrl(hubUri.AbsoluteUri)
+                .ConfigureLogging(logging =>
+                {
+                    logging.SetMinimumLevel(LogLevel.Information);
+                    logging.AddDebug();
+                })
                 .Build();
 
             _gutsHubConnection.On<string>("ReceiveToken", token =>
@@ -76,7 +82,7 @@ namespace Guts.Client.Core
             //open login window
             Uri webAppBaseUri = new Uri(_webAppBaseUrl);
             Uri loginPageUri = new Uri(webAppBaseUri, $"login?s={sessionId}");
-            OpenUrlInBrowser(loginPageUri.AbsoluteUri); 
+            OpenUrlInBrowser(loginPageUri.AbsoluteUri);
         }
 
         private void OpenUrlInBrowser(string url)
