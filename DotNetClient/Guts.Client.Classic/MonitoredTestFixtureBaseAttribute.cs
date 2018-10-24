@@ -45,7 +45,7 @@ namespace Guts.Client.Classic
         {
             try
             {
-                TestContext.Progress.WriteLine("Test run completed. Trying to send results...");
+                TestContext.Progress.WriteLine("Trying to send results...");
 
                 var result = _resultSender.SendAsync(testRun).Result;
 

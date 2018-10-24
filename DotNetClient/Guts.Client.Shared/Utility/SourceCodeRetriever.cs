@@ -15,9 +15,10 @@ namespace Guts.Client.Shared.Utility
             var sourceCodeBuilder = new StringBuilder();
             foreach (var path in paths)
             {
-                sourceCodeBuilder.AppendLine($"///{path}///");
+                var trimmedPath = path.Trim('\n', '\r');
+                sourceCodeBuilder.AppendLine($"///{trimmedPath}///");
                 sourceCodeBuilder.AppendLine();
-                sourceCodeBuilder.Append(Solution.Current.GetFileContent(path));
+                sourceCodeBuilder.Append(Solution.Current.GetFileContent(trimmedPath));
                 sourceCodeBuilder.AppendLine();
             }
 

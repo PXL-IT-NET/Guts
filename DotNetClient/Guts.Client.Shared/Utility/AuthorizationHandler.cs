@@ -32,19 +32,19 @@ namespace Guts.Client.Shared.Utility
                     loginWindow.TokenRetrieved += token =>
                     {
                         StoreTokenLocally(token);
-                        retrieveTokenTaskCompletionSource.SetResult(token);
+                        retrieveTokenTaskCompletionSource.TrySetResult(token);
                     };
 
                     loginWindow.Closed += (sender, e) =>
                     {
-                        retrieveTokenTaskCompletionSource.SetCanceled();
+                        retrieveTokenTaskCompletionSource.TrySetCanceled();
                     };
 
                     await loginWindow.StartLoginProcedureAsync();
                 }
                 catch (Exception ex)
                 {
-                    retrieveTokenTaskCompletionSource.SetException(ex);
+                    retrieveTokenTaskCompletionSource.TrySetException(ex);
                 }
             });
 

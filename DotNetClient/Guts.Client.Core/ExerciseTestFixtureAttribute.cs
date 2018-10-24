@@ -31,23 +31,38 @@ namespace Guts.Client.Core
 
         public override void AfterTest(ITest test)
         {
-            var results = TestRunResultAccumulator.Instance.TestResults;
+            TestContext.Progress.WriteLine("Test run completed.");
 
-            var exercise = new Exercise
+            try
             {
-                CourseCode = _courseCode,
-                ChapterNumber = _chapter,
-                ExerciseCode = _exerciseCode,
-            };
+                var results = TestRunResultAccumulator.Instance.TestResults;
 
-            var testRun = new ExerciseTestRun
+                var exercise = new Exercise
+                {
+                    CourseCode = _courseCode,
+                    ChapterNumber = _chapter,
+                    ExerciseCode = _exerciseCode,
+                };
+
+                var testRun = new ExerciseTestRun
+                {
+                    Exercise = exercise,
+                    Results = results,
+                };
+
+                if (!string.IsNullOrEmpty(_sourceCodeRelativeFilePaths))
+                {
+                    TestContext.Progress.WriteLine($"Reading source code files: {_sourceCodeRelativeFilePaths}");
+                    testRun.SourceCode = SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);
+                }
+
+                SendTestResults(testRun);
+            }
+            catch (Exception ex)
             {
-                Exercise = exercise,
-                Results = results,
-                SourceCode = SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths)
-            };
-
-            SendTestResults(testRun);
+                TestContext.Error.WriteLine("Something went wrong while sending the test results.");
+                TestContext.Error.WriteLine($"Exception: {ex}");
+            }
         }
     }
 }
