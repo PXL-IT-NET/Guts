@@ -19,7 +19,6 @@ using NSwag.AspNetCore;
 using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
 using System;
-using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Http.Connections;
 
@@ -49,6 +48,8 @@ namespace Guts.Api
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
+
+            services.Configure<SignalROptions>(Configuration.GetSection("SignalR"));
 
             services.AddCors(options =>
             {
@@ -108,10 +109,12 @@ namespace Guts.Api
                     }
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
+            var signalRSection = Configuration.GetSection("SignalR");
+            var redisConnectionString = signalRSection.GetValue<string>("RedisConnectionString");
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
-            });
+            }).AddRedis(redisConnectionString);
 
             services.AddSwagger();
         }

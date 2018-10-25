@@ -1,42 +1,41 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 
 namespace Guts.Api.Hubs
 {
+    public class SignalROptions
+    {
+        public string SessionSalt { get; set; }
+    }
+
     public class AuthHub : Hub
     {
-        private static readonly ConcurrentDictionary<string, string> _sessionDictionary = new ConcurrentDictionary<string, string>();
+        private readonly IOptions<SignalROptions> _options;
+
+        public AuthHub(IOptions<SignalROptions> options)
+        {
+            _options = options;
+        }
 
         public async Task StartLoginSession(string sessionId)
         {
-            if(_sessionDictionary.TryAdd(sessionId, Context.ConnectionId)) //Ensure the session can only be linked to the connection that first starts it
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
-            }
+            await Groups.AddToGroupAsync(Context.ConnectionId, GetGroupNameForSession(sessionId));
         }
 
         public async Task SendToken(string sessionId, string token)
         {
-            await Clients.Group(sessionId).SendAsync("ReceiveToken", token);
+            await Clients.Group(GetGroupNameForSession(sessionId)).SendAsync("ReceiveToken", token);
         }
 
         public async Task Cancel(string sessionId)
         {
-            await Clients.Group(sessionId).SendAsync("Cancel");
+            await Clients.Group(GetGroupNameForSession(sessionId)).SendAsync("Cancel");
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        private string GetGroupNameForSession(string sessionId)
         {
-            var sessionKeyValuePair = _sessionDictionary.FirstOrDefault(kv => kv.Value == Context.ConnectionId);
-            if (!sessionKeyValuePair.Equals(default(KeyValuePair<string, string>)))
-            {
-                _sessionDictionary.TryRemove(sessionKeyValuePair.Key, out var _);
-            }
-            await base.OnDisconnectedAsync(exception);
+            return sessionId + _options.Value.SessionSalt;
         }
     }
 }
