@@ -1,5 +1,4 @@
 ﻿using Guts.Api.Extensions;
-using Guts.Api.Hubs;
 using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,7 +19,6 @@ using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
 using System;
 using System.Text;
-using Microsoft.AspNetCore.Http.Connections;
 
 namespace Guts.Api
 {
@@ -48,8 +46,6 @@ namespace Guts.Api
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-
-            services.Configure<SignalROptions>(Configuration.GetSection("SignalR"));
 
             services.AddCors(options =>
             {
@@ -108,13 +104,6 @@ namespace Guts.Api
                         options.SslPort = 44318;
                     }
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
-            var signalRSection = Configuration.GetSection("SignalR");
-            var redisConnectionString = signalRSection.GetValue<string>("RedisConnectionString");
-            services.AddSignalR(options =>
-            {
-                options.EnableDetailedErrors = true;
-            }).AddRedis(redisConnectionString);
 
             services.AddSwagger();
         }
@@ -178,14 +167,6 @@ namespace Guts.Api
             app.UseSimpleInjector(_container, Configuration);
 
             app.UseAuthentication();
-
-            app.UseSignalR(routes =>
-            {
-                routes.MapHub<AuthHub>("/authHub", options =>
-                {
-                    options.Transports = HttpTransportType.WebSockets | HttpTransportType.LongPolling;
-                });
-            });
 
             app.UseMvc();
         }

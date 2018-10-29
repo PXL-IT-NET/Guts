@@ -4,6 +4,8 @@ using Guts.Api.Models;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Security;
+using Guts.Business.Services;
+using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -23,27 +25,29 @@ namespace Guts.Api.Controllers
         private readonly ICaptchaValidator _captchaValidator;
         private readonly IMailSender _mailSender;
         private readonly ITokenAccessPassFactory _tokenAccessPassFactory;
+        private readonly ILoginSessionService _loginSessionService;
 
         public AuthController(UserManager<User> userManager,
             IPasswordHasher<User> passwordHasher,
             ICaptchaValidator captchaValidator,
             IMailSender mailSender,
-            ITokenAccessPassFactory tokenAccessPassFactory)
+            ITokenAccessPassFactory tokenAccessPassFactory,
+            ILoginSessionService loginSessionService)
         {
             _userManager = userManager;
             _passwordHasher = passwordHasher;
             _captchaValidator = captchaValidator;
             _mailSender = mailSender;
             _tokenAccessPassFactory = tokenAccessPassFactory;
+            _loginSessionService = loginSessionService;
         }
 
         /// <summary>
         /// Registers a new user in the system.
         /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
         /// </summary>
-        [HttpPost]
+        [HttpPost("register")]
         [AllowAnonymous]
-        [Route("register")]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
@@ -89,9 +93,8 @@ namespace Guts.Api.Controllers
         /// <summary>
         /// Confirms the email address of a registered user by providing the token that was send to the users email adres.
         /// </summary>
-        [HttpPost]
+        [HttpPost("confirmemail")]
         [AllowAnonymous]
-        [Route("confirmemail")]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailModel model)
@@ -122,9 +125,8 @@ namespace Guts.Api.Controllers
         /// <summary>
         /// Sends an email to a user with a token (link) that can be used to reset the password of the user.
         /// </summary>
-        [HttpPost]
+        [HttpPost("forgotpassword")]
         [AllowAnonymous]
-        [Route("forgotpassword")]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> SendForgotPasswordMail([FromBody] ForgotPasswordModel model)
@@ -155,9 +157,8 @@ namespace Guts.Api.Controllers
         /// <summary>
         /// Resets the password of a user using a token that was sent to the users email address.
         /// </summary>
-        [HttpPost]
+        [HttpPost("resetpassword")]
         [AllowAnonymous]
-        [Route("resetpassword")]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
@@ -188,9 +189,8 @@ namespace Guts.Api.Controllers
         /// <summary>
         /// Request a (bearer) token that can be used to authenticate yourself in future requests.
         /// </summary>
-        [HttpPost(nameof(CreateToken))]
+        [HttpPost("token")]
         [AllowAnonymous]
-        [Route("token")]
         [ProducesResponseType(typeof(TokenAccessPass), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -221,7 +221,58 @@ namespace Guts.Api.Controllers
             var userRoles = await _userManager.GetRolesAsync(user);
             var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims, userRoles);
 
+            if (!string.IsNullOrEmpty(model.LoginSessionPublicIdentifier))
+            {
+                await _loginSessionService.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier, tokenAccessPass.Token);
+            }
+
             return Ok(tokenAccessPass);
+        }
+
+        [HttpPost("loginsession")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> CreateLoginSession()
+        {
+            await _loginSessionService.CleanUpOldSessionsAsync();
+            var session = await _loginSessionService.CreateSessionAsync(HttpContext.Connection.RemoteIpAddress.ToString());
+            return Ok(session);
+        }
+
+        [HttpPost("loginsession/{publicIdentifier}")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> RetrieveLoginSession(string publicIdentifier, [FromBody] string secretToken)
+        {
+            var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
+            try
+            {
+                var session = await _loginSessionService.GetSessionAsync(publicIdentifier, clientIp, secretToken);
+                return Ok(session);
+            }
+            catch (DataNotFoundException)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPatch("loginsession/{publicIdentifier}/cancel")]
+        [AllowAnonymous]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task<IActionResult> CancelLoginSession(string publicIdentifier)
+        {
+            var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
+
+            try
+            {
+                await _loginSessionService.CancelSessionAsync(publicIdentifier, clientIp);
+                return Ok();
+            }
+            catch (DataNotFoundException)
+            {
+                return BadRequest();
+            }
         }
 
         private async Task SendConfirmUserEmailMessage(User user)
@@ -229,5 +280,6 @@ namespace Guts.Api.Controllers
             var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             await _mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
         }
+
     }
 }

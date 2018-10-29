@@ -4,18 +4,18 @@ namespace Guts.Client.Core
 {
     public class LoginWindowFactory : ILoginWindowFactory
     {
-        private readonly string _apiBaseUrl;
+        private readonly IHttpHandler _httpHandler;
         private readonly string _webAppBaseUrl;
 
-        public LoginWindowFactory(string apiBaseUrl, string webAppBaseUrl)
+        public LoginWindowFactory(IHttpHandler httpHandler, string webAppBaseUrl)
         {
-            _apiBaseUrl = apiBaseUrl;
+            _httpHandler = httpHandler;
             _webAppBaseUrl = webAppBaseUrl;
         }
 
         public ILoginWindow Create()
         {
-            return new LoginWindow(new GuidSessionIdGenerator(), _apiBaseUrl, _webAppBaseUrl);
+            return new LoginWindow(_httpHandler, _webAppBaseUrl);
         }
     }
 }

@@ -54,6 +54,13 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
+        public ControllerContextBuilder WithClientIp(string ipString)
+        {
+            var ipAddress = IPAddress.Parse(ipString);
+            _context.HttpContext.Connection.RemoteIpAddress = ipAddress;
+            return this;
+        }
+
         public ControllerContext Build()
         {
             return _context;

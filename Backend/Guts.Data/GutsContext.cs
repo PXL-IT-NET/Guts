@@ -24,6 +24,8 @@ namespace Guts.Data
         public DbSet<TestRun> TestRuns { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
 
+        public DbSet<LoginSession> LoginSessions { get; set; }
+
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
             //var contextServices = ((IInfrastructure<IServiceProvider>)this).Instance;

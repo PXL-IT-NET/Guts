@@ -44,7 +44,7 @@ namespace Guts.Client.Core
 
             var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
 
-            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(apiBaseUrl, webAppBaseUrl));
+            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl));
             _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
         }
 
