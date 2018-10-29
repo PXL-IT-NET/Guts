@@ -1,18 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Security.Claims;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Security;
+using Guts.Business.Services;
 using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Security.Claims;
+using Guts.Data;
 
 namespace Guts.Api.Tests.Controllers
 {
@@ -25,6 +27,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IMailSender> _mailSenderMock;
         private Mock<IPasswordHasher<User>> _passwordHasherMock;
         private Mock<ITokenAccessPassFactory> _accessPassFactoryMock;
+        private Mock<ILoginSessionService> _loginSessionServiceMock;
 
         [SetUp]
         public void Setup()
@@ -58,11 +61,14 @@ namespace Guts.Api.Tests.Controllers
 
             _accessPassFactoryMock = new Mock<ITokenAccessPassFactory>();
 
+            _loginSessionServiceMock = new Mock<ILoginSessionService>();
+
             _controller = new AuthController(_userManagerMock.Object,
                 _passwordHasherMock.Object,
                 _captchaValidatorMock.Object,
                 _mailSenderMock.Object,
-               _accessPassFactoryMock.Object);
+               _accessPassFactoryMock.Object,
+                _loginSessionServiceMock.Object);
 
             var context = new ControllerContextBuilder().WithClientIp().Build();
             _controller.ControllerContext = context;
@@ -305,7 +311,7 @@ namespace Guts.Api.Tests.Controllers
             _userManagerMock.Verify(manager => manager.FindByNameAsync(model.Email), Times.Once);
             _passwordHasherMock.Verify(hasher => hasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, model.Password), Times.Once);
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
-            
+
         }
 
         [Test]
@@ -343,7 +349,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void CreateTokenShoudReturnOkResultWithTokenIfCredentialsAreCorrect()
+        public void CreateToken_ShoudReturnOkResultWithTokenIfCredentialsAreCorrect()
         {
             //Arrange
             var model = new LoginModelBuilder().Build();
@@ -387,6 +393,47 @@ namespace Guts.Api.Tests.Controllers
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
             _userManagerMock.Verify(manager => manager.GetClaimsAsync(existingUser), Times.Once);
             _accessPassFactoryMock.Verify(factory => factory.Create(existingUser, existingClaims, existingRoles), Times.Once);
+
+            _loginSessionServiceMock.Verify(
+                service => service.SetLoginTokenForSessionAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+
+            Assert.That(result.Value, Is.SameAs(createdAccesPass));
+        }
+
+        [Test]
+        public void CreateToken_ShoudSaveTokenToSessionIfASessionIsProvided()
+        {
+            //Arrange
+            var model = new LoginModelBuilder().WithSession().Build();
+
+            var existingUser = new User
+            {
+                EmailConfirmed = true
+            };
+            _userManagerMock.Setup(manager => manager.FindByNameAsync(It.IsAny<string>())).ReturnsAsync(existingUser);
+
+            _passwordHasherMock
+                .Setup(hasher => hasher.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(PasswordVerificationResult.Success);
+
+            var createdAccesPass = new TokenAccessPass
+            {
+                Token = Guid.NewGuid().ToString()
+            };
+
+            _accessPassFactoryMock
+                .Setup(factory => factory.Create(It.IsAny<User>(), It.IsAny<IList<Claim>>(), It.IsAny<IList<string>>()))
+                .Returns(createdAccesPass);
+
+            //Act
+            var result = _controller.CreateToken(model).Result as OkObjectResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+
+            _loginSessionServiceMock.Verify(
+                service => service.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier,
+                    createdAccesPass.Token), Times.Once);
 
             Assert.That(result.Value, Is.SameAs(createdAccesPass));
         }
@@ -601,7 +648,7 @@ namespace Guts.Api.Tests.Controllers
             var serializableError = result.Value as SerializableError;
             Assert.That(serializableError, Is.Not.Null);
             Assert.That(serializableError.Keys, Has.One.EqualTo(errorKey));
-            _userManagerMock.Verify(manager => manager.ResetPasswordAsync(It.IsAny<User>(),It.IsAny<string>() , It.IsAny<string>()), Times.Never);
+            _userManagerMock.Verify(manager => manager.ResetPasswordAsync(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         [Test]
@@ -677,5 +724,119 @@ namespace Guts.Api.Tests.Controllers
             _userManagerMock.Verify(manager => manager.ResetPasswordAsync(existingUser, model.Token, model.Password), Times.Once);
         }
 
+        [Test]
+        public void CreateLoginSession_ShouldCreateASessionUsingRemoteIpOfClient()
+        {
+            //Arrange
+            var createdSession = new LoginSession();
+            _loginSessionServiceMock.Setup(service => service.CreateSessionAsync(It.IsAny<string>())).ReturnsAsync(createdSession);
+
+            var clientIp = "123.1.123.0";
+            var context = new ControllerContextBuilder().WithClientIp(clientIp).Build();
+            _controller.ControllerContext = context;
+
+            //Act
+            var result = _controller.CreateLoginSession().Result as OkObjectResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Value, Is.SameAs(createdSession));
+            _loginSessionServiceMock.Verify(service => service.CreateSessionAsync(clientIp), Times.Once);
+        }
+
+        [Test]
+        public void CreateLoginSession_ShouldCleanUpOldSessions()
+        {
+            //Act
+            _controller.CreateLoginSession().Wait();
+
+            //Assert
+            _loginSessionServiceMock.Verify(service => service.CleanUpOldSessionsAsync(), Times.Once);
+        }
+
+        [Test]
+        public void RetrieveLoginSession_ShouldReturnSessionWhenSecretAndClientIpMatch()
+        {
+            //Arrange
+            var clientIp = "100.1.123.0";
+            var context = new ControllerContextBuilder().WithClientIp(clientIp).Build();
+            _controller.ControllerContext = context;
+
+            var existingSession = new LoginSession
+            {
+                PublicIdentifier = Guid.NewGuid().ToString(),
+                IpAddress = clientIp,
+                SessionToken = Guid.NewGuid().ToString()
+            };
+
+            _loginSessionServiceMock.Setup(service => service.GetSessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingSession);
+
+            //Act
+            var result = _controller.RetrieveLoginSession(existingSession.PublicIdentifier, existingSession.SessionToken).Result as ObjectResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Value, Is.SameAs(existingSession));
+            _loginSessionServiceMock.Verify(service => service.GetSessionAsync(existingSession.PublicIdentifier, clientIp, existingSession.SessionToken), Times.Once);
+        }
+
+        [Test]
+        public void RetrieveLoginSession_ShouldReturnBadRequestWhenSessionCannotBeFound()
+        {
+            //Arrange
+            var clientIp = "100.1.123.0";
+            var context = new ControllerContextBuilder().WithClientIp(clientIp).Build();
+            _controller.ControllerContext = context;
+
+            var somePublicIdentifier = Guid.NewGuid().ToString();
+            var someSecretToken = Guid.NewGuid().ToString();
+
+            _loginSessionServiceMock.Setup(service => service.GetSessionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Throws<DataNotFoundException>();
+
+            //Act
+            var result = _controller.RetrieveLoginSession(somePublicIdentifier, someSecretToken).Result as BadRequestResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _loginSessionServiceMock.Verify(service => service.GetSessionAsync(somePublicIdentifier, clientIp, someSecretToken), Times.Once);
+        }
+
+        [Test]
+        public void CancelLoginSession_ShouldCancelSessionIfFound()
+        {
+            //Arrange
+            var clientIp = "200.1.123.0";
+            var context = new ControllerContextBuilder().WithClientIp(clientIp).Build();
+            _controller.ControllerContext = context;
+
+            var sessionPublicIdentifier = Guid.NewGuid().ToString();
+
+            //Act
+            var result = _controller.CancelLoginSession(sessionPublicIdentifier).Result as OkResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _loginSessionServiceMock.Verify(service => service.CancelSessionAsync(sessionPublicIdentifier, clientIp), Times.Once);
+        }
+
+        [Test]
+        public void CancelLoginSession_ShouldReturnBadRequestWhenSessionCannotBeFound()
+        {
+            //Arrange
+            var clientIp = "100.1.123.0";
+            var context = new ControllerContextBuilder().WithClientIp(clientIp).Build();
+            _controller.ControllerContext = context;
+
+            var somePublicIdentifier = Guid.NewGuid().ToString();
+
+            _loginSessionServiceMock.Setup(service => service.CancelSessionAsync(It.IsAny<string>(), It.IsAny<string>())).Throws<DataNotFoundException>();
+
+            //Act
+            var result = _controller.CancelLoginSession(somePublicIdentifier).Result as BadRequestResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _loginSessionServiceMock.Verify(service => service.CancelSessionAsync(somePublicIdentifier, clientIp), Times.Once);
+        }
     }
 }

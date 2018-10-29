@@ -12,8 +12,15 @@ namespace Guts.Api.Tests.Builders
             _model = new LoginModel
             {
                 Email = Guid.NewGuid().ToString(),
-                Password = Guid.NewGuid().ToString()
+                Password = Guid.NewGuid().ToString(),
+                LoginSessionPublicIdentifier = null
             };
+        }
+
+        public LoginModelBuilder WithSession()
+        {
+            _model.LoginSessionPublicIdentifier = Guid.NewGuid().ToString();
+            return this;
         }
 
         public LoginModel Build()

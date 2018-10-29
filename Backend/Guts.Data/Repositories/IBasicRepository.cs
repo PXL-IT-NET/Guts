@@ -6,8 +6,10 @@ namespace Guts.Data.Repositories
 {
     public interface IBasicRepository<T> where T : class, IDomainObject
     {
-        Task<T> AddAsync(T newEntity);
         Task<T> GetByIdAsync(int id);
         Task<IList<T>> GetAllAsync();
+        Task<T> AddAsync(T newEntity);
+        Task<T> UpdateAsync(T existingEntity);
+        Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete);
     }
 }

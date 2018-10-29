@@ -1,41 +1,27 @@
-﻿using Guts.Client.Shared.Utility;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
+﻿using Guts.Client.Core.Models;
+using Guts.Client.Shared.Utility;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 
 namespace Guts.Client.Core
 {
-    public interface ISessionIdGenerator
-    {
-        string NewId();
-    }
 
-    public class GuidSessionIdGenerator : ISessionIdGenerator
-    {
-        public string NewId()
-        {
-            return Guid.NewGuid().ToString();
-        }
-    }
 
     public class LoginWindow : ILoginWindow
     {
-        private readonly ISessionIdGenerator _sessionIdGenerator;
-        private readonly string _apiBaseUrl;
+        private readonly IHttpHandler _httpHandler;
         private readonly string _webAppBaseUrl;
-        private HubConnection _gutsHubConnection;
 
         public event TokenRetrievedHandler TokenRetrieved;
         public event EventHandler Closed;
 
-        public LoginWindow(ISessionIdGenerator sessionIdGenerator, string apiBaseUrl, string webAppBaseUrl)
+        public LoginWindow(IHttpHandler httpHandler, string webAppBaseUrl)
         {
-            _sessionIdGenerator = sessionIdGenerator;
-            _apiBaseUrl = apiBaseUrl;
+            _httpHandler = httpHandler;
             _webAppBaseUrl = webAppBaseUrl;
         }
 
@@ -51,38 +37,26 @@ namespace Guts.Client.Core
                 throw new FieldAccessException($"No handler set for {nameof(Closed)} event.");
             }
 
-            var sessionId = _sessionIdGenerator.NewId();
-
-            //connect to the hub
-            Uri apiBaseUri = new Uri(_apiBaseUrl);
-            Uri hubUri = new Uri(apiBaseUri, "authhub");
-            _gutsHubConnection = new HubConnectionBuilder()
-                .WithUrl(hubUri.AbsoluteUri)
-                .ConfigureLogging(logging =>
-                {
-                    logging.SetMinimumLevel(LogLevel.Information);
-                    logging.AddDebug();
-                })
-                .Build();
-
-            _gutsHubConnection.On<string>("ReceiveToken", token =>
-            {
-                TokenRetrieved.Invoke(token);
-            });
-
-            _gutsHubConnection.On("Cancel", () =>
-            {
-                Closed.Invoke(this, new EventArgs());
-            });
-
-            await _gutsHubConnection.StartAsync();
-
-            await _gutsHubConnection.SendAsync("StartLoginSession", sessionId);
+            var session = await CreateLoginSessionAsync();
 
             //open login window
             Uri webAppBaseUri = new Uri(_webAppBaseUrl);
-            Uri loginPageUri = new Uri(webAppBaseUri, $"login?s={sessionId}");
+            Uri loginPageUri = new Uri(webAppBaseUri, $"login?s={session.PublicIdentifier}");
             OpenUrlInBrowser(loginPageUri.AbsoluteUri);
+
+            var maxLoginTimeInSeconds = 90;
+            var pollingIntervalInMilliSeconds = 400;
+            var token = await WaitForTokenAsync(session.PublicIdentifier, session.SessionToken, pollingIntervalInMilliSeconds, maxLoginTimeInSeconds);
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                TokenRetrieved?.Invoke(token);
+            }
+        }
+
+        private async Task<LoginSession> CreateLoginSessionAsync()
+        {
+            return await _httpHandler.PostAsJsonAsync<Object, LoginSession>("api/auth/loginsession", null);
         }
 
         private void OpenUrlInBrowser(string url)
@@ -111,6 +85,41 @@ namespace Guts.Client.Core
                     throw;
                 }
             }
+        }
+
+        private async Task<string> WaitForTokenAsync(string loginSessionPublicIdentifier, string sessionToken, int delayInMilliSeconds, int timeoutInSeconds)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
+            var pollingTask = Task.Run(async () =>
+            {
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+                while (!cancellationToken.IsCancellationRequested && stopWatch.Elapsed.TotalSeconds < timeoutInSeconds)
+                {
+                    var session =
+                        await _httpHandler.PostAsJsonAsync<string, LoginSession>(
+                            $"api/auth/loginsession/{loginSessionPublicIdentifier}", sessionToken);
+
+                    if (!string.IsNullOrEmpty(session.LoginToken))
+                    {
+                        return session.LoginToken;
+                    }
+
+                    if (session.IsCancelled)
+                    {
+                        Closed?.Invoke(this, new EventArgs());
+                        return string.Empty;
+                    }
+
+                    Thread.Sleep(delayInMilliSeconds);
+                }
+                stopWatch.Stop();
+                Closed?.Invoke(this, new EventArgs());
+                return string.Empty;
+            }, cancellationToken);
+
+            return await pollingTask;
         }
     }
 }

@@ -10,5 +10,7 @@ namespace Guts.Api.Models
 
         [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; }
+
+        public string LoginSessionPublicIdentifier { get; set; }
     }
 }
