@@ -85,6 +85,7 @@ namespace Guts.Api.Controllers
                 }
 
                 memoryStream.Position = 0;
+
                 var result = new FileContentResult(memoryStream.ToArray(), "application/zip")
                 {
                     FileDownloadName = $"Exercise_{exerciseId}_sources.zip"

@@ -38,7 +38,7 @@ Let's assume we are writing a test for a WPF Exercise that has *MainWindow* as i
 Create a test class (e.g. *MainWindowTests*).
 
 ```csharp
-[MonitoredTestFixture("dotNet1", 5, 3), Apartment(ApartmentState.STA)]
+[ExerciseTestFixture("dotNet1", 5, "3"), Apartment(ApartmentState.STA)]
 public class MainWindowTests
 {
     private MainWindow _mainWindow;
@@ -65,7 +65,7 @@ public class MainWindowTests
 
 You should use *NUnit* as your test framework (*NUnit* is included in the *Guts.Client* package).
 
-Instead of the `[TestFixture]` attribute you must use the `[MonitoredTestFixture]` attribute.
+Instead of the `[TestFixture]` attribute you must use the `[ExerciseTestFixture]` attribute.
 This attribute takes 3 parameters:
 1. The code of the course in the backend.
 2. The number of the chapter.
