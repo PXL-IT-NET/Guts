@@ -2,7 +2,3 @@ runtime: custom
 env: flex
 env_variables:
  ASPNETCORE_ENVIRONMENT: 'Production'
-# We must use manual_scaling with one instance (for now) because SignalR is used and the automatic-scaling or basic scaling does not support sticky sessions
-# See: https://cloud.google.com/appengine/docs/standard/python/config/appref
-#manual_scaling:
-# instances: 1

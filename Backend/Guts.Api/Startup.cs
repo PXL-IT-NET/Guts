@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 using Microsoft.IdentityModel.Tokens;
 using NJsonSchema;
 using NSwag;
@@ -18,6 +20,7 @@ using NSwag.AspNetCore;
 using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Guts.Api
@@ -59,10 +62,15 @@ namespace Guts.Api
 
             services.AddDbContext<GutsContext>(options =>
             {
-                options.UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"), sqlOptions =>
-                {
-                    sqlOptions.MigrationsAssembly("Guts.Data");
-                });
+                options
+                    .UseLoggerFactory(new LoggerFactory(new[]
+                    {
+                        new DebugLoggerProvider(
+                            (category, level) =>
+                                category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information),
+                    }))
+                    .UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"),
+                        sqlOptions => { sqlOptions.MigrationsAssembly("Guts.Data"); });
             });
 
             services.AddIdentity<User, Role>(options =>
@@ -145,6 +153,7 @@ namespace Guts.Api
 
                 settings.PostProcess = document =>
                 {
+                    document.Schemes = new List<SwaggerSchema> {SwaggerSchema.Https};
                     document.Info.Title = "GUTS Api";
                     document.Info.Description =
                         "Service that collects and queries data about runs of automated tests in programming exercises.";

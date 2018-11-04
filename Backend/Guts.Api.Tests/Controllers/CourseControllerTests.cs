@@ -6,6 +6,7 @@ using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
+using Guts.Data.Repositories;
 using Guts.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -22,6 +23,8 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ICourseConverter> _courseConverterMock;
         private Random _random;
+        private Mock<IChapterRepository> _chapterRepositoryMock;
+        private Mock<IAssignmentService> _assignmentServiceMock;
 
 
         [SetUp]
@@ -30,7 +33,13 @@ namespace Guts.Api.Tests.Controllers
             _courseServiceMock = new Mock<ICourseService>();
             _chapterServiceMock = new Mock<IChapterService>();
             _courseConverterMock = new Mock<ICourseConverter>();
-            _controller = new CourseController(_courseServiceMock.Object, _chapterServiceMock.Object, _courseConverterMock.Object);
+            _chapterRepositoryMock = new Mock<IChapterRepository>();
+            _assignmentServiceMock = new Mock<IAssignmentService>();
+            _controller = new CourseController(_courseServiceMock.Object, 
+                _chapterServiceMock.Object, 
+                _chapterRepositoryMock.Object, 
+                _assignmentServiceMock.Object, 
+                _courseConverterMock.Object);
             _random = new Random();
         }
 

@@ -28,9 +28,6 @@ namespace Guts.Data
 
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
-            //var contextServices = ((IInfrastructure<IServiceProvider>)this).Instance;
-            //var loggerFactory = contextServices.GetRequiredService<ILoggerFactory>();
-            //loggerFactory.AddConsole(LogLevel.Debug);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

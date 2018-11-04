@@ -107,9 +107,13 @@ namespace Guts.Api.Controllers
                 result.TryAdd("LastName", user.LastName);
                 result.TryAdd("FirstName", user.FirstName);
 
+                double total = 0.0;
+                double totalMaximum = 0.0;
+
                 foreach (var chapterScoreOptions in input.ChapterScoreOptions)
                 {
                     var chapter = chapterDictionary[chapterScoreOptions.ChapterNumber];
+                   
                     foreach (var exerciseScoreOptions in chapterScoreOptions.ExerciseScoreOptions)
                     {
                         var exercise = chapter.Exercises.FirstOrDefault(e => e.Code == exerciseScoreOptions.ExerciseCode);
@@ -128,10 +132,16 @@ namespace Guts.Api.Controllers
                             Math.Max(numberOfPassedTests - exerciseScoreOptions.MinimumNumberOfGreenTestsThreshold, 0) *
                             scorePerTest;
 
-                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_NbrPassed",numberOfPassedTests);
-                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_Score", score);
+                        total += score;
+                        totalMaximum += exerciseScoreOptions.MaximumScore;
+
+                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_NbrPassed({numberOfTests})",numberOfPassedTests);
+                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_Score({exerciseScoreOptions.MaximumScore})", score);
                     }
                 }
+
+                result.TryAdd($"Total({totalMaximum})", total);
+
                 results.Add(result);
             }
 
