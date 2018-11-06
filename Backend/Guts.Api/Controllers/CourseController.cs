@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using CsvHelper;
+﻿using CsvHelper;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
@@ -14,6 +7,15 @@ using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using CsvHelper.Configuration;
 
 namespace Guts.Api.Controllers
 {
@@ -28,7 +30,7 @@ namespace Guts.Api.Controllers
         private readonly IAssignmentService _assignmentService;
         private readonly ICourseConverter _courseConverter;
 
-        public CourseController(ICourseService courseService, 
+        public CourseController(ICourseService courseService,
             IChapterService chapterService,
             IChapterRepository chapterRepository,
             IAssignmentService assignmentService,
@@ -113,11 +115,11 @@ namespace Guts.Api.Controllers
                 foreach (var chapterScoreOptions in input.ChapterScoreOptions)
                 {
                     var chapter = chapterDictionary[chapterScoreOptions.ChapterNumber];
-                   
+
                     foreach (var exerciseScoreOptions in chapterScoreOptions.ExerciseScoreOptions)
                     {
                         var exercise = chapter.Exercises.FirstOrDefault(e => e.Code == exerciseScoreOptions.ExerciseCode);
-                        if(exercise == null) continue;
+                        if (exercise == null) continue;
 
                         var numberOfTests = exercise.Tests.Count;
 
@@ -135,7 +137,7 @@ namespace Guts.Api.Controllers
                         total += score;
                         totalMaximum += exerciseScoreOptions.MaximumScore;
 
-                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_NbrPassed({numberOfTests})",numberOfPassedTests);
+                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_NbrPassed({numberOfTests})", numberOfPassedTests);
                         result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_Score({exerciseScoreOptions.MaximumScore})", score);
                     }
                 }
@@ -145,24 +147,18 @@ namespace Guts.Api.Controllers
                 results.Add(result);
             }
 
-
-            using (var memoryStream = new MemoryStream())
+            var memoryStream = new MemoryStream();
+            var streamWriter = new StreamWriter(memoryStream);
+            var config = new Configuration
             {
-                using (var streamWriter = new StreamWriter(memoryStream))
-                {
-                    var csv = new CsvWriter(streamWriter);
-
-                    csv.WriteRecords(results);
-                    csv.Flush();
-
-                    memoryStream.Position = 0;
-                    var result = new FileContentResult(memoryStream.ToArray(), "text/csv")
-                    {
-                        FileDownloadName = "ExerciseScores.csv"
-                    };
-                    return result;
-                }
-            }
+                QuoteAllFields = true,
+                CultureInfo = new CultureInfo("nl-BE"),
+            };
+            var csv = new CsvWriter(streamWriter, config);
+            csv.WriteRecords(results);
+            streamWriter.Flush();
+            memoryStream.Position = 0;
+            return File(memoryStream, "text/csv", "ExerciseScores.csv");
         }
     }
 
@@ -197,4 +193,5 @@ namespace Guts.Api.Controllers
         public double MaximumScore { get; set; }
         public int MinimumNumberOfGreenTestsThreshold { get; set; }
     }
+
 }
