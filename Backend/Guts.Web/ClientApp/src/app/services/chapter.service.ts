@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import 'rxjs/add/operator/mergeMap';
 import { ClientSettingsService } from './client.settings.service';
 import { ClientSettings } from './client.settings';
-import { IChapterSummaryModel, ChapterSummaryModel, IChapterDetailsModel } from "../viewmodels/chapter.model"
+import { IChapterSummaryModel, ChapterSummaryModel, IChapterDetailsModel, IChapterStatisticsModel, ChapterStatisticsModel } from "../viewmodels/chapter.model"
 
 @Injectable()
 export class ChapterService {
@@ -25,10 +25,22 @@ export class ChapterService {
       if (date) {
         apiUrl += '?date=' + date.toISOString();
       }
-      return this.http
-        .get<IChapterSummaryModel>(apiUrl)
-        .map((chapterContents: IChapterSummaryModel) => {
+      return this.http.get<IChapterSummaryModel>(apiUrl)
+        .map<IChapterSummaryModel, ChapterSummaryModel>((chapterContents: IChapterSummaryModel) => {
           return new ChapterSummaryModel(chapterContents);
+        });
+    });
+  }
+
+  public getChapterStatistics(courseId: number, chapterNumber: number, date?: Date): Observable<ChapterStatisticsModel> {
+    return this.settingsService.get().mergeMap<ClientSettings, ChapterStatisticsModel>((settings: ClientSettings) => {
+      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber + '/statistics';
+      if (date) {
+        apiUrl += '?date=' + date.toISOString();
+      }
+      return this.http.get<IChapterStatisticsModel>(apiUrl)
+        .map<IChapterStatisticsModel, ChapterStatisticsModel>((chapterStatistics: IChapterStatisticsModel) => {
+          return new ChapterStatisticsModel(chapterStatistics);
         });
     });
   }

@@ -17,7 +17,7 @@ namespace Guts.Business.Services
         private readonly IProjectComponentRepository _projectComponentRepository;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
-        private readonly ITestResultConverter _testResultConverter;
+        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
         private readonly ITestRunRepository _testRunRepository;
 
         public AssignmentService(IExerciseRepository exerciseRepository, 
@@ -26,7 +26,7 @@ namespace Guts.Business.Services
             IProjectComponentRepository projectComponentRepository,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
-            ITestResultConverter testResultConverter,
+            IAssignmentWitResultsConverter assignmentWitResultsConverter,
             ITestRunRepository testRunRepository)
         {
             _exerciseRepository = exerciseRepository;
@@ -35,7 +35,7 @@ namespace Guts.Business.Services
             _projectComponentRepository = projectComponentRepository;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
-            _testResultConverter = testResultConverter;
+            _assignmentWitResultsConverter = assignmentWitResultsConverter;
             _testRunRepository = testRunRepository;
         }
 
@@ -110,11 +110,11 @@ namespace Guts.Business.Services
             assignment.Tests = assignmentTests;
         }
 
-        public async Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)
+        public async Task<AssignmentResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc);
+            var assignmentWithLastResultsOfUser = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc);
 
-            return _testResultConverter.ToExerciseResultDto(lastTestResults).FirstOrDefault();
+            return _assignmentWitResultsConverter.ToAssignmentResultDto(assignmentWithLastResultsOfUser);
         }
 
         public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc)

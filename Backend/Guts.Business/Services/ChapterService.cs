@@ -15,19 +15,19 @@ namespace Guts.Business.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly ITestResultRepository _testResultRepository;
-        private readonly ITestResultConverter _testResultConverter;
+        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
 
         public ChapterService(IChapterRepository chapterRepository, 
             ICourseRepository courseRepository, 
             IPeriodRepository periodRepository,
             ITestResultRepository testResultRepository,
-            ITestResultConverter testResultConverter)
+            IAssignmentWitResultsConverter assignmentWitResultsConverter)
         {
             _chapterRepository = chapterRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
             _testResultRepository = testResultRepository;
-            _testResultConverter = testResultConverter;
+            _assignmentWitResultsConverter = assignmentWitResultsConverter;
         }
 
         public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, int chapterNumber)
@@ -72,18 +72,18 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<IList<ExerciseResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? dateUtc)
+        public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? dateUtc)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, dateUtc);
+            var assignmentsWithResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, dateUtc);
 
-            return _testResultConverter.ToExerciseResultDto(lastTestResults);
+            return assignmentsWithResults.Select(a => _assignmentWitResultsConverter.ToAssignmentResultDto(a)).ToList();
         }
 
-        public async Task<IList<ExerciseResultDto>> GetAverageResultsAsync(int chapterId)
+        public async Task<IList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(int chapterId, DateTime? dateUtc)
         {
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, null, null);
-
-            return _testResultConverter.ToExerciseResultDto(lastTestResults);
+            var assignmentWithResultsOfMultipleUsers = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, dateUtc);
+            return assignmentWithResultsOfMultipleUsers
+                .Select(a => _assignmentWitResultsConverter.ToAssignmentStatisticsDto(a)).ToList();
         }
 
         public async Task<IList<Chapter>> GetChaptersOfCourseAsync(int courseId)

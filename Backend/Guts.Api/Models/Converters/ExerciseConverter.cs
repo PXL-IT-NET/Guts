@@ -8,7 +8,7 @@ namespace Guts.Api.Models.Converters
 {
     public class ExerciseConverter : IExerciseConverter
     {
-        public ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, ExerciseResultDto results, ExerciseTestRunInfoDto testRunInfo)
+        public ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, AssignmentResultDto results, ExerciseTestRunInfoDto testRunInfo)
         {
             if (exercise.Chapter?.Course == null)
             {

@@ -22,7 +22,7 @@ namespace Guts.Business.Tests.Services
         private Mock<ITestRepository> _testRepositoryMock;
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
-        private Mock<ITestResultConverter> _testResultConverterMock;
+        private Mock<IAssignmentWitResultsConverter> _testResultConverterMock;
         private Mock<ITestRunRepository> _testRunRepositoryMock;
         private Mock<IProjectService> _projectServiceMock;
         private Mock<IProjectComponentRepository> _projectComponentRepositoryMock;
@@ -36,7 +36,7 @@ namespace Guts.Business.Tests.Services
             _chapterServiceMock = new Mock<IChapterService>();
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
-            _testResultConverterMock = new Mock<ITestResultConverter>();
+            _testResultConverterMock = new Mock<IAssignmentWitResultsConverter>();
             _projectServiceMock = new Mock<IProjectService>();
             _projectComponentRepositoryMock = new Mock<IProjectComponentRepository>();
 
@@ -264,25 +264,24 @@ namespace Guts.Business.Tests.Services
             //Arrange
             var exerciseId = _random.NextPositive();
             var userId = _random.NextPositive();
-            IList<TestWithLastUserResults> existingLastTestResults = new List<TestWithLastUserResults>();
+            var existingAssignmentWithResults = new AssignmentWithLastResultsOfUser();
 
             _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(existingLastTestResults);
+                .ReturnsAsync(existingAssignmentWithResults);
 
-            var exerciseResultDto = new ExerciseResultDto();
-            var exerciseResultDtos = new List<ExerciseResultDto> {exerciseResultDto};
+            var assignmentResultDto = new AssignmentResultDto();
 
             _testResultConverterMock
-                .Setup(converter => converter.ToExerciseResultDto(It.IsAny<IList<TestWithLastUserResults>>()))
-                .Returns(exerciseResultDtos);
+                .Setup(converter => converter.ToAssignmentResultDto(It.IsAny<AssignmentWithLastResultsOfUser>()))
+                .Returns(assignmentResultDto);
 
             //Act
             var result = _service.GetResultsForUserAsync(exerciseId, userId, null).Result;
 
             //Assert
-            Assert.That(result, Is.EqualTo(exerciseResultDto));
+            Assert.That(result, Is.EqualTo(assignmentResultDto));
             _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfExerciseAsync(exerciseId, userId, null), Times.Once);
-            _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
+            _testResultConverterMock.Verify(converter => converter.ToAssignmentResultDto(existingAssignmentWithResults), Times.Once);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), new ExerciseTestRunInfoDto()),
+                () => _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), new ExerciseTestRunInfoDto()),
                 Throws.ArgumentException);
         }
 
@@ -42,7 +42,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), new ExerciseTestRunInfoDto()),
+                () => _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), new ExerciseTestRunInfoDto()),
                 Throws.ArgumentException);
         }
 
@@ -54,7 +54,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), new ExerciseTestRunInfoDto()),
+                () => _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), new ExerciseTestRunInfoDto()),
                 Throws.ArgumentException);
         }
 
@@ -67,7 +67,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), null),
+                () => _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), null),
                 Throws.ArgumentNullException);
         }
 
@@ -103,7 +103,7 @@ namespace Guts.Api.Tests.Models.Converters
             };
 
             //Act
-            var model = _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), testRunInfo);
+            var model = _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), testRunInfo);
 
             //Assert
             Assert.That(model, Is.Not.Null);
@@ -121,7 +121,7 @@ namespace Guts.Api.Tests.Models.Converters
             var exercise = new ExerciseBuilder().WithChapter(chapter).WithRandomTests(numberOfTests).Build();
 
             //Act
-            var model = _converter.ToExerciseDetailModel(exercise, new ExerciseResultDto(), new ExerciseTestRunInfoDto());
+            var model = _converter.ToExerciseDetailModel(exercise, new AssignmentResultDto(), new ExerciseTestRunInfoDto());
 
             //Assert
             Assert.That(model, Is.Not.Null);

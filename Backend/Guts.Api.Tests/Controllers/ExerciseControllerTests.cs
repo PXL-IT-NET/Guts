@@ -55,7 +55,7 @@ namespace Guts.Api.Tests.Controllers
             _exerciseRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()))
                 .ReturnsAsync(existingExercise);
 
-            var returnedExerciseResultDto = new ExerciseResultDto();
+            var returnedExerciseResultDto = new AssignmentResultDto();
             _exerciseServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(returnedExerciseResultDto);
 
@@ -67,7 +67,7 @@ namespace Guts.Api.Tests.Controllers
             var returnedModel = new ExerciseDetailModel();
             _exerciseConverterMock
                 .Setup(converter =>
-                    converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()))
+                    converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<AssignmentResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()))
                 .Returns(returnedModel);
 
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
@@ -100,7 +100,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult, Is.Not.Null);
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
+            _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<AssignmentResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult, Is.Not.Null);
             _exerciseRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _exerciseServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), null), Times.Never);
-            _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<ExerciseResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
+            _exerciseConverterMock.Verify(converter => converter.ToExerciseDetailModel(It.IsAny<Exercise>(), It.IsAny<AssignmentResultDto>(), It.IsAny<ExerciseTestRunInfoDto>()), Times.Never);
         }
 
         //[Test]

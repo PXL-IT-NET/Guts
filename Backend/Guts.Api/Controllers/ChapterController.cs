@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Guts.Api.Controllers
 {
@@ -25,16 +26,20 @@ namespace Guts.Api.Controllers
         private readonly IChapterRepository _chapterRepository;
         private readonly IChapterConverter _chapterConverter;
         private readonly UserManager<User> _userManager;
+        private readonly IMemoryCache _memoryCache;
+        public const int CacheTimeInSeconds = 300;
 
-        public ChapterController(IChapterService chapterService, 
+        public ChapterController(IChapterService chapterService,
             IChapterRepository chapterRepository,
-            IChapterConverter chapterConverter, 
-            UserManager<User> userManager)
+            IChapterConverter chapterConverter,
+            UserManager<User> userManager, 
+            IMemoryCache memoryCache)
         {
             _chapterService = chapterService;
             _chapterRepository = chapterRepository;
             _chapterConverter = chapterConverter;
             _userManager = userManager;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -68,7 +73,6 @@ namespace Guts.Api.Controllers
                 {
                     chapterUsers.Add(await _userManager.GetUserAsync(User));
                 }
-
 
                 var model = _chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
                 return Ok(model);
@@ -114,14 +118,57 @@ namespace Guts.Api.Controllers
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
                 var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId, dateUtc);
-                var averageExerciseResults = await _chapterService.GetAverageResultsAsync(chapter.Id);
-                var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults, averageExerciseResults);
+                var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)
             {
                 return NotFound();
             }
+        }
+
+        /// <summary>
+        /// Retrieves an overview of the exercise statistics for a chapter of a course (for the current period).
+        /// </summary>
+        /// <param name="courseId">Identifier of the course in the database.</param>
+        /// <param name="chapterNumber">Sequence number of the chapter.</param>
+        /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
+        [HttpGet("{chapterNumber}/statistics")]
+        [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> GetChapterStatistics(int courseId, int chapterNumber, [FromQuery] DateTime? date)
+        {
+            if (courseId < 1 || chapterNumber < 1)
+            {
+                return BadRequest();
+            }
+
+            var dateUtc = date?.ToUniversalTime();
+            bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
+
+            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterNumber}";
+            ChapterStatisticsModel model;
+            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out model))
+            {
+                try
+                {
+                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterNumber);
+                    var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter.Id, dateUtc);
+                    model = _chapterConverter.ToChapterStatisticsModel(chapter, chapterStatistics);
+
+                    if (useCache)
+                    {
+                        _memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
+                    }
+                }
+                catch (DataNotFoundException)
+                {
+                    return NotFound();
+                }
+            }
+
+            return Ok(model);
         }
     }
 }

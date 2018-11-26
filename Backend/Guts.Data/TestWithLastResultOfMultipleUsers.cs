@@ -3,9 +3,9 @@ using Guts.Domain;
 
 namespace Guts.Data
 {
-    public class TestWithLastUserResults
+    public class TestWithLastResultOfMultipleUsers
     {
         public Test Test { get; set; }
-        public IEnumerable<TestResult> ResultsOfUsers { get; set; }
+        public IEnumerable<TestResult> TestResults { get; set; }
     }
 }
