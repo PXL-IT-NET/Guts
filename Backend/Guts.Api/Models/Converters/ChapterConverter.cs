@@ -15,9 +15,7 @@ namespace Guts.Api.Models.Converters
             _userConverter = userConverter;
         }
 
-        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, 
-            IList<ExerciseResultDto> userExerciseResults,
-            IList<ExerciseResultDto> averageExerciseResults)
+        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, IList<AssignmentResultDto> userExerciseResults)
         {
             if (chapter.Exercises == null)
             {
@@ -33,38 +31,15 @@ namespace Guts.Api.Models.Converters
             {
                 Id = chapter.Id,
                 Number = chapter.Number,
-                UserExerciseSummaries = new List<ExerciseSummaryModel>(),
-                AverageExerciseSummaries = new List<ExerciseSummaryModel>()
+                ExerciseSummaries = new List<ExerciseSummaryModel>()
             };
 
             foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Code))
             {
                 var userExerciseSummaryModel = CreateExerciseSummaryModel(exercise, userExerciseResults);
-                model.UserExerciseSummaries.Add(userExerciseSummaryModel);
-
-                var averageExerciseSummaryModel = CreateExerciseSummaryModel(exercise, averageExerciseResults);
-                model.AverageExerciseSummaries.Add(averageExerciseSummaryModel);
+                model.ExerciseSummaries.Add(userExerciseSummaryModel);
             }
             return model;
-        }
-
-        private ExerciseSummaryModel CreateExerciseSummaryModel(Exercise exercise, IList<ExerciseResultDto> exerciseResults)
-        {
-            var exerciseSummaryModel = new ExerciseSummaryModel
-            {
-                ExerciseId = exercise.Id,
-                Code = exercise.Code,
-                NumberOfTests = exercise.Tests.Count
-            };
-
-            var matchingResult = exerciseResults.FirstOrDefault(result => result.ExerciseId == exercise.Id);
-            if (matchingResult != null)
-            {
-                exerciseSummaryModel.NumberOfUsers = matchingResult.UserCount;
-                exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
-                exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
-            }
-            return exerciseSummaryModel;
         }
 
         public ChapterModel ToChapterModel(Chapter chapter)
@@ -89,6 +64,70 @@ namespace Guts.Api.Models.Converters
                 }).ToList(),
                 Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };
+        }
+
+        public ChapterStatisticsModel ToChapterStatisticsModel(Chapter chapter, IList<AssignmentStatisticsDto> chapterStatistics)
+        {
+            var model = new ChapterStatisticsModel
+            {
+                Id = chapter.Id,
+                Number = chapter.Number,
+                ExerciseStatistics = new List<ExerciseStatisticsModel>()
+            };
+
+            foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Code))
+            {
+                var exerciseStatisticsModel = CreateExerciseStatisticsModel(exercise, chapterStatistics);
+                model.ExerciseStatistics.Add(exerciseStatisticsModel);
+            }
+
+            return model;
+        }
+
+        private ExerciseSummaryModel CreateExerciseSummaryModel(Exercise exercise, IList<AssignmentResultDto> exerciseResults)
+        {
+            var exerciseSummaryModel = new ExerciseSummaryModel
+            {
+                ExerciseId = exercise.Id,
+                Code = exercise.Code,
+                NumberOfTests = exercise.Tests.Count
+            };
+
+            var matchingResult = exerciseResults.FirstOrDefault(result => result.AssignmentId == exercise.Id);
+            if (matchingResult != null)
+            {
+                exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
+                exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
+            }
+            return exerciseSummaryModel;
+        }
+
+        private ExerciseStatisticsModel CreateExerciseStatisticsModel(Exercise exercise, IList<AssignmentStatisticsDto> chapterStatistics)
+        {
+            var model = new ExerciseStatisticsModel
+            {
+                ExerciseId = exercise.Id,
+                Code = exercise.Code,
+                TotalNumberOfUsers = 0,
+                TestPassageStatistics = new List<TestPassageStatisticModel>()
+            };
+
+            var exerciseStatistics = chapterStatistics.FirstOrDefault(result => result.AssignmentId == exercise.Id);
+            if (exerciseStatistics != null)
+            {
+                model.TotalNumberOfUsers = exerciseStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
+                foreach (var testPassageStatistic in exerciseStatistics.TestPassageStatistics)
+                {
+                    var testPassageStatisticModel = new TestPassageStatisticModel
+                    {
+                        AmountOfPassedTestsRange = $"{testPassageStatistic.AmountOfPassedTests} tests",
+                        NumberOfUsers = testPassageStatistic.AmountOfUsers
+                    };
+                    model.TestPassageStatistics.Add(testPassageStatisticModel);
+                }
+            }
+
+            return model;
         }
     }
 }

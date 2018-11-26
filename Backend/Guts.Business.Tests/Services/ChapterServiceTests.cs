@@ -23,7 +23,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<ICourseRepository> _courseRepositoryMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
-        private Mock<ITestResultConverter> _testResultConverterMock;
+        private Mock<IAssignmentWitResultsConverter> _testResultConverterMock;
 
         [SetUp]
         public void Setup()
@@ -34,7 +34,7 @@ namespace Guts.Business.Tests.Services
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _courseRepositoryMock = new Mock<ICourseRepository>();
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
-            _testResultConverterMock = new Mock<ITestResultConverter>();
+            _testResultConverterMock = new Mock<IAssignmentWitResultsConverter>();
 
             _service = new ChapterService(_chapterRepositoryMock.Object, 
                 _courseRepositoryMock.Object, 
@@ -231,54 +231,58 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
-        public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToExerciseResultDtos()
+        public void GetResultsForUserAsyncShouldRetrieveAssignmentsWithLastTestsResultsOfUserAndConvertThemToAssignmentResultDtos()
         {
             //Arrange
             var chapterId = _random.NextPositive();
             var userId = _random.NextPositive();
-            IList<TestWithLastUserResults> existingLastTestResults = new List<TestWithLastUserResults>();
+            var assignmentWithResults = new AssignmentWithLastResultsOfUser();
+            var assignmentsWithResults = new List<AssignmentWithLastResultsOfUser> {assignmentWithResults};
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfChapterAsync(It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(existingLastTestResults);
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfChapterAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(assignmentsWithResults);
 
-            var exerciseResultDtos = new List<ExerciseResultDto>();
+            var assignmentResultDto = new AssignmentResultDto();
 
             _testResultConverterMock
-                .Setup(converter => converter.ToExerciseResultDto(It.IsAny<IList<TestWithLastUserResults>>()))
-                .Returns(exerciseResultDtos);
+                .Setup(converter => converter.ToAssignmentResultDto(It.IsAny<AssignmentWithLastResultsOfUser>()))
+                .Returns(assignmentResultDto);
 
             //Act
             var results = _service.GetResultsForUserAsync(chapterId, userId, null).Result;
 
             //Assert
-            Assert.That(results, Is.EqualTo(exerciseResultDtos));
+            Assert.That(results, Has.Exactly(1).EqualTo(assignmentResultDto));
             _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfChapterAsync(chapterId, userId, null), Times.Once);
-            _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
+            _testResultConverterMock.Verify(converter => converter.ToAssignmentResultDto(assignmentWithResults), Times.Once);
         }
 
         [Test]
-        public void GetAverageResultsAsyncShouldRetrieveLastTestsResultsForAllUsersAndConvertThemToExerciseResultDtos()
+        public void GetChapterStatisticsAsyncShouldRetrieveAssignmentsWithLastResultsOfMultipleUsersAndConvertThemToStatistics()
         {
             //Arrange
             var chapterId = _random.NextPositive();
-            IList<TestWithLastUserResults> existingLastTestResults = new List<TestWithLastUserResults>();
+            var nowUtc = DateTime.UtcNow;
+            var assignmentWithResultsOfMultipleUsers = new AssignmentWithLastResultsOfMultipleUsers();
+            var assignmentsWithLastResultsOfMultipleUsers = new List<AssignmentWithLastResultsOfMultipleUsers> { assignmentWithResultsOfMultipleUsers };
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfChapterAsync(It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(existingLastTestResults);
+            _testResultRepositoryMock
+                .Setup(repo => repo.GetLastTestResultsOfChapterAsync(It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(assignmentsWithLastResultsOfMultipleUsers);
 
-            var exerciseResultDtos = new List<ExerciseResultDto>();
+            var assignmentStatisticsDto = new AssignmentStatisticsDto();
 
             _testResultConverterMock
-                .Setup(converter => converter.ToExerciseResultDto(It.IsAny<IList<TestWithLastUserResults>>()))
-                .Returns(exerciseResultDtos);
+                .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<AssignmentWithLastResultsOfMultipleUsers>()))
+                .Returns(assignmentStatisticsDto);
 
             //Act
-            var results = _service.GetAverageResultsAsync(chapterId).Result;
+            var results = _service.GetChapterStatisticsAsync(chapterId, nowUtc).Result;
 
             //Assert
-            Assert.That(results, Is.EqualTo(exerciseResultDtos));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfChapterAsync(chapterId, null, null), Times.Once);
-            _testResultConverterMock.Verify(converter => converter.ToExerciseResultDto(existingLastTestResults), Times.Once);
+            Assert.That(results, Has.Exactly(1).EqualTo(assignmentStatisticsDto));
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfChapterAsync(chapterId, nowUtc), Times.Once);
+            _testResultConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentWithResultsOfMultipleUsers), Times.Once);
         }
     }
 }

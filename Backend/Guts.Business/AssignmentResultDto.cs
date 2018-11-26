@@ -2,10 +2,9 @@
 
 namespace Guts.Business
 {
-    public class ExerciseResultDto
+    public class AssignmentResultDto
     {
-        public int ExerciseId { get; set; }
+        public int AssignmentId { get; set; }
         public IList<TestResultDto> TestResults { get; set; }
-        public int UserCount { get; set; }
     }
 }

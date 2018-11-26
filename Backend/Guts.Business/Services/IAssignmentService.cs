@@ -13,7 +13,7 @@ namespace Guts.Business.Services
         Task LoadTestsForAssignmentAsync(Assignment assignment);
         Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames);
 
-        Task<ExerciseResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
+        Task<AssignmentResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
         Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc);
 
         Task<IList<ExerciseSourceDto>> GetAllSourceCodes(int exerciseId);

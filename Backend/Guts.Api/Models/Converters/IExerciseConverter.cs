@@ -5,6 +5,6 @@ namespace Guts.Api.Models.Converters
 {
     public interface IExerciseConverter
     {
-        ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, ExerciseResultDto results, ExerciseTestRunInfoDto testRunInfo);
+        ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, AssignmentResultDto results, ExerciseTestRunInfoDto testRunInfo);
     }
 }

@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -53,7 +54,7 @@ namespace Guts.Api.Extensions
             RegisterTypesWhoseNameEndsWith("Converter", container, typeof(CourseConverter).Assembly, Lifestyle.Singleton);
 
             //register converters in business project
-            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(TestResultConverter).Assembly, Lifestyle.Singleton);
+            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(AssignmentWitResultsConverter).Assembly, Lifestyle.Singleton);
 
             //register services
             RegisterTypesWhoseNameEndsWith("Service", container, typeof(CourseService).Assembly, Lifestyle.Scoped);
@@ -110,6 +111,7 @@ namespace Guts.Api.Extensions
             container.CrossWire<IPasswordHasher<User>>(app);
             container.CrossWire<ILoggerFactory>(app);
             container.CrossWire<GutsContext>(app);
+            container.CrossWire<IMemoryCache>(app);
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)

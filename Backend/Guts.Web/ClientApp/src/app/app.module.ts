@@ -6,6 +6,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 
 import { AppComponent } from './components/app.component';
+import { EmptyComponent } from './components/empty.component';
 import { NavMenuComponent } from './components/nav-menu/nav-menu.component';
 import { HomeComponent } from './components/home/home.component';
 import { LoginComponent } from './components/login/login.component';
@@ -26,6 +27,7 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
+import { ChapterContextProvider } from './services/chapter.context.provider';
 import { ExerciseService } from './services/exercise.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
@@ -36,6 +38,7 @@ import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 @NgModule({
   declarations: [
     AppComponent,
+    EmptyComponent,
     NavMenuComponent,
     HomeComponent,
     LoginComponent,
@@ -43,7 +46,6 @@ import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
     ConfirmEmailComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
-
     CourseComponent,
     ChapterComponent,
     ChapterSummaryComponent,
@@ -69,16 +71,13 @@ import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
           {
             path: 'chapters/:chapterNumber', component: ChapterComponent,
             children: [
-              { path: 'users/:userId', redirectTo: 'users/:userId/summary' },
+              { path: 'users/:userId', component: EmptyComponent },
               { path: 'users/:userId/summary', component: ChapterSummaryComponent },
               { path: 'users/:userId/exercises/:exerciseId', component: ExerciseDetailComponent }
             ]
           }
         ]
       },
-      { path: 'courses/:courseId/chapters/:chapterNumber', component: ChapterSummaryComponent, canActivate: [AuthGuard] },
-      { path: 'exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
-      { path: 'exercises/:exerciseId/ofuser/:userId', component: ExerciseDetailComponent, canActivate: [AuthGuard] },
       { path: '**', redirectTo: 'home' }
     ]),
     LocalStorageModule.withConfig({
@@ -96,6 +95,7 @@ import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
     ExerciseService,
     ClientSettingsService,
     LocalStorageService,
+    ChapterContextProvider,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,

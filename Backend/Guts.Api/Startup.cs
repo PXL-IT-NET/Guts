@@ -114,6 +114,7 @@ namespace Guts.Api
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddSwagger();
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

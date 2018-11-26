@@ -52,6 +52,9 @@ namespace Guts.Data
 
             builder.Entity<Test>().HasMany(test => test.Results).WithOne(result => result.Test)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TestResult>()
+                .HasIndex((result => new {result.TestId, result.UserId, result.CreateDateTime }));
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

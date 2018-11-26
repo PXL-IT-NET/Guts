@@ -26,7 +26,7 @@ export class CourseComponent {
   ngOnInit() {
     this.route.params.subscribe(params => {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
-
+      
       this.courseService.getCourseContentsById(courseId).subscribe((courseContents: ICourseContentsModel) => {
         this.course = courseContents;
         if (courseContents.chapters.length > 0) {
