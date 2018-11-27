@@ -37,18 +37,21 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
     this.chapterNumber = 0;
     this.userId = 0;
 
+    //this.courseId = this.chapterContextProvider.context.courseId;
+    //this.chapterNumber = this.chapterContextProvider.context.chapterNumber;
     this.chapterContextSubscription = this.chapterContextProvider.contextChanged$.subscribe((context: ChapterContext) => {
       this.courseId = context.courseId;
       this.chapterNumber = context.chapterNumber;
       this.loadChapterSummary();
+
+      if (this.chapterContextProvider.statistics && this.chapterContextProvider.statistics.number === this.chapterNumber) {
+        this.statistics = this.chapterContextProvider.statistics;
+      }
     });
 
     this.chapterStatisticsSubscription = this.chapterContextProvider.statisticsChanged$.subscribe(() => {
       this.statistics = this.chapterContextProvider.statistics;
     });
-
-    this.courseId = this.chapterContextProvider.context.courseId;
-    this.chapterNumber = this.chapterContextProvider.context.chapterNumber;
 
     this.route.params.subscribe(params => {
       this.userId = +params['userId']; // (+) converts 'userId' to a number
@@ -62,6 +65,11 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.chapterContextSubscription.unsubscribe();
     this.chapterStatisticsSubscription.unsubscribe();
+    this.statistics = {
+      id: 0,
+      number: 0,
+      exerciseStatistics: []
+    };
   }
 
   private loadChapterSummary() {
