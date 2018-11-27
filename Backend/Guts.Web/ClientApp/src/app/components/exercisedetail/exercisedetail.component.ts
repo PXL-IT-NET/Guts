@@ -8,10 +8,11 @@ import { ChapterContextProvider } from '../../services/chapter.context.provider'
   templateUrl: './exercisedetail.component.html'
 })
 export class ExerciseDetailComponent {
+  public model: ExerciseDetailModel;
+  public loading: boolean = false;
+
   private exerciseId: number;
   private userId: number;
-
-  public model: ExerciseDetailModel;
 
   constructor(private route: ActivatedRoute,
     private exerciseService: ExerciseService,
@@ -46,7 +47,9 @@ export class ExerciseDetailComponent {
   }
 
   private loadExercise() {
+    this.loading = true;
     this.exerciseService.getExerciseDetail(this.exerciseId, this.userId, this.chapterContextProvider.context.statusDate).subscribe((exerciseDetail: IExerciseDetailModel) => {
+      this.loading = false;
       this.model = new ExerciseDetailModel(exerciseDetail);
     });
   }

@@ -13,6 +13,8 @@ import { Subscription } from 'rxjs';
 export class ChapterSummaryComponent implements OnInit, OnDestroy {
   public model: ChapterSummaryModel;
   public statistics: ChapterStatisticsModel;
+  public loadingSummary: boolean = false;
+  public loadingStatistics: boolean = false;
 
   private courseId: number;
   private chapterNumber: number;
@@ -37,19 +39,20 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
     this.chapterNumber = 0;
     this.userId = 0;
 
-    //this.courseId = this.chapterContextProvider.context.courseId;
-    //this.chapterNumber = this.chapterContextProvider.context.chapterNumber;
+    this.loadingStatistics = true;
     this.chapterContextSubscription = this.chapterContextProvider.contextChanged$.subscribe((context: ChapterContext) => {
       this.courseId = context.courseId;
       this.chapterNumber = context.chapterNumber;
       this.loadChapterSummary();
 
       if (this.chapterContextProvider.statistics && this.chapterContextProvider.statistics.number === this.chapterNumber) {
+        this.loadingStatistics = false;
         this.statistics = this.chapterContextProvider.statistics;
       }
     });
 
     this.chapterStatisticsSubscription = this.chapterContextProvider.statisticsChanged$.subscribe(() => {
+      this.loadingStatistics = false;
       this.statistics = this.chapterContextProvider.statistics;
     });
 
@@ -73,7 +76,9 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
   }
 
   private loadChapterSummary() {
+    this.loadingSummary = true;
     this.chapterService.getChapterSummary(this.courseId, this.chapterNumber, this.userId, this.chapterContextProvider.context.statusDate).subscribe((chapterContents: ChapterSummaryModel) => {
+      this.loadingSummary = false;
       this.model = chapterContents;
     });
   }

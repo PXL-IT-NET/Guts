@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class CourseComponent {
   public course: ICourseContentsModel;
   public selectedChapter: IChapterModel;
+  public loading: boolean = false;
 
   constructor(private route: ActivatedRoute,
     private router: Router,
@@ -26,8 +27,10 @@ export class CourseComponent {
   ngOnInit() {
     this.route.params.subscribe(params => {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
-      
+
+      this.loading = true;
       this.courseService.getCourseContentsById(courseId).subscribe((courseContents: ICourseContentsModel) => {
+        this.loading = false;
         this.course = courseContents;
         if (courseContents.chapters.length > 0) {
           this.selectedChapter = courseContents.chapters[0];

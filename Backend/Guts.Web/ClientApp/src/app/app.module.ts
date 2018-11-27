@@ -32,8 +32,8 @@ import { ExerciseService } from './services/exercise.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
 import 'rxjs/Rx';
-
 import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
+import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 
 @NgModule({
   declarations: [
@@ -85,7 +85,14 @@ import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
       storageType: 'localStorage'
     }),
     RecaptchaModule.forRoot(),
-    AngularDateTimePickerModule
+    AngularDateTimePickerModule,
+    NgxLoadingModule.forRoot({
+      animationType: ngxLoadingAnimationTypes.threeBounce,
+      backdropBackgroundColour: 'rgba(255,255,255,0.3)',
+      backdropBorderRadius: '4px',
+      primaryColour: '#ccccb3',
+      secondaryColour: '#e0e0d1'
+    })
   ],
   providers: [
     AuthGuard,

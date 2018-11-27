@@ -14,6 +14,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public selectedUserId: number;
   public context: ChapterContext;
   public datePickerSettings: any;
+  public loading: boolean = false;
+
   private courseId: number;
   private chapterNumber: number;
 
@@ -46,7 +48,9 @@ export class ChapterComponent implements OnInit, OnDestroy {
       this.courseId = +parentParams['courseId']; // (+) converts 'courseId' to a number
       this.chapterNumber = +params['chapterNumber']; // (+) converts 'chapterNumber' to a number
 
+      this.loading = true;
       this.chapterService.getChapterDetails(this.courseId, this.chapterNumber).subscribe((chapterDetails: IChapterDetailsModel) => {
+        this.loading = false;
         this.model = chapterDetails;
         this.selectedExerciseId = 0;
         this.selectedUserId = chapterDetails.users[0].id;
