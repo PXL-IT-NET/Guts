@@ -91,7 +91,8 @@ import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
       backdropBackgroundColour: 'rgba(255,255,255,0.3)',
       backdropBorderRadius: '4px',
       primaryColour: '#ccccb3',
-      secondaryColour: '#e0e0d1'
+      secondaryColour: '#e0e0d1',
+      tertiaryColour: '#f5f5f0'
     })
   ],
   providers: [

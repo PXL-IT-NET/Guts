@@ -3,8 +3,8 @@
     <form>
       <div class="form-group row">
 
-        <label for="exercises" class="col-sm-2 col-lg-1 col-form-label">Exercise</label>
-        <div class="col-sm-10 col-md-4 col-lg-3">
+        <label for="exercises" class="col-md-2 col-xl-1 col-form-label">Exercise</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
           <select name="exercises" class="form-control" [(ngModel)]="selectedExerciseId" (ngModelChange)="onSelectionChanged()">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.exerciseId">
@@ -13,8 +13,8 @@
           </select>
         </div>
 
-        <label for="users" class="col-sm-2 col-lg-1 col-form-label">User</label>
-        <div class="col-sm-10 col-md-4 col-lg-3">
+        <label for="users" class="col-md-2 col-xl-1 col-form-label">User</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
           <select name="users" class="form-control" [(ngModel)]="selectedUserId" (ngModelChange)="onSelectionChanged()">
             <option *ngFor="let user of model.users" [ngValue]="user.id">
               {{user.fullName}}
@@ -22,8 +22,8 @@
           </select>
         </div>
 
-        <label for="date" class="col-sm-2 col-lg-1 col-form-label">Status on</label>
-        <div class="col-sm-10 col-md-4 col-lg-3">
+        <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
           <angular2-date-picker name="date" [(ngModel)]="context.statusDate" [settings]="datePickerSettings" (onDateSelect)="onDateChanged()"></angular2-date-picker>
         </div>
 

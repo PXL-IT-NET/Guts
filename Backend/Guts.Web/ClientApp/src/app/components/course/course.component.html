@@ -3,8 +3,8 @@
     <h5>{{course.name}}</h5>
     <form>
       <div class="form-group row">
-        <label for="chapters" class="col-sm-2 col-lg-1 col-form-label">Chapter</label>
-        <div class="col-sm-10 col-lg-2">
+        <label for="chapters" class="col-md-2 col-xl-1 col-form-label">Chapter</label>
+        <div class="col-md-10 col-xl-2">
           <select name="chapters" class="form-control" [(ngModel)]="selectedChapter" (ngModelChange)="onChapterChanged()">
             <option *ngFor="let chapter of course.chapters" [ngValue]="chapter">
               Chapter {{chapter.number}}
