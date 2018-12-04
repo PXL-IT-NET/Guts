@@ -90,9 +90,9 @@ import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
       animationType: ngxLoadingAnimationTypes.threeBounce,
       backdropBackgroundColour: 'rgba(255,255,255,0.3)',
       backdropBorderRadius: '4px',
-      primaryColour: '#ccccb3',
+      primaryColour: '#f5f5f0',
       secondaryColour: '#e0e0d1',
-      tertiaryColour: '#f5f5f0'
+      tertiaryColour: '#ccccb3'
     })
   ],
   providers: [

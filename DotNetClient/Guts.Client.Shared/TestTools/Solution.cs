@@ -3,6 +3,8 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Guts.Client.Shared.TestTools
 {
@@ -59,11 +61,10 @@ namespace Guts.Client.Shared.TestTools
             {
                 return string.Empty;
             }
-            content = content.Trim('\r', '\n', ' ');
+            //remove new lines to rule out differences between files on unix, linux, windows
+            content = Regex.Replace(content, "\t|\r|\n|\\s", "");
 
-            byte[] fileBytes = new byte[content.Length * sizeof(char)];
-            Buffer.BlockCopy(content.ToCharArray(), 0, fileBytes, 0, fileBytes.Length);
-
+            var fileBytes = Encoding.UTF8.GetBytes(content);
             var hashBytes = MD5.Create().ComputeHash(fileBytes);
             return BitConverter.ToString(hashBytes);
         }
