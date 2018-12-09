@@ -5,6 +5,7 @@ import { ChapterSummaryModel, ChapterStatisticsModel } from '../../viewmodels/ch
 import { ActivatedRoute } from '@angular/router';
 import { ChapterContext } from '../../services/chapter.context.provider';
 import { Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
@@ -24,7 +25,8 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
 
   constructor(private chapterService: ChapterService,
     private chapterContextProvider: ChapterContextProvider,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private toastr: ToastrService) {
     this.model = {
       id: 0,
       number: 0,
@@ -77,9 +79,16 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
 
   private loadChapterSummary() {
     this.loadingSummary = true;
-    this.chapterService.getChapterSummary(this.courseId, this.chapterNumber, this.userId, this.chapterContextProvider.context.statusDate).subscribe((chapterContents: ChapterSummaryModel) => {
-      this.loadingSummary = false;
-      this.model = chapterContents;
+    this.chapterService.getChapterSummary(this.courseId, this.chapterNumber, this.userId, this.chapterContextProvider.context.statusDate)
+      .subscribe((result) => {
+        this.loadingSummary = false;
+
+        if (result.success) {
+          this.model = result.value;
+        } else {
+          this.toastr.error("Could not load chapter summary from API. Message: " + (result.message || "unknown error"), "API error");
+        }
+     
     });
   }
 }

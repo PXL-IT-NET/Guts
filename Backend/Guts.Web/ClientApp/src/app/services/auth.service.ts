@@ -9,7 +9,7 @@ import { ClientSettingsService } from './client.settings.service';
 import { ClientSettings } from './client.settings';
 import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
-import { Result } from '../util/result';
+import { PostResult } from "../util/Result";
 import { ConfirmEmailModel } from '../viewmodels/confirmemail.model';
 import { ForgotPasswordModel } from '../viewmodels/forgotpassword.model';
 import { ResetPasswordModel } from '../viewmodels/resetpassword.model';
@@ -43,7 +43,7 @@ export class AuthService {
     this.localStorageService.remove(LocalStorageKeys.currentToken);
   }
 
-  public login(model: LoginModel): Observable<Result> {
+  public login(model: LoginModel): Observable<PostResult> {
 
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
 
@@ -59,7 +59,7 @@ export class AuthService {
 
             // return true to indicate successful login
             this.loggedInState.next(true);
-            return Result.success();
+            return PostResult.success();
           } else {
             // return false to indicate failed login
             this.loggedInState.next(false);
@@ -70,17 +70,15 @@ export class AuthService {
           }
         }).catch((errorResponse: HttpErrorResponse) => {
           this.loggedInState.next(false);
-          return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });
     });
   }
 
-  public cancelLoginSession(loginSessionPublicIdentifier: string): Observable<Result> {
+  public cancelLoginSession(loginSessionPublicIdentifier: string): Observable<PostResult> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
       return this.http.patch(settings.apiBaseUrl + 'api/auth/loginsession/' + loginSessionPublicIdentifier + '/cancel',
-        null).map(() => {
-          return Result.success();
-        });
+        null).map<Object, PostResult>(() => PostResult.success());
     });
   }
 
@@ -94,47 +92,47 @@ export class AuthService {
     this.localStorageService.remove(LocalStorageKeys.currentToken);
   }
 
-  public register(model: RegisterModel): Observable<Result> {
+  public register(model: RegisterModel): Observable<PostResult> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
       return this.http.post(settings.apiBaseUrl + 'api/auth/register', model)
-        .map(() => {
-          return Result.success();
+        .map<Object, PostResult>(() => {
+          return PostResult.success();
         })
         .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });
     });
   }
 
-  public confirmEmail(model: ConfirmEmailModel): Observable<Result> {
+  public confirmEmail(model: ConfirmEmailModel): Observable<PostResult> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
       return this.http.post(settings.apiBaseUrl + 'api/auth/confirmemail', model)
-        .map(() => {
-          return Result.success();
+        .map<Object, PostResult>(() => {
+          return PostResult.success();
         }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });;
     });
   }
 
-  public sendForgotPasswordMail(model: ForgotPasswordModel): Observable<Result> {
+  public sendForgotPasswordMail(model: ForgotPasswordModel): Observable<PostResult> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
       return this.http.post(settings.apiBaseUrl + 'api/auth/forgotpassword', model)
-        .map(() => {
-          return Result.success();
+        .map<Object, PostResult>(() => {
+          return PostResult.success();
         }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });;
     });
   }
 
-  public resetPassword(model: ResetPasswordModel): Observable<Result> {
+  public resetPassword(model: ResetPasswordModel): Observable<PostResult> {
     return this.settingsService.get().mergeMap((settings: ClientSettings) => {
       return this.http.post(settings.apiBaseUrl + 'api/auth/resetpassword', model)
-        .map(() => {
-          return Result.success();
+        .map<Object, PostResult>(() => {
+          return PostResult.success();
         }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([Result.fromHttpErrorResponse(errorResponse)]);
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });;
     });
   }

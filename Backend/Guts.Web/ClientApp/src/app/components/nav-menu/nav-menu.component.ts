@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { ICourseModel } from '../../viewmodels/course.model';
 import { AuthService } from '../../services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-nav-menu',
@@ -18,7 +19,8 @@ export class NavMenuComponent {
   constructor(private localStorageService: LocalStorageService,
     private courseService: CourseService,
     private router: Router,
-    private authService: AuthService) {
+    private authService: AuthService,
+    private toastr: ToastrService) {
     this.coursesLoaded = false;
     this.courses = [];
 
@@ -47,10 +49,13 @@ export class NavMenuComponent {
   }
 
   private loadCourses() {
-    this.courseService.getCourses().subscribe(
-      (courses: ICourseModel[]) => {
-        this.courses = courses;
+    this.courseService.getCourses().subscribe((result) => {
+      if (result.success) {
+        this.courses = result.value;
         this.coursesLoaded = true;
-      });
+      } else if(this.isLoggedIn()) {
+        this.toastr.error("Could not load courses from API. Message: " + (result.message || "unknown error"), "API error");
+      }
+    });
   }
 }

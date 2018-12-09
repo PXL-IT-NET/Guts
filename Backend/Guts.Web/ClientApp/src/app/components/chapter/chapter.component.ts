@@ -3,6 +3,8 @@ import { ChapterService } from '../../services/chapter.service';
 import { ChapterContextProvider, ChapterContext } from '../../services/chapter.context.provider';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IChapterDetailsModel, ChapterStatisticsModel } from '../../viewmodels/chapter.model';
+import { GetResult } from "../../util/Result";
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -22,7 +24,9 @@ export class ChapterComponent implements OnInit, OnDestroy {
   constructor(private chapterService: ChapterService,
     private chapterContextProvider: ChapterContextProvider,
     private router: Router,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private toastr: ToastrService) {
+
     this.model = {
       id: 0,
       number: 0,
@@ -49,19 +53,23 @@ export class ChapterComponent implements OnInit, OnDestroy {
       this.chapterNumber = +params['chapterNumber']; // (+) converts 'chapterNumber' to a number
 
       this.loading = true;
-      this.chapterService.getChapterDetails(this.courseId, this.chapterNumber).subscribe((chapterDetails: IChapterDetailsModel) => {
+      this.chapterService.getChapterDetails(this.courseId, this.chapterNumber).subscribe((result: GetResult<IChapterDetailsModel>) => {
         this.loading = false;
-        this.model = chapterDetails;
-        this.selectedExerciseId = 0;
-        this.selectedUserId = chapterDetails.users[0].id;
-        this.navigateToSummaryForSelectedUser();
-        this.loadStatistics();
+        if (result.success) {
+          this.model = result.value;
+          this.selectedExerciseId = 0;
+          this.selectedUserId = result.value.users[0].id;
+          this.navigateToSummaryForSelectedUser();
+          this.loadStatistics();
+        } else {
+          this.toastr.error("Could not load chapter details from API. Message: " + (result.message || "unknown error"), "API error");
+        }
       });
     });
   }
 
   ngOnDestroy() {
-    
+
   }
 
   public onSelectionChanged() {
@@ -86,9 +94,14 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   private loadStatistics() {
-    this.chapterService.getChapterStatistics(this.courseId, this.chapterNumber, this.context.statusDate).subscribe((chapterStatistics: ChapterStatisticsModel) => {
-      this.chapterContextProvider.statistics = chapterStatistics;
-      this.chapterContextProvider.announceStatisticsChange();
-    });
+    this.chapterService.getChapterStatistics(this.courseId, this.chapterNumber, this.context.statusDate)
+      .subscribe((result) => {
+        if (result.success) {
+          this.chapterContextProvider.statistics = result.value;
+          this.chapterContextProvider.announceStatisticsChange();
+        } else {
+          this.toastr.error("Could not load chapter statistics from API. Message: " + (result.message || "unknown error"), "API error");
+        }
+      });
   }
 }

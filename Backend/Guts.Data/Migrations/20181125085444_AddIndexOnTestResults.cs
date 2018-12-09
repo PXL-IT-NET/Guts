@@ -6,6 +6,10 @@ namespace Guts.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_TestResults_Tests_TestId",
+                table: "TestResults");
+
             migrationBuilder.DropIndex(
                 name: "IX_TestResults_TestId",
                 table: "TestResults");
@@ -14,10 +18,21 @@ namespace Guts.Data.Migrations
                 name: "IX_TestResults_TestId_UserId_CreateDateTime",
                 table: "TestResults",
                 columns: new[] { "TestId", "UserId", "CreateDateTime" });
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_TestResults_Tests_TestId",
+                table: "TestResults",
+                column: "TestId",
+                principalTable: "Tests",
+                principalColumn: "Id");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_TestResults_Tests_TestId",
+                table: "TestResults"); 
+
             migrationBuilder.DropIndex(
                 name: "IX_TestResults_TestId_UserId_CreateDateTime",
                 table: "TestResults");
@@ -26,6 +41,13 @@ namespace Guts.Data.Migrations
                 name: "IX_TestResults_TestId",
                 table: "TestResults",
                 column: "TestId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_TestResults_Tests_TestId", 
+                table: "TestResults", 
+                column: "TestId",
+                principalTable: "Tests", 
+                principalColumn: "Id");
         }
     }
 }

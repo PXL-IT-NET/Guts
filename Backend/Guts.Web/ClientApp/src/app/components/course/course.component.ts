@@ -3,6 +3,7 @@ import { CourseService } from '../../services/course.service';
 import { ICourseContentsModel } from '../../viewmodels/course.model';
 import { IChapterModel } from '../../viewmodels/chapter.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   templateUrl: './course.component.html'
@@ -14,7 +15,8 @@ export class CourseComponent {
 
   constructor(private route: ActivatedRoute,
     private router: Router,
-    private courseService: CourseService) {
+    private courseService: CourseService,
+    private toastr: ToastrService) {
     this.course = {
       id: 0,
       code: '',
@@ -29,12 +31,16 @@ export class CourseComponent {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
 
       this.loading = true;
-      this.courseService.getCourseContentsById(courseId).subscribe((courseContents: ICourseContentsModel) => {
+      this.courseService.getCourseContentsById(courseId).subscribe((result) => {
         this.loading = false;
-        this.course = courseContents;
-        if (courseContents.chapters.length > 0) {
-          this.selectedChapter = courseContents.chapters[0];
-          this.onChapterChanged();
+        if (result.success) {
+          this.course = result.value;
+          if (this.course.chapters.length > 0) {
+            this.selectedChapter = this.course.chapters[0];
+            this.onChapterChanged();
+          }
+        } else {
+          this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");
         }
       });
     });

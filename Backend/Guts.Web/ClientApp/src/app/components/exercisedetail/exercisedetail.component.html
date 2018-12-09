@@ -27,14 +27,15 @@
 
   <div class="row">
     <h4>Testresults</h4>
-    <table class="table">
-      <thead class="thead-light">
+    <div class="table-responsive">
+      <table class="table">
+        <thead class="thead-light">
         <tr>
-          <th>Test</th>
+          <th class="col-greedy">Test</th>
           <th>Message</th>
         </tr>
-      </thead>
-      <tbody>
+        </thead>
+        <tbody>
         <tr *ngFor="let testResult of model.testResults">
           <td>
             <span *ngIf="!testResult.runned" class="fa fa-circle text-warning"></span>
@@ -46,10 +47,10 @@
             <pre class="text-danger">{{testResult.message}}</pre>
           </td>
         </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
-
   <ngx-loading [show]="loading"></ngx-loading>
 </div>
 

@@ -2,8 +2,10 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './components/app.component';
 import { EmptyComponent } from './components/empty.component';
@@ -18,7 +20,6 @@ import { ResetPasswordComponent } from './components/resetpassword/resetpassword
 import { CourseComponent } from './components/course/course.component';
 import { ChapterComponent } from "./components/chapter/chapter.component";
 import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
-import { CourseContentsComponent } from './components/coursecontents/coursecontents.component';
 import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
 
 import { AuthGuard } from './guards/auth.guard';
@@ -34,6 +35,7 @@ import { TokenInterceptor } from './util/tokeninterceptor';
 import 'rxjs/Rx';
 import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
+import { ToastrModule } from 'ngx-toastr';
 
 @NgModule({
   declarations: [
@@ -49,10 +51,11 @@ import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
     CourseComponent,
     ChapterComponent,
     ChapterSummaryComponent,
-    CourseContentsComponent,
     ExerciseDetailComponent
   ],
   imports: [
+    CommonModule,
+    BrowserAnimationsModule,
     ChartsModule,
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
@@ -69,11 +72,11 @@ import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
         path: 'courses/:courseId', component: CourseComponent, canActivate: [AuthGuard],
         children: [
           {
-            path: 'chapters/:chapterNumber', component: ChapterComponent,
+            path: 'chapters/:chapterNumber', component: ChapterComponent, canActivate: [AuthGuard],
             children: [
-              { path: 'users/:userId', component: EmptyComponent },
-              { path: 'users/:userId/summary', component: ChapterSummaryComponent },
-              { path: 'users/:userId/exercises/:exerciseId', component: ExerciseDetailComponent }
+              { path: 'users/:userId', component: EmptyComponent, canActivate: [AuthGuard] },
+              { path: 'users/:userId/summary', component: ChapterSummaryComponent, canActivate: [AuthGuard] },
+              { path: 'users/:userId/exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] }
             ]
           }
         ]
@@ -93,7 +96,8 @@ import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
       primaryColour: '#f5f5f0',
       secondaryColour: '#e0e0d1',
       tertiaryColour: '#ccccb3'
-    })
+    }),
+    ToastrModule.forRoot()
   ],
   providers: [
     AuthGuard,

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginModel } from '../../viewmodels/login.model';
-import { Result } from '../../util/result';
+import { PostResult} from "../../util/Result";
 
 
 @Component({
@@ -44,7 +44,7 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  private handleLoginResult(result: Result) {
+  private handleLoginResult(result: PostResult) {
     if (result.success) {
       this.router.navigate(['/']);
     } else {

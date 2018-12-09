@@ -5,7 +5,8 @@ import { IExerciseDetailModel, ExerciseDetailModel } from '../../viewmodels/exer
 import { ChapterContextProvider } from '../../services/chapter.context.provider';
 
 @Component({
-  templateUrl: './exercisedetail.component.html'
+  templateUrl: './exercisedetail.component.html',
+  styleUrls: ['./exercisedetail.component.css']
 })
 export class ExerciseDetailComponent {
   public model: ExerciseDetailModel;
