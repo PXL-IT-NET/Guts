@@ -92,29 +92,6 @@ namespace Guts.Data.Repositories
                                                         }
                         };
 
-
-            //var lastUserTestResultsQuery = from test in _context.Tests
-            //    from testResult in test.Results
-            //    where testResult.UserId == userId
-            //          && (test.AssignmentId == exerciseId)
-            //          && (dateUtc == null || testResult.CreateDateTime <= dateUtc)
-            //    group new { test, testResult } by new { test.Id, testResult.UserId } into userTestRunGroup
-            //    select userTestRunGroup.OrderByDescending(g => g.testResult.CreateDateTime).FirstOrDefault();
-
-            //var query = from testWithLastUserResult in lastUserTestResultsQuery
-            //    group testWithLastUserResult by testWithLastUserResult.test.Id
-            //    into testGroups
-            //    let test = testGroups.FirstOrDefault().test
-            //    select new TestWithResults
-            //    {
-            //        Test = test,
-            //        UserResults = testGroups.Select(g => new UserTestResult
-            //        {
-            //            UserId = g.testResult.UserId,
-            //            TestResult = g.testResult
-            //        })
-            //    };
-
             //Could not use ToListAsync here because it generates a strange error...
             return Task.FromResult(query.AsNoTracking().FirstOrDefault());
         }

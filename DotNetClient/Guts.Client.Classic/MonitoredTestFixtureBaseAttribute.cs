@@ -41,6 +41,23 @@ namespace Guts.Client.Classic
 
         public abstract void AfterTest(ITest test);
 
+        protected bool AllTestsOfFixtureWereRunned()
+        {
+            var results = TestRunResultAccumulator.Instance.TestResults;
+
+            TestContext.Progress.WriteLine(
+                $"You runned {results.Count} tests " +
+                $"of {TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture} tests " +
+                $"in the test class '{TestRunResultAccumulator.Instance.TestClassName}'");
+
+            if (results.Count >= TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture) return true;
+
+            TestContext.Progress.WriteLine("Not all tests of the test class (fixture) were runned. " +
+                                           "So the results will not be sent to the GUTS Api. " +
+                                           "Run all the tests of a fixture at once to send the results.");
+            return false;
+        }
+
         protected void SendTestResults(TestRunBase testRun)
         {
             try

@@ -148,8 +148,7 @@ namespace Guts.Api.Controllers
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
             var cacheKey = $"GetChapterStatistics-{courseId}-{chapterNumber}";
-            ChapterStatisticsModel model;
-            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out model))
+            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out ChapterStatisticsModel model))
             {
                 try
                 {

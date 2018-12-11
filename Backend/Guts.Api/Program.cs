@@ -1,4 +1,5 @@
-﻿using Guts.Data;
+﻿using Google.Cloud.Diagnostics.AspNetCore;
+using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -35,21 +36,28 @@ namespace Guts.Api
                     logger.LogError(ex, "An error occurred while seeding the database.");
                 }
             }
-
-
-
             host.Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            return WebHost.CreateDefaultBuilder(args).ConfigureLogging((hostingContext, logging) =>
+            var builder =  WebHost.CreateDefaultBuilder(args).ConfigureLogging((hostingContext, logging) =>
             {
                 logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                 logging.AddEventSourceLogger();
                 logging.AddConsole();
                 logging.AddDebug();
             }).UseStartup<Startup>();
+
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var isProduction = environment == EnvironmentName.Production;
+
+            if (isProduction)
+            {
+                builder = builder.UseGoogleDiagnostics();
+            }
+
+            return builder;
         }
     }
 }

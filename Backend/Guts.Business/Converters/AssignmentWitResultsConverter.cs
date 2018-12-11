@@ -8,14 +8,16 @@ namespace Guts.Business.Converters
     {
         public AssignmentResultDto ToAssignmentResultDto(AssignmentWithLastResultsOfUser assignmentWithLastResultsOfUser)
         {
-
             var resultDto = new AssignmentResultDto
             {
-                AssignmentId = assignmentWithLastResultsOfUser.Assignment.Id,
+                AssignmentId = assignmentWithLastResultsOfUser?.Assignment?.Id ?? 0,
                 TestResults = new List<TestResultDto>()
             };
 
-            foreach (var testWithResults in assignmentWithLastResultsOfUser.TestsWithLastResultOfUser)
+            var testsWithResults = assignmentWithLastResultsOfUser?.TestsWithLastResultOfUser?.ToList() ??
+                                   new List<TestWithLastResultOfUser>();
+
+            foreach (var testWithResults in testsWithResults)
             {
                 var testResultDto = new TestResultDto
                 {

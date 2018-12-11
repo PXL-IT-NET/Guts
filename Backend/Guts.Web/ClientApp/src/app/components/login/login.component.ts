@@ -47,8 +47,10 @@ export class LoginComponent implements OnInit {
   private handleLoginResult(result: PostResult) {
     if (result.success) {
       this.router.navigate(['/']);
+    } else if (!result.isAuthenticated) {
+      this.error = 'Wrong email-password combination';
     } else {
-      this.error = result.message || 'Wrong email-password combination';
+      this.error = result.message;
     }
     this.loading = false;
   }

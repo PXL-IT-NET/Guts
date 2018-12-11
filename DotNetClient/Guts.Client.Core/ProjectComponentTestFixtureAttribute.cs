@@ -33,7 +33,7 @@ namespace Guts.Client.Core
         {
             try
             {
-                var results = TestRunResultAccumulator.Instance.TestResults;
+                if (!AllTestsOfFixtureWereRunned()) return;
 
                 var projectComponent = new ProjectComponent
                 {
@@ -45,7 +45,7 @@ namespace Guts.Client.Core
                 var testRun = new ProjectComponentTestRun
                 {
                     ProjectComponent = projectComponent,
-                    Results = results,
+                    Results = TestRunResultAccumulator.Instance.TestResults,
                 };
 
                 if (!string.IsNullOrEmpty(_sourceCodeRelativeFilePaths))

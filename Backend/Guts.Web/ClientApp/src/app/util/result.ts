@@ -2,21 +2,30 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 export class Result {
   public success: boolean;
+  public isAuthenticated: boolean;
   public message?: string;
 
   constructor() {
     this.success = false;
+    this.isAuthenticated = true;
   }
 
   public static fromHttpErrorResponse(response: HttpErrorResponse): Result {
 
     var result: Result = {
-      success: false
+      success: false,
+      isAuthenticated: true
     };
 
     let message = '';
 
-    if (response.error instanceof Object) {
+    if (response.status == 401) {
+      result.isAuthenticated = false;
+    } else if (response.status >= 500) {
+      message = "There is a technical problem with the Guts server. (status: " + response.status + " " + response.statusText + ")";
+      console.log("API error:");
+      console.log(response);
+    } else if (response.error instanceof Object) {
       var messageContainer = response.error as Object;
       for (var propertyName in messageContainer) {
         if (messageContainer.hasOwnProperty(propertyName)) {
@@ -31,12 +40,12 @@ export class Result {
           }
         }
       }
+
+      if (message == '') {
+        message = response.statusText || 'Unknown error';
+      }
     } else if (response.error instanceof String) {
       message = response.error as string;
-    } else if (response.status >= 500) {
-      message = "There is a technical problem with the Guts server. (status: " + response.status + " " + response.statusText + ")";
-      console.log("API error:");
-      console.log(response);
     }
 
     result.message = message;
@@ -44,7 +53,7 @@ export class Result {
   }
 }
 
-export class PostResult extends Result{
+export class PostResult extends Result {
 
   public static success(): PostResult {
     var result = new PostResult();
@@ -57,7 +66,7 @@ export class PostResult extends Result{
   }
 }
 
-export class GetResult<T> extends Result{
+export class GetResult<T> extends Result {
   public value: T;
 
   public static success<T>(value: T): GetResult<T> {

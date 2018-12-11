@@ -35,7 +35,7 @@ namespace Guts.Client.Classic
 
             try
             {
-                var results = TestRunResultAccumulator.Instance.TestResults;
+                if (!AllTestsOfFixtureWereRunned()) return;
 
                 var exercise = new Exercise
                 {
@@ -47,7 +47,7 @@ namespace Guts.Client.Classic
                 var testRun = new ExerciseTestRun
                 {
                     Exercise = exercise,
-                    Results = results,
+                    Results = TestRunResultAccumulator.Instance.TestResults
                 };
 
                 if (!string.IsNullOrEmpty(_sourceCodeRelativeFilePaths))

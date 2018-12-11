@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="7.1.1" />
+    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="3.0.0-beta07" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.5" />
