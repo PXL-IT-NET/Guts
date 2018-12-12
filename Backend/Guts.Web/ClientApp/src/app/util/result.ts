@@ -55,6 +55,10 @@ export class Result {
 
 export class PostResult extends Result {
 
+  constructor() {
+    super();
+  }
+
   public static success(): PostResult {
     var result = new PostResult();
     result.success = true;

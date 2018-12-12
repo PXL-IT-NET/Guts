@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
 using Microsoft.EntityFrameworkCore;

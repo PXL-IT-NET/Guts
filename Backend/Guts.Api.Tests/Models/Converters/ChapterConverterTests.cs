@@ -117,16 +117,16 @@ namespace Guts.Api.Tests.Models.Converters
             var exerciseResult = new AssignmentResultDto
             {
                 AssignmentId = exercise.Id,
-                TestResults = new List<TestResultDto>()
+                TestResults = new List<TestResult>()
             };
             foreach (var test in exercise.Tests)
             {
                 if (numberOfPassingTests <= 0 && numberOfFailingTests <= 0) continue;
 
                 var passed = numberOfPassingTests > 0;
-                exerciseResult.TestResults.Add(new TestResultDto
+                exerciseResult.TestResults.Add(new TestResult
                 {
-                    TestName = test.TestName,
+                    TestId = test.Id,
                     Passed = passed
                 });
 

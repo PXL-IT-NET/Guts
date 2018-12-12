@@ -72,18 +72,38 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(int chapterId, int userId, DateTime? dateUtc)
+        public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(Chapter chapter, int userId, DateTime? dateUtc)
         {
-            var assignmentsWithResults = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, userId, dateUtc);
+            if (chapter.Exercises == null)
+            {
+                throw new ArgumentException("The chapter should have its exercises loaded");
+            }
 
-            return assignmentsWithResults.Select(a => _assignmentWitResultsConverter.ToAssignmentResultDto(a)).ToList();
+            var results = new List<AssignmentResultDto>();
+            foreach (var exercise in chapter.Exercises)
+            {
+                var dto = new AssignmentResultDto
+                {
+                    AssignmentId = exercise.Id,
+                    TestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exercise.Id, userId, dateUtc)
+                };
+                results.Add(dto);
+            }
+
+            return results;
         }
 
-        public async Task<IList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(int chapterId, DateTime? dateUtc)
+        public async Task<IList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(Chapter chapter, DateTime? dateUtc)
         {
-            var assignmentWithResultsOfMultipleUsers = await _testResultRepository.GetLastTestResultsOfChapterAsync(chapterId, dateUtc);
-            return assignmentWithResultsOfMultipleUsers
-                .Select(a => _assignmentWitResultsConverter.ToAssignmentStatisticsDto(a)).ToList();
+            var results = new List<AssignmentStatisticsDto>();
+            foreach (var exercise in chapter.Exercises)
+            {
+                var testResults =
+                    await _testResultRepository.GetLastTestResultsOfExerciseAsync(exercise.Id, null, dateUtc);
+                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(exercise.Id, testResults));
+               
+            }
+            return results;
         }
 
         public async Task<IList<Chapter>> GetChaptersOfCourseAsync(int courseId)

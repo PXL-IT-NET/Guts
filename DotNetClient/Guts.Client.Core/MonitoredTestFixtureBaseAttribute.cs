@@ -20,13 +20,6 @@ namespace Guts.Client.Core
         protected MonitoredTestFixtureBaseAttribute(string courseCode)
         {
             _courseCode = courseCode;
-
-            //var executingFolder = new DirectoryInfo(AppContext.BaseDirectory);
-            //var projectFolder = executingFolder.Parent?.Parent?.Parent;
-            //Assert.That(projectFolder, Is.Not.Null, () => "Technical error: could not find the path of the project.");
-
-
-            //.SetBasePath(projectFolder.FullName)
             var gutsConfig = new ConfigurationBuilder().AddJsonFile("gutssettings.json", optional: false).Build();
             var gutsSection = gutsConfig.GetSection("Guts");
 

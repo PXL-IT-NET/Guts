@@ -117,7 +117,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter.Id, userId, dateUtc);
+                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
                 var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults);
                 return Ok(model);
             }
@@ -153,7 +153,7 @@ namespace Guts.Api.Controllers
                 try
                 {
                     var chapter = await _chapterService.LoadChapterAsync(courseId, chapterNumber);
-                    var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter.Id, dateUtc);
+                    var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
                     model = _chapterConverter.ToChapterStatisticsModel(chapter, chapterStatistics);
 
                     if (useCache)

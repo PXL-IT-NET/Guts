@@ -112,9 +112,11 @@ namespace Guts.Business.Services
 
         public async Task<AssignmentResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)
         {
-            var assignmentWithLastResultsOfUser = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc);
-
-            return _assignmentWitResultsConverter.ToAssignmentResultDto(assignmentWithLastResultsOfUser);
+            return new AssignmentResultDto
+            {
+                AssignmentId = exerciseId,
+                TestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc)
+            };
         }
 
         public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc)

@@ -259,29 +259,24 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
-        public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToExerciseResultDtos()
+        public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToAnAssignmentResultDto()
         {
             //Arrange
             var exerciseId = _random.NextPositive();
             var userId = _random.NextPositive();
-            var existingAssignmentWithResults = new AssignmentWithLastResultsOfUser();
+            var lastTestResults = new List<TestResult>();
 
             _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(existingAssignmentWithResults);
-
-            var assignmentResultDto = new AssignmentResultDto();
-
-            _testResultConverterMock
-                .Setup(converter => converter.ToAssignmentResultDto(It.IsAny<AssignmentWithLastResultsOfUser>()))
-                .Returns(assignmentResultDto);
+                .ReturnsAsync(lastTestResults);
 
             //Act
             var result = _service.GetResultsForUserAsync(exerciseId, userId, null).Result;
 
             //Assert
-            Assert.That(result, Is.EqualTo(assignmentResultDto));
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.TestResults, Is.SameAs(lastTestResults));
+            Assert.That(result.AssignmentId, Is.EqualTo(exerciseId));
             _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfExerciseAsync(exerciseId, userId, null), Times.Once);
-            _testResultConverterMock.Verify(converter => converter.ToAssignmentResultDto(existingAssignmentWithResults), Times.Once);
         }
     }
 }
