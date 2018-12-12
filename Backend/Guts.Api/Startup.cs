@@ -22,6 +22,7 @@ using SimpleInjector;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace Guts.Api
 {
@@ -70,7 +71,11 @@ namespace Guts.Api
                                 category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information),
                     }))
                     .UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"),
-                        sqlOptions => { sqlOptions.MigrationsAssembly("Guts.Data"); });
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsAssembly("Guts.Data");
+                            sqlOptions.ServerVersion(new Version(5, 7, 14), ServerType.MySql);
+                        });
             });
 
             services.AddIdentity<User, Role>(options =>

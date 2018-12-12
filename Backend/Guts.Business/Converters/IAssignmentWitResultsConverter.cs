@@ -1,10 +1,10 @@
-﻿using Guts.Data;
+﻿using System.Collections.Generic;
+using Guts.Domain;
 
 namespace Guts.Business.Converters
 {
     public interface IAssignmentWitResultsConverter
     {
-        AssignmentResultDto ToAssignmentResultDto(AssignmentWithLastResultsOfUser assignmentWithLastResultsOfUser);
-        AssignmentStatisticsDto ToAssignmentStatisticsDto(AssignmentWithLastResultsOfMultipleUsers assignmentWithLastResultsOfMultipleUsers);
+        AssignmentStatisticsDto ToAssignmentStatisticsDto(int assignmentId, IList<TestResult> lastResultsOfMultipleUsers);
     }
 }

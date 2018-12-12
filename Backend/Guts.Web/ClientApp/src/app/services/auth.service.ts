@@ -45,7 +45,7 @@ export class AuthService {
 
   public login(model: LoginModel): Observable<PostResult> {
 
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
+    return this.settingsService.get().mergeMap<ClientSettings, PostResult>((settings: ClientSettings) => {
 
       return this.http.post(settings.apiBaseUrl + 'api/auth/token', model)
         .map((object: Object) => {
@@ -63,10 +63,10 @@ export class AuthService {
           } else {
             // return false to indicate failed login
             this.loggedInState.next(false);
-            return {
-              success: false,
-              message: 'No token present in returned token model'
-            };
+            var result = new PostResult();
+            result.isAuthenticated = false;
+            result.message = 'No token present in returned token model';
+            return result;
           }
         }).catch((errorResponse: HttpErrorResponse) => {
           this.loggedInState.next(false);

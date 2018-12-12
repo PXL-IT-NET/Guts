@@ -8,7 +8,7 @@ namespace Guts.Api.Models.Converters
 {
     public class ExerciseConverter : IExerciseConverter
     {
-        public ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, AssignmentResultDto results, ExerciseTestRunInfoDto testRunInfo)
+        public ExerciseDetailModel ToExerciseDetailModel(Exercise exercise, IList<TestResult> results, ExerciseTestRunInfoDto testRunInfo)
         {
             if (exercise.Chapter?.Course == null)
             {
@@ -49,7 +49,7 @@ namespace Guts.Api.Models.Converters
                     Message = string.Empty
                 };
 
-                var matchingResult = results?.TestResults?.FirstOrDefault(r => r.TestId == test.Id);
+                var matchingResult = results?.FirstOrDefault(r => r.TestId == test.Id);
                 if (matchingResult != null)
                 {
                     testResultModel.Runned = true;

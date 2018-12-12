@@ -54,9 +54,9 @@ namespace Guts.Api.Controllers
 
             var testRunInfo = await _assignmentService.GetUserTestRunInfoForExercise(exerciseId, userId, dateUtc);
 
-            var resultDto = await _assignmentService.GetResultsForUserAsync(exerciseId, userId, dateUtc);
+            var results = await _assignmentService.GetResultsForUserAsync(exerciseId, userId, dateUtc);
 
-            var model = _exerciseConverter.ToExerciseDetailModel(exercise, resultDto, testRunInfo);
+            var model = _exerciseConverter.ToExerciseDetailModel(exercise, results.TestResults, testRunInfo);
 
             return Ok(model);
         }

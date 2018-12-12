@@ -1,43 +1,15 @@
 ﻿using Guts.Data;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Domain;
 
 namespace Guts.Business.Converters
 {
     public class AssignmentWitResultsConverter : IAssignmentWitResultsConverter
     {
-        public AssignmentResultDto ToAssignmentResultDto(AssignmentWithLastResultsOfUser assignmentWithLastResultsOfUser)
+        public AssignmentStatisticsDto ToAssignmentStatisticsDto(int assignmentId, IList<TestResult> lastResultsOfMultipleUsers)
         {
-            var resultDto = new AssignmentResultDto
-            {
-                AssignmentId = assignmentWithLastResultsOfUser?.Assignment?.Id ?? 0,
-                TestResults = new List<TestResultDto>()
-            };
-
-            var testsWithResults = assignmentWithLastResultsOfUser?.TestsWithLastResultOfUser?.ToList() ??
-                                   new List<TestWithLastResultOfUser>();
-
-            foreach (var testWithResults in testsWithResults)
-            {
-                var testResultDto = new TestResultDto
-                {
-                    TestId = testWithResults.Test.Id,
-                    TestName = testWithResults.Test.TestName,
-                    Passed = testWithResults.TestResult.Passed,
-                    Message = testWithResults.TestResult.Message
-                };
-                resultDto.TestResults.Add(testResultDto);
-            }
-
-            return resultDto;
-
-        }
-
-        public AssignmentStatisticsDto ToAssignmentStatisticsDto(
-            AssignmentWithLastResultsOfMultipleUsers assignmentWithLastResultsOfMultipleUsers)
-        {
-            var passedTestsPerUserQuery = from testWithLastResultOfMultipleUsers in assignmentWithLastResultsOfMultipleUsers.TestsWithLastResultOfMultipleUsers
-                                          from testResult in testWithLastResultOfMultipleUsers.TestResults
+            var passedTestsPerUserQuery = from testResult in lastResultsOfMultipleUsers
                                           group testResult by testResult.UserId into userGroup
                                           select new
                                           {
@@ -55,7 +27,7 @@ namespace Guts.Business.Converters
 
             var result = new AssignmentStatisticsDto
             {
-                AssignmentId = assignmentWithLastResultsOfMultipleUsers.Assignment.Id,
+                AssignmentId = assignmentId,
                 TestPassageStatistics = testPassageStatisticsQuery.OrderBy(statistic => statistic.AmountOfPassedTests).ToList()
             };
             return result;

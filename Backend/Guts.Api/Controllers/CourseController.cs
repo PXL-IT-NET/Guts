@@ -151,7 +151,6 @@ namespace Guts.Api.Controllers
             var streamWriter = new StreamWriter(memoryStream);
             var config = new Configuration
             {
-                QuoteAllFields = true,
                 CultureInfo = new CultureInfo("nl-BE"),
             };
             var csv = new CsvWriter(streamWriter, config);
