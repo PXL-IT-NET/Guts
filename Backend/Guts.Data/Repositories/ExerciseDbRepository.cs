@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
@@ -14,7 +13,11 @@ namespace Guts.Data.Repositories
 
         public async Task<Exercise> GetSingleAsync(int chapterId, string code)
         {
-            var exercise = await _context.Exercises.FirstOrDefaultAsync(ex => ex.ChapterId == chapterId && ex.Code == code);
+            var exercise = await _context.Exercises
+                .Where(ex => ex.ChapterId == chapterId && ex.Code == code)
+                .Include(ex => ex.TestCodeHashes)
+                .FirstOrDefaultAsync();
+
             if (exercise == null)
             {
                 throw new DataNotFoundException();
@@ -34,15 +37,5 @@ namespace Guts.Data.Repositories
             }
             return exercise;
         }
-
-        //public async Task<IList<User>> GetExerciseUsersAsync(int exerciseId)
-        //{
-        //    var query = from testRun in _context.TestResults
-        //        where testRun.Test.ExerciseId == exerciseId
-        //        group testRun by testRun.User
-        //        into userGroups
-        //        select userGroups.Key;
-        //    return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
-        //}
     }
 }

@@ -58,6 +58,14 @@ namespace Guts.Client.Classic
             return false;
         }
 
+        protected string GetSourceCode()
+        {
+            if (string.IsNullOrEmpty(_sourceCodeRelativeFilePaths)) return string.Empty;
+
+            TestContext.Progress.WriteLine($"Reading source code files: {_sourceCodeRelativeFilePaths}");
+            return SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);
+        }
+
         protected void SendTestResults(TestRunBase testRun)
         {
             try

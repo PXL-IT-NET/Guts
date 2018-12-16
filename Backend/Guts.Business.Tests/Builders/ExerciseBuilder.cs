@@ -15,10 +15,17 @@ namespace Guts.Business.Tests.Builders
             _random = new Random();
             _exercise = new Exercise
             {
-                Id = _random.NextPositive(),
+                Id = 0,
                 ChapterId = _random.NextPositive(),
+                Code = Guid.NewGuid().ToString(),
                 Tests = new List<Test>()
             };
+        }
+
+        public ExerciseBuilder WithId()
+        {
+            _exercise.Id = _random.NextPositive();
+            return this;
         }
 
         public ExerciseBuilder WithRandomTests(int numberOfTests)
@@ -57,9 +64,21 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
+        public ExerciseBuilder WithTestCodeHash(string testCodeHash)
+        {
+            _exercise.TestCodeHashes.Add(new TestCodeHash
+            {
+                Id = _random.NextPositive(),
+                AssignmentId = _exercise.Id,
+                Hash = testCodeHash
+            });
+            return this;
+        }
+
         public Exercise Build()
         {
             return _exercise;
         }
+
     }
 }

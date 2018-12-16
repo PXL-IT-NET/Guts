@@ -4,7 +4,6 @@ using System.Linq;
 using Guts.Business.Converters;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Data;
 using Guts.Domain;
 using NUnit.Framework;
 

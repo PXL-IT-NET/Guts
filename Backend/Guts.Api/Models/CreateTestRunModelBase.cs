@@ -9,5 +9,7 @@ namespace Guts.Api.Models
         public IEnumerable<TestResultModel> Results { get; set; }
 
         public string SourceCode { get; set; }
+
+        public string TestCodeHash { get; set; }
     }
 }

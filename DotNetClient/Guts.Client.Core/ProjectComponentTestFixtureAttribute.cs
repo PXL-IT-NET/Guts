@@ -46,13 +46,9 @@ namespace Guts.Client.Core
                 {
                     ProjectComponent = projectComponent,
                     Results = TestRunResultAccumulator.Instance.TestResults,
+                    SourceCode = GetSourceCode(),
+                    TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
-
-                if (!string.IsNullOrEmpty(_sourceCodeRelativeFilePaths))
-                {
-                    TestContext.Progress.WriteLine($"Reading source code files: {_sourceCodeRelativeFilePaths}");
-                    testRun.SourceCode = SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);
-                }
 
                 SendTestResults(testRun);
             }

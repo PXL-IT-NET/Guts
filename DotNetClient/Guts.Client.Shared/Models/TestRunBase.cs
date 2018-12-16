@@ -7,5 +7,7 @@ namespace Guts.Client.Shared.Models
         public IEnumerable<TestResult> Results { get; set; }
 
         public string SourceCode { get; set; }
+
+        public string TestCodeHash { get; set; }
     }
 }

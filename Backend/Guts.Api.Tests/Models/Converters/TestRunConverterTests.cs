@@ -39,7 +39,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var numberOfTests = 2;
 
-            var exercise = new ExerciseBuilder().WithRandomTests(numberOfTests).Build();
+            var exercise = new ExerciseBuilder().WithId().WithRandomTests(numberOfTests).Build();
             _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder()
                 .WithSourceCode()
                 .WithRandomTestResultModelsFor(exercise.Tests)
@@ -81,7 +81,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void From_ShouldIgnoreNonExisingTests()
         {
             //Assert
-            var exercise = new ExerciseBuilder().Build();
+            var exercise = new ExerciseBuilder().WithId().Build();
             _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
             //Act
@@ -96,7 +96,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void From_ShouldConvertRunWithEmptyListOfTestResultsIfModelDoesNotContainTestResults()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().Build();
+            var exercise = new ExerciseBuilder().WithId().Build();
             _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().WithTestResultModels(null).Build();
 
             //Act

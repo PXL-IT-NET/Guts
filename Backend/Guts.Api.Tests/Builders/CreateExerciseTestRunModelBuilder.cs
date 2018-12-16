@@ -13,7 +13,8 @@ namespace Guts.Api.Tests.Builders
             {
                 Exercise = new ExerciseDtoBuilder().Build(),
                 Results = new List<TestResultModel>(),
-                SourceCode = null
+                SourceCode = null,
+                TestCodeHash = null
             };
         }
 

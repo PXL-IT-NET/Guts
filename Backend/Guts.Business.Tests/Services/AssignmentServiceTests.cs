@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Guts.Business.Converters;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
@@ -22,10 +21,10 @@ namespace Guts.Business.Tests.Services
         private Mock<ITestRepository> _testRepositoryMock;
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
-        private Mock<IAssignmentWitResultsConverter> _testResultConverterMock;
         private Mock<ITestRunRepository> _testRunRepositoryMock;
         private Mock<IProjectService> _projectServiceMock;
         private Mock<IProjectComponentRepository> _projectComponentRepositoryMock;
+        private Mock<IAssignmentRepository> _assignmentRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -36,17 +35,17 @@ namespace Guts.Business.Tests.Services
             _chapterServiceMock = new Mock<IChapterService>();
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
-            _testResultConverterMock = new Mock<IAssignmentWitResultsConverter>();
             _projectServiceMock = new Mock<IProjectService>();
             _projectComponentRepositoryMock = new Mock<IProjectComponentRepository>();
+            _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
 
             _service = new AssignmentService(_exerciseRepositoryMock.Object, 
                 _chapterServiceMock.Object, 
                 _projectServiceMock.Object,
                 _projectComponentRepositoryMock.Object,
+                _assignmentRepositoryMock.Object,
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
-                _testResultConverterMock.Object, 
                 _testRunRepositoryMock.Object);
         }
 
@@ -178,10 +177,7 @@ namespace Guts.Business.Tests.Services
         public void LoadTestsForAssignmentAsync_ShouldLoadExistingTests()
         {
             //Arrange
-            var assignment = new Exercise
-            {
-                Id = _random.NextPositive(),
-            };
+            var assignment = new ExerciseBuilder().WithId().Build();
 
             var existingTests = new List<Test>
             {
@@ -266,7 +262,7 @@ namespace Guts.Business.Tests.Services
             var userId = _random.NextPositive();
             var lastTestResults = new List<TestResult>();
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             //Act
@@ -276,7 +272,84 @@ namespace Guts.Business.Tests.Services
             Assert.That(result, Is.Not.Null);
             Assert.That(result.TestResults, Is.SameAs(lastTestResults));
             Assert.That(result.AssignmentId, Is.EqualTo(exerciseId));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfExerciseAsync(exerciseId, userId, null), Times.Once);
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAssignmentAsync(exerciseId, userId, null), Times.Once);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldReturnTrueForAValidHash()
+        {
+            //Arrange
+            var testCodeHash = Guid.NewGuid().ToString();
+            var assignment = new ExerciseBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
+
+            //Assert
+            Assert.That(isValid, Is.True);
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldReturnFalseForAnInValidHash()
+        {
+            //Arrange
+            var validHash = Guid.NewGuid().ToString();
+            var invalidHash = Guid.NewGuid().ToString();
+            var assignment = new ExerciseBuilder().WithId().WithTestCodeHash(validHash).Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(invalidHash, assignment, false).Result;
+
+            //Assert
+            Assert.That(isValid, Is.False);
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldAddTheHashForLectors()
+        {
+            //Arrange
+            var testCodeHash = Guid.NewGuid().ToString();
+            var assignment = new ExerciseBuilder().WithId().Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
+
+            //Assert
+            Assert.That(isValid, Is.True);
+            Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(assignment), Times.Once);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldNotAddHashesThatAlreadyExist()
+        {
+            //Arrange
+            var testCodeHash = Guid.NewGuid().ToString();
+            var assignment = new ExerciseBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
+
+            //Assert
+            Assert.That(isValid, Is.True);
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldReturnTrueIfTheHashIsEmptyAndTheAssignmentHasNoHashes()
+        {
+            //Arrange
+            var testCodeHash = string.Empty;
+            var assignment = new ExerciseBuilder().WithId().Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
+
+            //Assert
+            Assert.That(isValid, Is.True);
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
         }
     }
 }

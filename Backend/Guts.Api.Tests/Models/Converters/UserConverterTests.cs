@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Guts.Api.Models.Converters;
+﻿using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
-using Guts.Domain;
-using Moq;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters

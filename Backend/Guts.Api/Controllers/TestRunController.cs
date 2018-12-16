@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
@@ -8,6 +9,7 @@ using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+[assembly: InternalsVisibleTo("Guts.Api.Tests")]
 
 namespace Guts.Api.Controllers
 {
@@ -22,6 +24,8 @@ namespace Guts.Api.Controllers
         private readonly ITestRunConverter _testRunConverter;
         private readonly ITestRunService _testRunService;
         private readonly IAssignmentService _assignmentService;
+
+        internal const string InvalidTestCodeHashErrorKey = "InvalidTestCodeHash";
 
         public TestRunController(ITestRunConverter testRunConverter, 
             ITestRunService testRunService, 
@@ -63,6 +67,14 @@ namespace Guts.Api.Controllers
             }
 
             var exercise = await _assignmentService.GetOrCreateExerciseAsync(model.Exercise);
+
+            if (!await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, exercise, IsLector()))
+            {
+                ModelState.AddModelError(InvalidTestCodeHashErrorKey,
+                    "The hash of the test code does not match any of the hashes associated with the assignment.");
+                return BadRequest(ModelState);
+            }
+
             var savedModel = await SaveTestRunForAssignment(model, exercise);
             
             return CreatedAtAction(nameof(GetTestRun), new {id = savedModel?.Id}, savedModel);
@@ -84,6 +96,14 @@ namespace Guts.Api.Controllers
             }
 
             var component = await _assignmentService.GetOrCreateProjectComponentAsync(model.ProjectComponent);
+
+            if (! await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, component, IsLector()))
+            {
+                ModelState.AddModelError("InvalidTestCodeHash",
+                    "The hash of the test code does not match any of the hashes associated with the assignment.");
+                return BadRequest(ModelState);
+            }
+
             var savedModel = await SaveTestRunForAssignment(model, component);
             return CreatedAtAction(nameof(GetTestRun), new { id = savedModel.Id }, savedModel);
         }

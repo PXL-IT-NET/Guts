@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
 using ControllerBase = Guts.Api.Controllers.ControllerBase;
-using Test = NUnit.Framework.Internal.Test;
 
 namespace Guts.Api.Tests.Controllers
 {
@@ -50,7 +49,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetExerciseResultsForUserShouldReturnExerciseDetailsIfParamatersAreValid()
         {
             //Arrange
-            var existingExercise = new ExerciseBuilder().Build();
+            var existingExercise = new ExerciseBuilder().WithId().Build();
             var userId = _random.NextPositive();
 
             _exerciseRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()))

@@ -2,7 +2,6 @@ using Guts.Domain;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Guts.Data.Repositories
@@ -13,10 +12,10 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<IList<TestResult>> GetLastTestResultsOfExerciseAsync(int exerciseId, int? userId, DateTime? dateUtc)
+        public async Task<IList<TestResult>> GetLastTestResultsOfAssignmentAsync(int assignmentId, int? userId, DateTime? dateUtc)
         {
             var results = _context.TestResults.FromSql(
-                "CALL sp_getLastTestResultsOfAssignment({0}, {1}, {2})", exerciseId, userId, dateUtc);
+                "CALL sp_getLastTestResultsOfAssignment({0}, {1}, {2})", assignmentId, userId, dateUtc);
 
             return await results.AsNoTracking().ToListAsync();
         }

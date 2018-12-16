@@ -56,17 +56,8 @@ namespace Guts.Client.Shared.TestTools
         /// <returns>The hash of the file content</returns>
         public string GetFileHash(string relativeFilePath)
         {
-            var content = GetFileContent(relativeFilePath);
-            if (string.IsNullOrEmpty(content))
-            {
-                return string.Empty;
-            }
-            //remove new lines to rule out differences between files on unix, linux, windows
-            content = Regex.Replace(content, "\t|\r|\n|\\s", "");
-
-            var fileBytes = Encoding.UTF8.GetBytes(content);
-            var hashBytes = MD5.Create().ComputeHash(fileBytes);
-            return BitConverter.ToString(hashBytes);
+            var sourceCodePath = System.IO.Path.Combine(Path, relativeFilePath);
+            return FileUtil.GetFileHash(sourceCodePath);
         }
     }
 }

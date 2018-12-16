@@ -24,6 +24,12 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
+        public CreateTestRunModelBuilderBase<TModel> WithTestCodeHash()
+        {
+            Model.TestCodeHash = Guid.NewGuid().ToString();
+            return this;
+        }
+
         public CreateTestRunModelBuilderBase<TModel> WithRandomTestResultModels(int numberOfTestResults)
         {
             var testResultModels = new List<TestResultModel>();

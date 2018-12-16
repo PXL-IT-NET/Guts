@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Guts.Client.Shared.Models;
+using Guts.Client.Shared.TestTools;
 using NUnit.Framework;
 
 namespace Guts.Client.Shared.Utility
@@ -18,16 +19,19 @@ namespace Guts.Client.Shared.Utility
 
         public string TestClassName { get; set; }
 
+        public string TestCodeHash { get; set; }
+
         private TestRunResultAccumulator()
         {
             TestResults = new List<TestResult>();
+            Clear();
         }
 
         public static TestRunResultAccumulator Instance => _instance ?? (_instance = new TestRunResultAccumulator());
 
         public void AddTestResult(TestResult result)
         {
-            EnsureNumberOfTestsInCurrentFixtureIsRetrieved();
+            EnsureMetaDataIsLoaded();
 
             if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated) tests
 
@@ -39,9 +43,10 @@ namespace Guts.Client.Shared.Utility
             TestResults.Clear();
             NumberOfTestsInCurrentFixture = 0;
             TestClassName = string.Empty;
+            TestCodeHash = string.Empty;
         }
 
-        private void EnsureNumberOfTestsInCurrentFixtureIsRetrieved()
+        private void EnsureMetaDataIsLoaded()
         {
             if (NumberOfTestsInCurrentFixture > 0) return;
 
@@ -56,6 +61,9 @@ namespace Guts.Client.Shared.Utility
             {
                 TestClassName = TestContext.CurrentContext.Test.ClassName;
                 NumberOfTestsInCurrentFixture = testClassType.GetMethods().Count(m => m.GetCustomAttributes().OfType<TestAttribute>().Any());
+
+                var testCodePath = Path.Combine(testProjectDirectoryInfo.FullName, testClassType.Name + ".cs");
+                TestCodeHash = FileUtil.GetFileHash(testCodePath);
             }
         }
     }

@@ -239,7 +239,7 @@ namespace Guts.Business.Tests.Services
             var chapter = new ChapterBuilder().WithId().WithExercises(numberOfExercises, 1).Build();
             var lastTestResults = new List<TestResult> {new TestResult()};
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             //Act
@@ -248,7 +248,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Has.Count.EqualTo(numberOfExercises));
             _testResultRepositoryMock.Verify(
-                repo => repo.GetLastTestResultsOfExerciseAsync(
+                repo => repo.GetLastTestResultsOfAssignmentAsync(
                     It.Is<int>(exerciseId => chapter.Exercises.Any(e => e.Id == exerciseId)), userId, null),
                 Times.Exactly(numberOfExercises));
             Assert.That(results, Has.All.Matches((AssignmentResultDto dto) => dto.TestResults.Count == lastTestResults.Count));
@@ -264,7 +264,7 @@ namespace Guts.Business.Tests.Services
 
             var testResults = new List<TestResult>();
             _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResultsOfExerciseAsync(It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<DateTime?>()))
+                .Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(testResults);
 
             var assignmentStatisticsDto = new AssignmentStatisticsDto();
@@ -278,7 +278,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Has.Count.EqualTo(numberOfExercises));
             _testResultRepositoryMock.Verify(
-                repo => repo.GetLastTestResultsOfExerciseAsync(
+                repo => repo.GetLastTestResultsOfAssignmentAsync(
                     It.Is<int>(exerciseId => chapter.Exercises.Any(e => e.Id == exerciseId)), null, nowUtc),
                 Times.Exactly(numberOfExercises));
             _testResultConverterMock.Verify(

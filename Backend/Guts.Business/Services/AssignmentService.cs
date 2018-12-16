@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Converters;
 using Guts.Data;
 using Guts.Data.Repositories;
 using Guts.Domain;
@@ -15,27 +14,27 @@ namespace Guts.Business.Services
         private readonly IChapterService _chapterService;
         private readonly IProjectService _projectService;
         private readonly IProjectComponentRepository _projectComponentRepository;
+        private readonly IAssignmentRepository _assignmentRepository;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
-        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
         private readonly ITestRunRepository _testRunRepository;
 
         public AssignmentService(IExerciseRepository exerciseRepository, 
             IChapterService chapterService,
             IProjectService projectService,
             IProjectComponentRepository projectComponentRepository,
+            IAssignmentRepository assignmentRepository,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
-            IAssignmentWitResultsConverter assignmentWitResultsConverter,
             ITestRunRepository testRunRepository)
         {
             _exerciseRepository = exerciseRepository;
             _chapterService = chapterService;
             _projectService = projectService;
             _projectComponentRepository = projectComponentRepository;
+            _assignmentRepository = assignmentRepository;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
-            _assignmentWitResultsConverter = assignmentWitResultsConverter;
             _testRunRepository = testRunRepository;
         }
 
@@ -115,7 +114,7 @@ namespace Guts.Business.Services
             return new AssignmentResultDto
             {
                 AssignmentId = exerciseId,
-                TestResults = await _testResultRepository.GetLastTestResultsOfExerciseAsync(exerciseId, userId, dateUtc)
+                TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(exerciseId, userId, dateUtc)
             };
         }
 
@@ -148,6 +147,26 @@ namespace Guts.Business.Services
                 UserId = testrun.UserId,
                 UserFullName = $"{testrun.User.FirstName} {testrun.User.LastName}".Trim()
             }).OrderBy(dto => dto.UserFullName).ToList();
+        }
+
+        public async Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector)
+        {
+            if (!assignment.TestCodeHashes.Any() && string.IsNullOrEmpty(testCodeHash)) return true; //Ok to send an empty hash when no hashes are associated with the assignment
+
+            if (assignment.TestCodeHashes.Any(ah => ah.Hash == testCodeHash)) return true;
+
+            if (isLector && !string.IsNullOrEmpty(testCodeHash))
+            {
+                //add the hash to the collection of hashed associated with the assignment
+                assignment.TestCodeHashes.Add(new TestCodeHash
+                {
+                    AssignmentId = assignment.Id,
+                    Hash = testCodeHash
+                });
+                await _assignmentRepository.UpdateAsync(assignment);
+                return true;
+            }
+            return false;
         }
     }
 }

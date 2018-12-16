@@ -27,7 +27,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void ToExerciseDetailModel_ShouldThrowArgumentExceptionIfChapterOfExerciseIsNotLoaded()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithoutChapterLoaded().Build();
+            var exercise = new ExerciseBuilder().WithId().WithoutChapterLoaded().Build();
 
             //Act + Assert
             Assert.That(
@@ -40,7 +40,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapter = new ChapterBuilder().WithoutCourseLoaded().Build();
-            var exercise = new ExerciseBuilder().WithChapter(chapter).Build();
+            var exercise = new ExerciseBuilder().WithId().WithChapter(chapter).Build();
 
             //Act + Assert
             Assert.That(
@@ -52,7 +52,7 @@ namespace Guts.Api.Tests.Models.Converters
         public void ToExerciseDetailModel_ShouldThrowArgumentExceptionIfTestsAreNotLoaded()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithoutTestsLoaded().Build();
+            var exercise = new ExerciseBuilder().WithId().WithoutTestsLoaded().Build();
 
             //Act + Assert
             Assert.That(
@@ -65,7 +65,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapter = new ChapterBuilder().WithCourse().Build();
-            var exercise = new ExerciseBuilder().WithChapter(chapter).Build();
+            var exercise = new ExerciseBuilder().WithId().WithChapter(chapter).Build();
 
             //Act + Assert
             Assert.That(
@@ -78,7 +78,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapter = new ChapterBuilder().WithCourse().Build();
-            var exercise = new ExerciseBuilder().WithChapter(chapter).Build();
+            var exercise = new ExerciseBuilder().WithId().WithChapter(chapter).Build();
 
             //Act
             var model = _converter.ToExerciseDetailModel(exercise, null, new ExerciseTestRunInfoDto());
@@ -94,7 +94,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapter = new ChapterBuilder().WithCourse().Build();
-            var exercise = new ExerciseBuilder().WithChapter(chapter).Build();
+            var exercise = new ExerciseBuilder().WithId().WithChapter(chapter).Build();
             var utcNow = DateTime.UtcNow;
 
             var testRunInfo = new ExerciseTestRunInfoDto
@@ -120,7 +120,11 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var chapter = new ChapterBuilder().WithCourse().Build();
             var numberOfTests = _random.Next(2, 10);
-            var exercise = new ExerciseBuilder().WithChapter(chapter).WithRandomTests(numberOfTests).Build();
+            var exercise = new ExerciseBuilder()
+                .WithId()
+                .WithChapter(chapter)
+                .WithRandomTests(numberOfTests)
+                .Build();
 
             //Act
             var model = _converter.ToExerciseDetailModel(exercise, new List<TestResult>(), new ExerciseTestRunInfoDto());

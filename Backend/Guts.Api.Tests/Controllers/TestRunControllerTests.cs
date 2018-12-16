@@ -36,6 +36,10 @@ namespace Guts.Api.Tests.Controllers
             _testResultConverterMock = new Mock<ITestRunConverter>();
             _testRunServiceMock = new Mock<ITestRunService>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
+            _assignmentServiceMock.Setup(service =>
+                    service.ValidateTestCodeHashAsync(It.IsAny<string>(), It.IsAny<Assignment>(), It.IsAny<bool>()))
+                .ReturnsAsync(true);
+
             _userId = _random.Next(1, int.MaxValue);
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
         }
@@ -50,11 +54,8 @@ namespace Guts.Api.Tests.Controllers
         public void PostExerciseTestRun_ShouldSaveItInTheRepository()
         {
             //Arrange
-            var exercise = new Exercise
-            {
-                Id = _random.NextPositive(),
-                Code = Guid.NewGuid().ToString()
-            };
+            var exercise = new ExerciseBuilder().WithId().Build();
+           
             _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
                 .ReturnsAsync(exercise);
 
@@ -86,7 +87,31 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
-            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
+            
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+        }
+
+        [Test]
+        public void PostExerciseTestRun_ShouldReturnBadRequestWhenTheTestCodeHashIsInvalid()
+        {
+            //Arrange
+            var exercise = new ExerciseBuilder().WithId().Build();
+            var exerciseDto = new ExerciseDtoBuilder().WithExerciseCode(exercise.Code).Build();
+            var postedModel = new CreateExerciseTestRunModelBuilder()
+                .WithExercise(exerciseDto)
+                .WithTestCodeHash()
+                .Build();
+
+            _assignmentServiceMock.Setup(service =>
+                    service.ValidateTestCodeHashAsync(It.IsAny<string>(), It.IsAny<Assignment>(), It.IsAny<bool>()))
+                .ReturnsAsync(false);
+
+            //Act
+            var badRequestResult = _controller.PostExerciseTestRun(postedModel).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(badRequestResult, Is.Not.Null);
+            Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == TestRunController.InvalidTestCodeHashErrorKey));
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
         }
 
@@ -94,11 +119,7 @@ namespace Guts.Api.Tests.Controllers
         public void PostExerciseTestRun_ShouldNotCreateNewTestsIfUserIsAStudent()
         {
             //Arrange
-            var exercise = new Exercise
-            {
-                Id = _random.NextPositive(),
-                Code = Guid.NewGuid().ToString()
-            };
+            var exercise = new ExerciseBuilder().WithId().Build();
             _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
                 .ReturnsAsync(exercise);
 
@@ -124,11 +145,7 @@ namespace Guts.Api.Tests.Controllers
         public void PostProjectTestRun_ShouldSaveItInTheRepository()
         {
             //Arrange
-            var component = new ProjectComponent
-            {
-                Id = _random.NextPositive(),
-                Code = _random.NextPositive().ToString()
-            };
+            var component = new ProjectComponentBuilder().WithId().Build();
             _assignmentServiceMock.Setup(service => service.GetOrCreateProjectComponentAsync(It.IsAny<ProjectComponentDto>()))
                 .ReturnsAsync(component);
 
@@ -161,6 +178,30 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
             _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+        }
+
+        [Test]
+        public void PostProjectTestRun_ShouldReturnBadRequestWhenTheTestCodeHashIsInvalid()
+        {
+            //Arrange
+            var component = new ProjectComponentBuilder().WithId().Build();
+            var projectComponentDto = new ProjectComponentDtoBuilder().WithComponentCode(component.Code).Build();
+            var postedModel = new CreateProjectTestRunModelBuilder()
+                .WithProjectComponent(projectComponentDto)
+                .WithSourceCode()
+                .Build();
+
+            _assignmentServiceMock.Setup(service =>
+                    service.ValidateTestCodeHashAsync(It.IsAny<string>(), It.IsAny<Assignment>(), It.IsAny<bool>()))
+                .ReturnsAsync(false);
+
+            //Act
+            var badRequestResult = _controller.PostProjectTestRun(postedModel).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(badRequestResult, Is.Not.Null);
+            Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == TestRunController.InvalidTestCodeHashErrorKey));
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
         }
 
