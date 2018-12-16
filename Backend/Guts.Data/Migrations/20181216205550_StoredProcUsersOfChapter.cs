@@ -23,7 +23,8 @@ namespace Guts.Data.Migrations
             sb.AppendLine(" inner join Assignments a on tr.AssignmentId = a.Id");
             sb.AppendLine(" where a.ChapterId = ChapterId");
             sb.AppendLine(" group by u.Id) as g");
-            sb.AppendLine(" inner join Users u on u.Id = g.Id;");
+            sb.AppendLine("inner join Users u on u.Id = g.Id");
+            sb.AppendLine("order by u.FirstName, u.LastName;");
             sb.AppendLine(@"END");
             migrationBuilder.Sql(sb.ToString());
         }
