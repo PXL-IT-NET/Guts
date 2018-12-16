@@ -3,14 +3,16 @@ using System;
 using Guts.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Guts.Data.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    partial class GutsContextModelSnapshot : ModelSnapshot
+    [Migration("20181216205550_StoredProcUsersOfChapter")]
+    partial class StoredProcUsersOfChapter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

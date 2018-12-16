@@ -10,6 +10,6 @@ namespace Guts.Data.Repositories
         Task<Chapter> LoadWithExercisesAsync(int courseId, int number, int periodId);
         Task<Chapter> LoadWithExercisesAndTestsAsync(int courseId, int number, int periodId);
         Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId);
-        Task<IList<User>> GetUsersOfChapterAsync(int chapterId);
+      //  Task<IList<User>> GetUsersOfChapterAsync(int chapterId);
     }
 }

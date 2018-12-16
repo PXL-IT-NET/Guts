@@ -26,6 +26,7 @@ namespace Guts.Api.Controllers
         private readonly IChapterRepository _chapterRepository;
         private readonly IChapterConverter _chapterConverter;
         private readonly UserManager<User> _userManager;
+        private readonly IUserRepository _userRepository;
         private readonly IMemoryCache _memoryCache;
         public const int CacheTimeInSeconds = 300;
 
@@ -33,12 +34,14 @@ namespace Guts.Api.Controllers
             IChapterRepository chapterRepository,
             IChapterConverter chapterConverter,
             UserManager<User> userManager, 
+            IUserRepository userRepository,
             IMemoryCache memoryCache)
         {
             _chapterService = chapterService;
             _chapterRepository = chapterRepository;
             _chapterConverter = chapterConverter;
             _userManager = userManager;
+            _userRepository = userRepository;
             _memoryCache = memoryCache;
         }
 
@@ -66,7 +69,7 @@ namespace Guts.Api.Controllers
                 List<User> chapterUsers = new List<User>();
                 if (IsLector())
                 {
-                    chapterUsers.AddRange(await _chapterRepository.GetUsersOfChapterAsync(chapter.Id));
+                    chapterUsers.AddRange(await _userRepository.GetUsersOfChapterAsync(chapter.Id));
                 }
 
                 if (!chapterUsers.Any()) //add the own user

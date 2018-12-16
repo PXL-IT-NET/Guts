@@ -23,7 +23,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ICourseConverter> _courseConverterMock;
         private Random _random;
-        private Mock<IChapterRepository> _chapterRepositoryMock;
+        private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
 
 
@@ -33,11 +33,11 @@ namespace Guts.Api.Tests.Controllers
             _courseServiceMock = new Mock<ICourseService>();
             _chapterServiceMock = new Mock<IChapterService>();
             _courseConverterMock = new Mock<ICourseConverter>();
-            _chapterRepositoryMock = new Mock<IChapterRepository>();
+            _userRepositoryMock = new Mock<IUserRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _controller = new CourseController(_courseServiceMock.Object, 
                 _chapterServiceMock.Object, 
-                _chapterRepositoryMock.Object, 
+                _userRepositoryMock.Object, 
                 _assignmentServiceMock.Object, 
                 _courseConverterMock.Object);
             _random = new Random();

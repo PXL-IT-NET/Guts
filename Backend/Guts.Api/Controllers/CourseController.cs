@@ -26,19 +26,19 @@ namespace Guts.Api.Controllers
     {
         private readonly ICourseService _courseService;
         private readonly IChapterService _chapterService;
-        private readonly IChapterRepository _chapterRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IAssignmentService _assignmentService;
         private readonly ICourseConverter _courseConverter;
 
         public CourseController(ICourseService courseService,
             IChapterService chapterService,
-            IChapterRepository chapterRepository,
+            IUserRepository userRepository,
             IAssignmentService assignmentService,
             ICourseConverter courseConverter)
         {
             _courseService = courseService;
             _chapterService = chapterService;
-            _chapterRepository = chapterRepository;
+            _userRepository = userRepository;
             _assignmentService = assignmentService;
             _courseConverter = courseConverter;
         }
@@ -91,7 +91,7 @@ namespace Guts.Api.Controllers
             foreach (var chapterScoreOptions in input.ChapterScoreOptions)
             {
                 var chapter = await _chapterService.LoadChapterAsync(courseId, chapterScoreOptions.ChapterNumber);
-                allUsers = allUsers.Union(await _chapterRepository.GetUsersOfChapterAsync(chapter.Id), new DomainOjbectEqualityComparer<User>()).ToList();
+                allUsers = allUsers.Union(await _userRepository.GetUsersOfChapterAsync(chapter.Id), new DomainOjbectEqualityComparer<User>()).ToList();
             }
             allUsers = allUsers.OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToList();
 

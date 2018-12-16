@@ -32,6 +32,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<UserManager<User>> _userManagerMock;
         private Mock<IChapterRepository> _chapterRepositoryMock;
         private Mock<IMemoryCache> _memoryCacheMock;
+        private Mock<IUserRepository> _userRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -42,6 +43,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterRepositoryMock = new Mock<IChapterRepository>();
             _chapterConverterMock = new Mock<IChapterConverter>();
             _memoryCacheMock = new Mock<IMemoryCache>();
+            _userRepositoryMock = new Mock<IUserRepository>();
 
             var userStoreMock = new Mock<IUserStore<User>>();
             var passwordHasherMock = new Mock<IPasswordHasher<User>>();
@@ -67,6 +69,7 @@ namespace Guts.Api.Tests.Controllers
                 _chapterRepositoryMock.Object, 
                 _chapterConverterMock.Object, 
                 _userManagerMock.Object,
+                _userRepositoryMock.Object,
                 _memoryCacheMock.Object)
             {
                 ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(Role.Constants.Student).Build()

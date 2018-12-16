@@ -47,18 +47,18 @@ namespace Guts.Data.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<IList<User>> GetUsersOfChapterAsync(int chapterId)
-        {
-            var query = from chapter in _context.Chapters
-                from exercise in chapter.Exercises
-                from testRun in exercise.TestRuns
-                where chapter.Id == chapterId
-                group testRun by testRun.User
-                into userGroups
-                select userGroups.Key;
+        //public async Task<IList<User>> GetUsersOfChapterAsync(int chapterId)
+        //{
+        //    var query = from chapter in _context.Chapters
+        //        from exercise in chapter.Exercises
+        //        from testRun in exercise.TestRuns
+        //        where chapter.Id == chapterId
+        //        group testRun by testRun.User
+        //        into userGroups
+        //        select userGroups.Key;
 
-            return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
-        }
+        //    return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).ToListAsync();
+        //}
 
         private async Task<Chapter> ExecuteChapterQuery(IQueryable<Chapter> query)
         {
