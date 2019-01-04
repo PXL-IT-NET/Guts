@@ -54,7 +54,9 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (!model.Email.ToLower().EndsWith("pxl.be"))
+            var email = model.Email.ToLower();
+            var isPxlEmail = email.EndsWith("@pxl.be") || email.EndsWith("@student.pxl.be");
+            if (!isPxlEmail)
             {
                 return BadRequest("Only PXL email adresses are allowed.");
             }
@@ -77,7 +79,7 @@ namespace Guts.Api.Controllers
 
             if (result.Succeeded)
             {
-                var role = user.Email.ToLower().EndsWith("student.pxl.be") ? Role.Constants.Student : Role.Constants.Lector;
+                var role = user.Email.ToLower().EndsWith("@pxl.be") ? Role.Constants.Lector : Role.Constants.Student;
                 await _userManager.AddToRoleAsync(user, role);
                 await SendConfirmUserEmailMessage(user);
                 return Ok();

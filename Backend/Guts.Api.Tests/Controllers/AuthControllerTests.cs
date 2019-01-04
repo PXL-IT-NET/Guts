@@ -96,10 +96,12 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void RegisterShouldReturnBadRequestForNonPxlEmailAddress()
+        [TestCase("invalid@nottrusted.be")]
+        [TestCase("invalid@fakepxl.be")]
+        public void RegisterShouldReturnBadRequestForNonPxlEmailAddress(string invalidEmail)
         {
             //Arrange
-            var model = new RegisterModelBuilder().WithEmail("invalid@nottrusted.be").Build();
+            var model = new RegisterModelBuilder().WithEmail(invalidEmail).Build();
 
             //Act
             var result = _controller.Register(model).Result as BadRequestObjectResult;
