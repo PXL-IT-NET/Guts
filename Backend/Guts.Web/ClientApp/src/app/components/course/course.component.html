@@ -3,11 +3,20 @@
     <h5>{{course.name}}</h5>
     <form>
       <div class="form-group row">
-        <label for="chapters" class="col-md-2 col-xl-1 col-form-label">Chapter</label>
-        <div class="col-md-10 col-xl-2">
+        <label for="chapters" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.chapters.length > 0">Chapter</label>
+        <div class="col-md-10 col-xl-2" *ngIf="course.chapters.length > 0">
           <select name="chapters" class="form-control" [(ngModel)]="selectedChapter" (ngModelChange)="onChapterChanged()">
             <option *ngFor="let chapter of course.chapters" [ngValue]="chapter">
-              Chapter {{chapter.number}}
+              {{chapter.description}}
+            </option>
+          </select>
+        </div>
+
+        <label for="projects" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.projects.length > 0">Project</label>
+        <div class="col-md-10 col-xl-2" *ngIf="course.projects.length > 0">
+          <select name="projects" class="form-control" [(ngModel)]="selectedProject" (ngModelChange)="onProjectChanged()">
+            <option *ngFor="let project of course.projects" [ngValue]="project">
+              {{project.description}}
             </option>
           </select>
         </div>

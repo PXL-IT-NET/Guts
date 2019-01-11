@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CourseService } from '../../services/course.service';
 import { ICourseContentsModel } from '../../viewmodels/course.model';
 import { IChapterModel } from '../../viewmodels/chapter.model';
+import { IProjectModel } from '../../viewmodels/project.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
@@ -11,6 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 export class CourseComponent {
   public course: ICourseContentsModel;
   public selectedChapter: IChapterModel;
+  public selectedProject: IProjectModel;
   public loading: boolean = false;
 
   constructor(private route: ActivatedRoute,
@@ -21,9 +23,11 @@ export class CourseComponent {
       id: 0,
       code: '',
       name: '',
-      chapters: []
+      chapters: [],
+      projects: []
     };
     this.selectedChapter = null;
+    this.selectedProject = null;
   }
 
   ngOnInit() {
@@ -38,6 +42,8 @@ export class CourseComponent {
           if (this.course.chapters.length > 0) {
             this.selectedChapter = this.course.chapters[0];
             this.onChapterChanged();
+          } else if (this.course.projects.length > 0) {
+            this.selectedProject = this.course.projects[0];
           }
         } else {
           this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");
@@ -47,6 +53,16 @@ export class CourseComponent {
   }
 
   public onChapterChanged() {
-    this.router.navigate(['chapters', this.selectedChapter.number], { relativeTo: this.route });
+    if (this.selectedChapter) {
+      this.selectedProject = null;
+      this.router.navigate(['chapters', this.selectedChapter.code], { relativeTo: this.route });
+    }
+  }
+
+  public onProjectChanged() {
+    if (this.selectedProject) {
+      this.selectedChapter = null;
+      this.router.navigate(['projects', this.selectedProject.code], { relativeTo: this.route });
+    }
   }
 }

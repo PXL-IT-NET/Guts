@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Guts.Data;
 using Guts.Data.Repositories;
 using Guts.Domain;
@@ -49,6 +52,20 @@ namespace Guts.Business.Services
             }
 
             return project;
+        }
+
+        public async Task<IList<Project>> GetProjectsOfCourseAsync(int courseId)
+        {
+            try
+            {
+                var period = await _periodRepository.GetCurrentPeriodAsync();
+                var projects = await _projectRepository.GetByCourseIdAsync(courseId, period.Id);
+                return projects.OrderBy(p => p.Description).ToList();
+            }
+            catch (DataNotFoundException)
+            {
+                return new List<Project>();
+            }
         }
     }
 }

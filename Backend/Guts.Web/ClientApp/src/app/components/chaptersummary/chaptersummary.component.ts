@@ -18,7 +18,7 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
   public loadingStatistics: boolean = false;
 
   private courseId: number;
-  private chapterNumber: number;
+  private chapterCode: string;
   private userId: number;
   private chapterContextSubscription: Subscription;
   private chapterStatisticsSubscription: Subscription;
@@ -29,25 +29,27 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
     private toastr: ToastrService) {
     this.model = {
       id: 0,
-      number: 0,
+      code: '',
+      description: '',
       exerciseSummaries: [],
     };
     this.statistics = {
       id: 0,
-      number: 0,
+      code: '',
+      description: '',
       exerciseStatistics: []
     };
     this.courseId = 0;
-    this.chapterNumber = 0;
+    this.chapterCode = '';
     this.userId = 0;
 
     this.loadingStatistics = true;
     this.chapterContextSubscription = this.chapterContextProvider.contextChanged$.subscribe((context: ChapterContext) => {
       this.courseId = context.courseId;
-      this.chapterNumber = context.chapterNumber;
+      this.chapterCode = context.chapterCode;
       this.loadChapterSummary();
 
-      if (this.chapterContextProvider.statistics && this.chapterContextProvider.statistics.number === this.chapterNumber) {
+      if (this.chapterContextProvider.statistics && this.chapterContextProvider.statistics.code === this.chapterCode) {
         this.loadingStatistics = false;
         this.statistics = this.chapterContextProvider.statistics;
       }
@@ -72,14 +74,15 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
     this.chapterStatisticsSubscription.unsubscribe();
     this.statistics = {
       id: 0,
-      number: 0,
+      code: '',
+      description: '',
       exerciseStatistics: []
     };
   }
 
   private loadChapterSummary() {
     this.loadingSummary = true;
-    this.chapterService.getChapterSummary(this.courseId, this.chapterNumber, this.userId, this.chapterContextProvider.context.statusDate)
+    this.chapterService.getChapterSummary(this.courseId, this.chapterCode, this.userId, this.chapterContextProvider.context.statusDate)
       .subscribe((result) => {
         this.loadingSummary = false;
 

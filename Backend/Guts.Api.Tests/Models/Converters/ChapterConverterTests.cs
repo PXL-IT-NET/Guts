@@ -32,54 +32,51 @@ namespace Guts.Api.Tests.Models.Converters
             int numberOfUsers)
         {
             //Arrange
-            var chapter = new ChapterBuilder().WithId().WithExercises(5, numberOfTests).Build();
-            var userExerciseResults = GenerateAssignmentResults(chapter, numberOfPassingTests, numberOfFailingTests);
+            var chapter = new ChapterBuilder().WithId().WithAssignments(5, numberOfTests).Build();
+            var userAssignmentResults = GenerateAssignmentResults(chapter, numberOfPassingTests, numberOfFailingTests);
 
             //Act
-            var model = _converter.ToChapterSummaryModel(chapter, userExerciseResults);
+            var model = _converter.ToChapterSummaryModel(chapter, userAssignmentResults);
 
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(chapter.Id));
-            Assert.That(model.Number, Is.EqualTo(chapter.Number));
+            Assert.That(model.Code, Is.EqualTo(chapter.Code));
+            Assert.That(model.Description, Is.EqualTo(chapter.Description));
             Assert.That(model.ExerciseSummaries, Is.Not.Null);
-            Assert.That(model.ExerciseSummaries.Count, Is.EqualTo(chapter.Exercises.Count));
+            Assert.That(model.ExerciseSummaries.Count, Is.EqualTo(chapter.Assignments.Count));
 
-            foreach (var exercise in chapter.Exercises)
+            foreach (var assignment in chapter.Assignments)
             {
-                var userExerciseSummary = model.ExerciseSummaries.FirstOrDefault(summary => summary.ExerciseId == exercise.Id);
-                Assert.That(userExerciseSummary, Is.Not.Null);
-                Assert.That(userExerciseSummary.Code, Is.EqualTo(exercise.Code));
-                Assert.That(userExerciseSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
-                Assert.That(userExerciseSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
-                Assert.That(userExerciseSummary.NumberOfTests, Is.EqualTo(numberOfTests));
+                var userAssignmentSummary = model.ExerciseSummaries.FirstOrDefault(summary => summary.AssignmentId == assignment.Id);
+                Assert.That(userAssignmentSummary, Is.Not.Null);
+                Assert.That(userAssignmentSummary.Code, Is.EqualTo(assignment.Code));
+                Assert.That(userAssignmentSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
+                Assert.That(userAssignmentSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
+                Assert.That(userAssignmentSummary.NumberOfTests, Is.EqualTo(numberOfTests));
             }
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenExercisesAreMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenAssignmentsAreMissing()
         {
             //Arrange
             var chapter = new ChapterBuilder().Build();
-            chapter.Exercises = null;
-            var userExerciseResults = new List<AssignmentResultDto>();
-            //var averageExerciseResults = new List<AssignmentResultDto>();
+            chapter.Assignments = null;
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterSummaryModel(chapter, userExerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenTestsOfExercisesAreMissing()
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenTestsOfAssignmentsAreMissing()
         {
             //Arrange
-            var chapter = new ChapterBuilder().WithExercises(1, 1).Build();
-            chapter.Exercises.First().Tests = null;
-            var userExerciseResults = new List<AssignmentResultDto>();
-       //     var averageExerciseResults = new List<AssignmentResultDto>();
+            var chapter = new ChapterBuilder().WithAssignments(1, 1).Build();
+            chapter.Assignments.First().Tests = null;
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterSummaryModel(chapter, userExerciseResults), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToChapterSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
@@ -94,37 +91,38 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(chapter.Id));
-            Assert.That(model.Number, Is.EqualTo(chapter.Number));
+            Assert.That(model.Code, Is.EqualTo(chapter.Code));
+            Assert.That(model.Description, Is.EqualTo(chapter.Description));
         }
 
         private IList<AssignmentResultDto> GenerateAssignmentResults(Chapter chapter,
             int numberOfPassingTests,
             int numberOfFailingTests)
         {
-            var exerciseResults = new List<AssignmentResultDto>();
-            foreach (var exercise in chapter.Exercises)
+            var assignmentResults = new List<AssignmentResultDto>();
+            foreach (var assignment in chapter.Assignments)
             {
-                var exerciseResult = GenerateAssignmentResult(exercise, numberOfPassingTests, numberOfFailingTests);
-                exerciseResults.Add(exerciseResult);
+                var assignmentResult = GenerateAssignmentResult(assignment, numberOfPassingTests, numberOfFailingTests);
+                assignmentResults.Add(assignmentResult);
             }
-            return exerciseResults;
+            return assignmentResults;
         }
 
-        private AssignmentResultDto GenerateAssignmentResult(Exercise exercise,
+        private AssignmentResultDto GenerateAssignmentResult(Assignment assignment,
             int numberOfPassingTests,
             int numberOfFailingTests)
         {
-            var exerciseResult = new AssignmentResultDto
+            var assignmentResult = new AssignmentResultDto
             {
-                AssignmentId = exercise.Id,
+                AssignmentId = assignment.Id,
                 TestResults = new List<TestResult>()
             };
-            foreach (var test in exercise.Tests)
+            foreach (var test in assignment.Tests)
             {
                 if (numberOfPassingTests <= 0 && numberOfFailingTests <= 0) continue;
 
                 var passed = numberOfPassingTests > 0;
-                exerciseResult.TestResults.Add(new TestResult
+                assignmentResult.TestResults.Add(new TestResult
                 {
                     TestId = test.Id,
                     Passed = passed
@@ -139,7 +137,35 @@ namespace Guts.Api.Tests.Models.Converters
                     numberOfFailingTests--;
                 }
             }
-            return exerciseResult;
+            return assignmentResult;
+        }
+    }
+
+    [TestFixture]
+    internal class ProjectConverterTests
+    {
+        private ProjectConverter _converter;
+
+        [SetUp]
+        public void Setup()
+        {
+            _converter = new ProjectConverter();
+        }
+
+        [Test]
+        public void ToProjectModel_ShouldCorrectlyCovertValidProject()
+        {
+            //Arrange
+            var project = new ProjectBuilder().WithId().Build();
+
+            //Act
+            var model = _converter.ToProjectModel(project);
+
+            //Assert
+            Assert.That(model, Is.Not.Null);
+            Assert.That(model.Id, Is.EqualTo(project.Id));
+            Assert.That(model.Code, Is.EqualTo(project.Code));
+            Assert.That(model.Description, Is.EqualTo(project.Description));
         }
     }
 }

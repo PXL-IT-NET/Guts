@@ -7,16 +7,16 @@ namespace Guts.Business.Services
 {
     public interface IAssignmentService
     {
-        Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto);
-        Task<ProjectComponent> GetOrCreateProjectComponentAsync(ProjectComponentDto componentDto);
+        Task<Assignment> GetOrCreateExerciseAsync(AssignmentDto assignmentDto);
+        Task<Assignment> GetOrCreateProjectComponentAsync(AssignmentDto assignmentDto);
 
         Task LoadTestsForAssignmentAsync(Assignment assignment);
         Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames);
 
-        Task<AssignmentResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc);
-        Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc);
+        Task<AssignmentResultDto> GetResultsForUserAsync(int assignmentId, int userId, DateTime? dateUtc);
+        Task<AssignmentTestRunInfoDto> GetUserTestRunInfoForAssignment(int assignmentId, int userId, DateTime? dateUtc);
 
-        Task<IList<ExerciseSourceDto>> GetAllSourceCodes(int exerciseId);
+        Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId);
 
         Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector);
     }

@@ -5,6 +5,6 @@ namespace Guts.Api.Models.Converters
 {
     public interface ICourseConverter
     {
-        CourseContentsModel ToCourseContentsModel(Course course, IList<Chapter> chapters);
+        CourseContentsModel ToCourseContentsModel(Course course, IList<Chapter> chapters, IList<Project> projects);
     }
 }

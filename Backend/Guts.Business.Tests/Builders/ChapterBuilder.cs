@@ -17,10 +17,11 @@ namespace Guts.Business.Tests.Builders
             _chapter = new Chapter
             {
                 Id = 0,
-                Number = _random.NextPositive(),
+                Code = Guid.NewGuid().ToString(),
+                Description = Guid.NewGuid().ToString(),
                 CourseId = _random.NextPositive(),
                 PeriodId = _random.NextPositive(),
-                Exercises = new Collection<Exercise>()
+                Assignments = new Collection<Assignment>()
             };
         }
 
@@ -63,26 +64,26 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public ChapterBuilder WithExercises(int numberOfExercises, int numberOfTestsPerExercise)
+        public ChapterBuilder WithAssignments(int numberOfAssignments, int numberOfTestsPerAssignment)
         {
-            _chapter.Exercises = new List<Exercise>();
+            _chapter.Assignments = new List<Assignment>();
 
-            for (int i = 0; i < numberOfExercises; i++)
+            for (int i = 0; i < numberOfAssignments; i++)
             {
-                var exercise = new ExerciseBuilder()
+                var assignment = new AssignmentBuilder()
                     .WithId()
-                    .WithRandomTests(numberOfTestsPerExercise)
+                    .WithRandomTests(numberOfTestsPerAssignment)
                     .Build();
 
-                _chapter.Exercises.Add(exercise);
+                _chapter.Assignments.Add(assignment);
             }
 
             return this;
         }
 
-        public ChapterBuilder WithNumber(int number)
+        public ChapterBuilder WithCode(string code)
         {
-            _chapter.Number = number;
+            _chapter.Code = code;
             return this;
         }
 

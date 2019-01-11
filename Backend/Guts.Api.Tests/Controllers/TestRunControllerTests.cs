@@ -54,20 +54,20 @@ namespace Guts.Api.Tests.Controllers
         public void PostExerciseTestRun_ShouldSaveItInTheRepository()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithId().Build();
+            var assignment = new AssignmentBuilder().WithId().Build();
            
-            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
-                .ReturnsAsync(exercise);
+            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<AssignmentDto>()))
+                .ReturnsAsync(assignment);
 
-            var exerciseDto = new ExerciseDtoBuilder().WithExerciseCode(exercise.Code).Build();
-            var postedModel = new CreateExerciseTestRunModelBuilder()
-                .WithExercise(exerciseDto)
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
                 .WithSourceCode()
                 .Build();
 
-            TestPostAssignmentTestRun(() => _controller.PostExerciseTestRun(postedModel), postedModel, exercise);
+            TestPostAssignmentTestRun(() => _controller.PostExerciseTestRun(postedModel), postedModel, assignment);
 
-            _assignmentServiceMock.Verify(service => service.GetOrCreateExerciseAsync(postedModel.Exercise), Times.Once);
+            _assignmentServiceMock.Verify(service => service.GetOrCreateExerciseAsync(postedModel.Assignment), Times.Once);
         }
 
         [Test]
@@ -78,8 +78,8 @@ namespace Guts.Api.Tests.Controllers
             var errorMessage = Guid.NewGuid().ToString();
             _controller.ModelState.AddModelError(errorKey, errorMessage);
 
-            var exerciseDto = new ExerciseDtoBuilder().Build();
-            var postedModel = new CreateExerciseTestRunModelBuilder().WithExercise(exerciseDto).Build();
+            var assignmentDto = new AssignmentDtoBuilder().Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder().WithAssignment(assignmentDto).Build();
 
             //Act
             var badRequestResult = _controller.PostExerciseTestRun(postedModel).Result as BadRequestObjectResult;
@@ -95,10 +95,10 @@ namespace Guts.Api.Tests.Controllers
         public void PostExerciseTestRun_ShouldReturnBadRequestWhenTheTestCodeHashIsInvalid()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithId().Build();
-            var exerciseDto = new ExerciseDtoBuilder().WithExerciseCode(exercise.Code).Build();
-            var postedModel = new CreateExerciseTestRunModelBuilder()
-                .WithExercise(exerciseDto)
+            var assignment = new AssignmentBuilder().WithId().Build();
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
                 .WithTestCodeHash()
                 .Build();
 
@@ -119,13 +119,13 @@ namespace Guts.Api.Tests.Controllers
         public void PostExerciseTestRun_ShouldNotCreateNewTestsIfUserIsAStudent()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithId().Build();
-            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<ExerciseDto>()))
-                .ReturnsAsync(exercise);
+            var assignment = new AssignmentBuilder().WithId().Build();
+            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<AssignmentDto>()))
+                .ReturnsAsync(assignment);
 
-            var exerciseDto = new ExerciseDtoBuilder().WithExerciseCode(exercise.Code).Build();
-            var postedModel = new CreateExerciseTestRunModelBuilder()
-                .WithExercise(exerciseDto)
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
                 .WithSourceCode()
                 .Build();
 
@@ -135,7 +135,7 @@ namespace Guts.Api.Tests.Controllers
             _controller.PostExerciseTestRun(postedModel).Wait();
 
             //Assert
-            _assignmentServiceMock.Verify(service => service.LoadTestsForAssignmentAsync(exercise), Times.Once);
+            _assignmentServiceMock.Verify(service => service.LoadTestsForAssignmentAsync(assignment), Times.Once);
             _assignmentServiceMock.Verify(
                 service => service.LoadOrCreateTestsForAssignmentAsync(It.IsAny<Assignment>(),
                     It.IsAny<IEnumerable<string>>()), Times.Never);
@@ -145,19 +145,19 @@ namespace Guts.Api.Tests.Controllers
         public void PostProjectTestRun_ShouldSaveItInTheRepository()
         {
             //Arrange
-            var component = new ProjectComponentBuilder().WithId().Build();
-            _assignmentServiceMock.Setup(service => service.GetOrCreateProjectComponentAsync(It.IsAny<ProjectComponentDto>()))
-                .ReturnsAsync(component);
+            var assignment = new AssignmentBuilder().WithId().Build();
+            _assignmentServiceMock.Setup(service => service.GetOrCreateProjectComponentAsync(It.IsAny<AssignmentDto>()))
+                .ReturnsAsync(assignment);
 
-            var projectComponentDto = new ProjectComponentDtoBuilder().WithComponentCode(component.Code).Build();
-            var postedModel = new CreateProjectTestRunModelBuilder()
-                .WithProjectComponent(projectComponentDto)
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
                 .WithSourceCode()
                 .Build();
 
-            TestPostAssignmentTestRun(() => _controller.PostProjectTestRun(postedModel), postedModel, component);
+            TestPostAssignmentTestRun(() => _controller.PostProjectTestRun(postedModel), postedModel, assignment);
 
-            _assignmentServiceMock.Verify(service => service.GetOrCreateProjectComponentAsync(postedModel.ProjectComponent), Times.Once);
+            _assignmentServiceMock.Verify(service => service.GetOrCreateProjectComponentAsync(postedModel.Assignment), Times.Once);
         }
 
         [Test]
@@ -168,8 +168,8 @@ namespace Guts.Api.Tests.Controllers
             var errorMessage = Guid.NewGuid().ToString();
             _controller.ModelState.AddModelError(errorKey, errorMessage);
 
-            var projectComponentDto = new ProjectComponentDtoBuilder().Build();
-            var postedModel = new CreateProjectTestRunModelBuilder().WithProjectComponent(projectComponentDto).Build();
+            var assignmentDto = new AssignmentDtoBuilder().Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder().WithAssignment(assignmentDto).Build();
 
             //Act
             var badRequestResult = _controller.PostProjectTestRun(postedModel).Result as BadRequestObjectResult;
@@ -177,7 +177,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
-            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Exercise>()), Times.Never);
+            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Assignment>()), Times.Never);
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
         }
 
@@ -185,10 +185,10 @@ namespace Guts.Api.Tests.Controllers
         public void PostProjectTestRun_ShouldReturnBadRequestWhenTheTestCodeHashIsInvalid()
         {
             //Arrange
-            var component = new ProjectComponentBuilder().WithId().Build();
-            var projectComponentDto = new ProjectComponentDtoBuilder().WithComponentCode(component.Code).Build();
-            var postedModel = new CreateProjectTestRunModelBuilder()
-                .WithProjectComponent(projectComponentDto)
+            var assignment = new AssignmentBuilder().WithId().Build();
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
                 .WithSourceCode()
                 .Build();
 
@@ -231,7 +231,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         private void TestPostAssignmentTestRun(Func<Task<IActionResult>> actFunction,
-            CreateTestRunModelBase postedModel, Assignment existingAssignment)
+            CreateAssignmentTestRunModel postedModel, Assignment existingAssignment)
         {
             var convertedTestRun = new TestRun();
             _testResultConverterMock

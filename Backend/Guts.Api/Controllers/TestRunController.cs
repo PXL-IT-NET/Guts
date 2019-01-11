@@ -59,23 +59,23 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> PostExerciseTestRun([FromBody] CreateExerciseTestRunModel model)
+        public async Task<IActionResult> PostExerciseTestRun([FromBody] CreateAssignmentTestRunModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var exercise = await _assignmentService.GetOrCreateExerciseAsync(model.Exercise);
+            var assignment = await _assignmentService.GetOrCreateExerciseAsync(model.Assignment);
 
-            if (!await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, exercise, IsLector()))
+            if (!await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, assignment, IsLector()))
             {
                 ModelState.AddModelError(InvalidTestCodeHashErrorKey,
                     "The hash of the test code does not match any of the hashes associated with the assignment.");
                 return BadRequest(ModelState);
             }
 
-            var savedModel = await SaveTestRunForAssignment(model, exercise);
+            var savedModel = await SaveTestRunForAssignment(model, assignment);
             
             return CreatedAtAction(nameof(GetTestRun), new {id = savedModel?.Id}, savedModel);
         }
@@ -88,14 +88,14 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> PostProjectTestRun([FromBody] CreateProjectTestRunModel model)
+        public async Task<IActionResult> PostProjectTestRun([FromBody] CreateAssignmentTestRunModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var component = await _assignmentService.GetOrCreateProjectComponentAsync(model.ProjectComponent);
+            var component = await _assignmentService.GetOrCreateProjectComponentAsync(model.Assignment);
 
             if (! await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, component, IsLector()))
             {
@@ -108,7 +108,7 @@ namespace Guts.Api.Controllers
             return CreatedAtAction(nameof(GetTestRun), new { id = savedModel.Id }, savedModel);
         }
 
-        private async Task<SavedTestRunModel> SaveTestRunForAssignment(CreateTestRunModelBase model, Assignment assignment)
+        private async Task<SavedTestRunModel> SaveTestRunForAssignment(CreateAssignmentTestRunModel model, Assignment assignment)
         {
             var testNames = model.Results.Select(testResult => testResult.TestName);
 

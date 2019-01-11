@@ -18,7 +18,7 @@ namespace Guts.Api.Tests.Models.Converters
         private TestRunConverter _converter;
         private readonly Random _random;
         private int _userId;
-        private CreateExerciseTestRunModel _createExerciseTestRunModel;
+        private CreateAssignmentTestRunModel _createAssignmentTestRunModel;
 
         public TestRunConverterTests()
         {
@@ -30,7 +30,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             _converter = new TestRunConverter();
             _userId = _random.NextPositive();
-            _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().Build();
+            _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().Build();
         }
 
         [Test]
@@ -39,28 +39,28 @@ namespace Guts.Api.Tests.Models.Converters
             //Arrange
             var numberOfTests = 2;
 
-            var exercise = new ExerciseBuilder().WithId().WithRandomTests(numberOfTests).Build();
-            _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder()
+            var assignment = new AssignmentBuilder().WithId().WithRandomTests(numberOfTests).Build();
+            _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder()
                 .WithSourceCode()
-                .WithRandomTestResultModelsFor(exercise.Tests)
+                .WithRandomTestResultModelsFor(assignment.Tests)
                 .Build();
 
             //Act
-            var testRun = _converter.From(_createExerciseTestRunModel.Results, _createExerciseTestRunModel.SourceCode, _userId, exercise);
+            var testRun = _converter.From(_createAssignmentTestRunModel.Results, _createAssignmentTestRunModel.SourceCode, _userId, assignment);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
-            Assert.That(testRun.AssignmentId, Is.EqualTo(exercise.Id));
-            Assert.That(testRun.SourceCode, Is.EqualTo(_createExerciseTestRunModel.SourceCode));
+            Assert.That(testRun.AssignmentId, Is.EqualTo(assignment.Id));
+            Assert.That(testRun.SourceCode, Is.EqualTo(_createAssignmentTestRunModel.SourceCode));
             Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.UtcNow).Within(5).Seconds);
             Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
 
-            for (int i = 0; i < _createExerciseTestRunModel.Results.Count(); i++)
+            for (int i = 0; i < _createAssignmentTestRunModel.Results.Count(); i++)
             {
                 var testResult = testRun.TestResults.ElementAt(i);
-                var testResultModel = _createExerciseTestRunModel.Results.ElementAt(i);
-                var test = exercise.Tests.ElementAt(i);
+                var testResultModel = _createAssignmentTestRunModel.Results.ElementAt(i);
+                var test = assignment.Tests.ElementAt(i);
 
                 Assert.That(testResult.TestId, Is.EqualTo(test.Id));
                 Assert.That(testResult.Passed, Is.EqualTo(testResultModel.Passed));
@@ -71,21 +71,21 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void From_ShouldThrowExceptionIfExerciseIsNotProvided()
+        public void From_ShouldThrowExceptionIfAssignmentIsNotProvided()
         {
             //Act + Assert
-            Assert.That(() => _converter.From(_createExerciseTestRunModel.Results, null, _userId, null), Throws.ArgumentNullException);
+            Assert.That(() => _converter.From(_createAssignmentTestRunModel.Results, null, _userId, null), Throws.ArgumentNullException);
         }
 
         [Test]
         public void From_ShouldIgnoreNonExisingTests()
         {
             //Assert
-            var exercise = new ExerciseBuilder().WithId().Build();
-            _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().WithRandomTestResultModels(1).Build();
+            var assignment = new AssignmentBuilder().WithId().Build();
+            _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
             //Act
-            var result = _converter.From(_createExerciseTestRunModel.Results, null, _userId, exercise);
+            var result = _converter.From(_createAssignmentTestRunModel.Results, null, _userId, assignment);
 
             //Assert
             Assert.That(result, Is.Not.Null);
@@ -96,11 +96,11 @@ namespace Guts.Api.Tests.Models.Converters
         public void From_ShouldConvertRunWithEmptyListOfTestResultsIfModelDoesNotContainTestResults()
         {
             //Arrange
-            var exercise = new ExerciseBuilder().WithId().Build();
-            _createExerciseTestRunModel = new CreateExerciseTestRunModelBuilder().WithTestResultModels(null).Build();
+            var assignment = new AssignmentBuilder().WithId().Build();
+            _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().WithTestResultModels(null).Build();
 
             //Act
-            var testRun = _converter.From(_createExerciseTestRunModel.Results, null, _userId, exercise);
+            var testRun = _converter.From(_createAssignmentTestRunModel.Results, null, _userId, assignment);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
@@ -134,7 +134,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(testRun.Id));
-            Assert.That(model.ExerciseId, Is.EqualTo(testRun.AssignmentId));
+            Assert.That(model.AssignmentId, Is.EqualTo(testRun.AssignmentId));
             Assert.That(model.TestResults, Is.Not.Null);
             Assert.That(model.TestResults.Count, Is.EqualTo(testRun.TestResults.Count));
             var firstResult = model.TestResults.First();

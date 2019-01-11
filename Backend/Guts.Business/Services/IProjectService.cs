@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Guts.Domain;
 
 namespace Guts.Business.Services
@@ -7,5 +8,6 @@ namespace Guts.Business.Services
     {
         Task<Project> GetProjectAsync(string courseCode, string projectCode);
         Task<Project> GetOrCreateProjectAsync(string courseCode, string projectCode);
+        Task<IList<Project>> GetProjectsOfCourseAsync(int courseId);
     }
 }

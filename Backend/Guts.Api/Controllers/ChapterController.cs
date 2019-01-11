@@ -50,26 +50,26 @@ namespace Guts.Api.Controllers
         /// The overview contains testresults for the authorized user and the average results of all users.
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterNumber">Sequence number of the chapter</param>
-        [HttpGet("{chapterNumber}")]
+        /// <param name="chapterCode">Sequence number of the chapter</param>
+        [HttpGet("{chapterCode}")]
         [ProducesResponseType(typeof(ChapterDetailModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterDetails(int courseId, int chapterNumber)
+        public async Task<IActionResult> GetChapterDetails(int courseId, string chapterCode)
         {
-            if (courseId < 1 || chapterNumber < 1)
+            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
             {
                 return BadRequest();
             }
 
             try
             {
-                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterNumber);
+                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
 
                 List<User> chapterUsers = new List<User>();
                 if (IsLector())
                 {
-                    chapterUsers.AddRange(await _userRepository.GetUsersOfChapterAsync(chapter.Id));
+                    chapterUsers.AddRange(await _userRepository.GetUsersOfTopicAsync(chapter.Id));
                 }
 
                 if (!chapterUsers.Any()) //add the own user
@@ -91,16 +91,17 @@ namespace Guts.Api.Controllers
         /// The overview contains testresults for the authorized user and the average results of all users.
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterNumber">Sequence number of the chapter.</param>
+        /// <param name="chapterCode"></param>
         /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
         /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
-        [HttpGet("{chapterNumber}/users/{userId}/summary")]
+        [HttpGet("{chapterCode}/users/{userId}/summary")]
         [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterSummary(int courseId, int chapterNumber, int userId, [FromQuery] DateTime? date)
+        public async Task<IActionResult> GetChapterSummary(int courseId, string chapterCode, int userId,
+            [FromQuery] DateTime? date)
         {
-            if (courseId < 1 || chapterNumber < 1 || userId < 1)
+            if (courseId < 1 || string.IsNullOrEmpty(chapterCode) || userId < 1)
             {
                 return BadRequest();
             }
@@ -119,9 +120,9 @@ namespace Guts.Api.Controllers
 
             try
             {
-                var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterNumber);
-                var userExerciseResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
-                var model = _chapterConverter.ToChapterSummaryModel(chapter, userExerciseResults);
+                var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode);
+                var assignmentResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
+                var model = _chapterConverter.ToChapterSummaryModel(chapter, assignmentResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -131,18 +132,18 @@ namespace Guts.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves an overview of the exercise statistics for a chapter of a course (for the current period).
+        /// Retrieves an overview of the assignment statistics for a chapter of a course (for the current period).
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterNumber">Sequence number of the chapter.</param>
+        /// <param name="chapterCode">Sequence number of the chapter.</param>
         /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
-        [HttpGet("{chapterNumber}/statistics")]
+        [HttpGet("{chapterCode}/statistics")]
         [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterStatistics(int courseId, int chapterNumber, [FromQuery] DateTime? date)
+        public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, [FromQuery] DateTime? date)
         {
-            if (courseId < 1 || chapterNumber < 1)
+            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
             {
                 return BadRequest();
             }
@@ -150,12 +151,12 @@ namespace Guts.Api.Controllers
             var dateUtc = date?.ToUniversalTime();
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
-            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterNumber}";
+            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}";
             if (!useCache || !_memoryCache.TryGetValue(cacheKey, out ChapterStatisticsModel model))
             {
                 try
                 {
-                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterNumber);
+                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
                     var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
                     model = _chapterConverter.ToChapterStatisticsModel(chapter, chapterStatistics);
 

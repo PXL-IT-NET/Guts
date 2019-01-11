@@ -6,6 +6,6 @@ namespace Guts.Data.Repositories
 {
     public interface IUserRepository
     {
-        Task<IList<User>> GetUsersOfChapterAsync(int chapterId);
+        Task<IList<User>> GetUsersOfTopicAsync(int topicId);
     }
 }

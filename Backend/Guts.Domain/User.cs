@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace Guts.Domain
@@ -10,5 +11,7 @@ namespace Guts.Domain
 
         [Required]
         public string LastName { get; set; }
+
+        public virtual ICollection<ProjectTeamUser> TeamUsers { get; set; }
     }
 }

@@ -8,5 +8,6 @@ namespace Guts.Api.Models
         public string Code { get; set; }
         public string Name { get; set; }
         public IList<ChapterModel> Chapters { get; set; }
+        public IList<ProjectModel> Projects { get; set; }
     }
 }

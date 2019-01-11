@@ -8,18 +8,19 @@ using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters
 {
-
     [TestFixture]
     internal class CourseConverterTests
     {
         private CourseConverter _converter;
         private Mock<IChapterConverter> _chapterConverter;
+        private Mock<IProjectConverter> _projectConverter;
 
         [SetUp]
         public void Setup()
         {
             _chapterConverter = new Mock<IChapterConverter>();
-            _converter = new CourseConverter(_chapterConverter.Object);
+            _projectConverter = new Mock<IProjectConverter>();
+            _converter = new CourseConverter(_chapterConverter.Object, _projectConverter.Object);
         }
 
         [Test]
@@ -33,8 +34,14 @@ namespace Guts.Api.Tests.Models.Converters
                 new ChapterBuilder().Build()
             };
 
+            var projects = new List<Project>
+            {
+                new ProjectBuilder().Build(),
+                new ProjectBuilder().Build()
+            };
+
             //Act
-            var model = _converter.ToCourseContentsModel(course, chapters);
+            var model = _converter.ToCourseContentsModel(course, chapters, projects);
 
             //Assert
             Assert.That(model, Is.Not.Null);
@@ -44,10 +51,16 @@ namespace Guts.Api.Tests.Models.Converters
 
             Assert.That(model.Chapters, Is.Not.Null);
             Assert.That(model.Chapters, Has.Count.EqualTo(chapters.Count));
-
             foreach (var chapter in chapters)
             {
                 _chapterConverter.Verify(converter => converter.ToChapterModel(chapter), Times.Once);
+            }
+
+            Assert.That(model.Projects, Is.Not.Null);
+            Assert.That(model.Projects, Has.Count.EqualTo(projects.Count));
+            foreach (var project in projects)
+            {
+                _projectConverter.Verify(converter => converter.ToProjectModel(project), Times.Once);
             }
         }
 
@@ -56,9 +69,10 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var chapters = new List<Chapter>();
+            var projects = new List<Project>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToCourseContentsModel(null, chapters), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToCourseContentsModel(null, chapters, projects), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
@@ -66,9 +80,21 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var course = new CourseBuilder().WithId().Build();
+            var projects = new List<Project>();
 
             //Act + Assert
-            Assert.That(() => _converter.ToCourseContentsModel(course, null), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToCourseContentsModel(course, null, projects), Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
+        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenProjectsAreMissing()
+        {
+            //Arrange
+            var course = new CourseBuilder().WithId().Build();
+            var chapters = new List<Chapter>();
+
+            //Act + Assert
+            Assert.That(() => _converter.ToCourseContentsModel(course, chapters, null), Throws.InstanceOf<ArgumentException>());
         }
     }
 }

@@ -19,8 +19,6 @@ namespace Guts.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
-        public DbSet<ProjectComponent> ProjectComponents { get; set; }
-        public DbSet<Exercise> Exercises { get; set; }
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
@@ -35,6 +33,7 @@ namespace Guts.Data
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<Topic>().ToTable("Topics");
             builder.Entity<Assignment>().ToTable("Assignments");
             builder.Entity<ProjectTeamUser>().ToTable("ProjectTeamUsers");
             builder.Entity<User>().ToTable("Users");

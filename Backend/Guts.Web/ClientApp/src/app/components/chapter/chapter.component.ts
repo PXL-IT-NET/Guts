@@ -12,14 +12,14 @@ import { ToastrService } from 'ngx-toastr';
 export class ChapterComponent implements OnInit, OnDestroy {
 
   public model: IChapterDetailsModel;
-  public selectedExerciseId: number;
+  public selectedAssignmentId: number;
   public selectedUserId: number;
   public context: ChapterContext;
   public datePickerSettings: any;
   public loading: boolean = false;
 
   private courseId: number;
-  private chapterNumber: number;
+  private chapterCode: string;
 
   constructor(private chapterService: ChapterService,
     private chapterContextProvider: ChapterContextProvider,
@@ -29,11 +29,12 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
     this.model = {
       id: 0,
-      number: 0,
+      code: '',
+      description: '',
       exercises: [],
       users: []
     };
-    this.selectedExerciseId = 0;
+    this.selectedAssignmentId = 0;
     this.selectedUserId = 0;
     this.context = this.chapterContextProvider.context;
     this.datePickerSettings = {
@@ -42,7 +43,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       format: 'dd-MM-yyyy HH:mm'
     };
     this.courseId = 0;
-    this.chapterNumber = 0;
+    this.chapterCode = '';
   }
 
   ngOnInit() {
@@ -50,14 +51,14 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
       var parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams['courseId']; // (+) converts 'courseId' to a number
-      this.chapterNumber = +params['chapterNumber']; // (+) converts 'chapterNumber' to a number
+      this.chapterCode = params['chapterCode'];
 
       this.loading = true;
-      this.chapterService.getChapterDetails(this.courseId, this.chapterNumber).subscribe((result: GetResult<IChapterDetailsModel>) => {
+      this.chapterService.getChapterDetails(this.courseId, this.chapterCode).subscribe((result: GetResult<IChapterDetailsModel>) => {
         this.loading = false;
         if (result.success) {
           this.model = result.value;
-          this.selectedExerciseId = 0;
+          this.selectedAssignmentId = 0;
           this.selectedUserId = result.value.users[0].id;
           this.navigateToSummaryForSelectedUser();
           this.loadStatistics();
@@ -73,8 +74,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   public onSelectionChanged() {
-    if (this.selectedExerciseId > 0) {
-      this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedExerciseId], { relativeTo: this.route });
+    if (this.selectedAssignmentId > 0) {
+      this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedAssignmentId], { relativeTo: this.route });
     } else {
       this.navigateToSummaryForSelectedUser();
     }
@@ -88,13 +89,13 @@ export class ChapterComponent implements OnInit, OnDestroy {
   private navigateToSummaryForSelectedUser() {
     this.router.navigate(['users', this.selectedUserId, 'summary'], { relativeTo: this.route }).then(() => {
       this.chapterContextProvider.context.courseId = this.courseId;
-      this.chapterContextProvider.context.chapterNumber = this.chapterNumber;
+      this.chapterContextProvider.context.chapterCode = this.chapterCode;
       this.chapterContextProvider.announceContextChange();
     });
   }
 
   private loadStatistics() {
-    this.chapterService.getChapterStatistics(this.courseId, this.chapterNumber, this.context.statusDate)
+    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.context.statusDate)
       .subscribe((result) => {
         if (result.success) {
           this.chapterContextProvider.statistics = result.value;

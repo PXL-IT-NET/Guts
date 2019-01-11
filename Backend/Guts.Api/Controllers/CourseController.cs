@@ -26,18 +26,21 @@ namespace Guts.Api.Controllers
     {
         private readonly ICourseService _courseService;
         private readonly IChapterService _chapterService;
+        private readonly IProjectService _projectService;
         private readonly IUserRepository _userRepository;
         private readonly IAssignmentService _assignmentService;
         private readonly ICourseConverter _courseConverter;
 
         public CourseController(ICourseService courseService,
             IChapterService chapterService,
+            IProjectService projectService,
             IUserRepository userRepository,
             IAssignmentService assignmentService,
             ICourseConverter courseConverter)
         {
             _courseService = courseService;
             _chapterService = chapterService;
+            _projectService = projectService;
             _userRepository = userRepository;
             _assignmentService = assignmentService;
             _courseConverter = courseConverter;
@@ -72,13 +75,14 @@ namespace Guts.Api.Controllers
 
             var course = await _courseService.GetCourseByIdAsync(courseId);
             var chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
-            var model = _courseConverter.ToCourseContentsModel(course, chapters);
+            var projects = await _projectService.GetProjectsOfCourseAsync(courseId);
+            var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);
         }
 
-        [HttpPost("{courseId}/exercisescores")]
-        public async Task<IActionResult> DownloadCourseExerciseScores(int courseId, [FromBody] ScoreOptions input)
+        [HttpPost("{courseId}/assignmentscores")]
+        public async Task<IActionResult> DownloadCourseAssignmentScores(int courseId, [FromBody] ScoreOptions input)
         {
             //TODO: clean up this quick an dirty (non-performant) implementation.
             if (!IsLector())
@@ -90,16 +94,16 @@ namespace Guts.Api.Controllers
             var allUsers = new List<User>();
             foreach (var chapterScoreOptions in input.ChapterScoreOptions)
             {
-                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterScoreOptions.ChapterNumber);
-                allUsers = allUsers.Union(await _userRepository.GetUsersOfChapterAsync(chapter.Id), new DomainOjbectEqualityComparer<User>()).ToList();
+                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterScoreOptions.ChapterCode);
+                allUsers = allUsers.Union(await _userRepository.GetUsersOfTopicAsync(chapter.Id), new DomainOjbectEqualityComparer<User>()).ToList();
             }
             allUsers = allUsers.OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToList();
 
             //preload the chapters
-            var chapterDictionary = new Dictionary<int, Chapter>();
+            var chapterDictionary = new Dictionary<string, Chapter>();
             foreach (var chapterScoreOptions in input.ChapterScoreOptions)
             {
-                chapterDictionary[chapterScoreOptions.ChapterNumber] = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterScoreOptions.ChapterNumber);
+                chapterDictionary[chapterScoreOptions.ChapterCode] = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterScoreOptions.ChapterCode);
             }
 
             var results = new List<dynamic>();
@@ -114,31 +118,31 @@ namespace Guts.Api.Controllers
 
                 foreach (var chapterScoreOptions in input.ChapterScoreOptions)
                 {
-                    var chapter = chapterDictionary[chapterScoreOptions.ChapterNumber];
+                    var chapter = chapterDictionary[chapterScoreOptions.ChapterCode];
 
-                    foreach (var exerciseScoreOptions in chapterScoreOptions.ExerciseScoreOptions)
+                    foreach (var assignmentScoreOptions in chapterScoreOptions.AssignmentScoreOptions)
                     {
-                        var exercise = chapter.Exercises.FirstOrDefault(e => e.Code == exerciseScoreOptions.ExerciseCode);
-                        if (exercise == null) continue;
+                        var assignment = chapter.Assignments.FirstOrDefault(e => e.Code == assignmentScoreOptions.AssignmentCode);
+                        if (assignment == null) continue;
 
-                        var numberOfTests = exercise.Tests.Count;
+                        var numberOfTests = assignment.Tests.Count;
 
-                        var resultDto = await _assignmentService.GetResultsForUserAsync(exercise.Id, user.Id, chapterScoreOptions.Date);
+                        var resultDto = await _assignmentService.GetResultsForUserAsync(assignment.Id, user.Id, chapterScoreOptions.Date);
 
                         var numberOfPassedTests = resultDto?.TestResults?.Count(r => r.Passed) ?? 0;
 
-                        double scorePerTest = exerciseScoreOptions.MaximumScore /
-                                              (numberOfTests - exerciseScoreOptions.MinimumNumberOfGreenTestsThreshold);
+                        double scorePerTest = assignmentScoreOptions.MaximumScore /
+                                              (numberOfTests - assignmentScoreOptions.MinimumNumberOfGreenTestsThreshold);
 
                         double score =
-                            Math.Max(numberOfPassedTests - exerciseScoreOptions.MinimumNumberOfGreenTestsThreshold, 0) *
+                            Math.Max(numberOfPassedTests - assignmentScoreOptions.MinimumNumberOfGreenTestsThreshold, 0) *
                             scorePerTest;
 
                         total += score;
-                        totalMaximum += exerciseScoreOptions.MaximumScore;
+                        totalMaximum += assignmentScoreOptions.MaximumScore;
 
-                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_NbrPassed({numberOfTests})", numberOfPassedTests);
-                        result.TryAdd($"{chapter.Number}.{exerciseScoreOptions.ExerciseCode}_Score({exerciseScoreOptions.MaximumScore})", score);
+                        result.TryAdd($"{chapter.Code}.{assignmentScoreOptions.AssignmentCode}_NbrPassed({numberOfTests})", numberOfPassedTests);
+                        result.TryAdd($"{chapter.Code}.{assignmentScoreOptions.AssignmentCode}_Score({assignmentScoreOptions.MaximumScore})", score);
                     }
                 }
 
@@ -157,7 +161,7 @@ namespace Guts.Api.Controllers
             csv.WriteRecords(results);
             streamWriter.Flush();
             memoryStream.Position = 0;
-            return File(memoryStream, "text/csv", "ExerciseScores.csv");
+            return File(memoryStream, "text/csv", "AssignmentScores.csv");
         }
     }
 
@@ -181,14 +185,14 @@ namespace Guts.Api.Controllers
 
     public class ChapterScoreOptions
     {
-        public int ChapterNumber { get; set; }
-        public IList<ExerciseScoreOptions> ExerciseScoreOptions { get; set; }
+        public string ChapterCode { get; set; }
+        public IList<AssignmentScoreOptions> AssignmentScoreOptions { get; set; }
         public DateTime Date { get; set; }
     }
 
-    public class ExerciseScoreOptions
+    public class AssignmentScoreOptions
     {
-        public string ExerciseCode { get; set; }
+        public string AssignmentCode { get; set; }
         public double MaximumScore { get; set; }
         public int MinimumNumberOfGreenTestsThreshold { get; set; }
     }

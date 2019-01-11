@@ -13,11 +13,11 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<IList<TestRun>> GetUserTestRunsForExercise(int exerciseId, int userId, DateTime? date)
+        public async Task<IList<TestRun>> GetUserTestRunsForAssignmentAsync(int assignmentId, int userId, DateTime? date)
         {
-            var query = from exercise in _context.Exercises
-                        from testrun in exercise.TestRuns
-                        where (exercise.Id == exerciseId) &&
+            var query = from assignment in _context.Assignments
+                        from testrun in assignment.TestRuns
+                        where (assignment.Id == assignmentId) &&
                               (testrun.UserId == userId) &&
                               (date == null || testrun.CreateDateTime <= date)
                         orderby testrun.CreateDateTime
@@ -26,11 +26,11 @@ namespace Guts.Data.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<IList<TestRun>> GetLastTestRunForExerciseOfAllUsers(int exerciseId)
+        public async Task<IList<TestRun>> GetLastTestRunForAssignmentOfAllUsersAsync(int assignmentId)
         {
-            var query = from exercise in _context.Exercises
-                from testrun in exercise.TestRuns
-                where exercise.Id == exerciseId
+            var query = from assignment in _context.Assignments
+                from testrun in assignment.TestRuns
+                where assignment.Id == assignmentId
                 orderby testrun.CreateDateTime descending
                 group testrun by testrun.User
                 into userGroups

@@ -1,35 +1,38 @@
 import { IUserModel } from "./user.model"
-import { IExerciseModel } from './exercise.model';
-import { IExerciseStatisticsModel, ExerciseStatisticsModel } from './exercisestatistics.model';
-import { IExerciseSummaryModel, ExerciseSummaryModel } from "./exercisesummary.model"
+import { IAssignmentModel} from "./assignment.model";
+import { IAssignmentStatisticsModel, AssignmentStatisticsModel } from "./assignmentstatistics.model";
+import { IAssignmentSummaryModel, AssignmentSummaryModel } from "./assignmentsummary.model"
 
 export interface IChapterModel {
   id: number;
-  number: number;
+  code: string;
+  description: string;
 }
 
 export interface IChapterDetailsModel extends IChapterModel {
-  exercises: IExerciseModel[];
+  exercises: IAssignmentModel[];
   users: IUserModel[];
 }
 
 export interface IChapterSummaryModel extends IChapterModel {
-  exerciseSummaries: IExerciseSummaryModel[];
+  exerciseSummaries: IAssignmentSummaryModel[];
 }
 
 export class ChapterSummaryModel implements IChapterSummaryModel {
   public id: number;
-  public number: number;
-  public exerciseSummaries: ExerciseSummaryModel[];
+  public code: string;
+  public description: string;
+  public exerciseSummaries: AssignmentSummaryModel[];
 
   constructor(source: IChapterSummaryModel) {
     this.id = source.id;
-    this.number = source.number;
+    this.code = source.code;
+    this.description = source.description;
     this.exerciseSummaries = [];
 
     if (source.exerciseSummaries) {
       for (let exerciseSummary of source.exerciseSummaries) {
-        let summary = new ExerciseSummaryModel(exerciseSummary);
+        let summary = new AssignmentSummaryModel(exerciseSummary);
         this.exerciseSummaries.push(summary);
       }
     }
@@ -37,22 +40,24 @@ export class ChapterSummaryModel implements IChapterSummaryModel {
 }
 
 export interface IChapterStatisticsModel extends IChapterModel {
-  exerciseStatistics: IExerciseStatisticsModel[];
+  exerciseStatistics: IAssignmentStatisticsModel[];
 }
 
 export class ChapterStatisticsModel implements IChapterStatisticsModel {
   public id: number;
-  public number: number;
-  public exerciseStatistics: ExerciseStatisticsModel[];
+  public code: string;
+  public description: string;
+  public exerciseStatistics: AssignmentStatisticsModel[];
 
   constructor(source: IChapterStatisticsModel) {
     this.id = source.id;
-    this.number = source.number;
+    this.code = source.code;
+    this.description = source.description;
     this.exerciseStatistics = [];
 
     if (source.exerciseStatistics) {
       for (let exerciseStatistic of source.exerciseStatistics) {
-        let summary = new ExerciseStatisticsModel(exerciseStatistic);
+        let summary = new AssignmentStatisticsModel(exerciseStatistic);
         this.exerciseStatistics.push(summary);
       }
     }

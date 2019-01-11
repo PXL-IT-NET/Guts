@@ -22,9 +22,9 @@ namespace Guts.Api.Tests.Controllers
         private Mock<ICourseService> _courseServiceMock;
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ICourseConverter> _courseConverterMock;
-        private Random _random;
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
+        private Mock<IProjectService> _projectServiceMock;
 
 
         [SetUp]
@@ -32,15 +32,16 @@ namespace Guts.Api.Tests.Controllers
         {
             _courseServiceMock = new Mock<ICourseService>();
             _chapterServiceMock = new Mock<IChapterService>();
+            _projectServiceMock = new Mock<IProjectService>();
             _courseConverterMock = new Mock<ICourseConverter>();
             _userRepositoryMock = new Mock<IUserRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _controller = new CourseController(_courseServiceMock.Object, 
-                _chapterServiceMock.Object, 
+                _chapterServiceMock.Object,
+                _projectServiceMock.Object,
                 _userRepositoryMock.Object, 
                 _assignmentServiceMock.Object, 
                 _courseConverterMock.Object);
-            _random = new Random();
         }
 
         [Test]
@@ -83,28 +84,58 @@ namespace Guts.Api.Tests.Controllers
         {
             //Arrange
             var existingCourse = new CourseBuilder().WithId().Build();
+            _courseServiceMock.Setup(service => service.GetCourseByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync(existingCourse);
+
             var existingChapters = new List<Chapter>
             {
                 new ChapterBuilder().Build(),
                 new ChapterBuilder().Build(),
             };
-            var convertedCourse = new CourseContentsModel();
-
             _chapterServiceMock.Setup(service => service.GetChaptersOfCourseAsync(It.IsAny<int>())).ReturnsAsync(existingChapters);
-            var courseId = _random.NextPositive();
-            _courseServiceMock.Setup(service => service.GetCourseByIdAsync(It.IsAny<int>()))
-                .ReturnsAsync(existingCourse);
+
+            var convertedCourse = new CourseContentsModel();
             _courseConverterMock
-                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IList<Chapter>>()))
+                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IList<Chapter>>(), It.IsAny<IList<Project>>()))
                 .Returns(convertedCourse);
 
             //Act
-            var actionResult = _controller.GetCourseContents(courseId).Result as OkObjectResult;
+            var actionResult = _controller.GetCourseContents(existingCourse.Id).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.GetChaptersOfCourseAsync(courseId), Times.Once);
-            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, existingChapters), Times.Once);
+            _chapterServiceMock.Verify(service => service.GetChaptersOfCourseAsync(existingCourse.Id), Times.Once);
+            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, existingChapters, It.IsAny<IList<Project>>()), Times.Once);
+            Assert.That(actionResult.Value, Is.EqualTo(convertedCourse));
+        }
+
+        [Test]
+        public void GetCourseContentsShouldGetTheProjectsFromTheRepositoryAndConvertThemToModels()
+        {
+            //Arrange
+            var existingCourse = new CourseBuilder().WithId().Build();
+            _courseServiceMock.Setup(service => service.GetCourseByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync(existingCourse);
+
+            var existingProjects = new List<Project>
+            {
+                new ProjectBuilder().Build(),
+                new ProjectBuilder().Build(),
+            };
+            _projectServiceMock.Setup(service => service.GetProjectsOfCourseAsync(It.IsAny<int>())).ReturnsAsync(existingProjects);
+
+            var convertedCourse = new CourseContentsModel();
+            _courseConverterMock
+                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IList<Chapter>>(), It.IsAny<IList<Project>>()))
+                .Returns(convertedCourse);
+
+            //Act
+            var actionResult = _controller.GetCourseContents(existingCourse.Id).Result as OkObjectResult;
+
+            //Assert
+            Assert.That(actionResult, Is.Not.Null);
+            _projectServiceMock.Verify(service => service.GetProjectsOfCourseAsync(existingCourse.Id), Times.Once);
+            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, It.IsAny<IList<Chapter>>(), existingProjects), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(convertedCourse));
         }
 

@@ -19,8 +19,9 @@ import { ResetPasswordComponent } from './components/resetpassword/resetpassword
 
 import { CourseComponent } from './components/course/course.component';
 import { ChapterComponent } from "./components/chapter/chapter.component";
+import { ProjectComponent } from './components/project/project.component';
 import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
-import { ExerciseDetailComponent } from './components/exercisedetail/exercisedetail.component';
+import { AssignmentDetailComponent } from './components/assignmentdetail/assignmentdetail.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
@@ -29,7 +30,7 @@ import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
 import { ChapterContextProvider } from './services/chapter.context.provider';
-import { ExerciseService } from './services/exercise.service';
+import { AssignmentService } from './services/assignment.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
 import 'rxjs/Rx';
@@ -50,8 +51,9 @@ import { ToastrModule } from 'ngx-toastr';
     ResetPasswordComponent,
     CourseComponent,
     ChapterComponent,
+    ProjectComponent,
     ChapterSummaryComponent,
-    ExerciseDetailComponent
+    AssignmentDetailComponent
   ],
   imports: [
     CommonModule,
@@ -72,12 +74,15 @@ import { ToastrModule } from 'ngx-toastr';
         path: 'courses/:courseId', component: CourseComponent, canActivate: [AuthGuard],
         children: [
           {
-            path: 'chapters/:chapterNumber', component: ChapterComponent, canActivate: [AuthGuard],
+            path: 'chapters/:chapterCode', component: ChapterComponent, canActivate: [AuthGuard],
             children: [
               { path: 'users/:userId', component: EmptyComponent, canActivate: [AuthGuard] },
               { path: 'users/:userId/summary', component: ChapterSummaryComponent, canActivate: [AuthGuard] },
-              { path: 'users/:userId/exercises/:exerciseId', component: ExerciseDetailComponent, canActivate: [AuthGuard] }
+              { path: 'users/:userId/exercises/:assignmentId', component: AssignmentDetailComponent, canActivate: [AuthGuard] }
             ]
+          },
+          {
+            path: 'projects/:code', component: ProjectComponent, canActivate: [AuthGuard],
           }
         ]
       },
@@ -104,7 +109,7 @@ import { ToastrModule } from 'ngx-toastr';
     AuthService,
     CourseService,
     ChapterService,
-    ExerciseService,
+    AssignmentService,
     ClientSettingsService,
     LocalStorageService,
     ChapterContextProvider,

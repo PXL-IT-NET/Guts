@@ -18,7 +18,8 @@ namespace Guts.Business.Tests.Builders
                 Id = 0,
                 CourseId = _random.NextPositive(),
                 PeriodId = _random.NextPositive(),
-                Components = new Collection<ProjectComponent>()
+                Description = Guid.NewGuid().ToString(),
+                Assignments = new Collection<Assignment>()
             };
         }
 
@@ -31,6 +32,12 @@ namespace Guts.Business.Tests.Builders
         public ProjectBuilder WithCourseId(int courseId)
         {
             _project.CourseId = courseId;
+            return this;
+        }
+
+        public ProjectBuilder WithDescription(string description)
+        {
+            _project.Description = description;
             return this;
         }
 

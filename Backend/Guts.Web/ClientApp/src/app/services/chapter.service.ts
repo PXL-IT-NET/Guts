@@ -13,11 +13,11 @@ export class ChapterService {
     private settingsService: ClientSettingsService) {
   }
 
-  public getChapterDetails(courseId: number, chapterNumber: number): Observable<GetResult<IChapterDetailsModel>> {
+  public getChapterDetails(courseId: number, chapterCode: string): Observable<GetResult<IChapterDetailsModel>> {
 
     return this.settingsService.get().mergeMap<ClientSettings, GetResult<IChapterDetailsModel>>((settings: ClientSettings) => {
       return this.http
-        .get<IChapterDetailsModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber)
+        .get<IChapterDetailsModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterCode)
         .map(model => GetResult.success(model))
         .catch((errorResponse: HttpErrorResponse) => {
           return Observable.from([GetResult.fromHttpErrorResponse<IChapterDetailsModel>(errorResponse)]);
@@ -25,9 +25,9 @@ export class ChapterService {
     });
   }
 
-  public getChapterSummary(courseId: number, chapterNumber: number, userId: number, date?: Date): Observable<GetResult<ChapterSummaryModel>> {
+  public getChapterSummary(courseId: number, chapterCode: string, userId: number, date?: Date): Observable<GetResult<ChapterSummaryModel>> {
     return this.settingsService.get().mergeMap<ClientSettings, GetResult<ChapterSummaryModel>>((settings: ClientSettings) => {
-      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber + '/users/' + userId + '/summary';
+      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterCode + '/users/' + userId + '/summary';
       if (date) {
         apiUrl += '?date=' + date.toISOString();
       }
@@ -40,9 +40,9 @@ export class ChapterService {
     });
   }
 
-  public getChapterStatistics(courseId: number, chapterNumber: number, date?: Date): Observable<GetResult<ChapterStatisticsModel>> {
+  public getChapterStatistics(courseId: number, chapterCode: string, date?: Date): Observable<GetResult<ChapterStatisticsModel>> {
     return this.settingsService.get().mergeMap<ClientSettings, GetResult<ChapterStatisticsModel>>((settings: ClientSettings) => {
-      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterNumber + '/statistics';
+      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/chapters/' + chapterCode + '/statistics';
       if (date) {
         apiUrl += '?date=' + date.toISOString();
       }

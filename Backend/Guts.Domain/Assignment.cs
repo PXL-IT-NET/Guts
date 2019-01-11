@@ -19,6 +19,9 @@ namespace Guts.Domain
 
         public ICollection<TestCodeHash> TestCodeHashes { get; set; }
 
+        public virtual Topic Topic { get; set; }
+        public int TopicId { get; set; }
+
         public Assignment()
         {
             Tests = new HashSet<Test>();

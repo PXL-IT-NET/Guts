@@ -30,21 +30,21 @@ namespace Guts.Business.Services
             _assignmentWitResultsConverter = assignmentWitResultsConverter;
         }
 
-        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, int chapterNumber)
+        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, string chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
             Chapter chapter;
             try
             {
-                chapter = await _chapterRepository.GetSingleAsync(courseCode, chapterNumber, currentPeriod.Id);
+                chapter = await _chapterRepository.GetSingleAsync(courseCode, chapterCode, currentPeriod.Id);
             }
             catch (DataNotFoundException)
             {
                 var course = await _courseRepository.GetSingleAsync(courseCode);
                 chapter = new Chapter
                 {
-                    Number = chapterNumber,
+                    Code = chapterCode,
                     CourseId = course.Id,
                     PeriodId = currentPeriod.Id
                 };
@@ -54,38 +54,38 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<Chapter> LoadChapterAsync(int courseId, int chapterNumber)
+        public async Task<Chapter> LoadChapterAsync(int courseId, string chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
-            var chapter = await _chapterRepository.LoadWithExercisesAsync(courseId, chapterNumber, currentPeriod.Id);
+            var chapter = await _chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, currentPeriod.Id);
 
             return chapter;
         }
 
-        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, int chapterNumber)
+        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, string chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
-            var chapter = await _chapterRepository.LoadWithExercisesAndTestsAsync(courseId, chapterNumber, currentPeriod.Id);
+            var chapter = await _chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, currentPeriod.Id);
 
             return chapter;
         }
 
         public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(Chapter chapter, int userId, DateTime? dateUtc)
         {
-            if (chapter.Exercises == null)
+            if (chapter.Assignments == null)
             {
-                throw new ArgumentException("The chapter should have its exercises loaded");
+                throw new ArgumentException("The chapter should have its assignments loaded");
             }
 
             var results = new List<AssignmentResultDto>();
-            foreach (var exercise in chapter.Exercises)
+            foreach (var assignment in chapter.Assignments)
             {
                 var dto = new AssignmentResultDto
                 {
-                    AssignmentId = exercise.Id,
-                    TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(exercise.Id, userId, dateUtc)
+                    AssignmentId = assignment.Id,
+                    TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignment.Id, userId, dateUtc)
                 };
                 results.Add(dto);
             }
@@ -96,11 +96,11 @@ namespace Guts.Business.Services
         public async Task<IList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(Chapter chapter, DateTime? dateUtc)
         {
             var results = new List<AssignmentStatisticsDto>();
-            foreach (var exercise in chapter.Exercises)
+            foreach (var assignment in chapter.Assignments)
             {
                 var testResults =
-                    await _testResultRepository.GetLastTestResultsOfAssignmentAsync(exercise.Id, null, dateUtc);
-                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(exercise.Id, testResults));
+                    await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignment.Id, null, dateUtc);
+                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
                
             }
             return results;
@@ -119,7 +119,7 @@ namespace Guts.Business.Services
             }
 
             var chapters = await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
-            return chapters.OrderBy(chapter => chapter.Number).ToList();
+            return chapters.OrderBy(chapter => chapter.Code).ToList();
         }
     }
 }

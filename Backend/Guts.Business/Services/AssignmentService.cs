@@ -10,77 +10,39 @@ namespace Guts.Business.Services
 {
     public class AssignmentService : IAssignmentService
     {
-        private readonly IExerciseRepository _exerciseRepository;
+        private readonly IAssignmentRepository _assignmentRepository;
         private readonly IChapterService _chapterService;
         private readonly IProjectService _projectService;
-        private readonly IProjectComponentRepository _projectComponentRepository;
-        private readonly IAssignmentRepository _assignmentRepository;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestRunRepository _testRunRepository;
 
-        public AssignmentService(IExerciseRepository exerciseRepository, 
+        public AssignmentService(IAssignmentRepository assignmentRepository,
             IChapterService chapterService,
             IProjectService projectService,
-            IProjectComponentRepository projectComponentRepository,
-            IAssignmentRepository assignmentRepository,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
             ITestRunRepository testRunRepository)
         {
-            _exerciseRepository = exerciseRepository;
             _chapterService = chapterService;
             _projectService = projectService;
-            _projectComponentRepository = projectComponentRepository;
             _assignmentRepository = assignmentRepository;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testRunRepository = testRunRepository;
         }
 
-        public async Task<Exercise> GetOrCreateExerciseAsync(ExerciseDto exerciseDto)
+        public async Task<Assignment> GetOrCreateExerciseAsync(AssignmentDto assignmentDto)
         {
-            var chapter = await _chapterService.GetOrCreateChapterAsync(exerciseDto.CourseCode, exerciseDto.ChapterNumber);
-
-            Exercise exercise;
-            try
-            {
-                exercise = await _exerciseRepository.GetSingleAsync(chapter.Id, exerciseDto.ExerciseCode);
-            }
-            catch (DataNotFoundException)
-            {
-                exercise = new Exercise
-                {
-                    ChapterId = chapter.Id,
-                    Code = exerciseDto.ExerciseCode
-                };
-                exercise = await _exerciseRepository.AddAsync(exercise);
-            }
-
-            return exercise;
+            var chapter = await _chapterService.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
+            return await GetOrCreateAssignmentAsync(chapter.Id, assignmentDto.AssignmentCode);
         }
 
-        public async Task<ProjectComponent> GetOrCreateProjectComponentAsync(ProjectComponentDto componentDto)
+        public async Task<Assignment> GetOrCreateProjectComponentAsync(AssignmentDto assignmentDto)
         {
             var project =
-                await _projectService.GetOrCreateProjectAsync(componentDto.CourseCode, componentDto.ProjectCode);
-
-            ProjectComponent component;
-            try
-            {
-                component = await _projectComponentRepository.GetSingleAsync(project.Id, componentDto.ComponentCode);
-            }
-            catch (DataNotFoundException)
-            {
-                component = new ProjectComponent
-                {
-                    ProjectId = project.Id,
-                    Code = componentDto.ComponentCode
-                };
-                component = await _projectComponentRepository.AddAsync(component);
-            }
-
-            return component;
+                await _projectService.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
+            return await GetOrCreateAssignmentAsync(project.Id, assignmentDto.AssignmentCode);
         }
 
         public async Task LoadTestsForAssignmentAsync(Assignment assignment)
@@ -109,21 +71,20 @@ namespace Guts.Business.Services
             assignment.Tests = assignmentTests;
         }
 
-        public async Task<AssignmentResultDto> GetResultsForUserAsync(int exerciseId, int userId, DateTime? dateUtc)
+        public async Task<AssignmentResultDto> GetResultsForUserAsync(int assignmentId, int userId, DateTime? dateUtc)
         {
             return new AssignmentResultDto
             {
-                AssignmentId = exerciseId,
-                TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(exerciseId, userId, dateUtc)
+                AssignmentId = assignmentId,
+                TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignmentId, userId, dateUtc)
             };
         }
 
-        public async Task<ExerciseTestRunInfoDto> GetUserTestRunInfoForExercise(int exerciseId, int userId, DateTime? dateUtc)
+        public async Task<AssignmentTestRunInfoDto> GetUserTestRunInfoForAssignment(int assignmentId, int userId, DateTime? dateUtc)
         {
-            //TODO: write unit test
-            var testRunInfo = new ExerciseTestRunInfoDto();
+            var testRunInfo = new AssignmentTestRunInfoDto();
 
-            var testRuns = await _testRunRepository.GetUserTestRunsForExercise(exerciseId, userId, dateUtc);
+            var testRuns = await _testRunRepository.GetUserTestRunsForAssignmentAsync(assignmentId, userId, dateUtc);
             if (testRuns.Any())
             {
                 var firstTestRun = testRuns.First();
@@ -137,11 +98,11 @@ namespace Guts.Business.Services
             return testRunInfo;
         }
 
-        public async Task<IList<ExerciseSourceDto>> GetAllSourceCodes(int exerciseId)
+        public async Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId)
         {
-            var testRunsWithUser = await _testRunRepository.GetLastTestRunForExerciseOfAllUsers(exerciseId);
+            var testRunsWithUser = await _testRunRepository.GetLastTestRunForAssignmentOfAllUsersAsync(assignmentId);
 
-            return testRunsWithUser.Select(testrun => new ExerciseSourceDto
+            return testRunsWithUser.Select(testrun => new AssignmentSourceDto
             {
                 Source = testrun.SourceCode,
                 UserId = testrun.UserId,
@@ -167,6 +128,26 @@ namespace Guts.Business.Services
                 return true;
             }
             return false;
+        }
+
+        private async Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode)
+        {
+            Assignment assignment;
+            try
+            {
+                assignment = await _assignmentRepository.GetSingleAsync(topicId, assignmentCode);
+            }
+            catch (DataNotFoundException)
+            {
+                assignment = new Assignment
+                {
+                    TopicId = topicId,
+                    Code = assignmentCode
+                };
+                assignment = await _assignmentRepository.AddAsync(assignment);
+            }
+
+            return assignment;
         }
     }
 }

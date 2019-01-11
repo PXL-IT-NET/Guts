@@ -14,10 +14,10 @@ namespace Guts.Data.Repositories
             _context = context;
         }
 
-        public async Task<IList<User>> GetUsersOfChapterAsync(int chapterId)
+        public async Task<IList<User>> GetUsersOfTopicAsync(int topicId)
         {
             var users = _context.Users.FromSql(
-                "CALL sp_getUsersOfChapter({0})", chapterId);
+                "CALL sp_getUsersOfTopic({0})", topicId);
 
             return await users.AsNoTracking().ToListAsync();
         }

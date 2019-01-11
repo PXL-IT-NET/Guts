@@ -45,7 +45,7 @@ namespace Guts.Api.Models.Converters
             var model = new SavedTestRunModel
             {
                 Id = testRun.Id,
-                ExerciseId = testRun.AssignmentId,
+                AssignmentId = testRun.AssignmentId,
                 TestResults = new List<SavedTestResultModel>()
             };
 

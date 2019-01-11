@@ -15,29 +15,30 @@ namespace Guts.Api.Models.Converters
             _userConverter = userConverter;
         }
 
-        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, IList<AssignmentResultDto> userExerciseResults)
+        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, IList<AssignmentResultDto> userAssignmentResults)
         {
-            if (chapter.Exercises == null)
+            if (chapter.Assignments == null)
             {
-                throw new ArgumentException("Chapter should have exercises loaded", nameof(chapter));
+                throw new ArgumentException("Chapter should have assignments loaded", nameof(chapter));
             }
 
-            if (chapter.Exercises.Any(ex => ex.Tests == null))
+            if (chapter.Assignments.Any(ex => ex.Tests == null))
             {
-                throw new ArgumentException("All exercises of the chapter should have their tests loaded", nameof(chapter));
+                throw new ArgumentException("All assignments of the chapter should have their tests loaded", nameof(chapter));
             }
 
             var model = new ChapterSummaryModel
             {
                 Id = chapter.Id,
-                Number = chapter.Number,
-                ExerciseSummaries = new List<ExerciseSummaryModel>()
+                Code = chapter.Code,
+                Description = chapter.Description,
+                ExerciseSummaries = new List<AssignmentSummaryModel>()
             };
 
-            foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Code))
+            foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
             {
-                var userExerciseSummaryModel = CreateExerciseSummaryModel(exercise, userExerciseResults);
-                model.ExerciseSummaries.Add(userExerciseSummaryModel);
+                var assignmentSummaryModel = CreateAssignmentSummaryModel(assignment, userAssignmentResults);
+                model.ExerciseSummaries.Add(assignmentSummaryModel);
             }
             return model;
         }
@@ -47,7 +48,8 @@ namespace Guts.Api.Models.Converters
             return new ChapterModel
             {
                 Id = chapter.Id,
-                Number = chapter.Number
+                Code = chapter.Code,
+                Description = chapter.Description
             };
         }
 
@@ -56,11 +58,11 @@ namespace Guts.Api.Models.Converters
             return new ChapterDetailModel
             {
                 Id = chapter.Id,
-                Number = chapter.Number,
-                Exercises = chapter.Exercises.Select(exercise => new ExerciseModel
+                Code = chapter.Code,
+                Exercises = chapter.Assignments.Select(assignment => new AssignmentModel
                 {
-                    ExerciseId = exercise.Id,
-                    Code = exercise.Code
+                    AssignmentId = assignment.Id,
+                    Code = assignment.Code
                 }).ToList(),
                 Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };
@@ -71,52 +73,54 @@ namespace Guts.Api.Models.Converters
             var model = new ChapterStatisticsModel
             {
                 Id = chapter.Id,
-                Number = chapter.Number,
-                ExerciseStatistics = new List<ExerciseStatisticsModel>()
+                Code = chapter.Code,
+                ExerciseStatistics = new List<AssignmentStatisticsModel>()
             };
 
-            foreach (var exercise in chapter.Exercises.OrderBy(exercise => exercise.Code))
+            foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
             {
-                var exerciseStatisticsModel = CreateExerciseStatisticsModel(exercise, chapterStatistics);
-                model.ExerciseStatistics.Add(exerciseStatisticsModel);
+                var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, chapterStatistics);
+                model.ExerciseStatistics.Add(assignmentStatisticsModel);
             }
 
             return model;
         }
 
-        private ExerciseSummaryModel CreateExerciseSummaryModel(Exercise exercise, IList<AssignmentResultDto> exerciseResults)
+        private AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assigment,
+            IList<AssignmentResultDto> assignmentResults)
         {
-            var exerciseSummaryModel = new ExerciseSummaryModel
+            var assignmentSummaryModel = new AssignmentSummaryModel
             {
-                ExerciseId = exercise.Id,
-                Code = exercise.Code,
-                NumberOfTests = exercise.Tests.Count
+                AssignmentId = assigment.Id,
+                Code = assigment.Code,
+                NumberOfTests = assigment.Tests.Count
             };
 
-            var matchingResult = exerciseResults.FirstOrDefault(result => result.AssignmentId == exercise.Id);
+            var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assigment.Id);
             if (matchingResult != null)
             {
-                exerciseSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
-                exerciseSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
+                assignmentSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
+                assignmentSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
             }
-            return exerciseSummaryModel;
+            return assignmentSummaryModel;
         }
 
-        private ExerciseStatisticsModel CreateExerciseStatisticsModel(Exercise exercise, IList<AssignmentStatisticsDto> chapterStatistics)
+        private AssignmentStatisticsModel CreateAssignmentStatisticsModel(Assignment assignment,
+            IList<AssignmentStatisticsDto> chapterStatistics)
         {
-            var model = new ExerciseStatisticsModel
+            var model = new AssignmentStatisticsModel
             {
-                ExerciseId = exercise.Id,
-                Code = exercise.Code,
+                AssignmentId = assignment.Id,
+                Code = assignment.Code,
                 TotalNumberOfUsers = 0,
                 TestPassageStatistics = new List<TestPassageStatisticModel>()
             };
 
-            var exerciseStatistics = chapterStatistics.FirstOrDefault(result => result.AssignmentId == exercise.Id);
-            if (exerciseStatistics != null)
+            var assignmentStatistics = chapterStatistics.FirstOrDefault(result => result.AssignmentId == assignment.Id);
+            if (assignmentStatistics != null)
             {
-                model.TotalNumberOfUsers = exerciseStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
-                foreach (var testPassageStatistic in exerciseStatistics.TestPassageStatistics)
+                model.TotalNumberOfUsers = assignmentStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
+                foreach (var testPassageStatistic in assignmentStatistics.TestPassageStatistics)
                 {
                     var testPassageStatisticModel = new TestPassageStatisticModel
                     {

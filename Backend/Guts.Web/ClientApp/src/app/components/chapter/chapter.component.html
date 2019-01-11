@@ -5,9 +5,9 @@
 
         <label for="exercises" class="col-md-2 col-xl-1 col-form-label">Exercise</label>
         <div class="col-md-10 col-md-4 col-xl-3">
-          <select name="exercises" class="form-control" [(ngModel)]="selectedExerciseId" (ngModelChange)="onSelectionChanged()">
+          <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId" (ngModelChange)="onSelectionChanged()">
             <option [ngValue]="0" selected>Overview</option>
-            <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.exerciseId">
+            <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
               Exercise {{exercise.code}}
             </option>
           </select>

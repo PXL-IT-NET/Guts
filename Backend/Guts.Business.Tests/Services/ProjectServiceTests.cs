@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
@@ -124,6 +125,68 @@ namespace Guts.Business.Tests.Services
             _courseRepositoryMock.Verify(repo => repo.GetSingleAsync(existingCourse.Code), Times.Once);
 
             Assert.That(result, Is.EqualTo(addedProject));
+        }
+
+        [Test]
+        public void GetProjectsOfCourseAsync_ShouldReturnEmptyListWhenNoCurrentPeriodIsFound()
+        {
+            //Arrange
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).Throws<DataNotFoundException>();
+
+            //Act
+            var result = _service.GetProjectsOfCourseAsync(courseId).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public void GetProjectsOfCourseAsync_ShouldRetrieveChaptersFromRepository()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+
+            var projectsOfCourse = new List<Project>();
+            _projectRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(projectsOfCourse);
+
+            //Act
+            var result = _service.GetProjectsOfCourseAsync(courseId).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(courseId, existingPeriod.Id), Times.Once);
+            Assert.That(result, Is.Not.Null);
+        }
+
+        [Test]
+        public void GetProjectsOfCourseAsyncShouldSortProjectsByDescription()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var courseId = _random.NextPositive();
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+
+            var projectsOfCourse = new List<Project>
+            {
+                new ProjectBuilder().WithDescription("zzz").Build(),
+                new ProjectBuilder().WithDescription("aaa").Build()
+            };
+            _projectRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(projectsOfCourse);
+
+            //Act
+            var results = _service.GetProjectsOfCourseAsync(courseId).Result;
+
+            //Assert
+            Assert.That(results.Count, Is.EqualTo(projectsOfCourse.Count));
+            Assert.That(results.ElementAt(0).Description, Is.LessThan(results.ElementAt(1).Description));
         }
     }
 }

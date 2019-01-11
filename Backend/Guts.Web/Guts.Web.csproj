@@ -35,8 +35,10 @@
     <None Remove="ClientApp\src\app\components\course\course.component.ts" />
     <None Remove="ClientApp\src\app\components\empty.component.ts" />
     <None Remove="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <None Remove="ClientApp\src\app\components\project\project.component.ts" />
     <None Remove="ClientApp\src\app\services\chapter.context.provider.ts" />
-    <None Remove="ClientApp\src\app\viewmodels\exercisestatistics.model.ts" />
+    <None Remove="ClientApp\src\app\viewmodels\assignmentstatistics.model.ts" />
+    <None Remove="ClientApp\src\app\viewmodels\project.model.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,8 +46,10 @@
     <TypeScriptCompile Include="ClientApp\src\app\components\course\course.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\empty.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\components\project\project.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\services\chapter.context.provider.ts" />
-    <TypeScriptCompile Include="ClientApp\src\app\viewmodels\exercisestatistics.model.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\viewmodels\assignmentstatistics.model.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\viewmodels\project.model.ts" />
   </ItemGroup>
 
   <ItemGroup>

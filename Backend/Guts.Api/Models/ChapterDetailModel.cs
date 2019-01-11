@@ -4,7 +4,7 @@ namespace Guts.Api.Models
 {
     public class ChapterDetailModel : ChapterModel
     {
-        public IList<ExerciseModel> Exercises { get; set; }
+        public IList<AssignmentModel> Exercises { get; set; }
         public IList<UserModel> Users { get; set; }
     }
 }

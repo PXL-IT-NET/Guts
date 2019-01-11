@@ -28,34 +28,13 @@ namespace Guts.Data.Migrations
 
                     b.Property<string>("Description");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired();
+                    b.Property<int>("TopicId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TopicId");
 
                     b.ToTable("Assignments");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Assignment");
-                });
-
-            modelBuilder.Entity("Guts.Domain.Chapter", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int>("CourseId");
-
-                    b.Property<int>("Number");
-
-                    b.Property<int>("PeriodId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("PeriodId");
-
-                    b.ToTable("Chapters");
                 });
 
             modelBuilder.Entity("Guts.Domain.Course", b =>
@@ -117,35 +96,13 @@ namespace Guts.Data.Migrations
                     b.ToTable("Periods");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Project", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(20);
-
-                    b.Property<int>("CourseId");
-
-                    b.Property<string>("Description")
-                        .IsRequired();
-
-                    b.Property<int>("PeriodId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("PeriodId");
-
-                    b.ToTable("Projects");
-                });
-
             modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Name")
+                        .IsRequired();
 
                     b.Property<int>("ProjectId");
 
@@ -279,6 +236,36 @@ namespace Guts.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("TestRuns");
+                });
+
+            modelBuilder.Entity("Guts.Domain.Topic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20);
+
+                    b.Property<int>("CourseId");
+
+                    b.Property<string>("Description")
+                        .IsRequired();
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired();
+
+                    b.Property<int>("PeriodId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("Topics");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Topic");
                 });
 
             modelBuilder.Entity("Guts.Domain.User", b =>
@@ -418,55 +405,31 @@ namespace Guts.Data.Migrations
                     b.ToTable("UserTokens");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Exercise", b =>
-                {
-                    b.HasBaseType("Guts.Domain.Assignment");
-
-                    b.Property<int>("ChapterId");
-
-                    b.HasIndex("ChapterId");
-
-                    b.ToTable("Exercise");
-
-                    b.HasDiscriminator().HasValue("Exercise");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ProjectComponent", b =>
-                {
-                    b.HasBaseType("Guts.Domain.Assignment");
-
-                    b.Property<int>("ProjectId");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("ProjectComponent");
-
-                    b.HasDiscriminator().HasValue("ProjectComponent");
-                });
-
             modelBuilder.Entity("Guts.Domain.Chapter", b =>
                 {
-                    b.HasOne("Guts.Domain.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasBaseType("Guts.Domain.Topic");
 
-                    b.HasOne("Guts.Domain.Period", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.ToTable("Chapter");
+
+                    b.HasDiscriminator().HasValue("Chapter");
                 });
 
             modelBuilder.Entity("Guts.Domain.Project", b =>
                 {
-                    b.HasOne("Guts.Domain.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasBaseType("Guts.Domain.Topic");
 
-                    b.HasOne("Guts.Domain.Period", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
+
+                    b.ToTable("Project");
+
+                    b.HasDiscriminator().HasValue("Project");
+                });
+
+            modelBuilder.Entity("Guts.Domain.Assignment", b =>
+                {
+                    b.HasOne("Guts.Domain.Topic", "Topic")
+                        .WithMany("Assignments")
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -486,7 +449,7 @@ namespace Guts.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Guts.Domain.User", "User")
-                        .WithMany()
+                        .WithMany("TeamUsers")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
@@ -538,6 +501,19 @@ namespace Guts.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("Guts.Domain.Topic", b =>
+                {
+                    b.HasOne("Guts.Domain.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Guts.Domain.Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Guts.Domain.Role")
@@ -580,22 +556,6 @@ namespace Guts.Data.Migrations
                     b.HasOne("Guts.Domain.User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.Exercise", b =>
-                {
-                    b.HasOne("Guts.Domain.Chapter", "Chapter")
-                        .WithMany("Exercises")
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.ProjectComponent", b =>
-                {
-                    b.HasOne("Guts.Domain.Project", "Project")
-                        .WithMany("Components")
-                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

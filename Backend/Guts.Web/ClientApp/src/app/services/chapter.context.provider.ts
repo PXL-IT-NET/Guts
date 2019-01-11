@@ -13,7 +13,7 @@ export class ChapterContext {
   }
 
   public courseId: number;
-  public chapterNumber: number;
+  public chapterCode: string;
 
   constructor() {
     this._statusDate = new Date();

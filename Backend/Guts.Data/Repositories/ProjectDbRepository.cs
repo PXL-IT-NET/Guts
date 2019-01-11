@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,13 @@ namespace Guts.Data.Repositories
                 throw new DataNotFoundException();
             }
             return project;
+        }
+
+        public async Task<IList<Project>> GetByCourseIdAsync(int courseId, int periodId)
+        {
+            var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
+
+            return await query.ToListAsync();
         }
     }
 }
