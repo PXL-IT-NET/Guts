@@ -15,17 +15,17 @@ namespace Guts.Client.Shared.Utility
             _authorizationHandler = authorizationHandler;
         }
 
-        public async Task<Result> SendAsync(TestRunBase testRun)
+        public async Task<Result> SendAsync(AssignmentTestRun testRun, TestRunType type)
         {
             await RefreshAccessToken();
 
             var webApiTestRunsUrl = "api/testruns";
-            switch (testRun)
+            switch (type)
             {
-                case ExerciseTestRun _:
+                case TestRunType.ForExercise:
                     webApiTestRunsUrl += "/forexercise";
                     break;
-                case ProjectComponentTestRun _:
+                case TestRunType.ForProject:
                     webApiTestRunsUrl += "/forproject";
                     break;
             }

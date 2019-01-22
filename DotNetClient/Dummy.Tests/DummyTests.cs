@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace Dummy.Tests
 {
-    [ExerciseTestFixture("dummyCourse", 1, "dummyExercise")]
+    [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
     public class DummyTests
     {
         [MonitoredTest("Test something")]

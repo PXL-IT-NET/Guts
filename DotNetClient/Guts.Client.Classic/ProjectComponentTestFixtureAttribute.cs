@@ -35,22 +35,22 @@ namespace Guts.Client.Classic
             {
                 if (!AllTestsOfFixtureWereRunned()) return;
 
-                var projectComponent = new ProjectComponent
+                var projectComponent = new Assignment
                 {
                     CourseCode = _courseCode,
-                    ProjectCode = _projectCode,
-                    ComponentCode = _componentCode,
+                    TopicCode = _projectCode,
+                    AssignmentCode = _componentCode,
                 };
 
-                var testRun = new ProjectComponentTestRun
+                var testRun = new AssignmentTestRun
                 {
-                    ProjectComponent = projectComponent,
+                    Assignment = projectComponent,
                     Results = TestRunResultAccumulator.Instance.TestResults,
                     SourceCode = GetSourceCode(),
                     TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
 
-                SendTestResults(testRun);
+                SendTestResults(testRun, TestRunType.ForProject);
             }
             catch (Exception ex)
             {

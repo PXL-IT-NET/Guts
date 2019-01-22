@@ -66,13 +66,13 @@ namespace Guts.Client.Classic
             return SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);
         }
 
-        protected void SendTestResults(TestRunBase testRun)
+        protected void SendTestResults(AssignmentTestRun testRun, TestRunType type)
         {
             try
             {
                 TestContext.Progress.WriteLine("Trying to send results...");
 
-                var result = _resultSender.SendAsync(testRun).Result;
+                var result = _resultSender.SendAsync(testRun, type).Result;
 
                 if (result.Success)
                 {

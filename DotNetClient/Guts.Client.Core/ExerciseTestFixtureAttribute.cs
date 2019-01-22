@@ -9,16 +9,16 @@ namespace Guts.Client.Core
     [AttributeUsage(AttributeTargets.Class)]
     public class ExerciseTestFixtureAttribute : MonitoredTestFixtureBaseAttribute
     {
-        private readonly int _chapter;
+        private readonly string _chapterCode;
         private readonly string _exerciseCode;
 
-        public ExerciseTestFixtureAttribute(string courseCode, int chapter, string exerciseCode) : base(courseCode)
+        public ExerciseTestFixtureAttribute(string courseCode, string chapterCode, string exerciseCode) : base(courseCode)
         {
-            _chapter = chapter;
+            _chapterCode = chapterCode;
             _exerciseCode = exerciseCode;
         }
 
-        public ExerciseTestFixtureAttribute(string courseCode, int chapter, string exerciseCode, string sourceCodeRelativeFilePaths) : this(courseCode, chapter, exerciseCode)
+        public ExerciseTestFixtureAttribute(string courseCode, string chapterCode, string exerciseCode, string sourceCodeRelativeFilePaths) : this(courseCode, chapterCode, exerciseCode)
         {
             _sourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
         }
@@ -26,7 +26,7 @@ namespace Guts.Client.Core
         public override void BeforeTest(ITest test)
         {
             TestRunResultAccumulator.Instance.Clear();
-            TestContext.Progress.WriteLine($"Starting test run. Chapter {_chapter}, exercise {_exerciseCode}");
+            TestContext.Progress.WriteLine($"Starting test run. Chapter {_chapterCode}, exercise {_exerciseCode}");
         }
 
         public override void AfterTest(ITest test)
@@ -37,22 +37,22 @@ namespace Guts.Client.Core
             {
                 if (!AllTestsOfFixtureWereRunned()) return;
 
-                var exercise = new Exercise
+                var exercise = new Assignment
                 {
                     CourseCode = _courseCode,
-                    ChapterNumber = _chapter,
-                    ExerciseCode = _exerciseCode,
+                    TopicCode = _chapterCode,
+                    AssignmentCode = _exerciseCode
                 };
 
-                var testRun = new ExerciseTestRun
+                var testRun = new AssignmentTestRun
                 {
-                    Exercise = exercise,
+                    Assignment = exercise,
                     Results = TestRunResultAccumulator.Instance.TestResults,
                     SourceCode = GetSourceCode(),
                     TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
 
-                SendTestResults(testRun);
+                SendTestResults(testRun, TestRunType.ForExercise);
             }
             catch (Exception ex)
             {

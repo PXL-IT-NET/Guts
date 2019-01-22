@@ -13,13 +13,12 @@ namespace Guts.Client.Core.Tests
         public void Constructor_ShouldUseGutsSettingsJson()
         {
             //Arrange
-            var random = new Random();
             var courseCode = Guid.NewGuid().ToString();
-            var chapter = random.Next(1, int.MaxValue);
+            var chapterCode = Guid.NewGuid().ToString();
             var exerciseCode = Guid.NewGuid().ToString();
 
             //Act
-            var testFixture = new ExerciseTestFixtureAttribute(courseCode, chapter, exerciseCode);
+            var testFixture = new ExerciseTestFixtureAttribute(courseCode, chapterCode, exerciseCode);
 
             //Assert
             var sender = testFixture.GetPrivateFieldValue<TestRunResultSender>();
