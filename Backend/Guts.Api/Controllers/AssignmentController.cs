@@ -1,13 +1,13 @@
-﻿using System;
-using System.IO;
-using System.IO.Compression;
-using System.Threading.Tasks;
-using Guts.Api.Models.Converters;
+﻿using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Data.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Threading.Tasks;
 
 namespace Guts.Api.Controllers
 {
@@ -21,7 +21,7 @@ namespace Guts.Api.Controllers
         private readonly IAssignmentConverter _assignmentConverter;
 
         public AssignmentController(IAssignmentService assignmentService,
-            IAssignmentRepository assignmentRepository, 
+            IAssignmentRepository assignmentRepository,
             IAssignmentConverter assignmentConverter)
         {
             _assignmentService = assignmentService;
@@ -41,7 +41,7 @@ namespace Guts.Api.Controllers
             if (IsStudent())
             {
                 //students can only see their own assignment results
-                if(!IsOwnUserId(userId)) return Forbid();
+                if (!IsOwnUserId(userId)) return Forbid();
             }
             else if (!IsLector())
             {
@@ -59,6 +59,34 @@ namespace Guts.Api.Controllers
             var model = _assignmentConverter.ToAssignmentDetailModel(assignment, results.TestResults, testRunInfo);
 
             return Ok(model);
+        }
+
+        [HttpGet("{assignmentId}/forteam/{teamId}")]
+        public async Task<IActionResult> GetAssignmentResultsForTeam(int assignmentId, int teamId, [FromQuery] DateTime? date)
+        {
+            //if (IsStudent())
+            //{
+            //    //students can only see their own assignment results
+            //    if (!IsOwnUserId(userId)) return Forbid();
+            //}
+            //else if (!IsLector())
+            //{
+            //    return Forbid();
+            //}
+
+            var assignment = await _assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
+
+            var dateUtc = date?.ToUniversalTime();
+
+            //var testRunInfo = await _assignmentService.GetUserTestRunInfoForAssignment(assignmentId, userId, dateUtc);
+
+            //var results = await _assignmentService.GetResultsForUserAsync(assignmentId, userId, dateUtc);
+
+            // var model = _assignmentConverter.ToAssignmentDetailModel(assignment, results.TestResults, testRunInfo);
+
+            // return Ok(model);
+
+            throw new NotImplementedException();
         }
 
         [HttpGet("{assignmentId}/getsourcecodezip")]

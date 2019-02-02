@@ -15,7 +15,7 @@ namespace Guts.Api.Models.Converters
             _userConverter = userConverter;
         }
 
-        public ChapterSummaryModel ToChapterSummaryModel(Chapter chapter, IList<AssignmentResultDto> userAssignmentResults)
+        public TopicSummaryModel ToTopicSummaryModel(Chapter chapter, IList<AssignmentResultDto> userAssignmentResults)
         {
             if (chapter.Assignments == null)
             {
@@ -27,25 +27,25 @@ namespace Guts.Api.Models.Converters
                 throw new ArgumentException("All assignments of the chapter should have their tests loaded", nameof(chapter));
             }
 
-            var model = new ChapterSummaryModel
+            var model = new TopicSummaryModel
             {
                 Id = chapter.Id,
                 Code = chapter.Code,
                 Description = chapter.Description,
-                ExerciseSummaries = new List<AssignmentSummaryModel>()
+                AssignmentSummaries = new List<AssignmentSummaryModel>()
             };
 
             foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
             {
                 var assignmentSummaryModel = CreateAssignmentSummaryModel(assignment, userAssignmentResults);
-                model.ExerciseSummaries.Add(assignmentSummaryModel);
+                model.AssignmentSummaries.Add(assignmentSummaryModel);
             }
             return model;
         }
 
-        public ChapterModel ToChapterModel(Chapter chapter)
+        public TopicModel ToChapterModel(Chapter chapter)
         {
-            return new ChapterModel
+            return new TopicModel
             {
                 Id = chapter.Id,
                 Code = chapter.Code,
@@ -68,35 +68,38 @@ namespace Guts.Api.Models.Converters
             };
         }
 
-        public ChapterStatisticsModel ToChapterStatisticsModel(Chapter chapter, IList<AssignmentStatisticsDto> chapterStatistics)
+        public TopicStatisticsModel ToTopicStatisticsModel(Chapter chapter, IList<AssignmentStatisticsDto> chapterStatistics)
         {
-            var model = new ChapterStatisticsModel
+            var model = new TopicStatisticsModel
             {
                 Id = chapter.Id,
                 Code = chapter.Code,
-                ExerciseStatistics = new List<AssignmentStatisticsModel>()
+                AssignmentStatistics = new List<AssignmentStatisticsModel>()
             };
 
             foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
             {
                 var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, chapterStatistics);
-                model.ExerciseStatistics.Add(assignmentStatisticsModel);
+                model.AssignmentStatistics.Add(assignmentStatisticsModel);
             }
 
             return model;
         }
 
-        private AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assigment,
+        private AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
             IList<AssignmentResultDto> assignmentResults)
         {
             var assignmentSummaryModel = new AssignmentSummaryModel
             {
-                AssignmentId = assigment.Id,
-                Code = assigment.Code,
-                NumberOfTests = assigment.Tests.Count
+                AssignmentId = assignment.Id,
+                Code = assignment.Code,
+                Description = assignment.Description,
+                NumberOfTests = assignment.Tests.Count
             };
 
-            var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assigment.Id);
+            EnsureAssignmentDescription(assignmentSummaryModel, assignment);
+
+            var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assignment.Id);
             if (matchingResult != null)
             {
                 assignmentSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
@@ -116,6 +119,8 @@ namespace Guts.Api.Models.Converters
                 TestPassageStatistics = new List<TestPassageStatisticModel>()
             };
 
+            EnsureAssignmentDescription(model, assignment);
+
             var assignmentStatistics = chapterStatistics.FirstOrDefault(result => result.AssignmentId == assignment.Id);
             if (assignmentStatistics != null)
             {
@@ -132,6 +137,21 @@ namespace Guts.Api.Models.Converters
             }
 
             return model;
+        }
+
+        private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
+        {
+            if (string.IsNullOrEmpty(assignmentModel.Description))
+            {
+                if (int.TryParse(assignment.Code, out int assignmentNumber))
+                {
+                    assignmentModel.Description = "Assignment " + assignmentNumber;
+                }
+                else
+                {
+                    assignmentModel.Description = assignment.Code;
+                }
+            }
         }
     }
 }

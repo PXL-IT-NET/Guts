@@ -8,19 +8,8 @@
           </h5>
           <div class="card-body">
             <div class="list-group">
-              <div class="list-group-item" *ngFor="let exercise of model.exerciseSummaries">
-                <h4 class="list-group-item-heading">
-                  Exercise {{exercise.code}} <small>({{exercise.numberOfPassedTests}} / {{exercise.numberOfTests}} tests)</small>
-                </h4>
-                <div class="list-group-item-text">
-                  <div style="width: 400px; height: 200px;">
-                    <canvas baseChart
-                            [data]="exercise.chartData.data"
-                            [labels]="exercise.chartData.labels"
-                            [colors]="exercise.chartData.colors"
-                            chartType="doughnut"></canvas>
-                  </div>
-                </div>
+              <div class="list-group-item" *ngFor="let assignment of model.assignmentSummaries">
+                <assignment-summary [model]="assignment"></assignment-summary>
               </div>
             </div>
             <ngx-loading [show]="loadingSummary"></ngx-loading>
@@ -34,19 +23,8 @@
           </h5>
           <div class="card-body">
             <div class="list-group">
-              <div class="list-group-item" *ngFor="let exerciseStatistics of statistics.exerciseStatistics">
-                <h4 class="list-group-item-heading">
-                  Exercise {{exerciseStatistics.code}} <small>({{exerciseStatistics.totalNumberOfUsers}} students)</small>
-                </h4>
-                <div class="list-group-item-text">
-                  <div style="width: 400px; height: 200px;">
-                    <canvas baseChart
-                            [datasets]="exerciseStatistics.chartData.datasets"
-                            [labels]="exerciseStatistics.chartData.labels"
-                            chartType="bar"></canvas>
-                  </div>
-                  <!--<button class="btn btn-outline-secondary btn-sm" [routerLink]="['/exercises', exercise.exerciseId, 'students']">View students</button>-->
-                </div>
+              <div class="list-group-item" *ngFor="let assignment of statistics.assignmentStatistics">
+                <assignment-statistics [model]="assignment"></assignment-statistics>
               </div>
             </div>
             <ngx-loading [show]="loadingStatistics"></ngx-loading>

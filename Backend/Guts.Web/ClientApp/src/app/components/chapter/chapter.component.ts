@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ChapterService } from '../../services/chapter.service';
-import { ChapterContextProvider, ChapterContext } from '../../services/chapter.context.provider';
+import { TopicContextProvider, TopicContext} from "../../services/topic.context.provider";
 import { ActivatedRoute, Router } from '@angular/router';
-import { IChapterDetailsModel, ChapterStatisticsModel } from '../../viewmodels/chapter.model';
+import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
+import * as moment from 'moment';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -14,7 +15,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
   public selectedUserId: number;
-  public context: ChapterContext;
+  public selectedDate: Date;
+ // public context: TopicContext;
   public datePickerSettings: any;
   public loading: boolean = false;
 
@@ -22,7 +24,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
   private chapterCode: string;
 
   constructor(private chapterService: ChapterService,
-    private chapterContextProvider: ChapterContextProvider,
+    private topicContextProvider: TopicContextProvider,
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService) {
@@ -36,7 +38,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     };
     this.selectedAssignmentId = 0;
     this.selectedUserId = 0;
-    this.context = this.chapterContextProvider.context;
+    this.selectedDate = new Date();
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,
@@ -81,25 +83,21 @@ export class ChapterComponent implements OnInit, OnDestroy {
     }
   }
 
+  private navigateToSummaryForSelectedUser() {
+    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+    this.router.navigate(['users', this.selectedUserId, 'summary'], { relativeTo: this.route });
+  }
+
   public onDateChanged() {
-    this.chapterContextProvider.announceContextChange();
+    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
     this.loadStatistics();
   }
 
-  private navigateToSummaryForSelectedUser() {
-    this.router.navigate(['users', this.selectedUserId, 'summary'], { relativeTo: this.route }).then(() => {
-      this.chapterContextProvider.context.courseId = this.courseId;
-      this.chapterContextProvider.context.chapterCode = this.chapterCode;
-      this.chapterContextProvider.announceContextChange();
-    });
-  }
-
   private loadStatistics() {
-    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.context.statusDate)
+    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, moment(this.selectedDate))
       .subscribe((result) => {
         if (result.success) {
-          this.chapterContextProvider.statistics = result.value;
-          this.chapterContextProvider.announceStatisticsChange();
+          this.topicContextProvider.setStatistics(result.value);
         } else {
           this.toastr.error("Could not load chapter statistics from API. Message: " + (result.message || "unknown error"), "API error");
         }

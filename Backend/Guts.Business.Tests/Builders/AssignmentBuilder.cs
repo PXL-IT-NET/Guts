@@ -18,6 +18,7 @@ namespace Guts.Business.Tests.Builders
                 Id = 0,
                 TopicId = _random.NextPositive(),
                 Code = Guid.NewGuid().ToString(),
+                Description = Guid.NewGuid().ToString(),
                 Tests = new List<Test>()
             };
         }

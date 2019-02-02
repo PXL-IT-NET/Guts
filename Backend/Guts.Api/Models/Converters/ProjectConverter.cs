@@ -1,17 +1,40 @@
-﻿using Guts.Domain;
+﻿using System.Linq;
+using Guts.Domain;
 
 namespace Guts.Api.Models.Converters
 {
     public class ProjectConverter : IProjectConverter
     {
-        public ProjectModel ToProjectModel(Project project)
+        public TopicModel ToProjectModel(Project project)
         {
-            return new ProjectModel
+            return new TopicModel
             {
                 Id = project.Id,
                 Code = project.Code,
                 Description = project.Description
             };
+        }
+
+        public ProjectDetailModel ToProjectDetailModel(Project project)
+        {
+            var model = new ProjectDetailModel
+            {
+                Id = project.Id,
+                Code = project.Code,
+                Description = project.Description,
+                Teams = project.Teams.Select(t => new TeamModel
+                {
+                    Id = t.Id,
+                    Name = t.Name
+                }).ToList(),
+                Components = project.Assignments.Select(a => new AssignmentModel
+                {
+                    AssignmentId = a.Id,
+                    Code = a.Code
+                }).ToList()
+            };
+
+            return model;
         }
     }
 }

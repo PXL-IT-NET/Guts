@@ -20,6 +20,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IProjectRepository> _projectRepositoryMock;
         private Mock<ICourseRepository> _courseRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
+        private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -28,8 +29,12 @@ namespace Guts.Business.Tests.Services
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _courseRepositoryMock = new Mock<ICourseRepository>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
+            _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
 
-            _service = new ProjectService(_projectRepositoryMock.Object, _courseRepositoryMock.Object, _periodRepositoryMock.Object);
+            _service = new ProjectService(_projectRepositoryMock.Object, 
+                _courseRepositoryMock.Object, 
+                _periodRepositoryMock.Object, 
+                _projectTeamRepositoryMock.Object);
         }
 
         [Test]
@@ -187,6 +192,71 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results.Count, Is.EqualTo(projectsOfCourse.Count));
             Assert.That(results.ElementAt(0).Description, Is.LessThan(results.ElementAt(1).Description));
+        }
+
+        [Test]
+        public void LoadProjectAsync_ShouldReturnProjectForCurrentPeriodWithAssignmentsandTeams()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var existingProject = new ProjectBuilder().WithId().Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+
+            //Act
+            var result = _service.LoadProjectAsync(existingProject.CourseId, existingProject.Code).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.LoadWithAssignmentsAndTeamsAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id), Times.Once());
+            Assert.That(result, Is.EqualTo(existingProject));
+        }
+
+        [Test]
+        public void LoadProjectForUserAsync_ShouldReturnProjectForCurrentPeriodWithAssignmentsandOnlyTeamsOfTheUser()
+        {
+            //Arrange
+            var userId = _random.NextPositive();
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var existingProject = new ProjectBuilder().WithId().Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo =>
+                    repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+
+            //Act
+            var result = _service.LoadProjectForUserAsync(existingProject.CourseId, existingProject.Code, userId).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id, userId), Times.Once());
+            Assert.That(result, Is.EqualTo(existingProject));
+        }
+
+        [Test]
+        public void LoadTeamsOfProject_ShouldLoadTheTeamsOfTheProjectForTheCurrentPeriodWithUsers()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var existingProject = new ProjectBuilder().WithId().Build();
+            var existingTeams = new List<ProjectTeam>();
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
+
+            //Act
+            var result = _service.LoadTeamsOfProjectAsync(existingProject.CourseId, existingProject.Code).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id), Times.Once);
+            _projectTeamRepositoryMock.Verify(repo => repo.GetByProjectWithUsersAsync(existingProject.Id), Times.Once);
+            Assert.That(result, Is.EqualTo(existingTeams));
         }
     }
 }

@@ -3,12 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AssignmentSummaryModel = /** @class */ (function () {
     function AssignmentSummaryModel(source) {
         this._chartData = null;
-        this.assignmentId = source.assignmentId;
-        this.code = source.code;
-        this.numberOfTests = source.numberOfTests;
-        this.numberOfPassedTests = source.numberOfPassedTests;
-        this.numberOfFailedTests = source.numberOfFailedTests;
-        this.numberOfUsers = source.numberOfUsers;
+        this.assignmentId = 0;
+        this.code = '';
+        this.description = '';
+        this.numberOfTests = 0;
+        this.numberOfPassedTests = 0;
+        this.numberOfFailedTests = 0;
+        this.numberOfUsers = 0;
+        if (source) {
+            this.assignmentId = source.assignmentId;
+            this.code = source.code;
+            this.description = source.description;
+            this.numberOfTests = source.numberOfTests;
+            this.numberOfPassedTests = source.numberOfPassedTests;
+            this.numberOfFailedTests = source.numberOfFailedTests;
+            this.numberOfUsers = source.numberOfUsers;
+        }
     }
     Object.defineProperty(AssignmentSummaryModel.prototype, "chartData", {
         get: function () {

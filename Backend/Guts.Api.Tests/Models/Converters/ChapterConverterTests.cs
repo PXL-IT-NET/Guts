@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Guts.Api.Models.Converters;
+﻿using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Tests.Builders;
 using Guts.Domain;
 using Moq;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Guts.Api.Tests.Models.Converters
 {
@@ -26,7 +26,7 @@ namespace Guts.Api.Tests.Models.Converters
         [TestCase(5, 5, 0, 10)]
         [TestCase(5, 0, 5, 1)]
         [TestCase(5, 1, 1, 10)]
-        public void ToChapterSummaryModel_ShouldCorrectlyConvertValidChapter(int numberOfTests,
+        public void ToTopicSummaryModel_ShouldCorrectlyConvertValidChapter(int numberOfTests,
             int numberOfPassingTests,
             int numberOfFailingTests,
             int numberOfUsers)
@@ -36,21 +36,22 @@ namespace Guts.Api.Tests.Models.Converters
             var userAssignmentResults = GenerateAssignmentResults(chapter, numberOfPassingTests, numberOfFailingTests);
 
             //Act
-            var model = _converter.ToChapterSummaryModel(chapter, userAssignmentResults);
+            var model = _converter.ToTopicSummaryModel(chapter, userAssignmentResults);
 
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(chapter.Id));
             Assert.That(model.Code, Is.EqualTo(chapter.Code));
             Assert.That(model.Description, Is.EqualTo(chapter.Description));
-            Assert.That(model.ExerciseSummaries, Is.Not.Null);
-            Assert.That(model.ExerciseSummaries.Count, Is.EqualTo(chapter.Assignments.Count));
+            Assert.That(model.AssignmentSummaries, Is.Not.Null);
+            Assert.That(model.AssignmentSummaries.Count, Is.EqualTo(chapter.Assignments.Count));
 
             foreach (var assignment in chapter.Assignments)
             {
-                var userAssignmentSummary = model.ExerciseSummaries.FirstOrDefault(summary => summary.AssignmentId == assignment.Id);
+                var userAssignmentSummary = model.AssignmentSummaries.FirstOrDefault(summary => summary.AssignmentId == assignment.Id);
                 Assert.That(userAssignmentSummary, Is.Not.Null);
                 Assert.That(userAssignmentSummary.Code, Is.EqualTo(assignment.Code));
+                Assert.That(userAssignmentSummary.Description, Is.EqualTo(assignment.Description));
                 Assert.That(userAssignmentSummary.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
                 Assert.That(userAssignmentSummary.NumberOfFailedTests, Is.EqualTo(numberOfFailingTests));
                 Assert.That(userAssignmentSummary.NumberOfTests, Is.EqualTo(numberOfTests));
@@ -58,25 +59,52 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenAssignmentsAreMissing()
+        [TestCase("1", "Assignment 1")]
+        [TestCase("123", "Assignment 123")]
+        [TestCase("a", "a")]
+        [TestCase("abc", "abc")]
+        public void ToTopicSummaryModel_ShouldCreateDescriptionsForAssignmentsIfTheyAreMissing(string assignmentCode, string expectedDescription)
+        {
+            //Arrange
+            var chapter = new ChapterBuilder().WithId().WithAssignments(1, 2).Build();
+            var assignment = chapter.Assignments.First();
+            assignment.Code = assignmentCode;
+            assignment.Description = null;
+            var userAssignmentResults = GenerateAssignmentResults(chapter, 2, 2);
+
+            //Act
+            var model = _converter.ToTopicSummaryModel(chapter, userAssignmentResults);
+
+            //Assert
+            Assert.That(model, Is.Not.Null);
+            Assert.That(model.AssignmentSummaries, Is.Not.Null);
+            Assert.That(model.AssignmentSummaries.Count, Is.EqualTo(chapter.Assignments.Count));
+
+            var userAssignmentSummary = model.AssignmentSummaries.FirstOrDefault(summary => summary.AssignmentId == assignment.Id);
+            Assert.That(userAssignmentSummary, Is.Not.Null);
+            Assert.That(userAssignmentSummary.Description, Is.EqualTo(expectedDescription));
+        }
+
+        [Test]
+        public void ToTopicSummaryModel_ShouldThrowArgumentExceptionWhenAssignmentsAreMissing()
         {
             //Arrange
             var chapter = new ChapterBuilder().Build();
             chapter.Assignments = null;
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenTestsOfAssignmentsAreMissing()
+        public void ToTopicSummaryModel_ShouldThrowArgumentExceptionWhenTestsOfAssignmentsAreMissing()
         {
             //Arrange
             var chapter = new ChapterBuilder().WithAssignments(1, 1).Build();
             chapter.Assignments.First().Tests = null;
 
             //Act + Assert
-            Assert.That(() => _converter.ToChapterSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
+            Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
         }
 
         [Test]
@@ -138,34 +166,6 @@ namespace Guts.Api.Tests.Models.Converters
                 }
             }
             return assignmentResult;
-        }
-    }
-
-    [TestFixture]
-    internal class ProjectConverterTests
-    {
-        private ProjectConverter _converter;
-
-        [SetUp]
-        public void Setup()
-        {
-            _converter = new ProjectConverter();
-        }
-
-        [Test]
-        public void ToProjectModel_ShouldCorrectlyCovertValidProject()
-        {
-            //Arrange
-            var project = new ProjectBuilder().WithId().Build();
-
-            //Act
-            var model = _converter.ToProjectModel(project);
-
-            //Assert
-            Assert.That(model, Is.Not.Null);
-            Assert.That(model.Id, Is.EqualTo(project.Id));
-            Assert.That(model.Code, Is.EqualTo(project.Code));
-            Assert.That(model.Description, Is.EqualTo(project.Description));
         }
     }
 }

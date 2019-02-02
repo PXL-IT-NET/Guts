@@ -3,10 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AssignmentStatisticsModel = /** @class */ (function () {
     function AssignmentStatisticsModel(source) {
         this._chartData = null;
-        this.assignmentId = source.assignmentId;
-        this.code = source.code;
-        this.totalNumberOfUsers = source.totalNumberOfUsers;
-        this.testPassageStatistics = source.testPassageStatistics;
+        this.assignmentId = 0;
+        this.code = '';
+        this.description = '';
+        this.totalNumberOfUsers = 0;
+        this.testPassageStatistics = [];
+        if (source) {
+            this.assignmentId = source.assignmentId;
+            this.code = source.code;
+            this.description = source.description;
+            this.totalNumberOfUsers = source.totalNumberOfUsers;
+            this.testPassageStatistics = source.testPassageStatistics;
+        }
     }
     Object.defineProperty(AssignmentStatisticsModel.prototype, "chartData", {
         get: function () {

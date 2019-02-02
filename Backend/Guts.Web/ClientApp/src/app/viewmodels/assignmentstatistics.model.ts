@@ -13,14 +13,24 @@ export interface ITestPassageStatisticModel {
 export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
   public assignmentId: number;
   public code: string;
+  public description: string;
   public totalNumberOfUsers: number;
   public testPassageStatistics: ITestPassageStatisticModel[];
 
-  constructor(source: IAssignmentStatisticsModel) {
-    this.assignmentId = source.assignmentId;
-    this.code = source.code;
-    this.totalNumberOfUsers = source.totalNumberOfUsers;
-    this.testPassageStatistics = source.testPassageStatistics;
+  constructor(source?: IAssignmentStatisticsModel) {
+    this.assignmentId = 0;
+    this.code = '';
+    this.description = '';
+    this.totalNumberOfUsers = 0;
+    this.testPassageStatistics = [];
+
+    if (source) {
+      this.assignmentId = source.assignmentId;
+      this.code = source.code;
+      this.description = source.description;
+      this.totalNumberOfUsers = source.totalNumberOfUsers;
+      this.testPassageStatistics = source.testPassageStatistics;
+    }
   }
 
   private _chartData: Object | null = null;

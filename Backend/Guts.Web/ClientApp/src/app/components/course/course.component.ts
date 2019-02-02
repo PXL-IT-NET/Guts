@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { CourseService } from '../../services/course.service';
 import { ICourseContentsModel } from '../../viewmodels/course.model';
-import { IChapterModel } from '../../viewmodels/chapter.model';
-import { IProjectModel } from '../../viewmodels/project.model';
+import { ITopicModel } from '../../viewmodels/topic.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
@@ -11,8 +10,8 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class CourseComponent {
   public course: ICourseContentsModel;
-  public selectedChapter: IChapterModel;
-  public selectedProject: IProjectModel;
+  public selectedChapter: ITopicModel;
+  public selectedProject: ITopicModel;
   public loading: boolean = false;
 
   constructor(private route: ActivatedRoute,
@@ -44,6 +43,7 @@ export class CourseComponent {
             this.onChapterChanged();
           } else if (this.course.projects.length > 0) {
             this.selectedProject = this.course.projects[0];
+            this.onProjectChanged();
           }
         } else {
           this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");
