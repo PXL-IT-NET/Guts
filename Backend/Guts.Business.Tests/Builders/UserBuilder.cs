@@ -19,6 +19,12 @@ namespace Guts.Business.Tests.Builders
             };
         }
 
+        public UserBuilder WithId(int id)
+        {
+            _user.Id = id;
+            return this;
+        }
+
         public User Build()
         {
             return _user;

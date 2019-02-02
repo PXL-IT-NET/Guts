@@ -133,7 +133,7 @@ export class AuthService {
           return PostResult.success();
         }).catch((errorResponse: HttpErrorResponse) => {
           return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });;
+        });
     });
   }
 }

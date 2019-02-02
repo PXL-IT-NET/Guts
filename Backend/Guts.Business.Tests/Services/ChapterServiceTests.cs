@@ -239,7 +239,7 @@ namespace Guts.Business.Tests.Services
             var chapter = new ChapterBuilder().WithId().WithAssignments(numberOfAssignments, 1).Build();
             var lastTestResults = new List<TestResult> {new TestResult()};
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfUser(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             //Act
@@ -248,7 +248,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Has.Count.EqualTo(numberOfAssignments));
             _testResultRepositoryMock.Verify(
-                repo => repo.GetLastTestResultsOfAssignmentAsync(
+                repo => repo.GetLastTestResultsOfUser(
                     It.Is<int>(assignmentId => chapter.Assignments.Any(e => e.Id == assignmentId)), userId, null),
                 Times.Exactly(numberOfAssignments));
             Assert.That(results, Has.All.Matches((AssignmentResultDto dto) => dto.TestResults.Count == lastTestResults.Count));
@@ -264,7 +264,7 @@ namespace Guts.Business.Tests.Services
 
             var testResults = new List<TestResult>();
             _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int?>(), It.IsAny<DateTime?>()))
+                .Setup(repo => repo.GetLastTestResults(It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(testResults);
 
             var assignmentStatisticsDto = new AssignmentStatisticsDto();
@@ -278,8 +278,8 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Has.Count.EqualTo(numberOfAssignments));
             _testResultRepositoryMock.Verify(
-                repo => repo.GetLastTestResultsOfAssignmentAsync(
-                    It.Is<int>(assignmentId => chapter.Assignments.Any(e => e.Id == assignmentId)), null, nowUtc),
+                repo => repo.GetLastTestResults(
+                    It.Is<int>(assignmentId => chapter.Assignments.Any(e => e.Id == assignmentId)), nowUtc),
                 Times.Exactly(numberOfAssignments));
             _testResultConverterMock.Verify(
                 converter =>

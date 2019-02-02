@@ -53,14 +53,14 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(model.Chapters, Has.Count.EqualTo(chapters.Count));
             foreach (var chapter in chapters)
             {
-                _chapterConverter.Verify(converter => converter.ToChapterModel(chapter), Times.Once);
+                _chapterConverter.Verify(converter => converter.ToTopicModel(chapter), Times.Once);
             }
 
             Assert.That(model.Projects, Is.Not.Null);
             Assert.That(model.Projects, Has.Count.EqualTo(projects.Count));
             foreach (var project in projects)
             {
-                _projectConverter.Verify(converter => converter.ToProjectModel(project), Times.Once);
+                _projectConverter.Verify(converter => converter.ToTopicModel(project), Times.Once);
             }
         }
 

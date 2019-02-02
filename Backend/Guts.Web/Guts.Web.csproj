@@ -31,25 +31,35 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\app\components\assignmentstatistics\assignmentstatistics.component.ts" />
+    <None Remove="ClientApp\src\app\components\assignmentsummary\assignmentsummary.component.ts" />
     <None Remove="ClientApp\src\app\components\chapter\chapter.component.ts" />
     <None Remove="ClientApp\src\app\components\course\course.component.ts" />
     <None Remove="ClientApp\src\app\components\empty.component.ts" />
     <None Remove="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <None Remove="ClientApp\src\app\components\projectteamoverview\projectteamoverview.component.ts" />
     <None Remove="ClientApp\src\app\components\project\project.component.ts" />
-    <None Remove="ClientApp\src\app\services\chapter.context.provider.ts" />
+    <None Remove="ClientApp\src\app\services\topic.context.provider.ts" />
     <None Remove="ClientApp\src\app\viewmodels\assignmentstatistics.model.ts" />
     <None Remove="ClientApp\src\app\viewmodels\project.model.ts" />
+    <None Remove="ClientApp\src\app\viewmodels\team.model.ts" />
+    <None Remove="ClientApp\src\app\viewmodels\topic.model.ts" />
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\src\app\components\assignmentstatistics\assignmentstatistics.component.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\components\assignmentsummary\assignmentsummary.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\chapter\chapter.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\course\course.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\empty.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\login\login.component.spec.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\components\projectteamoverview\projectteamoverview.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\project\project.component.ts" />
-    <TypeScriptCompile Include="ClientApp\src\app\services\chapter.context.provider.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\services\topic.context.provider.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\viewmodels\assignmentstatistics.model.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\viewmodels\project.model.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\viewmodels\team.model.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\viewmodels\topic.model.ts" />
   </ItemGroup>
 
   <ItemGroup>

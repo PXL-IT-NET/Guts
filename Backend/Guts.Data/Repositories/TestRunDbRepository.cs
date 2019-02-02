@@ -48,5 +48,19 @@ namespace Guts.Data.Repositories
 
             return results.Select(r => r.TestRun).ToList();
         }
+
+        public async Task<IList<TestRun>> GetTeamTestRunsForAssignmentAsync(int assignmentId, int teamId, DateTime? dateUtc)
+        {
+            var query = from assignment in _context.Assignments
+                from testrun in assignment.TestRuns
+                join teamUser in _context.ProjectTeamUsers on testrun.UserId equals teamUser.UserId
+                where (assignment.Id == assignmentId) &&
+                      (teamUser.ProjectTeamId == teamId) &&
+                      (dateUtc == null || testrun.CreateDateTime <= dateUtc)
+                orderby testrun.CreateDateTime
+                select testrun;
+
+            return await query.ToListAsync();
+        }
     }
 }

@@ -30,8 +30,8 @@ namespace Guts.Api.Models.Converters
                 Id = course.Id,
                 Code = course.Code,
                 Name = course.Name,
-                Chapters = chapters.Select(chapter => _chapterConverter.ToChapterModel(chapter)).ToList(),
-                Projects = projects.Select(project => _projectConverter.ToProjectModel(project)).ToList()
+                Chapters = chapters.Select(chapter => _chapterConverter.ToTopicModel(chapter)).ToList(),
+                Projects = projects.Select(project => _projectConverter.ToTopicModel(project)).ToList()
             };
 
             return model;

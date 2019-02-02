@@ -1,5 +1,4 @@
-import { IChapterModel } from "./chapter.model"
-import { IProjectModel } from "./project.model"
+import { ITopicModel } from "./topic.model"
 
 export interface ICourseModel {
   id: number;
@@ -11,6 +10,6 @@ export interface ICourseContentsModel {
   id: number;
   code: string;
   name: string;
-  chapters: IChapterModel[];
-  projects: IProjectModel[];
+  chapters: ITopicModel[];
+  projects: ITopicModel[];
 }

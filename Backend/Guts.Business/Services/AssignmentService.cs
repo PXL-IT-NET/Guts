@@ -76,7 +76,7 @@ namespace Guts.Business.Services
             return new AssignmentResultDto
             {
                 AssignmentId = assignmentId,
-                TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignmentId, userId, dateUtc)
+                TestResults = await _testResultRepository.GetLastTestResultsOfUser(assignmentId, userId, dateUtc)
             };
         }
 
@@ -85,6 +85,35 @@ namespace Guts.Business.Services
             var testRunInfo = new AssignmentTestRunInfoDto();
 
             var testRuns = await _testRunRepository.GetUserTestRunsForAssignmentAsync(assignmentId, userId, dateUtc);
+            if (testRuns.Any())
+            {
+                var firstTestRun = testRuns.First();
+                var lastTestRun = testRuns.Last();
+                testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
+                testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
+                testRunInfo.SourceCode = lastTestRun.SourceCode;
+                testRunInfo.NumberOfRuns = testRuns.Count;
+            }
+
+            return testRunInfo;
+        }
+
+        public async Task<AssignmentResultDto> GetResultsForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc)
+        {
+            //TODO: add unit tests
+            return new AssignmentResultDto
+            {
+                AssignmentId = assignmentId,
+                TestResults = await _testResultRepository.GetLastTestResultsOfTeam(assignmentId, teamId, dateUtc)
+            };
+        }
+
+        public async Task<AssignmentTestRunInfoDto> GetTeamTestRunInfoForAssignment(int assignmentId, int teamId, DateTime? dateUtc)
+        {
+            //TODO: add unit tests
+            var testRunInfo = new AssignmentTestRunInfoDto();
+
+            var testRuns = await _testRunRepository.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, dateUtc);
             if (testRuns.Any())
             {
                 var firstTestRun = testRuns.First();

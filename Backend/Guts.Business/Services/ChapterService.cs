@@ -85,7 +85,7 @@ namespace Guts.Business.Services
                 var dto = new AssignmentResultDto
                 {
                     AssignmentId = assignment.Id,
-                    TestResults = await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignment.Id, userId, dateUtc)
+                    TestResults = await _testResultRepository.GetLastTestResultsOfUser(assignment.Id, userId, dateUtc)
                 };
                 results.Add(dto);
             }
@@ -99,7 +99,7 @@ namespace Guts.Business.Services
             foreach (var assignment in chapter.Assignments)
             {
                 var testResults =
-                    await _testResultRepository.GetLastTestResultsOfAssignmentAsync(assignment.Id, null, dateUtc);
+                    await _testResultRepository.GetLastTestResults(assignment.Id, dateUtc);
                 results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
                
             }

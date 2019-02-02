@@ -18,6 +18,7 @@ namespace Guts.Data
         public DbSet<Chapter> Chapters { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
+        public DbSet<ProjectTeamUser> ProjectTeamUsers { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }

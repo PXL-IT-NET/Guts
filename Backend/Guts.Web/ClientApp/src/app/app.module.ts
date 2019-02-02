@@ -22,6 +22,10 @@ import { ChapterComponent } from "./components/chapter/chapter.component";
 import { ProjectComponent } from './components/project/project.component';
 import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
 import { AssignmentDetailComponent } from './components/assignmentdetail/assignmentdetail.component';
+import { AssignmentSummaryComponent } from './components/assignmentsummary/assignmentsummary.component';
+import { AssignmentStatisticsComponent } from './components/assignmentstatistics/assignmentstatistics.component';
+import { ProjectTeamOverviewComponent } from './components/projectteamoverview/projectteamoverview.component';
+import { ProjectSummaryComponent } from './components/projectsummary/projectsummary.component';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AuthService } from './services/auth.service';
@@ -29,7 +33,8 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
-import { ChapterContextProvider } from './services/chapter.context.provider';
+import { ProjectService } from './services/project.service';
+import { TopicContextProvider } from "./services/topic.context.provider";
 import { AssignmentService } from './services/assignment.service';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { TokenInterceptor } from './util/tokeninterceptor';
@@ -37,6 +42,7 @@ import 'rxjs/Rx';
 import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
+import { NgbModule, NgbAccordionConfig } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -53,7 +59,11 @@ import { ToastrModule } from 'ngx-toastr';
     ChapterComponent,
     ProjectComponent,
     ChapterSummaryComponent,
-    AssignmentDetailComponent
+    AssignmentDetailComponent,
+    AssignmentSummaryComponent,
+    AssignmentStatisticsComponent,
+    ProjectTeamOverviewComponent,
+    ProjectSummaryComponent
   ],
   imports: [
     CommonModule,
@@ -62,6 +72,7 @@ import { ToastrModule } from 'ngx-toastr';
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
     FormsModule,
+    NgbModule,
     RouterModule.forRoot([
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
@@ -83,6 +94,11 @@ import { ToastrModule } from 'ngx-toastr';
           },
           {
             path: 'projects/:code', component: ProjectComponent, canActivate: [AuthGuard],
+            children: [
+              { path: 'teams', component: ProjectTeamOverviewComponent, canActivate: [AuthGuard] },
+              { path: 'teams/:teamId/summary', component: ProjectSummaryComponent, canActivate: [AuthGuard] },
+              { path: 'teams/:teamId/components/:assignmentId', component: AssignmentDetailComponent, canActivate: [AuthGuard] }
+            ]
           }
         ]
       },
@@ -109,10 +125,12 @@ import { ToastrModule } from 'ngx-toastr';
     AuthService,
     CourseService,
     ChapterService,
+    ProjectService,
     AssignmentService,
     ClientSettingsService,
     LocalStorageService,
-    ChapterContextProvider,
+    NgbAccordionConfig,
+    TopicContextProvider,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,

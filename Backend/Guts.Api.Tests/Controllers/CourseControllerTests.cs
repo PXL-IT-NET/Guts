@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
-using Guts.Common.Extensions;
 using Guts.Data.Repositories;
 using Guts.Domain;
 using Microsoft.AspNetCore.Mvc;

@@ -256,7 +256,7 @@ namespace Guts.Business.Tests.Services
             var userId = _random.NextPositive();
             var lastTestResults = new List<TestResult>();
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfUser(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             //Act
@@ -266,7 +266,7 @@ namespace Guts.Business.Tests.Services
             Assert.That(result, Is.Not.Null);
             Assert.That(result.TestResults, Is.SameAs(lastTestResults));
             Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAssignmentAsync(assignmentId, userId, null), Times.Once);
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfUser(assignmentId, userId, null), Times.Once);
         }
 
         [Test]

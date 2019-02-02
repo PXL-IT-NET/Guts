@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain;
@@ -38,5 +39,11 @@ namespace Guts.Data.Repositories
             return assignment;
         }
 
+        public async Task<IList<Assignment>> GetByTopicWithTests(int topicId)
+        {
+            var assignments = await _context.Assignments.Where(a => a.TopicId == topicId).Include(a => a.Tests)
+                .ToListAsync();
+            return assignments;
+        }
     }
 }

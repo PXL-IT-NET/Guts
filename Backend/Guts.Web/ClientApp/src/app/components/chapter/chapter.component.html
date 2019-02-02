@@ -24,7 +24,7 @@
 
         <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
         <div class="col-md-10 col-md-4 col-xl-3">
-          <angular2-date-picker name="date" [(ngModel)]="context.statusDate" [settings]="datePickerSettings" (onDateSelect)="onDateChanged()"></angular2-date-picker>
+          <angular2-date-picker name="date" [(ngModel)]="selectedDate" [settings]="datePickerSettings" (onDateSelect)="onDateChanged()"></angular2-date-picker>
         </div>
 
       </div>

@@ -16,6 +16,7 @@ export interface IAssignmentDetailModel extends IAssignmentModel {
 export class AssignmentDetailModel implements IAssignmentDetailModel {
   public assignmentId: number;
   public code: string;
+  public description: string;
   public topicCode: string;
   public courseName: string;
   public courseId: number;
@@ -28,6 +29,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
   constructor(source?: AssignmentDetailModel) {
     this.assignmentId = 0;
     this.code = '';
+    this.description = '';
     this.topicCode = '';
     this.courseName = '';
     this.courseId = 0;
@@ -40,6 +42,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
     if (source) {
       this.assignmentId = source.assignmentId;
       this.code = source.code;
+      this.description = source.description;
       this.topicCode = source.topicCode;
       this.courseName = source.courseName;
       this.courseId = source.courseId;

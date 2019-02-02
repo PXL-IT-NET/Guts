@@ -19,7 +19,8 @@ namespace Guts.Business.Tests.Builders
                 CourseId = _random.NextPositive(),
                 PeriodId = _random.NextPositive(),
                 Description = Guid.NewGuid().ToString(),
-                Assignments = new Collection<Assignment>()
+                Assignments = new Collection<Assignment>(),
+                Teams = new Collection<ProjectTeam>()
             };
         }
 
@@ -71,6 +72,38 @@ namespace Guts.Business.Tests.Builders
         public ProjectBuilder WithCode(string code)
         {
             _project.Code = code;
+            return this;
+        }
+
+        public ProjectBuilder WithAssignments(int numberOfAssignments)
+        {
+            for (int i = 0; i < numberOfAssignments; i++)
+            {
+                var assignment = new AssignmentBuilder().WithId().WithTopic(_project).Build();
+                _project.Assignments.Add(assignment);
+            }
+            return this;
+        }
+
+        public ProjectBuilder WithoutAssignments()
+        {
+            _project.Assignments = null;
+            return this;
+        }
+
+        public ProjectBuilder WithTeams(int numberOfTeams)
+        {
+            for (int i = 0; i < numberOfTeams; i++)
+            {
+                var team = new ProjectTeamBuilder().WithId().WithProject(_project).Build();
+                _project.Teams.Add(team);
+            }
+            return this;
+        }
+
+        public ProjectBuilder WithoutTeams()
+        {
+            _project.Teams = null;
             return this;
         }
 

@@ -23,23 +23,23 @@ namespace Guts.Api.Controllers
     public class ChapterController : ControllerBase
     {
         private readonly IChapterService _chapterService;
-        private readonly IChapterRepository _chapterRepository;
         private readonly IChapterConverter _chapterConverter;
+        private readonly ITopicConverter _topicConverter;
         private readonly UserManager<User> _userManager;
         private readonly IUserRepository _userRepository;
         private readonly IMemoryCache _memoryCache;
         public const int CacheTimeInSeconds = 300;
 
         public ChapterController(IChapterService chapterService,
-            IChapterRepository chapterRepository,
             IChapterConverter chapterConverter,
+            ITopicConverter topicConverter,
             UserManager<User> userManager, 
             IUserRepository userRepository,
             IMemoryCache memoryCache)
         {
             _chapterService = chapterService;
-            _chapterRepository = chapterRepository;
             _chapterConverter = chapterConverter;
+            _topicConverter = topicConverter;
             _userManager = userManager;
             _userRepository = userRepository;
             _memoryCache = memoryCache;
@@ -88,14 +88,14 @@ namespace Guts.Api.Controllers
 
         /// <summary>
         /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
-        /// The overview contains testresults for the authorized user and the average results of all users.
+        /// The overview contains testresults for the authorized user.
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode"></param>
         /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
         /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
         [HttpGet("{chapterCode}/users/{userId}/summary")]
-        [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> GetChapterSummary(int courseId, string chapterCode, int userId,
@@ -122,7 +122,7 @@ namespace Guts.Api.Controllers
             {
                 var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode);
                 var assignmentResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
-                var model = _chapterConverter.ToChapterSummaryModel(chapter, assignmentResults);
+                var model = _topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -138,7 +138,7 @@ namespace Guts.Api.Controllers
         /// <param name="chapterCode">Sequence number of the chapter.</param>
         /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
         [HttpGet("{chapterCode}/statistics")]
-        [ProducesResponseType(typeof(ChapterSummaryModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, [FromQuery] DateTime? date)
@@ -152,13 +152,13 @@ namespace Guts.Api.Controllers
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
             var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}";
-            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out ChapterStatisticsModel model))
+            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
             {
                 try
                 {
                     var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
                     var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
-                    model = _chapterConverter.ToChapterStatisticsModel(chapter, chapterStatistics);
+                    model = _topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics);
 
                     if (useCache)
                     {
