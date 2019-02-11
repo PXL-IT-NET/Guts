@@ -24,7 +24,8 @@ namespace Guts.Api.Controllers
 
         public AssignmentController(IAssignmentService assignmentService,
             IAssignmentRepository assignmentRepository,
-            IAssignmentConverter assignmentConverter, IProjectTeamRepository projectTeamRepository)
+            IAssignmentConverter assignmentConverter, 
+            IProjectTeamRepository projectTeamRepository)
         {
             _assignmentService = assignmentService;
             _assignmentRepository = assignmentRepository;
