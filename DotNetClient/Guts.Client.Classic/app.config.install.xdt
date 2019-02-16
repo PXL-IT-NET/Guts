@@ -4,7 +4,7 @@
   <appSettings>
     <!--http://localhost.fiddler/Guts.Api/-->
     <add key="GutsApiUri" xdt:Transform="Remove" xdt:Locator="Match(key)" />
-    <add key="GutsApiUri" value="https://guts-api.appspot.com/" xdt:Transform="Insert" />
+    <add key="GutsApiUri" value="https://guts-api.pxl.be/" xdt:Transform="Insert" />
   </appSettings>
   <appSettings xdt:Transform="Remove" xdt:Locator="XPath(/configuration/appSettings[2])" />
 </configuration>

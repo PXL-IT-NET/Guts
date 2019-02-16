@@ -2,6 +2,7 @@ using Guts.Domain;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Guts.Data.Repositories
@@ -14,26 +15,41 @@ namespace Guts.Data.Repositories
 
         public async Task<IList<TestResult>> GetLastTestResults(int assignmentId, DateTime? dateUtc)
         {
-            var results = _context.TestResults.FromSql(
-                "CALL sp_getLastTestResultsOfUser({0}, {1}, {2})", assignmentId, null, dateUtc);
-
-            return await results.AsNoTracking().ToListAsync();
+            return await GetLastTestResults(assignmentId, null, dateUtc);
         }
 
         public async Task<IList<TestResult>> GetLastTestResultsOfUser(int assignmentId, int userId, DateTime? dateUtc)
         {
-            var results = _context.TestResults.FromSql(
-                "CALL sp_getLastTestResultsOfUser({0}, {1}, {2})", assignmentId, userId, dateUtc);
-
-            return await results.AsNoTracking().ToListAsync();
+            return await GetLastTestResults(assignmentId, userId, dateUtc);
         }
 
         public async Task<IList<TestResult>> GetLastTestResultsOfTeam(int assignmentId, int teamId, DateTime? dateUtc)
         {
-            var results = _context.TestResults.FromSql(
-                "CALL sp_getLastTestResultsOfTeam({0}, {1}, {2})", assignmentId, teamId, dateUtc);
+            var testresultsPerTestPerTeamQuery = from testresult in _context.TestResults
+                                                 join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
+                                                 where (testresult.Test.AssignmentId == assignmentId)
+                                                       && (projectTeamUser.ProjectTeamId == teamId)
+                                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                                 group testresult by testresult.TestId;
 
-            return await results.AsNoTracking().ToListAsync();
+            var lastResultsQuery = testresultsPerTestPerTeamQuery.Select(testresultGroup =>
+                testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
+
+            return await lastResultsQuery.AsNoTracking().ToListAsync();
+        }
+
+        private async Task<IList<TestResult>> GetLastTestResults(int assignmentId, int? userId, DateTime? dateUtc)
+        {
+            var testresultsPerTestPerUserQuery = from testresult in _context.TestResults
+                                                 where (testresult.Test.AssignmentId == assignmentId)
+                                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                                       && (userId == null || testresult.UserId == userId.Value)
+                                                 group testresult by new { testresult.TestId, testresult.UserId };
+
+            var lastResultsQuery = testresultsPerTestPerUserQuery.Select(testresultGroup =>
+                testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
+
+            return await lastResultsQuery.AsNoTracking().ToListAsync();
         }
     }
 }

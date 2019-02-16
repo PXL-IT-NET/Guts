@@ -3,46 +3,50 @@ using System;
 using Guts.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Guts.Data.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    [Migration("20180906074952_AddSourceCodeToTestRun")]
-    partial class AddSourceCodeToTestRun
+    [Migration("20190212103005_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.1-rtm-30846")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("ProductVersion", "2.1.4-rtm-31024")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("Guts.Domain.Chapter", b =>
+            modelBuilder.Entity("Guts.Domain.Assignment", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("CourseId");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20);
 
-                    b.Property<int>("Number");
+                    b.Property<string>("Description");
 
-                    b.Property<int>("PeriodId");
+                    b.Property<int>("TopicId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CourseId");
+                    b.HasIndex("TopicId");
 
-                    b.HasIndex("PeriodId");
-
-                    b.ToTable("Chapters");
+                    b.ToTable("Assignments");
                 });
 
             modelBuilder.Entity("Guts.Domain.Course", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -56,26 +60,37 @@ namespace Guts.Data.Migrations
                     b.ToTable("Courses");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Exercise", b =>
+            modelBuilder.Entity("Guts.Domain.LoginSession", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("ChapterId");
+                    b.Property<DateTime>("CreateDateTime");
 
-                    b.Property<int>("Number");
+                    b.Property<string>("IpAddress")
+                        .IsRequired();
+
+                    b.Property<bool>("IsCancelled");
+
+                    b.Property<string>("LoginToken");
+
+                    b.Property<string>("PublicIdentifier")
+                        .IsRequired();
+
+                    b.Property<string>("SessionToken")
+                        .IsRequired();
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChapterId");
-
-                    b.ToTable("Exercises");
+                    b.ToTable("LoginSessions");
                 });
 
             modelBuilder.Entity("Guts.Domain.Period", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Description")
                         .IsRequired();
@@ -89,10 +104,48 @@ namespace Guts.Data.Migrations
                     b.ToTable("Periods");
                 });
 
+            modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name")
+                        .IsRequired();
+
+                    b.Property<int>("ProjectId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectTeams");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ProjectTeamUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("ProjectTeamId");
+
+                    b.Property<int>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectTeamId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectTeamUsers");
+                });
+
             modelBuilder.Entity("Guts.Domain.Role", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken();
@@ -107,7 +160,8 @@ namespace Guts.Data.Migrations
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasName("RoleNameIndex");
+                        .HasName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("Roles");
                 });
@@ -115,24 +169,44 @@ namespace Guts.Data.Migrations
             modelBuilder.Entity("Guts.Domain.Test", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("ExerciseId");
+                    b.Property<int>("AssignmentId");
 
                     b.Property<string>("TestName")
                         .IsRequired();
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExerciseId");
+                    b.HasIndex("AssignmentId");
 
                     b.ToTable("Tests");
+                });
+
+            modelBuilder.Entity("Guts.Domain.TestCodeHash", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("AssignmentId");
+
+                    b.Property<string>("Hash")
+                        .IsRequired();
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignmentId");
+
+                    b.ToTable("TestCodeHash");
                 });
 
             modelBuilder.Entity("Guts.Domain.TestResult", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("CreateDateTime");
 
@@ -148,11 +222,11 @@ namespace Guts.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TestId");
-
                     b.HasIndex("TestRunId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("TestId", "UserId", "CreateDateTime");
 
                     b.ToTable("TestResults");
                 });
@@ -160,11 +234,12 @@ namespace Guts.Data.Migrations
             modelBuilder.Entity("Guts.Domain.TestRun", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("AssignmentId");
 
                     b.Property<DateTime>("CreateDateTime");
-
-                    b.Property<int>("ExerciseId");
 
                     b.Property<string>("SourceCode");
 
@@ -172,17 +247,49 @@ namespace Guts.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExerciseId");
+                    b.HasIndex("AssignmentId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("TestRuns");
                 });
 
+            modelBuilder.Entity("Guts.Domain.Topic", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20);
+
+                    b.Property<int>("CourseId");
+
+                    b.Property<string>("Description")
+                        .IsRequired();
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired();
+
+                    b.Property<int>("PeriodId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("Topics");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Topic");
+                });
+
             modelBuilder.Entity("Guts.Domain.User", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<int>("AccessFailedCount");
 
@@ -230,7 +337,8 @@ namespace Guts.Data.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasName("UserNameIndex");
+                        .HasName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -238,7 +346,8 @@ namespace Guts.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -256,7 +365,8 @@ namespace Guts.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -318,30 +428,66 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Guts.Domain.Chapter", b =>
                 {
-                    b.HasOne("Guts.Domain.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasBaseType("Guts.Domain.Topic");
 
-                    b.HasOne("Guts.Domain.Period", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
+
+                    b.ToTable("Chapter");
+
+                    b.HasDiscriminator().HasValue("Chapter");
+                });
+
+            modelBuilder.Entity("Guts.Domain.Project", b =>
+                {
+                    b.HasBaseType("Guts.Domain.Topic");
+
+
+                    b.ToTable("Project");
+
+                    b.HasDiscriminator().HasValue("Project");
+                });
+
+            modelBuilder.Entity("Guts.Domain.Assignment", b =>
+                {
+                    b.HasOne("Guts.Domain.Topic", "Topic")
+                        .WithMany("Assignments")
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Guts.Domain.Exercise", b =>
+            modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
                 {
-                    b.HasOne("Guts.Domain.Chapter", "Chapter")
-                        .WithMany("Exercises")
-                        .HasForeignKey("ChapterId")
+                    b.HasOne("Guts.Domain.Project", "Project")
+                        .WithMany("Teams")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Guts.Domain.ProjectTeamUser", b =>
+                {
+                    b.HasOne("Guts.Domain.ProjectTeam", "ProjectTeam")
+                        .WithMany("TeamUsers")
+                        .HasForeignKey("ProjectTeamId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Guts.Domain.User", "User")
+                        .WithMany("TeamUsers")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Guts.Domain.Test", b =>
                 {
-                    b.HasOne("Guts.Domain.Exercise", "Exercise")
+                    b.HasOne("Guts.Domain.Assignment", "Assignment")
                         .WithMany("Tests")
-                        .HasForeignKey("ExerciseId")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Guts.Domain.TestCodeHash", b =>
+                {
+                    b.HasOne("Guts.Domain.Assignment", "Assignment")
+                        .WithMany("TestCodeHashes")
+                        .HasForeignKey("AssignmentId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -365,14 +511,27 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Guts.Domain.TestRun", b =>
                 {
-                    b.HasOne("Guts.Domain.Exercise", "Exercise")
+                    b.HasOne("Guts.Domain.Assignment", "Assignment")
                         .WithMany("TestRuns")
-                        .HasForeignKey("ExerciseId")
+                        .HasForeignKey("AssignmentId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Guts.Domain.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Guts.Domain.Topic", b =>
+                {
+                    b.HasOne("Guts.Domain.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Guts.Domain.Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

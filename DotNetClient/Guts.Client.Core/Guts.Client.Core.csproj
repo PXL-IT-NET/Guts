@@ -10,8 +10,10 @@
     <Description>Utilities to write unit tests and send the results to the Guts API (.NET Core Framework)</Description>
     <Copyright>Copyright ©  2018</Copyright>
     <PackageTags>Guts Unit Test Client</PackageTags>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>2.0.1.0</AssemblyVersion>
+    <FileVersion>2.0.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

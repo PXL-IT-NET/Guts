@@ -5,7 +5,6 @@ using Guts.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -62,25 +61,15 @@ namespace Guts.Data
         {
             //Make sure datetimes returned from the database are UTC datetimes
             optionsBuilder.ReplaceService<IEntityMaterializerSource, UtcAwareEntityMaterializerSource>();
-        }
-
-    }
-
-    /// <summary>
-    /// Used when creating migrations
-    /// </summary>
-    public class GutsContextFactory : IDesignTimeDbContextFactory<GutsContext>
-    {
-        public GutsContext CreateDbContext(string[] args)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<GutsContext>();
-            optionsBuilder.UseMySql("server=localhost;database=Guts;user id=Guts;Password=Q*ED&Yv9nK", sqlOptions =>
+            if (!optionsBuilder.IsConfigured)
             {
-                sqlOptions.MigrationsAssembly("Guts.Data");
-            });
-
-            return new GutsContext(optionsBuilder.Options);
+                optionsBuilder.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=Guts;Integrated Security=True;", sqlOptions =>
+                {
+                    sqlOptions.MigrationsAssembly("Guts.Data");
+                });
+            }
         }
+
     }
 
     public static class DateTimeMapper

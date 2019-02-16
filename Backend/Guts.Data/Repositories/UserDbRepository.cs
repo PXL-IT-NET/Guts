@@ -1,11 +1,12 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Guts.Domain;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Guts.Data.Repositories
 {
-    public class UserDbRepository :  IUserRepository
+    public class UserDbRepository : IUserRepository
     {
         private readonly GutsContext _context;
 
@@ -16,10 +17,12 @@ namespace Guts.Data.Repositories
 
         public async Task<IList<User>> GetUsersOfTopicAsync(int topicId)
         {
-            var users = _context.Users.FromSql(
-                "CALL sp_getUsersOfTopic({0})", topicId);
-
-            return await users.AsNoTracking().ToListAsync();
+            var query = from testrun in _context.TestRuns
+                        where testrun.Assignment.TopicId == topicId
+                        group testrun by testrun.User into userGroup
+                        select userGroup.Key;
+           
+            return await query.AsNoTracking().ToListAsync();
         }
     }
 }

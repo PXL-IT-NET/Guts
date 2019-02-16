@@ -8,7 +8,7 @@
           <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId" (ngModelChange)="onSelectionChanged()">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
-              Exercise {{exercise.code}}
+              {{exercise.description}}
             </option>
           </select>
         </div>

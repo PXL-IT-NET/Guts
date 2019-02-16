@@ -1,5 +1,4 @@
-﻿using Google.Cloud.Diagnostics.AspNetCore;
-using Guts.Data;
+﻿using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -41,21 +40,15 @@ namespace Guts.Api
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            var builder =  WebHost.CreateDefaultBuilder(args).ConfigureLogging((hostingContext, logging) =>
-            {
-                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                logging.AddEventSourceLogger();
-                logging.AddConsole();
-                logging.AddDebug();
-            }).UseStartup<Startup>();
-
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            var isProduction = environment == EnvironmentName.Production;
-
-            if (isProduction)
-            {
-                builder = builder.UseGoogleDiagnostics();
-            }
+            var builder = WebHost.CreateDefaultBuilder(args)
+                .UseIISIntegration()
+                .ConfigureLogging((hostingContext, logging) =>
+                {
+                    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    logging.AddEventSourceLogger();
+                    logging.AddConsole();
+                    logging.AddDebug();
+                }).UseStartup<Startup>();
 
             return builder;
         }

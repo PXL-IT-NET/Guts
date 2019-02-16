@@ -14,22 +14,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.IdentityModel.Tokens;
-using NJsonSchema;
 using NSwag;
-using NSwag.AspNetCore;
-using NSwag.SwaggerGeneration.Processors.Security;
 using SimpleInjector;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace Guts.Api
 {
     public class Startup
     {
-        private const string GutsOriginsPolicy = "GutsOriginsPolicy";
-
         private readonly Container _container;
         private IHostingEnvironment _currentHostingEnvironment;
 
@@ -51,13 +45,7 @@ namespace Guts.Api
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddCors(options =>
-            {
-                options.AddPolicy(GutsOriginsPolicy, builder =>
-                {
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-                });
-            });
+            services.AddCors();
 
             services.AddSimpleInjector(_container);
 
@@ -70,12 +58,10 @@ namespace Guts.Api
                             (category, level) =>
                                 category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information),
                     }))
-                    .UseMySql(Configuration.GetConnectionString("GutsDatabaseMySql"),
-                        sqlOptions =>
-                        {
-                            sqlOptions.MigrationsAssembly("Guts.Data");
-                            sqlOptions.ServerVersion(new Version(5, 7, 14), ServerType.MySql);
-                        });
+                    .UseSqlServer(Configuration.GetConnectionString("GutsDatabase"), sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly("Guts.Data");
+                    });
             });
 
             services.AddIdentity<User, Role>(options =>
@@ -118,7 +104,25 @@ namespace Guts.Api
                     }
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddSwagger();
+            services.AddSwaggerDocument(config =>
+            {
+                config.PostProcess = document =>
+                {
+                    document.SecurityDefinitions.Add("bearer", new SwaggerSecurityScheme
+                    {
+                        Type = SwaggerSecuritySchemeType.ApiKey,
+                        Name = "Authorization",
+                        Description =
+                            "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
+                        In = SwaggerSecurityApiKeyLocation.Header
+                    });
+                    document.Schemes = new List<SwaggerSchema> { SwaggerSchema.Https };
+                    document.Info.Title = "GUTS Api";
+                    document.Info.Description =
+                        "Service that collects and queries data about runs of automated tests in programming exercises.";
+                };
+            });
+
             services.AddMemoryCache();
         }
 
@@ -138,7 +142,7 @@ namespace Guts.Api
                 app.UseHsts();
             }
 
-          //  app.UseHttpsRedirection();
+            //  app.UseHttpsRedirection();
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -149,35 +153,23 @@ namespace Guts.Api
 
             app.UseCookiePolicy();
 
-            // Enable the Swagger UI middleware and the Swagger generator
-            app.UseSwaggerUi3WithApiExplorer(settings =>
+            app.UseSwagger();
+            app.UseSwaggerUi3();
+
+            app.UseCors(builder =>
             {
-                //typeof(Startup).GetTypeInfo().Assembly,
-                settings.SwaggerRoute = "/swagger";
-                settings.SwaggerUiRoute = "/docs";
-                settings.GeneratorSettings.DefaultPropertyNameHandling = PropertyNameHandling.CamelCase;
+                builder.AllowAnyHeader().AllowAnyMethod();
 
-                settings.PostProcess = document =>
-                {
-                    document.Schemes = new List<SwaggerSchema> {SwaggerSchema.Https};
-                    document.Info.Title = "GUTS Api";
-                    document.Info.Description =
-                        "Service that collects and queries data about runs of automated tests in programming exercises.";
-
-                };
-
-                settings.GeneratorSettings.OperationProcessors.Add(new OperationSecurityScopeProcessor("Bearer Token"));
-                settings.GeneratorSettings.DocumentProcessors.Add(new SecurityDefinitionAppender("Bearer Token",
-                    new SwaggerSecurityScheme
-                    {
-                        Type = SwaggerSecuritySchemeType.ApiKey,
-                        Name = "Authorization",
-                        Description = "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
-                        In = SwaggerSecurityApiKeyLocation.Header
-                    }));
+                builder.AllowAnyOrigin(); //TOOD: remove this
+                //if (env.IsDevelopment())
+                //{
+                //    builder.AllowAnyOrigin();
+                //}
+                //else
+                //{
+                //    builder.WithOrigins("https://*.pxl.be");
+                //}
             });
-
-            app.UseCors(GutsOriginsPolicy);
 
             app.UseSimpleInjector(_container, Configuration);
 

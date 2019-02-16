@@ -8,7 +8,7 @@ namespace Guts.Api.Controllers
         [Route("")]
         public IActionResult Index()
         {
-            return RedirectPermanent("~/docs");
+            return RedirectPermanent("~/swagger");
         }
     }
 }

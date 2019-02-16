@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using System;
 
 namespace Guts.Data.Migrations
 {
@@ -13,7 +13,7 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Code = table.Column<string>(maxLength: 20, nullable: false),
                     Name = table.Column<string>(nullable: false)
                 },
@@ -23,11 +23,29 @@ namespace Guts.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LoginSessions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    PublicIdentifier = table.Column<string>(nullable: false),
+                    SessionToken = table.Column<string>(nullable: false),
+                    IpAddress = table.Column<string>(nullable: false),
+                    LoginToken = table.Column<string>(nullable: true),
+                    IsCancelled = table.Column<bool>(nullable: false),
+                    CreateDateTime = table.Column<DateTime>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoginSessions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Periods",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Description = table.Column<string>(nullable: false),
                     From = table.Column<DateTime>(nullable: false),
                     Until = table.Column<DateTime>(nullable: false)
@@ -42,10 +60,10 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ConcurrencyStamp = table.Column<string>(nullable: true),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(maxLength: 256, nullable: true)
+                    NormalizedName = table.Column<string>(maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -57,21 +75,23 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    AccessFailedCount = table.Column<int>(nullable: false),
-                    ConcurrencyStamp = table.Column<string>(nullable: true),
-                    Email = table.Column<string>(maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(nullable: false),
-                    LockoutEnabled = table.Column<bool>(nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
-                    NormalizedEmail = table.Column<string>(maxLength: 256, nullable: true),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    UserName = table.Column<string>(maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(maxLength: 256, nullable: true),
+                    Email = table.Column<string>(maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(nullable: false),
                     PasswordHash = table.Column<string>(nullable: true),
+                    SecurityStamp = table.Column<string>(nullable: true),
+                    ConcurrencyStamp = table.Column<string>(nullable: true),
                     PhoneNumber = table.Column<string>(nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(nullable: false),
-                    SecurityStamp = table.Column<string>(nullable: true),
                     TwoFactorEnabled = table.Column<bool>(nullable: false),
-                    UserName = table.Column<string>(maxLength: 256, nullable: true)
+                    LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
+                    LockoutEnabled = table.Column<bool>(nullable: false),
+                    AccessFailedCount = table.Column<int>(nullable: false),
+                    FirstName = table.Column<string>(nullable: false),
+                    LastName = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -79,26 +99,28 @@ namespace Guts.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Chapters",
+                name: "Topics",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Code = table.Column<string>(maxLength: 20, nullable: false),
+                    Description = table.Column<string>(nullable: false),
                     CourseId = table.Column<int>(nullable: false),
-                    Number = table.Column<int>(nullable: false),
-                    PeriodId = table.Column<int>(nullable: false)
+                    PeriodId = table.Column<int>(nullable: false),
+                    Discriminator = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Chapters", x => x.Id);
+                    table.PrimaryKey("PK_Topics", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Chapters_Courses_CourseId",
+                        name: "FK_Topics_Courses_CourseId",
                         column: x => x.CourseId,
                         principalTable: "Courses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Chapters_Periods_PeriodId",
+                        name: "FK_Topics_Periods_PeriodId",
                         column: x => x.PeriodId,
                         principalTable: "Periods",
                         principalColumn: "Id",
@@ -110,10 +132,10 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    RoleId = table.Column<int>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
-                    ClaimValue = table.Column<string>(nullable: true),
-                    RoleId = table.Column<int>(nullable: false)
+                    ClaimValue = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -131,10 +153,10 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    UserId = table.Column<int>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
-                    ClaimValue = table.Column<string>(nullable: true),
-                    UserId = table.Column<int>(nullable: false)
+                    ClaimValue = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -212,21 +234,62 @@ namespace Guts.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Exercises",
+                name: "Assignments",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ChapterId = table.Column<int>(nullable: false),
-                    Number = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Code = table.Column<string>(maxLength: 20, nullable: false),
+                    Description = table.Column<string>(nullable: true),
+                    TopicId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Exercises", x => x.Id);
+                    table.PrimaryKey("PK_Assignments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Exercises_Chapters_ChapterId",
-                        column: x => x.ChapterId,
-                        principalTable: "Chapters",
+                        name: "FK_Assignments_Topics_TopicId",
+                        column: x => x.TopicId,
+                        principalTable: "Topics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProjectTeams",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(nullable: false),
+                    ProjectId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectTeams", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProjectTeams_Topics_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Topics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TestCodeHash",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Hash = table.Column<string>(nullable: false),
+                    AssignmentId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TestCodeHash", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TestCodeHash_Assignments_AssignmentId",
+                        column: x => x.AssignmentId,
+                        principalTable: "Assignments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -236,19 +299,19 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    AssignmentId = table.Column<int>(nullable: false),
+                    UserId = table.Column<int>(nullable: false),
                     CreateDateTime = table.Column<DateTime>(nullable: false),
-                    ExerciseId = table.Column<int>(nullable: false),
-                    Index = table.Column<int>(nullable: false),
-                    UserId = table.Column<int>(nullable: false)
+                    SourceCode = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TestRuns", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TestRuns_Exercises_ExerciseId",
-                        column: x => x.ExerciseId,
-                        principalTable: "Exercises",
+                        name: "FK_TestRuns_Assignments_AssignmentId",
+                        column: x => x.AssignmentId,
+                        principalTable: "Assignments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -264,17 +327,43 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ExerciseId = table.Column<int>(nullable: false),
-                    TestName = table.Column<string>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    TestName = table.Column<string>(nullable: false),
+                    AssignmentId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tests", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tests_Exercises_ExerciseId",
-                        column: x => x.ExerciseId,
-                        principalTable: "Exercises",
+                        name: "FK_Tests_Assignments_AssignmentId",
+                        column: x => x.AssignmentId,
+                        principalTable: "Assignments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProjectTeamUsers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    ProjectTeamId = table.Column<int>(nullable: false),
+                    UserId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectTeamUsers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProjectTeamUsers_ProjectTeams_ProjectTeamId",
+                        column: x => x.ProjectTeamId,
+                        principalTable: "ProjectTeams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProjectTeamUsers_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -284,11 +373,13 @@ namespace Guts.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Message = table.Column<string>(nullable: true),
-                    Passed = table.Column<bool>(nullable: false),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    TestRunId = table.Column<int>(nullable: false),
                     TestId = table.Column<int>(nullable: false),
-                    TestRunId = table.Column<int>(nullable: false)
+                    Passed = table.Column<bool>(nullable: false),
+                    Message = table.Column<string>(nullable: true),
+                    UserId = table.Column<int>(nullable: false),
+                    CreateDateTime = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -305,22 +396,33 @@ namespace Guts.Data.Migrations
                         principalTable: "TestRuns",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TestResults_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Chapters_CourseId",
-                table: "Chapters",
-                column: "CourseId");
+                name: "IX_Assignments_TopicId",
+                table: "Assignments",
+                column: "TopicId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Chapters_PeriodId",
-                table: "Chapters",
-                column: "PeriodId");
+                name: "IX_ProjectTeams_ProjectId",
+                table: "ProjectTeams",
+                column: "ProjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Exercises_ChapterId",
-                table: "Exercises",
-                column: "ChapterId");
+                name: "IX_ProjectTeamUsers_ProjectTeamId",
+                table: "ProjectTeamUsers",
+                column: "ProjectTeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProjectTeamUsers_UserId",
+                table: "ProjectTeamUsers",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",
@@ -335,9 +437,9 @@ namespace Guts.Data.Migrations
                 filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TestResults_TestId",
-                table: "TestResults",
-                column: "TestId");
+                name: "IX_TestCodeHash_AssignmentId",
+                table: "TestCodeHash",
+                column: "AssignmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TestResults_TestRunId",
@@ -345,9 +447,19 @@ namespace Guts.Data.Migrations
                 column: "TestRunId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TestRuns_ExerciseId",
+                name: "IX_TestResults_UserId",
+                table: "TestResults",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TestResults_TestId_UserId_CreateDateTime",
+                table: "TestResults",
+                columns: new[] { "TestId", "UserId", "CreateDateTime" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TestRuns_AssignmentId",
                 table: "TestRuns",
-                column: "ExerciseId");
+                column: "AssignmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TestRuns_UserId",
@@ -355,9 +467,19 @@ namespace Guts.Data.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tests_ExerciseId",
+                name: "IX_Tests_AssignmentId",
                 table: "Tests",
-                column: "ExerciseId");
+                column: "AssignmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Topics_CourseId",
+                table: "Topics",
+                column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Topics_PeriodId",
+                table: "Topics",
+                column: "PeriodId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserClaims_UserId",
@@ -390,7 +512,16 @@ namespace Guts.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "LoginSessions");
+
+            migrationBuilder.DropTable(
+                name: "ProjectTeamUsers");
+
+            migrationBuilder.DropTable(
                 name: "RoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "TestCodeHash");
 
             migrationBuilder.DropTable(
                 name: "TestResults");
@@ -408,6 +539,9 @@ namespace Guts.Data.Migrations
                 name: "UserTokens");
 
             migrationBuilder.DropTable(
+                name: "ProjectTeams");
+
+            migrationBuilder.DropTable(
                 name: "Tests");
 
             migrationBuilder.DropTable(
@@ -417,13 +551,13 @@ namespace Guts.Data.Migrations
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Exercises");
+                name: "Assignments");
 
             migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Chapters");
+                name: "Topics");
 
             migrationBuilder.DropTable(
                 name: "Courses");

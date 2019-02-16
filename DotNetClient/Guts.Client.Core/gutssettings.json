@@ -1,6 +1,6 @@
 {
   "Guts": {
-    "apiBaseUrl": "https://guts-api.appspot.com/",
-    "webAppBaseUrl": "https://guts-web.appspot.com/"
+    "apiBaseUrl": "https://guts-api.pxl.be/",
+    "webAppBaseUrl": "https://guts-web.pxl.be/"
   }
 }

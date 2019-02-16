@@ -32,7 +32,8 @@ namespace Guts.Api.Models.Converters
                 Exercises = chapter.Assignments.Select(assignment => new AssignmentModel
                 {
                     AssignmentId = assignment.Id,
-                    Code = assignment.Code
+                    Code = assignment.Code,
+                    Description = string.IsNullOrEmpty(assignment.Description) ? assignment.Code : assignment.Description
                 }).ToList(),
                 Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };

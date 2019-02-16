@@ -50,13 +50,12 @@ namespace Guts.Data
             };
             _context.Courses.AddIfNotExists(c => c.Code, dotNetEssentialsCourse);
 
-            var testPeriod = new Period
+            var dotAdvancedCourse = new Course
             {
-                Description = "Test period",
-                From = new DateTime(2017, 11, 1),
-                Until = new DateTime(2018, 2, 1)
+                Code = "dotNet2",
+                Name = ".NET Advanced"
             };
-            _context.Periods.AddIfNotExists(p => p.Description, testPeriod);
+            _context.Courses.AddIfNotExists(c => c.Code, dotAdvancedCourse);
 
             _context.SaveChanges();
         }
