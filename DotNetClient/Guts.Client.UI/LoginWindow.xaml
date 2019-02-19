@@ -27,12 +27,12 @@
                 </TextBlock.Foreground>
                 <TextBlock.Inlines>
                     To be able to send your test results you need to supply your credentials from
-                    <Hyperlink NavigateUri="https://guts-web.appspot.com" RequestNavigate="Hyperlink_OnRequestNavigate">
-                        guts-web.appspot.com
+                    <Hyperlink NavigateUri="https://guts-web.pxl.be" RequestNavigate="Hyperlink_OnRequestNavigate">
+                        guts-web.pxl.be
                     </Hyperlink> .
                     <LineBreak/>
                     No credentials yet?
-                    <Hyperlink NavigateUri="https://guts-web.appspot.com/register" RequestNavigate="Hyperlink_OnRequestNavigate">
+                    <Hyperlink NavigateUri="https://guts-web.pxl.be/register" RequestNavigate="Hyperlink_OnRequestNavigate">
                         Register
                     </Hyperlink>
                 </TextBlock.Inlines>

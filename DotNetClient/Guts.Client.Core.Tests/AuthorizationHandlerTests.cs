@@ -17,8 +17,8 @@ namespace Guts.Client.Core.Tests
             var apiBaseUrl = "https://localhost:44318/";
             var webAppBaseUrl = "https://localhost:44376/";
 
-            //var apiBaseUrl = "http://guts-api.appspot.com/";
-            //var webAppBaseUrl = "http://guts-web.appspot.com/";
+            //var apiBaseUrl = "http://guts-api.pxl.be/";
+            //var webAppBaseUrl = "http://guts-web.pxl.be/";
 
             loginWindowFactoryMock.Setup(factory => factory.Create()).Returns(
                 () =>
