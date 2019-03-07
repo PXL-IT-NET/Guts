@@ -1,0 +1,10 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    group = 'pxl.guts'
+    version = '1.0-SNAPSHOT'
+}
