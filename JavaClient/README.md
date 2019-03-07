@@ -71,8 +71,6 @@ public class Calculator {
     }
 
 }
-
-}
 ```
 
 CalculatorTest.java class
