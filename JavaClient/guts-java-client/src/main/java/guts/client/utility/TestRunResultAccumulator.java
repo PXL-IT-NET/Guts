@@ -22,7 +22,7 @@ public class TestRunResultAccumulator {
     private String testClassName;
     private String testCodeHash;
 
-    public TestRunResultAccumulator() {
+    private TestRunResultAccumulator() {
         testResults = new ArrayList<>();
         clear();
     }

@@ -16,6 +16,8 @@ public final class Configuration {
     private static final Path CONFIGURATION_FILE_PATH = Paths.get(System.getProperty("user.dir") + File.separator + "guts.json");
     private static Options options;
 
+    private Configuration() {}
+
     public static void setup() {
         Gson gson = new Gson();
 

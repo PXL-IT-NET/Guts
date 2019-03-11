@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 
 public final class FileUtil {
 
+    private FileUtil() {}
+
     public static String getSourceCode(String pathsString) {
         if(pathsString == null || pathsString.isEmpty())
             return null;

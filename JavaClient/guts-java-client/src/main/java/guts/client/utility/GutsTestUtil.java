@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public final class GutsTestUtil {
 
+    private GutsTestUtil() {}
+
     public static ClassSource getGutsClassSource(TestIdentifier testIdentifier) {
         Optional<TestSource> testSourceOptional = testIdentifier.getSource();
 
