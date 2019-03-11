@@ -20,7 +20,7 @@ namespace Guts.Api.Models
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "You must prove that your are not a robot")]
+        [Required(ErrorMessage = "You must prove that you are not a robot")]
         public string CaptchaToken { get; set; }
     }
 }
