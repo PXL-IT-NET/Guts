@@ -75,4 +75,8 @@ export class TopicContextProvider {
     this._currentContext.statistics = statistics;
     this.statisticsSource.next();
   }
+
+  public resendStatistics() {
+    this.statisticsSource.next();
+  }
 }

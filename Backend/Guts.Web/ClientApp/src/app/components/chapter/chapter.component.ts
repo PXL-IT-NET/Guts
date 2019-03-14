@@ -1,11 +1,15 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ChapterService } from '../../services/chapter.service';
-import { TopicContextProvider, TopicContext} from "../../services/topic.context.provider";
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
-import { GetResult } from "../../util/Result";
-import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
+import { ToastrService } from 'ngx-toastr';
+import { ChapterService } from '../../services/chapter.service';
+import { TopicContextProvider } from "../../services/topic.context.provider";
+import { GetResult } from "../../util/Result";
+import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
+import { IUserModel } from '../../viewmodels/user.model';
+import { Observable, Subject } from 'rxjs';
+import { debounceTime, map, distinctUntilChanged, filter, merge } from 'rxjs/operators';
+import { NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -14,20 +18,29 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
-  public selectedUserId: number;
+  public selectedUser: IUserModel;
   public selectedDate: Date;
- // public context: TopicContext;
   public datePickerSettings: any;
   public loading: boolean = false;
 
   private courseId: number;
   private chapterCode: string;
 
+  @ViewChild('instance') userTypeAheadInstance: NgbTypeahead;
+  public userFocus$: Subject<string>;
+  public userClick$: Subject<string>;
+
   constructor(private chapterService: ChapterService,
     private topicContextProvider: TopicContextProvider,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService) {
+    private toastr: ToastrService,
+    typeaheadConfig: NgbTypeaheadConfig) {
+
+    typeaheadConfig.showHint = true;
+
+    this.userFocus$ = new Subject<string>();
+    this.userClick$ = new Subject<string>();
 
     this.model = {
       id: 0,
@@ -37,7 +50,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       users: []
     };
     this.selectedAssignmentId = 0;
-    this.selectedUserId = 0;
+    this.selectedUser = null;
     this.selectedDate = new Date();
     this.datePickerSettings = {
       bigBanner: true,
@@ -46,6 +59,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     };
     this.courseId = 0;
     this.chapterCode = '';
+
   }
 
   ngOnInit() {
@@ -61,7 +75,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
         if (result.success) {
           this.model = result.value;
           this.selectedAssignmentId = 0;
-          this.selectedUserId = result.value.users[0].id;
+          this.selectedUser = result.value.users[0];
           this.navigateToSummaryForSelectedUser();
           this.loadStatistics();
         } else {
@@ -72,20 +86,28 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+  }
 
+  public onUserClick() {
+    this.selectedUser = null;
+    this.userClick$.next('');
   }
 
   public onSelectionChanged() {
+    if (!this.selectedUser.id) return; //No user selected. Client may be typing
+
     if (this.selectedAssignmentId > 0) {
-      this.router.navigate(['users', this.selectedUserId, 'exercises', this.selectedAssignmentId], { relativeTo: this.route });
+      this.router.navigate(['users', this.selectedUser.id, 'exercises', this.selectedAssignmentId], { relativeTo: this.route });
     } else {
-      this.navigateToSummaryForSelectedUser();
+      this.navigateToSummaryForSelectedUser().then(() => {
+        this.topicContextProvider.resendStatistics();
+      });
     }
   }
 
-  private navigateToSummaryForSelectedUser() {
+  private navigateToSummaryForSelectedUser() : Promise<boolean> {
     this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
-    this.router.navigate(['users', this.selectedUserId, 'summary'], { relativeTo: this.route });
+    return this.router.navigate(['users', this.selectedUser.id, 'summary'], { relativeTo: this.route });
   }
 
   public onDateChanged() {
@@ -103,4 +125,19 @@ export class ChapterComponent implements OnInit, OnDestroy {
         }
       });
   }
+
+  public searchUsers = (text$: Observable<string>) => {
+
+    const debouncedText$: Observable<string> = text$.pipe(debounceTime(200), distinctUntilChanged());
+    const clicksWithClosedPopup$: Observable<string> = this.userClick$.pipe(filter(() => !this.userTypeAheadInstance.isPopupOpen()));
+    const inputFocus$: Observable<string> = this.userFocus$;
+
+    return inputFocus$.merge(clicksWithClosedPopup$).merge(debouncedText$).pipe(
+      map(term => this.model.users.filter(u => u.fullName.toLowerCase().indexOf(term.toLowerCase()) > -1).slice(0, 10))
+    );
+  };
+
+  public formatUser = (user: IUserModel) => {
+    return user.fullName;
+  };
 }

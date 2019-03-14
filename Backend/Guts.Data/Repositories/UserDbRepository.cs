@@ -22,7 +22,7 @@ namespace Guts.Data.Repositories
                         group testrun by testrun.User into userGroup
                         select userGroup.Key;
            
-            return await query.AsNoTracking().ToListAsync();
+            return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).AsNoTracking().ToListAsync();
         }
     }
 }

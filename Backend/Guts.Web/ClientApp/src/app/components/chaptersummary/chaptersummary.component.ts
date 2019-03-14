@@ -52,6 +52,7 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
       this.loadingStatistics = false;
       this.statistics = this.topicContextProvider.currentContext.statistics;
     });
+    
   }
 
   ngOnInit() {

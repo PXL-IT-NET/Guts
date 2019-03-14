@@ -42,7 +42,7 @@ import 'rxjs/Rx';
 import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
-import { NgbModule, NgbAccordionConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -130,6 +130,8 @@ import { NgbModule, NgbAccordionConfig } from '@ng-bootstrap/ng-bootstrap';
     ClientSettingsService,
     LocalStorageService,
     NgbAccordionConfig,
+    NgbTypeahead,
+    NgbTypeaheadConfig,
     TopicContextProvider,
     {
       provide: HTTP_INTERCEPTORS,

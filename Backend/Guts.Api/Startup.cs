@@ -158,17 +158,17 @@ namespace Guts.Api
 
             app.UseCors(builder =>
             {
-                builder.AllowAnyHeader().AllowAnyMethod();
-
-                builder.AllowAnyOrigin(); //TOOD: remove this
-                //if (env.IsDevelopment())
-                //{
-                //    builder.AllowAnyOrigin();
-                //}
-                //else
-                //{
-                //    builder.WithOrigins("https://*.pxl.be");
-                //}
+                builder.AllowAnyHeader();
+                builder.AllowAnyMethod();
+                builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
+                if (env.IsDevelopment())
+                {
+                    builder.WithOrigins("https://localhost:44376", "http://localhost:62208");
+                }
+                else
+                {
+                    builder.WithOrigins("https://guts-web.pxl.be", "http://guts-web.pxl.be");
+                }
             });
 
             app.UseSimpleInjector(_container, Configuration);

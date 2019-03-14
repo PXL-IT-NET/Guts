@@ -15,11 +15,21 @@
 
         <label for="users" class="col-md-2 col-xl-1 col-form-label">User</label>
         <div class="col-md-10 col-md-4 col-xl-3">
-          <select name="users" class="form-control" [(ngModel)]="selectedUserId" (ngModelChange)="onSelectionChanged()">
-            <option *ngFor="let user of model.users" [ngValue]="user.id">
-              {{user.fullName}}
-            </option>
-          </select>
+          <input
+            id="users"
+            name="users"
+            type="text"
+            class="form-control"
+            [(ngModel)]="selectedUser"
+            (ngModelChange)="onSelectionChanged()" 
+            [ngbTypeahead]="searchUsers" 
+            (focus)="userFocus$.next($event.target.value)"
+            (click)="onUserClick()"
+            [inputFormatter]="formatUser"
+            [resultFormatter]="formatUser"
+            #instance="ngbTypeahead"
+            [readonly]="model.users.length <= 0"
+          />
         </div>
 
         <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
