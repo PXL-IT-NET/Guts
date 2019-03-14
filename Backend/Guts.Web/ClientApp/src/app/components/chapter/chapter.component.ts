@@ -9,7 +9,7 @@ import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
 import { IUserModel } from '../../viewmodels/user.model';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, map, distinctUntilChanged, filter, merge } from 'rxjs/operators';
-import { NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -22,24 +22,20 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public selectedDate: Date;
   public datePickerSettings: any;
   public loading: boolean = false;
+  
 
   private courseId: number;
   private chapterCode: string;
 
+  private userClick$: Subject<string>;
   @ViewChild('instance') userTypeAheadInstance: NgbTypeahead;
-  public userFocus$: Subject<string>;
-  public userClick$: Subject<string>;
 
   constructor(private chapterService: ChapterService,
     private topicContextProvider: TopicContextProvider,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService,
-    typeaheadConfig: NgbTypeaheadConfig) {
+    private toastr: ToastrService) {
 
-    typeaheadConfig.showHint = true;
-
-    this.userFocus$ = new Subject<string>();
     this.userClick$ = new Subject<string>();
 
     this.model = {
@@ -130,10 +126,16 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
     const debouncedText$: Observable<string> = text$.pipe(debounceTime(200), distinctUntilChanged());
     const clicksWithClosedPopup$: Observable<string> = this.userClick$.pipe(filter(() => !this.userTypeAheadInstance.isPopupOpen()));
-    const inputFocus$: Observable<string> = this.userFocus$;
 
-    return inputFocus$.merge(clicksWithClosedPopup$).merge(debouncedText$).pipe(
-      map(term => this.model.users.filter(u => u.fullName.toLowerCase().indexOf(term.toLowerCase()) > -1).slice(0, 10))
+    return clicksWithClosedPopup$.merge(debouncedText$).pipe(
+      map((term: string) => {
+        if (!term || term.length === 0) {
+          return this.model.users;
+        } else {
+          term = term.toLowerCase();
+          return this.model.users.filter(u => u.fullName.toLowerCase().indexOf(term) > -1);
+        }
+      })
     );
   };
 

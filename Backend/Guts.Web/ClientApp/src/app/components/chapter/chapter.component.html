@@ -15,21 +15,18 @@
 
         <label for="users" class="col-md-2 col-xl-1 col-form-label">User</label>
         <div class="col-md-10 col-md-4 col-xl-3">
-          <input
-            id="users"
-            name="users"
-            type="text"
-            class="form-control"
-            [(ngModel)]="selectedUser"
-            (ngModelChange)="onSelectionChanged()" 
-            [ngbTypeahead]="searchUsers" 
-            (focus)="userFocus$.next($event.target.value)"
-            (click)="onUserClick()"
-            [inputFormatter]="formatUser"
-            [resultFormatter]="formatUser"
-            #instance="ngbTypeahead"
-            [readonly]="model.users.length <= 0"
-          />
+          <input id="users"
+                 name="users"
+                 type="text"
+                 class="form-control"
+                 [(ngModel)]="selectedUser"
+                 (ngModelChange)="onSelectionChanged()"
+                 [ngbTypeahead]="searchUsers"
+                 (click)="onUserClick()"
+                 [inputFormatter]="formatUser"
+                 [resultFormatter]="formatUser"
+                 #instance="ngbTypeahead"
+                 [readonly]="model.users.length <= 1" />
         </div>
 
         <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
