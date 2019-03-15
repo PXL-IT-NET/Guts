@@ -13,7 +13,9 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class NavMenuComponent {
 
+  public isNavbarCollapsed: boolean;
   public courses: ICourseModel[];
+  
   private coursesLoaded: boolean;
 
   constructor(private localStorageService: LocalStorageService,
@@ -23,6 +25,7 @@ export class NavMenuComponent {
     private toastr: ToastrService) {
     this.coursesLoaded = false;
     this.courses = [];
+    this.isNavbarCollapsed = true;
 
     this.authService.getLoggedInState().subscribe((isLoggedIn) => {
       if (!this.coursesLoaded && isLoggedIn) {
