@@ -7,6 +7,7 @@ import guts.client.models.Assignment;
 import guts.client.models.AssignmentTestRun;
 import guts.client.models.Result;
 import guts.client.models.TestResult;
+import guts.client.utility.CodeCleaner;
 import guts.client.utility.FileUtil;
 import guts.client.utility.GutsTestUtil;
 import guts.client.utility.TestRunResultAccumulator;
@@ -66,7 +67,7 @@ public class GutsJUnit5 implements TestExecutionListener {
 
         if(TestRunResultAccumulator.getInstance().allTestOfFixtureWereRunned()) {
             Assignment assignment = new Assignment(fixture);
-            String sourceCode = FileUtil.getSourceCode(fixture.sourceCodeRelativeFilePaths());
+            String sourceCode = CodeCleaner.removeCommentsAndRemoveMultipleBlankLines(FileUtil.getSourceCode(fixture.sourceCodeRelativeFilePaths()));
             AssignmentTestRun testRun = new AssignmentTestRun(assignment, TestRunResultAccumulator.getInstance().getTestResults(), sourceCode, TestRunResultAccumulator.getInstance().getTestCodeHash());
 
             Result result = getTestResultSender().send(testRun, fixture.testRunType());

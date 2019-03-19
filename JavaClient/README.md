@@ -30,7 +30,7 @@ When tests are run for the first time a file *guts.json* will be added to the pr
 
 ```
 baseUrl = the url of the Guts Rest API
-registerUrl = the url of the register button on the login form
+webUrl = the url of the register button on the login form
 sourceDirectory = path to the source files from the root folder
 testDirectory = path to the test files from the root folder
 
@@ -41,7 +41,7 @@ The default configuration file is configured for maven and gradle projects
 ```
 {  
    "baseUrl":"http://localhost:54830/",
-   "registerUrl":"http://localhost:54831/register",
+   "webUrl":"http://localhost:54831/",
    "sourceDirectory":"src/main/java/",
    "testDirectory":"src/test/java/"
 }
@@ -107,10 +107,23 @@ class CalculatorTest {
 Parameterized tests are supported
 ```
 @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
-@DisplayName("Parameterized Test")
-@ValueSource(strings = { "param1", "param2", "param3"})
-public void parameterizedTest(String param) {
-    assertNotNull(param);
+@DisplayName("Parameterized addition test")
+@MethodSource("provideNumbersForAdditionParameterizedTest")
+public void additionParameterizedTest(int num1, int num2, int expected) {
+    Calculator calc = new Calculator();
+    int result = calc.add(num1, num2);
+
+    assertEquals(expected, result);
+}
+
+private static Stream<Arguments> provideNumbersForAdditionParameterizedTest() {
+    return Stream.of(
+        Arguments.of(2, 3, 5),
+        Arguments.of(6, 5, 11),
+        Arguments.of(7, 8, 15),
+        Arguments.of(2000, 6000, 8000),
+        Arguments.of(52551, 2568, 55119)
+    );
 }
 ```
 

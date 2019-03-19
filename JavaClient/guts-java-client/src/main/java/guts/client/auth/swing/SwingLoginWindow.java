@@ -10,9 +10,11 @@ import guts.client.Configuration;
 import guts.client.GutsJUnit5;
 import guts.client.http.IHttpClient;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
 
@@ -20,8 +22,8 @@ public class SwingLoginWindow extends JFrame {
 
     private JTextField emailField;
     private JPasswordField passwordField;
-    private JButton loginButton;
-    private JButton registerButton;
+    private Button loginButton;
+    private Button forgotPasswordButton;
     private JLabel errorLabel;
 
     private IHttpClient httpClient;
@@ -31,91 +33,117 @@ public class SwingLoginWindow extends JFrame {
         super("GUTS Login");
         this.httpClient = httpClient;
 
-        setSize(525, 350);
         setAlwaysOnTop(true);
         setResizable(false);
         setLocationRelativeTo(null);
 
         createView();
 
-        // pack();
+        pack();
         setVisible(true);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        emailField.requestFocus();
     }
 
     public void createView() {
-        JPanel layout = new JPanel(new BorderLayout());
-        layout.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        getContentPane().add(layout);
+        JPanel windowPanel = new JPanel(new BorderLayout());
+        getContentPane().add(windowPanel);
 
-        // -- header
-        JPanel header = new JPanel();
-        header.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        layout.add(header, BorderLayout.NORTH);
+        JPanel layout = new JPanel();
+        windowPanel.add(layout, BorderLayout.NORTH);
 
-        header.add(new JLabel("Add with guts details"));
+        // 10 pixel padding
+        layout.setBorder(BorderFactory.createEmptyBorder(15, 25, 5, 25));
+
+        // set layout to box layout
+        layout.setLayout(new GridBagLayout());
+
+        GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+
+        // -- header - image
+        LogoPanel logoPanel = new LogoPanel();
+        layout.add(logoPanel, constraints);
+
+        constraints.gridx = 1;
+        constraints.insets = new Insets(0, 15, 0, 0);
+        // -- header - text
+        TextPanel textPanel = new TextPanel();
+        layout.add(textPanel, constraints);
 
         // -- form
-        JPanel form = new JPanel(new GridBagLayout());
-        layout.add(form, BorderLayout.CENTER);
+        constraints.insets = new Insets(15, 0, 0, 0);
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.ipadx = 0;
+        constraints.ipady = 0;
+        layout.add(new JLabel("Email"), constraints);
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.LINE_END;
-        form.add(new JLabel("Email: "), c);
-        c.gridy++;
-        form.add(new JLabel("Password: "), c);
+        constraints.insets = new Insets(15, 15, 0, 0);
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        layout.add(emailField = new JTextField(), constraints);
 
-        c.gridy++;
-        registerButton = new JButton();
-        registerButton.setText("<HTML><FONT color=\"#000099\"><U>Register account</U></FONT></HTML>");
-        registerButton.setHorizontalAlignment(SwingConstants.LEFT);
-        registerButton.setBorder(null);
-        registerButton.setBorderPainted(false);
-        registerButton.setOpaque(false);
-        registerButton.setBackground(Color.WHITE);
-        registerButton.setToolTipText(Configuration.getRegisterUrl());
-        registerButton.addActionListener(e -> openRegisterUrl());
-        form.add(registerButton, c);
+        constraints.insets = new Insets(0, 0, 0, 0);
+        constraints.gridx = 0;
+        constraints.gridy = 2;
+        layout.add(new JLabel("Password"), constraints);
 
-        c.gridx = 1;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.LINE_START;
-        form.add(emailField = new JTextField(20), c);
-        c.gridy++;
-        form.add(passwordField = new JPasswordField(20), c);
+        constraints.insets = new Insets(0, 15, 0, 0);
+        constraints.gridx = 1;
+        layout.add(passwordField = new JPasswordField(), constraints);
 
-        c.gridy++;
-        c.anchor = GridBagConstraints.LINE_END;
-        form.add(loginButton = new JButton("Login"), c);
+        constraints.insets = new Insets(15, 0, 0, 0);
+        constraints.gridy = 3;
 
-        // -- footer / error panel
+        // -- login buttons
+        JPanel buttonPanel = new JPanel();
+        layout.add(buttonPanel, constraints);
+
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
+        buttonPanel.add(Box.createHorizontalGlue());
+        buttonPanel.add(forgotPasswordButton = new Button("Forgot password"));
+        buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPanel.add(loginButton = new Button("Login"));
+
+        // -- error label
         JPanel errorPanel = new JPanel();
-        errorPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 7, 0));
-        layout.add(errorPanel, BorderLayout.SOUTH);
-        errorPanel.add(errorLabel = new JLabel(""), c);
+        windowPanel.add(errorPanel, BorderLayout.SOUTH);
+        errorPanel.add(errorLabel = new JLabel());
 
         passwordField.addActionListener(e -> loginButtonPressed()); // on enter in password field
         loginButton.addActionListener(e -> loginButtonPressed());
+        forgotPasswordButton.addActionListener(e -> open(Configuration.getWebUrl() + "forgotpassword"));
     }
 
-    private void openRegisterUrl() {
-        if(Desktop.isDesktopSupported()) {
-            String url = Configuration.getRegisterUrl();
+    private void open(String url) {
+        if (Desktop.isDesktopSupported()) {
             try {
                 Desktop.getDesktop().browse(new URI(url));
             } catch (Exception e) {
-                GutsJUnit5.getLogger().severe("Unable to open web page: " + url);
+                GutsJUnit5.getLogger().severe("Failed to open web browser! Please go to '" + url + "' manually");
             }
+        } else {
+            GutsJUnit5.getLogger().severe("Opening web browser is not supported on your system. Please go to '" + url + "' manually");
         }
     }
 
     private void loginButtonPressed() {
         loginButton.setEnabled(false);
 
+        if(emailField.getText().isEmpty() || new String(passwordField.getPassword()).isEmpty()) {
+            showError("Please enter your credentials!");
+            loginButton.setEnabled(true);
+            return;
+        }
+
         Credentials credentials = new Credentials(emailField.getText(), new String(passwordField.getPassword()));
 
-        HttpResponse response = httpClient.post( "api/auth/token", credentials);
+        HttpResponse response = httpClient.post( Configuration.getBaseUrl() + "api/auth/token", credentials);
         if(response != null) {
             if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 try {
@@ -129,16 +157,16 @@ public class SwingLoginWindow extends JFrame {
                     }
                 } catch (IOException e) {
                     GutsJUnit5.getLogger().severe("Unable to get token from response: " + response);
-                    // GutsJUnit5.getLogger().severe(e.getMessage());
-                    errorLabel.setText("Failed to get token from http response");
+                    showError("Failed to get token from response!");
                 }
             } else {
                 if(response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED)
-                    errorLabel.setText("Wrong username/password combination");
+                    showError("Wrong username/password combination...");
             }
         } else {
             GutsJUnit5.getLogger().severe("Unable to get token from response: " + response);
-            errorLabel.setText("Unable to request token");
+            showError("Unable to request token");
+
         }
 
         // reset login form
@@ -148,6 +176,71 @@ public class SwingLoginWindow extends JFrame {
 
     public String getToken() {
         return token;
+    }
+
+    public void showError(String error) {
+        errorLabel.setText(error);
+        pack();
+    }
+
+    private class LogoPanel extends JPanel {
+        private BufferedImage image;
+
+        public LogoPanel() {
+            try {
+                image = ImageIO.read(getClass().getClassLoader().getResource("images/logo.png"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(75, 75);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if(image == null) {
+                g.setColor(Color.RED);
+                g.drawRect(0, 0, 75, 75);
+                return;
+            }
+
+            g.drawImage(image, 0, 0, 75, 75, this);
+        }
+    }
+
+    private class TextPanel extends JPanel {
+
+        public TextPanel() {
+            JLabel line1 = new JLabel("To be able to send your test results you need to", SwingConstants.CENTER);
+            JLabel line2 = new JLabel("supply your credentials from guts-web.pxl.be", SwingConstants.CENTER);
+            JLabel line3 = new JLabel("No credentials yet?");
+            Color green = new Color(88, 165, 24);
+            line1.setForeground(green);
+            line2.setForeground(green);
+            line3.setForeground(green);
+            add(line1);
+            add(line2);
+            add(line3);
+            JButton registerButton = new JButton("Register");
+            registerButton.setBorder(null);
+            registerButton.setBorderPainted(false);
+            registerButton.setOpaque(false);
+            registerButton.setBackground(Color.WHITE);
+            registerButton.setForeground(new Color(63, 119, 207));
+            registerButton.setToolTipText(Configuration.getWebUrl() + "register");
+            registerButton.addActionListener(e -> open(Configuration.getWebUrl() + "register"));
+            add(registerButton);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(325, 75);
+        }
     }
 
 }

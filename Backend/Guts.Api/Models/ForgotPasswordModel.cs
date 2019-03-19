@@ -8,7 +8,7 @@ namespace Guts.Api.Models
         [EmailAddress(ErrorMessage = "Please fill in a valid (pxl) email address")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "You must prove that your are not a robot")]
+        [Required(ErrorMessage = "You must prove that you are not a robot")]
         public string CaptchaToken { get; set; }
     }
 }
