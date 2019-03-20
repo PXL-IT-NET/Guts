@@ -16,6 +16,8 @@ public final class Configuration {
     private static final Path CONFIGURATION_FILE_PATH = Paths.get(System.getProperty("user.dir") + File.separator + "guts.json");
     private static Options options;
 
+    private Configuration() {}
+
     public static void setup() {
         Gson gson = new Gson();
 
@@ -45,9 +47,9 @@ public final class Configuration {
         return options.baseUrl;
     }
 
-    public static String getRegisterUrl() {
+    public static String getWebUrl() {
         checkIfOptionsLoaded();
-        return options.registerUrl;
+        return options.webUrl;
     }
 
     public static String getSourceDirectory() {
@@ -70,7 +72,7 @@ public final class Configuration {
 
     private static class Options {
         private String baseUrl = "http://localhost:54830/";
-        private String registerUrl = "http://localhost:54831/register";
+        private String webUrl = "http://localhost:54831/";
         private String sourceDirectory = "src/main/java/";
         private String testDirectory = "src/test/java/";
     }
