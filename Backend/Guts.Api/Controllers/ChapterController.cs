@@ -158,7 +158,7 @@ namespace Guts.Api.Controllers
                 {
                     var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
                     var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
-                    model = _topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics);
+                    model = _topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
 
                     if (useCache)
                     {

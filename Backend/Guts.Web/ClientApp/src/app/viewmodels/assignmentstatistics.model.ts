@@ -1,7 +1,8 @@
 import { IAssignmentModel } from "./assignment.model";
 
 export interface IAssignmentStatisticsModel extends IAssignmentModel {
-  totalNumberOfUsers: number;
+  totalNumberOfUnits: number;
+  unit: string;
   testPassageStatistics: ITestPassageStatisticModel[];
 }
 
@@ -14,21 +15,24 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
   public assignmentId: number;
   public code: string;
   public description: string;
-  public totalNumberOfUsers: number;
+  public totalNumberOfUnits: number;
+  public unit: string;
   public testPassageStatistics: ITestPassageStatisticModel[];
 
   constructor(source?: IAssignmentStatisticsModel) {
     this.assignmentId = 0;
     this.code = '';
     this.description = '';
-    this.totalNumberOfUsers = 0;
+    this.totalNumberOfUnits = 0;
+    this.unit = '';
     this.testPassageStatistics = [];
 
     if (source) {
       this.assignmentId = source.assignmentId;
       this.code = source.code;
       this.description = source.description;
-      this.totalNumberOfUsers = source.totalNumberOfUsers;
+      this.totalNumberOfUnits = source.totalNumberOfUnits;
+      this.unit = source.unit;
       this.testPassageStatistics = source.testPassageStatistics;
     }
   }
@@ -49,7 +53,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
         datasets: [
           {
             data: data,
-            label: 'Students'
+            label: this.unit
           }],
       };
 

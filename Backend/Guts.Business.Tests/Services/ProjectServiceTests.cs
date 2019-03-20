@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Business.Converters;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
@@ -22,6 +23,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<ITestResultRepository> _testResultRepositoryMock;
+        private Mock<IAssignmentWitResultsConverter> _assignmentWithResultsConverterMock;
 
         [SetUp]
         public void Setup()
@@ -32,12 +34,14 @@ namespace Guts.Business.Tests.Services
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
+            _assignmentWithResultsConverterMock = new Mock<IAssignmentWitResultsConverter>();
 
             _service = new ProjectService(_projectRepositoryMock.Object, 
                 _courseRepositoryMock.Object, 
                 _periodRepositoryMock.Object, 
                 _projectTeamRepositoryMock.Object, 
-                _testResultRepositoryMock.Object);
+                _testResultRepositoryMock.Object,
+                _assignmentWithResultsConverterMock.Object);
         }
 
         [Test]

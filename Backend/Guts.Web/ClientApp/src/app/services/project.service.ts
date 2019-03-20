@@ -9,6 +9,7 @@ import { ITeamDetailsModel } from "../viewmodels/team.model"
 import { GetResult, PostResult } from "../util/Result";
 import * as moment from 'moment';
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
+import { TeamGenerationModel } from "../viewmodels/team.model"
 
 @Injectable()
 export class ProjectService {
@@ -35,6 +36,18 @@ export class ProjectService {
         .map(model => GetResult.success(model))
         .catch((errorResponse: HttpErrorResponse) => {
           return Observable.from([GetResult.fromHttpErrorResponse<ITeamDetailsModel[]>(errorResponse)]);
+        });
+    });
+  }
+
+  public generateTeams(courseId: number, projectCode: string, model: TeamGenerationModel) {
+    return this.settingsService.get().mergeMap<ClientSettings, PostResult>((settings: ClientSettings) => {
+      return this.http
+        .post(settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/generate', model)
+        .map<Object, PostResult>(() => {
+          return PostResult.success();
+        }).catch((errorResponse: HttpErrorResponse) => {
+          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
         });
     });
   }

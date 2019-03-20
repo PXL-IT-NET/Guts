@@ -6,13 +6,15 @@ var AssignmentStatisticsModel = /** @class */ (function () {
         this.assignmentId = 0;
         this.code = '';
         this.description = '';
-        this.totalNumberOfUsers = 0;
+        this.totalNumberOfUnits = 0;
+        this.unit = '';
         this.testPassageStatistics = [];
         if (source) {
             this.assignmentId = source.assignmentId;
             this.code = source.code;
             this.description = source.description;
-            this.totalNumberOfUsers = source.totalNumberOfUsers;
+            this.totalNumberOfUnits = source.totalNumberOfUnits;
+            this.unit = source.unit;
             this.testPassageStatistics = source.testPassageStatistics;
         }
     }
@@ -31,7 +33,7 @@ var AssignmentStatisticsModel = /** @class */ (function () {
                     datasets: [
                         {
                             data: data,
-                            label: 'Students'
+                            label: this.unit
                         }
                     ],
                 };

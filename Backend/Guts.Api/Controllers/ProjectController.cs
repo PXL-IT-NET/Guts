@@ -89,6 +89,33 @@ namespace Guts.Api.Controllers
             return Ok(models);
         }
 
+        [HttpPost("{projectCode}/teams/generate")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> GenerateProjectTeams(int courseId, string projectCode, [FromBody] TeamGenerationModel model)
+        {
+            //TODO: technical dept -> write unit tests
+            if (courseId < 1 || string.IsNullOrEmpty(projectCode))
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
+            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.NumberOfTeams);
+            
+            return Ok();
+        }
+
         [HttpPost("{projectCode}/teams/{teamId}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -200,7 +227,7 @@ namespace Guts.Api.Controllers
                 {
                     var project = await _projectService.LoadProjectAsync(courseId, projectCode);
                     var projectStatistics = await _projectService.GetProjectStatisticsAsync(project, dateUtc);
-                    model = _topicConverter.ToTopicStatisticsModel(project, projectStatistics);
+                    model = _topicConverter.ToTopicStatisticsModel(project, projectStatistics, "Teams");
 
                     if (useCache)
                     {

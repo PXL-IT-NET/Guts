@@ -9,14 +9,6 @@ export class TopicContext {
 
   public statusDate : moment.Moment;
 
-  //private _statusDate: Date;
-  //public get statusDate() {
-  //  return this._statusDate;
-  //}
-  //public set statusDate(date: any) {
-  //  this._statusDate = new Date(date);
-  //}
-
   public topic: ITopicModel;
 
   public statistics: TopicStatisticsModel;

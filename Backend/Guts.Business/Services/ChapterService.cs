@@ -99,7 +99,7 @@ namespace Guts.Business.Services
             foreach (var assignment in chapter.Assignments)
             {
                 var testResults =
-                    await _testResultRepository.GetLastTestResults(assignment.Id, dateUtc);
+                    await _testResultRepository.GetLastTestResultsOfAllUsers(assignment.Id, dateUtc);
                 results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
                
             }

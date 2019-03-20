@@ -5,9 +5,10 @@ import { TopicContextProvider } from "../../services/topic.context.provider";
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
-import { ITeamDetailsModel } from "../../viewmodels/team.model";
+import { ITeamDetailsModel, TeamGenerationModel } from "../../viewmodels/team.model";
 import { PostResult } from "../../util/Result";
-
+import { AuthService } from "../../services/auth.service";
+import { UserProfile } from "../../viewmodels/user.model";
 
 @Component({
   templateUrl: './projectteamoverview.component.html'
@@ -16,27 +17,38 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
 
   public loading: boolean = false;
   public teams: ITeamDetailsModel[];
+  public userProfile: UserProfile;
+
+  public teamBaseName: string;
+  public numberOfTeamsToGenerate: number;
 
   private topicContextSubscription: Subscription;
+  private userProfileSubscription: Subscription;
 
   constructor(private projectService: ProjectService,
+    private authService: AuthService,
     private topicContextProvider: TopicContextProvider,
     private router: Router,
-    private route: ActivatedRoute,
     private toastr: ToastrService) {
     this.teams = [];
-
-    this.topicContextSubscription = this.topicContextProvider.topicChanged$.subscribe(() => {
-      this.loadTeams();
-    });
+    this.teamBaseName = '';
+    this.numberOfTeamsToGenerate = 0;
   }
 
   ngOnInit() {
+    this.topicContextSubscription = this.topicContextProvider.topicChanged$.subscribe(() => {
+      this.loadTeams();
+    });
 
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
+    });
   }
 
   ngOnDestroy() {
     this.topicContextSubscription.unsubscribe();
+    this.userProfileSubscription.unsubscribe();
   }
 
   public joinTeam(teamId: number) {
@@ -50,6 +62,21 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
           this.router.navigate(['/courses', this.topicContextProvider.currentContext.courseId]);
         } else {
           this.toastr.error(result.message || "unknown error", "Could not join team");
+        }
+      });
+  }
+
+  public onGenerateTeamsSubmit() {
+    this.loading = true;
+    var model = new TeamGenerationModel(this.teamBaseName, this.numberOfTeamsToGenerate);
+    this.projectService.generateTeams(this.topicContextProvider.currentContext.courseId,
+      this.topicContextProvider.currentContext.topic.code, model)
+      .subscribe((result: PostResult) => {
+        this.loading = false;
+        if (result.success) {
+          this.loadTeams();
+        } else {
+          this.toastr.error(result.message || "unknown error", "Could not generate teams");
         }
       });
   }

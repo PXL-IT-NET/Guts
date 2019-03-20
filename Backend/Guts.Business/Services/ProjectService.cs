@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Guts.Data;
+using Guts.Data.Repositories;
+using Guts.Domain;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Data;
-using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Business.Converters;
 
 namespace Guts.Business.Services
 {
@@ -15,18 +16,21 @@ namespace Guts.Business.Services
         private readonly IPeriodRepository _periodRepository;
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly ITestResultRepository _testResultRepository;
+        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
 
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
-            IPeriodRepository periodRepository, 
+            IPeriodRepository periodRepository,
             IProjectTeamRepository projectTeamRepository,
-            ITestResultRepository testResultRepository)
+            ITestResultRepository testResultRepository,
+            IAssignmentWitResultsConverter assignmentWitResultsConverter)
         {
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
             _projectTeamRepository = projectTeamRepository;
             _testResultRepository = testResultRepository;
+            _assignmentWitResultsConverter = assignmentWitResultsConverter;
         }
 
         public async Task<Project> GetProjectAsync(string courseCode, string projectCode)
@@ -76,9 +80,9 @@ namespace Guts.Business.Services
 
         public async Task<Project> LoadProjectAsync(int courseId, string projectCode)
         {
-                var period = await _periodRepository.GetCurrentPeriodAsync();
-                var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
-                return project;
+            var period = await _periodRepository.GetCurrentPeriodAsync();
+            var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+            return project;
         }
 
         public async Task<Project> LoadProjectForUserAsync(int courseId, string projectCode, int userId)
@@ -86,6 +90,25 @@ namespace Guts.Business.Services
             var period = await _periodRepository.GetCurrentPeriodAsync();
             var project = await _projectRepository.LoadWithAssignmentsAndTeamsOfUserAsync(courseId, projectCode, period.Id, userId);
             return project;
+        }
+
+        public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int numberOfTeams)
+        {
+            var period = await _periodRepository.GetCurrentPeriodAsync();
+            var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+
+            if (project.Teams.Count >= numberOfTeams) return;
+
+            var amountOfTeamsWithBaseName = project.Teams.Count(team => team.Name.StartsWith(teamBaseName));
+            for (int teamNumber = amountOfTeamsWithBaseName + 1; teamNumber <= numberOfTeams; teamNumber++)
+            {
+                var newTeam = new ProjectTeam
+                {
+                    Name = $"{teamBaseName} {teamNumber}",
+                    ProjectId = project.Id
+                };
+                await _projectTeamRepository.AddAsync(newTeam);
+            }
         }
 
         public async Task<IList<ProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode)
@@ -123,9 +146,17 @@ namespace Guts.Business.Services
             return results;
         }
 
-        public Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc)
+        public async Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc)
         {
-            throw new NotImplementedException();
+            //TODO: write tests
+            var results = new List<AssignmentStatisticsDto>();
+            foreach (var assignment in project.Assignments)
+            {
+                var testResults =
+                    await _testResultRepository.GetLastTestResultsOfAllTeams(assignment.Id, dateUtc);
+                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
+            }
+            return results;
         }
     }
 }

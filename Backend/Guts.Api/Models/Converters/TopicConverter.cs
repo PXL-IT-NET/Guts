@@ -36,7 +36,7 @@ namespace Guts.Api.Models.Converters
             return model;
         }
 
-        public TopicStatisticsModel ToTopicStatisticsModel(Topic topic, IList<AssignmentStatisticsDto> assignmentStatistics)
+        public TopicStatisticsModel ToTopicStatisticsModel(Topic topic, IList<AssignmentStatisticsDto> assignmentStatistics, string unit)
         {
             var model = new TopicStatisticsModel
             {
@@ -47,7 +47,7 @@ namespace Guts.Api.Models.Converters
 
             foreach (var assignment in topic.Assignments.OrderBy(a => a.Code))
             {
-                var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, assignmentStatistics);
+                var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, assignmentStatistics, unit);
                 model.AssignmentStatistics.Add(assignmentStatisticsModel);
             }
 
@@ -76,14 +76,18 @@ namespace Guts.Api.Models.Converters
             return assignmentSummaryModel;
         }
 
-        private AssignmentStatisticsModel CreateAssignmentStatisticsModel(Assignment assignment,
-            IList<AssignmentStatisticsDto> assignmentStatisticsList)
+        private AssignmentStatisticsModel CreateAssignmentStatisticsModel(
+            Assignment assignment,
+            IList<AssignmentStatisticsDto> assignmentStatisticsList, 
+            string unit)
         {
             var model = new AssignmentStatisticsModel
             {
                 AssignmentId = assignment.Id,
                 Code = assignment.Code,
-                TotalNumberOfUsers = 0,
+                Description = assignment.Description,
+                TotalNumberOfUnits = 0,
+                Unit = unit,
                 TestPassageStatistics = new List<TestPassageStatisticModel>()
             };
 
@@ -92,7 +96,7 @@ namespace Guts.Api.Models.Converters
             var assignmentStatistics = assignmentStatisticsList.FirstOrDefault(result => result.AssignmentId == assignment.Id);
             if (assignmentStatistics != null)
             {
-                model.TotalNumberOfUsers = assignmentStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
+                model.TotalNumberOfUnits = assignmentStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
                 foreach (var testPassageStatistic in assignmentStatistics.TestPassageStatistics)
                 {
                     var testPassageStatisticModel = new TestPassageStatisticModel

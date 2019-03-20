@@ -264,7 +264,7 @@ namespace Guts.Business.Tests.Services
 
             var testResults = new List<TestResult>();
             _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResults(It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .Setup(repo => repo.GetLastTestResultsOfAllUsers(It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(testResults);
 
             var assignmentStatisticsDto = new AssignmentStatisticsDto();
@@ -278,7 +278,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(results, Has.Count.EqualTo(numberOfAssignments));
             _testResultRepositoryMock.Verify(
-                repo => repo.GetLastTestResults(
+                repo => repo.GetLastTestResultsOfAllUsers(
                     It.Is<int>(assignmentId => chapter.Assignments.Any(e => e.Id == assignmentId)), nowUtc),
                 Times.Exactly(numberOfAssignments));
             _testResultConverterMock.Verify(

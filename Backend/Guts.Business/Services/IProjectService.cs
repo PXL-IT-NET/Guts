@@ -21,6 +21,8 @@ namespace Guts.Business.Services
         /// </summary>
         Task<Project> LoadProjectForUserAsync(int courseId, string projectCode, int userId);
 
+        Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int numberOfTeams);
+
         Task<IList<ProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
 
         Task AddUserToProjectTeam(int teamId, int userId);
@@ -28,5 +30,6 @@ namespace Guts.Business.Services
         Task<IList<AssignmentResultDto>> GetResultsForTeamAsync(Project project, int teamId, DateTime? dateUtc);
 
         Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc);
+        
     }
 }

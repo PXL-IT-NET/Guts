@@ -1,4 +1,6 @@
-﻿using System.Security.Authentication;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Security.Authentication;
 using System.Security.Claims;
 using Guts.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +25,12 @@ namespace Guts.Api.Controllers
             }
 
             throw new AuthenticationException($"The NameIdentifier ('{nameIdentifierClaim.Value}') of the user should be a positive integer.");
+        }
+
+        protected IList<string> GetUserRoles()
+        {
+            var roleClaims = User.FindAll(ClaimTypes.Role);
+            return roleClaims.Select(roleClaim => roleClaim.Value).ToList();
         }
 
         protected bool IsStudent()
