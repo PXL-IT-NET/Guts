@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    // testImplementation project(':guts-client-junit-5')
+    testImplementation 'be.pxl.guts:client-junit-5:1.0-SNAPSHOT'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.0'
+}
+
+test {
+    useJUnitPlatform()
+}
