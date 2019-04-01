@@ -1,5 +1,0 @@
-rootProject.name = 'GutsJavaClient'
-
-include 'guts-java-client'
-include 'guts-java-dummy-tests'
-

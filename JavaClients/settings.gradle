@@ -1,0 +1,6 @@
+rootProject.name = 'JavaClients'
+
+include 'guts-client-core'
+include 'guts-client-junit-5'
+include 'guts-client-junit-5-example'
+

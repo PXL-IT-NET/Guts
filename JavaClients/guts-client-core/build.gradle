@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'maven-publish'
+}
+
+group 'be.pxl.guts'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // guts client core dependencies
+    compile 'com.google.guava:guava:23.0'
+    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'org.apache.httpcomponents:httpclient:4.5.7'
+
+    // for guts client core testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.4.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'be.pxl.guts'
+            artifactId = 'client-core'
+
+            from components.java
+        }
+    }
+}
