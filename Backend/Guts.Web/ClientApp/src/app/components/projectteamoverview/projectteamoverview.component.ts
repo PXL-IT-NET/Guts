@@ -33,13 +33,13 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
     this.teams = [];
     this.teamBaseName = '';
     this.numberOfTeamsToGenerate = 0;
-  }
 
-  ngOnInit() {
     this.topicContextSubscription = this.topicContextProvider.topicChanged$.subscribe(() => {
       this.loadTeams();
     });
+  }
 
+  ngOnInit() {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
       this.userProfile = profile;
