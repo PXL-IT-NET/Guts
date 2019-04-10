@@ -1,10 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
 using System.IO;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Guts.Client.Shared.TestTools
 {
@@ -24,10 +20,17 @@ namespace Guts.Client.Shared.TestTools
             {
                 if (_current != null) return _current;
 
-                var executingFolder = new DirectoryInfo(Assembly.GetExecutingAssembly().Location);
-                var solutionFolder = executingFolder.Parent?.Parent?.Parent?.Parent;
-                Assert.That(solutionFolder, Is.Not.Null, () => "Technical error: could not find the path of the solution.");
-                _current = new Solution(solutionFolder.FullName);
+                var solutionDirectoryInfo = new DirectoryInfo(AppContext.BaseDirectory);
+                var isSolutionDirectory = solutionDirectoryInfo.GetFiles("*.sln").Length > 0;
+
+                while (!isSolutionDirectory && solutionDirectoryInfo.Parent != null)
+                {
+                    solutionDirectoryInfo = solutionDirectoryInfo.Parent;
+                    isSolutionDirectory = solutionDirectoryInfo.GetFiles("*.sln").Length > 0;
+                }
+
+                Assert.That(isSolutionDirectory, Is.True, () => "Technical error: could not find the path of the solution.");
+                _current = new Solution(solutionDirectoryInfo.FullName);
                 return _current;
             }
         }

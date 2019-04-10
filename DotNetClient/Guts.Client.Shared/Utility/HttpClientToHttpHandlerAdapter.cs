@@ -10,6 +10,7 @@ namespace Guts.Client.Shared.Utility
     public class HttpClientToHttpHandlerAdapter : IHttpHandler
     {
         private readonly HttpClient _httpClient;
+        private readonly string _apiBaseUrl;
 
         public HttpClientToHttpHandlerAdapter(string apiBaseUrl)
         {
@@ -18,7 +19,9 @@ namespace Guts.Client.Shared.Utility
                 apiBaseUrl += "/";
             }
 
-            _httpClient = new HttpClient { BaseAddress = new Uri(apiBaseUrl) };
+            _apiBaseUrl = apiBaseUrl;
+
+            _httpClient = new HttpClient { BaseAddress = new Uri(_apiBaseUrl) };
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
@@ -42,7 +45,7 @@ namespace Guts.Client.Shared.Utility
             }
 
             string message = await TryGetErrorMessageFromResponseAsync(response);
-            throw new HttpResponseException(response.StatusCode,message);
+            throw new HttpResponseException(_apiBaseUrl + requestUri, response.StatusCode,message);
         }
 
         public async Task<T> GetAsJsonAsync<T>(string requestUri)
@@ -54,7 +57,7 @@ namespace Guts.Client.Shared.Utility
             }
 
             string message = await TryGetErrorMessageFromResponseAsync(response);
-            throw new HttpResponseException(response.StatusCode, message);
+            throw new HttpResponseException(_apiBaseUrl + requestUri, response.StatusCode, message);
         }
 
         private static async Task<string> TryGetErrorMessageFromResponseAsync(HttpResponseMessage response)
@@ -74,7 +77,7 @@ namespace Guts.Client.Shared.Utility
             }
             catch (Exception)
             {
-                return string.Empty;
+                return await response.Content.ReadAsStringAsync();
             }
         }
     }

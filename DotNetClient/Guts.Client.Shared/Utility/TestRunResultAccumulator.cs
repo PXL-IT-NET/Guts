@@ -50,9 +50,23 @@ namespace Guts.Client.Shared.Utility
         {
             if (NumberOfTestsInCurrentFixture > 0) return;
 
-            var directoryInfo = new DirectoryInfo(TestContext.CurrentContext.TestDirectory); // .../TestProject/bin/Debug
-            var testProjectDirectoryInfo = directoryInfo.Parent.Parent;
+
+            var testClassName = TestContext.CurrentContext.Test.ClassName;
+            var dotIndex = testClassName.LastIndexOf('.');
+            if (dotIndex >= 0)
+            {
+                testClassName = testClassName.Substring(dotIndex + 1);
+            }
+            var relativeFilePath = testClassName + ".cs";
+            var testProjectDirectoryInfo = new DirectoryInfo(AppContext.BaseDirectory);
+            var fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+            while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
+            {
+                testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
+                fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+            }
             var testAssemblyName = testProjectDirectoryInfo.Name;
+
 
             var fullQualifiedTestClassName = $"{TestContext.CurrentContext.Test.ClassName}, {testAssemblyName}";
             var testClassType = Type.GetType(fullQualifiedTestClassName, false);

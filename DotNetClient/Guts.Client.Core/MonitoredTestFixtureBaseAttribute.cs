@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Guts.Client.Shared.Models;
 using Guts.Client.Shared.Utility;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
@@ -20,7 +22,20 @@ namespace Guts.Client.Core
         protected MonitoredTestFixtureBaseAttribute(string courseCode)
         {
             _courseCode = courseCode;
-            var gutsConfig = new ConfigurationBuilder().AddJsonFile("gutssettings.json", optional: false).Build();
+
+            var gutssettingsDirectory = GetSettingsFileDirectory(AppContext.BaseDirectory);
+            if (string.IsNullOrEmpty(gutssettingsDirectory))
+            {
+                gutssettingsDirectory = GetSettingsFileDirectory(Assembly.GetCallingAssembly().Location);
+            }
+            if (string.IsNullOrEmpty(gutssettingsDirectory))
+            {
+                throw new Exception("Could not find 'gutssettings.json' Searched in the following directories (and upper directories): " +
+                                    $"{AppContext.BaseDirectory} and {System.Reflection.Assembly.GetEntryAssembly().Location}.");
+            }
+
+            var provider = new PhysicalFileProvider(gutssettingsDirectory);
+            var gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
             var gutsSection = gutsConfig.GetSection("Guts");
 
             string apiBaseUrl = gutsSection.GetValue("apiBaseUrl", string.Empty);
@@ -106,6 +121,39 @@ namespace Guts.Client.Core
                 TestContext.Error.WriteLine("Something went wrong while sending the test results.");
                 TestContext.Error.WriteLine($"Exception: {ex}");
             }
+        }
+
+        private string GetSettingsFileDirectory(string baseDirectory)
+        {
+            var relativeFilePath = "gutssettings.json";
+            var testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
+            var fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+            while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
+            {
+                testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
+                fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+
+                //Hack: get json file in global nuget directory
+                if (testProjectDirectoryInfo.Name.ToLower() == "packages")
+                {
+                    var nugetDirectory = testProjectDirectoryInfo
+                        .EnumerateDirectories("guts.client.core", SearchOption.TopDirectoryOnly).FirstOrDefault();
+                    if (nugetDirectory != null)
+                    {
+                        var lastVersionDirectory = nugetDirectory.EnumerateDirectories()
+                            .OrderByDescending(di => di.Name).FirstOrDefault();
+                        if (lastVersionDirectory != null)
+                        {
+                            fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).FirstOrDefault();
+                            if (fileInfo != null)
+                            {
+                                testProjectDirectoryInfo = fileInfo.Directory;
+                            }
+                        }
+                    }
+                }
+            }
+            return fileInfo.Exists ? testProjectDirectoryInfo.FullName : string.Empty;
         }
     }
 }

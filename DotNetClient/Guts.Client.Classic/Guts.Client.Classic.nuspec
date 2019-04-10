@@ -12,8 +12,8 @@
     <copyright>Copyright 2017</copyright>
     <tags>Guts Unit Test Client</tags>
     <dependencies>
-      <dependency id="Guts.Client.Shared" version="2.0.0" />
-      <dependency id="NUnit3TestAdapter" version="3.12.0" />
+      <dependency id="Guts.Client.Shared" version="2.0.2" />
+      <dependency id="NUnit3TestAdapter" version="3.13.0" />
     </dependencies>
   </metadata>
   <files>
