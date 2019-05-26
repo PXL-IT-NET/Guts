@@ -41,18 +41,30 @@ export class TopicSummaryModel implements ITopicSummaryModel {
   public code: string;
   public description: string;
   public assignmentSummaries: AssignmentSummaryModel[];
+  public totalGreenTests: number;
+  public totalTests: number;
 
-  constructor(source: ITopicSummaryModel) {
-    this.id = source.id;
-    this.code = source.code;
-    this.description = source.description;
+  constructor(source?: ITopicSummaryModel) {
+    this.id = 0;
+    this.code = '';
+    this.description = '';
     this.assignmentSummaries = [];
+    this.totalGreenTests = 0;
+    this.totalTests = 0;
 
-    if (source.assignmentSummaries) {
-      for (let assignmentSummary of source.assignmentSummaries) {
-        let summary = new AssignmentSummaryModel(assignmentSummary);
-        this.assignmentSummaries.push(summary);
+    if (source) {
+      this.id = source.id;
+      this.code = source.code;
+      this.description = source.description;
+
+      if (source.assignmentSummaries) {
+        for (let assignmentSummary of source.assignmentSummaries) {
+          let summary = new AssignmentSummaryModel(assignmentSummary);
+          this.totalTests += assignmentSummary.numberOfTests;
+          this.totalGreenTests += assignmentSummary.numberOfPassedTests;
+          this.assignmentSummaries.push(summary);
+        }
       }
-    }
+    } 
   }
 }

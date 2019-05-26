@@ -23,12 +23,7 @@ export class ProjectSummaryComponent implements OnInit, OnDestroy {
     private topicContextProvider: TopicContextProvider,
     private route: ActivatedRoute,
     private toastr: ToastrService) {
-    this.model = {
-      id: 0,
-      code: '',
-      description: '',
-      assignmentSummaries: [],
-    };
+    this.model = new TopicSummaryModel();
     this.statistics = {
       id: 0,
       code: '',

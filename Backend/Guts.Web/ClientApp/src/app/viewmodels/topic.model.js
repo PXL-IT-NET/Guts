@@ -21,15 +21,24 @@ var TopicStatisticsModel = /** @class */ (function () {
 exports.TopicStatisticsModel = TopicStatisticsModel;
 var TopicSummaryModel = /** @class */ (function () {
     function TopicSummaryModel(source) {
-        this.id = source.id;
-        this.code = source.code;
-        this.description = source.description;
+        this.id = 0;
+        this.code = '';
+        this.description = '';
         this.assignmentSummaries = [];
-        if (source.assignmentSummaries) {
-            for (var _i = 0, _a = source.assignmentSummaries; _i < _a.length; _i++) {
-                var assignmentSummary = _a[_i];
-                var summary = new assignmentsummary_model_1.AssignmentSummaryModel(assignmentSummary);
-                this.assignmentSummaries.push(summary);
+        this.totalGreenTests = 0;
+        this.totalTests = 0;
+        if (source) {
+            this.id = source.id;
+            this.code = source.code;
+            this.description = source.description;
+            if (source.assignmentSummaries) {
+                for (var _i = 0, _a = source.assignmentSummaries; _i < _a.length; _i++) {
+                    var assignmentSummary = _a[_i];
+                    var summary = new assignmentsummary_model_1.AssignmentSummaryModel(assignmentSummary);
+                    this.totalTests += assignmentSummary.numberOfTests;
+                    this.totalGreenTests += assignmentSummary.numberOfPassedTests;
+                    this.assignmentSummaries.push(summary);
+                }
             }
         }
     }
