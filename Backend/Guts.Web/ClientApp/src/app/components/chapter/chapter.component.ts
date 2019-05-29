@@ -10,6 +10,7 @@ import { IUserModel } from '../../viewmodels/user.model';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, map, distinctUntilChanged, filter, merge } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { DatePicker } from 'angular2-datetimepicker';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -56,6 +57,14 @@ export class ChapterComponent implements OnInit, OnDestroy {
     this.courseId = 0;
     this.chapterCode = '';
 
+    // Fix datepicked error: Cannot read property 'getMonth' of undefined
+    DatePicker.prototype.ngOnInit = function() {
+      this.settings = Object.assign(this.defaultSettings, this.settings);
+      if (this.settings.defaultOpen) {
+        this.popover = true;
+      }
+      this.date = new Date();
+    };
   }
 
   ngOnInit() {
