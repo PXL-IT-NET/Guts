@@ -19,6 +19,7 @@ using SimpleInjector;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Guts.Api.Filters;
 
 namespace Guts.Api
 {
@@ -102,6 +103,9 @@ namespace Guts.Api
                     {
                         options.SslPort = 44318;
                     }
+
+                    options.Filters.Add<LogExceptionFilterAttribute>();
+
                 }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddSwaggerDocument(config =>
@@ -163,7 +167,8 @@ namespace Guts.Api
                 builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
                 if (env.IsDevelopment())
                 {
-                    builder.WithOrigins("https://localhost:44376", "http://localhost:62208");
+                    builder.AllowAnyOrigin();
+                    //builder.WithOrigins("https://localhost:44310/", "http://localhost:64042");
                 }
                 else
                 {
