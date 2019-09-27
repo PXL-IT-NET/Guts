@@ -17,8 +17,8 @@ namespace Guts.Business.Services
         private readonly ITestResultRepository _testResultRepository;
         private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
 
-        public ChapterService(IChapterRepository chapterRepository, 
-            ICourseRepository courseRepository, 
+        public ChapterService(IChapterRepository chapterRepository,
+            ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
             ITestResultRepository testResultRepository,
             IAssignmentWitResultsConverter assignmentWitResultsConverter)
@@ -101,7 +101,7 @@ namespace Guts.Business.Services
                 var testResults =
                     await _testResultRepository.GetLastTestResultsOfAllUsers(assignment.Id, dateUtc);
                 results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
-               
+
             }
             return results;
         }

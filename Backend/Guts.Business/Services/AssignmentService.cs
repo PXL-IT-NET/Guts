@@ -11,6 +11,7 @@ namespace Guts.Business.Services
     public class AssignmentService : IAssignmentService
     {
         private readonly IAssignmentRepository _assignmentRepository;
+        private readonly ITopicService _topicService;
         private readonly IChapterService _chapterService;
         private readonly IProjectService _projectService;
         private readonly ITestRepository _testRepository;
@@ -18,6 +19,7 @@ namespace Guts.Business.Services
         private readonly ITestRunRepository _testRunRepository;
 
         public AssignmentService(IAssignmentRepository assignmentRepository,
+            ITopicService topicService,
             IChapterService chapterService,
             IProjectService projectService,
             ITestRepository testRepository,
@@ -27,9 +29,16 @@ namespace Guts.Business.Services
             _chapterService = chapterService;
             _projectService = projectService;
             _assignmentRepository = assignmentRepository;
+            _topicService = topicService;
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testRunRepository = testRunRepository;
+        }
+
+        public async Task<Assignment> GetAssignmentAsync(AssignmentDto assignmentDto)
+        {
+            var topic = await _topicService.GetTopicAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
+            return await _assignmentRepository.GetSingleAsync(topic.Id, assignmentDto.AssignmentCode);
         }
 
         public async Task<Assignment> GetOrCreateExerciseAsync(AssignmentDto assignmentDto)

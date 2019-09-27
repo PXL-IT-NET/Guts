@@ -14,6 +14,7 @@ namespace Guts.Data
     {
         public DbSet<Period> Periods { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<Topic> Topics { get; set; }
         public DbSet<Chapter> Chapters { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }

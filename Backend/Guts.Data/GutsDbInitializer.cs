@@ -26,7 +26,13 @@ namespace Guts.Data
         public void DoAutomaticMigrations()
         {
             var pendingMigrations = _context.Database.GetPendingMigrations().ToList();
-            if (!pendingMigrations.Any()) return;
+            if (!pendingMigrations.Any())
+            {
+                _logger.LogInformation("No pending migrations found.");
+                return;
+            }
+
+            _logger.LogInformation("Migrating database...");
 
             try
             {

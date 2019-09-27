@@ -70,7 +70,7 @@ namespace Guts.Api.Extensions
                 var secret = captchaSection.GetValue<string>("secret");
                 var validationUrl = captchaSection.GetValue<string>("validationUrl");
                 return new GoogleCaptchaValidator(validationUrl, secret, container.GetInstance<IHttpClient>());
-            }, Lifestyle.Singleton);
+            }, Lifestyle.Scoped);
 
             container.Register<ISmtpClient>(() =>
             {

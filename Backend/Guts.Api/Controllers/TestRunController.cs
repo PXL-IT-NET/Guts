@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
+using Guts.Data;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -66,7 +67,24 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var assignment = await _assignmentService.GetOrCreateExerciseAsync(model.Assignment);
+            Assignment assignment;
+            if (IsLector())
+            {
+                assignment = await _assignmentService.GetOrCreateExerciseAsync(model.Assignment);
+            }
+            else
+            {
+                try
+                {
+                    assignment = await _assignmentService.GetAssignmentAsync(model.Assignment);
+                }
+                catch (DataNotFoundException)
+                {
+                    ModelState.AddModelError("InvalidAssignment",
+                        "The exercise is not created yet. A lector first must create the exercise.");
+                    return BadRequest(ModelState);
+                }
+            }
 
             if (!await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, assignment, IsLector()))
             {
@@ -95,7 +113,24 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var component = await _assignmentService.GetOrCreateProjectComponentAsync(model.Assignment);
+            Assignment component;
+            if (IsLector())
+            {
+                component = await _assignmentService.GetOrCreateProjectComponentAsync(model.Assignment);
+            }
+            else
+            {
+                try
+                {
+                    component = await _assignmentService.GetAssignmentAsync(model.Assignment);
+                }
+                catch (DataNotFoundException)
+                {
+                    ModelState.AddModelError("InvalidAssignment", 
+                        "The project component is not created yet. A lector first must first create the component.");
+                    return BadRequest(ModelState);
+                }
+            }
 
             if (! await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, component, IsLector()))
             {

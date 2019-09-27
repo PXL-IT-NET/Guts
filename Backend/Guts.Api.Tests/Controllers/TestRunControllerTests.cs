@@ -120,7 +120,7 @@ namespace Guts.Api.Tests.Controllers
         {
             //Arrange
             var assignment = new AssignmentBuilder().WithId().Build();
-            _assignmentServiceMock.Setup(service => service.GetOrCreateExerciseAsync(It.IsAny<AssignmentDto>()))
+            _assignmentServiceMock.Setup(service => service.GetAssignmentAsync(It.IsAny<AssignmentDto>()))
                 .ReturnsAsync(assignment);
 
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();

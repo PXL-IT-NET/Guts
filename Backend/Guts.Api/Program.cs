@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using Microsoft.Extensions.Logging.EventLog;
 
 namespace Guts.Api
 {
@@ -23,6 +24,7 @@ namespace Guts.Api
                 var logger = loggerFactory.CreateLogger("Program");
                 var userManager = services.GetRequiredService<UserManager<User>>();
                 var roleManager = services.GetRequiredService<RoleManager<Role>>();
+                logger.LogInformation(1,"Starting Guts Api...");
                 try
                 {
                     var initializer = new GutsDbInitializer(context, logger, userManager, roleManager);
@@ -45,8 +47,10 @@ namespace Guts.Api
                 .ConfigureLogging((hostingContext, logging) =>
                 {
                     logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    logging.AddEventSourceLogger();
-                    logging.AddConsole();
+                    logging.AddEventLog(new EventLogSettings
+                    {
+                        SourceName = "Guts" //Attention: make sure the registry of the host contains a key "Guts" in HKEY_LOCAL_MACHINE -> SYSTEM -> CurrentControlSet -> Services -> EventLog -> Application
+                    });
                     logging.AddDebug();
                 }).UseStartup<Startup>();
 
