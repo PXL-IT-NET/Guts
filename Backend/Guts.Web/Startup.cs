@@ -20,7 +20,7 @@ namespace Guts.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<ClientSettings>(Configuration.GetSection("Client"));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc(options => { options.EnableEndpointRouting = false; }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

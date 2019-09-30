@@ -20,13 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Guts.Api.Filters;
+using Microsoft.Extensions.Hosting;
 
 namespace Guts.Api
 {
     public class Startup
     {
         private readonly Container _container;
-        private IHostingEnvironment _currentHostingEnvironment;
+        private IWebHostEnvironment _currentHostingEnvironment;
 
         public Startup(IConfiguration configuration)
         {
@@ -53,12 +54,13 @@ namespace Guts.Api
             services.AddDbContext<GutsContext>(options =>
             {
                 options
-                    .UseLoggerFactory(new LoggerFactory(new[]
-                    {
-                        new DebugLoggerProvider(
-                            (category, level) =>
-                                category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information),
-                    }))
+                    .UseLoggerFactory(
+                        LoggerFactory.Create(builder =>
+                        {
+                            builder.AddFilter((category, level) =>
+                                category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information);
+                            builder.AddDebug();
+                        }))
                     .UseSqlServer(Configuration.GetConnectionString("GutsDatabase"), sqlOptions =>
                     {
                         sqlOptions.MigrationsAssembly("Guts.Data");
@@ -106,21 +108,23 @@ namespace Guts.Api
 
                     options.Filters.Add<LogExceptionFilterAttribute>();
 
-                }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                    options.EnableEndpointRouting = false;
+
+                }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
             services.AddSwaggerDocument(config =>
             {
                 config.PostProcess = document =>
                 {
-                    document.SecurityDefinitions.Add("bearer", new SwaggerSecurityScheme
+                    document.SecurityDefinitions.Add("bearer", new OpenApiSecurityScheme
                     {
-                        Type = SwaggerSecuritySchemeType.ApiKey,
+                        Type = OpenApiSecuritySchemeType.ApiKey,
                         Name = "Authorization",
                         Description =
                             "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
-                        In = SwaggerSecurityApiKeyLocation.Header
+                        In = OpenApiSecurityApiKeyLocation.Header
                     });
-                    document.Schemes = new List<SwaggerSchema> { SwaggerSchema.Https };
+                    document.Schemes = new List<OpenApiSchema> { OpenApiSchema.Https };
                     document.Info.Title = "GUTS Api";
                     document.Info.Description =
                         "Service that collects and queries data about runs of automated tests in programming exercises.";
@@ -131,7 +135,7 @@ namespace Guts.Api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             _currentHostingEnvironment = env;
 

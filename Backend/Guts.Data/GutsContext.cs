@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Guts.Data
 {
@@ -85,6 +86,10 @@ namespace Guts.Data
     {
         private static readonly MethodInfo SetKindToUtcMethod = typeof(DateTimeMapper).GetTypeInfo().GetMethod(nameof(DateTimeMapper.SetKindToUtc));
 
+        public UtcAwareEntityMaterializerSource(EntityMaterializerSourceDependencies dependencies) : base(dependencies)
+        {
+        }
+
         public override Expression CreateReadValueExpression(Expression valueBuffer, Type type, int index, IPropertyBase property)
         {
             if (type == typeof(DateTime))
@@ -96,5 +101,7 @@ namespace Guts.Data
             }
             return base.CreateReadValueExpression(valueBuffer, type, index, property);
         }
+
+       
     }
 }
