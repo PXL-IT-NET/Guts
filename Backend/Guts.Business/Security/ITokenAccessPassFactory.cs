@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Security.Claims;
-using Guts.Domain;
+using Guts.Domain.UserAggregate;
 
 namespace Guts.Business.Security
 {

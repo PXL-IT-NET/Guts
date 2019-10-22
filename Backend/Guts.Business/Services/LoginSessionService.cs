@@ -1,8 +1,8 @@
-﻿using Guts.Data.Repositories;
-using Guts.Domain;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Business.Repositories;
+using Guts.Domain.LoginSessionAggregate;
 
 namespace Guts.Business.Services
 {

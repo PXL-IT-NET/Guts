@@ -33,6 +33,7 @@
     <None Remove="ClientApp\src\app\components\assignmentstatistics\assignmentstatistics.component.ts" />
     <None Remove="ClientApp\src\app\components\assignmentsummary\assignmentsummary.component.ts" />
     <None Remove="ClientApp\src\app\components\chapter\chapter.component.ts" />
+    <None Remove="ClientApp\src\app\components\courseconfig\courseconfig.component.ts" />
     <None Remove="ClientApp\src\app\components\course\course.component.ts" />
     <None Remove="ClientApp\src\app\components\empty.component.ts" />
     <None Remove="ClientApp\src\app\components\login\login.component.spec.ts" />
@@ -49,6 +50,7 @@
     <TypeScriptCompile Include="ClientApp\src\app\components\assignmentstatistics\assignmentstatistics.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\assignmentsummary\assignmentsummary.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\chapter\chapter.component.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\components\courseconfig\courseconfig.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\course\course.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\empty.component.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\components\login\login.component.spec.ts" />

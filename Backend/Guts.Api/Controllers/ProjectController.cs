@@ -1,9 +1,6 @@
 ﻿using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Guts.Data;
-using Guts.Data.Repositories;
-using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Guts.Business;
+using Guts.Business.Repositories;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Guts.Api.Controllers

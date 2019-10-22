@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Guts.Business\Guts.Business.csproj" />
     <ProjectReference Include="..\Guts.Domain\Guts.Domain.csproj" />
   </ItemGroup>
 

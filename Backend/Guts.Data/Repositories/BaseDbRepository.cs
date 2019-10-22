@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Business;
+using Guts.Business.Repositories;
 
 namespace Guts.Data.Repositories
 {
-    public abstract class BaseDbRepository<T> : IBasicRepository<T> where T : class, IDomainObject
+    public abstract class BaseDbRepository<T> : IBasicRepository<T> where T : Entity
     {
         protected readonly GutsContext _context;
 

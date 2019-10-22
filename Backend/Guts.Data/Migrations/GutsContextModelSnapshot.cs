@@ -15,23 +15,27 @@ namespace Guts.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.4-rtm-31024")
+                .HasAnnotation("ProductVersion", "3.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("Guts.Domain.Assignment", b =>
+            modelBuilder.Entity("Guts.Domain.AssignmentAggregate.Assignment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Code")
                         .IsRequired()
+                        .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TopicId");
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -40,78 +44,193 @@ namespace Guts.Data.Migrations
                     b.ToTable("Assignments");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Course", b =>
+            modelBuilder.Entity("Guts.Domain.AssignmentAggregate.TestCodeHash", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignmentId");
+
+                    b.ToTable("TestCodeHash");
+                });
+
+            modelBuilder.Entity("Guts.Domain.CourseAggregate.Course", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Code")
                         .IsRequired()
+                        .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Courses");
                 });
 
-            modelBuilder.Entity("Guts.Domain.LoginSession", b =>
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime>("CreateDateTime");
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ExamPartId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaximumScore")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberOfTestsAlreadyGreenAtStart")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignmentId")
+                        .IsUnique();
+
+                    b.HasIndex("ExamPartId");
+
+                    b.ToTable("AssignmentEvaluation");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaximumScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("Exams");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.ToTable("ExamParts");
+                });
+
+            modelBuilder.Entity("Guts.Domain.LoginSessionAggregate.LoginSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreateDateTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("IpAddress")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsCancelled");
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("LoginToken");
+                    b.Property<string>("LoginToken")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PublicIdentifier")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SessionToken")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("LoginSessions");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Period", b =>
+            modelBuilder.Entity("Guts.Domain.PeriodAggregate.Period", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Description")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("From");
+                    b.Property<DateTime>("From")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("Until");
+                    b.Property<DateTime>("Until")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.ToTable("Periods");
                 });
 
-            modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
+            modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeam", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProjectId");
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -120,15 +239,18 @@ namespace Guts.Data.Migrations
                     b.ToTable("ProjectTeams");
                 });
 
-            modelBuilder.Entity("Guts.Domain.ProjectTeamUser", b =>
+            modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeamUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("ProjectTeamId");
+                    b.Property<int>("ProjectTeamId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -139,19 +261,23 @@ namespace Guts.Data.Migrations
                     b.ToTable("ProjectTeamUsers");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Role", b =>
+            modelBuilder.Entity("Guts.Domain.RoleAggregate.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken();
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
                     b.Property<string>("NormalizedName")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
                     b.HasKey("Id");
@@ -164,16 +290,19 @@ namespace Guts.Data.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Test", b =>
+            modelBuilder.Entity("Guts.Domain.TestAggregate.Test", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AssignmentId");
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
 
                     b.Property<string>("TestName")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -182,41 +311,30 @@ namespace Guts.Data.Migrations
                     b.ToTable("Tests");
                 });
 
-            modelBuilder.Entity("Guts.Domain.TestCodeHash", b =>
+            modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestResult", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AssignmentId");
+                    b.Property<DateTime>("CreateDateTime")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("Hash")
-                        .IsRequired();
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<bool>("Passed")
+                        .HasColumnType("bit");
 
-                    b.HasIndex("AssignmentId");
+                    b.Property<int>("TestId")
+                        .HasColumnType("int");
 
-                    b.ToTable("TestCodeHash");
-                });
+                    b.Property<int>("TestRunId")
+                        .HasColumnType("int");
 
-            modelBuilder.Entity("Guts.Domain.TestResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<DateTime>("CreateDateTime");
-
-                    b.Property<string>("Message");
-
-                    b.Property<bool>("Passed");
-
-                    b.Property<int>("TestId");
-
-                    b.Property<int>("TestRunId");
-
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -229,19 +347,24 @@ namespace Guts.Data.Migrations
                     b.ToTable("TestResults");
                 });
 
-            modelBuilder.Entity("Guts.Domain.TestRun", b =>
+            modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestRun", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AssignmentId");
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("CreateDateTime");
+                    b.Property<DateTime>("CreateDateTime")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("SourceCode");
+                    b.Property<string>("SourceCode")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -252,25 +375,31 @@ namespace Guts.Data.Migrations
                     b.ToTable("TestRuns");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Topic", b =>
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.Topic", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Code")
                         .IsRequired()
+                        .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
 
-                    b.Property<int>("CourseId");
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PeriodId");
+                    b.Property<int>("PeriodId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -283,49 +412,66 @@ namespace Guts.Data.Migrations
                     b.HasDiscriminator<string>("Discriminator").HasValue("Topic");
                 });
 
-            modelBuilder.Entity("Guts.Domain.User", b =>
+            modelBuilder.Entity("Guts.Domain.UserAggregate.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AccessFailedCount");
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken();
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
-                    b.Property<bool>("EmailConfirmed");
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("LockoutEnabled");
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd");
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
                     b.Property<string>("NormalizedUserName")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
-                    b.Property<string>("PasswordHash");
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber");
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PhoneNumberConfirmed");
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("SecurityStamp");
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("TwoFactorEnabled");
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
 
                     b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
                     b.HasKey("Id");
@@ -345,13 +491,17 @@ namespace Guts.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("ClaimType");
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue");
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RoleId");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -364,13 +514,17 @@ namespace Guts.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("ClaimType");
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue");
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -381,13 +535,17 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.Property<string>("LoginProvider");
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderKey");
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderDisplayName");
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -398,9 +556,11 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("RoleId");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -411,171 +571,221 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.Property<int>("UserId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("LoginProvider");
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name");
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Value");
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Chapter", b =>
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.ChapterAggregate.Chapter", b =>
                 {
-                    b.HasBaseType("Guts.Domain.Topic");
-
-
-                    b.ToTable("Chapter");
+                    b.HasBaseType("Guts.Domain.TopicAggregate.Topic");
 
                     b.HasDiscriminator().HasValue("Chapter");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Project", b =>
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAggregate.Project", b =>
                 {
-                    b.HasBaseType("Guts.Domain.Topic");
-
-
-                    b.ToTable("Project");
+                    b.HasBaseType("Guts.Domain.TopicAggregate.Topic");
 
                     b.HasDiscriminator().HasValue("Project");
                 });
 
-            modelBuilder.Entity("Guts.Domain.Assignment", b =>
+            modelBuilder.Entity("Guts.Domain.AssignmentAggregate.Assignment", b =>
                 {
-                    b.HasOne("Guts.Domain.Topic", "Topic")
+                    b.HasOne("Guts.Domain.TopicAggregate.Topic", "Topic")
                         .WithMany("Assignments")
                         .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Guts.Domain.ProjectTeam", b =>
+            modelBuilder.Entity("Guts.Domain.AssignmentAggregate.TestCodeHash", b =>
                 {
-                    b.HasOne("Guts.Domain.Project", "Project")
-                        .WithMany("Teams")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.ProjectTeamUser", b =>
-                {
-                    b.HasOne("Guts.Domain.ProjectTeam", "ProjectTeam")
-                        .WithMany("TeamUsers")
-                        .HasForeignKey("ProjectTeamId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Guts.Domain.User", "User")
-                        .WithMany("TeamUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.Test", b =>
-                {
-                    b.HasOne("Guts.Domain.Assignment", "Assignment")
-                        .WithMany("Tests")
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.TestCodeHash", b =>
-                {
-                    b.HasOne("Guts.Domain.Assignment", "Assignment")
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", "Assignment")
                         .WithMany("TestCodeHashes")
                         .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Guts.Domain.TestResult", b =>
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
                 {
-                    b.HasOne("Guts.Domain.Test", "Test")
-                        .WithMany("Results")
-                        .HasForeignKey("TestId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", null)
+                        .WithOne()
+                        .HasForeignKey("Guts.Domain.ExamAggregate.AssignmentEvaluation", "AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("Guts.Domain.TestRun", "TestRun")
-                        .WithMany("TestResults")
-                        .HasForeignKey("TestRunId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Guts.Domain.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasOne("Guts.Domain.ExamAggregate.ExamPart", null)
+                        .WithMany("AssignmentEvaluations")
+                        .HasForeignKey("ExamPartId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Guts.Domain.TestRun", b =>
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
                 {
-                    b.HasOne("Guts.Domain.Assignment", "Assignment")
-                        .WithMany("TestRuns")
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Guts.Domain.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Guts.Domain.Topic", b =>
-                {
-                    b.HasOne("Guts.Domain.Course", "Course")
+                    b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
 
-                    b.HasOne("Guts.Domain.Period", "Period")
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
+                {
+                    b.HasOne("Guts.Domain.ExamAggregate.Exam", null)
+                        .WithMany("Parts")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeam", b =>
+                {
+                    b.HasOne("Guts.Domain.TopicAggregate.ProjectAggregate.Project", "Project")
+                        .WithMany("Teams")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeamUser", b =>
+                {
+                    b.HasOne("Guts.Domain.ProjectTeamAggregate.ProjectTeam", "ProjectTeam")
+                        .WithMany("TeamUsers")
+                        .HasForeignKey("ProjectTeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.UserAggregate.User", "User")
+                        .WithMany("TeamUsers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.TestAggregate.Test", b =>
+                {
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", "Assignment")
+                        .WithMany("Tests")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestResult", b =>
+                {
+                    b.HasOne("Guts.Domain.TestAggregate.Test", "Test")
+                        .WithMany("Results")
+                        .HasForeignKey("TestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.TestRunAggregate.TestRun", "TestRun")
+                        .WithMany("TestResults")
+                        .HasForeignKey("TestRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestRun", b =>
+                {
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", "Assignment")
+                        .WithMany("TestRuns")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.Topic", b =>
+                {
+                    b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
                         .WithMany()
                         .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("Guts.Domain.Role")
+                    b.HasOne("Guts.Domain.RoleAggregate.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
-                    b.HasOne("Guts.Domain.User")
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.HasOne("Guts.Domain.User")
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.HasOne("Guts.Domain.Role")
+                    b.HasOne("Guts.Domain.RoleAggregate.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("Guts.Domain.User")
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.HasOne("Guts.Domain.User")
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

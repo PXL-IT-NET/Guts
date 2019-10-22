@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net.Mail;
 using Guts.Business.Communication;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.UserAggregate;
 using Moq;
 using NUnit.Framework;
 

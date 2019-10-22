@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Guts.Api.Models;
-using Guts.Business;
+using Guts.Business.Dtos;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.TestAggregate;
 
 namespace Guts.Api.Tests.Builders
 {

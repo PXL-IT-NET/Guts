@@ -4,7 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Guts.Domain;
+using Guts.Domain.UserAggregate;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Guts.Business.Security

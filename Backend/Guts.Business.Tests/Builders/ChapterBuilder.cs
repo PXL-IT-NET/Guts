@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.PeriodAggregate;
+using Guts.Domain.Tests.Builders;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 
 namespace Guts.Business.Tests.Builders
 {

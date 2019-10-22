@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Guts.Domain;
+using Guts.Domain.ProjectTeamAggregate;
 
 namespace Guts.Api.Models.Converters
 {

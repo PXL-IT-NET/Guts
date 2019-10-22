@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Converters;
-using Guts.Data;
-using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Business.Dtos;
+using Guts.Business.Repositories;
+using Guts.Domain.PeriodAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 
 namespace Guts.Business.Services
 {

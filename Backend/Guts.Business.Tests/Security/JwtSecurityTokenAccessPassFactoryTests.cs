@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Guts.Business.Security;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.UserAggregate;
 using NUnit.Framework;
 
 namespace Guts.Business.Tests.Security

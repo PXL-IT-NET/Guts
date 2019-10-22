@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Api", "Guts.Api\Guts.Api.csproj", "{012A8C54-F4DE-4EB7-B62A-0E9450398A58}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Common", "Guts.Common\Guts.Common.csproj", "{F22E8A28-CDAD-4A71-B1AA-61E2265550D3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Web", "Guts.Web\Guts.Web.csproj", "{A37768B7-D05F-4B96-BA93-DBBE69288F09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Guts.Domain.Tests", "Guts.Domain.Tests\Guts.Domain.Tests.csproj", "{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{A37768B7-D05F-4B96-BA93-DBBE69288F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A37768B7-D05F-4B96-BA93-DBBE69288F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A37768B7-D05F-4B96-BA93-DBBE69288F09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

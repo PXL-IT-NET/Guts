@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

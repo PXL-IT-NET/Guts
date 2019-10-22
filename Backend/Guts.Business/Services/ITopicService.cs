@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Domain.TopicAggregate;
 
 namespace Guts.Business.Services
 {

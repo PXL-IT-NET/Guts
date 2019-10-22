@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
-using Guts.Business;
+using Guts.Business.Dtos;
 using Guts.Business.Tests.Builders;
-using Guts.Domain;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.TestRunAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters

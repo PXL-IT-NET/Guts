@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-md-12">
-    <h5>{{course.name}}</h5>
+    <h5>{{course.name}}<span *ngIf="userProfile.isLector()">&nbsp;&nbsp;<a routerLink="config" type="button" class="btn btn-secondary btn-sm"><span class="fa fa-cog"></span></a></span></h5>
     <form>
       <div class="form-group row">
         <label for="chapters" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.chapters.length > 0">Chapter</label>

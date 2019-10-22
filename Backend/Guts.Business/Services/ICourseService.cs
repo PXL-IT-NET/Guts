@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Domain.CourseAggregate;
 
 namespace Guts.Business.Services
 {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Guts.Domain;
+using Guts.Business.Dtos;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Converters
 {
@@ -18,7 +19,7 @@ namespace Guts.Business.Converters
 
             var testPassageStatisticsQuery = from userStatistic in passedTestsPerUserQuery
                                              group userStatistic by userStatistic.AmountOfPassedTests into amountGroup
-                                             select new TestPassageStatistic
+                                             select new TestPassageStatisticDto
                                              {
                                                  AmountOfUsers = amountGroup.Count(),
                                                  AmountOfPassedTests = amountGroup.Key

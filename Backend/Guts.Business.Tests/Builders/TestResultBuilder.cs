@@ -1,6 +1,6 @@
 using Guts.Common.Extensions;
-using Guts.Domain;
 using System;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Tests.Builders
 {

@@ -1,7 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.PeriodAggregate;
+using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.Tests.Builders;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Tests.Builders
 {

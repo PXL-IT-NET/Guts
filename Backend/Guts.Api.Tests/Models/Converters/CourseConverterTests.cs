@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
-using Guts.Domain;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
 using NUnit.Framework;
 

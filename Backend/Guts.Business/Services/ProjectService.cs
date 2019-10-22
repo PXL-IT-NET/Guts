@@ -1,11 +1,12 @@
-﻿using Guts.Data;
-using Guts.Data.Repositories;
-using Guts.Domain;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Converters;
+using Guts.Business.Dtos;
+using Guts.Business.Repositories;
+using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Services
 {

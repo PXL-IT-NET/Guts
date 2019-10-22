@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Guts.Business;
-using Guts.Domain;
+using Guts.Business.Dtos;
+using Guts.Domain.TopicAggregate;
 
 namespace Guts.Api.Models.Converters
 {

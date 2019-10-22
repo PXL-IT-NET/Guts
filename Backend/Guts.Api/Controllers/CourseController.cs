@@ -2,7 +2,6 @@
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Guts.Data.Repositories;
 using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +15,10 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using CsvHelper.Configuration;
+using Guts.Business.Repositories;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.UserAggregate;
 
 namespace Guts.Api.Controllers
 {
@@ -95,7 +98,7 @@ namespace Guts.Api.Controllers
             foreach (var chapterScoreOptions in input.ChapterScoreOptions)
             {
                 var chapter = await _chapterService.LoadChapterAsync(courseId, chapterScoreOptions.ChapterCode);
-                allUsers = allUsers.Union(await _userRepository.GetUsersOfTopicAsync(chapter.Id), new DomainOjbectEqualityComparer<User>()).ToList();
+                allUsers = allUsers.Union(await _userRepository.GetUsersOfTopicAsync(chapter.Id)).ToList();
             }
             allUsers = allUsers.OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToList();
 
@@ -165,18 +168,6 @@ namespace Guts.Api.Controllers
         }
     }
 
-    public class DomainOjbectEqualityComparer<T> : IEqualityComparer<T> where T : IDomainObject
-    {
-        public bool Equals(T x, T y)
-        {
-            return x.Id == y.Id;
-        }
-
-        public int GetHashCode(T obj)
-        {
-            return obj.Id.GetHashCode();
-        }
-    }
 
     public class ScoreOptions
     {
@@ -196,5 +187,4 @@ namespace Guts.Api.Controllers
         public double MaximumScore { get; set; }
         public int MinimumNumberOfGreenTestsThreshold { get; set; }
     }
-
 }

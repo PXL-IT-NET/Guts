@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
-    <PackageReference Include="Moq" Version="4.13.0" />
+    <PackageReference Include="Moq" Version="4.13.1" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
   </ItemGroup>
@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Guts.Business\Guts.Business.csproj" />
     <ProjectReference Include="..\Guts.Common\Guts.Common.csproj" />
     <ProjectReference Include="..\Guts.Data\Guts.Data.csproj" />
+    <ProjectReference Include="..\Guts.Domain.Tests\Guts.Domain.Tests.csproj" />
     <ProjectReference Include="..\Guts.Domain\Guts.Domain.csproj" />
   </ItemGroup>
 

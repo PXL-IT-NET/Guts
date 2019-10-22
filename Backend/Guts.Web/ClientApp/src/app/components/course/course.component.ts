@@ -1,22 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy  } from '@angular/core';
 import { CourseService } from '../../services/course.service';
+import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from '../../viewmodels/course.model';
 import { ITopicModel } from '../../viewmodels/topic.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { UserProfile } from "../../viewmodels/user.model";
+import { Subscription } from 'rxjs';
 
 @Component({
   templateUrl: './course.component.html'
 })
-export class CourseComponent {
+export class CourseComponent implements OnInit, OnDestroy  {
   public course: ICourseContentsModel;
   public selectedChapter: ITopicModel;
   public selectedProject: ITopicModel;
   public loading: boolean = false;
+  public userProfile: UserProfile;
+
+  private userProfileSubscription: Subscription;
 
   constructor(private route: ActivatedRoute,
     private router: Router,
     private courseService: CourseService,
+    private authService: AuthService,
     private toastr: ToastrService) {
     this.course = {
       id: 0,
@@ -30,6 +37,12 @@ export class CourseComponent {
   }
 
   ngOnInit() {
+
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
+    });
+
     this.route.params.subscribe(params => {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
 
@@ -50,6 +63,10 @@ export class CourseComponent {
         }
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.userProfileSubscription.unsubscribe();
   }
 
   public onChapterChanged() {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Guts.Domain;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.UserAggregate;
 
 namespace Guts.Api.Models.Converters
 {

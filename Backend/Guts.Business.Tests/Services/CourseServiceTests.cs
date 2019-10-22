@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using Guts.Business.Repositories;
 using Guts.Business.Services;
-using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Domain.CourseAggregate;
 using Moq;
 using NUnit.Framework;
 

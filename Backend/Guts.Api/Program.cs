@@ -1,11 +1,12 @@
 ﻿using Guts.Data;
-using Guts.Domain;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.UserAggregate;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.EventLog;
 
 namespace Guts.Api
@@ -14,7 +15,7 @@ namespace Guts.Api
     {
         public static void Main(string[] args)
         {
-            var host = CreateWebHostBuilder(args).Build();
+            var host = CreateHostBuilder(args).Build();
 
             using (var scope = host.Services.CreateScope())
             {
@@ -40,19 +41,27 @@ namespace Guts.Api
             host.Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-        {
-            var builder = WebHost.CreateDefaultBuilder(args)
-                .UseIISIntegration()
-                .ConfigureLogging((hostingContext, logging) =>
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        { 
+            var builder = Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.ConfigureKestrel(options =>
+                {
+                    // Set properties and call methods on options
+                });
+                webBuilder.UseIISIntegration();
+                webBuilder.ConfigureLogging((hostingContext, logging) =>
                 {
                     logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                     logging.AddEventLog(new EventLogSettings
                     {
-                        SourceName = "Guts" //Attention: make sure the registry of the host contains a key "Guts" in HKEY_LOCAL_MACHINE -> SYSTEM -> CurrentControlSet -> Services -> EventLog -> Application
+                        SourceName =
+                            "Guts" //Attention: make sure the registry of the host contains a key "Guts" in HKEY_LOCAL_MACHINE -> SYSTEM -> CurrentControlSet -> Services -> EventLog -> Application
                     });
                     logging.AddDebug();
-                }).UseStartup<Startup>();
+                });
+                webBuilder.UseStartup<Startup>();
+            });
 
             return builder;
         }

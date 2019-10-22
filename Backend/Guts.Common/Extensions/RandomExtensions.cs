@@ -13,5 +13,10 @@ namespace Guts.Common.Extensions
         {
             return random.Next(0, 2) == 0;
         }
+
+        public static string NextString(this Random random)
+        {
+            return Guid.NewGuid().ToString();
+        }
     }
 }

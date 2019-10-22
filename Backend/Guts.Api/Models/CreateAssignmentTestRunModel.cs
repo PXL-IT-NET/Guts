@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Guts.Business;
+using Guts.Business.Dtos;
 
 namespace Guts.Api.Models
 {

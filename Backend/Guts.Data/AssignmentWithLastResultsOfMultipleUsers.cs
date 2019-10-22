@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Guts.Domain;
+using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Data
 {

@@ -1,4 +1,4 @@
-﻿using Guts.Domain;
+﻿using Guts.Domain.ProjectTeamAggregate;
 
 namespace Guts.Api.Models.Converters
 {

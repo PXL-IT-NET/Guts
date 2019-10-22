@@ -1,12 +1,24 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using Guts.Domain;
+using Guts.Data.EntityConfigurations;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.ExamAggregate;
+using Guts.Domain.LoginSessionAggregate;
+using Guts.Domain.PeriodAggregate;
+using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.TestAggregate;
+using Guts.Domain.TestRunAggregate;
+using Guts.Domain.TopicAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace Guts.Data
@@ -24,6 +36,10 @@ namespace Guts.Data
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
+
+        public DbSet<Exam> Exams { get; set; }
+
+        public DbSet<ExamPart> ExamParts { get; set; }
 
         public DbSet<LoginSession> LoginSessions { get; set; }
 
@@ -46,17 +62,10 @@ namespace Guts.Data
             builder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
             builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
 
-            builder.Entity<TestResult>().HasOne(result => result.Test).WithMany(test => test.Results)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<TestResult>().HasOne(result => result.TestRun).WithMany(run => run.TestResults)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Test>().HasMany(test => test.Results).WithOne(result => result.Test)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<TestResult>()
-                .HasIndex((result => new {result.TestId, result.UserId, result.CreateDateTime }));
+            builder.ApplyConfiguration(new TestResultConfiguration());
+            builder.ApplyConfiguration(new TestConfiguration());
+            builder.ApplyConfiguration(new ExamPartConfiguration());
+            builder.ApplyConfiguration(new AssignmentEvaluationConfiguration());
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

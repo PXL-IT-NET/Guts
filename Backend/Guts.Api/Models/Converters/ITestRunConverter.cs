@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using Guts.Domain;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Api.Models.Converters
 {

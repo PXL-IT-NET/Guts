@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.TestAggregate;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Tests.Builders
 {

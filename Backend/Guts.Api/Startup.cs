@@ -1,38 +1,38 @@
 ﻿using Guts.Api.Extensions;
 using Guts.Data;
-using Guts.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Debug;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
-using SimpleInjector;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using AutoMapper;
+using Guts.Api.Controllers;
 using Guts.Api.Filters;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.UserAggregate;
 using Microsoft.Extensions.Hosting;
+using NSwag.Generation.Processors.Security;
 
 namespace Guts.Api
 {
     public class Startup
     {
-        private readonly Container _container;
         private IWebHostEnvironment _currentHostingEnvironment;
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            _container = new Container();
         }
 
         public IConfiguration Configuration { get; }
@@ -48,8 +48,6 @@ namespace Guts.Api
             });
 
             services.AddCors();
-
-            services.AddSimpleInjector(_container);
 
             services.AddDbContext<GutsContext>(options =>
             {
@@ -99,39 +97,42 @@ namespace Guts.Api
                     };
                 });
 
-            services.AddMvc(options =>
-                {
-                    if (!_currentHostingEnvironment.IsProduction())
-                    {
-                        options.SslPort = 44318;
-                    }
-
-                    options.Filters.Add<LogExceptionFilterAttribute>();
-
-                    options.EnableEndpointRouting = false;
-
-                }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-
-            services.AddSwaggerDocument(config =>
+            services.AddControllers(options =>
             {
-                config.PostProcess = document =>
+                if (!_currentHostingEnvironment.IsProduction())
                 {
-                    document.SecurityDefinitions.Add("bearer", new OpenApiSecurityScheme
-                    {
-                        Type = OpenApiSecuritySchemeType.ApiKey,
-                        Name = "Authorization",
-                        Description =
-                            "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
-                        In = OpenApiSecurityApiKeyLocation.Header
-                    });
+                    options.SslPort = 44318;
+                }
+
+                options.Filters.Add<LogExceptionFilterAttribute>();
+            });
+
+            services.AddOpenApiDocument(document =>
+            {
+                document.AddSecurity("bearer", Enumerable.Empty<string>(), new OpenApiSecurityScheme
+                {
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    Description =
+                        "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
+                    In = OpenApiSecurityApiKeyLocation.Header
+                });
+                document.PostProcess = document =>
+                {
                     document.Schemes = new List<OpenApiSchema> { OpenApiSchema.Https };
                     document.Info.Title = "GUTS Api";
                     document.Info.Description =
                         "Service that collects and queries data about runs of automated tests in programming exercises.";
                 };
+                document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
             });
 
             services.AddMemoryCache();
+
+            var apiAssembly = typeof(CourseController).Assembly;
+            services.AddAutoMapper(apiAssembly);
+
+            services.AddApplicationServices(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -159,9 +160,11 @@ namespace Guts.Api
 
             app.UseStaticFiles();
 
+            app.UseRouting();
+
             app.UseCookiePolicy();
 
-            app.UseSwagger();
+            app.UseOpenApi();
             app.UseSwaggerUi3();
 
             app.UseCors(builder =>
@@ -180,11 +183,13 @@ namespace Guts.Api
                 }
             });
 
-            app.UseSimpleInjector(_container, Configuration);
-
             app.UseAuthentication();
+            app.UseAuthorization();
 
-            app.UseMvc();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

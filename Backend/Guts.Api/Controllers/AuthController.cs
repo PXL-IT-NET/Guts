@@ -1,12 +1,14 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
+using Guts.Business;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Security;
 using Guts.Business.Services;
-using Guts.Data;
-using Guts.Domain;
+using Guts.Domain.LoginSessionAggregate;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

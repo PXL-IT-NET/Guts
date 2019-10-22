@@ -7,72 +7,46 @@ using Guts.Business.Communication;
 using Guts.Business.Converters;
 using Guts.Business.Security;
 using Guts.Business.Services;
-using Guts.Data;
 using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Domain.ExamAggregate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.ViewComponents;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SimpleInjector;
-using SimpleInjector.Integration.AspNetCore.Mvc;
-using SimpleInjector.Lifestyles;
 
 namespace Guts.Api.Extensions
 {
     public static class StartUpExtensions
     {
-        public static void AddSimpleInjector(this IServiceCollection services, Container container)
+        public static void AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
-            container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-            services.AddSingleton<IControllerActivator>(
-                new SimpleInjectorControllerActivator(container));
-            services.AddSingleton<IViewComponentActivator>(
-                new SimpleInjectorViewComponentActivator(container));
-
-            services.EnableSimpleInjectorCrossWiring(container);
-            services.UseSimpleInjectorAspNetRequestScoping(container);
-        }
-
-        public static void UseSimpleInjector(this IApplicationBuilder app, Container container, IConfiguration configuration)
-        {
-            // Add application presentation components
-            container.RegisterMvcControllers(app);
-            container.RegisterMvcViewComponents(app);
+            //register domain factories
+            services.RegisterTypesWhoseNameEndsWith("Factory", typeof(ExamPart).Assembly, ServiceLifetime.Singleton);
 
             //register converters in api project
-            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(CourseConverter).Assembly, Lifestyle.Singleton);
+            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(CourseConverter).Assembly, ServiceLifetime.Singleton);
 
             //register converters in business project
-            RegisterTypesWhoseNameEndsWith("Converter", container, typeof(AssignmentWitResultsConverter).Assembly, Lifestyle.Singleton);
+            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(AssignmentWitResultsConverter).Assembly, ServiceLifetime.Singleton);
 
             //register services
-            RegisterTypesWhoseNameEndsWith("Service", container, typeof(CourseService).Assembly, Lifestyle.Scoped);
+            services.RegisterTypesWhoseNameEndsWith("Service", typeof(CourseService).Assembly, ServiceLifetime.Scoped);
 
             //register repositories
-            RegisterTypesWhoseNameEndsWith("Repository", container, typeof(CourseDbRepository).Assembly, Lifestyle.Scoped);
+            services.RegisterTypesWhoseNameEndsWith("Repository", typeof(CourseDbRepository).Assembly, ServiceLifetime.Scoped);
 
-
-            container.Register<IHttpClient, HttpClientAdapter>(Lifestyle.Scoped);
-            container.Register<ICaptchaValidator>(() =>
+            services.AddScoped<IHttpClient, HttpClientAdapter>();
+            services.AddScoped<ICaptchaValidator>(provider =>
             {
                 var captchaSection = configuration.GetSection("Captcha");
                 var secret = captchaSection.GetValue<string>("secret");
                 var validationUrl = captchaSection.GetValue<string>("validationUrl");
-                return new GoogleCaptchaValidator(validationUrl, secret, container.GetInstance<IHttpClient>());
-            }, Lifestyle.Scoped);
+                return new GoogleCaptchaValidator(validationUrl, secret, provider.GetService<IHttpClient>());
+            });
 
-            container.Register<ISmtpClient>(() =>
+            services.AddScoped<ISmtpClient>(provider =>
             {
                 var mailSection = configuration.GetSection("Mail");
                 var smtpHost = mailSection.GetValue<string>("host");
@@ -82,15 +56,15 @@ namespace Guts.Api.Extensions
                 return new SmtpClientAdapter(smtpHost, port, fromEmail, password);
             });
 
-            container.Register<IMailSender>(() =>
+            services.AddScoped<IMailSender>(provider =>
             {
                 var mailSection = configuration.GetSection("Mail");
                 var fromEmail = mailSection.GetValue<string>("from");
                 var webAppBaseUrl = mailSection.GetValue<string>("webappbaseurl");
-                return new MailSender(container.GetInstance<ISmtpClient>(), fromEmail, webAppBaseUrl);
-            }, Lifestyle.Scoped);
+                return new MailSender(provider.GetService<ISmtpClient>(), fromEmail, webAppBaseUrl);
+            });
 
-            container.Register<ITokenAccessPassFactory>(() =>
+            services.AddSingleton<ITokenAccessPassFactory>(provider =>
             {
                 var tokenSection = configuration.GetSection("Tokens");
                 var key = tokenSection.GetValue<string>("Key");
@@ -99,19 +73,7 @@ namespace Guts.Api.Extensions
                 var expirationTimeInMinutes = tokenSection.GetValue<int>("ExpirationTimeInMinutes");
 
                 return new JwtSecurityTokenAccessPassFactory(key, issuer, audience, expirationTimeInMinutes);
-            }, Lifestyle.Singleton);
-
-            container.Register<IConfiguration>(() => configuration, Lifestyle.Singleton);
-
-            // Cross-wire ASP.NET services.
-            container.CrossWire<UserManager<User>>(app);
-            container.CrossWire<RoleManager<Role>>(app);
-            container.CrossWire<SignInManager<User>>(app);
-            container.CrossWire<RoleManager<User>>(app);
-            container.CrossWire<IPasswordHasher<User>>(app);
-            container.CrossWire<ILoggerFactory>(app);
-            container.CrossWire<GutsContext>(app);
-            container.CrossWire<IMemoryCache>(app);
+            });
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)
@@ -136,10 +98,9 @@ namespace Guts.Api.Extensions
             );
         }
 
-        private static void RegisterTypesWhoseNameEndsWith(string classAndInterfaceNameEndsWith,
-            Container container,
+        private static void RegisterTypesWhoseNameEndsWith(this IServiceCollection services, string classAndInterfaceNameEndsWith,
             Assembly targetAssembly,
-            Lifestyle lifestyle)
+            ServiceLifetime lifetime)
         {
             var registrations = from type in targetAssembly.GetExportedTypes()
                 where type.Name.EndsWith(classAndInterfaceNameEndsWith) && type.GetInterfaces().Any() && !type.IsInterface
@@ -147,7 +108,7 @@ namespace Guts.Api.Extensions
 
             foreach (var registration in registrations)
             {
-                container.Register(registration.ServiceType, registration.ImplementationType, lifestyle);
+                services.Add(new ServiceDescriptor(registration.ServiceType, registration.ImplementationType, lifetime));
             }
         }
     }

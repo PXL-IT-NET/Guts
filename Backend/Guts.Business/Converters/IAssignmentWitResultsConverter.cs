@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Guts.Domain;
+using Guts.Business.Dtos;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Converters
 {

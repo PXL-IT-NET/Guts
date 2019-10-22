@@ -1,5 +1,5 @@
-using Guts.Domain;
 using System;
+using Guts.Domain.LoginSessionAggregate;
 
 namespace Guts.Business.Tests.Builders
 {

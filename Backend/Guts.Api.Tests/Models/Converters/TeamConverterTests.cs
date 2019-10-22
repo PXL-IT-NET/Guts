@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
-using Guts.Domain;
+using Guts.Domain.ProjectTeamAggregate;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters

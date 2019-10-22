@@ -1,5 +1,5 @@
 using System;
-using Guts.Common.Extensions;
+using Guts.Business.Dtos;
 
 namespace Guts.Business.Tests.Builders
 {

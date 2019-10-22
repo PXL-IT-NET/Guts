@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Business;
+using Guts.Business.Repositories;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories

@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Claims;
-using Guts.Domain;
+using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers

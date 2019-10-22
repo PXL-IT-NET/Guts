@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Business;
+using Guts.Business.Repositories;
+using Guts.Domain.PeriodAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories

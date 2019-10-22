@@ -4,7 +4,7 @@ using System.Linq;
 using Guts.Business.Converters;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.TestRunAggregate;
 using NUnit.Framework;
 
 namespace Guts.Business.Tests.Converters

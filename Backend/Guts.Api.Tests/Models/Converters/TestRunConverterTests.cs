@@ -6,7 +6,8 @@ using Guts.Api.Models.Converters;
 using Guts.Api.Tests.Builders;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Domain;
+using Guts.Domain.TestRunAggregate;
+using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters

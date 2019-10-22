@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Business;
+using Guts.Business.Repositories;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Data.Repositories
@@ -58,9 +60,8 @@ namespace Guts.Data.Repositories
                 where project.CourseId == courseId 
                       && project.Code == projectCode 
                       && project.PeriodId == periodId
-                select new Project
+                select new Project(project.Id)
                 {
-                    Id = project.Id,
                     Code = project.Code,
                     Description = project.Description,
                     Assignments = project.Assignments,

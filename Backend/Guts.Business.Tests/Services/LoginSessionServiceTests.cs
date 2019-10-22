@@ -1,13 +1,12 @@
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
-using Guts.Data;
-using Guts.Data.Repositories;
-using Guts.Domain;
 using Moq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Business.Repositories;
+using Guts.Domain.LoginSessionAggregate;
 
 namespace Guts.Business.Tests.Services
 {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Business.Repositories;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Services
 {

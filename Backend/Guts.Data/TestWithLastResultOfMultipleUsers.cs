@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using Guts.Domain;
+using Guts.Domain.TestAggregate;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Data
 {

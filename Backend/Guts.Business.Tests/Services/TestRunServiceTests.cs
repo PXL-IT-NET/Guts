@@ -1,8 +1,8 @@
 using System;
+using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Common.Extensions;
-using Guts.Data.Repositories;
-using Guts.Domain;
+using Guts.Domain.TestRunAggregate;
 using Moq;
 using NUnit.Framework;
 

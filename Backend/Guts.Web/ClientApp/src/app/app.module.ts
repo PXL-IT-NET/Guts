@@ -18,6 +18,7 @@ import { ForgotPasswordComponent } from './components/forgotpassword/forgotpassw
 import { ResetPasswordComponent } from './components/resetpassword/resetpassword.component';
 
 import { CourseComponent } from './components/course/course.component';
+import { CourseConfigComponent } from './components/courseconfig/courseconfig.component';
 import { ChapterComponent } from "./components/chapter/chapter.component";
 import { ProjectComponent } from './components/project/project.component';
 import { ChapterSummaryComponent } from "./components/chaptersummary/chaptersummary.component";
@@ -56,6 +57,7 @@ import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from 
     ForgotPasswordComponent,
     ResetPasswordComponent,
     CourseComponent,
+    CourseConfigComponent,
     ChapterComponent,
     ProjectComponent,
     ChapterSummaryComponent,
@@ -100,7 +102,10 @@ import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from 
               { path: 'teams/:teamId/components/:assignmentId', component: AssignmentDetailComponent, canActivate: [AuthGuard] }
             ]
           }
-        ]
+        ],
+      },
+      {
+        path: 'courses/:courseId/config', component: CourseConfigComponent, canActivate: [AuthGuard],
       },
       { path: '**', redirectTo: 'home' }
     ]),

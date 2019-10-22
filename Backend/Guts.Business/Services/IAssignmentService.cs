@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Guts.Domain;
+using Guts.Business.Dtos;
+using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Business.Services
 {
