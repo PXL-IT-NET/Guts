@@ -26,7 +26,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
   public numberOfRuns: number;
   public sourceCode: string;
 
-  constructor(source?: AssignmentDetailModel) {
+  constructor(source?: IAssignmentDetailModel) {
     this.assignmentId = 0;
     this.code = '';
     this.description = '';

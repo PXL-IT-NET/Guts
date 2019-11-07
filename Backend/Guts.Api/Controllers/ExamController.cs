@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Guts.Api.Models;
@@ -6,7 +8,7 @@ using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services;
 using Guts.Common;
-using Guts.Domain.ExamAggregate;
+using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +17,7 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/exams")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Constants.Lector)]
     public class ExamController : ControllerBase
     {
         private readonly IExamService _examService;
@@ -25,6 +27,26 @@ namespace Guts.Api.Controllers
         {
             _examService = examService;
             _mapper = mapper;
+        }
+
+        /// <summary>
+        /// Retrieves all exams.
+        /// Optionally filtered by course.
+        /// </summary>
+        /// <param name="courseId"></param>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ExamOutputModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<ActionResult> GetExams([FromQuery] int? courseId = null)
+        {
+            if (courseId <= 0)
+            {
+                return BadRequest(ErrorModel.FromString("Invalid course Id."));
+            }
+            var exams = await _examService.GetExamsAsync(courseId);
+            var model = exams.Select(e => _mapper.Map<ExamOutputModel>(e));
+            return Ok(model);
         }
 
         /// <summary>

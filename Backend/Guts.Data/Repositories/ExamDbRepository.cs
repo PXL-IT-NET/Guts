@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
@@ -13,7 +14,7 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<Exam> LoadWithPartsAndEvaluations(int examId)
+        public async Task<Exam> LoadWithPartsAndEvaluationsAsync(int examId)
         {
             var exam = await _context.Exams.Where(e => e.Id == examId)
                 .Include(e => e.Parts)
@@ -25,6 +26,16 @@ namespace Guts.Data.Repositories
             }
 
             return exam;
+        }
+
+        public async Task<IReadOnlyList<Exam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId)
+        {
+            var exams = await _context.Exams.Where(e => (courseId == null || e.CourseId == courseId) && e.PeriodId == periodId)
+                .Include(e => e.Parts)
+                .ThenInclude(ep => ep.AssignmentEvaluations)
+                .ToListAsync();
+
+            return exams;
         }
     }
 }

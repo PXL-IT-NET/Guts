@@ -5,8 +5,6 @@ import { Subject } from 'rxjs/Subject';
 import { LoginModel } from '../viewmodels/login.model';
 import { TokenModel } from '../viewmodels/token.model';
 import { RegisterModel } from '../viewmodels/register.model';
-import { ClientSettingsService } from './client.settings.service';
-import { ClientSettings } from './client.settings';
 import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
 import { PostResult } from "../util/Result";
@@ -23,7 +21,6 @@ export class AuthService {
   private currentUserProfile: UserProfile;
 
   constructor(private http: HttpClient,
-    private settingsService: ClientSettingsService,
     private localStorageService: LocalStorageService) {
 
     this.loggedInStateSubject = new Subject<boolean>();
@@ -49,41 +46,36 @@ export class AuthService {
 
   public login(model: LoginModel): Observable<PostResult> {
 
-    return this.settingsService.get().mergeMap<ClientSettings, PostResult>((settings: ClientSettings) => {
+    return this.http.post('api/auth/token', model)
+      .map((object: Object) => {
+        var tokenModel = object as TokenModel;
+        if (tokenModel && tokenModel.token) {
+          // set token property
+          this.tokenModel = tokenModel;
 
-      return this.http.post(settings.apiBaseUrl + 'api/auth/token', model)
-        .map((object: Object) => {
-          var tokenModel = object as TokenModel;
-          if (tokenModel && tokenModel.token) {
-            // set token property
-            this.tokenModel = tokenModel;
+          // store username and jwt token in local storage to keep user logged in between page refreshes
+          this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
 
-            // store username and jwt token in local storage to keep user logged in between page refreshes
-            this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
-
-            // return true to indicate successful login
-            this.loggedInStateSubject.next(true);
-            return PostResult.success();
-          } else {
-            // return false to indicate failed login
-            this.loggedInStateSubject.next(false);
-            var result = new PostResult();
-            result.isAuthenticated = false;
-            result.message = 'No token present in returned token model';
-            return result;
-          }
-        }).catch((errorResponse: HttpErrorResponse) => {
+          // return true to indicate successful login
+          this.loggedInStateSubject.next(true);
+          return PostResult.success();
+        } else {
+          // return false to indicate failed login
           this.loggedInStateSubject.next(false);
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+          var result = new PostResult();
+          result.isAuthenticated = false;
+          result.message = 'No token present in returned token model';
+          return result;
+        }
+      }).catch((errorResponse: HttpErrorResponse) => {
+        this.loggedInStateSubject.next(false);
+        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
+      });
   }
 
   public cancelLoginSession(loginSessionPublicIdentifier: string): Observable<PostResult> {
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.patch(settings.apiBaseUrl + 'api/auth/loginsession/' + loginSessionPublicIdentifier + '/cancel',
-        null).map<Object, PostResult>(() => PostResult.success());
-    });
+    return this.http.patch('api/auth/loginsession/' + loginSessionPublicIdentifier + '/cancel',
+      null).map<Object, PostResult>(() => PostResult.success());
   }
 
   public getLoggedInState(): Observable<boolean> {
@@ -92,13 +84,11 @@ export class AuthService {
 
   public getUserProfile(): Observable<UserProfile> {
     if (!this.currentUserProfile) {
-      return this.settingsService.get().mergeMap<ClientSettings, UserProfile>((settings: ClientSettings) => {
-        return this.http.get<IUserProfile>(settings.apiBaseUrl + 'api/users/current/profile')
-          .map<IUserProfile, UserProfile>(profile => {
-            this.currentUserProfile = new UserProfile(profile);
-            return this.currentUserProfile;
-          });
-      });
+      return this.http.get<IUserProfile>('api/users/current/profile')
+        .map<IUserProfile, UserProfile>(profile => {
+          this.currentUserProfile = new UserProfile(profile);
+          return this.currentUserProfile;
+        });
     } else {
       return Observable.from<UserProfile>([this.currentUserProfile]);
     }
@@ -113,47 +103,41 @@ export class AuthService {
   }
 
   public register(model: RegisterModel): Observable<PostResult> {
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.post(settings.apiBaseUrl + 'api/auth/register', model)
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        })
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+    return this.http.post('api/auth/register', model)
+      .map<Object, PostResult>(() => {
+        return PostResult.success();
+      })
+      .catch((errorResponse: HttpErrorResponse) => {
+        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
+      });
   }
 
   public confirmEmail(model: ConfirmEmailModel): Observable<PostResult> {
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.post(settings.apiBaseUrl + 'api/auth/confirmemail', model)
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });;
-    });
+
+    return this.http.post('api/auth/confirmemail', model)
+      .map<Object, PostResult>(() => {
+        return PostResult.success();
+      }).catch((errorResponse: HttpErrorResponse) => {
+        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
+      });;
+
   }
 
   public sendForgotPasswordMail(model: ForgotPasswordModel): Observable<PostResult> {
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.post(settings.apiBaseUrl + 'api/auth/forgotpassword', model)
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });;
-    });
+    return this.http.post('api/auth/forgotpassword', model)
+      .map<Object, PostResult>(() => {
+        return PostResult.success();
+      }).catch((errorResponse: HttpErrorResponse) => {
+        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
+      });
   }
 
   public resetPassword(model: ResetPasswordModel): Observable<PostResult> {
-    return this.settingsService.get().mergeMap((settings: ClientSettings) => {
-      return this.http.post(settings.apiBaseUrl + 'api/auth/resetpassword', model)
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+    return this.http.post('api/auth/resetpassword', model)
+      .map<Object, PostResult>(() => {
+        return PostResult.success();
+      }).catch((errorResponse: HttpErrorResponse) => {
+        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
+      });
   }
 }

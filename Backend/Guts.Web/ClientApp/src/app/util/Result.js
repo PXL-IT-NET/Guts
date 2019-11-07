@@ -5,7 +5,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -64,7 +64,7 @@ exports.Result = Result;
 var PostResult = /** @class */ (function (_super) {
     __extends(PostResult, _super);
     function PostResult() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        return _super.call(this) || this;
     }
     PostResult.success = function () {
         var result = new PostResult();
@@ -77,6 +77,27 @@ var PostResult = /** @class */ (function (_super) {
     return PostResult;
 }(Result));
 exports.PostResult = PostResult;
+var CreateResult = /** @class */ (function (_super) {
+    __extends(CreateResult, _super);
+    function CreateResult() {
+        return _super.call(this) || this;
+    }
+    CreateResult.success = function (value) {
+        var result = new CreateResult();
+        result.success = true;
+        result.value = value;
+        return result;
+    };
+    CreateResult.fromHttpErrorResponse = function (response) {
+        var result = Result.fromHttpErrorResponse(response);
+        var createResult = new CreateResult();
+        createResult.success = result.success;
+        createResult.message = result.message;
+        return createResult;
+    };
+    return CreateResult;
+}(Result));
+exports.CreateResult = CreateResult;
 var GetResult = /** @class */ (function (_super) {
     __extends(GetResult, _super);
     function GetResult() {

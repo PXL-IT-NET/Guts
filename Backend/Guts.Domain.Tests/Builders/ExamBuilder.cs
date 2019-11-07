@@ -9,9 +9,10 @@ namespace Guts.Domain.Tests.Builders
         public ExamBuilder()
         {
             int courseId = Random.NextPositive();
+            int periodId = Random.NextPositive();
             string name = Random.NextString();
 
-            ConstructItem(courseId, name);
+            ConstructItem(courseId, periodId, name);
         }
 
         public ExamBuilder WithId(int examId)

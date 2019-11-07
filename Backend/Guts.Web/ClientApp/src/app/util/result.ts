@@ -70,6 +70,29 @@ export class PostResult extends Result {
   }
 }
 
+export class CreateResult<T> extends Result {
+  public value: T;
+
+  constructor() {
+    super();
+  }
+
+  public static success<T>(value: T): CreateResult<T> {
+    var result = new CreateResult<T>();
+    result.success = true;
+    result.value = value;
+    return result;
+  }
+
+  public static fromHttpErrorResponse<T>(response: HttpErrorResponse): CreateResult<T> {
+    var result = Result.fromHttpErrorResponse(response);
+    var createResult = new CreateResult<T>();
+    createResult.success = result.success;
+    createResult.message = result.message;
+    return createResult;
+  }
+}
+
 export class GetResult<T> extends Result {
   public value: T;
 

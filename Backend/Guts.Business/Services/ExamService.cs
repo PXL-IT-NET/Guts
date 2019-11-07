@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
@@ -11,29 +12,40 @@ namespace Guts.Business.Services
         private readonly IExamRepository _examRepository;
         private readonly IExamPartRepository _examPartRepository;
         private readonly IAssignmentRepository _assignmentRepository;
+        private readonly IPeriodRepository _periodRepository;
         private readonly IExamFactory _examFactory;
 
         public ExamService(IExamRepository examRepository,
             IExamPartRepository examPartRepository,
             IAssignmentRepository assignmentRepository,
+            IPeriodRepository periodRepository,
             IExamFactory examFactory)
         {
             _examRepository = examRepository;
             _examPartRepository = examPartRepository;
             _assignmentRepository = assignmentRepository;
+            _periodRepository = periodRepository;
             _examFactory = examFactory;
         }
 
         public async Task<Exam> CreateExamAsync(int courseId, string name)
         {
-            var newExam = _examFactory.CreateNew(courseId, name);
+            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            var newExam = _examFactory.CreateNew(courseId, currentPeriod.Id, name);
             var savedExam = await _examRepository.AddAsync(newExam);
             return savedExam;
         }
 
+        public async Task<IReadOnlyList<Exam>> GetExamsAsync(int? courseId)
+        {
+            //TODO: write tests
+            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            return await _examRepository.FindWithPartsAndEvaluationsAsync(currentPeriod.Id, courseId);
+        }
+
         public async Task<Exam> GetExamAsync(int id)
         {
-            return await _examRepository.LoadWithPartsAndEvaluations(id);
+            return await _examRepository.LoadWithPartsAndEvaluationsAsync(id);
         }
 
         public async Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)

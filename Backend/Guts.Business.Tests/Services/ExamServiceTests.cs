@@ -3,6 +3,7 @@ using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.PeriodAggregate;
 using Guts.Domain.Tests.Builders;
 using Moq;
 using NUnit.Framework;
@@ -19,6 +20,7 @@ namespace Guts.Business.Tests.Services
         private Random _random;
         private Mock<IExamPartRepository> _examPartRepositoryMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
+        private Mock<IPeriodRepository> _periodRepositoryMock;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -33,9 +35,12 @@ namespace Guts.Business.Tests.Services
             _examFactoryMock = new Mock<IExamFactory>();
             _examPartRepositoryMock = new Mock<IExamPartRepository>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
+            _periodRepositoryMock = new Mock<IPeriodRepository>();
+
             _service = new ExamService(_examRepositoryMock.Object,
                 _examPartRepositoryMock.Object,
                 _assignmentRepositoryMock.Object,
+                _periodRepositoryMock.Object,
                 _examFactoryMock.Object);
         }
 
@@ -44,9 +49,13 @@ namespace Guts.Business.Tests.Services
         {
             var courseId = _random.NextPositive();
             var name = _random.NextString();
+
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+           
             var createdExam = new ExamBuilder().Build();
             _examFactoryMock
-                .Setup(f => f.CreateNew(It.IsAny<int>(), It.IsAny<string>()))
+                .Setup(f => f.CreateNew(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
                 .Returns(createdExam);
             var savedExam = new ExamBuilder().Build();
             _examRepositoryMock
@@ -54,7 +63,7 @@ namespace Guts.Business.Tests.Services
 
             var result = _service.CreateExamAsync(courseId, name).Result;
 
-            _examFactoryMock.Verify(f => f.CreateNew(courseId, name), Times.Once);
+            _examFactoryMock.Verify(f => f.CreateNew(courseId, existingPeriod.Id, name), Times.Once);
             _examRepositoryMock.Verify(repo => repo.AddAsync(createdExam), Times.Once);
             Assert.That(result, Is.SameAs(savedExam));
         }
@@ -65,11 +74,11 @@ namespace Guts.Business.Tests.Services
             var examId = _random.NextPositive();
             var existingExam = new ExamBuilder().WithId(examId).Build();
             _examRepositoryMock
-                .Setup(repo => repo.LoadWithPartsAndEvaluations(It.IsAny<int>())).ReturnsAsync(existingExam);
+                .Setup(repo => repo.LoadWithPartsAndEvaluationsAsync(It.IsAny<int>())).ReturnsAsync(existingExam);
 
             var result = _service.GetExamAsync(examId).Result;
 
-            _examRepositoryMock.Verify(repo => repo.LoadWithPartsAndEvaluations(examId), Times.Once);
+            _examRepositoryMock.Verify(repo => repo.LoadWithPartsAndEvaluationsAsync(examId), Times.Once);
             Assert.That(result, Is.SameAs(existingExam));
         }
     }

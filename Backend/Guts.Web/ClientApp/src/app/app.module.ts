@@ -35,15 +35,18 @@ import { ClientSettingsService } from './services/client.settings.service';
 import { CourseService } from './services/course.service';
 import { ChapterService } from './services/chapter.service';
 import { ProjectService } from './services/project.service';
+import { ExamService } from './services/exam.service';
 import { TopicContextProvider } from "./services/topic.context.provider";
 import { AssignmentService } from './services/assignment.service';
 import { RecaptchaModule } from 'ng-recaptcha';
-import { TokenInterceptor } from './util/tokeninterceptor';
+import { TokenInterceptor } from './interceptors/tokeninterceptor';
 import 'rxjs/Rx';
 import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
+import { RelativeInterceptor } from './interceptors/relative.interceptor';
+import { ExampartComponent } from './components/exampart/exampart.component';
 
 @NgModule({
   declarations: [
@@ -65,7 +68,8 @@ import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from 
     AssignmentSummaryComponent,
     AssignmentStatisticsComponent,
     ProjectTeamOverviewComponent,
-    ProjectSummaryComponent
+    ProjectSummaryComponent,
+    ExampartComponent
   ],
   imports: [
     CommonModule,
@@ -74,7 +78,7 @@ import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from 
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
     FormsModule,
-    NgbModule,
+    NgbModule.forRoot(),
     RouterModule.forRoot([
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
@@ -132,17 +136,15 @@ import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from 
     ChapterService,
     ProjectService,
     AssignmentService,
+    ExamService,
     ClientSettingsService,
     LocalStorageService,
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,
     TopicContextProvider,
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: TokenInterceptor,
-      multi: true
-    }
+    {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true},
+    {provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true}
   ],
   bootstrap: [AppComponent]
 })

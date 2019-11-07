@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Guts.Data.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    [Migration("20191020110730_AddExam")]
+    [Migration("20191025073543_AddExam")]
     partial class AddExam
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -134,9 +134,14 @@ namespace Guts.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PeriodId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
+
+                    b.HasIndex("PeriodId");
 
                     b.ToTable("Exams");
                 });
@@ -642,6 +647,12 @@ namespace Guts.Data.Migrations
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

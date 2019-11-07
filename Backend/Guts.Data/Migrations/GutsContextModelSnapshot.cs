@@ -132,9 +132,14 @@ namespace Guts.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PeriodId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
+
+                    b.HasIndex("PeriodId");
 
                     b.ToTable("Exams");
                 });
@@ -640,6 +645,12 @@ namespace Guts.Data.Migrations
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -32,8 +32,9 @@ namespace Guts.Domain.Tests.ExamAggregate
         public void Factory_CreateNew_ShouldConstructExamCorrectly()
         {
             var validCourseId = _random.NextPositive();
+            var validPeriodId = _random.NextPositive();
             var validName = _random.NextString();
-            var exam = _factory.CreateNew(validCourseId, validName);
+            var exam = _factory.CreateNew(validCourseId, validPeriodId, validName);
 
             Assert.That(exam, Is.Not.Null);
             Assert.That(exam.Id, Is.EqualTo(0));
@@ -43,13 +44,15 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(exam.Parts, Is.Empty);
         }
 
-        [TestCase(0, "someName")]
-        [TestCase(-1, "someName")]
-        [TestCase(1, null)]
-        [TestCase(1, "")]
-        public void Factory_CreateNew_ShouldThrowContractExceptionOnInvalidInput(int courseId, string name)
+        [TestCase(0, 1, "someName")] //invalid course
+        [TestCase(-1, 1, "someName")]
+        [TestCase(1, 1, null)] //invalid name
+        [TestCase(1, 1, "")]
+        [TestCase(1, 0, "someName")] //invalid period
+        [TestCase(1, -1, "someName")]
+        public void Factory_CreateNew_ShouldThrowContractExceptionOnInvalidInput(int courseId, int periodId, string name)
         {
-            Assert.That(() => _factory.CreateNew(courseId, name), Throws.InstanceOf<ContractException>());
+            Assert.That(() => _factory.CreateNew(courseId, periodId, name), Throws.InstanceOf<ContractException>());
         }
 
         [Test]

@@ -14,6 +14,7 @@ namespace Guts.Data.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CourseId = table.Column<int>(nullable: false),
+                    PeriodId = table.Column<int>(nullable: false),
                     Name = table.Column<string>(nullable: false),
                     MaximumScore = table.Column<int>(nullable: false)
                 },
@@ -24,6 +25,12 @@ namespace Guts.Data.Migrations
                         name: "FK_Exams_Courses_CourseId",
                         column: x => x.CourseId,
                         principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Exams_Periods_PeriodId",
+                        column: x => x.PeriodId,
+                        principalTable: "Periods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -96,6 +103,11 @@ namespace Guts.Data.Migrations
                 name: "IX_Exams_CourseId",
                 table: "Exams",
                 column: "CourseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Exams_PeriodId",
+                table: "Exams",
+                column: "PeriodId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

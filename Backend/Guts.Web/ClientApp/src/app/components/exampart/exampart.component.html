@@ -1,0 +1,36 @@
+<div class="mb-2">
+  <button class="btn btn-sm ml-3 btn-light" type="button" (click)="isCollapsed = !isCollapsed">
+    <span class="fa fa-pencil" *ngIf="model.id > 0"></span>
+    <span *ngIf="model.id <= 0"> Add new part</span>
+  </button>
+</div>
+<div [ngbCollapse]="isCollapsed">
+  <div class="card card-body">
+    <form name="form" (ngSubmit)="f.form.valid && saveExampart()" #f="ngForm" novalidate>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" id="name" name="name" [(ngModel)]="model.name" #name="ngModel" required
+              [ngClass]="{ 'is-invalid': f.submitted && !name.valid }" />
+            <div class="invalid-feedback">Name is required</div>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="deadlinedate">Deadline date and time</label>
+          <div class="input-group">
+            <input class="form-control" placeholder="yyyy-mm-dd" id="deadlinedate" name="deadlinedate"
+              [(ngModel)]="model.deadline" ngbDatepicker #d="ngbDatepicker" />
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" (click)="d.toggle()" type="button">
+                <span class="fa fa-calendar"></span>
+              </button>
+            </div>
+          </div>
+          <ngb-timepicker name="deadlinetime" [(ngModel)]="model.deadline"></ngb-timepicker>
+        </div>
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary" type="submit">Add exam part</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -17,5 +17,13 @@ namespace Guts.Api.Models
                 Message = ex.Message
             };
         }
+
+        public static ErrorModel FromString(string message)
+        {
+            return new ErrorModel
+            {
+                Message = message
+            };
+        }
     }
 }
