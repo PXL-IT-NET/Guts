@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import 'rxjs/add/operator/mergeMap';
-import { ClientSettingsService } from './client.settings.service';
-import { ClientSettings } from './client.settings';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel } from "../viewmodels/team.model"
 import { GetResult, PostResult } from "../util/Result";
@@ -13,85 +11,77 @@ import { TeamGenerationModel } from "../viewmodels/team.model"
 
 @Injectable()
 export class ProjectService {
-  constructor(private http: HttpClient,
-    private settingsService: ClientSettingsService) {
+  constructor(private http: HttpClient) {
   }
 
   public getProjectDetails(courseId: number, projectCode: string): Observable<GetResult<IProjectDetailsModel>> {
-
-    return this.settingsService.get().mergeMap<ClientSettings, GetResult<IProjectDetailsModel>>((settings: ClientSettings) => {
-      return this.http
-        .get<IProjectDetailsModel>(settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode)
-        .map(model => GetResult.success(model))
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([GetResult.fromHttpErrorResponse<IProjectDetailsModel>(errorResponse)]);
-        });
-    });
+    return this.http.get<IProjectDetailsModel>('api/courses/' + courseId + '/projects/' + projectCode)
+      .pipe(
+        map(model => GetResult.success(model)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<IProjectDetailsModel>(errorResponse));
+        })
+      );
   }
 
-  public getTeams(courseId: number, projectCode: string): Observable<GetResult<ITeamDetailsModel[]>>{
-    return this.settingsService.get().mergeMap<ClientSettings, GetResult<ITeamDetailsModel[]>>((settings: ClientSettings) => {
-      return this.http
-        .get<ITeamDetailsModel[]>(settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/teams')
-        .map(model => GetResult.success(model))
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([GetResult.fromHttpErrorResponse<ITeamDetailsModel[]>(errorResponse)]);
-        });
-    });
+  public getTeams(courseId: number, projectCode: string): Observable<GetResult<ITeamDetailsModel[]>> {
+    return this.http.get<ITeamDetailsModel[]>('api/courses/' + courseId + '/projects/' + projectCode + '/teams')
+      .pipe(
+        map(model => GetResult.success(model)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<ITeamDetailsModel[]>(errorResponse));
+        })
+      );
   }
 
   public generateTeams(courseId: number, projectCode: string, model: TeamGenerationModel) {
-    return this.settingsService.get().mergeMap<ClientSettings, PostResult>((settings: ClientSettings) => {
-      return this.http
-        .post(settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/generate', model)
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+    return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/generate', model)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public joinTeam(courseId: number, projectCode: string, teamId: number): Observable<PostResult> {
-    return this.settingsService.get().mergeMap<ClientSettings, PostResult>((settings: ClientSettings) => {
-      return this.http
-        .post(settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId, {})
-        .map<Object, PostResult>(() => {
-          return PostResult.success();
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+    return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId, {})
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public getProjectSummary(courseId: number, projectCode: string, teamId: number, date?: moment.Moment): Observable<GetResult<TopicSummaryModel>> {
-    return this.settingsService.get().mergeMap<ClientSettings, GetResult<TopicSummaryModel>>((settings: ClientSettings) => {
-      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/summary';
-      if (date) {
-        apiUrl += '?date=' + date.toISOString();
-      }
+    var apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/summary';
+    if (date) {
+      apiUrl += '?date=' + date.toISOString();
+    }
 
-      return this.http.get<ITopicSummaryModel>(apiUrl)
-        .map<ITopicSummaryModel, GetResult<TopicSummaryModel>>(model => GetResult.success(new TopicSummaryModel(model)))
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([GetResult.fromHttpErrorResponse<TopicSummaryModel>(errorResponse)]);
-        });
-    });
+    return this.http.get<ITopicSummaryModel>(apiUrl)
+      .pipe(
+        map(model => GetResult.success(new TopicSummaryModel(model))),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<TopicSummaryModel>(errorResponse));
+        })
+      );
   }
 
   public getProjectStatistics(courseId: number, projectCode: string, date?: moment.Moment): Observable<GetResult<TopicStatisticsModel>> {
-    return this.settingsService.get().mergeMap<ClientSettings, GetResult<TopicStatisticsModel>>((settings: ClientSettings) => {
-      var apiUrl = settings.apiBaseUrl + 'api/courses/' + courseId + '/projects/' + projectCode + '/statistics';
-      if (date) {
-        apiUrl += '?date=' + date.toISOString();
-      }
-      return this.http.get<ITopicStatisticsModel>(apiUrl)
-        .map<ITopicStatisticsModel, GetResult<TopicStatisticsModel>>((chapterStatistics: ITopicStatisticsModel) => {
+    var apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/statistics';
+    if (date) {
+      apiUrl += '?date=' + date.toISOString();
+    }
+    return this.http.get<ITopicStatisticsModel>(apiUrl)
+      .pipe(
+        map((chapterStatistics: ITopicStatisticsModel) => {
           return GetResult.success(new TopicStatisticsModel(chapterStatistics));
+        }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<TopicStatisticsModel>(errorResponse));
         })
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([GetResult.fromHttpErrorResponse<TopicStatisticsModel>(errorResponse)]);
-        });
-    });
+      );
   }
 }

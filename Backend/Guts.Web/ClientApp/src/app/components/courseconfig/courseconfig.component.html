@@ -11,7 +11,7 @@
         <li class="list-group-item" *ngFor="let exam of exams">
           <div class="mb-2">
             <span>{{exam.name}}</span>
-            <button class="btn btn-sm ml-3" type="button" (click)="exam.isCollapsed = !exam.isCollapsed">
+            <button class="btn btn-sm ml-2 btn-outline-secondary" type="button" (click)="exam.isCollapsed = !exam.isCollapsed">
               <span class="fa fa-pencil"></span>
             </button>
           </div>
@@ -32,7 +32,7 @@
         </li>
         <li class="list-group-item">
           <div class="mb-2">
-            <button class="btn btn-sm ml-3" type="button" (click)="newExam.isCollapsed = !newExam.isCollapsed">
+            <button class="btn btn-sm btn-primary ml-3" type="button" (click)="newExam.isCollapsed = !newExam.isCollapsed">
               Add new exam
             </button>
           </div>

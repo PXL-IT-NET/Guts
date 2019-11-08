@@ -15,7 +15,6 @@ export class TopicContext {
 
   constructor() {
     this.courseId = 0;
-    //this._statusDate = new Date();
     this.statusDate = moment();
     this.topic = null;
     this.statistics = null;

@@ -23,13 +23,13 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public selectedDate: Date;
   public datePickerSettings: any;
   public loading: boolean = false;
-  
+
 
   private courseId: number;
   private chapterCode: string;
 
   private userClick$: Subject<string>;
-  @ViewChild('instance') userTypeAheadInstance: NgbTypeahead;
+  @ViewChild('instance', {static: false}) userTypeAheadInstance: NgbTypeahead;
 
   constructor(private chapterService: ChapterService,
     private topicContextProvider: TopicContextProvider,
@@ -58,7 +58,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     this.chapterCode = '';
 
     // Fix datepicked error: Cannot read property 'getMonth' of undefined
-    DatePicker.prototype.ngOnInit = function() {
+    DatePicker.prototype.ngOnInit = function () {
       this.settings = Object.assign(this.defaultSettings, this.settings);
       if (this.settings.defaultOpen) {
         this.popover = true;
@@ -110,7 +110,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     }
   }
 
-  private navigateToSummaryForSelectedUser() : Promise<boolean> {
+  private navigateToSummaryForSelectedUser(): Promise<boolean> {
     this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
     return this.router.navigate(['users', this.selectedUser.id, 'summary'], { relativeTo: this.route });
   }
@@ -136,7 +136,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
     const debouncedText$: Observable<string> = text$.pipe(debounceTime(200), distinctUntilChanged());
     const clicksWithClosedPopup$: Observable<string> = this.userClick$.pipe(filter(() => !this.userTypeAheadInstance.isPopupOpen()));
 
-    return clicksWithClosedPopup$.merge(debouncedText$).pipe(
+    return clicksWithClosedPopup$.pipe(
+      merge(debouncedText$),
       map((term: string) => {
         if (!term || term.length === 0) {
           return this.model.users;

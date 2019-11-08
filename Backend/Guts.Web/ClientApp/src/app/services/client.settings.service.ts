@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ClientSettings } from './client.settings';
 import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
@@ -14,13 +15,13 @@ export class ClientSettingsService {
     public get(): Observable<ClientSettings> {
         var settings: ClientSettings = JSON.parse(String(this.localStorageService.get(LocalStorageKeys.clientSettings)));
         if (settings && settings.apiBaseUrl) {
-            return Observable.from([settings]);
+            return of(settings);
         } else {
-            return this.http.get<ClientSettings>('/api/clientsettings')
-                .map((settings) => {
+            return this.http.get<ClientSettings>('/api/clientsettings').pipe(
+                map((settings) => {
                     this.localStorageService.set(LocalStorageKeys.clientSettings, JSON.stringify(settings));
                     return settings;
-                });
+                }));
         }
     }
 }

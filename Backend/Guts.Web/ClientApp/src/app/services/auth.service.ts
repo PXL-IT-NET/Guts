@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Subject } from 'rxjs/Subject';
+import { Observable, Subject, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { LoginModel } from '../viewmodels/login.model';
 import { TokenModel } from '../viewmodels/token.model';
 import { RegisterModel } from '../viewmodels/register.model';
@@ -45,37 +45,41 @@ export class AuthService {
   }
 
   public login(model: LoginModel): Observable<PostResult> {
-
     return this.http.post('api/auth/token', model)
-      .map((object: Object) => {
-        var tokenModel = object as TokenModel;
-        if (tokenModel && tokenModel.token) {
-          // set token property
-          this.tokenModel = tokenModel;
+      .pipe(
+        map((object: Object) => {
+          var tokenModel = object as TokenModel;
+          if (tokenModel && tokenModel.token) {
+            // set token property
+            this.tokenModel = tokenModel;
 
-          // store username and jwt token in local storage to keep user logged in between page refreshes
-          this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
+            // store username and jwt token in local storage to keep user logged in between page refreshes
+            this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
 
-          // return true to indicate successful login
-          this.loggedInStateSubject.next(true);
-          return PostResult.success();
-        } else {
-          // return false to indicate failed login
+            // return true to indicate successful login
+            this.loggedInStateSubject.next(true);
+            return PostResult.success();
+          } else {
+            // return false to indicate failed login
+            this.loggedInStateSubject.next(false);
+            var result = new PostResult();
+            result.isAuthenticated = false;
+            result.message = 'No token present in returned token model';
+            return result;
+          }
+        }),
+        catchError((errorResponse: HttpErrorResponse) => {
           this.loggedInStateSubject.next(false);
-          var result = new PostResult();
-          result.isAuthenticated = false;
-          result.message = 'No token present in returned token model';
-          return result;
-        }
-      }).catch((errorResponse: HttpErrorResponse) => {
-        this.loggedInStateSubject.next(false);
-        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-      });
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public cancelLoginSession(loginSessionPublicIdentifier: string): Observable<PostResult> {
     return this.http.patch('api/auth/loginsession/' + loginSessionPublicIdentifier + '/cancel',
-      null).map<Object, PostResult>(() => PostResult.success());
+      null).pipe(
+        map(() => PostResult.success())
+      );
   }
 
   public getLoggedInState(): Observable<boolean> {
@@ -85,12 +89,14 @@ export class AuthService {
   public getUserProfile(): Observable<UserProfile> {
     if (!this.currentUserProfile) {
       return this.http.get<IUserProfile>('api/users/current/profile')
-        .map<IUserProfile, UserProfile>(profile => {
-          this.currentUserProfile = new UserProfile(profile);
-          return this.currentUserProfile;
-        });
+        .pipe(
+          map(profile => {
+            this.currentUserProfile = new UserProfile(profile);
+            return this.currentUserProfile;
+          })
+        );
     } else {
-      return Observable.from<UserProfile>([this.currentUserProfile]);
+      return of(this.currentUserProfile);
     }
   }
 
@@ -104,40 +110,41 @@ export class AuthService {
 
   public register(model: RegisterModel): Observable<PostResult> {
     return this.http.post('api/auth/register', model)
-      .map<Object, PostResult>(() => {
-        return PostResult.success();
-      })
-      .catch((errorResponse: HttpErrorResponse) => {
-        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-      });
+      .pipe(
+        map(() => { return PostResult.success(); }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public confirmEmail(model: ConfirmEmailModel): Observable<PostResult> {
-
     return this.http.post('api/auth/confirmemail', model)
-      .map<Object, PostResult>(() => {
-        return PostResult.success();
-      }).catch((errorResponse: HttpErrorResponse) => {
-        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-      });;
-
+      .pipe(
+        map(() => { return PostResult.success(); }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public sendForgotPasswordMail(model: ForgotPasswordModel): Observable<PostResult> {
     return this.http.post('api/auth/forgotpassword', model)
-      .map<Object, PostResult>(() => {
-        return PostResult.success();
-      }).catch((errorResponse: HttpErrorResponse) => {
-        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-      });
+      .pipe(
+        map(() => { return PostResult.success(); }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 
   public resetPassword(model: ResetPasswordModel): Observable<PostResult> {
     return this.http.post('api/auth/resetpassword', model)
-      .map<Object, PostResult>(() => {
-        return PostResult.success();
-      }).catch((errorResponse: HttpErrorResponse) => {
-        return Observable.from([PostResult.fromHttpErrorResponse(errorResponse)]);
-      });
+      .pipe(
+        map(() => { return PostResult.success(); }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
   }
 }

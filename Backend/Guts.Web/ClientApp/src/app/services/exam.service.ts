@@ -1,43 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { GetResult, CreateResult } from "../util/Result";
-import { Observable } from 'rxjs';
-import { ClientSettingsService } from './client.settings.service';
-import { ClientSettings } from './client.settings';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { IExamModel, ExamModel } from "../viewmodels/exam.model"
-import { mergeMap } from 'rxjs/operator/mergeMap';
-import { map } from 'rxjs/operator/map';
 
 
 @Injectable()
 export class ExamService {
-  private apiBaseUrl: string;
 
-  constructor(private http: HttpClient,
-    private settingsService: ClientSettingsService) {
-    this.apiBaseUrl = '';
+  constructor(private http: HttpClient) {
   }
 
   public getExamsOfCourse(courseId: number): Observable<GetResult<ExamModel[]>> {
-    return this.settingsService.get().mergeMap<ClientSettings, GetResult<ExamModel[]>>((settings: ClientSettings) => {
-      return this.http.get<IExamModel[]>(settings.apiBaseUrl + 'api/exams?courseId=' + courseId)
-        .map(examModels => GetResult.success(examModels.map(model => new ExamModel(model))))
-        .catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([GetResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+    return this.http.get<IExamModel[]>('api/exams?courseId=' + courseId)
+      .pipe(
+        map(examModels => GetResult.success(examModels.map(model => new ExamModel(model)))),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<ExamModel[]>(errorResponse));
+        })
+      );
   }
 
   public saveExam(model: IExamModel): Observable<CreateResult<ExamModel>> {
-    return this.settingsService.get().mergeMap<ClientSettings, CreateResult<ExamModel>>((settings: ClientSettings) => {
-      return this.http.post<IExamModel>(settings.apiBaseUrl + 'api/exams', model)
-        .map<IExamModel, CreateResult<ExamModel>>((savedExam: IExamModel) => {
+    return this.http.post<IExamModel>('api/exams', model)
+      .pipe(
+        map((savedExam: IExamModel) => {
           return CreateResult.success(new ExamModel(savedExam));
-          
-        }).catch((errorResponse: HttpErrorResponse) => {
-          return Observable.from([CreateResult.fromHttpErrorResponse(errorResponse)]);
-        });
-    });
+        }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(CreateResult.fromHttpErrorResponse<ExamModel>(errorResponse));
+        })
+      );
   }
-
 }
