@@ -3,3 +3,9 @@ export interface IAssignmentModel {
   code: string;
   description: string;
 }
+
+export interface ITopicAssignmentModel extends IAssignmentModel{
+  topicCode: string;
+  topicDescription: string;
+  numberOfTests: number;
+}

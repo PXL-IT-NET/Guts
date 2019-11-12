@@ -32,6 +32,9 @@ export class Result {
           if (propertyName === '0') {
             message = <string>messageContainer;
           }
+          else if(typeof(messageContainer[propertyName]) == 'string'){
+            message = <string>messageContainer[propertyName];
+          }
           else if (messageContainer[propertyName] instanceof Array) {
             var lines: string[] = messageContainer[propertyName];
             for (var line of lines) {

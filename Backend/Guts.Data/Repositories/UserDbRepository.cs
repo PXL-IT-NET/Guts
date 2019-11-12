@@ -20,10 +20,13 @@ namespace Guts.Data.Repositories
         {
             var query = from testrun in _context.TestRuns
                         where testrun.Assignment.TopicId == topicId
-                        group testrun by testrun.User into userGroup
-                        select userGroup.Key;
+                        select testrun.User;
            
-            return await query.OrderBy(user => user.FirstName).ThenBy(user => user.LastName).AsNoTracking().ToListAsync();
+            return await query
+                .Distinct()
+                .OrderBy(user => user.FirstName)
+                .ThenBy(user => user.LastName)
+                .AsNoTracking().ToListAsync();
         }
     }
 }

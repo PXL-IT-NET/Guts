@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
@@ -29,6 +30,8 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<IAssignmentConverter> _assignmentConverterMock;
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
+        private Mock<ITopicService> _topicServiceMock;
+        private Mock<IMapper> _mapperMock;
 
         [SetUp]
         public void Setup()
@@ -38,11 +41,13 @@ namespace Guts.Api.Tests.Controllers
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
             _assignmentConverterMock = new Mock<IAssignmentConverter>();
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
+            _topicServiceMock = new Mock<ITopicService>();
+            _mapperMock = new Mock<IMapper>();
 
             _controller = new AssignmentController(_assignmentServiceMock.Object,
                 _assignmentRepositoryMock.Object, 
                 _assignmentConverterMock.Object,
-                _projectTeamRepositoryMock.Object);
+                _projectTeamRepositoryMock.Object, _topicServiceMock.Object, _mapperMock.Object);
         }
 
         [Test]

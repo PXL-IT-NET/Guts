@@ -110,7 +110,5 @@ namespace Guts.Data
             }
             return base.CreateReadValueExpression(valueBuffer, type, index, property);
         }
-
-       
     }
 }

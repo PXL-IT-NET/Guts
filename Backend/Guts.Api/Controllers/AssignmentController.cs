@@ -7,6 +7,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Guts.Api.Models;
 using Guts.Business.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
@@ -21,22 +23,37 @@ namespace Guts.Api.Controllers
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IAssignmentConverter _assignmentConverter;
         private readonly IProjectTeamRepository _projectTeamRepository;
+        private readonly ITopicService _topicService;
+        private readonly IMapper _mapper;
 
         public AssignmentController(IAssignmentService assignmentService,
             IAssignmentRepository assignmentRepository,
             IAssignmentConverter assignmentConverter, 
-            IProjectTeamRepository projectTeamRepository)
+            IProjectTeamRepository projectTeamRepository,
+            ITopicService topicService,
+            IMapper mapper)
         {
             _assignmentService = assignmentService;
             _assignmentRepository = assignmentRepository;
             _assignmentConverter = assignmentConverter;
             _projectTeamRepository = projectTeamRepository;
+            _topicService = topicService;
+            _mapper = mapper;
         }
 
         [HttpGet("{assignmentId}")]
         public async Task<IActionResult> GetAssignmentResults(int assignmentId, [FromQuery] DateTime? date)
         {
             return await GetAssignmentResultsForUser(assignmentId, GetUserId(), date);
+        }
+
+        [HttpGet("ofcourse/{courseId}")]
+        public async Task<IActionResult> GetAssignmentsOfCourse(int courseId)
+        {
+            //TODO: write tests
+            var topics = await _topicService.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId);
+            var models = topics.SelectMany(t => t.Assignments).Select(a => _mapper.Map<TopicAssignmentModel>(a));
+            return Ok(models);
         }
 
         [HttpGet("{assignmentId}/foruser/{userId}")]

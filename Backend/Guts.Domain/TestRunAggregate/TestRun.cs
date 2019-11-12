@@ -18,9 +18,5 @@ namespace Guts.Domain.TestRunAggregate
         public virtual ICollection<TestResult> TestResults { get; set; } = new HashSet<TestResult>();
 
         public string SourceCode { get; set; }
-
-        public TestRun()
-        {
-        }
     }
 }

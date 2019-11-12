@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate;
 
@@ -19,6 +20,11 @@ namespace Guts.Business.Services
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
             return await _topicRepository.GetSingleAsync(courseCode, topicCode, currentPeriod.Id);
+        }
+
+        public async Task<IList<Topic>> GetTopicsByCourseWithAssignmentsAndTestsAsync(int courseId)
+        {
+            return await _topicRepository.GetByCourseWithAssignmentsAndTestsAsync(courseId);
         }
     }
 }

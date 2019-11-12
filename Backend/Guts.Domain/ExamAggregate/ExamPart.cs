@@ -19,11 +19,13 @@ namespace Guts.Domain.ExamAggregate
 
         public virtual IReadOnlyCollection<AssignmentEvaluation> AssignmentEvaluations => _assignmentEvaluations;
 
+        private ExamPart() { } //Needed for EF Core
+
         internal ExamPart(int examId, string name, DateTime deadline)
         {
             Contracts.Require(examId >= 0, "The exam id cannot be negative.");
             Contracts.Require(!string.IsNullOrEmpty(name), "An exam part cannot have an empty name.");
-            Contracts.Require(deadline.ToUniversalTime() == deadline, "The deadline must be an UTC time.");
+            Contracts.Require(deadline.Kind == DateTimeKind.Utc, "The deadline must be an UTC time.");
 
             _assignmentEvaluations = new HashSet<AssignmentEvaluation>();
             ExamId = examId;

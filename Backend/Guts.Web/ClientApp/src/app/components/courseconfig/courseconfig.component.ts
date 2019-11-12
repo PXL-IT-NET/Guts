@@ -4,7 +4,7 @@ import { ExamService } from '../../services/exam.service';
 import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserProfile } from "../../viewmodels/user.model";
-import { ExamModel } from "../../viewmodels/exam.model";
+import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
 import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -21,8 +21,6 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
   private courseId: number;
 
   constructor(private route: ActivatedRoute,
-    private router: Router,
-    private courseService: CourseService,
     private examService: ExamService,
     private authService: AuthService,
     private toastr: ToastrService) {
@@ -69,7 +67,9 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
         this.toastr.error("Could not save exam. Message: " + (result.message || "unknown error"), "API error");
       }
     });
+  }
 
-   
+  public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel){
+    exam.parts.push(examPart);
   }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
@@ -20,6 +22,12 @@ namespace Guts.Data.Repositories
                 throw new DataNotFoundException();
             }
             return topic;
+        }
+
+        public async Task<IList<Topic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId)
+        {
+            var query = _context.Topics.Where(t => t.CourseId == courseId).Include(t => t.Assignments).ThenInclude(a => a.Tests);
+            return await query.ToListAsync();
         }
     }
 }

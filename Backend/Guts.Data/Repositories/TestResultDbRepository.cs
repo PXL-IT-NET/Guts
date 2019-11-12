@@ -37,11 +37,11 @@ namespace Guts.Data.Repositories
         private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int assignmentId, int? teamId, DateTime? dateUtc)
         {
             var testresultsPerTestPerTeamQuery = from testresult in _context.TestResults
-                join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
-                where (testresult.Test.AssignmentId == assignmentId)
-                      && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
-                      && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
-                group testresult by new {testresult.TestId, projectTeamUser.ProjectTeamId};
+                                                 join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
+                                                 where (testresult.Test.AssignmentId == assignmentId)
+                                                       && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
+                                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                                 group testresult by new { testresult.TestId, projectTeamUser.ProjectTeamId };
 
             var lastResultsQuery = testresultsPerTestPerTeamQuery.Select(testresultGroup =>
                 testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
@@ -51,14 +51,35 @@ namespace Guts.Data.Repositories
 
         private async Task<IList<TestResult>> GetLastTestResultsPerUser(int assignmentId, int? userId, DateTime? dateUtc)
         {
-            var testresultsPerTestPerUserQuery = from testresult in _context.TestResults
-                                                 where (testresult.Test.AssignmentId == assignmentId)
-                                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
-                                                       && (userId == null || testresult.UserId == userId.Value)
-                                                 group testresult by new { testresult.TestId, testresult.UserId };
+            var lastResultKeys = from testresult in _context.TestResults
+                                 where testresult.Test.AssignmentId == assignmentId
+                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                       && (userId == null || testresult.UserId == userId.Value)
+                                 group testresult by new { testresult.TestId, testresult.UserId } into g
+                                 select new
+                                 {
+                                     g.Key.TestId,
+                                     g.Key.UserId,
+                                     CreatDateTime = g.Max(tr => tr.CreateDateTime)
+                                 };
 
-            var lastResultsQuery = testresultsPerTestPerUserQuery.Select(testresultGroup =>
-                testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
+            var lastResultsQuery = from testresult in _context.TestResults
+                                   from key in lastResultKeys
+                                   where testresult.TestId == key.TestId
+                                         && testresult.UserId == key.UserId
+                                         && testresult.CreateDateTime == key.CreatDateTime
+                                   select testresult;
+
+
+
+            //var testresultsPerTestPerUserQuery = from testresult in _context.TestResults
+            //                                     where (testresult.Test.AssignmentId == assignmentId)
+            //                                           && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+            //                                           && (userId == null || testresult.UserId == userId.Value)
+            //                                     group testresult by new { testresult.TestId, testresult.UserId };
+
+            //var lastResultsQuery = testresultsPerTestPerUserQuery.Select(testresultGroup =>
+            //    testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
 
             return await lastResultsQuery.AsNoTracking().ToListAsync();
         }
