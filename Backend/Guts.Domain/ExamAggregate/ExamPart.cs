@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 
@@ -35,6 +36,9 @@ namespace Guts.Domain.ExamAggregate
 
         public AssignmentEvaluation AddAssignmentEvaluation(Assignment assignment, int maximumScore, int numberOfTestsAlreadyGreenAtStart)
         {
+            bool isAssignmentAlreadyAdded = _assignmentEvaluations.Any(ae => ae.AssignmentId == assignment.Id);
+            Contracts.Require(!isAssignmentAlreadyAdded, $"An evaluation for assignment '{assignment.Code}' can only be added once.");
+
             var assignmentEvaluation = new AssignmentEvaluation(Id, assignment, maximumScore, numberOfTestsAlreadyGreenAtStart);
             _assignmentEvaluations.Add(assignmentEvaluation);
             return assignmentEvaluation;

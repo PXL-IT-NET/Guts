@@ -40,7 +40,6 @@ namespace Guts.Domain.ExamAggregate
 
         public ExamPart AddExamPart(string name, DateTime deadline)
         {
-            Contracts.Require(deadline > DateTime.UtcNow, "The deadline of a new exam part must be in the future.");
             var evaluation = new ExamPart(Id, name, deadline);
             _parts.Add(evaluation);
             return evaluation;

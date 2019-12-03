@@ -20,7 +20,7 @@
               <h6>Exam parts</h6>
               <ul class="list-group list-group-flush">
                 <li class="list-group-item list-group-item-secondary" *ngFor="let exampart of exam.parts">
-                    <app-exampart [model]="exampart" [examId]="exam.id"></app-exampart>
+                    <app-exampart [model]="exampart" [examId]="exam.id" (examPartDeleted)="onExamPartDeleted($event, exam)"></app-exampart>
                 </li>
                 <li class="list-group-item list-group-item-secondary">
                     <app-exampart [examId]="exam.id" (examPartAdded)="onExamPartAdded($event, exam)"></app-exampart>

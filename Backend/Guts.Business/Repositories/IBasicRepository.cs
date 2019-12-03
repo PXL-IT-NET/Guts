@@ -10,6 +10,7 @@ namespace Guts.Business.Repositories
         Task<IList<T>> GetAllAsync();
         Task<T> AddAsync(T newEntity);
         Task<T> UpdateAsync(T existingEntity);
+        Task DeleteAsync(T entityToDelete);
         Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete);
     }
 }

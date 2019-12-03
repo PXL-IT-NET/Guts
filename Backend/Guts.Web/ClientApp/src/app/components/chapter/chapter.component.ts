@@ -13,7 +13,8 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DatePicker } from 'angular2-datetimepicker';
 
 @Component({
-  templateUrl: './chapter.component.html'
+  templateUrl: './chapter.component.html',
+  providers: [TopicContextProvider]
 })
 export class ChapterComponent implements OnInit, OnDestroy {
 

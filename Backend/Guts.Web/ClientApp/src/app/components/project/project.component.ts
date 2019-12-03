@@ -8,7 +8,8 @@ import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
 
 @Component({
-  templateUrl: './project.component.html'
+  templateUrl: './project.component.html',
+  providers: [TopicContextProvider]
 })
 export class ProjectComponent implements OnInit, OnDestroy {
 

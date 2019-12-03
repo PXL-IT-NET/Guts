@@ -57,6 +57,12 @@ namespace Guts.Data.Repositories
             return entry.Entity;
         }
 
+        public virtual async Task DeleteAsync(T entityToDelete)
+        {
+            _context.Set<T>().Remove(entityToDelete);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete)
         {
             _context.Set<T>().RemoveRange(entitiesToDelete);

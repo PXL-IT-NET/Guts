@@ -5,7 +5,6 @@ import { TopicStatisticsModel, TopicSummaryModel } from '../../viewmodels/topic.
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-import * as moment from 'moment';
 
 @Component({
   templateUrl: './chaptersummary.component.html'
@@ -32,7 +31,10 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
       assignmentStatistics: []
     };
     this.userId = 0;
+    
+  }
 
+  ngOnInit() {
     this.route.params.subscribe(params => {
       this.userId = +params['userId']; // (+) converts 'userId' to a number
       this.loadChapterSummary();
@@ -47,11 +49,6 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
       this.loadingStatistics = false;
       this.statistics = this.topicContextProvider.currentContext.statistics;
     });
-    
-  }
-
-  ngOnInit() {
-
   }
 
   ngOnDestroy() {

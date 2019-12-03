@@ -26,5 +26,13 @@ namespace Guts.Data.Repositories
 
             return evaluation;
         }
+
+        public override async Task DeleteAsync(ExamPart entityToDelete)
+        {
+            var entry = _context.Entry(entityToDelete);
+            await entry.Collection(ep => ep.AssignmentEvaluations).LoadAsync();
+            _context.Set<AssignmentEvaluation>().RemoveRange(entityToDelete.AssignmentEvaluations);
+            await base.DeleteAsync(entityToDelete);
+        }
     }
 }

@@ -32,8 +32,8 @@ export class AssignmentEvaluation implements IAssignmentEvaluation{
  constructor(source?: IAssignmentEvaluation){
    this.id = 0;
    this.assignmentId = 0;
-   this.maximumScore = 0;
-   this.numberOfTestsAlreadyGreenAtStart = 0;
+   this.maximumScore = null;
+   this.numberOfTestsAlreadyGreenAtStart = null;
 
    if(source){
      this.id = source.id;

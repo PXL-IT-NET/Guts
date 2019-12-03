@@ -57,7 +57,6 @@ export class Result {
 }
 
 export class PostResult extends Result {
-
   constructor() {
     super();
   }

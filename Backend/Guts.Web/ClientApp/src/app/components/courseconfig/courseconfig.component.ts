@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy  } from '@angular/core';
-import { CourseService } from '../../services/course.service';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from "../../services/auth.service";
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { UserProfile } from "../../viewmodels/user.model";
 import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
 import { Subscription } from 'rxjs';
@@ -67,6 +66,10 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
         this.toastr.error("Could not save exam. Message: " + (result.message || "unknown error"), "API error");
       }
     });
+  }
+
+  public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel){
+    exam.parts.splice(exam.parts.indexOf(examPart), 1)
   }
 
   public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel){

@@ -28,6 +28,18 @@ namespace Guts.Data.Repositories
             return assignment;
         }
 
+        public async Task<Assignment> GetSingleWithTestsAsync(int assignmentId)
+        {
+            var assignment = await _context.Assignments.Where(a => a.Id == assignmentId)
+                .Include(a => a.Tests)
+                .FirstOrDefaultAsync();
+            if (assignment == null)
+            {
+                throw new DataNotFoundException();
+            }
+            return assignment;
+        }
+
         public async Task<Assignment> GetSingleWithTestsAndCourseAsync(int assignmentId)
         {
             var assignment = await _context.Assignments.Where(a => a.Id == assignmentId)

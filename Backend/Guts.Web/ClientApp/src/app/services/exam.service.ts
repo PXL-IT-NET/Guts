@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { GetResult, CreateResult } from "../util/Result";
+import { GetResult, CreateResult, Result, PostResult } from "../util/Result";
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IExamModel, ExamModel, IExamPartModel, ExamPartModel } from "../viewmodels/exam.model"
@@ -48,6 +48,16 @@ export class ExamService {
         }),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(CreateResult.fromHttpErrorResponse<ExamPartModel>(errorResponse));
+        })
+      );
+  }
+
+  public deleteExamPart(examId: number, examPartId: number): Observable<Result> {
+    return this.http.delete('api/exams/' + examId + '/parts/' + examPartId)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
         })
       );
   }

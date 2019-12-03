@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AssignmentService } from '../../services/assignment.service';
 import { ActivatedRoute } from '@angular/router';
 import { IAssignmentDetailModel, AssignmentDetailModel } from "../../viewmodels/assignmentdetail.model";
@@ -8,7 +8,7 @@ import { TopicContextProvider } from "../../services/topic.context.provider";
   templateUrl: './assignmentdetail.component.html',
   styleUrls: ['./assignmentdetail.component.css']
 })
-export class AssignmentDetailComponent {
+export class AssignmentDetailComponent implements OnInit {
   public model: AssignmentDetailModel;
   public loading: boolean = false;
 

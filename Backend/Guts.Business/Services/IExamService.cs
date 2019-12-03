@@ -12,6 +12,6 @@ namespace Guts.Business.Services
         Task<Exam> GetExamAsync(int id);
         Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto);
         Task<ExamPart> GetExamPartAsync(int examId, int examPartId);
-      
+        Task DeleteExamPartAsync(int id, int examPartId);
     }
 }

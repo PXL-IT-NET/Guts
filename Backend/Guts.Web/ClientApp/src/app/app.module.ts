@@ -2,7 +2,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 
@@ -13,6 +13,7 @@ import * as s from './services';
 import { AuthGuard } from './guards/auth.guard';
 import { TokenInterceptor } from './interceptors/tokeninterceptor';
 import { RelativeInterceptor } from './interceptors/relative.interceptor';
+import { PositiveNumberValidatorDirective } from './util/positive-number.directive';
 
 // 3th party
 import { ChartsModule } from 'ng2-charts';
@@ -44,7 +45,8 @@ import { ToastrModule } from 'ngx-toastr';
     c.AssignmentStatisticsComponent,
     c.ProjectTeamOverviewComponent,
     c.ProjectSummaryComponent,
-    c.ExampartComponent
+    c.ExampartComponent,
+    PositiveNumberValidatorDirective
   ],
   imports: [
     BrowserModule,
@@ -54,6 +56,7 @@ import { ToastrModule } from 'ngx-toastr';
     ChartsModule,
     HttpClientModule,
     FormsModule,
+    ReactiveFormsModule,
     NgbModule,
     LocalStorageModule.forRoot({
       prefix: 'guts',
@@ -80,7 +83,6 @@ import { ToastrModule } from 'ngx-toastr';
     s.AssignmentService,
     s.ExamService,
     s.ClientSettingsService,
-    s.TopicContextProvider,
     LocalStorageService,
     NgbAccordionConfig,
     NgbTypeahead,

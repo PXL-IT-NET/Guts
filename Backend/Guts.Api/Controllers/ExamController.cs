@@ -139,5 +139,26 @@ namespace Guts.Api.Controllers
                 return BadRequest(ErrorModel.FromException(ex));
             }
         }
+
+        /// <summary>
+        /// Deletes an exam part from an existing exam
+        /// </summary>
+        [HttpDelete("{id}/parts/{examPartId}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> DeleteExamPart(int id, int examPartId)
+        {
+            //TODO: write tests
+            try
+            {
+                await _examService.DeleteExamPartAsync(id, examPartId);
+                return Ok();
+            }
+            catch (ContractException ex)
+            {
+                return BadRequest(ErrorModel.FromException(ex));
+            }
+        }
     }
 }

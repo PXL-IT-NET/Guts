@@ -51,11 +51,13 @@ namespace Guts.Business.Services
         public async Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)
         {
             //TODO: write tests
+            Contracts.Require(examPartDto.AssignmentEvaluations.Count > 0,
+                "An exam part must have at least one assignment evaluation.");
             var exam = await GetExamAsync(examId);
             var examPart = exam.AddExamPart(examPartDto.Name, examPartDto.Deadline);
             foreach (var evaluation in examPartDto.AssignmentEvaluations)
             {
-                var assignment = await _assignmentRepository.GetByIdAsync(evaluation.AssignmentId);
+                var assignment = await _assignmentRepository.GetSingleWithTestsAsync(evaluation.AssignmentId);
                 examPart.AddAssignmentEvaluation(assignment, evaluation.MaximumScore,
                     evaluation.NumberOfTestsAlreadyGreenAtStart);
             }
@@ -68,6 +70,13 @@ namespace Guts.Business.Services
             var examPart = await _examPartRepository.LoadWithAssignmentEvaluationsAsync(examPartId);
             Contracts.Require(examPart.ExamId == examId, "Mismatch between exam id and exam part id.");
             return examPart;
+        }
+
+        public async Task DeleteExamPartAsync(int examId, int examPartId)
+        {
+            var examPartToDelete = await _examPartRepository.GetByIdAsync(examPartId);
+            Contracts.Require(examPartToDelete.ExamId == examId, "Mismatch between exam id and exam part id.");
+            await _examPartRepository.DeleteAsync(examPartToDelete);
         }
     }
 }
