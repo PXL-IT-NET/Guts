@@ -170,6 +170,7 @@ namespace Guts.Api
             app.UseCors(builder =>
             {
                 builder.AllowAnyHeader();
+                builder.WithExposedHeaders("Content-Disposition");
                 builder.AllowAnyMethod();
                 builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
                 if (env.IsDevelopment())

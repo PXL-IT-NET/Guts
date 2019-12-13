@@ -7,5 +7,7 @@ namespace Guts.Business.Repositories
     public interface IUserRepository
     {
         Task<IList<User>> GetUsersOfTopicAsync(int topicId);
+
+        Task<IList<User>> GetUsersOfCourseForCurrentPeriodAsync(int courseId);
     }
 }

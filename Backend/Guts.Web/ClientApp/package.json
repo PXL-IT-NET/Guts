@@ -24,6 +24,7 @@
     "angular2-datetimepicker": "^1.1.1",
     "bootstrap": "^4.3.1",
     "chart.js": "^2.9.2",
+    "file-saver": "^2.0.2",
     "font-awesome": "^4.7.0",
     "moment": "^2.24.0",
     "ng-recaptcha": "^5.0.0",

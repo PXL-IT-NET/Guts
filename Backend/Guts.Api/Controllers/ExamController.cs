@@ -1,8 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Guts.Api.Models;
 using Guts.Business;
 using Guts.Business.Dtos;
@@ -23,7 +27,8 @@ namespace Guts.Api.Controllers
         private readonly IExamService _examService;
         private readonly IMapper _mapper;
 
-        public ExamController(IExamService examService, IMapper mapper)
+        public ExamController(IExamService examService, 
+            IMapper mapper)
         {
             _examService = examService;
             _mapper = mapper;
@@ -159,6 +164,39 @@ namespace Guts.Api.Controllers
             {
                 return BadRequest(ErrorModel.FromException(ex));
             }
+        }
+
+        [HttpGet("{id}/downloadscores")]
+        public async Task<IActionResult> DownloadExamScores(int id)
+        {
+            //TODO: write tests
+
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
+            IList<dynamic> results;
+            try
+            {
+                results = await _examService.CalculateExamScores(id);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+
+            var memoryStream = new MemoryStream();
+            var streamWriter = new StreamWriter(memoryStream);
+            var config = new Configuration
+            {
+                CultureInfo = new CultureInfo("nl-BE"),
+            };
+            var csv = new CsvWriter(streamWriter, config);
+            csv.WriteRecords(results);
+            streamWriter.Flush();
+            memoryStream.Position = 0;
+            return File(memoryStream, "text/csv", "ExamScores.csv");
         }
     }
 }

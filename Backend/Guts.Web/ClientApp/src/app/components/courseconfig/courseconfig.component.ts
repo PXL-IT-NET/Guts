@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy  } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from '@angular/router';
@@ -10,7 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 @Component({
   templateUrl: './courseconfig.component.html'
 })
-export class CourseConfigComponent implements OnInit, OnDestroy  {
+export class CourseConfigComponent implements OnInit, OnDestroy {
   public loading: boolean = false;
   public userProfile: UserProfile;
   public exams: ExamModel[];
@@ -47,7 +47,7 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
           this.toastr.error("Could not retrieve exams from API. Message: " + (result.message || "unknown error"), "API error");
         }
       });
-     
+
     });
   }
 
@@ -56,6 +56,7 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
   }
 
   public saveNewExam() {
+    this.loading = true;
     this.newExam.courseId = this.courseId;
     this.examService.saveExam(this.newExam).subscribe(result => {
       this.loading = false;
@@ -68,11 +69,21 @@ export class CourseConfigComponent implements OnInit, OnDestroy  {
     });
   }
 
-  public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel){
+  public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.splice(exam.parts.indexOf(examPart), 1)
   }
 
-  public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel){
+  public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.push(examPart);
+  }
+
+  public downloadResults(exam: ExamModel) {
+    this.loading = true;
+    this.examService.getExamResultsDownloadUrl(exam.id).subscribe(result => {
+      this.loading = false;
+      if(!result.success){
+        this.toastr.error("Could not download results. Message: " + (result.message || "unknown error"), "API error");
+      }
+    });
   }
 }

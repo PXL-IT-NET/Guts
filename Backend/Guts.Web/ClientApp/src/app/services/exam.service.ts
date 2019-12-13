@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { GetResult, CreateResult, Result, PostResult } from "../util/Result";
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { IExamModel, ExamModel, IExamPartModel, ExamPartModel } from "../viewmodels/exam.model"
+import { IExamModel, ExamModel, IExamPartModel, ExamPartModel } from "../viewmodels/exam.model";
+import { saveAs } from 'file-saver';
 
 
 @Injectable()
@@ -58,6 +59,25 @@ export class ExamService {
         map(() => PostResult.success()),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
+  }
+
+  public getExamResultsDownloadUrl(examId: number): Observable<Result> {
+
+    return this.http.get<any>('api/exams/' + examId + '/downloadscores',
+      { headers: { 'Accept': 'application/octet-stream' }, responseType: 'blob' as 'json', observe: 'response'}) //
+      .pipe(
+        map((resonse: HttpResponse<any>) => {
+          var contentDisposition = resonse.headers.get('content-disposition');
+          var filename = contentDisposition.split(';')[1].split('filename')[1].split('=')[1].trim();
+          saveAs(resonse.body, filename);
+          var result = new Result();
+          result.success = true;
+          return result;
+        }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(Result.fromHttpErrorResponse(errorResponse));
         })
       );
   }
