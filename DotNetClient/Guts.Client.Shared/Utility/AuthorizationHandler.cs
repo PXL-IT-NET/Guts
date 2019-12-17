@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace Guts.Client.Shared.Utility
 {
@@ -21,6 +22,7 @@ namespace Guts.Client.Shared.Utility
 
         public async Task<string> RetrieveRemoteAccessTokenAsync()
         {
+            TestContext.Progress.WriteLine("Trying retrieve an access token...");
             var retrieveTokenTaskCompletionSource = new TaskCompletionSource<string>();
 
             Thread thread = new Thread(async () =>
@@ -52,7 +54,8 @@ namespace Guts.Client.Shared.Utility
             thread.Start();
 
             var maxLoginTimeInSeconds = 90;
-            if(await Task.WhenAny(retrieveTokenTaskCompletionSource.Task, Task.Delay(maxLoginTimeInSeconds * 1000)) != retrieveTokenTaskCompletionSource.Task)
+            TestContext.Progress.WriteLine($"Waiting {maxLoginTimeInSeconds} seconds (at most) for the user to login...");
+            if (await Task.WhenAny(retrieveTokenTaskCompletionSource.Task, Task.Delay(maxLoginTimeInSeconds * 1000)) != retrieveTokenTaskCompletionSource.Task)
             {
                 //timeout
                 retrieveTokenTaskCompletionSource.SetException(new Exception($"Login timeout. You must login within {maxLoginTimeInSeconds} seconds."));
