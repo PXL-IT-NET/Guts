@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Business.Converters;
+using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
@@ -28,6 +30,7 @@ namespace Guts.Business.Tests.Services
         private Mock<ITestRunRepository> _testRunRepositoryMock;
         private Mock<IProjectService> _projectServiceMock;
         private Mock<ITopicService> _topicServiceMock;
+        private Mock<IAssignmentWithResultsConverter> _assignmentWithResultsConverterMock;
 
         [SetUp]
         public void Setup()
@@ -40,6 +43,7 @@ namespace Guts.Business.Tests.Services
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _projectServiceMock = new Mock<IProjectService>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
+            _assignmentWithResultsConverterMock = new Mock<IAssignmentWithResultsConverter>();
 
             _service = new AssignmentService(_assignmentRepositoryMock.Object, 
                 _topicServiceMock.Object,
@@ -47,7 +51,31 @@ namespace Guts.Business.Tests.Services
                 _projectServiceMock.Object,
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
-                _testRunRepositoryMock.Object);
+                _testRunRepositoryMock.Object,
+                _assignmentWithResultsConverterMock.Object);
+        }
+
+        [Test]
+        public void GetAssignmentAsync_ShouldRetrieveTheTopicAndThenTheAssignment()
+        {
+            //Arrange
+            var dto = new AssignmentDtoBuilder().Build();
+            var existingTopic = new ChapterBuilder().WithId().Build();
+            var existingAssignment = new AssignmentBuilder().WithId().Build();
+
+            _topicServiceMock.Setup(service => service.GetTopicAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(existingTopic);
+
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>()))
+                .ReturnsAsync(existingAssignment);
+
+            //Act
+            var assignment = _service.GetAssignmentAsync(dto).Result;
+
+            //Assert
+            Assert.That(assignment, Is.SameAs(existingAssignment));
+            _topicServiceMock.Verify(service => service.GetTopicAsync(dto.CourseCode, dto.TopicCode), Times.Once);
+            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingTopic.Id, dto.AssignmentCode), Times.Once);
         }
 
         [Test]
@@ -63,11 +91,9 @@ namespace Guts.Business.Tests.Services
 
             _chapterServiceMock.Setup(repo => repo.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingChapter);
 
-            var existingAssignment = new Assignment
-            {
-                Id = _random.NextPositive(),
-                Code = assignmentDto.AssignmentCode
-            };
+            var existingAssignment = new AssignmentBuilder()
+                .WithId()
+                .WithCode(assignmentDto.AssignmentCode).Build();
 
             _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingAssignment);
 
@@ -95,11 +121,9 @@ namespace Guts.Business.Tests.Services
             _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(existingChapter);
 
-            var addedAssignment = new Assignment
-            {
-                Id = _random.NextPositive(),
-                Code = assignmentDto.AssignmentCode
-            };
+            var addedAssignment = new AssignmentBuilder()
+                .WithId()
+                .WithCode(assignmentDto.AssignmentCode).Build();
 
             _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();
             _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>())).ReturnsAsync(addedAssignment);
@@ -277,6 +301,27 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
+        public void GetResultsForTeamAsync_ShouldRetrieveLastTestsResultsForTeamAndConvertThemToAnAssignmentResultDto()
+        {
+            //Arrange
+            var assignmentId = _random.NextPositive();
+            var teamId = _random.NextPositive();
+            var lastTestResults = new List<TestResult>();
+
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(lastTestResults);
+
+            //Act
+            var result = _service.GetResultsForTeamAsync(assignmentId, teamId, null).Result;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.TestResults, Is.SameAs(lastTestResults));
+            Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfTeam(assignmentId, teamId, null), Times.Once);
+        }
+
+        [Test]
         public void ValidateTestCodeHashAsyncShouldReturnTrueForAValidHash()
         {
             //Arrange
@@ -354,6 +399,58 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
+        public void GetAssignmentUserStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
+        {
+            //Arrange
+            var assignmentId = _random.NextPositive();
+            var date = DateTime.UtcNow;
+            var lastTestResults = new List<TestResult>();
+            var assignmentStatisticsDto = new AssignmentStatisticsDto();
+
+            _testResultRepositoryMock
+                .Setup(repo => repo.GetLastTestResultsOfAllUsers(It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(lastTestResults);
+
+            _assignmentWithResultsConverterMock
+                .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
+                .Returns(assignmentStatisticsDto);
+
+            //Act
+            var result = _service.GetAssignmentUserStatisticsAsync(assignmentId, date).Result;
+
+            //Assert
+            Assert.That(result, Is.SameAs(assignmentStatisticsDto));
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllUsers(assignmentId, date), Times.Once);
+            _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
+        }
+
+        [Test]
+        public void GetAssignmentTeamStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
+        {
+            //Arrange
+            var assignmentId = _random.NextPositive();
+            var date = DateTime.UtcNow;
+            var lastTestResults = new List<TestResult>();
+            var assignmentStatisticsDto = new AssignmentStatisticsDto();
+
+            _testResultRepositoryMock
+                .Setup(repo => repo.GetLastTestResultsOfAllTeams(It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(lastTestResults);
+
+            _assignmentWithResultsConverterMock
+                .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
+                .Returns(assignmentStatisticsDto);
+
+            //Act
+            var result = _service.GetAssignmentTeamStatisticsAsync(assignmentId, date).Result;
+
+            //Assert
+            Assert.That(result, Is.SameAs(assignmentStatisticsDto));
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllTeams(assignmentId, date), Times.Once);
+            _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
+        }
+
+        [Test]
         public void GetUserTestRunInfoForAssignment_ShouldRetrieveTestrunsOfAUserForAnAssignmentAndReturnTheCorrectInfo()
         {
             //Arrange
@@ -380,6 +477,39 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(testRunInfo, Is.Not.Null);
             _testRunRepositoryMock.Verify(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now), Times.Once);
+            Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
+            Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
+            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
+            Assert.That(testRunInfo.SourceCode, Is.EqualTo(lastRun.SourceCode));
+        }
+
+        [Test]
+        public void GetTeamTestRunInfoForAssignment_ShouldRetrieveTestrunsOfATeamForAnAssignmentAndReturnTheCorrectInfo()
+        {
+            //Arrange
+            var random = new Random();
+            var now = DateTime.UtcNow;
+            int assignmentId = random.NextPositive();
+            int teamId = random.NextPositive();
+            var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
+            var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
+            var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
+            var testRuns = new List<TestRun>
+            {
+                firstRun,
+                secondRun,
+                lastRun
+            };
+            _testRunRepositoryMock
+                .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .ReturnsAsync(testRuns);
+
+            //Act
+            var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
+
+            //Assert
+            Assert.That(testRunInfo, Is.Not.Null);
+            _testRunRepositoryMock.Verify(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now), Times.Once);
             Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
             Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
             Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));

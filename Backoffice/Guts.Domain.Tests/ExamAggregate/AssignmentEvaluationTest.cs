@@ -42,6 +42,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(evaluation.NumberOfTestsAlreadyGreenAtStart, Is.EqualTo(validNumberOfTestsAlreadyGreenAtStart));
         }
 
+        [Test]
         [TestCase(-1, 10, 1)]
         [TestCase(1, 0, 0)]
         [TestCase(1, 10, -1)]
@@ -62,6 +63,7 @@ namespace Guts.Domain.Tests.ExamAggregate
                 Throws.InstanceOf<ContractException>());
         }
 
+        [Test]
         [TestCaseSource(typeof(InvalidAssignmentCases))]
         public void Constructor_ShouldThrowContractExceptionOnInvalidAssignment(Assignment invalidAssignment)
         {
@@ -85,6 +87,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             }
         }
 
+        [Test]
         [TestCase(5, 6)]
         [TestCase(5, 5)]
         public void Constructor_ShouldThrowContractExceptionWhenTestsAlreadyGreenAreEqualOrGreaterThanNumberOfTestsInTheAssignment(int numberOfTests, int numberOfTestsAlreadyGreen)

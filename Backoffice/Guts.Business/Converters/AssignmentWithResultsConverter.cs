@@ -5,7 +5,7 @@ using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Converters
 {
-    public class AssignmentWitResultsConverter : IAssignmentWitResultsConverter
+    public class AssignmentWithResultsConverter : IAssignmentWithResultsConverter
     {
         public AssignmentStatisticsDto ToAssignmentStatisticsDto(int assignmentId, IList<TestResult> lastResultsOfMultipleUsers)
         {

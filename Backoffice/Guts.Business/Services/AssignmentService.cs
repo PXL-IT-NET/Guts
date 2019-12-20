@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Services
 {
@@ -18,6 +20,7 @@ namespace Guts.Business.Services
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestRunRepository _testRunRepository;
+        private readonly IAssignmentWithResultsConverter _assignmentWithResultsConverter;
 
         public AssignmentService(IAssignmentRepository assignmentRepository,
             ITopicService topicService,
@@ -25,7 +28,8 @@ namespace Guts.Business.Services
             IProjectService projectService,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
-            ITestRunRepository testRunRepository)
+            ITestRunRepository testRunRepository,
+            IAssignmentWithResultsConverter assignmentWithResultsConverter)
         {
             _chapterService = chapterService;
             _projectService = projectService;
@@ -34,6 +38,7 @@ namespace Guts.Business.Services
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testRunRepository = testRunRepository;
+            _assignmentWithResultsConverter = assignmentWithResultsConverter;
         }
 
         public async Task<Assignment> GetAssignmentAsync(AssignmentDto assignmentDto)
@@ -92,25 +97,12 @@ namespace Guts.Business.Services
 
         public async Task<AssignmentTestRunInfoDto> GetUserTestRunInfoForAssignment(int assignmentId, int userId, DateTime? dateUtc)
         {
-            var testRunInfo = new AssignmentTestRunInfoDto();
-
             var testRuns = await _testRunRepository.GetUserTestRunsForAssignmentAsync(assignmentId, userId, dateUtc);
-            if (testRuns.Any())
-            {
-                var firstTestRun = testRuns.First();
-                var lastTestRun = testRuns.Last();
-                testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
-                testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
-                testRunInfo.SourceCode = lastTestRun.SourceCode;
-                testRunInfo.NumberOfRuns = testRuns.Count;
-            }
-
-            return testRunInfo;
+            return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
         public async Task<AssignmentResultDto> GetResultsForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc)
         {
-            //TODO: add unit tests
             return new AssignmentResultDto
             {
                 AssignmentId = assignmentId,
@@ -120,25 +112,13 @@ namespace Guts.Business.Services
 
         public async Task<AssignmentTestRunInfoDto> GetTeamTestRunInfoForAssignment(int assignmentId, int teamId, DateTime? dateUtc)
         {
-            //TODO: add unit tests
-            var testRunInfo = new AssignmentTestRunInfoDto();
-
             var testRuns = await _testRunRepository.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, dateUtc);
-            if (testRuns.Any())
-            {
-                var firstTestRun = testRuns.First();
-                var lastTestRun = testRuns.Last();
-                testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
-                testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
-                testRunInfo.SourceCode = lastTestRun.SourceCode;
-                testRunInfo.NumberOfRuns = testRuns.Count;
-            }
-
-            return testRunInfo;
+            return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
         public async Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId)
         {
+            //TODO: write tests
             var testRunsWithUser = await _testRunRepository.GetLastTestRunForAssignmentOfAllUsersAsync(assignmentId);
 
             return testRunsWithUser.Select(testrun => new AssignmentSourceDto
@@ -167,6 +147,33 @@ namespace Guts.Business.Services
                 return true;
             }
             return false;
+        }
+
+        public async Task<AssignmentStatisticsDto> GetAssignmentUserStatisticsAsync(int assignmentId, DateTime? dateUtc)
+        {
+            var testResults = await _testResultRepository.GetLastTestResultsOfAllUsers(assignmentId, dateUtc);
+            return _assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
+        }
+
+        public async Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int assignmentId, DateTime? dateUtc)
+        {
+            var testResults = await _testResultRepository.GetLastTestResultsOfAllTeams(assignmentId, dateUtc);
+            return _assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
+        }
+
+        private AssignmentTestRunInfoDto ConstructTestRunInfoFromTestRuns(IList<TestRun> testRuns)
+        {
+            var testRunInfo = new AssignmentTestRunInfoDto();
+            if (testRuns.Any())
+            {
+                var firstTestRun = testRuns.First();
+                var lastTestRun = testRuns.Last();
+                testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
+                testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
+                testRunInfo.SourceCode = lastTestRun.SourceCode;
+                testRunInfo.NumberOfRuns = testRuns.Count;
+            }
+            return testRunInfo;
         }
 
         private async Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode)

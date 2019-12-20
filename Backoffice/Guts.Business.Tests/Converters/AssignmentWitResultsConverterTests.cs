@@ -16,7 +16,7 @@ namespace Guts.Business.Tests.Converters
         public void ToAssignmentStatisticsDtoShouldCorrectlyGenerateStatistics()
         {
             //Arrange
-            var converter = new AssignmentWitResultsConverter();
+            var converter = new AssignmentWithResultsConverter();
    
             var random = new Random();
             var assigmentId = random.NextPositive();

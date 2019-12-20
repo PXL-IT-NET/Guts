@@ -29,7 +29,7 @@ namespace Guts.Api.Extensions
             services.RegisterTypesWhoseNameEndsWith("Converter", typeof(CourseConverter).Assembly, ServiceLifetime.Singleton);
 
             //register converters in business project
-            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(AssignmentWitResultsConverter).Assembly, ServiceLifetime.Singleton);
+            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(AssignmentWithResultsConverter).Assembly, ServiceLifetime.Singleton);
 
             //register services
             services.RegisterTypesWhoseNameEndsWith("Service", typeof(CourseService).Assembly, ServiceLifetime.Scoped);

@@ -15,20 +15,17 @@ namespace Guts.Business.Services
         private readonly IChapterRepository _chapterRepository;
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
-        private readonly ITestResultRepository _testResultRepository;
-        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
+        private readonly IAssignmentService _assignmentService;
 
         public ChapterService(IChapterRepository chapterRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
-            ITestResultRepository testResultRepository,
-            IAssignmentWitResultsConverter assignmentWitResultsConverter)
+            IAssignmentService assignmentService)
         {
             _chapterRepository = chapterRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
-            _testResultRepository = testResultRepository;
-            _assignmentWitResultsConverter = assignmentWitResultsConverter;
+            _assignmentService = assignmentService;
         }
 
         public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, string chapterCode)
@@ -75,19 +72,10 @@ namespace Guts.Business.Services
 
         public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(Chapter chapter, int userId, DateTime? dateUtc)
         {
-            if (chapter.Assignments == null)
-            {
-                throw new ArgumentException("The chapter should have its assignments loaded");
-            }
-
             var results = new List<AssignmentResultDto>();
             foreach (var assignment in chapter.Assignments)
             {
-                var dto = new AssignmentResultDto
-                {
-                    AssignmentId = assignment.Id,
-                    TestResults = await _testResultRepository.GetLastTestResultsOfUser(assignment.Id, userId, dateUtc)
-                };
+                var dto = await _assignmentService.GetResultsForUserAsync(assignment.Id, userId, dateUtc);
                 results.Add(dto);
             }
 
@@ -99,10 +87,8 @@ namespace Guts.Business.Services
             var results = new List<AssignmentStatisticsDto>();
             foreach (var assignment in chapter.Assignments)
             {
-                var testResults =
-                    await _testResultRepository.GetLastTestResultsOfAllUsers(assignment.Id, dateUtc);
-                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
-
+                var assignmentStatisticsDto = await _assignmentService.GetAssignmentUserStatisticsAsync(assignment.Id, dateUtc);
+                results.Add(assignmentStatisticsDto);
             }
             return results;
         }

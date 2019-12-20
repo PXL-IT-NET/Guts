@@ -60,12 +60,6 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public ProjectBuilder WithoutCourseLoaded()
-        {
-            _project.Course = null;
-            return this;
-        }
-
         public ProjectBuilder WithPeriod(Period period)
         {
             _project.Period = period;
@@ -102,12 +96,6 @@ namespace Guts.Business.Tests.Builders
                 var team = new ProjectTeamBuilder().WithId().WithProject(_project).Build();
                 _project.Teams.Add(team);
             }
-            return this;
-        }
-
-        public ProjectBuilder WithoutTeams()
-        {
-            _project.Teams = null;
             return this;
         }
 

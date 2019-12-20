@@ -73,15 +73,5 @@ namespace Guts.Api.Tests.Models.Converters
             //Act + Assert
             Assert.That(() => _converter.ToProjectDetailModel(project), Throws.ArgumentNullException);
         }
-
-        [Test]
-        public void ToProjectDetailModel_ShouldThrowArgumentExceptionWhenTeamsAreNotLoaded()
-        {
-            //Arrange
-            var project = new ProjectBuilder().WithId().WithoutTeams().Build();
-
-            //Act + Assert
-            Assert.That(() => _converter.ToProjectDetailModel(project), Throws.ArgumentNullException);
-        }
     }
 }

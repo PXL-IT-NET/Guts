@@ -24,5 +24,8 @@ namespace Guts.Business.Services
         Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId);
 
         Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector);
+
+        Task<AssignmentStatisticsDto> GetAssignmentUserStatisticsAsync(int assignmentId, DateTime? dateUtc);
+        Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int assignmentId, DateTime? dateUtc);
     }
 }

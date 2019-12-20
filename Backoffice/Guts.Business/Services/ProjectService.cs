@@ -16,22 +16,19 @@ namespace Guts.Business.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly IProjectTeamRepository _projectTeamRepository;
-        private readonly ITestResultRepository _testResultRepository;
-        private readonly IAssignmentWitResultsConverter _assignmentWitResultsConverter;
+        private readonly IAssignmentService _assignmentService;
 
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
             IProjectTeamRepository projectTeamRepository,
-            ITestResultRepository testResultRepository,
-            IAssignmentWitResultsConverter assignmentWitResultsConverter)
+            IAssignmentService assignmentService)
         {
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
             _projectTeamRepository = projectTeamRepository;
-            _testResultRepository = testResultRepository;
-            _assignmentWitResultsConverter = assignmentWitResultsConverter;
+            _assignmentService = assignmentService;
         }
 
         public async Task<Project> GetProjectAsync(string courseCode, string projectCode)
@@ -100,8 +97,7 @@ namespace Guts.Business.Services
 
             if (project.Teams.Count >= numberOfTeams) return;
 
-            var amountOfTeamsWithBaseName = project.Teams.Count(team => team.Name.StartsWith(teamBaseName));
-            for (int teamNumber = amountOfTeamsWithBaseName + 1; teamNumber <= numberOfTeams; teamNumber++)
+            for (int teamNumber = project.Teams.Count + 1; teamNumber <= numberOfTeams; teamNumber++)
             {
                 var newTeam = new ProjectTeam
                 {
@@ -120,27 +116,17 @@ namespace Guts.Business.Services
             return teams;
         }
 
-        public async Task AddUserToProjectTeam(int teamId, int userId)
+        public async Task AddUserToProjectTeamAsync(int teamId, int userId)
         {
             await _projectTeamRepository.AddUserToTeam(teamId, userId);
         }
 
         public async Task<IList<AssignmentResultDto>> GetResultsForTeamAsync(Project project, int teamId, DateTime? dateUtc)
         {
-            //TOOD: write tests
-            if (project.Assignments == null)
-            {
-                throw new ArgumentException("The project should have its assignments loaded");
-            }
-
             var results = new List<AssignmentResultDto>();
             foreach (var assignment in project.Assignments)
             {
-                var dto = new AssignmentResultDto
-                {
-                    AssignmentId = assignment.Id,
-                    TestResults = await _testResultRepository.GetLastTestResultsOfTeam(assignment.Id, teamId, dateUtc)
-                };
+                var dto = await _assignmentService.GetResultsForTeamAsync(assignment.Id, teamId, dateUtc);
                 results.Add(dto);
             }
 
@@ -149,13 +135,12 @@ namespace Guts.Business.Services
 
         public async Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc)
         {
-            //TODO: write tests
             var results = new List<AssignmentStatisticsDto>();
             foreach (var assignment in project.Assignments)
             {
-                var testResults =
-                    await _testResultRepository.GetLastTestResultsOfAllTeams(assignment.Id, dateUtc);
-                results.Add(_assignmentWitResultsConverter.ToAssignmentStatisticsDto(assignment.Id, testResults));
+                var assignmentStatistics =
+                    await _assignmentService.GetAssignmentTeamStatisticsAsync(assignment.Id, dateUtc);
+                results.Add(assignmentStatistics);
             }
             return results;
         }

@@ -30,6 +30,12 @@ namespace Guts.Domain.Tests.Builders
             return this;
         }
 
+        public AssignmentBuilder WithCode(string code)
+        {
+            _assignment.Code = code;
+            return this;
+        }
+
         public AssignmentBuilder WithRandomTests(int numberOfTests)
         {
             var tests = new List<Test>();
@@ -82,5 +88,6 @@ namespace Guts.Domain.Tests.Builders
             return _assignment;
         }
 
+       
     }
 }

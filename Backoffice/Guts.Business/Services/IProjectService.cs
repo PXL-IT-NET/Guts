@@ -27,7 +27,7 @@ namespace Guts.Business.Services
 
         Task<IList<ProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
 
-        Task AddUserToProjectTeam(int teamId, int userId);
+        Task AddUserToProjectTeamAsync(int teamId, int userId);
 
         Task<IList<AssignmentResultDto>> GetResultsForTeamAsync(Project project, int teamId, DateTime? dateUtc);
 

@@ -2,6 +2,7 @@
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Guts.Domain.UserAggregate;
 
 namespace Guts.Business.Communication
@@ -48,7 +49,7 @@ namespace Guts.Business.Communication
 
         public async Task SendForgotPasswordMessageAsync(User user, string forgotPasswordToken)
         {
-            var callbackUri = new Uri(_webAppBaseUri, $"resetpassword?userId={user.Id}&token={forgotPasswordToken}");
+            var callbackUri = new Uri(_webAppBaseUri, $"resetpassword?userId={user.Id}&token={HttpUtility.UrlEncode(forgotPasswordToken)}");
 
             var bodyBuilder = new StringBuilder();
             bodyBuilder.AppendLine("<html><body>");

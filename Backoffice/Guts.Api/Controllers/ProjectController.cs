@@ -144,7 +144,7 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            await _projectService.AddUserToProjectTeam(teamId, GetUserId());
+            await _projectService.AddUserToProjectTeamAsync(teamId, GetUserId());
             return Ok();
         }
 
