@@ -1,4 +1,4 @@
-﻿namespace Guts.Client.Core.Models
+﻿namespace Guts.Client.Shared.Utility
 {
     public class LoginSession
     {

@@ -21,8 +21,8 @@ namespace Guts.Business.Tests.Services
         private Mock<IExamPartRepository> _examPartRepositoryMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
-        private Mock<IAssignmentService> _assignmentServiceMock;
         private Mock<IUserRepository> _userRepositoryMock;
+        private Mock<ITestResultRepository> _testResultRepositoryMock;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -37,18 +37,17 @@ namespace Guts.Business.Tests.Services
             _examFactoryMock = new Mock<IExamFactory>();
             _examPartRepositoryMock = new Mock<IExamPartRepository>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
-            _assignmentServiceMock = new Mock<IAssignmentService>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
-
+            _testResultRepositoryMock = new Mock<ITestResultRepository>();
 
             _service = new ExamService(_examRepositoryMock.Object,
                 _examPartRepositoryMock.Object,
                 _assignmentRepositoryMock.Object,
-                _assignmentServiceMock.Object,
                 _periodRepositoryMock.Object,
                 _examFactoryMock.Object, 
-                _userRepositoryMock.Object);
+                _userRepositoryMock.Object, 
+                _testResultRepositoryMock.Object);
         }
 
         [Test]
@@ -81,11 +80,11 @@ namespace Guts.Business.Tests.Services
             var examId = _random.NextPositive();
             var existingExam = new ExamBuilder().WithId(examId).Build();
             _examRepositoryMock
-                .Setup(repo => repo.LoadWithPartsAndEvaluationsAsync(It.IsAny<int>())).ReturnsAsync(existingExam);
+                .Setup(repo => repo.LoadDeep(It.IsAny<int>())).ReturnsAsync(existingExam);
 
             var result = _service.GetExamAsync(examId).Result;
 
-            _examRepositoryMock.Verify(repo => repo.LoadWithPartsAndEvaluationsAsync(examId), Times.Once);
+            _examRepositoryMock.Verify(repo => repo.LoadDeep(examId), Times.Once);
             Assert.That(result, Is.SameAs(existingExam));
         }
     }

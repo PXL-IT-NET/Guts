@@ -64,6 +64,7 @@ namespace Guts.Data
 
             builder.ApplyConfiguration(new TestResultConfiguration());
             builder.ApplyConfiguration(new TestConfiguration());
+            builder.ApplyConfiguration(new ExamConfiguration());
             builder.ApplyConfiguration(new ExamPartConfiguration());
             builder.ApplyConfiguration(new AssignmentEvaluationConfiguration());
         }

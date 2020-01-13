@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ExamAggregate;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +15,11 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<Exam> LoadWithPartsAndEvaluationsAsync(int examId)
+        public async Task<Exam> LoadDeep(int examId)
         {
             var exam = await _context.Exams.Where(e => e.Id == examId)
-                .Include(e => e.Parts)
-                .ThenInclude(ep => ep.AssignmentEvaluations)
+                .Include($"{nameof(Exam.Parts)}.{nameof(ExamPart.AssignmentEvaluations)}.{nameof(AssignmentEvaluation.Assignment)}.{nameof(Assignment.Tests)}")
+                .Include($"{nameof(Exam.Parts)}.{nameof(ExamPart.AssignmentEvaluations)}.{nameof(AssignmentEvaluation.Assignment)}.{nameof(Assignment.Topic)}")
                 .FirstOrDefaultAsync();
             if (exam == null)
             {

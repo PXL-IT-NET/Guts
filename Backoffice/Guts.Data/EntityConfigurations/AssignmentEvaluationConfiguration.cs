@@ -9,7 +9,8 @@ namespace Guts.Data.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<AssignmentEvaluation> builder)
         {
-            builder.HasOne<Assignment>().WithMany().HasForeignKey(ae => ae.AssignmentId);
+            builder.HasOne(assignmentEvaluation => assignmentEvaluation.Assignment).WithMany()
+                .HasForeignKey(assignmentEvaluation => assignmentEvaluation.AssignmentId);
         }
     }
 }

@@ -14,6 +14,6 @@ namespace Guts.Business.Services
         Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto);
         Task<ExamPart> GetExamPartAsync(int examId, int examPartId);
         Task DeleteExamPartAsync(int id, int examPartId);
-        Task<IList<dynamic>> CalculateExamScores(int examId);
+        Task<IList<ExpandoObject>> CalculateExamScoresForCsv(int examId);
     }
 }

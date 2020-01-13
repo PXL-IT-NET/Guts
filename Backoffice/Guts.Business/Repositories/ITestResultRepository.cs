@@ -11,5 +11,6 @@ namespace Guts.Business.Repositories
         Task<IList<TestResult>> GetLastTestResultsOfUser(int assignmentId, int userId, DateTime? dateUtc);
         Task<IList<TestResult>> GetLastTestResultsOfAllTeams(int assignmentId, DateTime? dateUtc);
         Task<IList<TestResult>> GetLastTestResultsOfTeam(int assignmentId, int teamId, DateTime? dateUtc);
+        Task<IList<TestResult>> GetLastTestResultsOfAssignments(int[] assignmentIds, DateTime? dateUtc);
     }
 }

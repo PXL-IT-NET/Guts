@@ -1,6 +1,7 @@
 using System;
 using Guts.Common.Extensions;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.Tests.Builders;
 
 namespace Guts.Business.Tests.Builders
 {
@@ -23,27 +24,17 @@ namespace Guts.Business.Tests.Builders
             };
         }
 
-        public TestRunBuilder WithId()
-        {
-            _testRun.Id = _random.NextPositive();
-            return this;
-        }
-
-        public TestRunBuilder WithUserId(int userId)
-        {
-            _testRun.UserId = userId;
-            return this;
-        }
-
-        public TestRunBuilder WithAssignmentId(int assignmentId)
-        {
-            _testRun.AssignmentId = assignmentId;
-            return this;
-        }
-
         public TestRunBuilder WithCreationDate(DateTime date)
         {
             _testRun.CreateDateTime = date;
+            return this;
+        }
+
+        public TestRunBuilder WithUser()
+        {
+            var user = new UserBuilder(_random).WithId().Build();
+            _testRun.User = user;
+            _testRun.UserId = user.Id;
             return this;
         }
 

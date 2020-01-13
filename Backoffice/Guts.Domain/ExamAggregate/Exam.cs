@@ -4,12 +4,13 @@ using System.ComponentModel.DataAnnotations;
 using Guts.Common;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
+using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.ExamAggregate
 {
     public class Exam : AggregateRoot
     {
-        private readonly HashSet<ExamPart> _parts;
+        private readonly HashSet<IExamPart> _parts;
 
         public virtual Course Course { get; private set; }
         public int CourseId { get; private set; }
@@ -20,9 +21,9 @@ namespace Guts.Domain.ExamAggregate
         [Required]
         public string Name { get; private set; }
 
-        public int MaximumScore { get; private set; }
+        public int MaximumScore { get; private set; } //TODO: rename to NormalizedMaximumScore
 
-        public virtual IReadOnlyCollection<ExamPart> Parts => _parts;
+        public IReadOnlyCollection<IExamPart> Parts => _parts;
 
         private Exam(int courseId, int periodId, string name)
         {
@@ -35,7 +36,7 @@ namespace Guts.Domain.ExamAggregate
             Name = name;
             MaximumScore = 20;
 
-            _parts = new HashSet<ExamPart>();
+            _parts = new HashSet<IExamPart>();
         }
 
         public ExamPart AddExamPart(string name, DateTime deadline)
@@ -45,11 +46,25 @@ namespace Guts.Domain.ExamAggregate
             return evaluation;
         }
 
+        public IExamScore CalculateScoreForUser(User user, IExamTestResultCollection examTestResults)
+        {
+            var examScoreOfUser = new ExamScore(user, this);
+
+            foreach (var examPart in Parts)
+            {
+                var examPartScore =
+                    examPart.CalculateScoreForUser(user.Id, examTestResults.GetExamPartResults(examPart.Id));
+                examScoreOfUser.AddExamPartScore(examPartScore);
+            }
+
+            return examScoreOfUser;
+        }
+
         public class Factory : IExamFactory
         {
             public Exam CreateNew(int courseId, int periodId, string name)
             {
-                
+
                 return new Exam(courseId, periodId, name);
             }
         }

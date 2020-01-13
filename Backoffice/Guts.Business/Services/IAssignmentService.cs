@@ -9,8 +9,8 @@ namespace Guts.Business.Services
     public interface IAssignmentService
     {
         Task<Assignment> GetAssignmentAsync(AssignmentDto assignmentDto);
-        Task<Assignment> GetOrCreateExerciseAsync(AssignmentDto assignmentDto);
-        Task<Assignment> GetOrCreateProjectComponentAsync(AssignmentDto assignmentDto);
+
+        Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode);
 
         Task LoadTestsForAssignmentAsync(Assignment assignment);
         Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames);

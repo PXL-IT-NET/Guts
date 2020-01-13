@@ -1,16 +1,11 @@
-﻿using Guts.Client.Core.Models;
-using Guts.Client.Shared.Utility;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-
-namespace Guts.Client.Core
+namespace Guts.Client.Shared.Utility
 {
-
-
     public class LoginWindow : ILoginWindow
     {
         private readonly IHttpHandler _httpHandler;

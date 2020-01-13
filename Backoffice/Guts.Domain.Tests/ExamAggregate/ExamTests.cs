@@ -1,39 +1,36 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.Tests.Builders;
+using Guts.Domain.UserAggregate;
+using Moq;
 using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ExamAggregate
 {
-    public class ExamTests
+    [TestFixture]
+    public class ExamTests : DomainTestBase
     {
-        private Random _random;
         private Exam.Factory _factory;
         private Exam _existingExam;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            _random = new Random();
-        }
 
         [SetUp]
         public void SetUp()
         {
             _factory = new Exam.Factory();
-            var examId = _random.NextPositive();
+            var examId = Random.NextPositive();
             _existingExam = new ExamBuilder().WithId(examId).Build();
         }
 
         [Test]
         public void Factory_CreateNew_ShouldConstructExamCorrectly()
         {
-            var validCourseId = _random.NextPositive();
-            var validPeriodId = _random.NextPositive();
-            var validName = _random.NextString();
+            var validCourseId = Random.NextPositive();
+            var validPeriodId = Random.NextPositive();
+            var validName = Random.NextString();
             var exam = _factory.CreateNew(validCourseId, validPeriodId, validName);
 
             Assert.That(exam, Is.Not.Null);
@@ -58,7 +55,7 @@ namespace Guts.Domain.Tests.ExamAggregate
         [Test]
         public void AddExamPart_ShouldCorrectlyCreateAndAddAnExamPart()
         {
-            var validName = _random.NextString();
+            var validName = Random.NextString();
             var validDeadline = DateTime.UtcNow.AddDays(1);
 
             var addedPart = _existingExam.AddExamPart(validName, validDeadline);
@@ -68,6 +65,61 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(addedPart.ExamId, Is.EqualTo(_existingExam.Id));
             Assert.That(addedPart.Name, Is.EqualTo(validName));
             Assert.That(addedPart.Deadline, Is.EqualTo(validDeadline));
+        }
+
+        [Test]
+        public void CalculateScoreForUser_ShouldAggregateExamPartScoresForUser()
+        {
+            //Arrange
+            User user = new UserBuilder().WithId().Build();
+            var examBuilder = new ExamBuilder();
+
+            var examTestResultCollectionMock = new Mock<IExamTestResultCollection>();
+            var verifyExamPartActions = new List<Action<int, IExamScore>>();
+            for (int i = 0; i < Random.Next(2,10); i++)
+            {
+                verifyExamPartActions.Add(AddExamPartMockToExam(examBuilder, examTestResultCollectionMock));
+            }
+            
+            var exam = examBuilder.Build();
+
+            ////Act
+            var examScore = exam.CalculateScoreForUser(user, examTestResultCollectionMock.Object);
+
+            //Assert
+            Assert.That(examScore, Is.Not.Null);
+            foreach (var verifyExamPartAction in verifyExamPartActions)
+            {
+                verifyExamPartAction(user.Id, examScore);
+            }
+        }
+
+        private Action<int, IExamScore> AddExamPartMockToExam(ExamBuilder examBuilder,
+            Mock<IExamTestResultCollection> examTestResultCollectionMock)
+        {
+            var examPartScoreMock = new Mock<IExamPartScore>();
+            IExamPartScore examPartScore = examPartScoreMock.Object;
+
+            var examPartMock = new Mock<IExamPart>();
+            var examPartId = Random.NextPositive();
+            examPartMock.SetupGet(part => part.Id).Returns(examPartId);
+            examPartMock
+                .Setup(part => part.CalculateScoreForUser(It.IsAny<int>(), It.IsAny<IExamPartTestResultCollection>()))
+                .Returns(examPartScoreMock.Object);
+
+            var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
+            examTestResultCollectionMock.Setup(examTestResults => examTestResults.GetExamPartResults(examPartId))
+                .Returns(examPartTestResultCollectionMock.Object);
+
+            examBuilder.WithExamPart(examPartMock.Object);
+
+            void VerifyExamPartUsageForUserIdAndScore(int userId, IExamScore examScore)
+            {
+                examPartMock.Verify(part => part.CalculateScoreForUser(userId, examPartTestResultCollectionMock.Object));
+                Assert.That(examScore.ExamPartScores, Has.One.EqualTo(examPartScore));
+            }
+
+            return VerifyExamPartUsageForUserIdAndScore;
         }
     }
 }

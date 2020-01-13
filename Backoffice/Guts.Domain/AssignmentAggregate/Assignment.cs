@@ -8,11 +8,26 @@ namespace Guts.Domain.AssignmentAggregate
 {
     public class Assignment : AggregateRoot
     {
+        private string _description;
+
         [Required]
         [MaxLength(20)]
         public string Code { get; set; }
 
-        public string Description { get; set; }
+        public string Description
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_description)) return _description;
+                var alternativeDescription = Code;
+                if (Topic != null)
+                {
+                    alternativeDescription = $"{Topic.Code}.{alternativeDescription}";
+                }
+                return alternativeDescription;
+            }
+            set => _description = value;
+        }
 
         public virtual ICollection<Test> Tests { get; set; } = new HashSet<Test>();
 

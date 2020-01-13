@@ -1,6 +1,4 @@
-﻿using Guts.Client.Shared.Utility;
-
-namespace Guts.Client.Core
+﻿namespace Guts.Client.Shared.Utility
 {
     public class LoginWindowFactory : ILoginWindowFactory
     {

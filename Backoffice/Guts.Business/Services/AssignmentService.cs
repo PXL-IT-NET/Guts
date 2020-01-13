@@ -15,8 +15,6 @@ namespace Guts.Business.Services
     {
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly ITopicService _topicService;
-        private readonly IChapterService _chapterService;
-        private readonly IProjectService _projectService;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestRunRepository _testRunRepository;
@@ -24,15 +22,11 @@ namespace Guts.Business.Services
 
         public AssignmentService(IAssignmentRepository assignmentRepository,
             ITopicService topicService,
-            IChapterService chapterService,
-            IProjectService projectService,
             ITestRepository testRepository,
             ITestResultRepository testResultRepository, 
             ITestRunRepository testRunRepository,
             IAssignmentWithResultsConverter assignmentWithResultsConverter)
         {
-            _chapterService = chapterService;
-            _projectService = projectService;
             _assignmentRepository = assignmentRepository;
             _topicService = topicService;
             _testRepository = testRepository;
@@ -47,17 +41,24 @@ namespace Guts.Business.Services
             return await _assignmentRepository.GetSingleAsync(topic.Id, assignmentDto.AssignmentCode);
         }
 
-        public async Task<Assignment> GetOrCreateExerciseAsync(AssignmentDto assignmentDto)
+        public async Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode)
         {
-            var chapter = await _chapterService.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
-            return await GetOrCreateAssignmentAsync(chapter.Id, assignmentDto.AssignmentCode);
-        }
+            Assignment assignment;
+            try
+            {
+                assignment = await _assignmentRepository.GetSingleAsync(topicId, assignmentCode);
+            }
+            catch (DataNotFoundException)
+            {
+                assignment = new Assignment
+                {
+                    TopicId = topicId,
+                    Code = assignmentCode
+                };
+                assignment = await _assignmentRepository.AddAsync(assignment);
+            }
 
-        public async Task<Assignment> GetOrCreateProjectComponentAsync(AssignmentDto assignmentDto)
-        {
-            var project =
-                await _projectService.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
-            return await GetOrCreateAssignmentAsync(project.Id, assignmentDto.AssignmentCode);
+            return assignment;
         }
 
         public async Task LoadTestsForAssignmentAsync(Assignment assignment)
@@ -174,26 +175,6 @@ namespace Guts.Business.Services
                 testRunInfo.NumberOfRuns = testRuns.Count;
             }
             return testRunInfo;
-        }
-
-        private async Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode)
-        {
-            Assignment assignment;
-            try
-            {
-                assignment = await _assignmentRepository.GetSingleAsync(topicId, assignmentCode);
-            }
-            catch (DataNotFoundException)
-            {
-                assignment = new Assignment
-                {
-                    TopicId = topicId,
-                    Code = assignmentCode
-                };
-                assignment = await _assignmentRepository.AddAsync(assignment);
-            }
-
-            return assignment;
         }
     }
 }

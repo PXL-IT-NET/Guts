@@ -1,5 +1,6 @@
 ﻿using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
+using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters

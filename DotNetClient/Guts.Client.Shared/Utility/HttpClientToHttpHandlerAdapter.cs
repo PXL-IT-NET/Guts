@@ -21,7 +21,7 @@ namespace Guts.Client.Shared.Utility
 
             _apiBaseUrl = apiBaseUrl;
 
-            _httpClient = new HttpClient { BaseAddress = new Uri(_apiBaseUrl) };
+            _httpClient = new HttpClient { BaseAddress = new Uri(_apiBaseUrl), Timeout = TimeSpan.FromSeconds(6)};
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }

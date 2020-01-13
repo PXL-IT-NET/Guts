@@ -1,35 +1,27 @@
-using System;
 using System.Collections;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.Tests.Builders;
+using Moq;
 using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class AssignmentEvaluationTest
+    public class AssignmentEvaluationTests : DomainTestBase
     {
-        private Random _random;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            _random = new Random();
-        }
-
         [Test]
         public void Constructor_ShouldConstructValidExamPart()
         {
-            var validExamPartId = _random.NextPositive();
+            var validExamPartId = Random.NextPositive();
             var assignment = new AssignmentBuilder()
                 .WithId()
-                .WithRandomTests(_random.Next(2, 11))
+                .WithRandomTests(Random.Next(2, 11))
                 .Build();
-            var validMaximumScore = _random.Next(1, 101);
-            var validNumberOfTestsAlreadyGreenAtStart = _random.Next(0, assignment.Tests.Count);
+            var validMaximumScore = Random.Next(1, 101);
+            var validNumberOfTestsAlreadyGreenAtStart = Random.Next(0, assignment.Tests.Count);
 
             var evaluation = new AssignmentEvaluation(validExamPartId, assignment, 
                 validMaximumScore, validNumberOfTestsAlreadyGreenAtStart);
@@ -53,7 +45,7 @@ namespace Guts.Domain.Tests.ExamAggregate
         {
             var validAssignment = new AssignmentBuilder()
                 .WithId()
-                .WithRandomTests(_random.Next(2, 11))
+                .WithRandomTests(Random.Next(2, 11))
                 .Build();
             Assert.That(() => new AssignmentEvaluation(
                 examPartId, 
@@ -104,5 +96,27 @@ namespace Guts.Domain.Tests.ExamAggregate
                     numberOfTestsAlreadyGreen),
                 Throws.InstanceOf<ContractException>());
         }
+
+        [Test]
+        public void CalculateScore_ShouldReturnAnAssignmentEvaluationScoreBasedOnTheNumberOfPassingTests()
+        {
+            //Arrange
+            int numberOfTests = Random.Next(5, 21);
+            var assignment = new AssignmentBuilder().WithRandomTests(numberOfTests).Build();
+            var assignmentEvaluation = new AssignmentEvaluationBuilder().WithId().WithAssignment(assignment).Build();
+
+            var assignmentResultMock = new Mock<IAssignmentResult>();
+            int numberOfPassingTests = Random.Next(0, numberOfTests + 1);
+            assignmentResultMock.SetupGet(assignmentResult => assignmentResult.NumberOfPassingTests)
+                .Returns(numberOfPassingTests);
+            
+            //Act
+            IAssignmentEvaluationScore score = assignmentEvaluation.CalculateScore(assignmentResultMock.Object);
+
+            //Assert
+            Assert.That(score.NumberOfPassedTests, Is.EqualTo(numberOfPassingTests));
+            Assert.That(score.AssignmentEvaluationId, Is.EqualTo(assignmentEvaluation.Id));
+        }
+
     }
 }

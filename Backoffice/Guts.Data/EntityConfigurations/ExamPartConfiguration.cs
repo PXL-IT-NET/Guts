@@ -1,4 +1,5 @@
-﻿using Guts.Domain.ExamAggregate;
+﻿using System.Collections.Generic;
+using Guts.Domain.ExamAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -8,11 +9,10 @@ namespace Guts.Data.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<ExamPart> builder)
         {
+            builder.HasMany(e => (IReadOnlyCollection<AssignmentEvaluation>)e.AssignmentEvaluations).WithOne()
+                .HasForeignKey(ea => ea.ExamPartId).OnDelete(DeleteBehavior.NoAction);
             builder.Metadata.FindNavigation(nameof(ExamPart.AssignmentEvaluations))
                 .SetPropertyAccessMode(PropertyAccessMode.Field);
-            builder.HasOne<Exam>().WithMany(e => e.Parts).HasForeignKey(e => e.ExamId);
-            builder.HasMany(e => e.AssignmentEvaluations).WithOne()
-                .HasForeignKey(ea => ea.ExamPartId).OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

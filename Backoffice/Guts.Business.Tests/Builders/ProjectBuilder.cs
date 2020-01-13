@@ -34,22 +34,10 @@ namespace Guts.Business.Tests.Builders
             return this;
         }
 
-        public ProjectBuilder WithCourseId(int courseId)
-        {
-            _project.CourseId = courseId;
-            return this;
-        }
 
         public ProjectBuilder WithDescription(string description)
         {
             _project.Description = description;
-            return this;
-        }
-
-        public ProjectBuilder WithCourse()
-        {
-            _project.Course = new CourseBuilder().WithId().Build();
-            _project.CourseId = _project.Course.Id;
             return this;
         }
 
@@ -66,13 +54,6 @@ namespace Guts.Business.Tests.Builders
             _project.PeriodId = period.Id;
             return this;
         }
-
-        public ProjectBuilder WithCode(string code)
-        {
-            _project.Code = code;
-            return this;
-        }
-
         public ProjectBuilder WithAssignments(int numberOfAssignments)
         {
             for (int i = 0; i < numberOfAssignments; i++)

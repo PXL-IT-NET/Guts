@@ -25,16 +25,22 @@ namespace Guts.Api.Controllers
         private readonly ITestRunConverter _testRunConverter;
         private readonly ITestRunService _testRunService;
         private readonly IAssignmentService _assignmentService;
+        private readonly IChapterService _chapterService;
+        private readonly IProjectService _projectService;
 
         internal const string InvalidTestCodeHashErrorKey = "InvalidTestCodeHash";
 
         public TestRunController(ITestRunConverter testRunConverter, 
             ITestRunService testRunService, 
-            IAssignmentService assignmentService)
+            IAssignmentService assignmentService,
+            IChapterService chapterService, 
+            IProjectService projectService)
         {
             _testRunConverter = testRunConverter;
             _testRunService = testRunService;
             _assignmentService = assignmentService;
+            _chapterService = chapterService;
+            _projectService = projectService;
         }
 
         /// <summary>
@@ -70,7 +76,8 @@ namespace Guts.Api.Controllers
             Assignment assignment;
             if (IsLector())
             {
-                assignment = await _assignmentService.GetOrCreateExerciseAsync(model.Assignment);
+                var chapter = await _chapterService.GetOrCreateChapterAsync(model.Assignment.CourseCode, model.Assignment.TopicCode);
+                assignment = await _assignmentService.GetOrCreateAssignmentAsync(chapter.Id, model.Assignment.AssignmentCode);
             }
             else
             {
@@ -116,7 +123,8 @@ namespace Guts.Api.Controllers
             Assignment component;
             if (IsLector())
             {
-                component = await _assignmentService.GetOrCreateProjectComponentAsync(model.Assignment);
+                var project = await _projectService.GetOrCreateProjectAsync(model.Assignment.CourseCode, model.Assignment.TopicCode);
+                component = await _assignmentService.GetOrCreateAssignmentAsync(project.Id, model.Assignment.AssignmentCode);
             }
             else
             {

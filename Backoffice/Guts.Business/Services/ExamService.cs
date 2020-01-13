@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
-using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ExamAggregate;
 
 namespace Guts.Business.Services
@@ -16,26 +14,26 @@ namespace Guts.Business.Services
         private readonly IExamRepository _examRepository;
         private readonly IExamPartRepository _examPartRepository;
         private readonly IAssignmentRepository _assignmentRepository;
-        private readonly IAssignmentService _assignmentService;
         private readonly IPeriodRepository _periodRepository;
         private readonly IExamFactory _examFactory;
         private readonly IUserRepository _userRepository;
+        private readonly ITestResultRepository _testResultRepository;
 
         public ExamService(IExamRepository examRepository,
             IExamPartRepository examPartRepository,
             IAssignmentRepository assignmentRepository,
-            IAssignmentService assignmentService,
             IPeriodRepository periodRepository,
             IExamFactory examFactory,
-            IUserRepository userRepository)
+            IUserRepository userRepository, 
+            ITestResultRepository testResultRepository)
         {
             _examRepository = examRepository;
             _examPartRepository = examPartRepository;
             _assignmentRepository = assignmentRepository;
-            _assignmentService = assignmentService;
             _periodRepository = periodRepository;
             _examFactory = examFactory;
             _userRepository = userRepository;
+            _testResultRepository = testResultRepository;
         }
 
         public async Task<Exam> CreateExamAsync(int courseId, string name)
@@ -55,7 +53,7 @@ namespace Guts.Business.Services
 
         public async Task<Exam> GetExamAsync(int id)
         {
-            return await _examRepository.LoadWithPartsAndEvaluationsAsync(id);
+            return await _examRepository.LoadDeep(id);
         }
 
         public async Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)
@@ -89,71 +87,29 @@ namespace Guts.Business.Services
             await _examPartRepository.DeleteAsync(examPartToDelete);
         }
 
-        public async Task<IList<dynamic>> CalculateExamScores(int examId)
+        public async Task<IList<ExpandoObject>> CalculateExamScoresForCsv(int examId)
         {
             //TODO: write tests
-            var exam = await GetExamAsync(examId);
-            //Get (and sort) all users
-            var allUsers = await _userRepository.GetUsersOfCourseForCurrentPeriodAsync(exam.CourseId);
-            allUsers = allUsers.OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToList();
 
-            //preload the assignments
-            var assignmentDictionary = new Dictionary<int, Assignment>();
-            var assignmentIds = exam.Parts.SelectMany(ep => ep.AssignmentEvaluations.Select(ae => ae.AssignmentId))
-                .ToList();
-            foreach (var assignmentId in assignmentIds)
+            var scores = new List<IExamScore>();
+            var exam = await GetExamAsync(examId);
+
+            var examResults = new ExamTestResultCollection();
+            foreach (var examPart in exam.Parts)
             {
-                var assignment = await _assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
-                assignmentDictionary.TryAdd(assignmentId, assignment);
+                var assignmentIds = examPart.AssignmentEvaluations.Select(ae => ae.Assignment.Id).ToArray();
+                var examPartTestResults = await _testResultRepository.GetLastTestResultsOfAssignments(assignmentIds, examPart.Deadline);
+                examResults.AddExamPartResults(examPart.Id, ExamPartTestResultCollection.FromLastTestResults(examPartTestResults));
             }
 
-            var results = new List<dynamic>();
+            var allUsers = await _userRepository.GetUsersOfCourseForCurrentPeriodAsync(exam.CourseId);
             foreach (var user in allUsers)
             {
-                var result = new ExpandoObject();
-                result.TryAdd("LastName", user.LastName);
-                result.TryAdd("FirstName", user.FirstName);
-
-                double total = 0.0;
-                double totalMaximum = 0.0;
-
-                foreach (var examPart in exam.Parts)
-                {
-                    var examPartTotalMaximum = examPart.AssignmentEvaluations.Sum(ae => ae.MaximumScore);
-                    totalMaximum += examPartTotalMaximum;
-
-                    double examPartTotal = 0.0;
-                    foreach (var examPartAssignmentEvaluation in examPart.AssignmentEvaluations)
-                    {
-                        var assignment = assignmentDictionary[examPartAssignmentEvaluation.AssignmentId];
-                        var numberOfTests = assignment.Tests.Count;
-                        var resultDto = await _assignmentService.GetResultsForUserAsync(assignment.Id, user.Id, examPart.Deadline);
-                        var numberOfPassedTests = resultDto?.TestResults?.Count(r => r.Passed) ?? 0;
-
-                        double scorePerTest = examPartAssignmentEvaluation.MaximumScore /
-                                              Convert.ToDouble(numberOfTests - examPartAssignmentEvaluation.NumberOfTestsAlreadyGreenAtStart);
-
-                        double score =
-                            Math.Max(numberOfPassedTests - examPartAssignmentEvaluation.NumberOfTestsAlreadyGreenAtStart, 0) *
-                            scorePerTest;
-
-                        examPartTotal += score;
-
-
-                        result.TryAdd($"{assignment.Topic.Code}.{assignment.Code}_NbrPassed({numberOfTests})", numberOfPassedTests);
-                        result.TryAdd($"{assignment.Topic.Code}.{assignment.Code}_Score({examPartAssignmentEvaluation.MaximumScore})", score);
-                    }
-                    result.TryAdd($"Total_{examPart.Name}({examPartTotalMaximum})", examPartTotal);
-                    total += examPartTotal;
-
-                }
-                result.TryAdd($"Total({totalMaximum})", total);
-                result.TryAdd("Total(20)", Math.Round((total / totalMaximum) * 20, MidpointRounding.AwayFromZero));
-
-                results.Add(result);
-
+                var score = exam.CalculateScoreForUser(user, examResults);
+                scores.Add(score);
             }
-            return results;
+
+            return scores.Select(score => score.ToCsvRecord()).ToList();
         }
     }
 }

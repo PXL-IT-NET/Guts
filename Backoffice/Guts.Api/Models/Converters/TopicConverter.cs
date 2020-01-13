@@ -114,9 +114,10 @@ namespace Guts.Api.Models.Converters
 
         private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
         {
-            if (string.IsNullOrEmpty(assignmentModel.Description))
+            int.TryParse(assignment.Code, out int assignmentNumber);
+            if (assignmentModel.Description == assignmentNumber.ToString())
             {
-                if (int.TryParse(assignment.Code, out int assignmentNumber))
+                if (assignmentNumber > 0)
                 {
                     assignmentModel.Description = "Assignment " + assignmentNumber;
                 }

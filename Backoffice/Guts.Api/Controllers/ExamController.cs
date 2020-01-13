@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,7 @@ using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services;
 using Guts.Common;
+using Guts.Common.Extensions;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -176,10 +178,13 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
-            IList<dynamic> results;
+            var exam = await _examService.GetExamAsync(id);
+            var fileDownloadName = $"{exam.Name.ToValidFileName()}.csv";
+
+            IEnumerable<dynamic> examScoreCsvRecords;
             try
             {
-                results = await _examService.CalculateExamScores(id);
+                examScoreCsvRecords = await _examService.CalculateExamScoresForCsv(id);
             }
             catch (DataNotFoundException)
             {
@@ -193,10 +198,10 @@ namespace Guts.Api.Controllers
                 CultureInfo = new CultureInfo("nl-BE"),
             };
             var csv = new CsvWriter(streamWriter, config);
-            csv.WriteRecords(results);
+            csv.WriteRecords(examScoreCsvRecords);
             streamWriter.Flush();
             memoryStream.Position = 0;
-            return File(memoryStream, "text/csv", "ExamScores.csv");
+            return File(memoryStream, "text/csv", fileDownloadName);
         }
     }
 }

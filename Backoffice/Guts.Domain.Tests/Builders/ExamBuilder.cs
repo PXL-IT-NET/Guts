@@ -21,9 +21,9 @@ namespace Guts.Domain.Tests.Builders
             return this;
         }
 
-        public ExamBuilder WithExamPart(ExamPart examPart)
+        public ExamBuilder WithExamPart(IExamPart examPart)
         {
-            var examParts = GetFieldValue<HashSet<ExamPart>>();
+            var examParts = GetFieldValue<HashSet<IExamPart>>();
             examParts.Add(examPart);
             return this;
         }

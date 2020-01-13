@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Configuration;
-using Guts.Client.Classic.UI;
 using Guts.Client.Shared.Models;
 using Guts.Client.Shared.Utility;
 using NUnit.Framework;
@@ -28,7 +27,7 @@ namespace Guts.Client.Classic
 
             var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
 
-            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler));
+            var authorizationHandler = new AuthorizationHandler(new UI.LoginWindowFactory(httpHandler));
             _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
         }
 
@@ -76,7 +75,7 @@ namespace Guts.Client.Classic
 
                 if (result.Success)
                 {
-                    TestContext.Progress.WriteLine("Results succesfully sent.");
+                    TestContext.Progress.WriteLine("Results successfully sent.");
                 }
                 else
                 {

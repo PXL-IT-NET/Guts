@@ -3,6 +3,7 @@ using Guts.Client.Classic.UI;
 using Guts.Client.Shared.Utility;
 using Moq;
 using NUnit.Framework;
+using LoginWindowFactory = Guts.Client.Classic.UI.LoginWindowFactory;
 
 namespace Guts.Client.Tests.Utility
 {

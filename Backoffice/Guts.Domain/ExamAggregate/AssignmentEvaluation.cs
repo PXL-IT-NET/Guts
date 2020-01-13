@@ -4,8 +4,9 @@ using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Domain.ExamAggregate
 {
-    public class AssignmentEvaluation : Entity
+    public class AssignmentEvaluation : Entity, IAssignmentEvaluation
     {
+        public Assignment Assignment { get; private set; }
         public int AssignmentId { get; private set; }
 
         public int ExamPartId { get; private set; }
@@ -14,7 +15,7 @@ namespace Guts.Domain.ExamAggregate
 
         public int NumberOfTestsAlreadyGreenAtStart { get; private set; }
 
-        private AssignmentEvaluation() { }
+        private AssignmentEvaluation() { } //Used by EF
 
         internal AssignmentEvaluation(int examPartId, 
             Assignment assignment, int maximumScore, int numberOfTestsAlreadyGreenAtStart)
@@ -29,9 +30,19 @@ namespace Guts.Domain.ExamAggregate
                 $"must be smaller than the total number of tests ({assignment.Tests.Count}).");
 
             ExamPartId = examPartId;
+            Assignment = assignment;
             AssignmentId = assignment.Id;
             MaximumScore = maximumScore;
             NumberOfTestsAlreadyGreenAtStart = numberOfTestsAlreadyGreenAtStart;
+        }
+
+        public IAssignmentEvaluationScore CalculateScore(IAssignmentResult assignmentResult)
+        {
+            var score = new AssignmentEvaluationScore(this)
+            {
+                NumberOfPassedTests = assignmentResult.NumberOfPassingTests
+            };
+            return score;
         }
     }
 }

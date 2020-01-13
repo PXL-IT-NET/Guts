@@ -22,7 +22,6 @@ namespace Guts.Client.Shared.Utility
 
         public async Task<string> RetrieveRemoteAccessTokenAsync()
         {
-            TestContext.Progress.WriteLine("Trying retrieve an access token...");
             var retrieveTokenTaskCompletionSource = new TaskCompletionSource<string>();
 
             Thread thread = new Thread(async () =>
@@ -42,7 +41,9 @@ namespace Guts.Client.Shared.Utility
                         retrieveTokenTaskCompletionSource.TrySetCanceled();
                     };
 
+                    TestContext.Progress.WriteLine("Opening login window...");
                     await loginWindow.StartLoginProcedureAsync();
+                    TestContext.Progress.WriteLine("Login window open.");
                 }
                 catch (Exception ex)
                 {

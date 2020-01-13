@@ -7,7 +7,6 @@ namespace Guts.Domain.Tests.Builders
 {
     internal class ExamPartBuilder : BaseBuilder<ExamPart>
     {
-
         public ExamPartBuilder()
         {
             int examId = 0;
@@ -29,9 +28,9 @@ namespace Guts.Domain.Tests.Builders
             return this;
         }
 
-        public ExamPartBuilder WithAssignmentEvaluation(AssignmentEvaluation assignmentEvaluation)
+        public ExamPartBuilder WithAssignmentEvaluation(IAssignmentEvaluation assignmentEvaluation)
         {
-            var evaluations = GetFieldValue<HashSet<AssignmentEvaluation>>();
+            var evaluations = GetFieldValue<HashSet<IAssignmentEvaluation>>();
             evaluations.Add(assignmentEvaluation);
             return this;
         }

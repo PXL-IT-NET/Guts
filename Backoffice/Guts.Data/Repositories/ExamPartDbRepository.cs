@@ -31,7 +31,7 @@ namespace Guts.Data.Repositories
         {
             var entry = _context.Entry(entityToDelete);
             await entry.Collection(ep => ep.AssignmentEvaluations).LoadAsync();
-            _context.Set<AssignmentEvaluation>().RemoveRange(entityToDelete.AssignmentEvaluations);
+            _context.Set<AssignmentEvaluation>().RemoveRange(entityToDelete.AssignmentEvaluations.OfType<AssignmentEvaluation>());
             await base.DeleteAsync(entityToDelete);
         }
     }

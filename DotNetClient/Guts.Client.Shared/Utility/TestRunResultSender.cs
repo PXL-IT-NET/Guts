@@ -1,6 +1,9 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Guts.Client.Shared.Models;
+using NUnit.Framework;
 
 namespace Guts.Client.Shared.Utility
 {
@@ -30,10 +33,23 @@ namespace Guts.Client.Shared.Utility
                     break;
             }
 
-            var response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
-
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            TestContext.Progress.WriteLine("Sending data...");
+            HttpResponseMessage response = null;
+            bool sendFailed = false;
+            try
             {
+                response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
+            }
+            catch (Exception e)
+            {
+                //HACK: for some reason the post times out when the token isn't valid (expired) anymore
+                TestContext.Error.WriteLine(e);
+                sendFailed = true;
+            }
+
+            if (sendFailed || response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                TestContext.Progress.WriteLine("First try failed (unauthorized).");
                 //retry with token retrieved remotely
                 await RefreshAccessToken(allowCachedToken: false);
                 response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
@@ -55,11 +71,14 @@ namespace Guts.Client.Shared.Utility
             if (allowCachedToken)
             {
                 token = _authorizationHandler.RetrieveLocalAccessToken();
+                TestContext.Progress.WriteLine("Retrieved authentication token from cache.");
             }
 
             if (string.IsNullOrEmpty(token))
             {
+                TestContext.Progress.WriteLine("Retrieving an authentication token online...");
                 token = await _authorizationHandler.RetrieveRemoteAccessTokenAsync();
+                TestContext.Progress.WriteLine("Retrieved authentication token.");
             }
 
             _httpHandler.UseBearerToken(token);

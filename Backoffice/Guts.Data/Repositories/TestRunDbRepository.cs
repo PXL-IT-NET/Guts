@@ -29,25 +29,33 @@ namespace Guts.Data.Repositories
 
         public async Task<IList<TestRun>> GetLastTestRunForAssignmentOfAllUsersAsync(int assignmentId)
         {
-            var query = from assignment in _context.Assignments
+            var lastTestRunsDataQuery = from assignment in _context.Assignments
                 from testrun in assignment.TestRuns
                 where assignment.Id == assignmentId
                 orderby testrun.CreateDateTime descending
-                group testrun by testrun.User
-                into userGroups
+                group testrun by new {testrun.AssignmentId, testrun.UserId} into testRunGroups
                 select new
                 {
-                    TestRun = userGroups.FirstOrDefault(),
-                    User = userGroups.Key
+                    testRunGroups.Key.AssignmentId,
+                    testRunGroups.Key.UserId,
+                    CreateDateTime = testRunGroups.Max(tr => tr.CreateDateTime)
                 };
 
-            var results = await query.ToListAsync();
-            foreach (var result in results) //For some reason including the USER relation does not work out of the box
-            {
-                result.TestRun.User = result.User;
-            }
+            var lastTestRunsQuery = from testrun in _context.TestRuns
+                from testrunData in lastTestRunsDataQuery
+                where testrun.AssignmentId == testrunData.AssignmentId
+                      && testrun.UserId == testrunData.UserId
+                      && testrun.CreateDateTime == testrunData.CreateDateTime
+                select testrun;
 
-            return results.Select(r => r.TestRun).ToList();
+            var lastTestRuns = await lastTestRunsQuery.Include(testrun => testrun.User).ToListAsync();
+            return lastTestRuns;
+            //foreach (var result in results) //For some reason including the USER relation does not work out of the box
+            //{
+            //    result.TestRun.User = result.User;
+            //}
+
+           // return results.Select(r => r.TestRun).ToList();
         }
 
         public async Task<IList<TestRun>> GetTeamTestRunsForAssignmentAsync(int assignmentId, int teamId, DateTime? dateUtc)
