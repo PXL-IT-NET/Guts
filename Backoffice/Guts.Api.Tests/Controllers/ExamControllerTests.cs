@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Business;
 using Guts.Business.Services;
+using Guts.Business.Services.Exam;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
@@ -37,6 +40,33 @@ namespace Guts.Api.Tests.Controllers
         public void ShouldInheritFromControllerBase()
         {
             Assert.That(_controller, Is.InstanceOf<ControllerBase>());
+        }
+
+        [Test]
+        public void GetExams_ShouldReturnExamsOfCourse()
+        {
+            //Arrange
+            int? courseId = _random.NextPositive();
+           
+            var retrievedExams = new List<Exam>()
+            {
+                new ExamBuilder().Build()
+            };
+
+            _examServiceMock.Setup(service => service.GetExamsAsync(courseId))
+                .ReturnsAsync(retrievedExams).Verifiable();
+
+            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(new ExamOutputModel());
+
+            //Act
+            var actionResult = _controller.GetExams(courseId).Result as OkObjectResult;
+
+            //Assert
+            Assert.That(actionResult, Is.Not.Null);
+            var results = actionResult.Value as IEnumerable<ExamOutputModel>;
+            Assert.That(results.Count(), Is.EqualTo(retrievedExams.Count));
+            _examServiceMock.Verify();
+            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsIn<Exam>(retrievedExams)), Times.Once);
         }
 
         [Test]

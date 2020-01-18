@@ -15,7 +15,7 @@ namespace Guts.Data.Repositories
         {
         }
 
-        public async Task<Exam> LoadDeep(int examId)
+        public async Task<IExam> LoadDeepAsync(int examId)
         {
             var exam = await _context.Exams.Where(e => e.Id == examId)
                 .Include($"{nameof(Exam.Parts)}.{nameof(ExamPart.AssignmentEvaluations)}.{nameof(AssignmentEvaluation.Assignment)}.{nameof(Assignment.Tests)}")

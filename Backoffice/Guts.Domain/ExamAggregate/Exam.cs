@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Guts.Common;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
@@ -8,7 +9,7 @@ using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.ExamAggregate
 {
-    public class Exam : AggregateRoot
+    public class Exam : AggregateRoot, IExam
     {
         private readonly HashSet<IExamPart> _parts;
 
@@ -46,6 +47,13 @@ namespace Guts.Domain.ExamAggregate
             return evaluation;
         }
 
+        public void DeleteExamPart(int examPartId)
+        {
+            var examPartToDelete = _parts.FirstOrDefault(part => part.Id == examPartId);
+            Contracts.Require(examPartToDelete != null, $"Exam part with identifier '{examPartId}' cannot be found.");
+            _parts.Remove(examPartToDelete);
+        }
+
         public IExamScore CalculateScoreForUser(User user, IExamTestResultCollection examTestResults)
         {
             var examScoreOfUser = new ExamScore(user, this);
@@ -68,5 +76,7 @@ namespace Guts.Domain.ExamAggregate
                 return new Exam(courseId, periodId, name);
             }
         }
+
+        
     }
 }

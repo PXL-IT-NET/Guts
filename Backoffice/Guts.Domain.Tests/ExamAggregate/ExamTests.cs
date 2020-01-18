@@ -37,6 +37,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(exam.Id, Is.EqualTo(0));
             Assert.That(exam.CourseId, Is.EqualTo(validCourseId));
             Assert.That(exam.Name, Is.EqualTo(validName));
+            Assert.That(exam.PeriodId, Is.EqualTo(validPeriodId));
             Assert.That(exam.MaximumScore, Is.EqualTo(20));
             Assert.That(exam.Parts, Is.Empty);
         }
@@ -65,6 +66,39 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(addedPart.ExamId, Is.EqualTo(_existingExam.Id));
             Assert.That(addedPart.Name, Is.EqualTo(validName));
             Assert.That(addedPart.Deadline, Is.EqualTo(validDeadline));
+        }
+
+        [Test]
+        public void DeleteExamPart_ShouldRemoveAnExistingExamPart()
+        {
+            //Arrange
+            var examPartToKeep = new ExamPartBuilder().WithId().Build();
+            var examPartToDelete = new ExamPartBuilder().WithId().Build();
+            var exam = new ExamBuilder()
+                .WithExamPart(examPartToKeep)
+                .WithExamPart(examPartToDelete)
+                .Build();
+
+            //Act
+            exam.DeleteExamPart(examPartToDelete.Id);
+
+            //Assert
+            Assert.That(exam.Parts, Has.Count.EqualTo(1));
+            Assert.That(exam.Parts, Has.One.EqualTo(examPartToKeep));
+        }
+
+        [Test]
+        public void DeleteExamPart_ShouldThrowContractExceptionWhenPartDoesNotExist()
+        {
+            //Arrange
+            var examPart = new ExamPartBuilder().WithId().Build();
+            var exam = new ExamBuilder()
+                .WithExamPart(examPart)
+                .Build();
+            int nonExistingExamPartId = examPart.Id + 1;
+
+            //Act + Assert
+            Assert.That(() =>exam.DeleteExamPart(nonExistingExamPartId), Throws.InstanceOf<ContractException>());
         }
 
         [Test]

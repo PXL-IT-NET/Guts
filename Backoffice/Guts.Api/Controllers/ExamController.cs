@@ -12,6 +12,7 @@ using Guts.Api.Models;
 using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services;
+using Guts.Business.Services.Exam;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.RoleAggregate;
@@ -102,7 +103,8 @@ namespace Guts.Api.Controllers
         /// <summary>
         /// Retrieves an exam part.
         /// </summary>
-        /// <param name="id">Identifier of the exam part in the database</param>
+        /// <param name="id">Identifier of the exam</param>
+        /// <param name="examPartId">Identifier of the exam part</param>
         [HttpGet("{id}/parts/{examPartId}")]
         [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -111,7 +113,8 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                var examPart = await _examService.GetExamPartAsync(id, examPartId);
+                var exam = await _examService.GetExamAsync(id);
+                var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
                 var model = _mapper.Map<ExamPartOutputModel>(examPart);
                 return Ok(model);
             }
@@ -159,7 +162,8 @@ namespace Guts.Api.Controllers
             //TODO: write tests
             try
             {
-                await _examService.DeleteExamPartAsync(id, examPartId);
+                var exam = await _examService.GetExamAsync(id);
+                await _examService.DeleteExamPartAsync(exam, examPartId);
                 return Ok();
             }
             catch (ContractException ex)
@@ -184,7 +188,7 @@ namespace Guts.Api.Controllers
             IEnumerable<dynamic> examScoreCsvRecords;
             try
             {
-                examScoreCsvRecords = await _examService.CalculateExamScoresForCsv(id);
+                examScoreCsvRecords = await _examService.CalculateExamScoresForCsvAsync(id);
             }
             catch (DataNotFoundException)
             {

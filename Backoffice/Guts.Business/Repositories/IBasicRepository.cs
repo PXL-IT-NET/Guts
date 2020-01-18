@@ -11,6 +11,7 @@ namespace Guts.Business.Repositories
         Task<T> AddAsync(T newEntity);
         Task<T> UpdateAsync(T existingEntity);
         Task DeleteAsync(T entityToDelete);
+        Task DeleteByIdAsync(int id);
         Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete);
     }
 }

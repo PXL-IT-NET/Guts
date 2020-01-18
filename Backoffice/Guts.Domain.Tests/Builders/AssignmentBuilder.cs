@@ -30,6 +30,12 @@ namespace Guts.Domain.Tests.Builders
             return this;
         }
 
+        public AssignmentBuilder WithId(int id)
+        {
+            _assignment.Id = id;
+            return this;
+        }
+
         public AssignmentBuilder WithCode(string code)
         {
             _assignment.Code = code;
@@ -44,7 +50,8 @@ namespace Guts.Domain.Tests.Builders
                 var test = new Test
                 {
                     Id = _random.NextPositive(),
-                    TestName = Guid.NewGuid().ToString()
+                    TestName = Guid.NewGuid().ToString(),
+                    AssignmentId = _assignment.Id
                 };
                 tests.Add(test);
             }

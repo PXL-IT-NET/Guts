@@ -1,8 +1,9 @@
-using Guts.Common.Extensions;
 using System;
+using Guts.Common.Extensions;
+using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 
-namespace Guts.Business.Tests.Builders
+namespace Guts.Domain.Tests.Builders
 {
     public class TestResultBuilder
     {
@@ -45,6 +46,13 @@ namespace Guts.Business.Tests.Builders
         public TestResultBuilder WithTest(int testId)
         {
             _testResult.TestId = testId;
+            return this;
+        }
+
+        public TestResultBuilder WithTest(Test test)
+        {
+            _testResult.TestId = test.Id;
+            _testResult.Test = test;
             return this;
         }
 

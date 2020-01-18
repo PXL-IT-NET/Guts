@@ -28,6 +28,12 @@ namespace Guts.Domain.Tests.Builders
             return this;
         }
 
+        public ExamPartBuilder WithExamId(int examId)
+        {
+            SetProperty(part => part.ExamId, examId);
+            return this;
+        }
+
         public ExamPartBuilder WithAssignmentEvaluation(IAssignmentEvaluation assignmentEvaluation)
         {
             var evaluations = GetFieldValue<HashSet<IAssignmentEvaluation>>();

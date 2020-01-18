@@ -7,7 +7,7 @@ using Guts.Business.Repositories;
 using Guts.Common;
 using Guts.Domain.ExamAggregate;
 
-namespace Guts.Business.Services
+namespace Guts.Business.Services.Exam
 {
     public class ExamService : IExamService
     {
@@ -17,7 +17,7 @@ namespace Guts.Business.Services
         private readonly IPeriodRepository _periodRepository;
         private readonly IExamFactory _examFactory;
         private readonly IUserRepository _userRepository;
-        private readonly ITestResultRepository _testResultRepository;
+        private readonly IExamTestResultLoader _examTestResultLoader;
 
         public ExamService(IExamRepository examRepository,
             IExamPartRepository examPartRepository,
@@ -25,7 +25,7 @@ namespace Guts.Business.Services
             IPeriodRepository periodRepository,
             IExamFactory examFactory,
             IUserRepository userRepository, 
-            ITestResultRepository testResultRepository)
+            IExamTestResultLoader examTestResultLoader)
         {
             _examRepository = examRepository;
             _examPartRepository = examPartRepository;
@@ -33,10 +33,10 @@ namespace Guts.Business.Services
             _periodRepository = periodRepository;
             _examFactory = examFactory;
             _userRepository = userRepository;
-            _testResultRepository = testResultRepository;
+            _examTestResultLoader = examTestResultLoader;
         }
 
-        public async Task<Exam> CreateExamAsync(int courseId, string name)
+        public async Task<Domain.ExamAggregate.Exam> CreateExamAsync(int courseId, string name)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
             var newExam = _examFactory.CreateNew(courseId, currentPeriod.Id, name);
@@ -44,24 +44,22 @@ namespace Guts.Business.Services
             return savedExam;
         }
 
-        public async Task<IReadOnlyList<Exam>> GetExamsAsync(int? courseId)
+        public async Task<IExam> GetExamAsync(int id)
         {
-            //TODO: write tests
+            return await _examRepository.LoadDeepAsync(id);
+        }
+
+        public async Task<IReadOnlyList<Domain.ExamAggregate.Exam>> GetExamsAsync(int? courseId)
+        {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
             return await _examRepository.FindWithPartsAndEvaluationsAsync(currentPeriod.Id, courseId);
         }
 
-        public async Task<Exam> GetExamAsync(int id)
+        public async Task<IExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)
         {
-            return await _examRepository.LoadDeep(id);
-        }
-
-        public async Task<ExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)
-        {
-            //TODO: write tests
             Contracts.Require(examPartDto.AssignmentEvaluations.Count > 0,
                 "An exam part must have at least one assignment evaluation.");
-            var exam = await GetExamAsync(examId);
+            IExam exam = await GetExamAsync(examId);
             var examPart = exam.AddExamPart(examPartDto.Name, examPartDto.Deadline);
             foreach (var evaluation in examPartDto.AssignmentEvaluations)
             {
@@ -73,36 +71,19 @@ namespace Guts.Business.Services
             return examPart;
         }
 
-        public async Task<ExamPart> GetExamPartAsync(int examId, int examPartId)
+        public async Task DeleteExamPartAsync(IExam exam, int examPartId)
         {
-            var examPart = await _examPartRepository.LoadWithAssignmentEvaluationsAsync(examPartId);
-            Contracts.Require(examPart.ExamId == examId, "Mismatch between exam id and exam part id.");
-            return examPart;
+            exam.DeleteExamPart(examPartId);
+            await _examPartRepository.DeleteByIdAsync(examPartId);
         }
 
-        public async Task DeleteExamPartAsync(int examId, int examPartId)
+        public async Task<IList<ExpandoObject>> CalculateExamScoresForCsvAsync(int examId)
         {
-            var examPartToDelete = await _examPartRepository.GetByIdAsync(examPartId);
-            Contracts.Require(examPartToDelete.ExamId == examId, "Mismatch between exam id and exam part id.");
-            await _examPartRepository.DeleteAsync(examPartToDelete);
-        }
-
-        public async Task<IList<ExpandoObject>> CalculateExamScoresForCsv(int examId)
-        {
-            //TODO: write tests
+            IExam exam = await GetExamAsync(examId);
+            var examResults = await _examTestResultLoader.GetExamResultsAsync(exam);
+            var allUsers = await _userRepository.GetUsersOfCourseForCurrentPeriodAsync(exam.CourseId);
 
             var scores = new List<IExamScore>();
-            var exam = await GetExamAsync(examId);
-
-            var examResults = new ExamTestResultCollection();
-            foreach (var examPart in exam.Parts)
-            {
-                var assignmentIds = examPart.AssignmentEvaluations.Select(ae => ae.Assignment.Id).ToArray();
-                var examPartTestResults = await _testResultRepository.GetLastTestResultsOfAssignments(assignmentIds, examPart.Deadline);
-                examResults.AddExamPartResults(examPart.Id, ExamPartTestResultCollection.FromLastTestResults(examPartTestResults));
-            }
-
-            var allUsers = await _userRepository.GetUsersOfCourseForCurrentPeriodAsync(exam.CourseId);
             foreach (var user in allUsers)
             {
                 var score = exam.CalculateScoreForUser(user, examResults);

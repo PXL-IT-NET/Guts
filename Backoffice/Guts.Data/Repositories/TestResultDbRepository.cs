@@ -34,7 +34,7 @@ namespace Guts.Data.Repositories
             return await GetLastTestResultsPerTeam(assignmentId, teamId, dateUtc);
         }
 
-        public async Task<IList<TestResult>> GetLastTestResultsOfAssignments(int[] assignmentIds, DateTime? dateUtc)
+        public async Task<IList<TestResult>> GetLastTestResultsOfAssignmentsAsync(int[] assignmentIds, DateTime? dateUtc)
         {
             var lastResultKeys = from testresult in _context.TestResults
                 where assignmentIds.Contains(testresult.Test.AssignmentId)

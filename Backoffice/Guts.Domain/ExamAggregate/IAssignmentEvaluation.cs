@@ -2,7 +2,7 @@ using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Domain.ExamAggregate
 {
-    public interface IAssignmentEvaluation
+    public interface IAssignmentEvaluation : IEntity
     {
         Assignment Assignment { get; }
         int AssignmentId { get; }

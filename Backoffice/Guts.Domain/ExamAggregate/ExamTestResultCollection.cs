@@ -6,7 +6,6 @@ namespace Guts.Domain.ExamAggregate
     {
         private readonly Dictionary<int, IExamPartTestResultCollection> _examPartTestResults;
 
-
         public ExamTestResultCollection()
         {
             _examPartTestResults = new Dictionary<int, IExamPartTestResultCollection>();
@@ -24,7 +23,15 @@ namespace Guts.Domain.ExamAggregate
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
-            yield return _examPartTestResults;
+            foreach (var key in _examPartTestResults.Keys)
+            {
+                yield return key;
+            }
+
+            foreach (var value in _examPartTestResults.Values)
+            {
+                yield return value;
+            }
         }
     }
 }

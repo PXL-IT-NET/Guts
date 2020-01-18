@@ -18,5 +18,10 @@ namespace Guts.Common.Extensions
         {
             return Guid.NewGuid().ToString();
         }
+
+        public static DateTime NextDateTimeInFuture(this Random random)
+        {
+            return DateTime.Now.AddDays(random.Next(1, 10001));
+        }
     }
 }

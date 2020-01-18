@@ -63,6 +63,12 @@ namespace Guts.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public virtual async Task DeleteByIdAsync(int id)
+        {
+            var entityToDelete = await _context.Set<T>().FindAsync();
+            await DeleteAsync(entityToDelete);
+        }
+
         public async Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete)
         {
             _context.Set<T>().RemoveRange(entitiesToDelete);

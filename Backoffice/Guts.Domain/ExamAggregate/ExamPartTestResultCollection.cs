@@ -46,7 +46,21 @@ namespace Guts.Domain.ExamAggregate
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
-            yield return _userAssignmentDictionary;
+            foreach (var key in _userAssignmentDictionary.Keys)
+            {
+                yield return key;
+            }
+            foreach (var assignmentResultDictionary in _userAssignmentDictionary.Values)
+            {
+                foreach (var key in assignmentResultDictionary.Keys)
+                {
+                    yield return key;
+                }
+                foreach (var value in assignmentResultDictionary.Values)
+                {
+                    yield return value;
+                }
+            }
         }
     }
 }
