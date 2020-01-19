@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -11,10 +10,10 @@ using CsvHelper.Configuration;
 using Guts.Api.Models;
 using Guts.Business;
 using Guts.Business.Dtos;
-using Guts.Business.Services;
 using Guts.Business.Services.Exam;
 using Guts.Common;
 using Guts.Common.Extensions;
+using Guts.Domain.ExamAggregate;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -88,6 +87,11 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
         {
+            if (!IsLector()) 
+            {
+                return Forbid();
+            }
+
             try
             {
                 var exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
@@ -106,7 +110,7 @@ namespace Guts.Api.Controllers
         /// <param name="id">Identifier of the exam</param>
         /// <param name="examPartId">Identifier of the exam part</param>
         [HttpGet("{id}/parts/{examPartId}")]
-        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ExamPartOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<ActionResult> GetExamPart(int id, int examPartId)
@@ -115,16 +119,13 @@ namespace Guts.Api.Controllers
             {
                 var exam = await _examService.GetExamAsync(id);
                 var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
+                if(examPart == null) throw new DataNotFoundException();
                 var model = _mapper.Map<ExamPartOutputModel>(examPart);
                 return Ok(model);
             }
             catch (DataNotFoundException)
             {
                 return NotFound();
-            }
-            catch (ContractException ex)
-            {
-                return BadRequest(ErrorModel.FromException(ex));
             }
         }
 
@@ -137,7 +138,11 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExamPart(int id, [FromBody]ExamPartDto model)
         {
-            //TODO: write tests
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
             try
             {
                 var examPart = await _examService.CreateExamPartAsync(id, model);
@@ -159,7 +164,11 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> DeleteExamPart(int id, int examPartId)
         {
-            //TODO: write tests
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
             try
             {
                 var exam = await _examService.GetExamAsync(id);
@@ -175,26 +184,25 @@ namespace Guts.Api.Controllers
         [HttpGet("{id}/downloadscores")]
         public async Task<IActionResult> DownloadExamScores(int id)
         {
-            //TODO: write tests
-
             if (!IsLector())
             {
                 return Forbid();
             }
 
-            var exam = await _examService.GetExamAsync(id);
-            var fileDownloadName = $"{exam.Name.ToValidFileName()}.csv";
-
-            IEnumerable<dynamic> examScoreCsvRecords;
+            IExam exam;
             try
             {
-                examScoreCsvRecords = await _examService.CalculateExamScoresForCsvAsync(id);
+                exam = await _examService.GetExamAsync(id);
             }
             catch (DataNotFoundException)
             {
                 return NotFound();
             }
 
+            var fileDownloadName = $"{exam.Name.ToValidFileName()}.csv";
+
+            IEnumerable<dynamic> examScoreCsvRecords = await _examService.CalculateExamScoresForCsvAsync(id);
+            
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);
             var config = new Configuration

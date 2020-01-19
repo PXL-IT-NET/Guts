@@ -9,6 +9,11 @@ namespace Guts.Common.Extensions
             return random.Next(1, Int32.MaxValue);
         }
 
+        public static int NextZeroOrNegative(this Random random, int minimumValue = -1)
+        {
+            return -1 * random.Next(0, (-1 * minimumValue) + 1);
+        }
+
         public static bool NextBool(this Random random)
         {
             return random.Next(0, 2) == 0;
