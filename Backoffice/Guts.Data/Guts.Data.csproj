@@ -14,6 +14,24 @@
     <Compile Remove="Migrations\20181016112505_AddProject.cs" />
     <Compile Remove="Migrations\20181016172332_AddProject.cs" />
     <Compile Remove="Migrations\20181016172834_AddProject.cs" />
+    <Compile Remove="Migrations\20200129090400_test.cs" />
+    <Compile Remove="Migrations\20200129090400_test.Designer.cs" />
+    <Compile Remove="Migrations\20200129100228_test.cs" />
+    <Compile Remove="Migrations\20200129100228_test.Designer.cs" />
+    <Compile Remove="Migrations\20200129131916_AddSolutionFiles.cs" />
+    <Compile Remove="Migrations\20200129131916_AddSolutionFiles.Designer.cs" />
+    <Compile Remove="Migrations\20200129132209_AddSolutionFiles.cs" />
+    <Compile Remove="Migrations\20200129132209_AddSolutionFiles.Designer.cs" />
+    <Compile Remove="Migrations\20200129150514_AddSolutionFiles.cs" />
+    <Compile Remove="Migrations\20200129150514_AddSolutionFiles.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Migrations\20200129153803_AddSolutionFiles.MoveDataScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\20200129153803_AddSolutionFiles.MoveDataScript.sql" />
   </ItemGroup>
 
   <ItemGroup>

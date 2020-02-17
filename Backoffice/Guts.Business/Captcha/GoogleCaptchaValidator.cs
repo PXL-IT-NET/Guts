@@ -5,7 +5,7 @@ using Guts.Business.Communication;
 
 namespace Guts.Business.Captcha
 {
-    public class GoogleCaptchaValidator : ICaptchaValidator
+    internal class GoogleCaptchaValidator : ICaptchaValidator
     {
         private readonly string _validationUrl;
         private readonly string _secret;

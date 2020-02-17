@@ -46,7 +46,7 @@ namespace Guts.Client.Core
                 {
                     Assignment = projectComponent,
                     Results = TestRunResultAccumulator.Instance.TestResults,
-                    SourceCode = GetSourceCode(),
+                    SolutionFiles = GetSourceCodeFiles(),
                     TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
 

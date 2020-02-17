@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using Guts.Client.Shared.Models;
 using Guts.Client.Shared.Utility;
@@ -57,9 +58,9 @@ namespace Guts.Client.Classic
             return false;
         }
 
-        protected string GetSourceCode()
+        protected IEnumerable<SolutionFile> GetSourceCodeFiles()
         {
-            if (string.IsNullOrEmpty(_sourceCodeRelativeFilePaths)) return string.Empty;
+            if (string.IsNullOrEmpty(_sourceCodeRelativeFilePaths)) return new List<SolutionFile>();
 
             TestContext.Progress.WriteLine($"Reading source code files: {_sourceCodeRelativeFilePaths}");
             return SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);

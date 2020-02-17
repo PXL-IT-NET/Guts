@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Guts.Business.Security
 {
-    public class JwtSecurityTokenAccessPassFactory : ITokenAccessPassFactory
+    internal class JwtSecurityTokenAccessPassFactory : ITokenAccessPassFactory
     {
         private readonly string _key;
         private readonly string _issuer;

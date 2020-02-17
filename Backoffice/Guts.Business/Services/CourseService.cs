@@ -5,7 +5,7 @@ using Guts.Domain.CourseAggregate;
 
 namespace Guts.Business.Services
 {
-    public class CourseService : ICourseService
+    internal class CourseService : ICourseService
     {
         private readonly ICourseRepository _courseRepository;
 

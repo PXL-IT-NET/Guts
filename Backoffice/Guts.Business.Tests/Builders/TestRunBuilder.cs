@@ -2,6 +2,7 @@ using System;
 using Guts.Common.Extensions;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Tests.Builders
 {
@@ -19,7 +20,6 @@ namespace Guts.Business.Tests.Builders
                 Id = 0,
                 UserId = _random.NextPositive(),
                 AssignmentId = _random.NextPositive(),
-                SourceCode = Guid.NewGuid().ToString(),
                 CreateDateTime = DateTime.UtcNow.AddDays(-_random.Next(1, 100))
             };
         }
@@ -42,5 +42,7 @@ namespace Guts.Business.Tests.Builders
         {
             return _testRun;
         }
+
+        
     }
 }

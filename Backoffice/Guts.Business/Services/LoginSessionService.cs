@@ -6,7 +6,7 @@ using Guts.Domain.LoginSessionAggregate;
 
 namespace Guts.Business.Services
 {
-    public class LoginSessionService : ILoginSessionService
+    internal class LoginSessionService : ILoginSessionService
     {
         private readonly ILoginSesssionRepository _loginSesssionRepository;
 

@@ -50,12 +50,6 @@ namespace Guts.Data.Repositories
 
             var lastTestRuns = await lastTestRunsQuery.Include(testrun => testrun.User).ToListAsync();
             return lastTestRuns;
-            //foreach (var result in results) //For some reason including the USER relation does not work out of the box
-            //{
-            //    result.TestRun.User = result.User;
-            //}
-
-           // return results.Select(r => r.TestRun).ToList();
         }
 
         public async Task<IList<TestRun>> GetTeamTestRunsForAssignmentAsync(int assignmentId, int teamId, DateTime? dateUtc)

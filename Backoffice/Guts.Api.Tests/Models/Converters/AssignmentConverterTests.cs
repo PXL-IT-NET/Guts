@@ -32,7 +32,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), new AssignmentTestRunInfoDto()),
+                () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
                 Throws.ArgumentException);
         }
 
@@ -45,7 +45,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), new AssignmentTestRunInfoDto()),
+                () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
                 Throws.ArgumentException);
         }
 
@@ -57,7 +57,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), new AssignmentTestRunInfoDto()),
+                () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
                 Throws.ArgumentException);
         }
 
@@ -70,7 +70,7 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(
-                () => _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), null),
+                () => _converter.ToAssignmentDetailModel(assignment, null, null, null),
                 Throws.ArgumentNullException);
         }
 
@@ -82,7 +82,7 @@ namespace Guts.Api.Tests.Models.Converters
             var assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
 
             //Act
-            var model = _converter.ToAssignmentDetailModel(assignment, null, new AssignmentTestRunInfoDto());
+            var model = _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null);
 
             //Assert
             Assert.That(model, Is.Not.Null);
@@ -106,7 +106,7 @@ namespace Guts.Api.Tests.Models.Converters
             };
 
             //Act
-            var model = _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), testRunInfo);
+            var model = _converter.ToAssignmentDetailModel(assignment, testRunInfo, null, null);
 
             //Assert
             Assert.That(model, Is.Not.Null);
@@ -128,7 +128,7 @@ namespace Guts.Api.Tests.Models.Converters
                 .Build();
 
             //Act
-            var model = _converter.ToAssignmentDetailModel(assignment, new List<TestResult>(), new AssignmentTestRunInfoDto());
+            var model = _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null);
 
             //Assert
             Assert.That(model, Is.Not.Null);

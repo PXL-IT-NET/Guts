@@ -42,20 +42,19 @@ namespace Guts.Api.Tests.Models.Converters
 
             var assignment = new AssignmentBuilder().WithId().WithRandomTests(numberOfTests).Build();
             _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder()
-                .WithSourceCode()
+                .WithSolutionFile()
                 .WithRandomTestResultModelsFor(assignment.Tests)
                 .Build();
 
             //Act
-            var testRun = _converter.From(_createAssignmentTestRunModel.Results, _createAssignmentTestRunModel.SourceCode, _userId, assignment);
+            var testRun = _converter.From(_createAssignmentTestRunModel.Results, _userId, assignment);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
             Assert.That(testRun.UserId, Is.EqualTo(_userId));
             Assert.That(testRun.AssignmentId, Is.EqualTo(assignment.Id));
-            Assert.That(testRun.SourceCode, Is.EqualTo(_createAssignmentTestRunModel.SourceCode));
             Assert.That(testRun.CreateDateTime, Is.EqualTo(DateTime.UtcNow).Within(5).Seconds);
-            Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));          
+            Assert.That(testRun.TestResults.Count, Is.EqualTo(numberOfTests));
 
             for (int i = 0; i < _createAssignmentTestRunModel.Results.Count(); i++)
             {
@@ -68,14 +67,14 @@ namespace Guts.Api.Tests.Models.Converters
                 Assert.That(testResult.Message, Is.EqualTo(testResultModel.Message));
                 Assert.That(testResult.UserId, Is.EqualTo(_userId));
                 Assert.That(testResult.CreateDateTime, Is.EqualTo(DateTime.UtcNow).Within(5).Seconds);
-            }    
+            }
         }
 
         [Test]
         public void From_ShouldThrowExceptionIfAssignmentIsNotProvided()
         {
             //Act + Assert
-            Assert.That(() => _converter.From(_createAssignmentTestRunModel.Results, null, _userId, null), Throws.ArgumentNullException);
+            Assert.That(() => _converter.From(_createAssignmentTestRunModel.Results, _userId, null), Throws.ArgumentNullException);
         }
 
         [Test]
@@ -86,7 +85,7 @@ namespace Guts.Api.Tests.Models.Converters
             _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().WithRandomTestResultModels(1).Build();
 
             //Act
-            var result = _converter.From(_createAssignmentTestRunModel.Results, null, _userId, assignment);
+            var result = _converter.From(_createAssignmentTestRunModel.Results, _userId, assignment);
 
             //Assert
             Assert.That(result, Is.Not.Null);
@@ -101,7 +100,7 @@ namespace Guts.Api.Tests.Models.Converters
             _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().WithTestResultModels(null).Build();
 
             //Act
-            var testRun = _converter.From(_createAssignmentTestRunModel.Results, null, _userId, assignment);
+            var testRun = _converter.From(_createAssignmentTestRunModel.Results, _userId, assignment);
 
             //Assert
             Assert.That(testRun, Is.Not.Null);
@@ -127,7 +126,7 @@ namespace Guts.Api.Tests.Models.Converters
                         TestId = _random.NextPositive()
                     }
                 }
-            }; 
+            };
 
             //Act
             var model = _converter.ToTestRunModel(testRun);

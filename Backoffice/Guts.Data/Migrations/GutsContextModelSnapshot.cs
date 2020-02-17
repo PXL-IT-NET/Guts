@@ -364,9 +364,6 @@ namespace Guts.Data.Migrations
                     b.Property<DateTime>("CreateDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SourceCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -489,6 +486,31 @@ namespace Guts.Data.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ValueObjects.SolutionFile", b =>
+                {
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ModifyDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FilePath")
+                        .HasColumnType("nvarchar(255)")
+                        .HasMaxLength(255);
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AssignmentId", "UserId", "ModifyDateTime", "FilePath");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SolutionFiles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -626,7 +648,7 @@ namespace Guts.Data.Migrations
 
             modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
                 {
-                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", null)
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", "Assignment")
                         .WithMany()
                         .HasForeignKey("AssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -743,6 +765,21 @@ namespace Guts.Data.Migrations
                     b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
                         .WithMany()
                         .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.ValueObjects.SolutionFile", b =>
+                {
+                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", null)
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

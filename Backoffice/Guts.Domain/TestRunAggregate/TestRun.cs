@@ -16,7 +16,5 @@ namespace Guts.Domain.TestRunAggregate
         public DateTime CreateDateTime { get; set; }
 
         public virtual ICollection<TestResult> TestResults { get; set; } = new HashSet<TestResult>();
-
-        public string SourceCode { get; set; }
     }
 }

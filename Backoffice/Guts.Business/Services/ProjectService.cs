@@ -10,7 +10,7 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Services
 {
-    public class ProjectService : IProjectService
+    internal class ProjectService : IProjectService
     {
         private readonly IProjectRepository _projectRepository;
         private readonly ICourseRepository _courseRepository;

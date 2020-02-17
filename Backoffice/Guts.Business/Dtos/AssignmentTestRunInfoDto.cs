@@ -7,6 +7,5 @@ namespace Guts.Business.Dtos
         public DateTime? FirstRunDateTime { get; set; }
         public DateTime? LastRunDateTime { get; set; }
         public int NumberOfRuns { get; set; }
-        public string SourceCode { get; set; }
     }
 }

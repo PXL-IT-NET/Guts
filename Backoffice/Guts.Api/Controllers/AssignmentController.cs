@@ -24,6 +24,7 @@ namespace Guts.Api.Controllers
         private readonly IAssignmentConverter _assignmentConverter;
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly ITopicService _topicService;
+        private readonly ISolutionFileRepository _solutionFileRepository;
         private readonly IMapper _mapper;
 
         public AssignmentController(IAssignmentService assignmentService,
@@ -31,6 +32,7 @@ namespace Guts.Api.Controllers
             IAssignmentConverter assignmentConverter, 
             IProjectTeamRepository projectTeamRepository,
             ITopicService topicService,
+            ISolutionFileRepository solutionFileRepository,
             IMapper mapper)
         {
             _assignmentService = assignmentService;
@@ -38,6 +40,7 @@ namespace Guts.Api.Controllers
             _assignmentConverter = assignmentConverter;
             _projectTeamRepository = projectTeamRepository;
             _topicService = topicService;
+            _solutionFileRepository = solutionFileRepository;
             _mapper = mapper;
         }
 
@@ -77,7 +80,10 @@ namespace Guts.Api.Controllers
 
             var results = await _assignmentService.GetResultsForUserAsync(assignmentId, userId, dateUtc);
 
-            var model = _assignmentConverter.ToAssignmentDetailModel(assignment, results.TestResults, testRunInfo);
+            var solutionFiles =
+                await _solutionFileRepository.GetAllLatestOfAssignmentForUserAsync(assignmentId, userId, dateUtc);
+
+            var model = _assignmentConverter.ToAssignmentDetailModel(assignment, testRunInfo, results.TestResults, solutionFiles);
 
             return Ok(model);
         }
@@ -105,7 +111,10 @@ namespace Guts.Api.Controllers
 
             var results = await _assignmentService.GetResultsForTeamAsync(assignmentId, teamId, dateUtc);
 
-            var model = _assignmentConverter.ToAssignmentDetailModel(assignment, results.TestResults, testRunInfo);
+            var solutionFiles =
+                await _solutionFileRepository.GetAllLatestOfAssignmentForTeamAsync(assignmentId, teamId, dateUtc);
+
+            var model = _assignmentConverter.ToAssignmentDetailModel(assignment, testRunInfo, results.TestResults, solutionFiles);
 
             return Ok(model);
         }
@@ -118,18 +127,22 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
-            var sourceCodes = await _assignmentService.GetAllSourceCodes(assignmentId);
+            var solutions = await _assignmentService.GetAllSolutions(assignmentId);
             using (var memoryStream = new MemoryStream())
             {
                 using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
                 {
-                    foreach (var sourceCode in sourceCodes)
+                    foreach (var solution in solutions)
                     {
-                        var entry = zipArchive.CreateEntry($@"{sourceCode.UserFullName}\source.txt");
-                        using (StreamWriter writer = new StreamWriter(entry.Open()))
+                        foreach (var solutionFile in solution.SolutionFiles)
                         {
-                            await writer.WriteAsync(sourceCode.Source);
+                            var entry = zipArchive.CreateEntry($@"{solution.UserFullName}\{solutionFile.FilePath}");
+                            using (StreamWriter writer = new StreamWriter(entry.Open()))
+                            {
+                                await writer.WriteAsync(solutionFile.Content);
+                            }
                         }
+
                     }
                 }
 

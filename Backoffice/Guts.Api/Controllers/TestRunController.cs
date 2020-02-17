@@ -7,6 +7,7 @@ using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Services;
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -153,10 +154,9 @@ namespace Guts.Api.Controllers
 
         private async Task<SavedTestRunModel> SaveTestRunForAssignment(CreateAssignmentTestRunModel model, Assignment assignment)
         {
-            var testNames = model.Results.Select(testResult => testResult.TestName);
-
             if (IsLector())
             {
+                var testNames = model.Results.Select(testResult => testResult.TestName);
                 await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
             }
             else
@@ -164,8 +164,12 @@ namespace Guts.Api.Controllers
                 await _assignmentService.LoadTestsForAssignmentAsync(assignment);
             }
 
-            var testRun = _testRunConverter.From(model.Results, model.SourceCode, GetUserId(), assignment);
-            var savedTestRun = await _testRunService.RegisterRunAsync(testRun);
+            var testRun = _testRunConverter.From(model.Results, GetUserId(), assignment);
+
+            var solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
+                SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath, sourceFileModel.Content));
+
+            var savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
 
             var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
             return savedModel;

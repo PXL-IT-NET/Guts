@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.PeriodAggregate;
@@ -10,7 +9,7 @@ using Guts.Domain.TopicAggregate.ChapterAggregate;
 
 namespace Guts.Business.Services
 {
-    public class ChapterService : IChapterService
+    internal class ChapterService : IChapterService
     {
         private readonly IChapterRepository _chapterRepository;
         private readonly ICourseRepository _courseRepository;

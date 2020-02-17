@@ -9,7 +9,7 @@ using Guts.Domain.ExamAggregate;
 
 namespace Guts.Business.Services.Exam
 {
-    public class ExamService : IExamService
+    internal class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
         private readonly IExamPartRepository _examPartRepository;

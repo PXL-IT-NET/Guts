@@ -34,7 +34,7 @@ namespace Guts.Api.Models.Converters
                 {
                     AssignmentId = assignment.Id,
                     Code = assignment.Code,
-                    Description = string.IsNullOrEmpty(assignment.Description) ? assignment.Code : assignment.Description
+                    Description = assignment.Description
                 }).OrderBy(model => model.Description).ToList(),
                 Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
             };

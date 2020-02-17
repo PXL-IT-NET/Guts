@@ -6,7 +6,7 @@ namespace Guts.Api.Models.Converters
 {
     public interface ITestRunConverter
     {
-        TestRun From(IEnumerable<TestResultModel> testResultModels, string sourceCode, int userId, Assignment assignment);
+        TestRun From(IEnumerable<TestResultModel> testResultModels, int userId, Assignment assignment);
         SavedTestRunModel ToTestRunModel(TestRun testRun);
     }
 }

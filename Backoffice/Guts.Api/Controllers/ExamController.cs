@@ -199,7 +199,7 @@ namespace Guts.Api.Controllers
                 return NotFound();
             }
 
-            var fileDownloadName = $"{exam.Name.ToValidFileName()}.csv";
+            var fileDownloadName = $"{exam.Name.ToValidFilePath()}.csv";
 
             IEnumerable<dynamic> examScoreCsvRecords = await _examService.CalculateExamScoresForCsvAsync(id);
             

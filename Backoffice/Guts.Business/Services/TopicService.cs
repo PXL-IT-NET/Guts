@@ -5,7 +5,7 @@ using Guts.Domain.TopicAggregate;
 
 namespace Guts.Business.Services
 {
-    public class TopicService : ITopicService
+    internal class TopicService : ITopicService
     {
         private readonly ITopicRepository _topicRepository;
         private readonly IPeriodRepository _periodRepository;

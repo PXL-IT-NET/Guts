@@ -12,7 +12,7 @@ namespace Guts.Api.Models
         [Required]
         public IEnumerable<TestResultModel> Results { get; set; }
 
-        public string SourceCode { get; set; }
+        public IEnumerable<SolutionFileModel> SolutionFiles { get; set; }
 
         public string TestCodeHash { get; set; }
     }

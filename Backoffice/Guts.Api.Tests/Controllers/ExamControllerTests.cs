@@ -394,7 +394,7 @@ namespace Guts.Api.Tests.Controllers
             //Arrange
             int examId = _random.NextPositive();
             string examName = _random.NextString();
-            string expectedFileName = $"{examName.ToValidFileName()}.csv";
+            string expectedFileName = $"{examName.ToValidFilePath()}.csv";
 
             var examMock = new Mock<IExam>();
             examMock.SetupGet(exam => exam.Name).Returns(examName);

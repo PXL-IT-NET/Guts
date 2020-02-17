@@ -13,6 +13,7 @@ using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
 
@@ -29,6 +30,7 @@ namespace Guts.Business.Tests.Services
         private Mock<ITestRunRepository> _testRunRepositoryMock;
         private Mock<ITopicService> _topicServiceMock;
         private Mock<IAssignmentWithResultsConverter> _assignmentWithResultsConverterMock;
+        private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -39,6 +41,7 @@ namespace Guts.Business.Tests.Services
             _testResultRepositoryMock = new Mock<ITestResultRepository>();
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
+            _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
             _assignmentWithResultsConverterMock = new Mock<IAssignmentWithResultsConverter>();
 
             _service = new AssignmentService(_assignmentRepositoryMock.Object, 
@@ -46,6 +49,7 @@ namespace Guts.Business.Tests.Services
                 _testRepositoryMock.Object,
                 _testResultRepositoryMock.Object,
                 _testRunRepositoryMock.Object,
+                _solutionFileRepositoryMock.Object,
                 _assignmentWithResultsConverterMock.Object);
         }
 
@@ -474,7 +478,6 @@ namespace Guts.Business.Tests.Services
             Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
             Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
             Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
-            Assert.That(testRunInfo.SourceCode, Is.EqualTo(lastRun.SourceCode));
         }
 
         [Test]
@@ -507,42 +510,40 @@ namespace Guts.Business.Tests.Services
             Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
             Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
             Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
-            Assert.That(testRunInfo.SourceCode, Is.EqualTo(lastRun.SourceCode));
         }
 
         [Test]
-        public void GetAllSourceCodes_ShouldGetTheLastTestRunForAllUsersAndReturnSourceCodeInfoForEachUserOrderedByUserFullName()
+        public void GetAllSolutions_ShouldGetTheLastSolutionFilesForEachUserOrderedByUserFullName()
         {
             //Arrange
             var assignmentId = _random.NextPositive();
             var numberOfUsers = _random.Next(5, 21);
-            var testRunsWithUser = new List<TestRun>();
+            var solutionFilesWithUser = new List<SolutionFile>();
             for (int i = 0; i < numberOfUsers; i++)
             {
-                testRunsWithUser.Add(new TestRunBuilder(_random).WithUser().Build());
+                solutionFilesWithUser.Add(new SolutionFileBuilder().WithUser().Build());
             }
 
-            _testRunRepositoryMock.Setup(repo => repo.GetLastTestRunForAssignmentOfAllUsersAsync(assignmentId))
-                .ReturnsAsync(testRunsWithUser);
+            _solutionFileRepositoryMock.Setup(repo => repo.GetAllLatestOfAssignmentAsync(assignmentId))
+                .ReturnsAsync(solutionFilesWithUser);
 
             //Act
-            var assignmentSourceDtos = _service.GetAllSourceCodes(assignmentId).Result;
+            var assignmentSolutionDtos = _service.GetAllSolutions(assignmentId).Result;
 
             //Assert
-            _testResultRepositoryMock.Verify();
+            _solutionFileRepositoryMock.Verify();
 
-            Assert.That(assignmentSourceDtos, Has.Count.EqualTo(numberOfUsers));
-            foreach (var assignmentSourceDto in assignmentSourceDtos)
+            Assert.That(assignmentSolutionDtos, Has.Count.EqualTo(numberOfUsers));
+            foreach (var assignmentSolutionDto in assignmentSolutionDtos)
             {
-                var matchingTestRun = testRunsWithUser.FirstOrDefault(t => t.UserId == assignmentSourceDto.UserId);
-                Assert.That(matchingTestRun, Is.Not.Null);
-                Assert.That(assignmentSourceDto.Source, Is.EqualTo(matchingTestRun.SourceCode));
-                Assert.That(assignmentSourceDto.UserFullName, Does.StartWith(matchingTestRun.User.FirstName));
-                Assert.That(assignmentSourceDto.UserFullName, Does.EndWith(matchingTestRun.User.LastName));
-                Assert.That(assignmentSourceDto.Source, Is.EqualTo(matchingTestRun.SourceCode));
+                var matchingSolutionFile = solutionFilesWithUser.FirstOrDefault(t => t.UserId == assignmentSolutionDto.UserId);
+                Assert.That(matchingSolutionFile, Is.Not.Null);
+                Assert.That(assignmentSolutionDto.SolutionFiles, Has.One.EqualTo(matchingSolutionFile));
+                Assert.That(assignmentSolutionDto.UserFullName, Does.StartWith(matchingSolutionFile.User.FirstName));
+                Assert.That(assignmentSolutionDto.UserFullName, Does.EndWith(matchingSolutionFile.User.LastName));
             }
            
-            Assert.That(assignmentSourceDtos,Is.EquivalentTo(assignmentSourceDtos.OrderBy(dto => dto.UserFullName)));
+            Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.UserFullName)));
         }
     }
 }

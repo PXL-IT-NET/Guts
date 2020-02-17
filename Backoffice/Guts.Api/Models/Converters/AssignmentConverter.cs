@@ -4,12 +4,17 @@ using System.Linq;
 using Guts.Business.Dtos;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Api.Models.Converters
 {
     public class AssignmentConverter : IAssignmentConverter
     {
-        public AssignmentDetailModel ToAssignmentDetailModel(Assignment assignment, IList<TestResult> results, AssignmentTestRunInfoDto testRunInfo)
+        public AssignmentDetailModel ToAssignmentDetailModel(
+            Assignment assignment,
+            AssignmentTestRunInfoDto testRunInfo,
+            IList<TestResult> results,
+            IList<SolutionFile> solutionFiles)
         {
             if (assignment.Topic?.Course == null)
             {
@@ -26,6 +31,9 @@ namespace Guts.Api.Models.Converters
                 throw new ArgumentNullException(nameof(testRunInfo));
             }
 
+            results ??= new List<TestResult>();
+            solutionFiles ??= new List<SolutionFile>();
+
             var model = new AssignmentDetailModel
             {
                 TopicCode = assignment.Topic.Code,
@@ -37,9 +45,19 @@ namespace Guts.Api.Models.Converters
                 FirstRun =  testRunInfo.FirstRunDateTime, 
                 LastRun = testRunInfo.LastRunDateTime,
                 NumberOfRuns = testRunInfo.NumberOfRuns,
-                SourceCode = testRunInfo.SourceCode
+                SolutionFiles = new List<SolutionFileModel>()
             };
 
+            AddTestResults(model, assignment, results);
+
+            AddSolutionFiles(model, solutionFiles);
+
+            return model;
+        }
+
+        private void AddTestResults(AssignmentDetailModel model, Assignment assignment,
+            IList<TestResult> results)
+        {
             foreach (var test in assignment.Tests)
             {
                 var testResultModel = new TestResultModel
@@ -60,8 +78,19 @@ namespace Guts.Api.Models.Converters
 
                 model.TestResults.Add(testResultModel);
             }
+        }
 
-            return model;
+        private void AddSolutionFiles(AssignmentDetailModel model, IList<SolutionFile> solutionFiles)
+        {
+            foreach (var solutionFile in solutionFiles)
+            {
+                var solutionFileModel = new SolutionFileModel
+                {
+                    FilePath = solutionFile.FilePath,
+                    Content = solutionFile.Content
+                };
+                model.SolutionFiles.Add(solutionFileModel);
+            }
         }
     }
 }

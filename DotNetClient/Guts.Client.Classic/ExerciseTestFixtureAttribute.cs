@@ -48,7 +48,7 @@ namespace Guts.Client.Classic
                 {
                     Assignment = exercise,
                     Results = TestRunResultAccumulator.Instance.TestResults,
-                    SourceCode = GetSourceCode(),
+                    SolutionFiles = GetSourceCodeFiles(),
                     TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
 

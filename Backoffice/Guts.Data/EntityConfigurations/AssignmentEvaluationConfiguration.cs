@@ -1,5 +1,4 @@
-﻿using Guts.Domain.AssignmentAggregate;
-using Guts.Domain.ExamAggregate;
+﻿using Guts.Domain.ExamAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

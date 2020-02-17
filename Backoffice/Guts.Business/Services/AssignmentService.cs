@@ -11,20 +11,22 @@ using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Business.Services
 {
-    public class AssignmentService : IAssignmentService
+    internal class AssignmentService : IAssignmentService
     {
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly ITopicService _topicService;
         private readonly ITestRepository _testRepository;
         private readonly ITestResultRepository _testResultRepository;
         private readonly ITestRunRepository _testRunRepository;
+        private readonly ISolutionFileRepository _solutionFileRepository;
         private readonly IAssignmentWithResultsConverter _assignmentWithResultsConverter;
 
         public AssignmentService(IAssignmentRepository assignmentRepository,
             ITopicService topicService,
             ITestRepository testRepository,
-            ITestResultRepository testResultRepository, 
+            ITestResultRepository testResultRepository,
             ITestRunRepository testRunRepository,
+            ISolutionFileRepository solutionFileRepository,
             IAssignmentWithResultsConverter assignmentWithResultsConverter)
         {
             _assignmentRepository = assignmentRepository;
@@ -32,6 +34,7 @@ namespace Guts.Business.Services
             _testRepository = testRepository;
             _testResultRepository = testResultRepository;
             _testRunRepository = testRunRepository;
+            _solutionFileRepository = solutionFileRepository;
             _assignmentWithResultsConverter = assignmentWithResultsConverter;
         }
 
@@ -117,17 +120,24 @@ namespace Guts.Business.Services
             return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
-        public async Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId)
+        public async Task<IList<AssignmentSolutionDto>> GetAllSolutions(int assignmentId)
         {
-            //TODO: write tests
-            var testRunsWithUser = await _testRunRepository.GetLastTestRunForAssignmentOfAllUsersAsync(assignmentId);
+            var assignmentSolutions = new List<AssignmentSolutionDto>();
 
-            return testRunsWithUser.Select(testrun => new AssignmentSourceDto
+            var allSolutionFiles = await _solutionFileRepository.GetAllLatestOfAssignmentAsync(assignmentId);
+
+            var userFileGroups = allSolutionFiles.GroupBy(sf => sf.User);
+            foreach (var userFileGroup in userFileGroups)
             {
-                Source = testrun.SourceCode,
-                UserId = testrun.UserId,
-                UserFullName = $"{testrun.User.FirstName} {testrun.User.LastName}".Trim()
-            }).OrderBy(dto => dto.UserFullName).ToList();
+                assignmentSolutions.Add(new AssignmentSolutionDto
+                {
+                    UserId = userFileGroup.Key.Id,
+                    UserFullName = $"{userFileGroup.Key.FirstName} {userFileGroup.Key.LastName}".Trim(),
+                    SolutionFiles = userFileGroup
+                });
+            }
+
+            return assignmentSolutions;
         }
 
         public async Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector)
@@ -171,7 +181,6 @@ namespace Guts.Business.Services
                 var lastTestRun = testRuns.Last();
                 testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
                 testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
-                testRunInfo.SourceCode = lastTestRun.SourceCode;
                 testRunInfo.NumberOfRuns = testRuns.Count;
             }
             return testRunInfo;

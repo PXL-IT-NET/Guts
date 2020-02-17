@@ -8,7 +8,7 @@ namespace Guts.Api.Models.Converters
 {
     public class TestRunConverter : ITestRunConverter
     {
-        public TestRun From(IEnumerable<TestResultModel> testResultModels, string sourceCode, int userId, Assignment assignment)
+        public TestRun From(IEnumerable<TestResultModel> testResultModels, int userId, Assignment assignment)
         {
             if(assignment == null) throw new ArgumentNullException(nameof(assignment));
 
@@ -16,12 +16,11 @@ namespace Guts.Api.Models.Converters
             {
                 UserId = userId,
                 AssignmentId = assignment.Id,
-                SourceCode = sourceCode,
                 CreateDateTime = DateTime.UtcNow,
                 TestResults = new List<TestResult>()
             };
 
-            testResultModels = testResultModels ?? new List<TestResultModel>();
+            testResultModels ??= new List<TestResultModel>();
 
             foreach (var testResultModel in testResultModels)
             {
@@ -50,7 +49,7 @@ namespace Guts.Api.Models.Converters
                 TestResults = new List<SavedTestResultModel>()
             };
 
-            testRun.TestResults = testRun.TestResults ?? new List<TestResult>();
+            testRun.TestResults ??= new List<TestResult>();
 
             foreach (var testResult in testRun.TestResults)
             {

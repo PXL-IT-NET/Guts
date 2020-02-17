@@ -14,6 +14,7 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
+using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
@@ -72,7 +73,7 @@ namespace Guts.Api.Tests.Controllers
 
             var postedModel = new CreateAssignmentTestRunModelBuilder()
                 .WithAssignment(assignmentDto)
-                .WithSourceCode()
+                .WithSolutionFile()
                 .Build();
 
             TestPostAssignmentTestRun(() => _controller.PostExerciseTestRun(postedModel), postedModel, assignment);
@@ -99,7 +100,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
             
-            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -136,7 +137,7 @@ namespace Guts.Api.Tests.Controllers
 
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == TestRunController.InvalidTestCodeHashErrorKey));
-            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -150,7 +151,7 @@ namespace Guts.Api.Tests.Controllers
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
             var postedModel = new CreateAssignmentTestRunModelBuilder()
                 .WithAssignment(assignmentDto)
-                .WithSourceCode()
+                .WithSolutionFile()
                 .Build();
 
             _controller = CreateControllerWithUserInContext(Role.Constants.Student);
@@ -181,7 +182,7 @@ namespace Guts.Api.Tests.Controllers
 
             var postedModel = new CreateAssignmentTestRunModelBuilder()
                 .WithAssignment(assignmentDto)
-                .WithSourceCode()
+                .WithSolutionFile()
                 .Build();
 
             TestPostAssignmentTestRun(() => _controller.PostProjectTestRun(postedModel), postedModel, assignment);
@@ -207,8 +208,8 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == errorKey));
-            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Assignment>()), Times.Never);
-            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+            _testResultConverterMock.Verify(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<int>(), It.IsAny<Assignment>()), Times.Never);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -227,7 +228,7 @@ namespace Guts.Api.Tests.Controllers
 
             var postedModel = new CreateAssignmentTestRunModelBuilder()
                 .WithAssignment(assignmentDto)
-                .WithSourceCode()
+                .WithSolutionFile()
                 .Build();
 
             _assignmentServiceMock.Setup(service =>
@@ -242,7 +243,7 @@ namespace Guts.Api.Tests.Controllers
             _assignmentServiceMock.Verify();
             Assert.That(badRequestResult, Is.Not.Null);
             Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == TestRunController.InvalidTestCodeHashErrorKey));
-            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>()), Times.Never);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -275,12 +276,11 @@ namespace Guts.Api.Tests.Controllers
         {
             var convertedTestRun = new TestRun();
             _testResultConverterMock
-                .Setup(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<string>(),
-                    It.IsAny<int>(), It.IsAny<Assignment>()))
+                .Setup(converter => converter.From(It.IsAny<IEnumerable<TestResultModel>>(), It.IsAny<int>(), It.IsAny<Assignment>()))
                 .Returns(convertedTestRun);
 
             var savedTestRun = new TestRun();
-            _testRunServiceMock.Setup(repo => repo.RegisterRunAsync(It.IsAny<TestRun>())).ReturnsAsync(savedTestRun);
+            _testRunServiceMock.Setup(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>())).ReturnsAsync(savedTestRun);
 
             var savedTestRunModel = new SavedTestRunModel
             {
@@ -295,13 +295,13 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(createdResult, Is.Not.Null);
             _testResultConverterMock.Verify(
-                converter => converter.From(postedModel.Results, postedModel.SourceCode, _userId, existingAssignment), Times.Once);
+                converter => converter.From(postedModel.Results, _userId, existingAssignment), Times.Once);
 
             _assignmentServiceMock.Verify(
                 service => service.LoadOrCreateTestsForAssignmentAsync(existingAssignment,
                     It.Is<IEnumerable<string>>(testNames => testNames.All(testName =>
                         postedModel.Results.Any(testResult => testResult.TestName == testName)))), Times.Once);
-            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun), Times.Once);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun, It.IsAny<IEnumerable<SolutionFile>>()), Times.Once); //TODO: also test if solution files are passed in
             _testResultConverterMock.Verify(converter => converter.ToTestRunModel(savedTestRun), Times.Once);
             Assert.That(createdResult.ActionName, Is.EqualTo(nameof(_controller.GetTestRun)));
             Assert.That(createdResult.RouteValues["id"], Is.EqualTo(savedTestRunModel.Id));

@@ -2,13 +2,10 @@
 using System.Net;
 using System.Reflection;
 using Guts.Api.Models.Converters;
+using Guts.Bootstrapper;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Business.Converters;
-using Guts.Business.Security;
-using Guts.Business.Services;
-using Guts.Data.Repositories;
-using Guts.Domain.ExamAggregate;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
@@ -22,58 +19,14 @@ namespace Guts.Api.Extensions
     {
         public static void AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
-            //register domain factories
-            services.RegisterTypesWhoseNameEndsWith("Factory", typeof(ExamPart).Assembly, ServiceLifetime.Singleton);
+            Assembly apiAssembly = typeof(CourseConverter).Assembly;
 
             //register converters in api project
-            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(CourseConverter).Assembly, ServiceLifetime.Singleton);
+            services.RegisterTypesWhoseNameEndsWith("Converter", apiAssembly, ServiceLifetime.Singleton);
 
-            //register converters in business project
-            services.RegisterTypesWhoseNameEndsWith("Converter", typeof(AssignmentWithResultsConverter).Assembly, ServiceLifetime.Singleton);
-
-            //register services
-            services.RegisterTypesWhoseNameEndsWith("Service", typeof(CourseService).Assembly, ServiceLifetime.Scoped);
-
-            //register repositories
-            services.RegisterTypesWhoseNameEndsWith("Repository", typeof(CourseDbRepository).Assembly, ServiceLifetime.Scoped);
-
-            services.AddScoped<IHttpClient, HttpClientAdapter>();
-            services.AddScoped<ICaptchaValidator>(provider =>
-            {
-                var captchaSection = configuration.GetSection("Captcha");
-                var secret = captchaSection.GetValue<string>("secret");
-                var validationUrl = captchaSection.GetValue<string>("validationUrl");
-                return new GoogleCaptchaValidator(validationUrl, secret, provider.GetService<IHttpClient>());
-            });
-
-            services.AddScoped<ISmtpClient>(provider =>
-            {
-                var mailSection = configuration.GetSection("Mail");
-                var smtpHost = mailSection.GetValue<string>("host");
-                var port = mailSection.GetValue<int>("port");
-                var fromEmail = mailSection.GetValue<string>("from");
-                var password = mailSection.GetValue<string>("password");
-                return new SmtpClientAdapter(smtpHost, port, fromEmail, password);
-            });
-
-            services.AddScoped<IMailSender>(provider =>
-            {
-                var mailSection = configuration.GetSection("Mail");
-                var fromEmail = mailSection.GetValue<string>("from");
-                var webAppBaseUrl = mailSection.GetValue<string>("webappbaseurl");
-                return new MailSender(provider.GetService<ISmtpClient>(), fromEmail, webAppBaseUrl);
-            });
-
-            services.AddSingleton<ITokenAccessPassFactory>(provider =>
-            {
-                var tokenSection = configuration.GetSection("Tokens");
-                var key = tokenSection.GetValue<string>("Key");
-                var issuer = tokenSection.GetValue<string>("Issuer");
-                var audience = tokenSection.GetValue<string>("Audience");
-                var expirationTimeInMinutes = tokenSection.GetValue<int>("ExpirationTimeInMinutes");
-
-                return new JwtSecurityTokenAccessPassFactory(key, issuer, audience, expirationTimeInMinutes);
-            });
+            services.AddDomainLayerServices();
+            services.AddBusinessLayerServices(configuration);
+            services.AddDataLayerServices();
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)

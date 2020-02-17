@@ -7,7 +7,7 @@ using Guts.Domain.UserAggregate;
 
 namespace Guts.Business.Communication
 {
-    public class MailSender : IMailSender
+    internal class MailSender : IMailSender
     {
         private readonly Uri _webAppBaseUri;
         private readonly ISmtpClient _smtpClient;
@@ -22,7 +22,7 @@ namespace Guts.Business.Communication
 
         public async Task SendConfirmUserEmailMessageAsync(User user, string confirmationToken)
         {
-            var callbackUri = new Uri(_webAppBaseUri, $"confirmemail?userId={user.Id}&token={confirmationToken}");
+            var callbackUri = new Uri(_webAppBaseUri, $"confirmemail?userId={user.Id}&token={HttpUtility.UrlEncode(confirmationToken)}");
 
             var bodyBuilder = new StringBuilder();
             bodyBuilder.AppendLine("<html><body>");

@@ -21,7 +21,7 @@ namespace Guts.Business.Services
         Task<AssignmentResultDto> GetResultsForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc);
         Task<AssignmentTestRunInfoDto> GetTeamTestRunInfoForAssignment(int assignmentId, int teamId, DateTime? dateUtc);
 
-        Task<IList<AssignmentSourceDto>> GetAllSourceCodes(int assignmentId);
+        Task<IList<AssignmentSolutionDto>> GetAllSolutions(int assignmentId);
 
         Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector);
 

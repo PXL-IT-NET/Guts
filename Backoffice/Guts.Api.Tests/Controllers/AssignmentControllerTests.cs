@@ -14,6 +14,7 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
+using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
@@ -32,6 +33,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<ITopicService> _topicServiceMock;
         private Mock<IMapper> _mapperMock;
+        private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -42,12 +44,16 @@ namespace Guts.Api.Tests.Controllers
             _assignmentConverterMock = new Mock<IAssignmentConverter>();
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _topicServiceMock = new Mock<ITopicService>();
+            _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
             _mapperMock = new Mock<IMapper>();
 
             _controller = new AssignmentController(_assignmentServiceMock.Object,
                 _assignmentRepositoryMock.Object, 
                 _assignmentConverterMock.Object,
-                _projectTeamRepositoryMock.Object, _topicServiceMock.Object, _mapperMock.Object);
+                _projectTeamRepositoryMock.Object, 
+                _topicServiceMock.Object,
+                _solutionFileRepositoryMock.Object,
+                _mapperMock.Object);
         }
 
         [Test]
@@ -57,7 +63,7 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetAssignmentResultsForUser_ShouldReturnAssignmentDetailsIfParamatersAreValid()
+        public void GetAssignmentResultsForUser_ShouldReturnAssignmentDetailsIfParametersAreValid()
         {
             //Arrange
             var existingAssignment = new AssignmentBuilder().WithId().Build();
@@ -75,10 +81,16 @@ namespace Guts.Api.Tests.Controllers
                 .Setup(service => service.GetUserTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(returnedTestRunInfo);
 
+            var returnedSolutionFiles = new List<SolutionFile>();
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForUserAsync(existingAssignment.Id, userId, null))
+                .ReturnsAsync(returnedSolutionFiles);
+
             var returnedModel = new AssignmentDetailModel();
             _assignmentConverterMock
                 .Setup(converter =>
-                    converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()))
+                    converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<AssignmentTestRunInfoDto>(),
+                        It.IsAny<IList<TestResult>>(), It.IsAny<IList<SolutionFile>>()))
                 .Returns(returnedModel);
 
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
@@ -91,7 +103,9 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult.Value, Is.EqualTo(returnedModel));
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id), Times.Once);
             _assignmentServiceMock.Verify(repo => repo.GetResultsForUserAsync(existingAssignment.Id, userId, null), Times.Once);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(existingAssignment, assignmentResultDto.TestResults, returnedTestRunInfo), Times.Once);
+            _solutionFileRepositoryMock.Verify();
+            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(
+                existingAssignment, returnedTestRunInfo, assignmentResultDto.TestResults, returnedSolutionFiles), Times.Once);
         }
 
         [Test]
@@ -111,7 +125,9 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult, Is.Not.Null);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()), Times.Never);
+            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(
+                It.IsAny<Assignment>(), It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
+                It.IsAny<IList<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -130,11 +146,14 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult, Is.Not.Null);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(service => service.GetResultsForUserAsync(It.IsAny<int>(), It.IsAny<int>(), null), Times.Never);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()), Times.Never);
+            _assignmentConverterMock.Verify(
+                converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
+                    It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
+                    It.IsAny<IList<SolutionFile>>()), Times.Never);
         }
 
         [Test]
-        public void GetAssignmentResultsForTeam_ShouldReturnAssignmentDetailsIfParamatersAreValid()
+        public void GetAssignmentResultsForTeam_ShouldReturnAssignmentDetailsIfParametersAreValid()
         {
             //Arrange
             var userId = _random.NextPositive();
@@ -155,10 +174,16 @@ namespace Guts.Api.Tests.Controllers
                 .Setup(service => service.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(returnedTestRunInfo);
 
+            var returnedSolutionFiles = new List<SolutionFile>();
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForTeamAsync(existingAssignment.Id, teamId, null))
+                .ReturnsAsync(returnedSolutionFiles);
+
             var returnedModel = new AssignmentDetailModel();
             _assignmentConverterMock
                 .Setup(converter =>
-                    converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()))
+                    converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<AssignmentTestRunInfoDto>(),
+                        It.IsAny<IList<TestResult>>(), It.IsAny<IList<SolutionFile>>()))
                 .Returns(returnedModel);
 
             _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
@@ -171,9 +196,12 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult.Value, Is.EqualTo(returnedModel));
             _projectTeamRepositoryMock.Verify(repo => repo.LoadByIdAsync(teamId), Times.Once);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id), Times.Once);
+            _solutionFileRepositoryMock.Verify();
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(existingAssignment.Id, teamId, null), Times.Once);
             _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(existingAssignment.Id, teamId, null), Times.Once);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(existingAssignment, assignmentResultDto.TestResults, returnedTestRunInfo), Times.Once);
+            _assignmentConverterMock.Verify(
+                converter => converter.ToAssignmentDetailModel(existingAssignment, returnedTestRunInfo,
+                    assignmentResultDto.TestResults, returnedSolutionFiles), Times.Once);
         }
 
         [Test]
@@ -198,7 +226,10 @@ namespace Guts.Api.Tests.Controllers
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()), Times.Never);
+            _assignmentConverterMock.Verify(
+                converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
+                    It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
+                    It.IsAny<IList<SolutionFile>>()), Times.Never);
         }
 
         [Test]
@@ -221,7 +252,10 @@ namespace Guts.Api.Tests.Controllers
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _assignmentConverterMock.Verify(converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(), It.IsAny<IList<TestResult>>(), It.IsAny<AssignmentTestRunInfoDto>()), Times.Never);
+            _assignmentConverterMock.Verify(
+                converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
+                    It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
+                    It.IsAny<IList<SolutionFile>>()), Times.Never);
         }
     }
 }

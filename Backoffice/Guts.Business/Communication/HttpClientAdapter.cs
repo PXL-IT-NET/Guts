@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Guts.Business.Communication
 {
-    public class HttpClientAdapter : IHttpClient, IDisposable
+    internal class HttpClientAdapter : IHttpClient, IDisposable
     {
         private readonly HttpClient _httpClient;
 

@@ -15,6 +15,7 @@ using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -35,14 +36,11 @@ namespace Guts.Data
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<Test> Tests { get; set; }
         public DbSet<TestRun> TestRuns { get; set; }
+        public DbSet<SolutionFile> SolutionFiles { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
-
         public DbSet<Exam> Exams { get; set; }
-
         public DbSet<ExamPart> ExamParts { get; set; }
-
         public DbSet<LoginSession> LoginSessions { get; set; }
-
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
         }
@@ -52,7 +50,6 @@ namespace Guts.Data
             base.OnModelCreating(builder);
 
             builder.Entity<Topic>().ToTable("Topics");
-            builder.Entity<Assignment>().ToTable("Assignments");
             builder.Entity<ProjectTeamUser>().ToTable("ProjectTeamUsers");
             builder.Entity<User>().ToTable("Users");
             builder.Entity<Role>().ToTable("Roles");
@@ -62,6 +59,8 @@ namespace Guts.Data
             builder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
             builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
 
+            builder.ApplyConfiguration(new AssignmentConfiguration());
+            builder.ApplyConfiguration(new SolutionFileConfiguration());
             builder.ApplyConfiguration(new TestResultConfiguration());
             builder.ApplyConfiguration(new TestConfiguration());
             builder.ApplyConfiguration(new ExamConfiguration());

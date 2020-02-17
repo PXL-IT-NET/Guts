@@ -20,7 +20,7 @@ namespace Guts.Api.Tests.Builders
             {
                 Assignment = new AssignmentDtoBuilder().Build(),
                 Results = new List<TestResultModel>(),
-                SourceCode = null,
+                SolutionFiles = new List<SolutionFileModel>(),
                 TestCodeHash = null
             };
         }
@@ -32,9 +32,12 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
-        public CreateAssignmentTestRunModelBuilder WithSourceCode()
+        public CreateAssignmentTestRunModelBuilder WithSolutionFile()
         {
-            _model.SourceCode = Guid.NewGuid().ToString();
+            _model.SolutionFiles = new List<SolutionFileModel>
+            {
+                new SolutionFileModelBuilder().Build()
+            };
             return this;
         }
 

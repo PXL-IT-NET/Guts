@@ -35,6 +35,8 @@ namespace Guts.Domain.AssignmentAggregate
 
         public virtual ICollection<TestCodeHash> TestCodeHashes { get; set; } = new HashSet<TestCodeHash>();
 
+     //   public virtual ICollection<SolutionFile> SolutionFiles { get; set; } = new HashSet<SolutionFile>();
+
         public virtual Topic Topic { get; set; }
         public int TopicId { get; set; }
 

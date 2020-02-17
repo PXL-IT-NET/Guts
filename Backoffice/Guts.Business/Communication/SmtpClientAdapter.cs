@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Guts.Business.Communication
 {
-    public class SmtpClientAdapter : ISmtpClient
+    internal class SmtpClientAdapter : ISmtpClient
     {
         private readonly SmtpClient _smtpClient;
 
