@@ -1,0 +1,46 @@
+<div class="row">
+  <div class="col-md-12">
+    <form>
+      <div class="form-group row">
+
+        <label for="exercises" class="col-md-2 col-xl-1 col-form-label">Exercise</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
+          <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId" (ngModelChange)="onSelectionChanged()">
+            <option [ngValue]="0" selected>Overview</option>
+            <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
+              {{exercise.code}}
+            </option>
+          </select>
+        </div>
+
+        <label for="users" class="col-md-2 col-xl-1 col-form-label">User</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
+          <input id="users"
+                 name="users"
+                 type="text"
+                 class="form-control"
+                 [(ngModel)]="selectedUser"
+                 (ngModelChange)="onSelectionChanged()"
+                 [ngbTypeahead]="searchUsers"
+                 (click)="onUserClick()"
+                 [inputFormatter]="formatUser"
+                 [resultFormatter]="formatUser"
+                 #instance="ngbTypeahead"
+                 [readonly]="model.users.length <= 1" />
+        </div>
+
+        <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
+        <div class="col-md-10 col-md-4 col-xl-3">
+          <angular2-date-picker name="date" [(ngModel)]="selectedDate" [settings]="datePickerSettings" (onDateSelect)="onDateChanged()"></angular2-date-picker>
+        </div>
+
+      </div>
+    </form>
+    <ngx-loading [show]="loading"></ngx-loading>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <router-outlet></router-outlet>
+  </div>
+</div>

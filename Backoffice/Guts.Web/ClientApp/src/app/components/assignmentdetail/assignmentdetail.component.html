@@ -1,0 +1,78 @@
+<div class="col-md-10 col-md-offset-1">
+  <div class="form-group row">
+    <label for="firstrun" class="col-sm-2 col-form-label">First test run</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" readonly id="firstrun" value="{{model.firstRun}}">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="lastrun" class="col-sm-2 col-form-label">Last test run</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" readonly id="lastrun" value="{{model.lastRun}}">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="numberofruns" class="col-sm-2 col-form-label">Number of test runs</label>
+    <div class="col-sm-10">
+      <input type="number" class="form-control" readonly id="numberofruns" value="{{model.numberOfRuns}}">
+    </div>
+  </div>
+  <div class="form-group row" *ngIf="model.solutionFiles.length > 0">
+    <div class="col-sm-12">
+      <div class="card">
+        <h5 class="card-header">Source code</h5>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item" *ngFor="let solutionFile of model.solutionFiles">
+            <div class="mb-2">
+              <span>{{solutionFile.filePath}}</span>
+              <button class="btn btn-sm ml-2 btn-outline-primary" type="button"
+                (click)="solutionFile.isCollapsed = !solutionFile.isCollapsed">
+                <span class="fa fa-plus" *ngIf="solutionFile.isCollapsed"></span>
+                <span class="fa fa-minus" *ngIf="!solutionFile.isCollapsed"></span>
+              </button>
+            </div>
+            <div [ngbCollapse]="solutionFile.isCollapsed">
+              <div class="card card-body">
+                <textarea class="form-control" readonly rows="10">{{solutionFile.content}}</textarea>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <h5 class="card-header">Test results</h5>
+        <div class="card card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead>
+                <tr>
+                  <th class="col-greedy">Test</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let testResult of model.testResults">
+                  <td>
+                    <span *ngIf="!testResult.runned" class="fa fa-circle text-warning"></span>
+                    <span *ngIf="testResult.runned && testResult.passed" class="fa fa-check-circle text-success"></span>
+                    <span *ngIf="testResult.runned &&!testResult.passed" class="fa fa-times-circle text-danger"></span>
+                    <span class="ml-2">{{testResult.testName}}</span>
+                  </td>
+                  <td>
+                    <pre class="text-danger">{{testResult.message}}</pre>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ngx-loading [show]="loading"></ngx-loading>
+</div>

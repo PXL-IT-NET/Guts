@@ -1,0 +1,64 @@
+<div class="row">
+  <div class="col-md-12">
+    <ngx-loading [show]="loading"></ngx-loading>
+    <h5>Course configuration</h5>
+    <div class="card">
+      <div class="card-header">
+        Exams
+      </div>
+      <ul class="list-group list-group-flush">
+
+        <li class="list-group-item" *ngFor="let exam of exams">
+          <div class="mb-2">
+            <span>{{exam.name}}</span>
+            <button class="btn btn-sm ml-2 btn-outline-primary" type="button"
+              (click)="exam.isCollapsed = !exam.isCollapsed">
+              <span class="fa fa-plus" *ngIf="exam.isCollapsed"></span>
+              <span class="fa fa-minus" *ngIf="!exam.isCollapsed"></span>
+            </button>
+            <button class="btn btn-sm ml-2 btn-outline-secondary" (click)="downloadResults(exam)">Download results</button>
+          </div>
+          <div [ngbCollapse]="exam.isCollapsed">
+            <div class="card card-body">
+              <h6>Exam parts</h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item list-group-item-secondary" *ngFor="let exampart of exam.parts">
+                  <app-exampart [model]="exampart" [examId]="exam.id"
+                    (examPartDeleted)="onExamPartDeleted($event, exam)"></app-exampart>
+                </li>
+                <li class="list-group-item list-group-item-secondary">
+                  <app-exampart [examId]="exam.id" (examPartAdded)="onExamPartAdded($event, exam)"></app-exampart>
+                </li>
+              </ul>
+
+            </div>
+          </div>
+        </li>
+        <li class="list-group-item">
+          <div class="mb-2">
+            <button class="btn btn-sm btn-primary ml-3" type="button"
+              (click)="newExam.isCollapsed = !newExam.isCollapsed">
+              Add new exam
+            </button>
+          </div>
+          <div [ngbCollapse]="newExam.isCollapsed">
+            <div class="card card-body">
+              <form name="form" (ngSubmit)="f.form.valid && saveNewExam()" #f="ngForm" novalidate>
+                <div class="form-group">
+                  <label for="name">Name</label>
+                  <input type="text" class="form-control" id="name" name="name" [(ngModel)]="newExam.name"
+                    #name="ngModel" required [ngClass]="{ 'is-invalid': f.submitted && !name.valid }" />
+                  <div class="invalid-feedback">Name is required</div>
+                </div>
+                <div class="form-group">
+                  <button [disabled]="loading" class="btn btn-primary" type="submit">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
