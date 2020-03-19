@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
@@ -56,26 +57,21 @@ namespace Guts.Data.Repositories
 
         public async Task<Project> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, string projectCode, int periodId, int userId)
         {
-            var query = from project in _context.Projects
-                where project.CourseId == courseId 
-                      && project.Code == projectCode 
-                      && project.PeriodId == periodId
-                select new Project(project.Id)
-                {
-                    Code = project.Code,
-                    Description = project.Description,
-                    Assignments = project.Assignments,
-                    CourseId = project.CourseId,
-                    PeriodId = project.PeriodId,
-                    Teams = project.Teams.Where(t => t.TeamUsers.Any(tu => tu.UserId == userId)).ToList()
-                };
+            var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
+            query = query.Include(p => p.Assignments).Include(p => p.Teams);
 
-            var result = await query.FirstOrDefaultAsync();
-            if (result == null)
+            var project = await query.FirstOrDefaultAsync();
+            if (project == null)
             {
                 throw new DataNotFoundException();
             }
-            return result;
+
+            //only return the teams of the user
+            var userProjectTeamIds = await _context.ProjectTeamUsers.Where(ptu => ptu.UserId == userId)
+                .Select(ptu => ptu.ProjectTeamId).ToListAsync();
+            project.Teams = project.Teams.Where(pt => userProjectTeamIds.Any(teamId => teamId == pt.Id)).ToList();
+
+            return project;
         }
     }
 }

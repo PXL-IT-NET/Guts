@@ -37,9 +37,35 @@ namespace Guts.Data.Repositories
         public async Task<IList<TestResult>> GetLastTestResultsOfAssignmentsAsync(int[] assignmentIds, DateTime? dateUtc)
         {
             var lastResultKeys = from testresult in _context.TestResults
-                where assignmentIds.Contains(testresult.Test.AssignmentId)
+                                 where assignmentIds.Contains(testresult.Test.AssignmentId)
+                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                 group testresult by new { testresult.TestId, testresult.UserId } into g
+                                 select new
+                                 {
+                                     g.Key.TestId,
+                                     g.Key.UserId,
+                                     CreatDateTime = g.Max(tr => tr.CreateDateTime)
+                                 };
+
+            var lastResultsQuery = from testresult in _context.TestResults
+                                   from key in lastResultKeys
+                                   where testresult.TestId == key.TestId
+                                         && testresult.UserId == key.UserId
+                                         && testresult.CreateDateTime == key.CreatDateTime
+                                   select testresult;
+
+            return await lastResultsQuery.Include(testresult => testresult.Test).AsNoTracking().ToListAsync();
+        }
+
+        private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int assignmentId, int? teamId, DateTime? dateUtc)
+        {
+            var lastResultKeys = from testresult in _context.TestResults
+                join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
+                where testresult.Test.AssignmentId == assignmentId
                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
-                group testresult by new { testresult.TestId, testresult.UserId } into g
+                      && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
+                group testresult by new {testresult.TestId, testresult.UserId}
+                into g
                 select new
                 {
                     g.Key.TestId,
@@ -53,21 +79,6 @@ namespace Guts.Data.Repositories
                       && testresult.UserId == key.UserId
                       && testresult.CreateDateTime == key.CreatDateTime
                 select testresult;
-
-            return await lastResultsQuery.Include(testresult => testresult.Test).AsNoTracking().ToListAsync();
-        }
-
-        private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int assignmentId, int? teamId, DateTime? dateUtc)
-        {
-            var testresultsPerTestPerTeamQuery = from testresult in _context.TestResults
-                                                 join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
-                                                 where (testresult.Test.AssignmentId == assignmentId)
-                                                       && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
-                                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
-                                                 group testresult by new { testresult.TestId, projectTeamUser.ProjectTeamId };
-
-            var lastResultsQuery = testresultsPerTestPerTeamQuery.Select(testresultGroup =>
-                testresultGroup.OrderByDescending(testresult => testresult.CreateDateTime).FirstOrDefault());
 
             return await lastResultsQuery.AsNoTracking().ToListAsync();
         }
@@ -95,7 +106,5 @@ namespace Guts.Data.Repositories
 
             return await lastResultsQuery.AsNoTracking().ToListAsync();
         }
-
-       
     }
 }
