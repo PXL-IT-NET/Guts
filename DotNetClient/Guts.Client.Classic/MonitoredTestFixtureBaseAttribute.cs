@@ -5,6 +5,7 @@ using Guts.Client.Shared.Models;
 using Guts.Client.Shared.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using LoginWindowFactory = Guts.Client.Classic.UI.LoginWindowFactory;
 
 namespace Guts.Client.Classic
 {
@@ -13,23 +14,31 @@ namespace Guts.Client.Classic
         protected readonly string _courseCode;
         protected string _sourceCodeRelativeFilePaths;
         protected readonly TestRunResultSender _resultSender;
+        private Exception _initializationException;
 
         public ActionTargets Targets => ActionTargets.Suite;
 
-        protected MonitoredTestFixtureBaseAttribute(string courseCode)
+        protected MonitoredTestFixtureBaseAttribute(string courseCode) : base(new object[0])
         {
             _courseCode = courseCode;
 
-            string apiBaseUrl = ConfigurationManager.AppSettings["GutsApiUri"];
-            if (string.IsNullOrEmpty(apiBaseUrl))
+            try
             {
-                throw new ConfigurationErrorsException("Could not find an appsetting 'GutsApiUri' that contains a valid Api url.");
+                string apiBaseUrl = ConfigurationManager.AppSettings["GutsApiUri"];
+                if (string.IsNullOrEmpty(apiBaseUrl))
+                {
+                    throw new ConfigurationErrorsException("Could not find an appsetting 'GutsApiUri' that contains a valid Api url.");
+                }
+
+                var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
+
+                var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler));
+                _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
             }
-
-            var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
-
-            var authorizationHandler = new AuthorizationHandler(new UI.LoginWindowFactory(httpHandler));
-            _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
+            catch (Exception e)
+            {
+                _initializationException = e;
+            }
         }
 
         protected MonitoredTestFixtureBaseAttribute(string courseCode, string sourceCodeRelativeFilePaths) : this(courseCode)
@@ -37,7 +46,13 @@ namespace Guts.Client.Classic
             _sourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
         }
 
-        public abstract void BeforeTest(ITest test);
+        public virtual void BeforeTest(ITest test)
+        {
+            if (_initializationException != null)
+            {
+                throw _initializationException;
+            }
+        }
 
         public abstract void AfterTest(ITest test);
 

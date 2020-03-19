@@ -25,6 +25,7 @@ namespace Guts.Client.Core
 
         public override void BeforeTest(ITest test)
         {
+            base.BeforeTest(test);
             TestRunResultAccumulator.Instance.Clear();
             TestContext.Progress.WriteLine($"Starting test run. Chapter {_chapterCode}, exercise {_exerciseCode}");
         }

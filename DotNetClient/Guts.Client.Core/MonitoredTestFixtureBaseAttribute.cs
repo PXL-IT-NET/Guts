@@ -17,52 +17,61 @@ namespace Guts.Client.Core
         protected readonly string _courseCode;
         protected string _sourceCodeRelativeFilePaths;
         protected readonly TestRunResultSender _resultSender;
+        private Exception _initializationException;
 
         public ActionTargets Targets => ActionTargets.Suite;
 
-        protected MonitoredTestFixtureBaseAttribute(string courseCode)
+        protected MonitoredTestFixtureBaseAttribute(string courseCode) : base(new object[0])
         {
             _courseCode = courseCode;
 
-            var gutssettingsDirectory = GetSettingsFileDirectory(AppContext.BaseDirectory);
-            if (string.IsNullOrEmpty(gutssettingsDirectory))
+            try
             {
-                gutssettingsDirectory = GetSettingsFileDirectory(Assembly.GetCallingAssembly().Location);
+                var gutsSettingsDirectory = GetSettingsFileDirectory(AppContext.BaseDirectory);
+                if (string.IsNullOrEmpty(gutsSettingsDirectory))
+                {
+                    gutsSettingsDirectory = GetSettingsFileDirectory(Assembly.GetCallingAssembly().Location);
+                }
+                if (string.IsNullOrEmpty(gutsSettingsDirectory))
+                {
+                    throw new Exception("Could not find 'gutssettings.json' Searched in the following directories (and upper directories): " +
+                                        $"{AppContext.BaseDirectory} and {Assembly.GetEntryAssembly().Location}.");
+                }
+
+                var provider = new PhysicalFileProvider(gutsSettingsDirectory);
+                var gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
+                var gutsSection = gutsConfig.GetSection("Guts");
+
+                string apiBaseUrl = gutsSection.GetValue("apiBaseUrl", string.Empty);
+                if (string.IsNullOrEmpty(apiBaseUrl))
+                {
+                    throw new Exception("Could not find 'apiBaseUrl' setting in 'gutssettings.json'.");
+                }
+
+                string webAppBaseUrl = gutsSection.GetValue("webAppBaseUrl", string.Empty);
+                if (string.IsNullOrEmpty(webAppBaseUrl))
+                {
+                    throw new Exception("Could not find 'webAppBaseUrl' setting in 'gutssettings.json'.");
+                }
+
+                var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
+
+                var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl));
+                _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
             }
-            if (string.IsNullOrEmpty(gutssettingsDirectory))
+            catch (Exception e)
             {
-                throw new Exception("Could not find 'gutssettings.json' Searched in the following directories (and upper directories): " +
-                                    $"{AppContext.BaseDirectory} and {System.Reflection.Assembly.GetEntryAssembly().Location}.");
+                _initializationException = e;
             }
-
-            var provider = new PhysicalFileProvider(gutssettingsDirectory);
-            var gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
-            var gutsSection = gutsConfig.GetSection("Guts");
-
-            string apiBaseUrl = gutsSection.GetValue("apiBaseUrl", string.Empty);
-            if (string.IsNullOrEmpty(apiBaseUrl))
-            {
-                throw new Exception("Could not find 'apiBaseUrl' setting in 'gutssettings.json'.");
-            }
-
-            string webAppBaseUrl = gutsSection.GetValue("webAppBaseUrl", string.Empty);
-            if (string.IsNullOrEmpty(webAppBaseUrl))
-            {
-                throw new Exception("Could not find 'webAppBaseUrl' setting in 'gutssettings.json'.");
-            }
-
-            var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
-
-            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl));
-            _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
         }
 
-        protected MonitoredTestFixtureBaseAttribute(string courseCode, string sourceCodeRelativeFilePaths) : this(courseCode)
+        public virtual void BeforeTest(ITest test)
         {
-            _sourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
+            if (_initializationException != null)
+            {
+                throw _initializationException;
+            }
         }
-
-        public abstract void BeforeTest(ITest test);
 
         public abstract void AfterTest(ITest test);
 
@@ -101,7 +110,7 @@ namespace Guts.Client.Core
 
                 if (result.Success)
                 {
-                    TestContext.Progress.WriteLine("Results succesfully sent.");
+                    TestContext.Progress.WriteLine("Results successfully sent.");
                 }
                 else
                 {
@@ -139,17 +148,14 @@ namespace Guts.Client.Core
                 {
                     var nugetDirectory = testProjectDirectoryInfo
                         .EnumerateDirectories("guts.client.core", SearchOption.TopDirectoryOnly).FirstOrDefault();
-                    if (nugetDirectory != null)
+                    var lastVersionDirectory = nugetDirectory?.EnumerateDirectories()
+                        .OrderByDescending(di => di.Name).FirstOrDefault();
+                    if (lastVersionDirectory != null)
                     {
-                        var lastVersionDirectory = nugetDirectory.EnumerateDirectories()
-                            .OrderByDescending(di => di.Name).FirstOrDefault();
-                        if (lastVersionDirectory != null)
+                        fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).FirstOrDefault();
+                        if (fileInfo != null)
                         {
-                            fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).FirstOrDefault();
-                            if (fileInfo != null)
-                            {
-                                testProjectDirectoryInfo = fileInfo.Directory;
-                            }
+                            testProjectDirectoryInfo = fileInfo.Directory;
                         }
                     }
                 }

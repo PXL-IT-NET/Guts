@@ -25,6 +25,7 @@ namespace Guts.Client.Classic
 
         public override void BeforeTest(ITest test)
         {
+            base.BeforeTest(test);
             TestRunResultAccumulator.Instance.Clear();
             TestContext.Progress.WriteLine($"Starting test run. Project '{_projectCode}', component '{_componentCode}'.");
         }
