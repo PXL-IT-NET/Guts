@@ -26,7 +26,7 @@ namespace Guts.Api.Extensions
 
             services.AddDomainLayerServices();
             services.AddBusinessLayerServices(configuration);
-            services.AddDataLayerServices();
+            services.AddInfrastructureLayerServices(configuration);
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)

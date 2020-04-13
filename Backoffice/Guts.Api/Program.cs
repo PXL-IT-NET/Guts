@@ -1,13 +1,13 @@
-﻿using Guts.Data;
+﻿using Guts.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using Guts.Bootstrapper.Logging;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging.EventLog;
 
 namespace Guts.Api
 {
@@ -50,15 +50,12 @@ namespace Guts.Api
                     // Set properties and call methods on options
                 });
                 webBuilder.UseIISIntegration();
-                webBuilder.ConfigureLogging((hostingContext, logging) =>
+                webBuilder.ConfigureLogging((hostingContext, loggingBuilder) =>
                 {
-                    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    logging.AddEventLog(new EventLogSettings
-                    {
-                        SourceName =
-                            "Guts" //Attention: make sure the registry of the host contains a key "Guts" in HKEY_LOCAL_MACHINE -> SYSTEM -> CurrentControlSet -> Services -> EventLog -> Application
-                    });
-                    logging.AddDebug();
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    loggingBuilder.AddDebug();
+                    loggingBuilder.AddFile();
                 });
                 webBuilder.UseStartup<Startup>();
             });

@@ -3,14 +3,19 @@ using System.Linq;
 using System.Reflection;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
-using Guts.Business.Converters;
 using Guts.Business.Security;
 using Guts.Business.Services;
-using Guts.Business.Services.Exam;
-using Guts.Data.Repositories;
+using Guts.Infrastructure.Repositories;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.RoleAggregate;
+using Guts.Domain.UserAggregate;
+using Guts.Infrastructure;
+using Guts.Infrastructure.Logging;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Guts.Bootstrapper
 {
@@ -24,8 +29,41 @@ namespace Guts.Bootstrapper
             services.RegisterTypesWhoseNameEndsWith("Factory", domainAssembly, ServiceLifetime.Singleton);
         }
 
-        public static void AddDataLayerServices(this IServiceCollection services)
+        public static void AddInfrastructureLayerServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.Configure<FileLoggerOptions>(configuration.GetSection("Logging:FileLogger"));
+
+            services.AddDbContext<GutsContext>(options =>
+            {
+                options
+                    .UseLoggerFactory(
+                        LoggerFactory.Create(builder =>
+                        {
+                            builder.AddFilter((category, level) =>
+                                category == DbLoggerCategory.Database.Command.Name && level == LogLevel.Information);
+                            builder.AddDebug();
+                        }))
+                    .UseSqlServer(configuration.GetConnectionString("GutsDatabase"), sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly("Guts.Infrastructure");
+                    });
+            });
+
+            services.AddIdentity<User, Role>(options =>
+                {
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                    options.Lockout.MaxFailedAccessAttempts = 8;
+                    options.Lockout.AllowedForNewUsers = true;
+
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequiredLength = 6;
+
+                    options.SignIn.RequireConfirmedEmail = true;
+                    options.SignIn.RequireConfirmedPhoneNumber = false;
+                })
+                .AddEntityFrameworkStores<GutsContext>()
+                .AddDefaultTokenProviders();
+
             Assembly dataAssembly = typeof(CourseDbRepository).Assembly;
 
             //register repositories

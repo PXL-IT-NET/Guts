@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Api", "Guts.Api\Guts.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Api.Tests", "Guts.Api.Tests\Guts.Api.Tests.csproj", "{FA9910ED-A81E-4943-A0CC-D39F9AE90DF7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Data", "Guts.Data\Guts.Data.csproj", "{10995547-2458-4A66-A48C-3AB3A0C1A959}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Infrastructure", "Guts.Infrastructure\Guts.Infrastructure.csproj", "{10995547-2458-4A66-A48C-3AB3A0C1A959}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Domain", "Guts.Domain\Guts.Domain.csproj", "{192C80A7-1082-4F60-9E44-E5049B434D72}"
 EndProject
@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Web", "Guts.Web\Guts.W
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Domain.Tests", "Guts.Domain.Tests\Guts.Domain.Tests.csproj", "{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Guts.Bootstrapper", "Guts.Bootstrapper\Guts.Bootstrapper.csproj", "{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Bootstrapper", "Guts.Bootstrapper\Guts.Bootstrapper.csproj", "{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
