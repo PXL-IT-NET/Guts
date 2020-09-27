@@ -60,7 +60,7 @@ namespace Guts.Api
 
             services.AddControllers(options =>
             {
-                options.Filters.Add<LogExceptionFilterAttribute>();
+                options.Filters.Add<ApplicationExceptionFilterAttribute>();
                 options.Filters.Add<LogBadRequestFilterAttribute>();
             });
 
@@ -101,7 +101,6 @@ namespace Guts.Api
             }
             else
             {
-                app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
 

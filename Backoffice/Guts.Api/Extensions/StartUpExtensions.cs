@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using Guts.Api.Models.Converters;
@@ -39,7 +40,7 @@ namespace Guts.Api.Extensions
                         {
                             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                             context.Response.ContentType = "application/json";
-                            var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+                            Exception exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
                             //Place a breakpoint here to inspect the unhandled exception...
                             if (exception != null)
                             {
