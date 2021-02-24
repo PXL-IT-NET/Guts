@@ -145,9 +145,16 @@ namespace Guts.Api.Controllers
 
             var user = await _userManager.FindByEmailAsync(model.Email);
 
-            if (user == null || !user.EmailConfirmed)
+            if (user == null)
             {
-                //don't reveal if the user does not exist or the email is not yet confirmed
+                //don't reveal if the user does not exist
+                return Ok();
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                //send a confirmation email, but don't reveal the email is not yet confirmed
+                await SendConfirmUserEmailMessage(user);
                 return Ok();
             }
 

@@ -1,16 +1,21 @@
 ﻿using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Services;
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
 [assembly: InternalsVisibleTo("Guts.Api.Tests")]
 
 namespace Guts.Api.Controllers
@@ -28,6 +33,7 @@ namespace Guts.Api.Controllers
         private readonly IAssignmentService _assignmentService;
         private readonly IChapterService _chapterService;
         private readonly IProjectService _projectService;
+        private readonly ILogger<TestRunController> _logger;
 
         internal const string InvalidTestCodeHashErrorKey = "InvalidTestCodeHash";
 
@@ -35,13 +41,15 @@ namespace Guts.Api.Controllers
             ITestRunService testRunService, 
             IAssignmentService assignmentService,
             IChapterService chapterService, 
-            IProjectService projectService)
+            IProjectService projectService,
+            ILogger<TestRunController> logger)
         {
             _testRunConverter = testRunConverter;
             _testRunService = testRunService;
             _assignmentService = assignmentService;
             _chapterService = chapterService;
             _projectService = projectService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -73,6 +81,9 @@ namespace Guts.Api.Controllers
             {
                 return BadRequest(ModelState);
             }
+
+            _logger.LogInformation(
+                $"Received testrun for exercise (assignmentCode: {model.Assignment.AssignmentCode}, chapterCode: {model.Assignment.TopicCode}) from user {GetUserId()}");
 
             Assignment assignment;
             if (IsLector())
@@ -121,6 +132,9 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
+            _logger.LogInformation(
+                $"Received testrun for project (assignmentCode: {model.Assignment.AssignmentCode}, projectCode: {model.Assignment.TopicCode}) from user {GetUserId()}");
+
             Assignment component;
             if (IsLector())
             {
@@ -164,7 +178,8 @@ namespace Guts.Api.Controllers
                 await _assignmentService.LoadTestsForAssignmentAsync(assignment);
             }
 
-            var testRun = _testRunConverter.From(model.Results, GetUserId(), assignment);
+            TestRun testRun = _testRunConverter.From(model.Results, GetUserId(), assignment);
+            LogTestRun(testRun);
 
             var solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
                 SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath, sourceFileModel.Content));
@@ -173,6 +188,24 @@ namespace Guts.Api.Controllers
 
             var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
             return savedModel;
+        }
+
+        private void LogTestRun(TestRun testRun)
+        {
+            if (testRun == null)
+            {
+                _logger.LogInformation("Test run is null");
+            }
+            else
+            {
+                StringBuilder logMessageBuilder = new StringBuilder();
+                logMessageBuilder.AppendLine($"Saving test run for user {testRun.UserId}:");
+                logMessageBuilder.AppendLine($"AssignmentId: {testRun.AssignmentId}");
+                logMessageBuilder.AppendLine($"#Passing tests: {testRun.TestResults.Count(r => r.Passed)}");
+                logMessageBuilder.AppendLine($"#Failing tests: {testRun.TestResults.Count(r => !r.Passed)}");
+                logMessageBuilder.AppendLine("-------------------------------------");
+                _logger.LogInformation(logMessageBuilder.ToString());
+            }
         }
     }
 }

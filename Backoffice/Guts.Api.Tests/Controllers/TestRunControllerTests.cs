@@ -16,6 +16,7 @@ using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using ControllerBase = Guts.Api.Controllers.ControllerBase;
@@ -33,6 +34,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<IProjectService> _projectServiceMock;
         private int _userId;
+        private Mock<ILogger<TestRunController>> _loggerMock;
 
         [SetUp]
         public void Setup()
@@ -46,6 +48,7 @@ namespace Guts.Api.Tests.Controllers
                 .ReturnsAsync(true);
             _chapterServiceMock = new Mock<IChapterService>();
             _projectServiceMock = new Mock<IProjectService>();
+            _loggerMock = new Mock<ILogger<TestRunController>>();
 
             _userId = _random.Next(1, int.MaxValue);
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
@@ -315,7 +318,8 @@ namespace Guts.Api.Tests.Controllers
                 _testRunServiceMock.Object, 
                 _assignmentServiceMock.Object,
                 _chapterServiceMock.Object,
-                _projectServiceMock.Object)
+                _projectServiceMock.Object, 
+                _loggerMock.Object)
             {
                 ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()
             };

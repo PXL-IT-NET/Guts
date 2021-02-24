@@ -36,5 +36,10 @@ namespace Guts.Domain.ValueObjects
         {
             yield return FullPath;
         }
+
+        public override string ToString()
+        {
+            return FullPath;
+        }
     }
 }
