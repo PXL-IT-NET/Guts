@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services
 {
@@ -16,18 +18,21 @@ namespace Guts.Business.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly IProjectTeamRepository _projectTeamRepository;
+        private readonly ISolutionFileRepository _solutionFileRepository;
         private readonly IAssignmentService _assignmentService;
 
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
             IProjectTeamRepository projectTeamRepository,
+            ISolutionFileRepository solutionFileRepository,
             IAssignmentService assignmentService)
         {
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
             _projectTeamRepository = projectTeamRepository;
+            _solutionFileRepository = solutionFileRepository;
             _assignmentService = assignmentService;
         }
 
@@ -141,6 +146,28 @@ namespace Guts.Business.Services
                 var assignmentStatistics =
                     await _assignmentService.GetAssignmentTeamStatisticsAsync(assignment.Id, dateUtc);
                 results.Add(assignmentStatistics);
+            }
+            return results;
+        }
+
+        public async Task<IList<SolutionDto>> GetAllSolutions(Project project, DateTime? dateUtc)
+        {
+            var results = new List<SolutionDto>();
+            foreach (ProjectTeam team in project.Teams)
+            {
+                var teamFiles = new List<SolutionFile>();
+                foreach (Assignment assignment in project.Assignments)
+                {
+                    IList<SolutionFile> files = await _solutionFileRepository.GetAllLatestOfAssignmentForTeamAsync(assignment.Id, team.Id, dateUtc);
+                    teamFiles.AddRange(files);
+                    
+                }
+                results.Add(new SolutionDto
+                {
+                    WriterId = team.Id,
+                    WriterName = team.Name,
+                    SolutionFiles = teamFiles
+                });
             }
             return results;
         }

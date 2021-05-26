@@ -120,19 +120,19 @@ namespace Guts.Business.Services
             return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
-        public async Task<IList<AssignmentSolutionDto>> GetAllSolutions(int assignmentId)
+        public async Task<IList<SolutionDto>> GetAllSolutions(int assignmentId)
         {
-            var assignmentSolutions = new List<AssignmentSolutionDto>();
+            var assignmentSolutions = new List<SolutionDto>();
 
             var allSolutionFiles = await _solutionFileRepository.GetAllLatestOfAssignmentAsync(assignmentId);
 
             var userFileGroups = allSolutionFiles.GroupBy(sf => sf.User);
             foreach (var userFileGroup in userFileGroups)
             {
-                assignmentSolutions.Add(new AssignmentSolutionDto
+                assignmentSolutions.Add(new SolutionDto
                 {
-                    UserId = userFileGroup.Key.Id,
-                    UserFullName = $"{userFileGroup.Key.FirstName} {userFileGroup.Key.LastName}".Trim(),
+                    WriterId = userFileGroup.Key.Id,
+                    WriterName = $"{userFileGroup.Key.FirstName} {userFileGroup.Key.LastName}".Trim(),
                     SolutionFiles = userFileGroup
                 });
             }

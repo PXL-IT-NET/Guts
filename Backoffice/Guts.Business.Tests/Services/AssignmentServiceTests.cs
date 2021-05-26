@@ -536,14 +536,14 @@ namespace Guts.Business.Tests.Services
             Assert.That(assignmentSolutionDtos, Has.Count.EqualTo(numberOfUsers));
             foreach (var assignmentSolutionDto in assignmentSolutionDtos)
             {
-                var matchingSolutionFile = solutionFilesWithUser.FirstOrDefault(t => t.UserId == assignmentSolutionDto.UserId);
+                var matchingSolutionFile = solutionFilesWithUser.FirstOrDefault(t => t.UserId == assignmentSolutionDto.WriterId);
                 Assert.That(matchingSolutionFile, Is.Not.Null);
                 Assert.That(assignmentSolutionDto.SolutionFiles, Has.One.EqualTo(matchingSolutionFile));
-                Assert.That(assignmentSolutionDto.UserFullName, Does.StartWith(matchingSolutionFile.User.FirstName));
-                Assert.That(assignmentSolutionDto.UserFullName, Does.EndWith(matchingSolutionFile.User.LastName));
+                Assert.That(assignmentSolutionDto.WriterName, Does.StartWith(matchingSolutionFile.User.FirstName));
+                Assert.That(assignmentSolutionDto.WriterName, Does.EndWith(matchingSolutionFile.User.LastName));
             }
            
-            Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.UserFullName)));
+            Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.WriterName)));
         }
     }
 }

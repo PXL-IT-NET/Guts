@@ -136,7 +136,7 @@ namespace Guts.Api.Controllers
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode">Sequence number of the chapter.</param>
-        /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
+        /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
         [HttpGet("{chapterCode}/statistics")]
         [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]

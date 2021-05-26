@@ -3,10 +3,10 @@ using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Dtos
 {
-    public class AssignmentSolutionDto
+    public class SolutionDto
     {
-        public int UserId { get; set; }
-        public string UserFullName { get; set; }
+        public int WriterId { get; set; }
+        public string WriterName { get; set; }
         public IEnumerable<SolutionFile> SolutionFiles { get; set; }
     }
 }

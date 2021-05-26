@@ -25,6 +25,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
+        private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -35,11 +36,13 @@ namespace Guts.Business.Tests.Services
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
+            _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
 
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
                 _periodRepositoryMock.Object,
                 _projectTeamRepositoryMock.Object,
+                _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object);
         }
 

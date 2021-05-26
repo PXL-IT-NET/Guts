@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Business;
+using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
@@ -21,13 +24,14 @@ namespace Guts.Api.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ProjectController : ControllerBase
     {
-        public const int CacheTimeInSeconds = 300;
+        public const int CacheTimeInSeconds = 60;
 
         private readonly IProjectService _projectService;
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IProjectConverter _projectConverter;
         private readonly ITopicConverter _topicConverter;
         private readonly ITeamConverter _teamConverter;
+        private readonly ISolutionFileService _solutionFileService;
         private readonly IMemoryCache _memoryCache;
 
         public ProjectController(IProjectService projectService,
@@ -35,6 +39,7 @@ namespace Guts.Api.Controllers
             IProjectConverter projectConverter,
             ITopicConverter topicConverter,
             ITeamConverter teamConverter,
+            ISolutionFileService solutionFileService,
             IMemoryCache memoryCache)
         {
             _projectService = projectService;
@@ -42,6 +47,7 @@ namespace Guts.Api.Controllers
             _projectConverter = projectConverter;
             _topicConverter = topicConverter;
             _teamConverter = teamConverter;
+            _solutionFileService = solutionFileService;
             _memoryCache = memoryCache;
         }
 
@@ -241,6 +247,25 @@ namespace Guts.Api.Controllers
             }
 
             return Ok(model);
+        }
+
+        [HttpGet("{projectCode}/getsourcecodezip")]
+        public async Task<IActionResult> DownloadSourceCodesAsZip(int courseId, string projectCode, [FromQuery] DateTime? date)
+        {
+            if (!IsLector())
+            {
+                return Forbid();
+            }
+
+            Project project = await _projectService.LoadProjectAsync(courseId, projectCode);
+            IList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
+
+            byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
+            var result = new FileContentResult(bytes, "application/zip")
+            {
+                FileDownloadName = $"Project_{projectCode}_sources.zip"
+            };
+            return result;
         }
     }
 }

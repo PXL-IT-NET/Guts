@@ -32,6 +32,7 @@ namespace Guts.Business.Services
         Task<IList<AssignmentResultDto>> GetResultsForTeamAsync(Project project, int teamId, DateTime? dateUtc);
 
         Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc);
-        
+
+        Task<IList<SolutionDto>> GetAllSolutions(Project project, DateTime? dateUtc);
     }
 }

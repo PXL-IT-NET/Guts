@@ -30,6 +30,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IMemoryCache> _memoryCacheMock;
         private Mock<ITopicConverter> _topicConverterMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
+        private Mock<ISolutionFileService> _solutionFileServiceMock;
 
         [SetUp]
         public void Setup()
@@ -41,6 +42,7 @@ namespace Guts.Api.Tests.Controllers
             _projectConverterMock = new Mock<IProjectConverter>();
             _topicConverterMock = new Mock<ITopicConverter>();
             _teamConverterMock = new Mock<ITeamConverter>();
+            _solutionFileServiceMock = new Mock<ISolutionFileService>();
             _memoryCacheMock = new Mock<IMemoryCache>();
             _controller = CreateControllerWithUserInContext(Role.Constants.Student);
         }
@@ -162,7 +164,8 @@ namespace Guts.Api.Tests.Controllers
                 _assignmentRepositoryMock.Object,
                 _projectConverterMock.Object, 
                 _topicConverterMock.Object, 
-                _teamConverterMock.Object, 
+                _teamConverterMock.Object,
+                _solutionFileServiceMock.Object,
                 _memoryCacheMock.Object)
             {
                 ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()

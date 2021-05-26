@@ -25,14 +25,16 @@ namespace Guts.Api.Controllers
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly ITopicService _topicService;
         private readonly ISolutionFileRepository _solutionFileRepository;
+        private readonly ISolutionFileService _solutionFileService;
         private readonly IMapper _mapper;
 
         public AssignmentController(IAssignmentService assignmentService,
             IAssignmentRepository assignmentRepository,
-            IAssignmentConverter assignmentConverter, 
+            IAssignmentConverter assignmentConverter,
             IProjectTeamRepository projectTeamRepository,
             ITopicService topicService,
             ISolutionFileRepository solutionFileRepository,
+            ISolutionFileService solutionFileService,
             IMapper mapper)
         {
             _assignmentService = assignmentService;
@@ -41,6 +43,7 @@ namespace Guts.Api.Controllers
             _projectTeamRepository = projectTeamRepository;
             _topicService = topicService;
             _solutionFileRepository = solutionFileRepository;
+            _solutionFileService = solutionFileService;
             _mapper = mapper;
         }
 
@@ -128,32 +131,12 @@ namespace Guts.Api.Controllers
             }
 
             var solutions = await _assignmentService.GetAllSolutions(assignmentId);
-            using (var memoryStream = new MemoryStream())
+            byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
+            var result = new FileContentResult(bytes, "application/zip")
             {
-                using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
-                {
-                    foreach (var solution in solutions)
-                    {
-                        foreach (var solutionFile in solution.SolutionFiles)
-                        {
-                            var entry = zipArchive.CreateEntry($@"{solution.UserFullName}\{solutionFile.FilePath}");
-                            using (StreamWriter writer = new StreamWriter(entry.Open()))
-                            {
-                                await writer.WriteAsync(solutionFile.Content);
-                            }
-                        }
-
-                    }
-                }
-
-                memoryStream.Position = 0;
-
-                var result = new FileContentResult(memoryStream.ToArray(), "application/zip")
-                {
-                    FileDownloadName = $"Assignment_{assignmentId}_sources.zip"
-                };
-                return result;
-            }
+                FileDownloadName = $"Assignment_{assignmentId}_sources.zip"
+            };
+            return result;
         }
     }
 }

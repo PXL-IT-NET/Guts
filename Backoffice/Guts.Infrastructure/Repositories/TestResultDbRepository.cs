@@ -62,7 +62,7 @@ namespace Guts.Infrastructure.Repositories
             var lastResultKeys = from testresult in _context.TestResults
                                  join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
                                  where testresult.Test.AssignmentId == assignmentId
-                                       && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                                     && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
                                        && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
                                  group testresult by new { testresult.TestId, projectTeamUser.ProjectTeamId }
                 into g
@@ -79,6 +79,7 @@ namespace Guts.Infrastructure.Repositories
                                    where testresult.TestId == key.TestId
                                          && projectTeamUser.ProjectTeamId == key.ProjectTeamId
                                          && testresult.CreateDateTime == key.CreatDateTime
+                                         && testresult.Test.AssignmentId == assignmentId
                                    select testresult;
 
             return await lastResultsQuery.AsNoTracking().ToListAsync();
@@ -103,6 +104,7 @@ namespace Guts.Infrastructure.Repositories
                                    where testresult.TestId == key.TestId
                                          && testresult.UserId == key.UserId
                                          && testresult.CreateDateTime == key.CreatDateTime
+                                         && testresult.Test.AssignmentId == assignmentId
                                    select testresult;
 
             return await lastResultsQuery.AsNoTracking().ToListAsync();

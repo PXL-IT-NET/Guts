@@ -34,6 +34,7 @@ namespace Guts.Api.Tests.Controllers
         private Mock<ITopicService> _topicServiceMock;
         private Mock<IMapper> _mapperMock;
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+        private Mock<ISolutionFileService> _solutionFileServiceMock;
 
         [SetUp]
         public void Setup()
@@ -45,6 +46,7 @@ namespace Guts.Api.Tests.Controllers
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _topicServiceMock = new Mock<ITopicService>();
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
+            _solutionFileServiceMock = new Mock<ISolutionFileService>();
             _mapperMock = new Mock<IMapper>();
 
             _controller = new AssignmentController(_assignmentServiceMock.Object,
@@ -53,6 +55,7 @@ namespace Guts.Api.Tests.Controllers
                 _projectTeamRepositoryMock.Object, 
                 _topicServiceMock.Object,
                 _solutionFileRepositoryMock.Object,
+                _solutionFileServiceMock.Object,
                 _mapperMock.Object);
         }
 
