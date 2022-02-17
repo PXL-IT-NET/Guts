@@ -17,6 +17,7 @@ export class CourseComponent implements OnInit, OnDestroy  {
   public selectedProject: ITopicModel;
   public loading: boolean = false;
   public userProfile: UserProfile;
+  public hasContent: boolean;
 
   private userProfileSubscription: Subscription;
 
@@ -34,6 +35,7 @@ export class CourseComponent implements OnInit, OnDestroy  {
     };
     this.selectedChapter = null;
     this.selectedProject = null;
+    this.hasContent = true;
   }
 
   ngOnInit() {
@@ -47,6 +49,7 @@ export class CourseComponent implements OnInit, OnDestroy  {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
 
       this.loading = true;
+      this.hasContent = true;
       this.courseService.getCourseContentsById(courseId).subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -57,6 +60,8 @@ export class CourseComponent implements OnInit, OnDestroy  {
           } else if (this.course.projects.length > 0) {
             this.selectedProject = this.course.projects[0];
             this.onProjectChanged();
+          } else {
+            this.hasContent = false;
           }
         } else {
           this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");

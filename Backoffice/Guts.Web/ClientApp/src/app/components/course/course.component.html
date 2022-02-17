@@ -1,7 +1,7 @@
 <div class="row">
   <div class="col-md-12">
     <h5>{{course.name}}<span class="small" *ngIf="userProfile.isLector()"> (<a routerLink="config">configure</a>)</span></h5>
-    <form>
+    <form *ngIf="hasContent">
       <div class="form-group row">
         <label for="chapters" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.chapters.length > 0">Chapter</label>
         <div class="col-md-10 col-xl-2" *ngIf="course.chapters.length > 0">
@@ -22,6 +22,9 @@
         </div>
       </div>
     </form>
+    <p *ngIf="!hasContent">
+      This course has no exercises or projects yet. 
+    </p>
     <ngx-loading [show]="loading"></ngx-loading>
   </div>
 </div>
