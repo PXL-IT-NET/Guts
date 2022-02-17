@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Guts.Infrastructure
 {
@@ -99,16 +100,16 @@ namespace Guts.Infrastructure
         {
         }
 
-        public override Expression CreateReadValueExpression(Expression valueBuffer, Type type, int index, IPropertyBase property)
+        public override Expression CreateMaterializeExpression(IEntityType entityType, string entityInstanceName, Expression materializationContextExpression)
         {
-            if (type == typeof(DateTime))
+            if (entityType.ClrType == typeof(DateTime))
             {
                 return Expression.Call(
                     SetKindToUtcMethod,
-                    base.CreateReadValueExpression(valueBuffer, type, index, property)
+                    base.CreateMaterializeExpression(entityType, entityInstanceName, materializationContextExpression)
                 );
             }
-            return base.CreateReadValueExpression(valueBuffer, type, index, property);
+            return base.CreateMaterializeExpression(entityType, entityInstanceName, materializationContextExpression);
         }
     }
 }

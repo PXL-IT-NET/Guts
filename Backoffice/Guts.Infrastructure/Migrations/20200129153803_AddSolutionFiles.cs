@@ -41,7 +41,7 @@ namespace Guts.Infrastructure.Migrations
                 table: "SolutionFiles",
                 column: "UserId");
 
-            MigrateOldSourceCodeData(migrationBuilder);
+           // MigrateOldSourceCodeData(migrationBuilder); //Not needed anymore. All sources have been migrated on all environments
         }
 
         private void MigrateOldSourceCodeData(MigrationBuilder migrationBuilder)

@@ -52,10 +52,10 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
       this.solutionFiles = source.solutionFiles.map(file => new SolutionFileModel(file));
 
       if (source.firstRun) {
-        this.firstRun = moment(source.firstRun).format('DD/MM/YYYY HH:mm');
+        this.firstRun = moment.utc(source.firstRun).local().format('DD/MM/YYYY HH:mm');
       }
       if (source.lastRun) {
-        this.lastRun = moment(source.lastRun).format('DD/MM/YYYY HH:mm');
+        this.lastRun = moment.utc(source.lastRun).local().format('DD/MM/YYYY HH:mm');
       }
     }
   }

@@ -205,11 +205,7 @@ namespace Guts.Api.Controllers
             
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);
-            var config = new Configuration
-            {
-                CultureInfo = new CultureInfo("nl-BE"),
-            };
-            var csv = new CsvWriter(streamWriter, config);
+            var csv = new CsvWriter(streamWriter, new CultureInfo("nl-BE"));
             csv.WriteRecords(examScoreCsvRecords);
             streamWriter.Flush();
             memoryStream.Position = 0;

@@ -55,6 +55,7 @@ namespace Guts.Api
                     loggingBuilder.ClearProviders();
                     loggingBuilder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                     loggingBuilder.AddDebug();
+                    loggingBuilder.AddConsole();
                     loggingBuilder.AddFile();
                 });
                 webBuilder.UseStartup<Startup>();
