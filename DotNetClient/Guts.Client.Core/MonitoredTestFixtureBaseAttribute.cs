@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Guts.Client.Shared.Models;
-using Guts.Client.Shared.Utility;
+using Guts.Client.Core.Models;
+using Guts.Client.Core.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using NUnit.Framework;
@@ -39,16 +39,16 @@ namespace Guts.Client.Core
                 }
 
                 var provider = new PhysicalFileProvider(gutsSettingsDirectory);
-                var gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
-                var gutsSection = gutsConfig.GetSection("Guts");
+                IConfigurationRoot gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
+                IConfigurationSection gutsSection = gutsConfig.GetSection("Guts");
 
-                string apiBaseUrl = gutsSection.GetValue("apiBaseUrl", string.Empty);
+                string apiBaseUrl = gutsSection["apiBaseUrl"];
                 if (string.IsNullOrEmpty(apiBaseUrl))
                 {
                     throw new Exception("Could not find 'apiBaseUrl' setting in 'gutssettings.json'.");
                 }
 
-                string webAppBaseUrl = gutsSection.GetValue("webAppBaseUrl", string.Empty);
+                string webAppBaseUrl = gutsSection["webAppBaseUrl"];
                 if (string.IsNullOrEmpty(webAppBaseUrl))
                 {
                     throw new Exception("Could not find 'webAppBaseUrl' setting in 'gutssettings.json'.");

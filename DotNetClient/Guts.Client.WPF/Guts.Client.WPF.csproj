@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Version>1.0.0</Version>
+		<Company>PXL</Company>
+		<Description>Utilities to write unit tests for WPF applications.</Description>
+		<Copyright>Copyright ©  2022</Copyright>
+		<PackageTags>Guts;Unit Test;WPF</PackageTags>
+	</PropertyGroup>
+
+</Project>

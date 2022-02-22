@@ -1,6 +1,6 @@
 ﻿using System;
-using Guts.Client.Shared.Models;
-using Guts.Client.Shared.Utility;
+using Guts.Client.Core.Models;
+using Guts.Client.Core.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
