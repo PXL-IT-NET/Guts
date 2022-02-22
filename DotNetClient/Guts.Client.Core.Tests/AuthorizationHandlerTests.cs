@@ -1,4 +1,4 @@
-using Guts.Client.Shared.Utility;
+using Guts.Client.Core.Utility;
 using Moq;
 using NUnit.Framework;
 

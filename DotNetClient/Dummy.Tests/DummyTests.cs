@@ -1,5 +1,4 @@
-﻿using Guts.Client.Classic;
-using Guts.Client.Shared;
+﻿using Guts.Client.Core;
 using NUnit.Framework;
 
 namespace Dummy.Tests
@@ -7,7 +6,7 @@ namespace Dummy.Tests
     [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
     public class DummyTests
     {
-        [MonitoredTest("Test something")]
+    //    [MonitoredTest("Test something")]
         public void TestSomething()
         {
             Assert.True(true);

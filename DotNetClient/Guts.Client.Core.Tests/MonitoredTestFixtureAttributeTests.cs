@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Guts.Client.Shared.TestTools;
-using Guts.Client.Shared.Utility;
+using Guts.Client.Core.TestTools;
+using Guts.Client.Core.Utility;
 using NUnit.Framework;
 
 namespace Guts.Client.Core.Tests
