@@ -3,8 +3,8 @@ using Guts.Domain.ExamAggregate;
 
 namespace Guts.Business.Repositories
 {
-    public interface IExamPartRepository : IBasicRepository<ExamPart>
+    public interface IExamPartRepository : IBasicRepository<IExamPart>
     {
-        Task<ExamPart> LoadWithAssignmentEvaluationsAsync(int examPartId);
+        Task<IExamPart> LoadWithAssignmentEvaluationsAsync(int examPartId);
     }
 }

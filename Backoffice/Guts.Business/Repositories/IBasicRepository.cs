@@ -4,7 +4,7 @@ using Guts.Domain;
 
 namespace Guts.Business.Repositories
 {
-    public interface IBasicRepository<T> where T : Entity
+    public interface IBasicRepository<T> where T : IEntity
     {
         Task<T> GetByIdAsync(int id);
         Task<IList<T>> GetAllAsync();

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ProjectDbRepository : BaseDbRepository<Project>, IProjectRepository
+    public class ProjectDbRepository : BaseDbRepository<Project, Project>, IProjectRepository
     {
         public ProjectDbRepository(GutsContext context) : base(context)
         {

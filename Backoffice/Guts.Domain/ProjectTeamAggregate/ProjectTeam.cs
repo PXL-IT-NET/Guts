@@ -4,7 +4,7 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Domain.ProjectTeamAggregate
 {
-    public class ProjectTeam : AggregateRoot
+    public class ProjectTeam : AggregateRoot, IProjectTeam
     {
         [Required]
         public string Name { get; set; }

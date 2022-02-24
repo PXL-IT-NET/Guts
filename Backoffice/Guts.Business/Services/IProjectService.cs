@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Services
@@ -34,5 +35,9 @@ namespace Guts.Business.Services
         Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc);
 
         Task<IList<SolutionDto>> GetAllSolutions(Project project, DateTime? dateUtc);
+
+        Task<IReadOnlyList<IProjectAssessment>> GetProjectAssessmentsAsync(int projectId);
+
+        Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc);
     }
 }

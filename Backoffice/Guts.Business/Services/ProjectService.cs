@@ -7,6 +7,7 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.ValueObjects;
 
@@ -20,13 +21,17 @@ namespace Guts.Business.Services
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly ISolutionFileRepository _solutionFileRepository;
         private readonly IAssignmentService _assignmentService;
+        private readonly IProjectAssessmentRepository _projectAssessmentRepository;
+        private readonly IProjectAssessmentFactory _assessmentFactory;
 
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
             IProjectTeamRepository projectTeamRepository,
             ISolutionFileRepository solutionFileRepository,
-            IAssignmentService assignmentService)
+            IAssignmentService assignmentService,
+            IProjectAssessmentRepository projectAssessmentRepository,
+            IProjectAssessmentFactory assessmentFactory)
         {
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
@@ -34,6 +39,8 @@ namespace Guts.Business.Services
             _projectTeamRepository = projectTeamRepository;
             _solutionFileRepository = solutionFileRepository;
             _assignmentService = assignmentService;
+            _projectAssessmentRepository = projectAssessmentRepository;
+            _assessmentFactory = assessmentFactory;
         }
 
         public async Task<Project> GetProjectAsync(string courseCode, string projectCode)
@@ -170,6 +177,18 @@ namespace Guts.Business.Services
                 });
             }
             return results;
+        }
+
+        public async Task<IReadOnlyList<IProjectAssessment>> GetProjectAssessmentsAsync(int projectId)
+        {
+            return await _projectAssessmentRepository.FindByProjectIdAsync(projectId);
+        }
+
+        public async Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc)
+        {
+            IProjectAssessment assessment = _assessmentFactory.CreateNew(projectId, description, openOnUtc, deadlineUtc);
+            await _projectAssessmentRepository.AddAsync(assessment);
+            return assessment;
         }
     }
 }

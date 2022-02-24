@@ -6,7 +6,7 @@ using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Domain.TopicAggregate
 {
-    public class Topic : AggregateRoot
+    public class Topic : AggregateRoot, ITopic
     {
         private string _code;
 
@@ -42,7 +42,7 @@ namespace Guts.Domain.TopicAggregate
 
         protected Topic(int id) : base(id)
         {
-            
+
         }
     }
 }

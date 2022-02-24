@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ExamDbRepository : BaseDbRepository<Exam>, IExamRepository
+    public class ExamDbRepository : BaseDbRepository<IExam, Exam>, IExamRepository
     {
         public ExamDbRepository(GutsContext context) : base(context)
         {

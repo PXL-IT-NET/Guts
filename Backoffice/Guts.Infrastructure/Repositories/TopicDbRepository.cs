@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class TopicDbRepository : BaseDbRepository<Topic>, ITopicRepository
+    public class TopicDbRepository : BaseDbRepository<Topic, Topic>, ITopicRepository
     {
         public TopicDbRepository(GutsContext context) : base(context)
         {
