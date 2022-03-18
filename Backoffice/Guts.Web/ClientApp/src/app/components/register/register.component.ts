@@ -13,7 +13,7 @@ export class RegisterComponent {
   public error = '';
   public registered = false;
 
-  @ViewChild(RecaptchaComponent, {static: false}) public captcha?: RecaptchaComponent;
+  @ViewChild(RecaptchaComponent) public captcha?: RecaptchaComponent;
 
   constructor(
     private router: Router,

@@ -30,7 +30,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
   private chapterCode: string;
 
   private userClick$: Subject<string>;
-  @ViewChild('instance', {static: false}) userTypeAheadInstance: NgbTypeahead;
+  @ViewChild('instance') userTypeAheadInstance: NgbTypeahead;
 
   constructor(private chapterService: ChapterService,
     private topicContextProvider: TopicContextProvider,

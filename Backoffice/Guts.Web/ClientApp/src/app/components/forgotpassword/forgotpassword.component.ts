@@ -12,7 +12,7 @@ export class ForgotPasswordComponent {
     public error = '';
     public success = false;
 
-    @ViewChild(RecaptchaComponent, {static: false}) public captcha?: RecaptchaComponent;
+    @ViewChild(RecaptchaComponent) public captcha?: RecaptchaComponent;
 
     constructor(private authenticationService: AuthService) {
         this.model = {
