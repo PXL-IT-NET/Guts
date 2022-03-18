@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Guts.Api.Models.ProjectModels;
 using Guts.Domain.ProjectTeamAggregate;
 
 namespace Guts.Api.Models.Converters

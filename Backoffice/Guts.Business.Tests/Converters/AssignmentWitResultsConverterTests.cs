@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Business.Converters;
-using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;

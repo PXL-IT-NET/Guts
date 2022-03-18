@@ -11,8 +11,6 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
-using Guts.Domain.TopicAggregate.ChapterAggregate;
-using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;

@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Repositories;
-using Guts.Domain.TopicAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories

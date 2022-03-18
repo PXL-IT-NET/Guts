@@ -1,11 +1,11 @@
 ﻿using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
-using Guts.Domain.TopicAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {

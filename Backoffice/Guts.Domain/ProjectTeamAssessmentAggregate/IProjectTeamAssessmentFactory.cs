@@ -1,5 +1,5 @@
 ﻿using Guts.Domain.ProjectTeamAggregate;
-using Guts.Domain.TopicAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {

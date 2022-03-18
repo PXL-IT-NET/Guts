@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Guts.Api.Models
+namespace Guts.Api.Models.AssignmentModels
 {
     public class AssignmentStatisticsModel: AssignmentModel
     {

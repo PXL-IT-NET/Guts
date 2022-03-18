@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Guts.Api.Models
+namespace Guts.Api.Models.ProjectModels
 {
     public class TeamDetailsModel : TeamModel
     {

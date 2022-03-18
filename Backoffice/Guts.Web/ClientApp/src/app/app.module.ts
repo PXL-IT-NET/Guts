@@ -16,7 +16,7 @@ import { RelativeInterceptor } from './interceptors/relative.interceptor';
 import { PositiveNumberValidatorDirective } from './util/positive-number.directive';
 
 // 3th party
-import { ChartsModule } from 'ng2-charts';
+import { ChartsModule, ThemeService } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 import { RecaptchaModule } from 'ng-recaptcha';
@@ -87,6 +87,7 @@ import { ToastrModule } from 'ngx-toastr';
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,
+    ThemeService,
     {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true}
   ],

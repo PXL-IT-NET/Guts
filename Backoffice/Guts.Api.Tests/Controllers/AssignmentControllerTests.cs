@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
+using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.Converters;
 using Guts.Api.Tests.Builders;
 using Guts.Business.Dtos;

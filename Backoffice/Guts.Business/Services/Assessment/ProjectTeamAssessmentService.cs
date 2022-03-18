@@ -2,8 +2,8 @@
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
-using Guts.Domain.TopicAggregate;
 using System.Threading.Tasks;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Services.Assessment
 {

@@ -1,5 +1,4 @@
-﻿using Guts.Domain.TopicAggregate;
-using Guts.Domain.TopicAggregate.ProjectAggregate;
+﻿using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Collections.Generic;

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using Guts.Api.Models.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 

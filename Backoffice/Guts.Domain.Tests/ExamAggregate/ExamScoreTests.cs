@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.Tests.Builders;

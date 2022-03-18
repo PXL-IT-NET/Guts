@@ -53,8 +53,7 @@ namespace Guts.Infrastructure.Migrations
                         name: "FK_ProjectTeamAssessments_ProjectTeams_ProjectTeamId",
                         column: x => x.ProjectTeamId,
                         principalTable: "ProjectTeams",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -90,8 +89,7 @@ namespace Guts.Infrastructure.Migrations
                         name: "FK_PeerAssessments_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(

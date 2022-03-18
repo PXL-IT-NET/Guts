@@ -6,6 +6,9 @@ import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
+import { UserProfile } from 'src/app/viewmodels/user.model';
+import { Subscription } from 'rxjs';
+import { AuthService } from 'src/app/services';
 
 @Component({
   templateUrl: './project.component.html',
@@ -19,15 +22,18 @@ export class ProjectComponent implements OnInit, OnDestroy {
   public selectedAssignmentId: number;
   public selectedTeamId: number;
   public datePickerSettings: any;
+  public userProfile: UserProfile;
   public loading: boolean = false;
 
   private courseId: number;
   private projectCode: string;
+  private userProfileSubscription: Subscription;
 
   constructor(private projectService: ProjectService, 
     private topicContextProvider: TopicContextProvider,
     private router: Router,
     private route: ActivatedRoute,
+    private authService: AuthService,
     private toastr: ToastrService) {
     this.courseId = 0;
     this.projectCode = '';
@@ -51,6 +57,12 @@ export class ProjectComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
+    });
+
     this.route.params.subscribe(params => {
 
       var parentParams = this.route.parent.snapshot.params;
@@ -81,7 +93,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-
+    this.userProfileSubscription.unsubscribe();
   }
 
   public onSelectionChanged() {

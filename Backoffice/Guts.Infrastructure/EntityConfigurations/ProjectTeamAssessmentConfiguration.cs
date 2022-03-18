@@ -1,9 +1,9 @@
 ﻿using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
-using Guts.Domain.TopicAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Collections.Generic;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Infrastructure.EntityConfigurations
 {
@@ -12,13 +12,22 @@ namespace Guts.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<ProjectTeamAssessment> builder)
         {
             builder.ToTable("ProjectTeamAssessments");
-            builder.HasOne(pta => (ProjectAssessment)pta.ProjectAssessment).WithMany()
-                .HasForeignKey(nameof(ProjectTeamAssessment.ProjectAssessment) + "Id").IsRequired();
-            builder.HasOne(pta => (ProjectTeam)pta.Team).WithMany()
-                .HasForeignKey(nameof(ProjectTeam) + "Id").IsRequired();
 
-            builder.HasMany(pta => (IReadOnlyCollection<PeerAssessment>)pta.PeerAssessments).WithOne()
-                .HasForeignKey(nameof(ProjectTeamAssessment) + "Id").IsRequired();
+            builder.HasOne(pta => (ProjectAssessment)pta.ProjectAssessment)
+                .WithMany()
+                .HasForeignKey(nameof(ProjectTeamAssessment.ProjectAssessment) + "Id")
+                .IsRequired();
+
+            builder.HasOne(pta => (ProjectTeam)pta.Team).WithMany()
+                .HasForeignKey(nameof(ProjectTeam) + "Id")
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired();
+
+            builder.HasMany(pta => (IReadOnlyCollection<PeerAssessment>)pta.PeerAssessments)
+                .WithOne()
+                .HasForeignKey(nameof(ProjectTeamAssessment) + "Id")
+                .IsRequired();
+
             builder.Metadata.FindNavigation(nameof(ProjectTeamAssessment.PeerAssessments)).SetPropertyAccessMode(PropertyAccessMode.Field);
         }
     }

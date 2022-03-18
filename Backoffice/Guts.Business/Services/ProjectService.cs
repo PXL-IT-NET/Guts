@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
-using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.ValueObjects;
 

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Domain.CourseAggregate;

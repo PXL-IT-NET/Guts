@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Guts.Domain.TopicAggregate
+namespace Guts.Domain.TopicAggregate.ProjectAggregate
 {
     public interface IProjectAssessmentFactory
     {

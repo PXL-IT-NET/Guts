@@ -1,6 +1,6 @@
-﻿using Guts.Domain.TopicAggregate;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Repositories
 {

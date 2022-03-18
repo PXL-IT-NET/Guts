@@ -456,7 +456,7 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("TestRuns");
                 });
 
-            modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAssessment", b =>
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAggregate.ProjectAssessment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -854,7 +854,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.UserAggregate.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Subject");
@@ -864,7 +864,7 @@ namespace Guts.Infrastructure.Migrations
 
             modelBuilder.Entity("Guts.Domain.ProjectTeamAssessmentAggregate.ProjectTeamAssessment", b =>
                 {
-                    b.HasOne("Guts.Domain.TopicAggregate.ProjectAssessment", "ProjectAssessment")
+                    b.HasOne("Guts.Domain.TopicAggregate.ProjectAggregate.ProjectAssessment", "ProjectAssessment")
                         .WithMany()
                         .HasForeignKey("ProjectAssessmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -873,7 +873,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.ProjectTeamAggregate.ProjectTeam", "Team")
                         .WithMany()
                         .HasForeignKey("ProjectTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("ProjectAssessment");
@@ -938,7 +938,7 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAssessment", b =>
+            modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAggregate.ProjectAssessment", b =>
                 {
                     b.HasOne("Guts.Domain.TopicAggregate.ProjectAggregate.Project", null)
                         .WithMany("Assessments")

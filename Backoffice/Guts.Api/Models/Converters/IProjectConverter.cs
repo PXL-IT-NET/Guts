@@ -1,4 +1,5 @@
-﻿using Guts.Domain.TopicAggregate.ProjectAggregate;
+﻿using Guts.Api.Models.ProjectModels;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
 {
