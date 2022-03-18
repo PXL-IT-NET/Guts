@@ -20,7 +20,6 @@ import { ChartsModule, ThemeService } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 import { RecaptchaModule } from 'ng-recaptcha';
-import { AngularDateTimePickerModule } from 'angular2-datetimepicker';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
 
@@ -62,8 +61,7 @@ import { ToastrModule } from 'ngx-toastr';
       prefix: 'guts',
       storageType: 'localStorage'
     }),
-    RecaptchaModule.forRoot(),
-    AngularDateTimePickerModule,
+    RecaptchaModule,
     NgxLoadingModule.forRoot({
       animationType: ngxLoadingAnimationTypes.threeBounce,
       backdropBackgroundColour: 'rgba(255,255,255,0.3)',
