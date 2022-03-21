@@ -18,7 +18,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
   public model: IProjectDetailsModel;
   public context: TopicContext;
-  public selectedDate: Date;
+  public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
   public selectedTeamId: number;
   public datePickerSettings: any;
@@ -47,7 +47,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     };
 
     this.selectedAssignmentId = 0;
-    this.selectedDate = new Date();
+    this.selectedDate = moment();
     this.selectedTeamId = 0;
     this.datePickerSettings = {
       bigBanner: true,
@@ -105,23 +105,23 @@ export class ProjectComponent implements OnInit, OnDestroy {
   }
 
   public onDateChanged() {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+    this.topicContextProvider.setTopic(this.courseId, this.model, this.selectedDate);
     this.loadStatistics();
   }
 
   private navigateToTeamOverview() {
     this.router.navigate(['teams'], { relativeTo: this.route }).then(() => {
-      this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+      this.topicContextProvider.setTopic(this.courseId, this.model, this.selectedDate);
     });
   }
 
   private navigateToSummaryForSelectedTeam() {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+    this.topicContextProvider.setTopic(this.courseId, this.model, this.selectedDate);
     this.router.navigate(['teams', this.selectedTeamId, 'summary'], { relativeTo: this.route });
   }
 
   private loadStatistics() {
-    this.projectService.getProjectStatistics(this.courseId, this.projectCode, moment(this.selectedDate))
+    this.projectService.getProjectStatistics(this.courseId, this.projectCode, this.selectedDate)
       .subscribe((result) => {
         if (result.success) {
           this.topicContextProvider.setStatistics(result.value);

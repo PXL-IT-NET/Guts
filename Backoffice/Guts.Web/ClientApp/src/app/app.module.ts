@@ -22,6 +22,7 @@ import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage
 import { RecaptchaModule } from 'ng-recaptcha';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
+import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { ToastrModule } from 'ngx-toastr';
     c.ProjectTeamOverviewComponent,
     c.ProjectSummaryComponent,
     c.ExampartComponent,
-    PositiveNumberValidatorDirective
+    PositiveNumberValidatorDirective,
+    NgDatetimeComponent
   ],
   imports: [
     BrowserModule,

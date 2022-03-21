@@ -3,11 +3,11 @@
     <ul class="nav">
       <li class="nav-item">
         <a class="nav-link" [routerLink]="['teams']">Teams</a>
-      </li>   
+      </li>
       <li class="nav-item">
         <a class="nav-link" [routerLink]="['teams']">Assessments</a>
-      </li>   
-    </ul>  
+      </li>
+    </ul>
   </div>
 </div>
 <div class="row">
@@ -36,14 +36,8 @@
 
         <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
         <div class="col-md-10 col-md-4 col-xl-3">
-          <!--<angular2-date-picker name="date" [(ngModel)]="selectedDate" [settings]="datePickerSettings"
-                            (onDateSelect)="onDateChanged()"></angular2-date-picker>-->
-
-          <ng-bootstrap-datetime-angular inputDatetimeFormat="dd/MM/yyyy hh:mm a"
-                                         formControlName="date"
-                                         name="date"></ng-bootstrap-datetime-angular>
+          <app-ng-datetime [(date)]="selectedDate" (dateChange)="onDateChanged()"></app-ng-datetime>
         </div>
-
       </div>
     </form>
     <ngx-loading [show]="loading"></ngx-loading>

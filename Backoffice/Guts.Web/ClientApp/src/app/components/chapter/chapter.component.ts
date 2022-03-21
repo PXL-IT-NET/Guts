@@ -20,7 +20,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
   public selectedUser: IUserModel;
-  public selectedDate: Date;
+  public selectedDate: moment.Moment;
+
   public datePickerSettings: any;
   public loading: boolean = false;
 
@@ -48,7 +49,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     };
     this.selectedAssignmentId = 0;
     this.selectedUser = null;
-    this.selectedDate = new Date();
+    this.selectedDate = moment();
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,
@@ -111,17 +112,17 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   private navigateToSummaryForSelectedUser(): Promise<boolean> {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+    this.topicContextProvider.setTopic(this.courseId, this.model, this.selectedDate);
     return this.router.navigate(['users', this.selectedUser.id, 'summary'], { relativeTo: this.route });
   }
 
   public onDateChanged() {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
+    this.topicContextProvider.setTopic(this.courseId, this.model, this.selectedDate);
     this.loadStatistics();
   }
 
   private loadStatistics() {
-    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, moment(this.selectedDate))
+    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.selectedDate)
       .subscribe((result) => {
         if (result.success) {
           this.topicContextProvider.setStatistics(result.value);
