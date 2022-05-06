@@ -6,11 +6,12 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<Company>PXL</Company>
 		<Description>Utilities to write unit tests for WPF applications.</Description>
 		<Copyright>Copyright ©  2022</Copyright>
 		<PackageTags>Guts;Unit Test;WPF</PackageTags>
+		<PackageReleaseNotes>Added DispatcherUtil class. Made TestsWindow obsolete.</PackageReleaseNotes>
 	</PropertyGroup>
 
 </Project>
