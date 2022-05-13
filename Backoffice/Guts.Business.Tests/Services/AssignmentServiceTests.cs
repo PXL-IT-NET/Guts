@@ -11,8 +11,6 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
-using Guts.Domain.TopicAggregate.ChapterAggregate;
-using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
@@ -254,7 +252,7 @@ namespace Guts.Business.Tests.Services
         {
             //Arrange
             var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
-            var existingTests = testNames.Select(name => new Test
+            List<Test> existingTests = testNames.Select(name => new Test
             {
                 Id = _random.NextPositive(),
                 TestName = name
@@ -275,6 +273,33 @@ namespace Guts.Business.Tests.Services
             _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
             Assert.That(assignment.Tests, Is.Not.Null);
             Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
+        }
+
+        [Test]
+        public void LoadOrCreateTestsForAssignmentAsync_ShouldRemoveExistingTestsThatAreNotInTestNamesParameter()
+        {
+            //Arrange
+            Test test1 = new TestBuilder().Build();
+            Test deprecatedTest = new TestBuilder().Build();
+
+            var testNames = new List<string> { test1.TestName };
+            var assignment = new Assignment
+            {
+                Id = _random.NextPositive()
+            };
+
+            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>{test1, deprecatedTest});
+
+            //Act
+            _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
+
+            //Assert
+            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+            _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
+            _testRepositoryMock.Verify(repo => repo.DeleteAsync(deprecatedTest), Times.Once);
+
+            Assert.That(assignment.Tests, Is.Not.Null);
+            Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
         }
 
         [Test]

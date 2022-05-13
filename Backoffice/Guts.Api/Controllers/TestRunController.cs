@@ -170,7 +170,7 @@ namespace Guts.Api.Controllers
         {
             if (IsLector())
             {
-                var testNames = model.Results.Select(testResult => testResult.TestName);
+                var testNames = model.Results.Select(testResult => testResult.TestName).ToList();
                 await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
             }
             else

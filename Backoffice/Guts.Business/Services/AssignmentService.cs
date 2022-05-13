@@ -70,23 +70,33 @@ namespace Guts.Business.Services
             assignment.Tests = assignmentTests;
         }
 
-        public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IEnumerable<string> testNames)
+        public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IReadOnlyList<string> testNames)
         {
             var assignmentTests = await _testRepository.FindByAssignmentId(assignment.Id);
 
-            foreach (var testName in testNames)
+            IList<string> testNamesToCreate =
+                testNames.Where(testName => assignmentTests.All(test => test.TestName != testName)).ToList();
+
+            foreach (string testNameToCreate in testNamesToCreate)
             {
-                if (assignmentTests.All(test => test.TestName != testName))
+                var newTest = new Test
                 {
-                    var newTest = new Test
-                    {
-                        AssignmentId = assignment.Id,
-                        TestName = testName
-                    };
-                    var savedTest = await _testRepository.AddAsync(newTest);
-                    assignmentTests.Add(savedTest);
-                }
+                    AssignmentId = assignment.Id,
+                    TestName = testNameToCreate
+                };
+                var savedTest = await _testRepository.AddAsync(newTest);
+                assignmentTests.Add(savedTest);
             }
+
+            IList<Test> testsToDelete =
+                assignmentTests.Where(test => testNames.All(testName => testName != test.TestName)).ToList();
+
+            foreach (Test testToDelete in testsToDelete)
+            {
+                await _testRepository.DeleteAsync(testToDelete);
+                assignmentTests.Remove(testToDelete);
+            }
+
             assignment.Tests = assignmentTests;
         }
 

@@ -166,7 +166,7 @@ namespace Guts.Api.Tests.Controllers
             _assignmentServiceMock.Verify(service => service.LoadTestsForAssignmentAsync(assignment), Times.Once);
             _assignmentServiceMock.Verify(
                 service => service.LoadOrCreateTestsForAssignmentAsync(It.IsAny<Assignment>(),
-                    It.IsAny<IEnumerable<string>>()), Times.Never);
+                    It.IsAny<IReadOnlyList<string>>()), Times.Never);
         }
 
         [Test]
@@ -302,7 +302,7 @@ namespace Guts.Api.Tests.Controllers
 
             _assignmentServiceMock.Verify(
                 service => service.LoadOrCreateTestsForAssignmentAsync(existingAssignment,
-                    It.Is<IEnumerable<string>>(testNames => testNames.All(testName =>
+                    It.Is<IReadOnlyList<string>>(testNames => testNames.All(testName =>
                         postedModel.Results.Any(testResult => testResult.TestName == testName)))), Times.Once);
             _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun, It.IsAny<IEnumerable<SolutionFile>>()), Times.Once); //TODO: also test if solution files are passed in
             _testResultConverterMock.Verify(converter => converter.ToTestRunModel(savedTestRun), Times.Once);
