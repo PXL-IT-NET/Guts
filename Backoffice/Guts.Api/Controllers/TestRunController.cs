@@ -3,6 +3,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Guts.Api.Extensions;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
@@ -182,7 +183,7 @@ namespace Guts.Api.Controllers
             LogTestRun(testRun);
 
             var solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
-                SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath, sourceFileModel.Content));
+                SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath, sourceFileModel.Content.TryFromBase64()));
 
             var savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
 

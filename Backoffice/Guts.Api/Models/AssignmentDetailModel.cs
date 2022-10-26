@@ -14,6 +14,6 @@ namespace Guts.Api.Models
         public DateTime? FirstRun { get; set; }
         public DateTime? LastRun { get; set; }
         public int NumberOfRuns { get; set; }
-        public IList<SolutionFileModel> SolutionFiles { get; set; }
+        public IList<SolutionFileOutputModel> SolutionFiles { get; set; }
     }
 }

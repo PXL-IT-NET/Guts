@@ -45,7 +45,7 @@ namespace Guts.Api.Models.Converters
                 FirstRun =  testRunInfo.FirstRunDateTime, 
                 LastRun = testRunInfo.LastRunDateTime,
                 NumberOfRuns = testRunInfo.NumberOfRuns,
-                SolutionFiles = new List<SolutionFileModel>()
+                SolutionFiles = new List<SolutionFileOutputModel>()
             };
 
             AddTestResults(model, assignment, results);
@@ -84,7 +84,7 @@ namespace Guts.Api.Models.Converters
         {
             foreach (var solutionFile in solutionFiles)
             {
-                var solutionFileModel = new SolutionFileModel
+                var solutionFileModel = new SolutionFileOutputModel
                 {
                     FilePath = solutionFile.FilePath,
                     Content = solutionFile.Content

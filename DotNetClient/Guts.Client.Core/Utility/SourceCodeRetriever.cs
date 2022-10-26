@@ -18,10 +18,13 @@ namespace Guts.Client.Core.Utility
             {
                 var trimmedPath = path.Trim('\n', '\r');
 
+                string content = Solution.Current.GetFileContent(trimmedPath) ?? string.Empty;
+                string contentBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content));
+
                 sourceFiles.Add(new SolutionFile
                 {
                     FilePath = trimmedPath,
-                    Content = Solution.Current.GetFileContent(trimmedPath)
+                    Content = contentBase64
                 });
             }
 
