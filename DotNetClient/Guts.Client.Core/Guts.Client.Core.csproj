@@ -10,7 +10,7 @@
     <Description>Utilities to write unit tests and send the results to the Guts API</Description>
     <Copyright>Copyright ©  2019</Copyright>
     <PackageTags>Guts;Unit Test;Client</PackageTags>
-    <Version>4.0.1</Version>
+    <Version>4.0.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>4.0.0</AssemblyVersion>
     <FileVersion>4.0.0</FileVersion>

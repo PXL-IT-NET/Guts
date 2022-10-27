@@ -88,14 +88,14 @@ namespace Guts.Business.Services
                 assignmentTests.Add(savedTest);
             }
 
-            IList<Test> testsToDelete =
-                assignmentTests.Where(test => testNames.All(testName => testName != test.TestName)).ToList();
+            //IList<Test> testsToDelete =
+            //    assignmentTests.Where(test => testNames.All(testName => testName != test.TestName)).ToList();
 
-            foreach (Test testToDelete in testsToDelete)
-            {
-                await _testRepository.DeleteAsync(testToDelete);
-                assignmentTests.Remove(testToDelete);
-            }
+            //foreach (Test testToDelete in testsToDelete)
+            //{
+            //    await _testRepository.DeleteAsync(testToDelete);
+            //    assignmentTests.Remove(testToDelete);
+            //}
 
             assignment.Tests = assignmentTests;
         }

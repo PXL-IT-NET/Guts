@@ -74,7 +74,9 @@ namespace Guts.Client.Core.Utility
             if (testClassType != null)
             {
                 TestClassName = TestContext.CurrentContext.Test.ClassName;
-                NumberOfTestsInCurrentFixture = testClassType.GetMethods().Count(m => m.GetCustomAttributes().OfType<TestAttribute>().Any());
+
+                NumberOfTestsInCurrentFixture = testClassType.GetMethods().Where(m => m.GetCustomAttributes().OfType<TestAttribute>().Any())
+                    .Select(m => Math.Max(1, m.GetCustomAttributes().OfType<TestCaseAttribute>().Count())).Sum();
 
                 var testCodePath = Path.Combine(testProjectDirectoryInfo.FullName, testClassType.Name + ".cs");
                 TestCodeHash = FileUtil.GetFileHash(testCodePath);

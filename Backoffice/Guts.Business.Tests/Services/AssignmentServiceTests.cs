@@ -275,32 +275,32 @@ namespace Guts.Business.Tests.Services
             Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
         }
 
-        [Test]
-        public void LoadOrCreateTestsForAssignmentAsync_ShouldRemoveExistingTestsThatAreNotInTestNamesParameter()
-        {
-            //Arrange
-            Test test1 = new TestBuilder().Build();
-            Test deprecatedTest = new TestBuilder().Build();
+        //[Test]
+        //public void LoadOrCreateTestsForAssignmentAsync_ShouldRemoveExistingTestsThatAreNotInTestNamesParameter() //Mistake: a TestRun does not always contain all tests
+        //{
+        //    //Arrange
+        //    Test test1 = new TestBuilder().Build();
+        //    Test deprecatedTest = new TestBuilder().Build();
 
-            var testNames = new List<string> { test1.TestName };
-            var assignment = new Assignment
-            {
-                Id = _random.NextPositive()
-            };
+        //    var testNames = new List<string> { test1.TestName };
+        //    var assignment = new Assignment
+        //    {
+        //        Id = _random.NextPositive()
+        //    };
 
-            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>{test1, deprecatedTest});
+        //    _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>{test1, deprecatedTest});
 
-            //Act
-            _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
+        //    //Act
+        //    _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
 
-            //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
-            _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
-            _testRepositoryMock.Verify(repo => repo.DeleteAsync(deprecatedTest), Times.Once);
+        //    //Assert
+        //    _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+        //    _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
+        //    _testRepositoryMock.Verify(repo => repo.DeleteAsync(deprecatedTest), Times.Once);
 
-            Assert.That(assignment.Tests, Is.Not.Null);
-            Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
-        }
+        //    Assert.That(assignment.Tests, Is.Not.Null);
+        //    Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
+        //}
 
         [Test]
         public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToAnAssignmentResultDto()
