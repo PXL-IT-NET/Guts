@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -83,8 +85,7 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _logger.LogInformation(
-                $"Received testrun for exercise (assignmentCode: {model.Assignment.AssignmentCode}, chapterCode: {model.Assignment.TopicCode}) from user {GetUserId()}");
+            LogTestRunReceived(model);
 
             Assignment assignment;
             if (IsLector())
@@ -180,18 +181,32 @@ namespace Guts.Api.Controllers
             }
 
             TestRun testRun = _testRunConverter.From(model.Results, GetUserId(), assignment);
-            LogTestRun(testRun);
 
-            var solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
-                SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath, sourceFileModel.Content.TryFromBase64()));
+            IList<SolutionFile> solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
+                SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath,
+                    sourceFileModel.Content.TryFromBase64())).ToList();
 
-            var savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
+            TestRun savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
+
+            LogTestRunRegistered(testRun, solutionFiles);
 
             var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
             return savedModel;
         }
 
-        private void LogTestRun(TestRun testRun)
+        private void LogTestRunReceived(CreateAssignmentTestRunModel model)
+        {
+            string sourcePaths = string.Empty;
+            if (model.SolutionFiles.Any())
+            {
+                sourcePaths = string.Join(";", model.SolutionFiles.Select(sf => sf.FilePath));
+            }
+
+            _logger.LogInformation(
+                $"Received testrun for exercise (assignmentCode: {model.Assignment.AssignmentCode}, chapterCode: {model.Assignment.TopicCode}, Source files: {sourcePaths}) from user {GetUserId()}");
+        }
+        
+        private void LogTestRunRegistered(TestRun testRun, IList<SolutionFile> solutionFiles)
         {
             if (testRun == null)
             {
@@ -199,11 +214,18 @@ namespace Guts.Api.Controllers
             }
             else
             {
+                string sourcePaths = string.Empty;
+                if (solutionFiles.Any())
+                {
+                    sourcePaths = string.Join(";", solutionFiles.Select(sf => sf.FilePath));
+                }
+                
                 StringBuilder logMessageBuilder = new StringBuilder();
                 logMessageBuilder.AppendLine($"Saving test run for user {testRun.UserId}:");
                 logMessageBuilder.AppendLine($"AssignmentId: {testRun.AssignmentId}");
                 logMessageBuilder.AppendLine($"#Passing tests: {testRun.TestResults.Count(r => r.Passed)}");
                 logMessageBuilder.AppendLine($"#Failing tests: {testRun.TestResults.Count(r => !r.Passed)}");
+                logMessageBuilder.AppendLine($"Sources: {sourcePaths}");
                 logMessageBuilder.AppendLine("-------------------------------------");
                 _logger.LogInformation(logMessageBuilder.ToString());
             }
