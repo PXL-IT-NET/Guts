@@ -23,7 +23,7 @@ export class Result {
       result.isAuthenticated = false;
     } else if (response.status >= 500) {
       message = "There is a technical problem with the Guts server. (status: " + response.status + " " + response.statusText + ")";
-      console.log("API error:");
+      console.log("API server error:");
       console.log(response);
     } else if (response.error instanceof Object) {
       var messageContainer = response.error as Object;
@@ -45,10 +45,17 @@ export class Result {
       }
 
       if (message == '') {
-        message = response.statusText || 'Unknown error';
+        message = JSON.stringify(response.error) || 'Unknown error';
       }
+
+      console.log("API client error:");
+      console.log(response);
+
     } else if (response.error instanceof String) {
       message = response.error as string;
+
+      console.log("API client error:");
+      console.log(response);
     }
 
     result.message = message;
