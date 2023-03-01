@@ -22,7 +22,8 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "aot": false,
+            "buildOptimizer": true,
+            "aot": true,
             "assets": [
               "src/favicon.ico",
               "src/assets"
