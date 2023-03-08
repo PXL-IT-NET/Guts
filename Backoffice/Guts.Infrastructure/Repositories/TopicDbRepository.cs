@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class TopicDbRepository : BaseDbRepository<Topic>, ITopicRepository
+    internal class TopicDbRepository : BaseDbRepository<ITopic, Topic>, ITopicRepository
     {
         public TopicDbRepository(GutsContext context) : base(context)
         {
         }
 
-        public async Task<Topic> GetSingleAsync(string courseCode, string code, int periodId)
+        public async Task<ITopic> GetSingleAsync(string courseCode, string code, int periodId)
         {
             var topic = await _context.Topics.FirstOrDefaultAsync(t => t.Course.Code == courseCode && t.Code == code && t.PeriodId == periodId);
             if (topic == null)
@@ -24,7 +24,7 @@ namespace Guts.Infrastructure.Repositories
             return topic;
         }
 
-        public async Task<IList<Topic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId)
+        public async Task<IReadOnlyList<ITopic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId)
         {
             var query = _context.Topics.Where(t => t.CourseId == courseId && t.PeriodId == periodId).Include(t => t.Assignments).ThenInclude(a => a.Tests);
             return await query.ToListAsync();

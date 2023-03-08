@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Controllers
 {
@@ -60,8 +62,8 @@ namespace Guts.Api.Controllers
             }
 
             var course = await _courseService.GetCourseByIdAsync(courseId);
-            var chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
-            var projects = await _projectService.GetProjectsOfCourseAsync(courseId);
+            IReadOnlyList<Chapter> chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
+            IReadOnlyList<IProject> projects = await _projectService.GetProjectsOfCourseAsync(courseId);
             var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);

@@ -6,7 +6,7 @@ namespace Guts.Api.Models.Converters
 {
     public class TeamConverter: ITeamConverter
     {
-        public TeamDetailsModel ToTeamDetailsModel(ProjectTeam projectTeam)
+        public TeamDetailsModel ToTeamDetailsModel(IProjectTeam projectTeam)
         {
             if (projectTeam.TeamUsers == null)
             {

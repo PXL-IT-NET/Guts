@@ -107,7 +107,7 @@ namespace Guts.Api.Tests.Models.Converters
             Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
         }
 
-        private IList<AssignmentResultDto> GenerateAssignmentResults(Chapter chapter,
+        private IReadOnlyList<AssignmentResultDto> GenerateAssignmentResults(Chapter chapter,
             int numberOfPassingTests,
             int numberOfFailingTests)
         {

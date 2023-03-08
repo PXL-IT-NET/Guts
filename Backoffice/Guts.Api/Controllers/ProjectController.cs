@@ -62,7 +62,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            Project project;
+            IProject project;
             if (IsLector())
             {
                 project = await _projectService.LoadProjectAsync(courseId, projectCode);
@@ -194,7 +194,7 @@ namespace Guts.Api.Controllers
 
                 project.Assignments = await _assignmentRepository.GetByTopicWithTests(project.Id);
 
-                var assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
+                IReadOnlyList<AssignmentResultDto> assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
 
                 var model = _topicConverter.ToTopicSummaryModel(project, assignmentResults);
                 return Ok(model);
@@ -257,8 +257,8 @@ namespace Guts.Api.Controllers
                 return Forbid();
             }
 
-            Project project = await _projectService.LoadProjectAsync(courseId, projectCode);
-            IList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
+            IProject project = await _projectService.LoadProjectAsync(courseId, projectCode);
+            IReadOnlyList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
 
             byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
             var result = new FileContentResult(bytes, "application/zip")

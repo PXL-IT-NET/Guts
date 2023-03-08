@@ -4,10 +4,10 @@ using Guts.Domain.TopicAggregate;
 
 namespace Guts.Business.Repositories
 {
-    public interface ITopicRepository : IBasicRepository<Topic>
+    public interface ITopicRepository : IBasicRepository<ITopic>
     {
-        Task<Topic> GetSingleAsync(string courseCode, string code, int periodId);
+        Task<ITopic> GetSingleAsync(string courseCode, string code, int periodId);
 
-        Task<IList<Topic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId);
+        Task<IReadOnlyList<ITopic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId);
     }
 }

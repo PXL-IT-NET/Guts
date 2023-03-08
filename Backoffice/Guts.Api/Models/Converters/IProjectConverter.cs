@@ -4,7 +4,7 @@ namespace Guts.Api.Models.Converters
 {
     public interface IProjectConverter
     {
-        TopicModel ToTopicModel(Project project);
-        ProjectDetailModel ToProjectDetailModel(Project project);
+        TopicModel ToTopicModel(IProject project);
+        ProjectDetailModel ToProjectDetailModel(IProject project);
     }
 }

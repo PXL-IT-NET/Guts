@@ -3,7 +3,7 @@ using Guts.Domain.ProjectTeamAggregate;
 
 namespace Guts.Domain.TopicAggregate.ProjectAggregate
 {
-    public class Project : Topic
+    public class Project : Topic, IProject
     {
         public Project()
         {
@@ -13,6 +13,7 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate
         {
         }
 
-        public virtual ICollection<ProjectTeam> Teams { get; set; } = new HashSet<ProjectTeam>();
+        public ICollection<IProjectAssessment> Assessments { get; set; } = new HashSet<IProjectAssessment>();
+        public ICollection<ProjectTeam> Teams { get; set; } = new HashSet<ProjectTeam>();
     }
 }

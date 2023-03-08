@@ -9,30 +9,34 @@ namespace Guts.Business.Services
 {
     public interface IProjectService
     {
-        Task<Project> GetProjectAsync(string courseCode, string projectCode);
-        Task<Project> GetOrCreateProjectAsync(string courseCode, string projectCode);
-        Task<IList<Project>> GetProjectsOfCourseAsync(int courseId);
+        Task<IProject> GetProjectAsync(string courseCode, string projectCode);
+        Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode);
+        Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId);
 
         /// <summary>
         /// Loads a project with its assignments and all teams
         /// </summary>
-        Task<Project> LoadProjectAsync(int courseId, string projectCode);
+        Task<IProject> LoadProjectAsync(int courseId, string projectCode);
 
         /// <summary>
         /// Loads a project with its assignments and only the team(s) of the user
         /// </summary>
-        Task<Project> LoadProjectForUserAsync(int courseId, string projectCode, int userId);
+        Task<IProject> LoadProjectForUserAsync(int courseId, string projectCode, int userId);
 
         Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int numberOfTeams);
 
-        Task<IList<ProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
+        Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
 
         Task AddUserToProjectTeamAsync(int teamId, int userId);
 
-        Task<IList<AssignmentResultDto>> GetResultsForTeamAsync(Project project, int teamId, DateTime? dateUtc);
+        Task<IReadOnlyList<AssignmentResultDto>> GetResultsForTeamAsync(IProject project, int teamId, DateTime? dateUtc);
 
-        Task<IList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(Project project, DateTime? dateUtc);
+        Task<IReadOnlyList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(IProject project, DateTime? dateUtc);
 
-        Task<IList<SolutionDto>> GetAllSolutions(Project project, DateTime? dateUtc);
+        Task<IReadOnlyList<SolutionDto>> GetAllSolutions(IProject project, DateTime? dateUtc);
+
+        Task<IReadOnlyList<IProjectAssessment>> GetProjectAssessmentsAsync(int projectId);
+
+        Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc);
     }
 }

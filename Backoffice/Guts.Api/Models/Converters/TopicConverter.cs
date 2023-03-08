@@ -9,7 +9,7 @@ namespace Guts.Api.Models.Converters
 {
     public class TopicConverter : ITopicConverter
     {
-        public TopicSummaryModel ToTopicSummaryModel(Topic topic, IList<AssignmentResultDto> assignmentResults)
+        public TopicSummaryModel ToTopicSummaryModel(ITopic topic, IReadOnlyList<AssignmentResultDto> assignmentResults)
         {
             if (topic.Assignments == null)
             {
@@ -37,7 +37,7 @@ namespace Guts.Api.Models.Converters
             return model;
         }
 
-        public TopicStatisticsModel ToTopicStatisticsModel(Topic topic, IList<AssignmentStatisticsDto> assignmentStatistics, string unit)
+        public TopicStatisticsModel ToTopicStatisticsModel(ITopic topic, IReadOnlyList<AssignmentStatisticsDto> assignmentStatistics, string unit)
         {
             var model = new TopicStatisticsModel
             {
@@ -56,7 +56,7 @@ namespace Guts.Api.Models.Converters
         }
 
         private AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
-            IList<AssignmentResultDto> assignmentResults)
+            IReadOnlyList<AssignmentResultDto> assignmentResults)
         {
             var assignmentSummaryModel = new AssignmentSummaryModel
             {
@@ -79,7 +79,7 @@ namespace Guts.Api.Models.Converters
 
         private AssignmentStatisticsModel CreateAssignmentStatisticsModel(
             Assignment assignment,
-            IList<AssignmentStatisticsDto> assignmentStatisticsList, 
+            IReadOnlyList<AssignmentStatisticsDto> assignmentStatisticsList, 
             string unit)
         {
             var model = new AssignmentStatisticsModel

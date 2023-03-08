@@ -7,6 +7,6 @@ namespace Guts.Business.Services
 {
     public interface ISolutionFileService
     {
-        Task<byte[]> CreateZipFromFiles(IList<SolutionDto> solutions);
+        Task<byte[]> CreateZipFromFiles(IReadOnlyList<SolutionDto> solutions);
     }
 }

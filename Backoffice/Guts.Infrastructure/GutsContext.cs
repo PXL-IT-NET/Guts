@@ -67,6 +67,10 @@ namespace Guts.Infrastructure
             builder.ApplyConfiguration(new ExamConfiguration());
             builder.ApplyConfiguration(new ExamPartConfiguration());
             builder.ApplyConfiguration(new AssignmentEvaluationConfiguration());
+            builder.ApplyConfiguration(new ProjectConfiguration());
+            builder.ApplyConfiguration(new ProjectAssessmentConfiguration());
+            builder.ApplyConfiguration(new ProjectTeamAssessmentConfiguration());
+            builder.ApplyConfiguration(new PeerAssessmentConfiguration());
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

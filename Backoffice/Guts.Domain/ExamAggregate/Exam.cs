@@ -40,7 +40,7 @@ namespace Guts.Domain.ExamAggregate
             _parts = new HashSet<IExamPart>();
         }
 
-        public ExamPart AddExamPart(string name, DateTime deadline)
+        public IExamPart AddExamPart(string name, DateTime deadline)
         {
             var evaluation = new ExamPart(Id, name, deadline);
             _parts.Add(evaluation);

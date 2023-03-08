@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ExamDbRepository : BaseDbRepository<Exam>, IExamRepository
+    internal class ExamDbRepository : BaseDbRepository<IExam, Exam>, IExamRepository
     {
         public ExamDbRepository(GutsContext context) : base(context)
         {
@@ -29,9 +29,9 @@ namespace Guts.Infrastructure.Repositories
             return exam;
         }
 
-        public async Task<IReadOnlyList<Exam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId)
+        public async Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId)
         {
-            var exams = await _context.Exams.Where(e => (courseId == null || e.CourseId == courseId) && e.PeriodId == periodId)
+            List<Exam> exams = await _context.Exams.Where(e => (courseId == null || e.CourseId == courseId) && e.PeriodId == periodId)
                 .Include(e => e.Parts)
                 .ThenInclude(ep => ep.AssignmentEvaluations)
                 .ToListAsync();

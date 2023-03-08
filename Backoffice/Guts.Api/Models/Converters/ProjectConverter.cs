@@ -5,7 +5,7 @@ namespace Guts.Api.Models.Converters
 {
     public class ProjectConverter : IProjectConverter
     {
-        public TopicModel ToTopicModel(Project project)
+        public TopicModel ToTopicModel(IProject project)
         {
             return new TopicModel
             {
@@ -15,7 +15,7 @@ namespace Guts.Api.Models.Converters
             };
         }
 
-        public ProjectDetailModel ToProjectDetailModel(Project project)
+        public ProjectDetailModel ToProjectDetailModel(IProject project)
         {
             var model = new ProjectDetailModel
             {

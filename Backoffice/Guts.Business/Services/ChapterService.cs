@@ -69,7 +69,7 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<IList<AssignmentResultDto>> GetResultsForUserAsync(Chapter chapter, int userId, DateTime? dateUtc)
+        public async Task<IReadOnlyList<AssignmentResultDto>> GetResultsForUserAsync(Chapter chapter, int userId, DateTime? dateUtc)
         {
             var results = new List<AssignmentResultDto>();
             foreach (var assignment in chapter.Assignments)
@@ -81,7 +81,7 @@ namespace Guts.Business.Services
             return results;
         }
 
-        public async Task<IList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(Chapter chapter, DateTime? dateUtc)
+        public async Task<IReadOnlyList<AssignmentStatisticsDto>> GetChapterStatisticsAsync(Chapter chapter, DateTime? dateUtc)
         {
             var results = new List<AssignmentStatisticsDto>();
             foreach (var assignment in chapter.Assignments)
@@ -92,7 +92,7 @@ namespace Guts.Business.Services
             return results;
         }
 
-        public async Task<IList<Chapter>> GetChaptersOfCourseAsync(int courseId)
+        public async Task<IReadOnlyList<Chapter>> GetChaptersOfCourseAsync(int courseId)
         {
             Period currentPeriod;
             try

@@ -6,7 +6,7 @@ using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Domain.TopicAggregate
 {
-    public class Topic : AggregateRoot
+    public class Topic : AggregateRoot, ITopic //TODO: make internal
     {
         private string _code;
 

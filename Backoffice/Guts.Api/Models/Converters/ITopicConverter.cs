@@ -6,7 +6,7 @@ namespace Guts.Api.Models.Converters
 {
     public interface ITopicConverter
     {
-        TopicSummaryModel ToTopicSummaryModel(Topic topic, IList<AssignmentResultDto> assignmentResults);
-        TopicStatisticsModel ToTopicStatisticsModel(Topic topic, IList<AssignmentStatisticsDto> assignmentStatistics, string unit);
+        TopicSummaryModel ToTopicSummaryModel(ITopic topic, IReadOnlyList<AssignmentResultDto> assignmentResults);
+        TopicStatisticsModel ToTopicStatisticsModel(ITopic topic, IReadOnlyList<AssignmentStatisticsDto> assignmentStatistics, string unit);
     }
 }

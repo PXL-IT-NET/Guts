@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class CourseDbRepository : BaseDbRepository<Course>, ICourseRepository
+    internal class CourseDbRepository : BaseDbRepository<Course, Course>, ICourseRepository
     {
         public CourseDbRepository(GutsContext context) : base(context)
         {

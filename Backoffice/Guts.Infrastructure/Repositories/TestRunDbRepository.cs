@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class TestRunDbRepository : BaseDbRepository<TestRun>, ITestRunRepository
+    internal class TestRunDbRepository : BaseDbRepository<TestRun, TestRun>, ITestRunRepository
     {
         public TestRunDbRepository(GutsContext context) : base(context)
         {

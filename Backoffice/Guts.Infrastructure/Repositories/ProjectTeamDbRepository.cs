@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ProjectTeamDbRepository : BaseDbRepository<ProjectTeam>, IProjectTeamRepository
+    internal class ProjectTeamDbRepository : BaseDbRepository<IProjectTeam, ProjectTeam>, IProjectTeamRepository
     {
         public ProjectTeamDbRepository(GutsContext context) : base(context)
         {
         }
 
-        public async Task<IList<ProjectTeam>> GetByProjectWithUsersAsync(int projectId)
+        public async Task<IReadOnlyList<IProjectTeam>> GetByProjectWithUsersAsync(int projectId)
         {
             var teams = await _context.ProjectTeams
                 .Where(pt => pt.ProjectId == projectId)
@@ -33,7 +33,7 @@ namespace Guts.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<ProjectTeam> LoadByIdAsync(int teamId)
+        public async Task<IProjectTeam> LoadByIdAsync(int teamId)
         {
             var team = await _context.ProjectTeams.Where(pt => pt.Id == teamId).Include(pt => pt.TeamUsers).FirstOrDefaultAsync();
             if (team == null)

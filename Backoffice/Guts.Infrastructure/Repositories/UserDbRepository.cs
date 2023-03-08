@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class UserDbRepository : IUserRepository
+    internal class UserDbRepository : IUserRepository
     {
         private readonly GutsContext _context;
 

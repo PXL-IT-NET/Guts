@@ -98,7 +98,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<Chapter>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(userAssignmentResults);
             _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(It.IsAny<Chapter>(), 
-                It.IsAny<IList<AssignmentResultDto>>()))
+                It.IsAny<IReadOnlyList<AssignmentResultDto>>()))
                 .Returns(chapterContents);
 
             //Act
@@ -197,7 +197,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
                 .Returns(chapterStatisticsModel);
 
             //Act
@@ -251,7 +251,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
                 .Returns(chapterStatisticsModel);
 
             //Act
@@ -285,7 +285,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
                 .Returns(chapterStatisticsModel);
 
             object cachedChapterStatisticsModel;

@@ -4,10 +4,10 @@ using Guts.Domain.ExamAggregate;
 
 namespace Guts.Business.Repositories
 {
-    public interface IExamRepository : IBasicRepository<Exam>
+    public interface IExamRepository : IBasicRepository<IExam>
     {
         Task<IExam> LoadDeepAsync(int examId);
 
-        Task<IReadOnlyList<Exam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId);
+        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId);
     }
 }

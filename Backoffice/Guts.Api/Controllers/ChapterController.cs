@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
+using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Domain.UserAggregate;
