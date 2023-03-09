@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using Guts.Api.Models.AssignmentModels;
+using Guts.Api.Models.ProjectModels;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters

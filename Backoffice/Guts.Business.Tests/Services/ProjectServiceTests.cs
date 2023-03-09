@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;

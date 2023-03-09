@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Guts.Api.Models
+namespace Guts.Api.Models.ProjectModels
 {
     public class TeamGenerationModel
     {

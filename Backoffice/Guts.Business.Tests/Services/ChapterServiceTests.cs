@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
-using Guts.Domain.TestRunAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Moq;
 using NUnit.Framework;

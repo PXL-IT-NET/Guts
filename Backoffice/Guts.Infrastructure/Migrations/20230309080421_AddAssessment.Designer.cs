@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Guts.Infrastructure.Migrations
 {
     [DbContext(typeof(GutsContext))]
-    [Migration("20230308150422_AddAssessment")]
+    [Migration("20230309080421_AddAssessment")]
     partial class AddAssessment
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -856,7 +856,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.UserAggregate.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Subject");
@@ -875,7 +875,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.ProjectTeamAggregate.ProjectTeam", "Team")
                         .WithMany()
                         .HasForeignKey("ProjectTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("ProjectAssessment");

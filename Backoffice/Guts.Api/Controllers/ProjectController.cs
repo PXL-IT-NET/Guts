@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -16,12 +14,12 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
+using Guts.Api.Models.ProjectModels;
 
 namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/projects")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ProjectController : ControllerBase
     {
         public const int CacheTimeInSeconds = 60;
@@ -99,6 +97,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> GenerateProjectTeams(int courseId, string projectCode, [FromBody] TeamGenerationModel model)
         {
             //TODO: technical dept -> write unit tests
@@ -110,11 +109,6 @@ namespace Guts.Api.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            }
-
-            if (!IsLector())
-            {
-                return Forbid();
             }
 
             await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.NumberOfTeams);
@@ -250,13 +244,9 @@ namespace Guts.Api.Controllers
         }
 
         [HttpGet("{projectCode}/getsourcecodezip")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> DownloadSourceCodesAsZip(int courseId, string projectCode, [FromQuery] DateTime? date)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
             IProject project = await _projectService.LoadProjectAsync(courseId, projectCode);
             IReadOnlyList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
 

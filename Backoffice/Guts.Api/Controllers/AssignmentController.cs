@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -125,13 +123,9 @@ namespace Guts.Api.Controllers
         }
 
         [HttpGet("{assignmentId}/getsourcecodezip")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> DownloadSourceCodesAsZip(int assignmentId)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
             IReadOnlyList<SolutionDto> solutions = await _assignmentService.GetAllSolutions(assignmentId);
             byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
             var result = new FileContentResult(bytes, "application/zip")

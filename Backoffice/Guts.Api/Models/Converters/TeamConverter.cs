@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Guts.Domain.ProjectTeamAggregate;
 
+using Guts.Api.Models.ProjectModels;
+
 namespace Guts.Api.Models.Converters
 {
     public class TeamConverter: ITeamConverter

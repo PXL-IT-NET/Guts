@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Guts.Api.Controllers;
-using Guts.Api.Models;
 using Guts.Api.Models.Converters;
+using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
 using Guts.Business.Repositories;
 using Guts.Business.Services;

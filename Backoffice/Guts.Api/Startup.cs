@@ -13,9 +13,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Filters;
+using Guts.Domain.RoleAggregate;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Hosting;
 using NSwag.Generation.Processors.Security;
 
@@ -43,9 +45,9 @@ namespace Guts.Api
             services.AddCors();
 
             services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
                 .AddJwtBearer(options =>
                 {
                     options.RequireHttpsMetadata = false;
@@ -58,8 +60,27 @@ namespace Guts.Api
                     };
                 });
 
+            services.AddAuthorization(options =>
+            {
+                var authenticatedUsersOnlyPolicy = new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser()
+                    .Build();
+
+                options.AddPolicy(ApiConstants.AuthenticatedUsersOnlyPolicy, authenticatedUsersOnlyPolicy);
+                options.DefaultPolicy = authenticatedUsersOnlyPolicy;
+
+                var lectorsOnlyPolicy = new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser()
+                    .RequireRole(Role.Constants.Lector)
+                    .Build();
+                options.AddPolicy(ApiConstants.LectorsOnlyPolicy, lectorsOnlyPolicy);
+            });
+
             services.AddControllers(options =>
             {
+                options.Filters.Add(new AuthorizeFilter(ApiConstants.AuthenticatedUsersOnlyPolicy));
                 options.Filters.Add<ApplicationExceptionFilterAttribute>();
                 options.Filters.Add<LogBadRequestFilterAttribute>();
             });

@@ -11,6 +11,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         IPeerAssessment SelfAssessment { get; }
         IReadOnlyList<IPeerAssessment> PeerAssessments { get; }
 
+        double TeamAverage { get; }
         AssessmentScore SelfAssessmentScore { get; }
         AssessmentScore PeerAssessmentScore { get; }
         double SelfAssessmentFactor { get; }

@@ -10,7 +10,12 @@ internal class PeerAssessmentConfiguration : IEntityTypeConfiguration<PeerAssess
     public void Configure(EntityTypeBuilder<PeerAssessment> builder)
     {
         builder.ToTable("PeerAssessments");
-        builder.HasOne(pa => pa.User).WithMany().HasForeignKey(nameof(PeerAssessment.User) + "Id").IsRequired();
+
+        builder.HasOne(pa => pa.User)
+            .WithMany()
+            .HasForeignKey(nameof(PeerAssessment.User) + "Id")
+            .OnDelete(DeleteBehavior.NoAction)
+            .IsRequired();
         builder.HasOne(pa => pa.Subject).WithMany().HasForeignKey(nameof(PeerAssessment.Subject) + "Id").IsRequired();
 
         builder.Property(pa => pa.CooperationScore).IsRequired().HasConversion(score => score.Value, scoreValue => new AssessmentScore(scoreValue));

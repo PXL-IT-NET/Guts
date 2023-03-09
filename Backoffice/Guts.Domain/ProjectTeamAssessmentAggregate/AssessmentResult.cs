@@ -14,6 +14,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         public IReadOnlyList<IPeerAssessment> PeerAssessments { get; }
 
+        public double TeamAverage { get; }
+
         public AssessmentScore SelfAssessmentScore { get; }
 
         public AssessmentScore PeerAssessmentScore { get; }
@@ -33,13 +35,15 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             PeerAssessments = allPeerAssessments.Where(pa => pa.Subject.Id == subject.Id && pa.User.Id != subject.Id).ToList();
             Contracts.Require(PeerAssessments.Any(), "Cannot create an assessment result when there is no other peer that evaluated the subject.");
 
+            TeamAverage = allPeerAssessments.Sum(pa => pa.ContributionScore + pa.CooperationScore + pa.EffortScore) / (3.0 * allPeerAssessments.Count);
+
             double selfAssessmentAverage = (SelfAssessment.ContributionScore + SelfAssessment.CooperationScore + SelfAssessment.EffortScore) / 3.0;
 
-            SelfAssessmentFactor = selfAssessmentAverage / AssessmentScore.Average;
+            SelfAssessmentFactor = selfAssessmentAverage / TeamAverage;
 
-            double peerAssessmentAverage = allPeerAssessments.Sum(pa => pa.ContributionScore + pa.CooperationScore + pa.EffortScore) / (3.0 * allPeerAssessments.Count);
+            double peerAssessmentAverage = PeerAssessments.Sum(pa => pa.ContributionScore + pa.CooperationScore + pa.EffortScore) / (3.0 * allPeerAssessments.Count);
 
-            PeerAssessmentFactor = peerAssessmentAverage / AssessmentScore.Average;
+            PeerAssessmentFactor = peerAssessmentAverage / TeamAverage;
 
             SelfAssessmentScore = selfAssessmentAverage;
 

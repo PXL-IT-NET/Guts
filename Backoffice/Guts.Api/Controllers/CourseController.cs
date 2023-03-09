@@ -1,8 +1,6 @@
 ﻿using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Net;
@@ -15,7 +13,6 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class CourseController : ControllerBase
     {
         private readonly ICourseService _courseService;

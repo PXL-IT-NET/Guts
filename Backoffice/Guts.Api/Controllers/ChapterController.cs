@@ -6,12 +6,9 @@ using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
-using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Domain.UserAggregate;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -20,7 +17,6 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/chapters")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ChapterController : ControllerBase
     {
         private readonly IChapterService _chapterService;

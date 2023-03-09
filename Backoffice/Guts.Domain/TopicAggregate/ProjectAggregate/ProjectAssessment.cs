@@ -20,7 +20,9 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate
             {
                 Contracts.Require(projectId > 0, "A project assessment can only be created for an existing (stored) project.");
                 Contracts.Require(!string.IsNullOrEmpty(description), "The description of a project assessment cannot be empty");
+                Contracts.Require(openOnUtc.Kind == DateTimeKind.Utc, "The opening date must be a UTC date.");
                 Contracts.Require(openOnUtc < deadlineUtc, "The deadline date cannot be before the opening date.");
+                Contracts.Require(deadlineUtc.Kind == DateTimeKind.Utc, "The deadline date must be a UTC date.");
                 Contracts.Require(deadlineUtc > DateTime.UtcNow, "The deadline date must be in the future.");
 
                 var assessment = new ProjectAssessment

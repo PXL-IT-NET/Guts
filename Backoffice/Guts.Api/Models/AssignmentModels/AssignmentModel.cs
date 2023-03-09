@@ -1,4 +1,4 @@
-namespace Guts.Api.Models
+namespace Guts.Api.Models.AssignmentModels
 {
     public class AssignmentModel
     {

@@ -854,7 +854,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.UserAggregate.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Subject");
@@ -873,7 +873,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.ProjectTeamAggregate.ProjectTeam", "Team")
                         .WithMany()
                         .HasForeignKey("ProjectTeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("ProjectAssessment");
