@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy  } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CourseService } from '../../services/course.service';
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from '../../viewmodels/course.model';
@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 @Component({
   templateUrl: './course.component.html'
 })
-export class CourseComponent implements OnInit, OnDestroy  {
+export class CourseComponent implements OnInit, OnDestroy {
   public course: ICourseContentsModel;
   public selectedChapter: ITopicModel;
   public selectedProject: ITopicModel;
@@ -36,37 +36,18 @@ export class CourseComponent implements OnInit, OnDestroy  {
     this.selectedChapter = null;
     this.selectedProject = null;
     this.hasContent = true;
-  }
-
-  ngOnInit() {
-
-    this.userProfile = new UserProfile();
-    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
-      this.userProfile = profile;
-    });
 
     this.route.params.subscribe(params => {
       let courseId = +params['courseId']; // (+) converts 'courseId' to a number
+      this.loadCourseContents(courseId);
+    });
 
-      this.loading = true;
-      this.hasContent = true;
-      this.courseService.getCourseContentsById(courseId).subscribe((result) => {
-        this.loading = false;
-        if (result.success) {
-          this.course = result.value;
-          if (this.course.chapters.length > 0) {
-            this.selectedChapter = this.course.chapters[0];
-            this.onChapterChanged();
-          } else if (this.course.projects.length > 0) {
-            this.selectedProject = this.course.projects[0];
-            this.onProjectChanged();
-          } else {
-            this.hasContent = false;
-          }
-        } else {
-          this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");
-        }
-      });
+  }
+
+  ngOnInit() {
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
     });
   }
 
@@ -87,4 +68,27 @@ export class CourseComponent implements OnInit, OnDestroy  {
       this.router.navigate(['projects', this.selectedProject.code], { relativeTo: this.route });
     }
   }
+
+  private loadCourseContents(courseId: number) {
+    this.loading = true;
+    this.hasContent = true;
+    this.courseService.getCourseContentsById(courseId).subscribe((result) => {
+      this.loading = false;
+      if (result.success) {
+        this.course = result.value;
+        if (this.course.chapters.length > 0) {
+          this.selectedChapter = this.course.chapters[0];
+          this.onChapterChanged();
+        } else if (this.course.projects.length > 0) {
+          this.selectedProject = this.course.projects[0];
+          this.onProjectChanged();
+        } else {
+          this.hasContent = false;
+        }
+      } else {
+        this.toastr.error("Could not course details from API. Message: " + (result.message || "unknown error"), "API error");
+      }
+    });
+  }
+
 }

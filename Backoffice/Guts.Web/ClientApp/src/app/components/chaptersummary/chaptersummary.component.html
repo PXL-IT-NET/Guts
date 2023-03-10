@@ -7,10 +7,13 @@
             Your test outcomes <small>({{model.totalGreenTests}} / {{model.totalTests}} tests)</small>
           </h5>
           <div class="card-body">
-            <div class="list-group">
+            <div class="list-group" *ngIf="userId > 0">
               <div class="list-group-item" *ngFor="let assignment of model.assignmentSummaries">
                 <assignment-summary [model]="assignment"></assignment-summary>
               </div>
+            </div>
+            <div *ngIf="userId <= 0">
+              You must select a user to see test outcomes. 
             </div>
             <ngx-loading [show]="loadingSummary"></ngx-loading>
           </div>

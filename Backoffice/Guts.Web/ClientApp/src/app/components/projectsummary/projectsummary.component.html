@@ -7,10 +7,13 @@
             Your test outcomes <small>({{model.totalGreenTests}} / {{model.totalTests}} tests)</small>
           </h5>
           <div class="card-body">
-            <div class="list-group">
+            <div class="list-group" *ngIf="teamId > 0">
               <div class="list-group-item" *ngFor="let assignment of model.assignmentSummaries">
                 <assignment-summary [model]="assignment"></assignment-summary>
               </div>
+            </div>
+            <div *ngIf="teamId <= 0">
+              You must <a [routerLink]="['../teams']">join a team</a> to see your test outcomes. 
             </div>
             <ngx-loading [show]="loadingSummary"></ngx-loading>
           </div>

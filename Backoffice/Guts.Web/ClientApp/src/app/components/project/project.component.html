@@ -2,9 +2,9 @@
   <div class="col-md-12">
     <form *ngIf="model.teams.length > 0">
       <div class="form-group row">
-        <label for="components" class="col-md-2 col-xl-1 col-form-label">Component</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
-          <select name="components" class="form-control" [(ngModel)]="selectedAssignmentId" (ngModelChange)="onSelectionChanged()">
+        <label for="components" class="col-lg-1 col-md-2 col-form-label">Component</label>
+        <div class="col-lg-3 col-md-4">
+          <select name="components" class="form-control" [(ngModel)]="selectedAssignmentId">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let component of model.components" [ngValue]="component.assignmentId">
               {{component.code}}
@@ -12,18 +12,18 @@
           </select>
         </div>
 
-        <label for="teams" class="col-md-2 col-xl-1 col-form-label">Team</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
-          <select name="teams" class="form-control" [(ngModel)]="selectedTeamId" (ngModelChange)="onSelectionChanged()">
+        <label for="teams" class="col-lg-1 col-md-2 col-form-label">Team</label>
+        <div class="col-lg-3 col-md-4">
+          <select name="teams" class="form-control" [(ngModel)]="selectedTeamId">
             <option *ngFor="let team of model.teams" [ngValue]="team.id">
               {{team.name}}
             </option>
           </select>
         </div>
 
-        <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
-          <app-ng-datetime name="date" [(date)]="selectedDate" (dateChange)="onDateChanged()"></app-ng-datetime>
+        <label for="date" class="col-lg-1 col-md-2 col-form-label">Status on</label>
+        <div class="col-lg-3 col-md-4">
+          <app-ng-datetime name="date" [(date)]="selectedDate"></app-ng-datetime>
         </div>
 
       </div>
@@ -33,6 +33,12 @@
 </div>
 <div class="row">
   <div class="col-md-12">
-    <router-outlet></router-outlet>
+    <app-project-summary *ngIf="selectedAssignmentId <= 0" [courseId]="courseId" [projectCode]="projectCode"
+      [teamId]="selectedTeamId" [statusDate]="selectedDate">
+    </app-project-summary>
+
+    <app-assignment-detail *ngIf="selectedAssignmentId > 0" [assignmentId]="selectedAssignmentId" 
+      [teamId]="selectedTeamId" [statusDate]="selectedDate">
+    </app-assignment-detail>
   </div>
 </div>

@@ -11,7 +11,9 @@ export class NgDatetimeComponent implements OnInit {
 
   @Input()
   public set date(d: moment.Moment) {
-    this._dateString = this.parseDateToStringWithFormat(d);
+    if(moment.isMoment(d)){
+      this._dateString = this.parseDateToStringWithFormat(d);
+    }
   }
 
   @Output() dateChange: EventEmitter<moment.Moment>;
