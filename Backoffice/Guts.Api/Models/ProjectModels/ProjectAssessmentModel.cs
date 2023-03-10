@@ -1,5 +1,6 @@
 ﻿using System;
 using AutoMapper;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.ProjectModels;
 
@@ -16,7 +17,7 @@ public class ProjectAssessmentModel
     {
         public MappingProfile()
         {
-            CreateMap<ProjectAssessmentModel, ProjectAssessmentModel>();
+            CreateMap<IProjectAssessment, ProjectAssessmentModel>();
         }
     }
 }

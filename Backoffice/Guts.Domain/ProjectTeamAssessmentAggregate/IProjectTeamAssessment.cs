@@ -20,5 +20,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore);
 
         IReadOnlyList<User> GetPeersToEvaluateFor(int userId);
+
+        IAssessmentResult GetAssessmentResultFor(int userId);
     }
 }

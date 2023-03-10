@@ -4,6 +4,7 @@ import { IProjectDetailsModel } from '../../viewmodels/project.model';
 import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
+import * as moment from 'moment';
 
 @Component({
   templateUrl: './project.component.html'
@@ -11,7 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 export class ProjectComponent implements OnInit {
 
   public model: IProjectDetailsModel;
-  public selectedDate: Date;
+  public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
   public selectedTeamId: number;
   public datePickerSettings: any;
@@ -36,7 +37,7 @@ export class ProjectComponent implements OnInit {
     };
 
     this.selectedAssignmentId = 0;
-    this.selectedDate = new Date();
+    this.selectedDate = moment();
     this.selectedTeamId = 0;
     this.datePickerSettings = {
       bigBanner: true,

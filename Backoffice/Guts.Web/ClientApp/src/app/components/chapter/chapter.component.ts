@@ -8,6 +8,7 @@ import { IUserModel } from '../../viewmodels/user.model';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, map, distinctUntilChanged, filter, merge } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import * as moment from 'moment';
 
 @Component({
   templateUrl: './chapter.component.html'
@@ -17,7 +18,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
   public selectedUser: IUserModel;
-  public selectedDate: Date;
+  public selectedDate: moment.Moment;
   public datePickerSettings: any;
   public loading: boolean = false;
   public courseId: number;
@@ -41,7 +42,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     };
     this.selectedAssignmentId = 0;
     this.selectedUser = null;
-    this.selectedDate = new Date();
+    this.selectedDate = moment();
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,

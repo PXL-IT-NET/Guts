@@ -9,7 +9,6 @@ namespace Guts.Business.Services
 {
     public interface IProjectService
     {
-        Task<IProject> GetProjectAsync(string courseCode, string projectCode);
         Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode);
         Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId);
 

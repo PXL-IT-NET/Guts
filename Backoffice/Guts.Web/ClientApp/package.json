@@ -26,6 +26,7 @@
     "@ng-bootstrap/ng-bootstrap": "11.0.1",
     "angular-2-local-storage": "^3.0.2",
     "bootstrap": "4.6.2",
+    "bootstrap-icons": "^1.10.3",
     "chart.js": "^2.9.2",
     "file-saver": "^2.0.2",
     "font-awesome": "^4.7.0",

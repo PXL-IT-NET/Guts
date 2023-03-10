@@ -29,7 +29,7 @@ public class ProjectAssessmentController : ControllerBase
         _mapper = mapper;
     }
 
-    [HttpGet("ofproject/{projectId}")]
+    [HttpGet("of-project/{projectId}")]
     [ProducesResponseType(typeof(IList<ProjectAssessmentModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectAssessments(int projectId)

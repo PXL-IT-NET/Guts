@@ -41,11 +41,11 @@ namespace Guts.Business.Services
             _assessmentFactory = assessmentFactory;
         }
 
-        public async Task<IProject> GetProjectAsync(string courseCode, string projectCode)
-        {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-            return await _projectRepository.GetSingleAsync(courseCode, projectCode, currentPeriod.Id);
-        }
+        //public async Task<IProject> GetProjectAsync(string courseCode, string projectCode)
+        //{
+        //    var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+        //    return await _projectRepository.GetSingleAsync(courseCode, projectCode, currentPeriod.Id);
+        //}
 
         public async Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode)
         {

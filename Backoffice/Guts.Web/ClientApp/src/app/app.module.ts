@@ -83,6 +83,7 @@ import { ProjectAssessmentOverviewComponent } from './components/project-assessm
     s.CourseService,
     s.ChapterService,
     s.ProjectService,
+    s.ProjectAssessmentService,
     s.AssignmentService,
     s.ExamService,
     s.ClientSettingsService,
