@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
@@ -60,6 +62,20 @@ namespace Guts.Business.Services.Assessment
             }
 
             return teamAssessment;
+        }
+
+        public async Task<ProjectTeamAssessmentStatusDto> GetStatusAsync(int projectAssessmentId, int teamId)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+            return new ProjectTeamAssessmentStatusDto
+            {
+                Id = teamAssessment.Id,
+                TeamId = teamId,
+                IsComplete = teamAssessment.IsComplete,
+                PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
+                    new PeerDto { FirstName = user.FirstName, LastName = user.LastName, UserId = user.Id }).ToList(),
+            };
         }
     }
 }

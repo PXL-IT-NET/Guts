@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -29,7 +30,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
         {
             Contracts.Require(team != null, "A team must be provided.");
-            Contracts.Require(team!.TeamUsers.Any(), "The users of team must be loaded.");
+            Contracts.Require(team!.TeamUsers.Any(), "The team has no members.");
             Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
             Team = team;
 
@@ -81,6 +82,19 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
                 if (!_peerAssessments.Any(pa => pa.User.Id == userId && pa.Subject.Id == subject.Id))
                 {
                     peers.Add(subject);
+                }
+            }
+            return peers;
+        }
+
+        public IReadOnlyList<User> GetPeersThatNeedToEvaluateOthers()
+        {
+            var peers = new List<User>();
+            foreach (User user in Team.TeamUsers.Select(tu => tu.User))
+            {
+                if (_peerAssessments.Count(pa => pa.User.Id == user.Id) < Team.TeamUsers.Count)
+                {
+                    peers.Add(user);
                 }
             }
             return peers;

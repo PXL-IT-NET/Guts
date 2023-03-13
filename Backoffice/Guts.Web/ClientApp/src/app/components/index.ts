@@ -1,3 +1,5 @@
+import { from } from 'rxjs'
+
 export * from './assignmentdetail/assignmentdetail.component'
 export * from './assignmentstatistics/assignmentstatistics.component'
 export * from './assignmentsummary/assignmentsummary.component'
@@ -19,3 +21,4 @@ export * from './register/register.component'
 export * from './resetpassword/resetpassword.component'
 export * from './app.component'
 export * from './project-assessment-overview/project-assessment-overview.component'
+export * from './project-team-assessment-evaluation-form/project-team-assessment-evaluation-form.component'

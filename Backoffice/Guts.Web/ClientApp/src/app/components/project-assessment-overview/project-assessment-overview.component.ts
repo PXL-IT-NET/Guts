@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { ProjectService } from 'src/app/services';
-import { ProjectAssessmentService } from 'src/app/services/projectassessment.service';
+import { ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
+import { ProjectAssessmentService } from 'src/app/services/project.assessment.service';
 import { IProjectDetailsModel } from 'src/app/viewmodels/project.model';
 import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from 'src/app/viewmodels/projectassessment.model';
 
@@ -29,6 +29,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
   constructor(private formBuilder: FormBuilder,
     private projectService: ProjectService,
     private projectAssessmentService: ProjectAssessmentService,
+    private projectTeamAssessmentService: ProjectTeamAssessmentService,
     private toastr: ToastrService,
     private route: ActivatedRoute) {
     this.project = {
@@ -59,8 +60,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
         this.project = result.value;
         if(this.project.teams.length > 0){
           this.selectedTeamId = this.project.teams[0].id;
-        }
-        this.loadProjectAssessments();
+        } 
+        this.loadProjectAssessments(); 
       } else {
         this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
       }
@@ -90,10 +91,23 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     return fc.dirty || fc.touched
   }
 
-  private loadProjectAssessments(){
+  public loadProjectAssessments(){
     this.projectAssessmentService.getAssessmentsOfProject(this.project.id).subscribe(result => {
       if (result.success) {
         this.assessments = result.value;
+        //this.assessments = this.assessments.slice(0,1);
+        this.assessments.forEach(assessment => {
+          if(assessment.isOpen){
+            this.projectTeamAssessmentService.getStatusOfProjectTeamAssessment(assessment.id, this.selectedTeamId).subscribe(result => {
+              if (result.success) {
+                 assessment.teamStatus = result.value;
+              } else {
+                this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
+              }
+            });
+          }
+        });
+
       } else {
         this.toastr.error("Could not load project assessments from API. Message: " + (result.message || "unknown error"), "API error");
       }

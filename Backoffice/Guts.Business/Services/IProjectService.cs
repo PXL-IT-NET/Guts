@@ -28,7 +28,8 @@ namespace Guts.Business.Services
 
         Task AddUserToProjectTeamAsync(int teamId, int userId);
 
-        Task<IReadOnlyList<AssignmentResultDto>> GetResultsForTeamAsync(IProject project, int teamId, DateTime? dateUtc);
+        Task<IReadOnlyList<AssignmentResultDto>>
+            GetResultsForTeamAsync(IProject project, int teamId, DateTime? dateUtc);
 
         Task<IReadOnlyList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(IProject project, DateTime? dateUtc);
 
@@ -36,6 +37,7 @@ namespace Guts.Business.Services
 
         Task<IReadOnlyList<IProjectAssessment>> GetProjectAssessmentsAsync(int projectId);
 
-        Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc);
+        Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc,
+            DateTime deadlineUtc);
     }
 }

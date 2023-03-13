@@ -23,7 +23,6 @@ import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage
 import { RecaptchaModule } from 'ng-recaptcha';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
-import { ProjectAssessmentOverviewComponent } from './components/project-assessment-overview/project-assessment-overview.component';
 
 @NgModule({
   declarations: [
@@ -50,7 +49,8 @@ import { ProjectAssessmentOverviewComponent } from './components/project-assessm
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
-    ProjectAssessmentOverviewComponent
+    c.ProjectAssessmentOverviewComponent,
+    c.ProjectTeamAssessmentEvaluationFormComponent
   ],
   imports: [
     BrowserModule,
@@ -84,6 +84,7 @@ import { ProjectAssessmentOverviewComponent } from './components/project-assessm
     s.ChapterService,
     s.ProjectService,
     s.ProjectAssessmentService,
+    s.ProjectTeamAssessmentService,
     s.AssignmentService,
     s.ExamService,
     s.ClientSettingsService,

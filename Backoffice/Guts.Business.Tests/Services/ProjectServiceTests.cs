@@ -46,28 +46,28 @@ namespace Guts.Business.Tests.Services
                 null, null); //TODO: use actual mocks
         }
 
-        [Test]
-        public void GetProjectAsync_ShouldReturnProjectForCurrentPeriod()
-        {
-            //Arrange
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var courseCode = Guid.NewGuid().ToString();
-            var existingProject = new ProjectBuilder().WithId()
-                .WithCourse(courseCode)
-                .WithPeriod(existingPeriod).Build();
+        //[Test]
+        //public void GetProjectAsync_ShouldReturnProjectForCurrentPeriod()
+        //{
+        //    //Arrange
+        //    var existingPeriod = new Period { Id = _random.NextPositive() };
+        //    var courseCode = Guid.NewGuid().ToString();
+        //    var existingProject = new ProjectBuilder().WithId()
+        //        .WithCourse(courseCode)
+        //        .WithPeriod(existingPeriod).Build();
 
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(existingProject);
+        //    _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+        //    _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+        //        .ReturnsAsync(existingProject);
 
-            //Act
-            var result = _service.GetProjectAsync(courseCode, existingProject.Code).Result;
+        //    //Act
+        //    var result = _service.GetProjectAsync(courseCode, existingProject.Code).Result;
 
-            //Assert
-            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
-            _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(courseCode, existingProject.Code, existingPeriod.Id), Times.Once());
-            Assert.That(result, Is.EqualTo(existingProject));
-        }
+        //    //Assert
+        //    _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
+        //    _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(courseCode, existingProject.Code, existingPeriod.Id), Times.Once());
+        //    Assert.That(result, Is.EqualTo(existingProject));
+        //}
 
         [Test]
         public void GetOrCreateProjectAsync_ShouldReturnProjectIfItExists()

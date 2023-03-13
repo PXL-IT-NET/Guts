@@ -1,34 +1,55 @@
 <div class="row">
     <div class="col-12">
-
-        <select name="teams" class="form-control" [(ngModel)]="selectedTeamId">
-            <option *ngFor="let team of project.teams" [ngValue]="team.id">
-              {{team.name}}
-            </option>
-          </select>
-
         <table class="table table-bordered">
             <thead>
-              <tr>
-                <th scope="col">Description</th>
-                <th scope="col">Open on</th>
-                <th scope="col">Deadline</th>
-                <th></th>
-              </tr>
+                <tr>
+                    <th scope="col">Description</th>
+                    <th scope="col">Open on</th>
+                    <th scope="col">Closed on</th>
+                    <th scope="col">
+                        <span>Team </span>
+                        <select name="teams" [(ngModel)]="selectedTeamId"
+                            (change)="loadProjectAssessments()">
+                            <option *ngFor="let team of project.teams" [ngValue]="team.id">
+                                {{team.name}}
+                            </option>
+                        </select>
+                    </th>
+                </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let assessment of assessments">
-                <td>{{assessment.description}}</td>
-                <td>{{assessment.openOnDisplay}}</td>
-                <td>{{assessment.deadlineDisplay}}</td>
-                <td>
-                    <a href="#" title="wijzigen">
-                        <span class="bi-pencil-square"></span>
-                    </a>
-                </td>
-              </tr>
+                <tr *ngFor="let assessment of assessments">
+                    <td>{{assessment.description}}</td>
+                    <td>{{assessment.openOnDisplay}}</td>
+                    <td>{{assessment.deadlineDisplay}}</td>
+                    <td>
+                        <div *ngIf="assessment.teamStatus.isComplete" >
+                            <span class="bi-check-square text-success"></span>
+                            <span class="text-success"> Completed</span>
+                        </div>
+                        <div *ngIf="!assessment.teamStatus.isComplete">
+                            <div>
+                                <span class="bi-x-square text-danger"></span>
+                                <span *ngIf="assessment.isOpen" class="text-danger"> Not completed</span>
+                                <span *ngIf="!assessment.isOpen" class="text-danger"> Not open</span>
+                            </div>
+                            <div *ngIf="assessment.teamStatus.peersThatNeedToEvaluateOthers.length > 0">
+                                <em>Peers that need to evaluate others:</em>
+                                <div *ngFor="let peer of assessment.teamStatus.peersThatNeedToEvaluateOthers">
+                                    <span>{{peer.fullName}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="assessment.isOpen" class="m-2">
+                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']" class="btn btn-success">
+                                <span class="bi-pencil-square"></span>
+                                <span> Evaluate self and others</span>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
-          </table>
+        </table>
 
     </div>
 </div>
@@ -40,7 +61,8 @@
                 <div class="col-12">
                     <div class="form-group row">
                         <label for="description" class="col-3 col-form-label">Description</label>
-                        <div class="col-9" [class.has-error]="descriptionControl.invalid && canShowErrors(descriptionControl)">
+                        <div class="col-9"
+                            [class.has-error]="descriptionControl.invalid && canShowErrors(descriptionControl)">
                             <input type="text" class="form-control" formControlName="description">
                             <div *ngIf="canShowErrors(descriptionControl)">
                                 <span class="text-danger" *ngIf="descriptionControl.errors?.required">
@@ -56,8 +78,7 @@
                 <div class="col-12">
                     <div class="form-group row">
                         <label for="openOn" class="col-3 col-form-label">Open on</label>
-                        <div class="col-9"
-                            [class.has-error]="openOnControl.invalid && canShowErrors(openOnControl)">
+                        <div class="col-9" [class.has-error]="openOnControl.invalid && canShowErrors(openOnControl)">
                             <app-ng-datetime name="openOn" formControlName="openOn"></app-ng-datetime>
                             <div *ngIf="canShowErrors(openOnControl)">
                                 <span class="text-danger" *ngIf="openOnControl.errors?.required">

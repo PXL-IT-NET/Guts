@@ -35,7 +35,10 @@ namespace Guts.Infrastructure.Repositories
 
         public async Task<IProjectTeam> LoadByIdAsync(int teamId)
         {
-            var team = await _context.ProjectTeams.Where(pt => pt.Id == teamId).Include(pt => pt.TeamUsers).FirstOrDefaultAsync();
+            var team = await _context.ProjectTeams.Where(pt => pt.Id == teamId)
+                .Include(pt => pt.TeamUsers)
+                .ThenInclude(tu => tu.User)
+                .FirstOrDefaultAsync();
             if (team == null)
             {
                 throw new DataNotFoundException();
