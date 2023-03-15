@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
@@ -74,8 +75,34 @@ namespace Guts.Business.Services.Assessment
                 TeamId = teamId,
                 IsComplete = teamAssessment.IsComplete,
                 PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
-                    new PeerDto { FirstName = user.FirstName, LastName = user.LastName, UserId = user.Id }).ToList(),
+                    new UserDto { FirstName = user.FirstName, LastName = user.LastName, Id = user.Id }).ToList(),
             };
+        }
+
+        public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+            IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeersAssessmentsOf(userId);
+            IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeersAssessmentsOf(userId);
+
+            return storedAssessments.Concat(missingAssessments).ToList();
+        }
+
+        public async Task SavePeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId, IReadOnlyList<PeerAssessmentDto> peerAssessments)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+            foreach (PeerAssessmentDto dto in peerAssessments)
+            {
+                Contracts.Require(dto.UserId == userId, $"Only peer assessments of user with id '{userId}' are allowed.");
+                IPeerAssessment peerAssessment = teamAssessment.AddOrReplacePeerAssessment(userId, dto.SubjectId,
+                    dto.CooperationScore, dto.ContributionScore, dto.EffortScore);
+                peerAssessment.Explanation = dto.Explanation;
+            }
+
+            teamAssessment.ValidateAssessmentsOf(userId);
+
+            await _repository.UpdateAsync(teamAssessment);
         }
     }
 }

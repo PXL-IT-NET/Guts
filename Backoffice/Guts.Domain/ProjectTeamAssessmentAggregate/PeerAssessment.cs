@@ -4,7 +4,7 @@ using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
-    internal class PeerAssessment : Entity, IPeerAssessment
+    public class PeerAssessment : Entity, IPeerAssessment
     {
         public User User { get; private set; }
 
@@ -31,7 +31,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         private PeerAssessment() { } //Used by EF
 
-        internal PeerAssessment(User user, User subject)
+        public PeerAssessment(User user, User subject)
         {
             Contracts.Require(user != null, "A user must be provided.");
             Contracts.Require(user.Id > 0, "An existing user must be provided.");
@@ -41,9 +41,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             User = user;
             Subject = subject;
 
-            CooperationScore = AssessmentScore.Average;
-            ContributionScore = AssessmentScore.Average;
-            EffortScore = AssessmentScore.Average;
+            CooperationScore = AssessmentScore.NoAddedValue;
+            ContributionScore = AssessmentScore.NoAddedValue;
+            EffortScore = AssessmentScore.NoAddedValue;
         }
 
         public void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore)

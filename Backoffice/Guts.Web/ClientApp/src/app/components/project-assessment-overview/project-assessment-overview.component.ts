@@ -2,20 +2,24 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
+import { Subscription } from 'rxjs';
+import { AuthService, ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
 import { ProjectAssessmentService } from 'src/app/services/project.assessment.service';
 import { IProjectDetailsModel } from 'src/app/viewmodels/project.model';
 import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from 'src/app/viewmodels/projectassessment.model';
+import { UserProfile } from 'src/app/viewmodels/user.model';
 
 @Component({
   selector: 'app-project-assessment-overview',
   templateUrl: './project-assessment-overview.component.html'
 })
 export class ProjectAssessmentOverviewComponent implements OnInit {
+  private userProfileSubscription: Subscription;
 
   public project: IProjectDetailsModel;
   public assessments: ProjectAssessmentModel[];
   public selectedTeamId: number;
+  public userProfile: UserProfile;
 
   //#Form
   public assessmentForm: FormGroup;
@@ -30,6 +34,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private projectService: ProjectService,
     private projectAssessmentService: ProjectAssessmentService,
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private authService: AuthService,
     private toastr: ToastrService,
     private route: ActivatedRoute) {
     this.project = {
@@ -42,9 +47,16 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
 
     this.assessments = [];
     this.selectedTeamId = 0;
+    this.userProfile = new UserProfile();
   }
 
   ngOnInit(): void {
+
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
+    });
+
     //#Form
     this.assessmentForm = this.formBuilder.group({
       'description': [null, [Validators.required]],
@@ -66,7 +78,10 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
         this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
       }
     });
+  }
 
+  ngOnDestroy() {
+    this.userProfileSubscription.unsubscribe();
   }
 
   public onAssessmentSubmit() {

@@ -61,14 +61,14 @@ export interface IProjectTeamAssessmentStatusModel {
   id: number;
   teamId: number;
   isComplete: boolean;
-  peersThatNeedToEvaluateOthers: IPeerModel[];
+  peersThatNeedToEvaluateOthers: IUserModel[];
 }
 
 export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentStatusModel {
   public id: number;
   public teamId: number;
   public isComplete: boolean;
-  public peersThatNeedToEvaluateOthers: IPeerModel[];
+  public peersThatNeedToEvaluateOthers: IUserModel[];
 
   constructor(source?: IProjectTeamAssessmentStatusModel) {
     this.id = 0;
@@ -78,26 +78,71 @@ export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentS
 
     if (source) {
       Object.assign(this, source);
-      this.peersThatNeedToEvaluateOthers = source.peersThatNeedToEvaluateOthers.map(peer => new PeerModel(peer));
+      this.peersThatNeedToEvaluateOthers = source.peersThatNeedToEvaluateOthers.map(peer => new UserModel(peer));
     }
   }
 }
 
-export interface IPeerModel {
-  userId: number;
+export enum AssessmentScore{
+  NoAddedValue = 0,
+  WayBelowAverage = 1,
+  BelowAverage = 2,
+  Average = 3,
+  AboveAverage = 4,
+  WayAboveAverage = 5,
+}
+
+export interface IUserModel {
+  id: number;
   fullName: string;
 }
 
-export class PeerModel implements IPeerModel {
-  public userId: number;
+export class UserModel implements IUserModel {
+  public id: number;
   public fullName: string;
 
-  constructor(source?: IPeerModel) {
-    this.userId = 0;
+  constructor(source?: IUserModel) {
+    this.id = 0;
     this.fullName = '';
 
     if (source) {
       Object.assign(this, source);
+    }
+  }
+}
+
+export interface IPeerAssessmentModel{
+  subject: IUserModel;
+  user: IUserModel;
+  contributionScore: AssessmentScore;
+  cooperationScore: AssessmentScore;
+  effortScore: AssessmentScore;
+  isSelfAssessment: boolean;
+  explanation: string;
+}
+
+export class PeerAssessmentModel implements IPeerAssessmentModel{
+  public subject: IUserModel;
+  public user: IUserModel;
+  public contributionScore: AssessmentScore;
+  public cooperationScore: AssessmentScore;
+  public effortScore: AssessmentScore;
+  public isSelfAssessment: boolean;
+  public explanation: string;
+
+  constructor(source?: IPeerAssessmentModel) {
+    this.subject = new UserModel();
+    this.user = new UserModel();
+    this.contributionScore = AssessmentScore.Average;
+    this.cooperationScore = AssessmentScore.Average;
+    this.effortScore = AssessmentScore.Average;
+    this.isSelfAssessment = false;
+    this.explanation = '';
+
+    if (source) {
+      Object.assign(this, source);
+      this.subject = new UserModel(source.subject);
+      this.user = new UserModel(source.user);
     }
   }
 }

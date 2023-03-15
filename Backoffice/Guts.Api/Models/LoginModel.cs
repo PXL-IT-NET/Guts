@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Api.Models
 {

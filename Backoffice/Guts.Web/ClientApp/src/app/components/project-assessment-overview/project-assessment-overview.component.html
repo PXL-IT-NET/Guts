@@ -1,5 +1,10 @@
 <div class="row">
     <div class="col-12">
+        <h5>Peer assessments</h5>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -40,7 +45,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="assessment.isOpen" class="m-2">
+                        <div *ngIf="assessment.isOpen && !assessment.teamStatus.isComplete" class="m-2">
                             <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']" class="btn btn-success">
                                 <span class="bi-pencil-square"></span>
                                 <span> Evaluate self and others</span>
@@ -53,9 +58,11 @@
 
     </div>
 </div>
-<div class="row">
+<div class="row" *ngIf="userProfile.isLector()">
     <div class="col-12">
-
+        <h5>Add new project assessment</h5>
+    </div>
+    <div class="col-12">
         <form class="form-horizontal" [formGroup]="assessmentForm" (ngSubmit)="onAssessmentSubmit()">
             <div class="row">
                 <div class="col-12">
@@ -110,7 +117,7 @@
             <div class="row top-buffer">
                 <div class="col-12">
                     <button type="submit" class="btn btn-sm btn-success padding-8"
-                        [disabled]="assessmentForm.pristine">Bewaren</button>
+                        [disabled]="assessmentForm.pristine">Add project assessment</button>
                 </div>
             </div>
         </form>

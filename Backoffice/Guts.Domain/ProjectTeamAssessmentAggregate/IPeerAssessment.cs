@@ -13,6 +13,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         bool IsSelfAssessment { get; }
 
+        string Explanation { get; set; }
+
         void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore);
     }
 }
