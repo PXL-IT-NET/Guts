@@ -21,7 +21,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         IReadOnlyList<IPeerAssessment> GetPeersAssessmentsOf(int userId);
 
-        IReadOnlyList<IPeerAssessment> GetMissingPeersAssessmentsOf(int userId);
+        IReadOnlyList<IPeerAssessment> GetMissingPeerAssessmentsOf(int userId);
 
         IReadOnlyList<User> GetPeersThatNeedToEvaluateOthers();
 

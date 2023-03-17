@@ -18,7 +18,7 @@ const routes: Routes = [
       { path: 'chapters/:chapterCode/testresults', component: c.ChapterComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code', redirectTo: 'projects/:code/testresults', pathMatch: 'full' },
       { path: 'projects/:code/testresults', component: c.ProjectComponent, canActivate: [AuthGuard] },
-      { path: 'projects/:code/teams', component: c.ProjectTeamOverviewComponent, canActivate: [AuthGuard] },
+      { path: 'projects/:code/teams', component: c.ProjectTeamComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments', component: c.ProjectAssessmentOverviewComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/evaluate', component: c.ProjectTeamAssessmentEvaluationFormComponent, canActivate: [AuthGuard] }
     ],
@@ -30,7 +30,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {enableTracing: true})],
+  imports: [RouterModule.forRoot(routes, {enableTracing: false})],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

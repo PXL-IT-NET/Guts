@@ -43,7 +43,7 @@ import { ToastrModule } from 'ngx-toastr';
     c.AssignmentDetailComponent,
     c.AssignmentSummaryComponent,
     c.AssignmentStatisticsComponent,
-    c.ProjectTeamOverviewComponent,
+    c.ProjectTeamComponent,
     c.ProjectSummaryComponent,
     c.ProjectAssessmentOverviewComponent,
     c.ExampartComponent,

@@ -25,7 +25,7 @@ internal class ProjectTeamAssessmentConfiguration : IEntityTypeConfiguration<Pro
 
         builder.HasMany(pta => (IReadOnlyCollection<PeerAssessment>)pta.PeerAssessments)
             .WithOne()
-            .HasForeignKey(nameof(ProjectTeamAssessment) + "Id")
+            .HasForeignKey(pa => pa.ProjectTeamAssessmentId)
             .IsRequired();
 
         builder.Metadata.FindNavigation(nameof(ProjectTeamAssessment.PeerAssessments)).SetPropertyAccessMode(PropertyAccessMode.Field);

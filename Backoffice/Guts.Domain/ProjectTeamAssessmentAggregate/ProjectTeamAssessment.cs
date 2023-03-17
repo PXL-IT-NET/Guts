@@ -20,7 +20,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         public IReadOnlyCollection<IPeerAssessment> PeerAssessments => _peerAssessments;
 
-        public bool IsComplete => (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
+        public bool IsComplete => Team.TeamUsers.Count > 0 && (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
 
         private ProjectTeamAssessment()
         {
@@ -64,7 +64,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
                 User subject = Team.TeamUsers.SingleOrDefault(tu => tu.UserId == subjectId)?.User;
                 Contracts.Require(user != null, $"Cannot add a peer assessment for subject with id '{subjectId}'. The subject is not a member of the team.");
 
-                peerAssessment = new PeerAssessment(user, subject);
+                peerAssessment = new PeerAssessment(Id, user, subject);
 
                 _peerAssessments.Add(peerAssessment);
             }
@@ -80,7 +80,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             return _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
         }
 
-        public IReadOnlyList<IPeerAssessment> GetMissingPeersAssessmentsOf(int userId)
+        public IReadOnlyList<IPeerAssessment> GetMissingPeerAssessmentsOf(int userId)
         {
             RequireUserToBeATeamMember(userId);
             User user = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
@@ -91,7 +91,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             {
                 if (storedAssessments.All(a => a.Subject.Id != teamUser.UserId))
                 {
-                    missingAssessments.Add(new PeerAssessment(user, teamUser.User));
+                    missingAssessments.Add(new PeerAssessment(Id, user, teamUser.User));
                 }
             }
             return missingAssessments;

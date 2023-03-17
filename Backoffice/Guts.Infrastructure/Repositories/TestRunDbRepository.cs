@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Repositories;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
@@ -50,6 +51,30 @@ namespace Guts.Infrastructure.Repositories
 
             var lastTestRuns = await lastTestRunsQuery.Include(testrun => testrun.User).ToListAsync();
             return lastTestRuns;
+        }
+
+        public async Task RemoveAllTopicTestRunsOfUserAsync(int topicId, int userId)
+        {
+            List<TestRun> testRunsToDelete = await _context.TestRuns
+                .Where(testRun => testRun.Assignment.TopicId == topicId && testRun.UserId == userId)
+                .Include(testRun => testRun.TestResults).ToListAsync();
+
+            foreach (TestRun testRun in testRunsToDelete)
+            {
+                _context.TestResults.RemoveRange(testRun.TestResults);
+            }
+
+            _context.TestRuns.RemoveRange(testRunsToDelete);
+
+            var query = from assignment in _context.Assignments
+                join solutionFile in _context.SolutionFiles on assignment.Id equals solutionFile.AssignmentId
+                where assignment.TopicId == topicId && solutionFile.UserId == userId
+                select solutionFile;
+            List<SolutionFile> solutionFilesToDelete = await query.ToListAsync();
+
+            _context.SolutionFiles.RemoveRange(solutionFilesToDelete);
+            
+            await _context.SaveChangesAsync();
         }
 
         public async Task<IList<TestRun>> GetTeamTestRunsForAssignmentAsync(int assignmentId, int teamId, DateTime? dateUtc)

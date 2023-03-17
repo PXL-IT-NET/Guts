@@ -43,7 +43,7 @@ namespace Guts.Business.Tests.Services
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object,
-                null, null); //TODO: use actual mocks
+                null, null, null); //TODO: use actual mocks
         }
 
         //[Test]

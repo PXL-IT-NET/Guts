@@ -59,7 +59,7 @@ namespace Guts.Infrastructure.Repositories
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
 
-            var project = await query.FirstOrDefaultAsync();
+            var project = await query.AsNoTracking().FirstOrDefaultAsync();
             if (project == null)
             {
                 throw new DataNotFoundException();

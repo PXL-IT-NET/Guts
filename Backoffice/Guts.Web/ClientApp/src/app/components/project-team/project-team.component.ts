@@ -10,16 +10,18 @@ import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
 
 @Component({
-  templateUrl: './projectteamoverview.component.html'
+  templateUrl: './project-team.component.html'
 })
-export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
+export class ProjectTeamComponent implements OnInit, OnDestroy {
 
   public loading: boolean = false;
   public teams: ITeamDetailsModel[];
+  public myTeam: ITeamDetailsModel;
   public userProfile: UserProfile;
 
   public teamBaseName: string;
-  public numberOfTeamsToGenerate: number;
+  public teamNumberFrom: number;
+  public teamNumberTo: number;
 
   private userProfileSubscription: Subscription;
 
@@ -32,25 +34,39 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toastr: ToastrService) {
     this.teams = [];
+    this.myTeam = null;
     this.teamBaseName = '';
-    this.numberOfTeamsToGenerate = 0;
+    this.teamNumberFrom = 0;
+    this.teamNumberTo = 0;
     this.courseId = 0;
     this.projectCode = '';
   }
 
   ngOnInit() {
-    this.userProfile = new UserProfile();
-    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
-      this.userProfile = profile;
-    });
-
     this.courseId = +this.route.parent.snapshot.params['courseId']
     this.projectCode = this.route.snapshot.params['code'];
-    this.loadTeams();
+
+    this.userProfile = new UserProfile();
+    this.loadData(false);
   }
 
   ngOnDestroy() {
     this.userProfileSubscription.unsubscribe();
+  }
+
+  public leaveMyTeam() {
+    let confirmMessage = "Are you sure you want to leave '" + this.myTeam.name + "'? All your submitted test results and peer assessments for this project will be deleted.";
+    if(confirm(confirmMessage)){
+      this.projectService.leaveTeam(this.courseId, this.projectCode, this.myTeam.id)
+      .subscribe((result: PostResult) => {
+        this.loading = false;
+        if (result.success) {
+          this.loadData(true);
+        } else {
+          this.toastr.error(result.message || "unknown error", "Could not leave team");
+        }
+      });
+    }
   }
 
   public joinTeam(teamId: number) {
@@ -59,7 +75,7 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
-          this.router.navigate(['/home']); //qsdf
+          this.loadData(true);
         } else {
           this.toastr.error(result.message || "unknown error", "Could not join team");
         }
@@ -68,17 +84,32 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
 
   public onGenerateTeamsSubmit() {
     this.loading = true;
-    var model = new TeamGenerationModel(this.teamBaseName, this.numberOfTeamsToGenerate);
+    var model = new TeamGenerationModel(this.teamBaseName, this.teamNumberFrom, this.teamNumberTo);
     this.projectService.generateTeams(this.courseId, this.projectCode, model)
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
-          this.loadTeams();
+          this.toastr.success("Teams generated");
+          this.loadData(false);
         } else {
           this.toastr.error(result.message || "unknown error", "Could not generate teams");
         }
       });
   }
+
+  private loadData(clearCachedUserProfile: boolean){
+    this.loading = true;
+    this.userProfileSubscription?.unsubscribe();
+    if(clearCachedUserProfile){
+      this.authService.invalidateUserProfileCache();
+    }
+    this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
+      this.userProfile = profile;
+      this.loading = false;
+      this.loadTeams();
+    });
+  }
+
 
   private loadTeams() {
     this.loading = true;
@@ -86,6 +117,7 @@ export class ProjectTeamOverviewComponent implements OnInit, OnDestroy {
       this.loading = false;
       if (result.success) {
         this.teams = result.value;
+        this.myTeam = this.teams.find(team => team.members.some(member => member.userId == this.userProfile.id)) || null;
       } else {
         this.toastr.error("Could not load teams from API. Message: " + (result.message || "unknown error"), "API error");
       }

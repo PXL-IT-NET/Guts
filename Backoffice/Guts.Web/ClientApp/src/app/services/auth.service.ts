@@ -44,6 +44,10 @@ export class AuthService {
     this.currentUserProfile = null;
   }
 
+  public invalidateUserProfileCache(): void {
+    this.currentUserProfile = null;
+  }
+
   public login(model: LoginModel): Observable<PostResult> {
     return this.http.post('api/auth/token', model)
       .pipe(

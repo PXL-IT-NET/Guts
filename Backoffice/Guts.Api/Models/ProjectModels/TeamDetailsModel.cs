@@ -4,6 +4,6 @@ namespace Guts.Api.Models.ProjectModels
 {
     public class TeamDetailsModel : TeamModel
     {
-        public IList<string> Members { get; set; }
+        public IList<TeamUserModel> Members { get; set; }
     }
 }

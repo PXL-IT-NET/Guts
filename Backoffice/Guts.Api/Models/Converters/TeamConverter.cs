@@ -19,7 +19,7 @@ namespace Guts.Api.Models.Converters
             {
                 Id = projectTeam.Id,
                 Name = projectTeam.Name,
-                Members = new List<string>()
+                Members = new List<TeamUserModel>()
             };
 
             foreach (var teamUser in projectTeam.TeamUsers)
@@ -28,7 +28,13 @@ namespace Guts.Api.Models.Converters
                 {
                     throw new ArgumentException("The users should be loaded");
                 }
-                model.Members.Add(teamUser.User.FirstName + " " + teamUser.User.LastName);
+
+                var member = new TeamUserModel
+                {
+                    UserId = teamUser.User.Id,
+                    Name = (teamUser.User.FirstName + " " + teamUser.User.LastName).Trim()
+                };
+                model.Members.Add(member);
             }
 
             return model;

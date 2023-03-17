@@ -1,7 +1,6 @@
 ﻿using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -111,7 +110,7 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.NumberOfTeams);
+            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.TeamNumberFrom, model.TeamNumberTo);
             
             return Ok();
         }
@@ -145,6 +144,23 @@ namespace Guts.Api.Controllers
             }
 
             await _projectService.AddUserToProjectTeamAsync(teamId, GetUserId());
+            return Ok();
+        }
+
+        [HttpPost("{projectCode}/teams/{teamId}/leave")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Conflict)]
+        public async Task<IActionResult> LeaveProjectTeam(int courseId, string projectCode, int teamId)
+        {
+            //TODO: technical dept -> write unit tests
+            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
+            {
+                return BadRequest();
+            }
+
+            await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
             return Ok();
         }
 

@@ -6,6 +6,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
     public class PeerAssessment : Entity, IPeerAssessment
     {
+        public int ProjectTeamAssessmentId { get; private set; }
+
         public User User { get; private set; }
 
         public User Subject { get; private set; }
@@ -31,13 +33,15 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         private PeerAssessment() { } //Used by EF
 
-        public PeerAssessment(User user, User subject)
+        public PeerAssessment(int projectTeamAssessmentId, User user, User subject)
         {
+            Contracts.Require(projectTeamAssessmentId > 0, "An existing project team assessment identifier must be provided.");
             Contracts.Require(user != null, "A user must be provided.");
             Contracts.Require(user.Id > 0, "An existing user must be provided.");
             Contracts.Require(subject != null, "A subject must be provided.");
             Contracts.Require(subject.Id > 0, "An existing subject must be provided.");
 
+            ProjectTeamAssessmentId = projectTeamAssessmentId;
             User = user;
             Subject = subject;
 

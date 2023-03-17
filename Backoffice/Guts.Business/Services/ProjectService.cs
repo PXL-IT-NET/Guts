@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
+using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -21,6 +23,7 @@ namespace Guts.Business.Services
         private readonly IAssignmentService _assignmentService;
         private readonly IProjectAssessmentRepository _projectAssessmentRepository;
         private readonly IProjectAssessmentFactory _assessmentFactory;
+        private readonly ITestRunRepository _testRunRepository;
 
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
@@ -29,7 +32,8 @@ namespace Guts.Business.Services
             ISolutionFileRepository solutionFileRepository,
             IAssignmentService assignmentService,
             IProjectAssessmentRepository projectAssessmentRepository,
-            IProjectAssessmentFactory assessmentFactory)
+            IProjectAssessmentFactory assessmentFactory,
+            ITestRunRepository testRunRepository)
         {
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
@@ -39,13 +43,8 @@ namespace Guts.Business.Services
             _assignmentService = assignmentService;
             _projectAssessmentRepository = projectAssessmentRepository;
             _assessmentFactory = assessmentFactory;
+            _testRunRepository = testRunRepository;
         }
-
-        //public async Task<IProject> GetProjectAsync(string courseCode, string projectCode)
-        //{
-        //    var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-        //    return await _projectRepository.GetSingleAsync(courseCode, projectCode, currentPeriod.Id);
-        //}
 
         public async Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode)
         {
@@ -100,21 +99,25 @@ namespace Guts.Business.Services
             return project;
         }
 
-        public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int numberOfTeams)
+        public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo)
         {
             var period = await _periodRepository.GetCurrentPeriodAsync();
             var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
-            if (project.Teams.Count >= numberOfTeams) return;
+            ICollection<ProjectTeam> allTeams = project.Teams;
 
-            for (int teamNumber = project.Teams.Count + 1; teamNumber <= numberOfTeams; teamNumber++)
+            for (int teamNumber = teamNumberFrom; teamNumber <= teamNumberTo; teamNumber++)
             {
                 var newTeam = new ProjectTeam
                 {
                     Name = $"{teamBaseName} {teamNumber}",
                     ProjectId = project.Id
                 };
-                await _projectTeamRepository.AddAsync(newTeam);
+
+                if (allTeams.All(team => team.Name.ToLower() != newTeam.Name.ToLower()))
+                {
+                    await _projectTeamRepository.AddAsync(newTeam);
+                }
             }
         }
 
@@ -129,6 +132,17 @@ namespace Guts.Business.Services
         public async Task AddUserToProjectTeamAsync(int teamId, int userId)
         {
             await _projectTeamRepository.AddUserToTeam(teamId, userId);
+        }
+
+        public async Task RemoveUserFromProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
+        {
+            IProject project  = await LoadProjectForUserAsync(courseId, projectCode, userId);
+
+            Contracts.Require(project.Teams.Count == 1, "The user is not a member ot the team");
+
+            await _projectTeamRepository.RemoveUserFromTeam(teamId, userId);
+
+            await _testRunRepository.RemoveAllTopicTestRunsOfUserAsync(project.Id, userId);
         }
 
         public async Task<IReadOnlyList<AssignmentResultDto>> GetResultsForTeamAsync(IProject project, int teamId, DateTime? dateUtc)
@@ -175,11 +189,6 @@ namespace Guts.Business.Services
                 });
             }
             return results;
-        }
-
-        public async Task<IReadOnlyList<IProjectAssessment>> GetProjectAssessmentsAsync(int projectId)
-        {
-            return await _projectAssessmentRepository.FindByProjectIdAsync(projectId);
         }
 
         public async Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc)

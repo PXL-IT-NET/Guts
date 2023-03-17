@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class PeriodDbRepository : IPeriodRepository
+    internal class PeriodDbRepository : IPeriodRepository
     {
         private readonly GutsContext _context;
 

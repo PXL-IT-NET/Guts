@@ -45,7 +45,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="assessment.isOpen && !assessment.teamStatus.isComplete" class="m-2">
+                        <div *ngIf="assessment.isOpen && !assessment.teamStatus.isComplete && userProfile.isMemberOf(assessment.teamStatus.teamId)" class="m-2">
                             <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']" class="btn btn-success">
                                 <span class="bi-pencil-square"></span>
                                 <span> Evaluate self and others</span>
@@ -59,68 +59,71 @@
     </div>
 </div>
 <div class="row" *ngIf="userProfile.isLector()">
-    <div class="col-12">
-        <h5>Add new project assessment</h5>
-    </div>
-    <div class="col-12">
-        <form class="form-horizontal" [formGroup]="assessmentForm" (ngSubmit)="onAssessmentSubmit()">
-            <div class="row">
-                <div class="col-12">
-                    <div class="form-group row">
-                        <label for="description" class="col-3 col-form-label">Description</label>
-                        <div class="col-9"
-                            [class.has-error]="descriptionControl.invalid && canShowErrors(descriptionControl)">
-                            <input type="text" class="form-control" formControlName="description">
-                            <div *ngIf="canShowErrors(descriptionControl)">
-                                <span class="text-danger" *ngIf="descriptionControl.errors?.required">
-                                    Verplicht veld
-                                </span>
+    <div class="col-6">
+        <div class="card my-5">
+            <div class="card-body">
+              <h5 class="card-title">Add project assessment</h5>
+              <div class="card-text">
+                <form [formGroup]="assessmentForm" (ngSubmit)="onAssessmentSubmit()">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="description" class="col-3 col-form-label">Description</label>
+                                <div class="col-9"
+                                    [class.has-error]="descriptionControl.invalid && canShowErrors(descriptionControl)">
+                                    <input type="text" class="form-control" formControlName="description">
+                                    <div *ngIf="canShowErrors(descriptionControl)">
+                                        <span class="text-danger" *ngIf="descriptionControl.errors?.required">
+                                            Verplicht veld
+                                        </span>
+                                    </div>
+        
+                                </div>
                             </div>
-
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <div class="form-group row">
-                        <label for="openOn" class="col-3 col-form-label">Open on</label>
-                        <div class="col-9" [class.has-error]="openOnControl.invalid && canShowErrors(openOnControl)">
-                            <app-ng-datetime name="openOn" formControlName="openOn"></app-ng-datetime>
-                            <div *ngIf="canShowErrors(openOnControl)">
-                                <span class="text-danger" *ngIf="openOnControl.errors?.required">
-                                    Verplicht veld
-                                </span>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="openOn" class="col-3 col-form-label">Open on</label>
+                                <div class="col-9" [class.has-error]="openOnControl.invalid && canShowErrors(openOnControl)">
+                                    <app-ng-datetime name="openOn" formControlName="openOn"></app-ng-datetime>
+                                    <div *ngIf="canShowErrors(openOnControl)">
+                                        <span class="text-danger" *ngIf="openOnControl.errors?.required">
+                                            Verplicht veld
+                                        </span>
+                                    </div>
+        
+                                </div>
                             </div>
-
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <div class="form-group row">
-                        <label for="deadline" class="col-3 col-form-label">Deadline</label>
-                        <div class="col-9"
-                            [class.has-error]="deadlineControl.invalid && canShowErrors(deadlineControl)">
-                            <app-ng-datetime name="deadline" formControlName="deadline"></app-ng-datetime>
-                            <div *ngIf="canShowErrors(deadlineControl)">
-                                <span class="text-danger" *ngIf="deadlineControl.errors?.required">
-                                    Verplicht veld
-                                </span>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group row">
+                                <label for="deadline" class="col-3 col-form-label">Deadline</label>
+                                <div class="col-9"
+                                    [class.has-error]="deadlineControl.invalid && canShowErrors(deadlineControl)">
+                                    <app-ng-datetime name="deadline" formControlName="deadline"></app-ng-datetime>
+                                    <div *ngIf="canShowErrors(deadlineControl)">
+                                        <span class="text-danger" *ngIf="deadlineControl.errors?.required">
+                                            Verplicht veld
+                                        </span>
+                                    </div>
+        
+                                </div>
                             </div>
-
                         </div>
                     </div>
-                </div>
+                    <div class="row top-buffer">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-sm btn-success padding-8"
+                                [disabled]="assessmentForm.pristine">Add project assessment</button>
+                        </div>
+                    </div>
+                </form>
+              </div>
+            
             </div>
-            <div class="row top-buffer">
-                <div class="col-12">
-                    <button type="submit" class="btn btn-sm btn-success padding-8"
-                        [disabled]="assessmentForm.pristine">Add project assessment</button>
-                </div>
-            </div>
-        </form>
-
-    </div>
+          </div>
 </div>

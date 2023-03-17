@@ -6,5 +6,6 @@ namespace Guts.Api.Models
     {
         public int Id { get; set; }
         public IList<string> Roles { get; set; }
+        public List<int> Teams { get; set; }
     }
 }

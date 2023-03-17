@@ -84,7 +84,7 @@ namespace Guts.Business.Services.Assessment
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
             IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeersAssessmentsOf(userId);
-            IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeersAssessmentsOf(userId);
+            IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeerAssessmentsOf(userId);
 
             return storedAssessments.Concat(missingAssessments).ToList();
         }
