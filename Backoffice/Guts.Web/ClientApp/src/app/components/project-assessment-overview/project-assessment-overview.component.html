@@ -51,6 +51,13 @@
                                 <span> Evaluate self and others</span>
                             </a>
                         </div>
+
+                        <div *ngIf="assessment.teamStatus.isComplete && userProfile.isLector()" class="m-2">
+                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'detailed-results']" class="btn btn-success">
+                                <span class="bi-pencil-square"></span>
+                                <span> View results</span>
+                            </a>
+                        </div>
                     </td>
                 </tr>
             </tbody>

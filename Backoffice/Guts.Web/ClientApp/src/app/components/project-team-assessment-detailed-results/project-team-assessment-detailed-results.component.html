@@ -1,0 +1,40 @@
+<div class="row">
+    <div class="col-12">
+        <h5>Peer evaluation results</h5>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <ngb-accordion [closeOthers]="true">
+            <ngb-panel [title]="result.subject.fullName" *ngFor="let result of results">
+                <ng-template ngbPanelContent>
+
+                    <div class="card">
+                        <div class="card-header">
+                            Average
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Average score</h5>
+                            <div class="card-text">
+                                <p>{{result.averageResult.average}}</p>
+                                <p>{{result.averageResult.score}}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <ul>
+                        <ng-template ngFor let-kindResult [ngForOf]="result.kindResults">
+                            <li>
+                                <p>{{kindResult.kind}}</p>
+                                <p>{{kindResult.average}}</p>
+                                <p>{{kindResult.score}}</p>
+                            </li>
+                        </ng-template>
+                    </ul> -->
+
+                </ng-template>
+            </ngb-panel>
+        </ngb-accordion>
+    </div>
+</div>

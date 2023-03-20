@@ -35,6 +35,21 @@ public class ProjectTeamAssessmentController : ControllerBase
         return Ok(status);
     }
 
+    [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/detailed-results")]
+    [ProducesResponseType(typeof(IList<AssessmentResultModel>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
+    {
+        if (!IsLector())
+        {
+            return Forbid();
+        }
+
+        IReadOnlyList<IAssessmentResult> results = await _projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
+        IList<AssessmentResultModel> models = results.Select(result => _mapper.Map<AssessmentResultModel>(result)).ToList();
+        return Ok(models);
+    }
+
     [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peer-assessments")]
     [ProducesResponseType(typeof(IList<PeerAssessmentModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]

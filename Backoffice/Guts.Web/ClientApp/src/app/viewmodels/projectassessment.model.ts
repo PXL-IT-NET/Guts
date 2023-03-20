@@ -147,3 +147,25 @@ export class PeerAssessmentModel implements IPeerAssessmentModel{
   }
 }
 
+export interface IAssessmentResultModel{
+  subject: IUserModel;
+  selfAssessment: IPeerAssessmentModel;
+  peerAssessments: IPeerAssessmentModel[];
+  averageResult: IAssessmentSubResultModel;
+  effortResult: IAssessmentSubResultModel;
+  cooperationResult: IAssessmentSubResultModel;
+  contributionResult: IAssessmentSubResultModel;
+}
+
+export interface IAssessmentSubResultModel{
+  teamAverage: number;
+  average: number;
+  selfAverage: number;
+  peerAverage: number;
+  score: AssessmentScore;
+  selfScore: AssessmentScore;
+  peerScore: AssessmentScore;
+}
+
+
+

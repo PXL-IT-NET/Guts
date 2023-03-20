@@ -50,7 +50,8 @@ import { ToastrModule } from 'ngx-toastr';
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
     c.ProjectAssessmentOverviewComponent,
-    c.ProjectTeamAssessmentEvaluationFormComponent
+    c.ProjectTeamAssessmentEvaluationFormComponent,
+    c.ProjectTeamAssessmentDetailedResultsComponent
   ],
   imports: [
     BrowserModule,

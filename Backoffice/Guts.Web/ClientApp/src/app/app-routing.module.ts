@@ -20,7 +20,8 @@ const routes: Routes = [
       { path: 'projects/:code/testresults', component: c.ProjectComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/teams', component: c.ProjectTeamComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments', component: c.ProjectAssessmentOverviewComponent, canActivate: [AuthGuard] },
-      { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/evaluate', component: c.ProjectTeamAssessmentEvaluationFormComponent, canActivate: [AuthGuard] }
+      { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/evaluate', component: c.ProjectTeamAssessmentEvaluationFormComponent, canActivate: [AuthGuard] },
+      { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/detailed-results', component: c.ProjectTeamAssessmentDetailedResultsComponent, canActivate: [AuthGuard] }
     ],
   },
   {

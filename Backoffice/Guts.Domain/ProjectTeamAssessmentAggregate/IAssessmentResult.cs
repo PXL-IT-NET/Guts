@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Guts.Domain.UserAggregate;
-using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
@@ -10,11 +9,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         IPeerAssessment SelfAssessment { get; }
         IReadOnlyList<IPeerAssessment> PeerAssessments { get; }
-
-        double TeamAverage { get; }
-        AssessmentScore SelfAssessmentScore { get; }
-        AssessmentScore PeerAssessmentScore { get; }
-        double SelfAssessmentFactor { get; }
-        double PeerAssessmentFactor { get; }
+        IAssessmentSubResult AverageResult { get; }
+        IAssessmentSubResult EffortResult { get; }
+        IAssessmentSubResult CooperationResult { get; }
+        IAssessmentSubResult ContributionResult { get; }
     }
 }

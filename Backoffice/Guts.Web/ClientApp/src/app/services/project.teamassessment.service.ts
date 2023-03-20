@@ -3,7 +3,7 @@ import { Injectable } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { CreateResult, GetResult, PostResult } from "../util/Result";
-import { IPeerAssessmentModel, IProjectAssessmentModel, IProjectTeamAssessmentStatusModel, PeerAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel, ProjectTeamAssessmentStatusModel } from "../viewmodels/projectassessment.model";
+import { IAssessmentResultModel, IPeerAssessmentModel, IProjectTeamAssessmentStatusModel, PeerAssessmentModel, ProjectTeamAssessmentStatusModel } from "../viewmodels/projectassessment.model";
 
 @Injectable()
 export class ProjectTeamAssessmentService {
@@ -17,6 +17,17 @@ export class ProjectTeamAssessmentService {
         map(model => GetResult.success(new ProjectTeamAssessmentStatusModel(model))),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(GetResult.fromHttpErrorResponse<ProjectTeamAssessmentStatusModel>(errorResponse));
+        })
+      );
+  }
+
+  public getDetailedResultsOfProjectTeamAssessment(projectAssessmentId: number, teamId: number): Observable<GetResult<IAssessmentResultModel[]>> {
+    let url = 'api/project-team-assessments/of-project-assessment/' + projectAssessmentId + '/of-team/' + teamId + '/detailed-results';
+    return this.http.get<IAssessmentResultModel[]>(url)
+      .pipe(
+        map(model => GetResult.success(model)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<IAssessmentResultModel[]>(errorResponse));
         })
       );
   }

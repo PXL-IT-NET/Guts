@@ -79,6 +79,34 @@ namespace Guts.Business.Services.Assessment
             };
         }
 
+        public async Task<IReadOnlyList<IAssessmentResult>> GetResultsForLectorAsync(int projectAssessmentId, int teamId)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+            List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
+                .Select(teamUser => teamAssessment.GetAssessmentResultFor(teamUser.UserId)).ToList();
+            return results;
+        }
+
+        public async Task<StudentAssessmentResultDto> GetResultForStudentAsync(int projectAssessmentId, int teamId, int userId)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+            IAssessmentResult result = teamAssessment.GetAssessmentResultFor(userId);
+          
+
+            return new StudentAssessmentResultDto
+            {
+                Average = result.AverageResult.Average,
+                PeerAverage = result.AverageResult.PeerAverage,
+                SelfAverage = result.AverageResult.SelfAverage,
+                TeamAverage = result.AverageResult.TeamAverage,
+                Score = result.AverageResult.Score,
+                PeerScore = result.AverageResult.PeerScore,
+                SelfScore = result.AverageResult.SelfScore
+            };
+        }
+
         public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)
         {
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
