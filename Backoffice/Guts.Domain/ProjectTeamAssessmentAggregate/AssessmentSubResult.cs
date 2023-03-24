@@ -29,10 +29,10 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
             SelfAverage = calculateScore(selfAssessment);
 
-            PeerAverage = peerAssessmentsForSubject.Sum(pa => calculateScore(pa) / allPeerAssessments.Count);
+            PeerAverage = peerAssessmentsForSubject.Sum(pa => calculateScore(pa) / peerAssessmentsForSubject.Count);
 
             List<IPeerAssessment> allPeerAssessmentsForSubject = new List<IPeerAssessment>(peerAssessmentsForSubject) { selfAssessment };
-            Average = allPeerAssessmentsForSubject.Sum(pa => calculateScore(pa) / allPeerAssessments.Count);
+            Average = allPeerAssessmentsForSubject.Sum(pa => calculateScore(pa) / allPeerAssessmentsForSubject.Count);
 
             SelfScore = SelfAverage;
             PeerScore = PeerAverage;

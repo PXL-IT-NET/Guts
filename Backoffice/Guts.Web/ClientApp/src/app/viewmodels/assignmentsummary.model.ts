@@ -41,6 +41,10 @@ export class AssignmentSummaryModel implements IAssignmentSummaryModel {
     if (!this._chartData) {
       var numberOfNotRunnedTests = this.numberOfTests - this.numberOfPassedTests - this.numberOfFailedTests;
       this._chartData = {
+        datasets: [{
+          data: [this.numberOfPassedTests, this.numberOfFailedTests, numberOfNotRunnedTests],
+          backgroundColor: ['#00ff00', '#ff0000', '#ffa500'] 
+        }],
         data: [this.numberOfPassedTests, this.numberOfFailedTests, numberOfNotRunnedTests],
         labels: ['Passed tests', 'Failed tests', 'Not runned tests'],
         colors: [{ backgroundColor: ['#00ff00', '#ff0000', '#ffa500'] }]

@@ -155,6 +155,7 @@ export interface IAssessmentResultModel{
   effortResult: IAssessmentSubResultModel;
   cooperationResult: IAssessmentSubResultModel;
   contributionResult: IAssessmentSubResultModel;
+  individualGrade: number;
 }
 
 export interface IAssessmentSubResultModel{

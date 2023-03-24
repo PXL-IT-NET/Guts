@@ -5,36 +5,193 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
-        <ngb-accordion [closeOthers]="true">
-            <ngb-panel [title]="result.subject.fullName" *ngFor="let result of results">
-                <ng-template ngbPanelContent>
+    <div class="col-xl-4">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Peer + Self assesment
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <canvas baseChart [datasets]="peerAndSelfChartData.datasets" [labels]="peerAndSelfChartData.labels"
+                        [options]="chartOptions" [type]="'bar'"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Self assesment
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <canvas baseChart [datasets]="selfChartData.datasets" [labels]="selfChartData.labels"
+                        [options]="chartOptions" [type]="'bar'"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Peer assesment
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <canvas baseChart [datasets]="peerChartData.datasets" [labels]="peerChartData.labels"
+                        [options]="chartOptions" [type]="'bar'"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            Average
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">Average score</h5>
-                            <div class="card-text">
-                                <p>{{result.averageResult.average}}</p>
-                                <p>{{result.averageResult.score}}</p>
+<div class="row">
+    <div class="col-xl-10">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Assessment details
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <ngb-accordion [closeOthers]="true">
+                        <ngb-panel [title]="result.subject.fullName" *ngFor="let result of results">
+                            <ng-template ngbPanelContent>
+                                <div>
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Team member</th>
+                                                <th scope="col">Contribution</th>
+                                                <th scope="col">Effort</th>
+                                                <th scope="col">Cooperation</th>
+                                                <th scope="col">Additional explanation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>{{result.selfAssessment.user.fullName}}</td>
+                                                <td>
+                                                    <select name="contributionScore"
+                                                        [(ngModel)]="result.selfAssessment.contributionScore"
+                                                        disabled="disabled">
+                                                        <option value="0">No added value (0)</option>
+                                                        <option value="1">Way below group average (1)</option>
+                                                        <option value="2">Below group average (2)</option>
+                                                        <option value="3">Equal to group average (3)</option>
+                                                        <option value="4">Above group average (4)</option>
+                                                        <option value="5">Way above group average (5)</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select name="effortScore"
+                                                        [(ngModel)]="result.selfAssessment.effortScore"
+                                                        disabled="disabled">
+                                                        <option value="0">No added value (0)</option>
+                                                        <option value="1">Way below group average (1)</option>
+                                                        <option value="2">Below group average (2)</option>
+                                                        <option value="3">Equal to group average (3)</option>
+                                                        <option value="4">Above group average (4)</option>
+                                                        <option value="5">Way above group average (5)</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select name="coperationScore"
+                                                        [(ngModel)]="result.selfAssessment.cooperationScore"
+                                                        disabled="disabled">
+                                                        <option value="0">No added value (0)</option>
+                                                        <option value="1">Way below group average (1)</option>
+                                                        <option value="2">Below group average (2)</option>
+                                                        <option value="3">Equal to group average (3)</option>
+                                                        <option value="4">Above group average (4)</option>
+                                                        <option value="5">Way above group average (5)</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <textarea [(ngModel)]="result.selfAssessment.explanation" rows="4"
+                                                        cols="40" readonly="readonly" disabled="disabled">
+                                                    </textarea>
+                                                </td>
+                                            </tr>
+                                            <ng-template ngFor let-peerAssessment [ngForOf]="result.peerAssessments">
+                                                <tr>
+                                                    <td>{{peerAssessment.user.fullName}}</td>
+                                                    <td>
+                                                        <select name="contributionScore"
+                                                            [(ngModel)]="peerAssessment.contributionScore"
+                                                            disabled="disabled">
+                                                            <option value="0">No added value (0)</option>
+                                                            <option value="1">Way below group average (1)</option>
+                                                            <option value="2">Below group average (2)</option>
+                                                            <option value="3">Equal to group average (3)</option>
+                                                            <option value="4">Above group average (4)</option>
+                                                            <option value="5">Way above group average (5)</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <select name="effortScore"
+                                                            [(ngModel)]="peerAssessment.effortScore"
+                                                            disabled="disabled">
+                                                            <option value="0">No added value (0)</option>
+                                                            <option value="1">Way below group average (1)</option>
+                                                            <option value="2">Below group average (2)</option>
+                                                            <option value="3">Equal to group average (3)</option>
+                                                            <option value="4">Above group average (4)</option>
+                                                            <option value="5">Way above group average (5)</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <select name="coperationScore"
+                                                            [(ngModel)]="peerAssessment.cooperationScore"
+                                                            disabled="disabled">
+                                                            <option value="0">No added value (0)</option>
+                                                            <option value="1">Way below group average (1)</option>
+                                                            <option value="2">Below group average (2)</option>
+                                                            <option value="3">Equal to group average (3)</option>
+                                                            <option value="4">Above group average (4)</option>
+                                                            <option value="5">Way above group average (5)</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <textarea [(ngModel)]="peerAssessment.explanation" rows="4"
+                                                            cols="40" readonly="readonly" disabled="disabled">
+                                                        </textarea>
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </ng-template>
+                        </ngb-panel>
+                    </ngb-accordion>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Grade correction
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <form>
+                        <div class="form-group row">
+                            <label for="teamGrade" class="col-6 col-form-label">Team grade</label>
+                            <div class="col-6">
+                                <input name="teamGrade" type="number" min="0" max="20" class="form-control" [(ngModel)]="teamGrade" (ngModelChange)="calculateIndividualGrades()" />
                             </div>
                         </div>
-                    </div>
-
-                    <!-- <ul>
-                        <ng-template ngFor let-kindResult [ngForOf]="result.kindResults">
-                            <li>
-                                <p>{{kindResult.kind}}</p>
-                                <p>{{kindResult.average}}</p>
-                                <p>{{kindResult.score}}</p>
-                            </li>
-                        </ng-template>
-                    </ul> -->
-
-                </ng-template>
-            </ngb-panel>
-        </ngb-accordion>
+                        <div class="form-group row" *ngFor="let result of results">
+                            <label for="individualScore" class="col-6 col-form-label">{{result.subject.fullName}}</label>
+                            <div class="col-6">
+                                <input id="individualScore" name="individualScore" type="number" min="0" max="20" class="form-control" [value]="result.individualGrade" readonly />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

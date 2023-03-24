@@ -17,7 +17,7 @@ import { PositiveNumberValidatorDirective } from './util/positive-number.directi
 import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.component';
 
 // 3th party
-import { ChartsModule } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 import { RecaptchaModule } from 'ng-recaptcha';
@@ -58,7 +58,7 @@ import { ToastrModule } from 'ngx-toastr';
     AppRoutingModule,
     CommonModule,
     BrowserAnimationsModule,
-    ChartsModule,
+    NgChartsModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
