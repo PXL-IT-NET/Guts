@@ -14,6 +14,6 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate
         }
 
         public ICollection<IProjectAssessment> Assessments { get; set; } = new HashSet<IProjectAssessment>();
-        public ICollection<ProjectTeam> Teams { get; set; } = new HashSet<ProjectTeam>();
+        public ICollection<IProjectTeam> Teams { get; set; } = new HashSet<IProjectTeam>();
     }
 }

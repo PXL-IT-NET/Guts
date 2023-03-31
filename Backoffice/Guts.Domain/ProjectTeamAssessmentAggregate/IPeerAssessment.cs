@@ -5,6 +5,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
     public interface IPeerAssessment
     {
+        int ProjectTeamAssessmentId { get; }
         User Subject { get; }
         User User { get; }
         AssessmentScore ContributionScore { get; }
@@ -13,8 +14,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         bool IsSelfAssessment { get; }
 
-        string Explanation { get; set; }
+        string Explanation { get; }
 
-        void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore);
+        void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, string explanation);
     }
 }

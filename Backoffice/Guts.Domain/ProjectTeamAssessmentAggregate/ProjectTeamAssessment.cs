@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -20,7 +19,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         public IReadOnlyCollection<IPeerAssessment> PeerAssessments => _peerAssessments;
 
-        public bool IsComplete => Team.TeamUsers.Count > 0 && (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
+        public bool IsComplete => (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
 
         private ProjectTeamAssessment()
         {
@@ -34,7 +33,6 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
             Team = team;
 
-            Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
             Contracts.Require(projectAssessment!.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
             ProjectAssessment = projectAssessment;
         }
@@ -43,13 +41,15 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         {
             public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
             {
+                Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
                 Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
                 return new ProjectTeamAssessment(projectAssessment, team);
             }
         }
 
-        public IPeerAssessment AddOrReplacePeerAssessment(int userId, int subjectId,
-            AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore)
+        public IPeerAssessment AddOrUpdatePeerAssessment(int userId, int subjectId,
+            AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore,
+            string explanation)
         {
             RequireUserToBeATeamMember(userId);
             RequireUserToBeATeamMember(subjectId);
@@ -58,22 +58,17 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             IPeerAssessment peerAssessment = _peerAssessments.SingleOrDefault(pa => pa.User.Id == userId && pa.Subject.Id == subjectId);
             if (peerAssessment == null)
             {
-                User user = Team.TeamUsers.SingleOrDefault(tu => tu.UserId == userId)?.User;
-                Contracts.Require(user != null, $"Cannot add a peer assessment for user with id '{userId}'. The user is not a member of the team.");
-
-                User subject = Team.TeamUsers.SingleOrDefault(tu => tu.UserId == subjectId)?.User;
-                Contracts.Require(user != null, $"Cannot add a peer assessment for subject with id '{subjectId}'. The subject is not a member of the team.");
-
+                User user = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
+                User subject = Team.TeamUsers.Single(tu => tu.UserId == subjectId).User;
                 peerAssessment = new PeerAssessment(Id, user, subject);
-
                 _peerAssessments.Add(peerAssessment);
             }
 
-            peerAssessment.SetScores(cooperationScore, contributionScore, effortScore);
+            peerAssessment.SetScores(cooperationScore, contributionScore, effortScore, explanation);
             return peerAssessment;
         }
 
-        public IReadOnlyList<IPeerAssessment> GetPeersAssessmentsOf(int userId)
+        public IReadOnlyList<IPeerAssessment> GetPeerAssessmentsOf(int userId)
         {
             RequireUserToBeATeamMember(userId);
 
@@ -126,18 +121,18 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             if (allAssessmentsOfUser.Count == Team.TeamUsers.Count)
             {
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average contribution score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has an above average contribution score. Maybe you mean that everyone's score should be 'Average'?");
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average cooperation score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has an above average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average effort score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has an above average effort score. Maybe you mean that everyone's score should be 'Average'?");
 
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average contribution score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has a below average contribution score. Maybe you mean that everyone's score should be 'Average'?");
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average cooperation score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has a below average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
                 Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average effort score. Maybe you mean that everyone's score should be 'Average'.");
+                    "It is not possible that everyone has a below average effort score. Maybe you mean that everyone's score should be 'Average'?");
             }
         }
 

@@ -1,12 +1,8 @@
-<h4 class="list-group-item-heading">
+<h4>
   {{model.description}} <small>({{model.numberOfPassedTests}} / {{model.numberOfTests}} tests)</small>
 </h4>
-<div class="list-group-item-text">
-  <div style="width: 280px;">
-    <div>
-      <canvas baseChart [datasets]="model.chartData.datasets" [labels]="model.chartData.labels" [type]="'doughnut'" [options]="chartOptions">
-      </canvas>
-    </div>
-  </div>
- 
+<div>
+  <canvas baseChart [datasets]="model.chartData.datasets" [labels]="model.chartData.labels" [type]="'doughnut'"
+    [options]="chartOptions">
+  </canvas>
 </div>

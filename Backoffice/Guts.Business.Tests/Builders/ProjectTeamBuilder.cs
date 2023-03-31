@@ -19,13 +19,19 @@ namespace Guts.Business.Tests.Builders
             {
                 Id = 0,
                 Name = Guid.NewGuid().ToString(),
-                TeamUsers = new Collection<ProjectTeamUser>()
+                TeamUsers = new Collection<IProjectTeamUser>()
             };
         }
 
         public ProjectTeamBuilder WithId()
         {
             _team.Id = _random.NextPositive();
+            return this;
+        }
+
+        public ProjectTeamBuilder WithName(string name)
+        {
+            _team.Name = name;
             return this;
         }
 

@@ -112,7 +112,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
         this.assessments = result.value;
         //this.assessments = this.assessments.slice(0,1);
         this.assessments.forEach(assessment => {
-          if(assessment.isOpen){
+          if(assessment.isOpen || assessment.isOver){
             this.projectTeamAssessmentService.getStatusOfProjectTeamAssessment(assessment.id, this.selectedTeamId).subscribe(result => {
               if (result.success) {
                  assessment.teamStatus = result.value;

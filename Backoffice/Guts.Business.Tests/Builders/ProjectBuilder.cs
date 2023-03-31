@@ -24,7 +24,7 @@ namespace Guts.Business.Tests.Builders
                 PeriodId = _random.NextPositive(),
                 Description = Guid.NewGuid().ToString(),
                 Assignments = new Collection<Assignment>(),
-                Teams = new Collection<ProjectTeam>()
+                Teams = new Collection<IProjectTeam>()
             };
         }
 
@@ -67,6 +67,12 @@ namespace Guts.Business.Tests.Builders
         public ProjectBuilder WithoutAssignments()
         {
             _project.Assignments = null;
+            return this;
+        }
+
+        public ProjectBuilder WithTeam(IProjectTeam team)
+        {
+            _project.Teams.Add(team);
             return this;
         }
 

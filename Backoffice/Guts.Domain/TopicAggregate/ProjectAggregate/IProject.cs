@@ -6,6 +6,6 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate
     public interface IProject : ITopic
     {
         ICollection<IProjectAssessment> Assessments { get; set; }
-        ICollection<ProjectTeam> Teams { get; set; }
+        ICollection<IProjectTeam> Teams { get; set; }
     }
 }

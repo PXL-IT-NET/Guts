@@ -16,10 +16,11 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         bool IsComplete { get; }
 
-        IPeerAssessment AddOrReplacePeerAssessment(int userId, int subjectId,
-            AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore);
+        IPeerAssessment AddOrUpdatePeerAssessment(int userId, int subjectId,
+            AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, 
+            string explanation);
 
-        IReadOnlyList<IPeerAssessment> GetPeersAssessmentsOf(int userId);
+        IReadOnlyList<IPeerAssessment> GetPeerAssessmentsOf(int userId);
 
         IReadOnlyList<IPeerAssessment> GetMissingPeerAssessmentsOf(int userId);
 

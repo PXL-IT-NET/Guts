@@ -4,7 +4,7 @@ using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
-    public class PeerAssessment : Entity, IPeerAssessment
+    internal class PeerAssessment : Entity, IPeerAssessment
     {
         public int ProjectTeamAssessmentId { get; private set; }
 
@@ -27,13 +27,13 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         /// </summary>
         public AssessmentScore EffortScore { get; private set; }
 
-        public string Explanation { get; set; }
+        public string Explanation { get; private set; }
 
         public bool IsSelfAssessment => User.Id == Subject.Id;
 
         private PeerAssessment() { } //Used by EF
 
-        public PeerAssessment(int projectTeamAssessmentId, User user, User subject)
+        internal PeerAssessment(int projectTeamAssessmentId, User user, User subject)
         {
             Contracts.Require(projectTeamAssessmentId > 0, "An existing project team assessment identifier must be provided.");
             Contracts.Require(user != null, "A user must be provided.");
@@ -50,11 +50,12 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             EffortScore = AssessmentScore.NoAddedValue;
         }
 
-        public void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore)
+        public void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, string explanation)
         {
             CooperationScore = cooperationScore;
             ContributionScore = contributionScore;
             EffortScore = effortScore;
+            Explanation = explanation;
         }
     }
 }

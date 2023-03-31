@@ -38,6 +38,10 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
   public get deadlineDisplay() : string {
     return this.deadlineUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
   }
+  public get isOver() : boolean {
+    let now = moment();
+    return now.isAfter(this.deadlineUtc);
+  }
 
   public teamStatus: IProjectTeamAssessmentStatusModel;
 
@@ -159,13 +163,17 @@ export interface IAssessmentResultModel{
 }
 
 export interface IAssessmentSubResultModel{
-  teamAverage: number;
-  average: number;
-  selfAverage: number;
-  peerAverage: number;
+  value: number;
+  selfValue: number;
+  peerValue: number;
+
   score: AssessmentScore;
   selfScore: AssessmentScore;
   peerScore: AssessmentScore;
+
+  averageValue: number;
+  averageSelfValue: number;
+  averagePeerValue: number;
 }
 
 

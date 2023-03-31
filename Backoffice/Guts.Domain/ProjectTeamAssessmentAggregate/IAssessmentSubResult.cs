@@ -4,12 +4,16 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
     public interface IAssessmentSubResult
     {
-        double TeamAverage { get; }
-        double Average { get; }
-        double SelfAverage { get; } 
-        double PeerAverage { get; }
+        double Value { get; }
+        double SelfValue { get; }
+        double PeerValue { get; }
+
         AssessmentScore Score { get; }
         AssessmentScore SelfScore { get; }
         AssessmentScore PeerScore { get; }
+
+        double AverageValue { get; }
+        double AverageSelfValue { get; }
+        double AveragePeerValue { get; }
     }
 }

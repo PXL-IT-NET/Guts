@@ -7,6 +7,7 @@ using Guts.Api.Models.ProjectModels;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Assessment;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers;
@@ -35,16 +36,12 @@ public class ProjectTeamAssessmentController : ControllerBase
         return Ok(status);
     }
 
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/detailed-results")]
     [ProducesResponseType(typeof(IList<AssessmentResultModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
     {
-        if (!IsLector())
-        {
-            return Forbid();
-        }
-
         IReadOnlyList<IAssessmentResult> results = await _projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
         IList<AssessmentResultModel> models = results.Select(result => _mapper.Map<AssessmentResultModel>(result)).ToList();
         return Ok(models);

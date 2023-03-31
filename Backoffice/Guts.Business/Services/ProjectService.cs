@@ -104,7 +104,7 @@ namespace Guts.Business.Services
             var period = await _periodRepository.GetCurrentPeriodAsync();
             var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
-            ICollection<ProjectTeam> allTeams = project.Teams;
+            ICollection<IProjectTeam> allTeams = project.Teams;
 
             for (int teamNumber = teamNumberFrom; teamNumber <= teamNumberTo; teamNumber++)
             {

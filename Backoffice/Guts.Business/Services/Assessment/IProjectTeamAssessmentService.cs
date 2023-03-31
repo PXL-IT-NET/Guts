@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
-using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services.Assessment
 {
@@ -12,8 +11,6 @@ namespace Guts.Business.Services.Assessment
 
         Task<ProjectTeamAssessmentStatusDto> GetStatusAsync(int projectAssessmentId, int teamId);
         Task<IReadOnlyList<IAssessmentResult>> GetResultsForLectorAsync(int projectAssessmentId, int teamId);
-        Task<StudentAssessmentResultDto> GetResultForStudentAsync(int projectAssessmentId, int teamId, int userId);
-
         Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId);
         Task SavePeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId, IReadOnlyList<PeerAssessmentDto> peerAssessments);
     }

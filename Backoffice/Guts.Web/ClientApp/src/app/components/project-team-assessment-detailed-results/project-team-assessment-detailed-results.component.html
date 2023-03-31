@@ -5,15 +5,31 @@
 </div>
 
 <div class="row">
+    <div class="col-12">
+        <ul class="nav">
+            <li class="nav-item">
+              <a class="nav-link" [ngClass]="{'disabled': !previousTeam}" [routerLink]="['../../', previousTeam?.id, 'detailed-results']">Vorige</a>
+            </li>
+            <li class="nav-item">
+                <h5><span class="nav-link active">{{currentTeam?.name}}</span></h5>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [ngClass]="{'disabled': !nextTeam}" [routerLink]="['../../', nextTeam?.id, 'detailed-results']">Volgende</a>
+            </li>
+          </ul>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-xl-4">
         <div class="card m-2">
             <h5 class="card-header">
-                Peer + Self assesment
+                Peer assesment
             </h5>
             <div class="card-body">
                 <div class="card-text">
-                    <canvas baseChart [datasets]="peerAndSelfChartData.datasets" [labels]="peerAndSelfChartData.labels"
-                        [options]="chartOptions" [type]="'bar'"></canvas>
+                    <canvas baseChart [datasets]="peerChartData.datasets" [labels]="peerChartData.labels"
+                        [options]="barChartOptions" [type]="'bar'"></canvas>
                 </div>
             </div>
         </div>
@@ -26,7 +42,7 @@
             <div class="card-body">
                 <div class="card-text">
                     <canvas baseChart [datasets]="selfChartData.datasets" [labels]="selfChartData.labels"
-                        [options]="chartOptions" [type]="'bar'"></canvas>
+                        [options]="barChartOptions" [type]="'bar'"></canvas>
                 </div>
             </div>
         </div>
@@ -34,12 +50,12 @@
     <div class="col-xl-4">
         <div class="card m-2">
             <h5 class="card-header">
-                Peer assesment
+                Peer + Self assesment
             </h5>
             <div class="card-body">
                 <div class="card-text">
-                    <canvas baseChart [datasets]="peerChartData.datasets" [labels]="peerChartData.labels"
-                        [options]="chartOptions" [type]="'bar'"></canvas>
+                    <canvas baseChart [datasets]="peerAndSelfChartData.datasets" [labels]="peerAndSelfChartData.labels"
+                        [options]="barChartOptions" [type]="'bar'"></canvas>
                 </div>
             </div>
         </div>
@@ -47,7 +63,62 @@
 </div>
 
 <div class="row">
-    <div class="col-xl-10">
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Peer vs. self evaluation
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <canvas baseChart [datasets]="peersVersusSelfChartData.datasets"
+                        [labels]="peersVersusSelfChartData.labels" [options]="radarChartOptions"
+                        [type]="'radar'"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Grade correction for {{currentTeam?.name}}
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <form>
+                        <div class="form-group row">
+                            <label for="teamGrade" class="col-6 col-form-label">Team grade</label>
+                            <div class="col-6">
+                                <input name="teamGrade" type="number" min="0" max="20" class="form-control"
+                                    [(ngModel)]="teamGrade" (ngModelChange)="calculateIndividualGrades()" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="correctionType" class="col-6 col-form-label">Correction based on</label>
+                            <div class="col-6">
+                                <select name="correctionType" class="form-control" [(ngModel)]="gradeCorrectionType" (ngModelChange)="calculateIndividualGrades()">
+                                    <option [ngValue]="0">Peers only</option>
+                                    <option [ngValue]="1">Self only</option>
+                                    <option [ngValue]="2">Peer and self average</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row" *ngFor="let result of results">
+                            <label for="individualScore"
+                                class="col-6 col-form-label">{{result.subject.fullName}}</label>
+                            <div class="col-6">
+                                <input id="individualScore" name="individualScore" type="number" min="0" max="20"
+                                    class="form-control" [value]="result.individualGrade" readonly />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
         <div class="card m-2">
             <h5 class="card-header">
                 Assessment details
@@ -169,29 +240,5 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-lg-4 col-md-6">
-        <div class="card m-2">
-            <h5 class="card-header">
-                Grade correction
-            </h5>
-            <div class="card-body">
-                <div class="card-text">
-                    <form>
-                        <div class="form-group row">
-                            <label for="teamGrade" class="col-6 col-form-label">Team grade</label>
-                            <div class="col-6">
-                                <input name="teamGrade" type="number" min="0" max="20" class="form-control" [(ngModel)]="teamGrade" (ngModelChange)="calculateIndividualGrades()" />
-                            </div>
-                        </div>
-                        <div class="form-group row" *ngFor="let result of results">
-                            <label for="individualScore" class="col-6 col-form-label">{{result.subject.fullName}}</label>
-                            <div class="col-6">
-                                <input id="individualScore" name="individualScore" type="number" min="0" max="20" class="form-control" [value]="result.individualGrade" readonly />
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>

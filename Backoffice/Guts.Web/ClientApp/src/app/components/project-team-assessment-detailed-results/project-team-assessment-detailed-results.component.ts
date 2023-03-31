@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ToastrService } from 'ngx-toastr';
-import { ProjectTeamAssessmentService } from 'src/app/services';
+import { ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
 import { IAssessmentResultModel } from 'src/app/viewmodels/projectassessment.model';
+import { ITeamModel } from 'src/app/viewmodels/team.model';
 
 @Component({
   selector: 'app-project-team-assessment-detailed-results',
@@ -11,14 +12,21 @@ import { IAssessmentResultModel } from 'src/app/viewmodels/projectassessment.mod
 })
 export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
 
+  public allTeams: ITeamModel[];
+  public currentTeam: ITeamModel;
+  public previousTeam: ITeamModel;
+  public nextTeam: ITeamModel;
+
   public results: IAssessmentResultModel[];
   public teamGrade: number;
+  public gradeCorrectionType: GradeCorrectionType;
 
   public selfChartData: ChartData<'bar', number[]>;
   public peerChartData: ChartData<'bar', number[]>;
   public peerAndSelfChartData: ChartData<'bar', number[]>;
+  public peersVersusSelfChartData: ChartData<'radar', number[]>;
 
-  public chartOptions: ChartOptions<'bar'> = {
+  public barChartOptions: ChartOptions<'bar'> = {
     scales: {
       y: {
         min: 0,
@@ -38,10 +46,101 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
     }
   };
 
+  public radarChartOptions: ChartOptions<'radar'> = {
+    scales: {
+      r: {
+        beginAtZero: true,
+        suggestedMin: 0,
+        suggestedMax: 5,
+        ticks: {
+          stepSize: 1
+        }
+      }
+    }
+  };
+
   constructor(
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private projectService: ProjectService,
     private toastr: ToastrService,
     private route: ActivatedRoute) {
+    this.allTeams = [];
+    this.currentTeam = {
+      id: 0,
+      name: ''
+    };
+    this.previousTeam = null;
+    this.nextTeam = null;
+    this.gradeCorrectionType = GradeCorrectionType.Peers;
+    this.resetResults();
+  }
+
+  ngOnInit(): void {
+
+    let courseId = +this.route.parent.snapshot.params['courseId']
+    let projectCode = this.route.snapshot.params['code'];
+    let assessmentId = this.route.snapshot.params['assessmentId'];
+
+
+    this.route.params.subscribe(params => {
+      let teamId = params['teamId'];
+
+      if (this.allTeams.length <= 0) {
+        this.projectService.getProjectDetails(courseId, projectCode).subscribe(result => {
+          if (result.success) {
+            this.allTeams = result.value.teams;
+            this.setTeams(teamId);
+
+          } else {
+            this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
+          }
+        });
+      } else{
+        this.setTeams(teamId);
+      }
+
+      this.resetResults();
+      this.projectTeamAssessmentService.getDetailedResultsOfProjectTeamAssessment(assessmentId, teamId).subscribe(result => {
+        if (result.success) {
+          this.results = result.value;
+          this.calculateIndividualGrades();
+
+          this.setChartData(this.peerAndSelfChartData,
+            result => result.averageResult.value,
+            result => result.effortResult.value,
+            result => result.contributionResult.value,
+            result => result.cooperationResult.value);
+
+          this.setChartData(this.selfChartData,
+            result => result.averageResult.selfValue,
+            result => result.effortResult.selfValue,
+            result => result.contributionResult.selfValue,
+            result => result.cooperationResult.selfValue);
+
+          this.setChartData(this.peerChartData,
+            result => result.averageResult.peerValue,
+            result => result.effortResult.peerValue,
+            result => result.contributionResult.peerValue,
+            result => result.cooperationResult.peerValue);
+
+          this.peersVersusSelfChartData.datasets.push({
+            label: 'Peers',
+            data: this.results.map(result => result.averageResult.peerValue)
+          });
+          this.peersVersusSelfChartData.datasets.push({
+            label: 'Self',
+            data: this.results.map(result => result.averageResult.selfValue)
+          });
+          this.peersVersusSelfChartData.labels = this.results.map(result => result.subject.fullName);
+        } else {
+          this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
+          this.resetResults();
+        }
+      });
+    });
+  }
+
+  private resetResults(){
     this.results = [];
     this.teamGrade = 0;
 
@@ -59,42 +158,28 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
       datasets: [],
       labels: [],
     };
+
+    this.peersVersusSelfChartData = {
+      datasets: [],
+      labels: [],
+    };
   }
 
-  ngOnInit(): void {
+  private setTeams(currentTeamId: number) {
+    this.currentTeam = this.allTeams.find(team => team.id == currentTeamId);
+    let currentIndex = this.allTeams.indexOf(this.currentTeam);
 
-    let assessmentId = this.route.snapshot.params['assessmentId'];
-    let teamId = this.route.snapshot.params['teamId'];
+    if (currentIndex > 0) {
+      this.previousTeam = this.allTeams[currentIndex - 1];
+    } else {
+      this.previousTeam = null;
+    }
 
-    this.projectTeamAssessmentService.getDetailedResultsOfProjectTeamAssessment(assessmentId, teamId).subscribe(result => {
-      if (result.success) {
-        this.results = result.value;
-        this.calculateIndividualGrades();
-
-        this.setChartData(this.peerAndSelfChartData,
-          result => result.averageResult.average,
-          result => result.effortResult.average,
-          result => result.contributionResult.average,
-          result => result.cooperationResult.average);
-
-        this.setChartData(this.selfChartData,
-          result => result.averageResult.selfAverage,
-          result => result.effortResult.selfAverage,
-          result => result.contributionResult.selfAverage,
-          result => result.cooperationResult.selfAverage);
-
-        this.setChartData(this.peerChartData,
-          result => result.averageResult.peerAverage,
-          result => result.effortResult.peerAverage,
-          result => result.contributionResult.peerAverage,
-          result => result.cooperationResult.peerAverage);
-
-
-      } else {
-        this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
-      }
-    });
-
+    if (currentIndex < this.allTeams.length - 1) {
+      this.nextTeam = this.allTeams[currentIndex + 1];
+    } else {
+      this.nextTeam = null;
+    }
   }
 
   private setChartData(chartData: ChartData<'bar', number[]>,
@@ -123,15 +208,34 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
       data: this.results.map(result => selectCooperationScore(result))
     });
     chartData.labels = this.results.map(result => result.subject.fullName);
-  } 
+  }
 
-  public calculateIndividualGrades(): void{
+  public calculateIndividualGrades(): void {
     this.teamGrade = Math.max(this.teamGrade || 0, 0);
     this.results.forEach(result => {
-      let indivdualGrade = this.teamGrade * (result.averageResult.average / result.averageResult.teamAverage);
+      let indivdualGrade = 0;
+      switch (this.gradeCorrectionType) {
+        case GradeCorrectionType.Peers: {
+          indivdualGrade = this.teamGrade * (result.averageResult.peerValue / result.averageResult.averagePeerValue);
+          break;
+        }
+        case GradeCorrectionType.Self: {
+          indivdualGrade = this.teamGrade * (result.averageResult.selfValue / result.averageResult.averageSelfValue);
+          break;
+        }
+        case GradeCorrectionType.PeersAndSelf: {
+          indivdualGrade = this.teamGrade * (result.averageResult.value / result.averageResult.averageValue);
+          break;
+        }
+      }
       indivdualGrade = Math.min(indivdualGrade, 20);
       result.individualGrade = +indivdualGrade.toFixed(2);
     });
   }
+}
 
+export enum GradeCorrectionType {
+  Peers = 0,
+  Self = 1,
+  PeersAndSelf = 2
 }

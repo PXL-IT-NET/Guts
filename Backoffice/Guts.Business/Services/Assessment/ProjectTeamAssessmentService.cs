@@ -88,30 +88,11 @@ namespace Guts.Business.Services.Assessment
             return results;
         }
 
-        public async Task<StudentAssessmentResultDto> GetResultForStudentAsync(int projectAssessmentId, int teamId, int userId)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-
-            IAssessmentResult result = teamAssessment.GetAssessmentResultFor(userId);
-          
-
-            return new StudentAssessmentResultDto
-            {
-                Average = result.AverageResult.Average,
-                PeerAverage = result.AverageResult.PeerAverage,
-                SelfAverage = result.AverageResult.SelfAverage,
-                TeamAverage = result.AverageResult.TeamAverage,
-                Score = result.AverageResult.Score,
-                PeerScore = result.AverageResult.PeerScore,
-                SelfScore = result.AverageResult.SelfScore
-            };
-        }
-
         public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)
         {
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
-            IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeersAssessmentsOf(userId);
+            IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeerAssessmentsOf(userId);
             IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeerAssessmentsOf(userId);
 
             return storedAssessments.Concat(missingAssessments).ToList();
@@ -123,9 +104,8 @@ namespace Guts.Business.Services.Assessment
             foreach (PeerAssessmentDto dto in peerAssessments)
             {
                 Contracts.Require(dto.UserId == userId, $"Only peer assessments of user with id '{userId}' are allowed.");
-                IPeerAssessment peerAssessment = teamAssessment.AddOrReplacePeerAssessment(userId, dto.SubjectId,
-                    dto.CooperationScore, dto.ContributionScore, dto.EffortScore);
-                peerAssessment.Explanation = dto.Explanation;
+                IPeerAssessment peerAssessment = teamAssessment.AddOrUpdatePeerAssessment(userId, dto.SubjectId,
+                    dto.CooperationScore, dto.ContributionScore, dto.EffortScore, dto.Explanation);
             }
 
             teamAssessment.ValidateAssessmentsOf(userId);

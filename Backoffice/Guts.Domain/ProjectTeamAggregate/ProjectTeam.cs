@@ -9,9 +9,9 @@ namespace Guts.Domain.ProjectTeamAggregate
         [Required]
         public string Name { get; set; }
 
-        public virtual Project Project { get; set; }
+        public IProject Project { get; set; }
         public int ProjectId { get; set; }
 
-        public virtual ICollection<ProjectTeamUser> TeamUsers { get; set; } = new HashSet<ProjectTeamUser>();
+        public ICollection<IProjectTeamUser> TeamUsers { get; set; } = new HashSet<IProjectTeamUser>();
     }
 }
