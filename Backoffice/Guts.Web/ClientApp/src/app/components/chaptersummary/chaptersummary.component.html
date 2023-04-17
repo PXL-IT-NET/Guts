@@ -1,14 +1,14 @@
 <div class="row">
-  <div class="col-md-10 col-md-offset-1">
+  <div class="col-12">
     <div class="row">
-      <div class="col-xl-7">
+      <div class="col-xl-8">
         <div class="card">
           <h5 class="card-header">
             Your test outcomes <small>({{model.totalGreenTests}} / {{model.totalTests}} tests)</small>
           </h5>
           <div class="card-body">
             <div class="row" *ngIf="userId > 0">
-              <div class="col-lg-6" *ngFor="let assignment of model.assignmentSummaries">
+              <div class="col-lg-6 col-xl-3" *ngFor="let assignment of model.assignmentSummaries">
                 <div class="card mb-2">
                   <div class="card-body">
                     <assignment-summary [model]="assignment"></assignment-summary>
@@ -23,7 +23,7 @@
           </div>
         </div>
       </div>
-      <div class="col-xl-5">
+      <div class="col-xl-4">
         <div class="card">
           <h5 class="card-header">
             Number of passed tests of others

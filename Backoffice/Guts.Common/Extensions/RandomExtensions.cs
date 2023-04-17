@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 
 namespace Guts.Common.Extensions
 {
@@ -28,6 +29,12 @@ namespace Guts.Common.Extensions
         public static DateTime NextDateTimeInFuture(this Random random)
         {
             return DateTime.Now.AddDays(random.Next(1, 10001));
+        }
+
+        public static T NextEnum<T>(this Random random) where T : struct, IConvertible
+        {
+            if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
+            return Enum.GetValues(typeof(T)).OfType<T>().NextRandomItem();
         }
     }
 }

@@ -32,5 +32,13 @@ namespace Guts.Domain.Tests.Builders
             SetProperty(pa => pa.Subject, subject);
             return this;
         }
+
+        public PeerAssessmentBuilder WithScores(AssessmentScore contributionScore, AssessmentScore effortScore, AssessmentScore cooperationScore)
+        {
+            SetProperty(pa => pa.ContributionScore, contributionScore);
+            SetProperty(pa => pa.EffortScore, effortScore);
+            SetProperty(pa => pa.CooperationScore, cooperationScore);
+            return this;
+        }
     }
 }
