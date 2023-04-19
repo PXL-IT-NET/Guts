@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using AutoMapper;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Api.Models.ProjectModels;
 
@@ -12,11 +13,11 @@ public class AssessmentResultModel
 
     public IList<PeerAssessmentModel> PeerAssessments { get; set; }
 
-    public IAssessmentSubResult AverageResult { get; set; }
+    public AssessmentSubResultModel AverageResult { get; set; }
 
-    public IAssessmentSubResult EffortResult { get; set; }
-    public IAssessmentSubResult CooperationResult { get; set; }
-    public IAssessmentSubResult ContributionResult { get; set; }
+    public AssessmentSubResultModel EffortResult { get; set; }
+    public AssessmentSubResultModel CooperationResult { get; set; }
+    public AssessmentSubResultModel ContributionResult { get; set; }
 
     private class MappingProfile : Profile
     {

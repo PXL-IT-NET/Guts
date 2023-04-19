@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ChartData, ChartOptions } from 'chart.js';
+import { ChartData, ChartOptions, ScriptableScaleContext } from 'chart.js';
 import { ToastrService } from 'ngx-toastr';
 import { ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
 import { IAssessmentResultModel } from 'src/app/viewmodels/projectassessment.model';
@@ -41,6 +41,14 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
             if (value == 5) return 'Way above average (5)';
             return '';
           }
+        },
+        grid: {
+          borderDash: (context: ScriptableScaleContext) => {
+            if (context.tick.value === 3) {
+              return [3, 2]; // set the dash pattern for the 0 gridline
+            }
+            return [];
+          }
         }
       }
     }
@@ -80,7 +88,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
     let courseId = +this.route.parent.snapshot.params['courseId']
     let projectCode = this.route.snapshot.params['code'];
     let assessmentId = this.route.snapshot.params['assessmentId'];
-
 
     this.route.params.subscribe(params => {
       let teamId = params['teamId'];

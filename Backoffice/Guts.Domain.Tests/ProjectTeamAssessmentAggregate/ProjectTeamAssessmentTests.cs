@@ -333,7 +333,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
                 .Returns(expectedResult);
 
             //Act
-            IAssessmentResult result = _projectTeamAssessment.GetAssessmentResultFor(user.Id);
+            IAssessmentResult result = _projectTeamAssessment.GetAssessmentResultFor(user.Id, builder.AssessmentResultFactoryMock.Object);
 
             //Assert
             builder.AssessmentResultFactoryMock.Verify(factory => factory.Create(user, _projectTeamAssessment.PeerAssessments), Times.Once);
@@ -349,7 +349,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             User nonTeamUser = new UserBuilder().Build();
 
             //Act + Assert
-            Assert.That(() => _projectTeamAssessment.GetAssessmentResultFor(nonTeamUser.Id), Throws.InstanceOf<ContractException>());
+            Assert.That(() => _projectTeamAssessment.GetAssessmentResultFor(nonTeamUser.Id, builder.AssessmentResultFactoryMock.Object), Throws.InstanceOf<ContractException>());
         }
     }
 }

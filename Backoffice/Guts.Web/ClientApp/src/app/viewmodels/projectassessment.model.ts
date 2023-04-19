@@ -87,15 +87,6 @@ export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentS
   }
 }
 
-export enum AssessmentScore{
-  NoAddedValue = 0,
-  WayBelowAverage = 1,
-  BelowAverage = 2,
-  Average = 3,
-  AboveAverage = 4,
-  WayAboveAverage = 5,
-}
-
 export interface IUserModel {
   id: number;
   fullName: string;
@@ -118,9 +109,9 @@ export class UserModel implements IUserModel {
 export interface IPeerAssessmentModel{
   subject: IUserModel;
   user: IUserModel;
-  contributionScore: AssessmentScore;
-  cooperationScore: AssessmentScore;
-  effortScore: AssessmentScore;
+  contributionScore: number;
+  cooperationScore: number;
+  effortScore: number;
   isSelfAssessment: boolean;
   explanation: string;
 }
@@ -128,18 +119,18 @@ export interface IPeerAssessmentModel{
 export class PeerAssessmentModel implements IPeerAssessmentModel{
   public subject: IUserModel;
   public user: IUserModel;
-  public contributionScore: AssessmentScore;
-  public cooperationScore: AssessmentScore;
-  public effortScore: AssessmentScore;
+  public contributionScore: number;
+  public cooperationScore: number;
+  public effortScore: number;
   public isSelfAssessment: boolean;
   public explanation: string;
 
   constructor(source?: IPeerAssessmentModel) {
     this.subject = new UserModel();
     this.user = new UserModel();
-    this.contributionScore = AssessmentScore.Average;
-    this.cooperationScore = AssessmentScore.Average;
-    this.effortScore = AssessmentScore.Average;
+    this.contributionScore = 3;
+    this.cooperationScore = 3;
+    this.effortScore = 3;
     this.isSelfAssessment = false;
     this.explanation = '';
 
@@ -167,9 +158,9 @@ export interface IAssessmentSubResultModel{
   selfValue: number;
   peerValue: number;
 
-  score: AssessmentScore;
-  selfScore: AssessmentScore;
-  peerScore: AssessmentScore;
+  score: number;
+  selfScore: number;
+  peerScore: number;
 
   averageValue: number;
   averageSelfValue: number;

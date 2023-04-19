@@ -16,17 +16,20 @@ namespace Guts.Business.Services.Assessment
         private readonly IProjectTeamAssessmentFactory _factory;
         private readonly IProjectAssessmentRepository _projectAssessmentRepository;
         private readonly IProjectTeamRepository _teamRepository;
+        private readonly IAssessmentResultFactory _assessmentResultFactory;
 
         public ProjectTeamAssessmentService(
             IProjectTeamAssessmentRepository repository,
             IProjectTeamAssessmentFactory factory,
             IProjectAssessmentRepository projectAssessmentRepository,
-            IProjectTeamRepository teamRepository)
+            IProjectTeamRepository teamRepository,
+            IAssessmentResultFactory assessmentResultFactory)
         {
             _repository = repository;
             _factory = factory;
             _projectAssessmentRepository = projectAssessmentRepository;
             _teamRepository = teamRepository;
+            _assessmentResultFactory = assessmentResultFactory;
         }
 
         public async Task<IProjectTeamAssessment> GetOrCreateTeamAssessmentAsync(int projectAssessmentId, int projectTeamId)
@@ -84,8 +87,17 @@ namespace Guts.Business.Services.Assessment
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
             List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
-                .Select(teamUser => teamAssessment.GetAssessmentResultFor(teamUser.UserId)).ToList();
+                .Select(teamUser => teamAssessment.GetAssessmentResultFor(teamUser.UserId, _assessmentResultFactory)).ToList();
             return results;
+        }
+
+        public async Task<IAssessmentResult> GetResultForStudent(int projectAssessmentId, int teamId, int userId)
+        {
+            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+            IAssessmentResult result =  teamAssessment.GetAssessmentResultFor(userId, _assessmentResultFactory);
+            result.ClearPeerAssessments();
+            return result;
         }
 
         public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)

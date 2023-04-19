@@ -51,7 +51,8 @@ import { ToastrModule } from 'ngx-toastr';
     NgDatetimeComponent,
     c.ProjectAssessmentOverviewComponent,
     c.ProjectTeamAssessmentEvaluationFormComponent,
-    c.ProjectTeamAssessmentDetailedResultsComponent
+    c.ProjectTeamAssessmentDetailedResultsComponent,
+    c.ProjectTeamAssessmentMyResultComponent
   ],
   imports: [
     BrowserModule,

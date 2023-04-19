@@ -32,7 +32,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
                 List<IPeerAssessment> allNonSelfAssessments = allPeerAssessments.Where(pa => !pa.IsSelfAssessment).ToList();
                 result.AveragePeerValue = allNonSelfAssessments.Sum(pa => calculateScore(pa) / allNonSelfAssessments.Count);
 
-                IPeerAssessment selfAssessment = allPeerAssessments.FirstOrDefault(pa => pa.Subject.Id == subjectId);
+                IPeerAssessment selfAssessment = allPeerAssessments.FirstOrDefault(pa => pa.IsSelfAssessment && pa.Subject.Id == subjectId);
                 Contracts.Require(selfAssessment != null, "Cannot create an assessment result when the subject has not evaluated itself.");
 
                 List<IPeerAssessment> peerAssessmentsForSubject = allPeerAssessments.Where(pa => pa.Subject.Id == subjectId && pa.User.Id != subjectId).ToList();

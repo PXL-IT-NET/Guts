@@ -11,7 +11,6 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
     internal class ProjectTeamAssessment : AggregateRoot, IProjectTeamAssessment
     {
-        private readonly IAssessmentResultFactory _assessmentResultFactory;
         private readonly HashSet<IPeerAssessment> _peerAssessments;
 
         public IProjectAssessment ProjectAssessment { get; private set; }
@@ -22,13 +21,12 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
         public bool IsComplete => (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
 
-        private ProjectTeamAssessment(IAssessmentResultFactory assessmentResultFactory)
+        private ProjectTeamAssessment()
         {
-            _assessmentResultFactory = assessmentResultFactory;
             _peerAssessments = new HashSet<IPeerAssessment>();
         }
 
-        private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team, IAssessmentResultFactory assessmentResultFactory) : this(assessmentResultFactory)
+        private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
         {
             Contracts.Require(team != null, "A team must be provided.");
             Contracts.Require(team!.TeamUsers.Any(), "The team has no members.");
@@ -37,23 +35,15 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
 
             Contracts.Require(projectAssessment!.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
             ProjectAssessment = projectAssessment;
-            _assessmentResultFactory = assessmentResultFactory; 
         }
 
         public class Factory : IProjectTeamAssessmentFactory
         {
-            private readonly IAssessmentResultFactory _assessmentResultFactory;
-
-            public Factory(IAssessmentResultFactory assessmentResultFactory)
-            {
-                _assessmentResultFactory = assessmentResultFactory;
-            }
-
             public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
             {
                 Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
                 Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
-                return new ProjectTeamAssessment(projectAssessment, team, _assessmentResultFactory);
+                return new ProjectTeamAssessment(projectAssessment, team);
             }
         }
 
@@ -115,14 +105,14 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             return peers;
         }
 
-        public IAssessmentResult GetAssessmentResultFor(int userId)
+        public IAssessmentResult GetAssessmentResultFor(int userId, IAssessmentResultFactory resultFactory)
         {
             RequireUserToBeATeamMember(userId);
             Contracts.Require(IsComplete, "The team assessment is not completed by all peers. Assessment results are only available when all members completed the assessment.");
 
             User subject = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
 
-            return _assessmentResultFactory.Create(subject, PeerAssessments);
+            return resultFactory.Create(subject, PeerAssessments);
         }
 
         public void ValidateAssessmentsOf(int userId)

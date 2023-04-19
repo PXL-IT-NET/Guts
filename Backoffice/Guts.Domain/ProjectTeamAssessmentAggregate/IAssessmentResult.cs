@@ -13,5 +13,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         IAssessmentSubResult EffortResult { get; }
         IAssessmentSubResult CooperationResult { get; }
         IAssessmentSubResult ContributionResult { get; }
+
+        void ClearPeerAssessments();
     }
 }

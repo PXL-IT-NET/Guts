@@ -32,6 +32,17 @@ export class ProjectTeamAssessmentService {
       );
   }
 
+  public getMyResultOfProjectTeamAssessment(projectAssessmentId: number, teamId: number): Observable<GetResult<IAssessmentResultModel>> {
+    let url = 'api/project-team-assessments/of-project-assessment/' + projectAssessmentId + '/of-team/' + teamId + '/my-result';
+    return this.http.get<IAssessmentResultModel>(url)
+      .pipe(
+        map(model => GetResult.success(model)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(GetResult.fromHttpErrorResponse<IAssessmentResultModel>(errorResponse));
+        })
+      );
+  }
+
   public getPeerAssessmentsOfUser(projectAssessmentId: number, teamId: number): Observable<GetResult<PeerAssessmentModel[]>> {
     let url = 'api/project-team-assessments/of-project-assessment/' + projectAssessmentId + '/of-team/' + teamId + '/peer-assessments';
     return this.http.get<IPeerAssessmentModel[]>(url)

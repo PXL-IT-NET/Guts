@@ -36,17 +36,6 @@ public class ProjectTeamAssessmentController : ControllerBase
         return Ok(status);
     }
 
-    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-    [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/detailed-results")]
-    [ProducesResponseType(typeof(IList<AssessmentResultModel>), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-    public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
-    {
-        IReadOnlyList<IAssessmentResult> results = await _projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
-        IList<AssessmentResultModel> models = results.Select(result => _mapper.Map<AssessmentResultModel>(result)).ToList();
-        return Ok(models);
-    }
-
     [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peer-assessments")]
     [ProducesResponseType(typeof(IList<PeerAssessmentModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -70,5 +59,29 @@ public class ProjectTeamAssessmentController : ControllerBase
         await _projectTeamAssessmentService.SavePeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId, dtos);
 
         return Ok();
+    }
+
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+    [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/detailed-results")]
+    [ProducesResponseType(typeof(IList<AssessmentResultModel>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
+    {
+        IReadOnlyList<IAssessmentResult> results = await _projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
+        IList<AssessmentResultModel> models = results.Select(result => _mapper.Map<AssessmentResultModel>(result)).ToList();
+        return Ok(models);
+    }
+
+    [HttpGet("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/my-result")]
+    [ProducesResponseType(typeof(IList<PeerAssessmentModel>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetProjectTeamAssessmentResultForUser(int projectAssessmentId, int teamId)
+    {
+        int userId = GetUserId();
+        
+        IAssessmentResult result = await _projectTeamAssessmentService.GetResultForStudent(projectAssessmentId, teamId, userId);
+
+        AssessmentResultModel model = _mapper.Map<AssessmentResultModel>(result);
+        return Ok(model);
     }
 }

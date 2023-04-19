@@ -15,6 +15,12 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         public IAssessmentSubResult EffortResult { get; private set; }
         public IAssessmentSubResult CooperationResult { get; private set; }
         public IAssessmentSubResult ContributionResult { get; private set; }
+        public void ClearPeerAssessments()
+        {
+            PeerAssessments = new List<IPeerAssessment>();
+        }
+
+        private AssessmentResult() { }
 
         internal class Factory : IAssessmentResultFactory
         {
@@ -31,7 +37,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
                 Contracts.Require(subject != null, "An assessment result needs a subject.");
                 result.Subject = subject;
 
-                result.SelfAssessment = allPeerAssessments.FirstOrDefault(pa => pa.Subject.Id == subject.Id);
+                result.SelfAssessment = allPeerAssessments.FirstOrDefault(pa => pa.IsSelfAssessment && pa.Subject.Id == subject.Id);
                 Contracts.Require(result.SelfAssessment != null, "Cannot create an assessment result when the subject has not evaluated itself.");
 
                 result.PeerAssessments = allPeerAssessments.Where(pa => pa.Subject.Id == subject.Id && pa.User.Id != subject.Id).ToList();
@@ -46,6 +52,5 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             }
         }
 
-        private AssessmentResult(){}
     }
 }

@@ -1,14 +1,14 @@
 <div class="row">
   <div class="col-12">
     <div class="row">
-      <div class="col-xl-8">
+      <div class="col-12">
         <div class="card">
           <h5 class="card-header">
             Your test outcomes <small>({{model.totalGreenTests}} / {{model.totalTests}} tests)</small>
           </h5>
           <div class="card-body">
             <div class="row" *ngIf="userId > 0">
-              <div class="col-lg-6 col-xl-3" *ngFor="let assignment of model.assignmentSummaries">
+              <div class="col-lg-4 col-xl-2" *ngFor="let assignment of model.assignmentSummaries">
                 <div class="card mb-2">
                   <div class="card-body">
                     <assignment-summary [model]="assignment"></assignment-summary>
@@ -17,27 +17,29 @@
               </div>
             </div>
             <div *ngIf="userId <= 0">
-              You must select a user to see test outcomes. 
+              You must select a user to see test outcomes.
             </div>
             <ngx-loading [show]="loadingSummary"></ngx-loading>
           </div>
         </div>
       </div>
-      <div class="col-xl-4">
+    </div>
+    <div class="row">
+      <div class="col-12">
         <div class="card">
           <h5 class="card-header">
             Number of passed tests of others
           </h5>
           <div class="card-body">
             <div class="row">
-              <div class="col-12" *ngFor="let assignment of statistics.assignmentStatistics">
+              <div class="col-lg-4 col-xl-3" *ngFor="let assignment of statistics.assignmentStatistics">
                 <div class="card mb-2">
                   <div class="card-body">
                     <assignment-statistics [model]="assignment"></assignment-statistics>
                   </div>
                 </div>
               </div>
-            </div> 
+            </div>
             <ngx-loading [show]="loadingStatistics"></ngx-loading>
           </div>
         </div>
@@ -45,4 +47,3 @@
     </div>
   </div>
 </div>
-

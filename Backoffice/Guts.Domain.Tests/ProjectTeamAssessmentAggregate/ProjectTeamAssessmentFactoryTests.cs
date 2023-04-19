@@ -28,7 +28,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             _projectTeamMockBuilder = new ProjectTeamMockBuilder();
             _projectTeamMock = _projectTeamMockBuilder.Build();
 
-            _factory = new ProjectTeamAssessment.Factory(null);
+            _factory = new ProjectTeamAssessment.Factory();
         }
 
         [Test]

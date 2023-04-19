@@ -3,7 +3,7 @@ using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.ProjectTeamAssessmentAggregate
 {
-    internal interface IAssessmentResultFactory
+    public interface IAssessmentResultFactory
     {
         IAssessmentResult Create(User subject, IReadOnlyCollection<IPeerAssessment> allPeerAssessments);
     }
