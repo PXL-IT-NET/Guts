@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
@@ -22,15 +22,15 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
   public userProfile: UserProfile;
 
   //#Form
-  public assessmentForm: FormGroup;
+  public assessmentForm: UntypedFormGroup;
   
-  public get descriptionControl() { return <FormControl>this.assessmentForm.get('description'); }
-  public get openOnControl() { return <FormControl>this.assessmentForm.get('openOn'); }
-  public get deadlineControl() { return <FormControl>this.assessmentForm.get('deadline'); }
+  public get descriptionControl() { return <UntypedFormControl>this.assessmentForm.get('description'); }
+  public get openOnControl() { return <UntypedFormControl>this.assessmentForm.get('openOn'); }
+  public get deadlineControl() { return <UntypedFormControl>this.assessmentForm.get('deadline'); }
   //#End Form
 
 
-  constructor(private formBuilder: FormBuilder,
+  constructor(private formBuilder: UntypedFormBuilder,
     private projectService: ProjectService,
     private projectAssessmentService: ProjectAssessmentService,
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
@@ -102,7 +102,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     })
   }
 
-  public canShowErrors(fc: FormControl): boolean {
+  public canShowErrors(fc: UntypedFormControl): boolean {
     return fc.dirty || fc.touched
   }
 

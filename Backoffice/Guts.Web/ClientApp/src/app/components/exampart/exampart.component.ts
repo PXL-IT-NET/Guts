@@ -4,7 +4,7 @@ import { AssignmentService, ExamService } from 'src/app/services';
 import { ITopicAssignmentModel } from 'src/app/viewmodels/assignment.model';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-exampart',
@@ -22,7 +22,7 @@ export class ExampartComponent implements OnInit {
   public newAssigmnentEvaluation: AssignmentEvaluation;
   public isCollapsed: boolean;
 
-  public newAssignmentEvaluationForm: FormGroup;
+  public newAssignmentEvaluationForm: UntypedFormGroup;
   public get assignmentId() { return this.newAssignmentEvaluationForm.get('assignmentId'); }
   public get maximumScore() { return this.newAssignmentEvaluationForm.get('maximumScore'); }
   public get numberOfTestsAlreadyGreenAtStart() { return this.newAssignmentEvaluationForm.get('numberOfTestsAlreadyGreenAtStart'); }
@@ -63,10 +63,10 @@ export class ExampartComponent implements OnInit {
 
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
 
-    this.newAssignmentEvaluationForm = new FormGroup({
-      'assignmentId': new FormControl(this.newAssigmnentEvaluation.assignmentId, [Validators.min(1)]),
-      'maximumScore': new FormControl(this.newAssigmnentEvaluation.maximumScore, [Validators.required, Validators.min(1)]),
-      'numberOfTestsAlreadyGreenAtStart': new FormControl(this.newAssigmnentEvaluation.numberOfTestsAlreadyGreenAtStart, [Validators.required, Validators.min(0)]),
+    this.newAssignmentEvaluationForm = new UntypedFormGroup({
+      'assignmentId': new UntypedFormControl(this.newAssigmnentEvaluation.assignmentId, [Validators.min(1)]),
+      'maximumScore': new UntypedFormControl(this.newAssigmnentEvaluation.maximumScore, [Validators.required, Validators.min(1)]),
+      'numberOfTestsAlreadyGreenAtStart': new UntypedFormControl(this.newAssigmnentEvaluation.numberOfTestsAlreadyGreenAtStart, [Validators.required, Validators.min(0)]),
     });
   }
 
