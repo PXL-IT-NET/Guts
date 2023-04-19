@@ -34,7 +34,7 @@
     "ng-recaptcha": "9.0.0",
     "ng2-charts": "^3.0.0",
     "ngx-loading": "13.0.1",
-    "ngx-toastr": "^11.2.1",
+    "ngx-toastr": "^16.1.1",
     "run-script-os": "^1.1.6",
     "rxjs": "~6.6.7",
     "tslib": "^2.0.0",
