@@ -80,7 +80,7 @@
                 <form [formGroup]="assessmentForm" (ngSubmit)="onAssessmentSubmit()">
                     <div class="row">
                         <div class="col-12">
-                            <div class="form-group row">
+                            <div class="mb-2 row">
                                 <label for="description" class="col-3 col-form-label">Description</label>
                                 <div class="col-9"
                                     [class.has-error]="descriptionControl.invalid && canShowErrors(descriptionControl)">
@@ -97,7 +97,7 @@
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <div class="form-group row">
+                            <div class="mb-2 row">
                                 <label for="openOn" class="col-3 col-form-label">Open on</label>
                                 <div class="col-9" [class.has-error]="openOnControl.invalid && canShowErrors(openOnControl)">
                                     <app-ng-datetime name="openOn" formControlName="openOn"></app-ng-datetime>
@@ -113,7 +113,7 @@
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <div class="form-group row">
+                            <div class="mb-2 row">
                                 <label for="deadline" class="col-3 col-form-label">Deadline</label>
                                 <div class="col-9"
                                     [class.has-error]="deadlineControl.invalid && canShowErrors(deadlineControl)">

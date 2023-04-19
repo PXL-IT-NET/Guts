@@ -72,6 +72,8 @@ export class CourseComponent implements OnInit, OnDestroy {
   private loadCourseContents(courseId: number) {
     this.loading = true;
     this.hasContent = true;
+    this.selectedChapter = null;
+    this.selectedProject = null;
     this.courseService.getCourseContentsById(courseId).subscribe((result) => {
       this.loading = false;
       if (result.success) {

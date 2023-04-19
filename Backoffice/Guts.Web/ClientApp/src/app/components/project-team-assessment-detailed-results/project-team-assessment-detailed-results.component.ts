@@ -43,11 +43,11 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
           }
         },
         grid: {
-          borderDash: (context: ScriptableScaleContext) => {
-            if (context.tick.value === 3) {
-              return [3, 2]; // set the dash pattern for the 0 gridline
+          lineWidth: (ctx, options) => {
+            if (ctx.tick.value === 3) {
+              return 3; // set the dash pattern for the 0 gridline
             }
-            return [];
+            return 1;
           }
         }
       }
@@ -102,7 +102,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
             this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
           }
         });
-      } else{
+      } else {
         this.setTeams(teamId);
       }
 
@@ -147,7 +147,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
     });
   }
 
-  private resetResults(){
+  private resetResults() {
     this.results = [];
     this.teamGrade = 0;
 

@@ -10,13 +10,13 @@
   <div class="card card-body">
     <form name="form" (ngSubmit)="f.form.valid && saveExampart()" #f="ngForm" novalidate>
       <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="mb-2 col-md-6">
           <label for="name">Name</label>
           <input type="text" class="form-control" id="name" name="name" [(ngModel)]="model.name" #name="ngModel"
             required [ngClass]="{ 'is-invalid': f.submitted && !name.valid }" [disabled]="model.id > 0" />
           <div class="invalid-feedback">Name is required</div>
         </div>
-        <div class="form-group col-md-6">
+        <div class="mb-2 col-md-6">
           <label for="deadlinedate">Deadline date and time</label>
           <div class="input-group">
             <input class="form-control" placeholder="yyyy-mm-dd" id="deadlinedate" name="deadlinedate"
@@ -73,10 +73,10 @@
         </div>
 
       </div>
-      <div class="form-group" *ngIf="model.id <= 0">
+      <div class="mb-2" *ngIf="model.id <= 0">
         <button class="btn btn-primary btn-sm" type="submit">Add exam part</button>
       </div>
-      <div class="form-group" *ngIf="model.id > 0">
+      <div class="mb-2" *ngIf="model.id > 0">
         <button class="btn btn-primary btn-sm" (click)="deleteExampart()">
           <span>Delete exam part</span>
         </button>

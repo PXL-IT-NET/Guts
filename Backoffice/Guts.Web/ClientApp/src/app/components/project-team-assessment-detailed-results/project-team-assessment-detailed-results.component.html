@@ -85,14 +85,14 @@
             <div class="card-body">
                 <div class="card-text">
                     <form>
-                        <div class="form-group row">
+                        <div class="mb-2 row">
                             <label for="teamGrade" class="col-6 col-form-label">Team grade</label>
                             <div class="col-6">
                                 <input name="teamGrade" type="number" min="0" max="20" class="form-control"
                                     [(ngModel)]="teamGrade" (ngModelChange)="calculateIndividualGrades()" />
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="mb-2 row">
                             <label for="correctionType" class="col-6 col-form-label">Correction based on</label>
                             <div class="col-6">
                                 <select name="correctionType" class="form-control" [(ngModel)]="gradeCorrectionType" (ngModelChange)="calculateIndividualGrades()">
@@ -102,7 +102,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group row" *ngFor="let result of results">
+                        <div class="mb-2 row" *ngFor="let result of results">
                             <label for="individualScore"
                                 class="col-6 col-form-label">{{result.subject.fullName}}</label>
                             <div class="col-6">
