@@ -1,6 +1,6 @@
 ﻿using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.AssessmentResultAggregate
 {
     public interface IAssessmentSubResult
     {

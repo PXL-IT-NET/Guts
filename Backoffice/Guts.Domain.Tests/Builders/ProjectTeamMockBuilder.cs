@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.UserAggregate;
@@ -12,8 +14,14 @@ namespace Guts.Domain.Tests.Builders
         {
             Item = new Mock<IProjectTeam>();
             Item.SetupGet(pt => pt.ProjectId).Returns(Random.NextPositive());
-            Item.SetupGet(pa => pa.Name).Returns(Random.NextString());
-            Item.SetupGet(pa => pa.TeamUsers).Returns(new List<IProjectTeamUser>());
+            Item.SetupGet(pt => pt.Name).Returns(Random.NextString());
+            Item.SetupGet(pt => pt.TeamUsers).Returns(new List<IProjectTeamUser>());
+        }
+
+        public ProjectTeamMockBuilder WithId()
+        {
+            Item.SetupGet(pt => pt.Id).Returns(Random.NextPositive());
+            return this;
         }
 
         public ProjectTeamMockBuilder WithMembers(int numberOfMembers)
@@ -29,6 +37,12 @@ namespace Guts.Domain.Tests.Builders
                 members.Add(memberMock.Object);
             }
             Item.SetupGet(pa => pa.TeamUsers).Returns(members);
+            Item.Setup(pt => pt.GetTeamUser(It.IsAny<int>())).Returns((int userId) =>
+            {
+                User member = members.SingleOrDefault(m => m.UserId == userId)?.User;
+                Contracts.Require(member != null, "User is not a member" );
+                return member;
+            });
             return this;
         }
     }

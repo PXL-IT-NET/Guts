@@ -105,15 +105,15 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             return peers;
         }
 
-        public IAssessmentResult GetAssessmentResultFor(int userId, IAssessmentResultFactory resultFactory)
-        {
-            RequireUserToBeATeamMember(userId);
-            Contracts.Require(IsComplete, "The team assessment is not completed by all peers. Assessment results are only available when all members completed the assessment.");
+        //public IAssessmentResult GetAssessmentResultFor(int userId, IAssessmentResultFactory resultFactory)
+        //{
+        //    RequireUserToBeATeamMember(userId);
+        //    Contracts.Require(IsComplete, "The team assessment is not completed by all peers. Assessment results are only available when all members completed the assessment.");
 
-            User subject = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
+        //    User subject = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
 
-            return resultFactory.Create(subject, PeerAssessments);
-        }
+        //    return resultFactory.Create(subject, PeerAssessments);
+        //}
 
         public void ValidateAssessmentsOf(int userId)
         {

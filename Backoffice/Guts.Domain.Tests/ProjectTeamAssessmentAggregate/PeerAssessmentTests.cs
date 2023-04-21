@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Guts.Common.Extensions;
+﻿using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;

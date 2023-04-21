@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
+using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.AssessmentResultAggregate
 {
     internal class AssessmentSubResult : IAssessmentSubResult
     {

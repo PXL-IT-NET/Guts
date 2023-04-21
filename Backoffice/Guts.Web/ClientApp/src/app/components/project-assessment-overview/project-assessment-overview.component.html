@@ -46,20 +46,20 @@
                             </div>
                         </div>
                         <div *ngIf="assessment.isOpen && !assessment.teamStatus.isComplete && userProfile.isMemberOf(assessment.teamStatus.teamId)" class="m-2">
-                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']" class="btn btn-success">
+                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']" class="btn btn-outline-success">
                                 <span class="bi-pencil-square"></span>
                                 <span> Evaluate self and others</span>
                             </a>
                         </div>
                         <div *ngIf="assessment.teamStatus.isComplete && userProfile.isLector()" class="m-2">
-                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'detailed-results']" class="btn btn-success">
+                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'detailed-results']" class="btn btn-outline-success">
                                 <span class="bi-pencil-square"></span>
                                 <span> View results</span>
                             </a>
                         </div>
 
                         <div *ngIf="assessment.teamStatus.isComplete && userProfile.isMemberOf(selectedTeamId)" class="m-2">
-                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'my-result']" class="btn btn-success">
+                            <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'my-result']" class="btn btn-outline-success">
                                 <span class="bi-pencil-square"></span>
                                 <span> View my result</span>
                             </a>
@@ -130,7 +130,7 @@
                     </div>
                     <div class="row top-buffer">
                         <div class="col-12">
-                            <button type="submit" class="btn btn-sm btn-success padding-8"
+                            <button type="submit" class="btn btn-sm btn-outline-success padding-8"
                                 [disabled]="assessmentForm.pristine">Add project assessment</button>
                         </div>
                     </div>

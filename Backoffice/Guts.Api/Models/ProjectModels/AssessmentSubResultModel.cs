@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Guts.Domain.ProjectTeamAssessmentAggregate;
+using Guts.Domain.AssessmentResultAggregate;
 
 namespace Guts.Api.Models.ProjectModels;
 

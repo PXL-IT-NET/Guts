@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using Guts.Common;
 using Guts.Common.Extensions;
+using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
@@ -317,39 +317,6 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
 
             //Act + Assert
             Assert.That(() => _projectTeamAssessment.GetPeerAssessmentsOf(nonTeamUser.Id), Throws.InstanceOf<ContractException>());
-        }
-
-        [Test]
-        public void GetAssessmentResultFor_ShouldReturnResultWithUserAsSubject()
-        {
-            //Arrange
-            var builder = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded();
-            _projectTeamAssessment = builder.Build();
-            User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
-
-            IAssessmentResult expectedResult = new Mock<IAssessmentResult>().Object;
-            builder.AssessmentResultFactoryMock
-                .Setup(factory => factory.Create(It.IsAny<User>(), It.IsAny<IReadOnlyCollection<IPeerAssessment>>()))
-                .Returns(expectedResult);
-
-            //Act
-            IAssessmentResult result = _projectTeamAssessment.GetAssessmentResultFor(user.Id, builder.AssessmentResultFactoryMock.Object);
-
-            //Assert
-            builder.AssessmentResultFactoryMock.Verify(factory => factory.Create(user, _projectTeamAssessment.PeerAssessments), Times.Once);
-            Assert.That(result, Is.SameAs(expectedResult));
-        }
-
-        [Test]
-        public void GetAssessmentResultFor_UserNotInTeam_ShouldThrowContractException()
-        {
-            //Arrange
-            var builder = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded();
-            _projectTeamAssessment = builder.Build();
-            User nonTeamUser = new UserBuilder().Build();
-
-            //Act + Assert
-            Assert.That(() => _projectTeamAssessment.GetAssessmentResultFor(nonTeamUser.Id, builder.AssessmentResultFactoryMock.Object), Throws.InstanceOf<ContractException>());
         }
     }
 }

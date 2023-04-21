@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
+using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -87,7 +88,8 @@ namespace Guts.Business.Services.Assessment
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
             List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
-                .Select(teamUser => teamAssessment.GetAssessmentResultFor(teamUser.UserId, _assessmentResultFactory)).ToList();
+                .Select(teamUser => _assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
+
             return results;
         }
 
@@ -95,8 +97,7 @@ namespace Guts.Business.Services.Assessment
         {
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
-            IAssessmentResult result =  teamAssessment.GetAssessmentResultFor(userId, _assessmentResultFactory);
-            result.ClearPeerAssessments();
+            IAssessmentResult result =  _assessmentResultFactory.Create(userId, teamAssessment, false);
             return result;
         }
 
@@ -116,8 +117,8 @@ namespace Guts.Business.Services.Assessment
             foreach (PeerAssessmentDto dto in peerAssessments)
             {
                 Contracts.Require(dto.UserId == userId, $"Only peer assessments of user with id '{userId}' are allowed.");
-                IPeerAssessment peerAssessment = teamAssessment.AddOrUpdatePeerAssessment(userId, dto.SubjectId,
-                    dto.CooperationScore, dto.ContributionScore, dto.EffortScore, dto.Explanation);
+                teamAssessment.AddOrUpdatePeerAssessment(userId, dto.SubjectId, dto.CooperationScore,
+                    dto.ContributionScore, dto.EffortScore, dto.Explanation);
             }
 
             teamAssessment.ValidateAssessmentsOf(userId);

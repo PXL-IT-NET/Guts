@@ -140,7 +140,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
           });
           this.peersVersusSelfChartData.labels = this.results.map(result => result.subject.fullName);
         } else {
-          this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.warning("Could not retrieve project team assment results. Message: " + (result.message || "unknown error"), "API error");
           this.resetResults();
         }
       });

@@ -25,7 +25,7 @@
           <li class="list-group-item" *ngFor="let solutionFile of model.solutionFiles">
             <div class="mb-2">
               <span>{{solutionFile.filePath}}</span>
-              <button class="btn btn-sm ml-2 btn-outline-primary" type="button"
+              <button class="btn btn-sm ms-2 btn-outline-primary" type="button"
                 (click)="solutionFile.isCollapsed = !solutionFile.isCollapsed">
                 <span class="fa fa-plus" *ngIf="solutionFile.isCollapsed"></span>
                 <span class="fa fa-minus" *ngIf="!solutionFile.isCollapsed"></span>
@@ -61,7 +61,7 @@
                     <span *ngIf="!testResult.runned" class="fa fa-circle text-warning"></span>
                     <span *ngIf="testResult.runned && testResult.passed" class="fa fa-check-circle text-success"></span>
                     <span *ngIf="testResult.runned &&!testResult.passed" class="fa fa-times-circle text-danger"></span>
-                    <span class="ml-2">{{testResult.testName}}</span>
+                    <span class="ms-2">{{testResult.testName}}</span>
                   </td>
                   <td>
                     <pre class="text-danger">{{testResult.message}}</pre>

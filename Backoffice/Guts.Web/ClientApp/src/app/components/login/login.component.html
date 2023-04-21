@@ -15,8 +15,8 @@
       <div class="invalid-feedback">Password is required</div>
     </div>
     <div class="mb-2">
-      <button [disabled]="loading" class="btn btn-primary" type="submit">Login</button>
-      <button [disabled]="loading" class="btn btn-default" type="button" (click)="cancelSession()" *ngIf="model.loginSessionPublicIdentifier && model.loginSessionPublicIdentifier.length > 0">Cancel</button>
+      <button [disabled]="loading" class="btn btn-outline-primary" type="submit">Login</button>
+      <button [disabled]="loading" class="btn btn-outline-secondary" type="button" (click)="cancelSession()" *ngIf="model.loginSessionPublicIdentifier && model.loginSessionPublicIdentifier.length > 0">Cancel</button>
     </div>
     <pre *ngIf="error" class="alert alert-danger">{{error}}</pre>
     <ngx-loading [show]="loading"></ngx-loading>

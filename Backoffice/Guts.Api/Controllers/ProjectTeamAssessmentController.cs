@@ -6,6 +6,7 @@ using AutoMapper;
 using Guts.Api.Models.ProjectModels;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Assessment;
+using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

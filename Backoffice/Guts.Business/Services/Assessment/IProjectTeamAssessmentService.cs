@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
+using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 
 namespace Guts.Business.Services.Assessment

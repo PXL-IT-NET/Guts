@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Guts.Domain.ProjectTeamAssessmentAggregate;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.AssessmentResultAggregate
 {
     internal interface IAssessmentSubResultFactory
     {

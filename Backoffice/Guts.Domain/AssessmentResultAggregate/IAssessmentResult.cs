@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.AssessmentResultAggregate
 {
     public interface IAssessmentResult
     {
@@ -13,7 +14,5 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         IAssessmentSubResult EffortResult { get; }
         IAssessmentSubResult CooperationResult { get; }
         IAssessmentSubResult ContributionResult { get; }
-
-        void ClearPeerAssessments();
     }
 }

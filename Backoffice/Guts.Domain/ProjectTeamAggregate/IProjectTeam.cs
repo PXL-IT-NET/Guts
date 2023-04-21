@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.ProjectTeamAggregate
 {
@@ -9,5 +10,7 @@ namespace Guts.Domain.ProjectTeamAggregate
         IProject Project { get; }
         int ProjectId { get; }
         ICollection<IProjectTeamUser> TeamUsers { get; set; }
+
+        User GetTeamUser(int userId);
     }
 }

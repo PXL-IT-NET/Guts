@@ -2,7 +2,6 @@
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
-using Moq;
 
 namespace Guts.Domain.Tests.Builders
 {
