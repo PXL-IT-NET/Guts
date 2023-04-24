@@ -8,6 +8,7 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
 using NUnit.Framework;
@@ -25,6 +26,8 @@ namespace Guts.Business.Tests.Services
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+        private Mock<IProjectAssessmentFactory> _projectAssessmentFactoryMock;
+        private Mock<IProjectAssessmentRepository> _projectAssessmentRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -36,6 +39,8 @@ namespace Guts.Business.Tests.Services
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
+            _projectAssessmentFactoryMock = new Mock<IProjectAssessmentFactory>();
+            _projectAssessmentRepositoryMock = new Mock<IProjectAssessmentRepository>();
 
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
@@ -43,31 +48,8 @@ namespace Guts.Business.Tests.Services
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object,
-                null, null, null); //TODO: use actual mocks
+                _projectAssessmentRepositoryMock.Object, _projectAssessmentFactoryMock.Object, null); //TODO: use actual mock
         }
-
-        //[Test]
-        //public void GetProjectAsync_ShouldReturnProjectForCurrentPeriod()
-        //{
-        //    //Arrange
-        //    var existingPeriod = new Period { Id = _random.NextPositive() };
-        //    var courseCode = Guid.NewGuid().ToString();
-        //    var existingProject = new ProjectBuilder().WithId()
-        //        .WithCourse(courseCode)
-        //        .WithPeriod(existingPeriod).Build();
-
-        //    _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-        //    _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-        //        .ReturnsAsync(existingProject);
-
-        //    //Act
-        //    var result = _service.GetProjectAsync(courseCode, existingProject.Code).Result;
-
-        //    //Assert
-        //    _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
-        //    _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(courseCode, existingProject.Code, existingPeriod.Id), Times.Once());
-        //    Assert.That(result, Is.EqualTo(existingProject));
-        //}
 
         [Test]
         public void GetOrCreateProjectAsync_ShouldReturnProjectIfItExists()
@@ -404,6 +386,28 @@ namespace Guts.Business.Tests.Services
             _assignmentServiceMock.Verify(service => service.GetAssignmentTeamStatisticsAsync(
                 It.IsIn<int>(existingProject.Assignments.Select(a => a.Id)),
                 date), Times.Exactly(numberOfAssignments));
+        }
+
+        [Test]
+        public void CreateProjectAssessmentAsync_ShouldUseFactoryToCreateAndRepositoryToSave()
+        {
+            //Arrange
+            int projectId = _random.NextPositive();
+            string description = _random.NextString();
+            DateTime openOnUtc = _random.NextDateTimeInFuture().ToUniversalTime();
+            DateTime deadlineUtc = openOnUtc.AddDays(7);
+          
+            IProjectAssessment createdAssessment = new ProjectAssessmentMockBuilder().Build().Object;
+            _projectAssessmentFactoryMock
+                .Setup(factory => factory.CreateNew(projectId, description, openOnUtc, deadlineUtc))
+                .Returns(createdAssessment);
+
+            //Act
+            IProjectAssessment result = _service.CreateProjectAssessmentAsync(projectId, description, openOnUtc, deadlineUtc).Result;
+
+            //Assert
+            _projectAssessmentRepositoryMock.Verify(repo => repo.AddAsync(createdAssessment), Times.Once);
+            Assert.That(result, Is.SameAs(createdAssessment));
         }
     }
 }

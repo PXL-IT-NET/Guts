@@ -23,7 +23,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
 
   //#Form
   public assessmentForm: UntypedFormGroup;
-  
+
   public get descriptionControl() { return <UntypedFormControl>this.assessmentForm.get('description'); }
   public get openOnControl() { return <UntypedFormControl>this.assessmentForm.get('openOn'); }
   public get deadlineControl() { return <UntypedFormControl>this.assessmentForm.get('deadline'); }
@@ -70,10 +70,10 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this.projectService.getProjectDetails(courseId, projectCode).subscribe(result => {
       if (result.success) {
         this.project = result.value;
-        if(this.project.teams.length > 0){
+        if (this.project.teams.length > 0) {
           this.selectedTeamId = this.project.teams[0].id;
-        } 
-        this.loadProjectAssessments(); 
+        }
+        this.loadProjectAssessments();
       } else {
         this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
       }
@@ -92,7 +92,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     let model = new ProjectAssessmentCreateModel(this.project.id);
     Object.assign(model, this.assessmentForm.getRawValue());
 
-    this.projectAssessmentService.addProjectAssessment(model).subscribe(result =>{
+    this.projectAssessmentService.addProjectAssessment(model).subscribe(result => {
       if (result.success) {
         this.toastr.success("Project peer assessment added");
         this.assessments.push(result.value);
@@ -106,23 +106,26 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     return fc.dirty || fc.touched
   }
 
-  public loadProjectAssessments(){
+  public loadProjectAssessments() {
     this.projectAssessmentService.getAssessmentsOfProject(this.project.id).subscribe(result => {
       if (result.success) {
         this.assessments = result.value;
-        //this.assessments = this.assessments.slice(0,1);
-        this.assessments.forEach(assessment => {
-          if(assessment.isOpen || assessment.isOver){
-            this.projectTeamAssessmentService.getStatusOfProjectTeamAssessment(assessment.id, this.selectedTeamId).subscribe(result => {
-              if (result.success) {
-                 assessment.teamStatus = result.value;
-              } else {
-                this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
-              }
-            });
-          }
-        });
-
+        if (this.selectedTeamId > 0) {
+          this.assessments.forEach(assessment => {
+            if (assessment.isAfterOpenOn) {
+              this.projectTeamAssessmentService.getStatusOfProjectTeamAssessment(assessment.id, this.selectedTeamId).subscribe(result => {
+                if (result.success) {
+                  assessment.teamStatus = result.value;
+                } else {
+                  this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
+                }
+              });
+            }
+          });
+        }
+        else {
+          this.toastr.warning("You are not a member of a team. Please join a team first.", "No team found");
+        }
       } else {
         this.toastr.error("Could not load project assessments from API. Message: " + (result.message || "unknown error"), "API error");
       }

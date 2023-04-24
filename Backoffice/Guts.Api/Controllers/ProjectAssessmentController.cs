@@ -62,6 +62,6 @@ public class ProjectAssessmentController : ControllerBase
 
         ProjectAssessmentModel outputModel = _mapper.Map<ProjectAssessmentModel>(assessment);
 
-        return CreatedAtAction(nameof(GetProjectAssessment), new { id = outputModel.Id }, outputModel);
+        return CreatedAtAction(nameof(GetProjectAssessment), new { id = assessment.Id }, outputModel);
     }
 }

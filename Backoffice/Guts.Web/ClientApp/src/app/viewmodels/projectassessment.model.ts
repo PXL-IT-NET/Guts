@@ -34,6 +34,11 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
     return now.isAfter(this.openOnUtc) && this.deadlineUtc.isAfter(now);
   }
 
+  public get isAfterOpenOn() : boolean {
+    let now = moment();
+    return now.isAfter(this.openOnUtc);
+  }
+
   public deadlineUtc: moment.Moment;
   public get deadlineDisplay() : string {
     return this.deadlineUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
