@@ -348,7 +348,7 @@ namespace Guts.Business.Tests.Services
             var date = DateTime.UtcNow;
 
             _assignmentServiceMock.Setup(
-                    service => service.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>())
+                    service => service.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>())
                 )
                 .ReturnsAsync(new AssignmentResultDto());
 
@@ -358,6 +358,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(assignmentResults.Count, Is.EqualTo(numberOfAssignments));
             _assignmentServiceMock.Verify(service => service.GetResultsForTeamAsync(
+                existingProject.Id,
                 It.IsIn<int>(existingProject.Assignments.Select(a => a.Id)),
                 teamId, date), Times.Exactly(numberOfAssignments));
         }
@@ -374,7 +375,7 @@ namespace Guts.Business.Tests.Services
             var date = DateTime.UtcNow;
 
             _assignmentServiceMock.Setup(
-                    service => service.GetAssignmentTeamStatisticsAsync(It.IsAny<int>(), It.IsAny<DateTime?>())
+                    service => service.GetAssignmentTeamStatisticsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>())
                 )
                 .ReturnsAsync(new AssignmentStatisticsDto());
 
@@ -384,6 +385,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(assignmentStatistics.Count, Is.EqualTo(numberOfAssignments));
             _assignmentServiceMock.Verify(service => service.GetAssignmentTeamStatisticsAsync(
+                existingProject.Id,
                 It.IsIn<int>(existingProject.Assignments.Select(a => a.Id)),
                 date), Times.Exactly(numberOfAssignments));
         }

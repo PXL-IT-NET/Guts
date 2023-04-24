@@ -24,14 +24,14 @@ namespace Guts.Infrastructure.Repositories
             return await GetLastTestResultsPerUser(assignmentId, userId, dateUtc);
         }
 
-        public async Task<IList<TestResult>> GetLastTestResultsOfAllTeams(int assignmentId, DateTime? dateUtc)
+        public async Task<IList<TestResult>> GetLastTestResultsOfAllTeams(int projectId, int assignmentId, DateTime? dateUtc)
         {
-            return await GetLastTestResultsPerTeam(assignmentId, null, dateUtc);
+            return await GetLastTestResultsPerTeam(projectId, assignmentId, null, dateUtc);
         }
 
-        public async Task<IList<TestResult>> GetLastTestResultsOfTeam(int assignmentId, int teamId, DateTime? dateUtc)
+        public async Task<IList<TestResult>> GetLastTestResultsOfTeam(int projectId, int assignmentId, int teamId, DateTime? dateUtc)
         {
-            return await GetLastTestResultsPerTeam(assignmentId, teamId, dateUtc);
+            return await GetLastTestResultsPerTeam(projectId, assignmentId, teamId, dateUtc);
         }
 
         public async Task<IList<TestResult>> GetLastTestResultsOfAssignmentsAsync(int[] assignmentIds, DateTime? dateUtc)
@@ -57,27 +57,32 @@ namespace Guts.Infrastructure.Repositories
             return await lastResultsQuery.Include(testresult => testresult.Test).AsNoTracking().ToListAsync();
         }
 
-        private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int assignmentId, int? teamId, DateTime? dateUtc)
+        private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int projectId, int assignmentId, int? teamId, DateTime? dateUtc)
         {
             var lastResultKeys = from testresult in _context.TestResults
-                                 join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
-                                 where testresult.Test.AssignmentId == assignmentId
-                                     && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
-                                       && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
-                                 group testresult by new { testresult.TestId, projectTeamUser.ProjectTeamId }
-                into g
-                                 select new
-                                 {
-                                     g.Key.TestId,
-                                     g.Key.ProjectTeamId,
-                                     CreatDateTime = g.Max(tr => tr.CreateDateTime)
-                                 };
+                from projectTeamUser in _context.ProjectTeamUsers //on testresult.UserId equals projectTeamUser.UserId
+                where (testresult.Test.AssignmentId == assignmentId)
+                      && (testresult.UserId == projectTeamUser.UserId)
+                      && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
+                      && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
+                      && (projectTeamUser.ProjectTeam.ProjectId == projectId)
+                group testresult by new { testresult.TestId, projectTeamUser.ProjectTeamId } into g
+                select new
+                {
+                    g.Key.TestId,
+                    g.Key.ProjectTeamId,
+                    CreatDateTime = g.Max(tr => tr.CreateDateTime)
+                };
+
+
+            var test = lastResultKeys.ToList();
 
             var lastResultsQuery = from testresult in _context.TestResults
                                    join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
                                    from key in lastResultKeys
                                    where testresult.TestId == key.TestId
                                          && projectTeamUser.ProjectTeamId == key.ProjectTeamId
+                                         && projectTeamUser.ProjectTeam.ProjectId == projectId
                                          && testresult.CreateDateTime == key.CreatDateTime
                                          && testresult.Test.AssignmentId == assignmentId
                                    select testresult;

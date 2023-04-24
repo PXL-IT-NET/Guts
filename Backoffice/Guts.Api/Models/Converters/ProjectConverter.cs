@@ -28,12 +28,12 @@ namespace Guts.Api.Models.Converters
                 {
                     Id = t.Id,
                     Name = t.Name
-                }).ToList(),
+                }).OrderBy(team => team.Name).ToList(),
                 Components = project.Assignments.Select(a => new AssignmentModel
                 {
                     AssignmentId = a.Id,
                     Code = a.Code
-                }).ToList()
+                }).OrderBy(c => c.Code).ToList()
             };
 
             return model;

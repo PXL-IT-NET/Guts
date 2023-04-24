@@ -327,21 +327,22 @@ namespace Guts.Business.Tests.Services
         public void GetResultsForTeamAsync_ShouldRetrieveLastTestsResultsForTeamAndConvertThemToAnAssignmentResultDto()
         {
             //Arrange
+            var projectId = _random.NextPositive();
             var assignmentId = _random.NextPositive();
             var teamId = _random.NextPositive();
             var lastTestResults = new List<TestResult>();
 
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             //Act
-            var result = _service.GetResultsForTeamAsync(assignmentId, teamId, null).Result;
+            var result = _service.GetResultsForTeamAsync(projectId, assignmentId, teamId, null).Result;
 
             //Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.TestResults, Is.SameAs(lastTestResults));
             Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfTeam(assignmentId, teamId, null), Times.Once);
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfTeam(projectId, assignmentId, teamId, null), Times.Once);
         }
 
         [Test]
@@ -451,13 +452,14 @@ namespace Guts.Business.Tests.Services
         public void GetAssignmentTeamStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
         {
             //Arrange
+            var projectId = _random.NextPositive();
             var assignmentId = _random.NextPositive();
             var date = DateTime.UtcNow;
             var lastTestResults = new List<TestResult>();
             var assignmentStatisticsDto = new AssignmentStatisticsDto();
 
             _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResultsOfAllTeams(It.IsAny<int>(), It.IsAny<DateTime?>()))
+                .Setup(repo => repo.GetLastTestResultsOfAllTeams(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(lastTestResults);
 
             _assignmentWithResultsConverterMock
@@ -465,11 +467,11 @@ namespace Guts.Business.Tests.Services
                 .Returns(assignmentStatisticsDto);
 
             //Act
-            var result = _service.GetAssignmentTeamStatisticsAsync(assignmentId, date).Result;
+            var result = _service.GetAssignmentTeamStatisticsAsync(projectId, assignmentId, date).Result;
 
             //Assert
             Assert.That(result, Is.SameAs(assignmentStatisticsDto));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllTeams(assignmentId, date), Times.Once);
+            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllTeams(projectId, assignmentId, date), Times.Once);
             _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
         }
 

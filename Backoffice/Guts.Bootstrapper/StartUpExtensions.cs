@@ -47,6 +47,10 @@ namespace Guts.Bootstrapper
                     {
                         sqlOptions.MigrationsAssembly("Guts.Infrastructure");
                     });
+
+#if DEBUG
+                options.EnableSensitiveDataLogging(true);
+#endif
             });
 
             services.AddIdentity<User, Role>(options =>

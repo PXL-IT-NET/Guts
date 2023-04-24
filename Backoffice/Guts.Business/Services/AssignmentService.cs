@@ -115,12 +115,12 @@ namespace Guts.Business.Services
             return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
-        public async Task<AssignmentResultDto> GetResultsForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc)
+        public async Task<AssignmentResultDto> GetResultsForTeamAsync(int projectId, int assignmentId, int teamId, DateTime? dateUtc)
         {
             return new AssignmentResultDto
             {
                 AssignmentId = assignmentId,
-                TestResults = await _testResultRepository.GetLastTestResultsOfTeam(assignmentId, teamId, dateUtc)
+                TestResults = await _testResultRepository.GetLastTestResultsOfTeam(projectId, assignmentId, teamId, dateUtc)
             };
         }
 
@@ -176,9 +176,9 @@ namespace Guts.Business.Services
             return _assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
         }
 
-        public async Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int assignmentId, DateTime? dateUtc)
+        public async Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int projectId, int assignmentId, DateTime? dateUtc)
         {
-            var testResults = await _testResultRepository.GetLastTestResultsOfAllTeams(assignmentId, dateUtc);
+            var testResults = await _testResultRepository.GetLastTestResultsOfAllTeams(projectId, assignmentId, dateUtc);
             return _assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
         }
 

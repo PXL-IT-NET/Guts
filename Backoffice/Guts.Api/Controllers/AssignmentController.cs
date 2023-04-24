@@ -112,7 +112,7 @@ namespace Guts.Api.Controllers
 
             var testRunInfo = await _assignmentService.GetTeamTestRunInfoForAssignment(assignmentId, teamId, dateUtc);
 
-            var results = await _assignmentService.GetResultsForTeamAsync(assignmentId, teamId, dateUtc);
+            var results = await _assignmentService.GetResultsForTeamAsync(team.ProjectId, assignmentId, teamId, dateUtc);
 
             var solutionFiles =
                 await _solutionFileRepository.GetAllLatestOfAssignmentForTeamAsync(assignmentId, teamId, dateUtc);

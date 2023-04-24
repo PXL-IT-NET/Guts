@@ -149,7 +149,7 @@ namespace Guts.Business.Services
             var results = new List<AssignmentResultDto>();
             foreach (var assignment in project.Assignments)
             {
-                var dto = await _assignmentService.GetResultsForTeamAsync(assignment.Id, teamId, dateUtc);
+                var dto = await _assignmentService.GetResultsForTeamAsync(project.Id, assignment.Id, teamId, dateUtc);
                 results.Add(dto);
             }
 
@@ -162,7 +162,7 @@ namespace Guts.Business.Services
             foreach (var assignment in project.Assignments)
             {
                 var assignmentStatistics =
-                    await _assignmentService.GetAssignmentTeamStatisticsAsync(assignment.Id, dateUtc);
+                    await _assignmentService.GetAssignmentTeamStatisticsAsync(project.Id, assignment.Id, dateUtc);
                 results.Add(assignmentStatistics);
             }
             return results;

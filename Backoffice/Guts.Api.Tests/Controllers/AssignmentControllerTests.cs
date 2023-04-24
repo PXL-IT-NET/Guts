@@ -169,7 +169,7 @@ namespace Guts.Api.Tests.Controllers
                 .ReturnsAsync(existingAssignment);
 
             var assignmentResultDto = new AssignmentResultDto();
-            _assignmentServiceMock.Setup(service => service.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            _assignmentServiceMock.Setup(service => service.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(assignmentResultDto);
 
             var returnedTestRunInfo = new AssignmentTestRunInfoDto();
@@ -201,7 +201,7 @@ namespace Guts.Api.Tests.Controllers
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id), Times.Once);
             _solutionFileRepositoryMock.Verify();
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(existingAssignment.Id, teamId, null), Times.Once);
-            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(existingAssignment.Id, teamId, null), Times.Once);
+            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(existingTeam.ProjectId, existingAssignment.Id, teamId, null), Times.Once);
             _assignmentConverterMock.Verify(
                 converter => converter.ToAssignmentDetailModel(existingAssignment, returnedTestRunInfo,
                     assignmentResultDto.TestResults, returnedSolutionFiles), Times.Once);
@@ -228,7 +228,7 @@ namespace Guts.Api.Tests.Controllers
             _projectTeamRepositoryMock.Verify(repo => repo.LoadByIdAsync(otherTeam.Id), Times.Once);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
+            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
             _assignmentConverterMock.Verify(
                 converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
                     It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
@@ -254,7 +254,7 @@ namespace Guts.Api.Tests.Controllers
             _projectTeamRepositoryMock.Verify(repo => repo.LoadByIdAsync(teamId.Id), Times.Once);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
             _assignmentServiceMock.Verify(repo => repo.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
-            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
+            _assignmentServiceMock.Verify(repo => repo.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()), Times.Never);
             _assignmentConverterMock.Verify(
                 converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
                     It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),

@@ -18,7 +18,7 @@ namespace Guts.Business.Services
         Task<AssignmentResultDto> GetResultsForUserAsync(int assignmentId, int userId, DateTime? dateUtc);
         Task<AssignmentTestRunInfoDto> GetUserTestRunInfoForAssignment(int assignmentId, int userId, DateTime? dateUtc);
 
-        Task<AssignmentResultDto> GetResultsForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc);
+        Task<AssignmentResultDto> GetResultsForTeamAsync(int projectId, int assignmentId, int teamId, DateTime? dateUtc);
         Task<AssignmentTestRunInfoDto> GetTeamTestRunInfoForAssignment(int assignmentId, int teamId, DateTime? dateUtc);
 
         Task<IReadOnlyList<SolutionDto>> GetAllSolutions(int assignmentId);
@@ -26,6 +26,6 @@ namespace Guts.Business.Services
         Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector);
 
         Task<AssignmentStatisticsDto> GetAssignmentUserStatisticsAsync(int assignmentId, DateTime? dateUtc);
-        Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int assignmentId, DateTime? dateUtc);
+        Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int projectId, int assignmentId, DateTime? dateUtc);
     }
 }
