@@ -18,9 +18,9 @@ namespace Guts.Api.Models.Converters
             _projectConverter = projectConverter;
         }
 
-        public CourseContentsModel ToCourseContentsModel(Course course, 
-            IList<Chapter> chapters, 
-            IList<Project> projects)
+        public CourseContentsModel ToCourseContentsModel(Course course,
+            IReadOnlyList<Chapter> chapters,
+            IReadOnlyList<IProject> projects)
         {
             if (course == null || chapters == null || projects == null)
             {

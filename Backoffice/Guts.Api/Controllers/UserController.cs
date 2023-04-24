@@ -1,26 +1,33 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using Guts.Api.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
+using Guts.Business.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/users")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class UserController : ControllerBase
     {
+        private readonly IProjectTeamRepository _projectTeamRepository;
+
+        public UserController(IProjectTeamRepository projectTeamRepository)
+        {
+            _projectTeamRepository = projectTeamRepository;
+        }
+
         [HttpGet("current/profile")]
         [ProducesResponseType(typeof(UserProfileModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public IActionResult GetCurrentUserProfile()
+        public async Task<IActionResult> GetCurrentUserProfile()
         {
-            //TODO: use this service to have a user profile at client side.
             var model = new UserProfileModel
             {
                 Id = GetUserId(),
-                Roles = GetUserRoles()
+                Roles = GetUserRoles(),
+                Teams = (await _projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList()
             };
             return Ok(model);
         }

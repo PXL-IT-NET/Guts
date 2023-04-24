@@ -49,9 +49,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="app.yaml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="client.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

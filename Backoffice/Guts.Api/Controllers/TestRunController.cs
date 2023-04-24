@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -13,11 +12,8 @@ using Guts.Business.Services;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 [assembly: InternalsVisibleTo("Guts.Api.Tests")]
 
@@ -28,7 +24,6 @@ namespace Guts.Api.Controllers
     /// </summary>
     [Produces("application/json")]
     [Route("api/testruns")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class TestRunController : ControllerBase
     {
         private readonly ITestRunConverter _testRunConverter;
@@ -73,7 +68,6 @@ namespace Guts.Api.Controllers
         /// Saves a testrun for an exercise. The testrun may contain results for one, multiple or all tests.
         /// If the exercise (or its chapter) does not exists yet (for the current period) a new exercise / chapter is created for the current period. 
         /// </summary>
-        [HttpPost] //keep for backwards compatibility
         [HttpPost("forexercise")]
         [ProducesResponseType(typeof(SavedTestRunModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]

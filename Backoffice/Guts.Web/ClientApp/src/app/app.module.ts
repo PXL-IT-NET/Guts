@@ -17,7 +17,7 @@ import { PositiveNumberValidatorDirective } from './util/positive-number.directi
 import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.component';
 
 // 3th party
-import { ChartsModule } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 import { RecaptchaModule } from 'ng-recaptcha';
@@ -43,18 +43,23 @@ import { ToastrModule } from 'ngx-toastr';
     c.AssignmentDetailComponent,
     c.AssignmentSummaryComponent,
     c.AssignmentStatisticsComponent,
-    c.ProjectTeamOverviewComponent,
+    c.ProjectTeamComponent,
     c.ProjectSummaryComponent,
+    c.ProjectAssessmentOverviewComponent,
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
-    NgDatetimeComponent
+    NgDatetimeComponent,
+    c.ProjectAssessmentOverviewComponent,
+    c.ProjectTeamAssessmentEvaluationFormComponent,
+    c.ProjectTeamAssessmentDetailedResultsComponent,
+    c.ProjectTeamAssessmentMyResultComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     CommonModule,
     BrowserAnimationsModule,
-    ChartsModule,
+    NgChartsModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
@@ -80,6 +85,8 @@ import { ToastrModule } from 'ngx-toastr';
     s.CourseService,
     s.ChapterService,
     s.ProjectService,
+    s.ProjectAssessmentService,
+    s.ProjectTeamAssessmentService,
     s.AssignmentService,
     s.ExamService,
     s.ClientSettingsService,

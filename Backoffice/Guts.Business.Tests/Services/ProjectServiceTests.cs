@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Guts.Business.Converters;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
@@ -9,6 +8,7 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
 using NUnit.Framework;
@@ -26,6 +26,8 @@ namespace Guts.Business.Tests.Services
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+        private Mock<IProjectAssessmentFactory> _projectAssessmentFactoryMock;
+        private Mock<IProjectAssessmentRepository> _projectAssessmentRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -37,36 +39,16 @@ namespace Guts.Business.Tests.Services
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
+            _projectAssessmentFactoryMock = new Mock<IProjectAssessmentFactory>();
+            _projectAssessmentRepositoryMock = new Mock<IProjectAssessmentRepository>();
 
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
                 _periodRepositoryMock.Object,
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
-                _assignmentServiceMock.Object);
-        }
-
-        [Test]
-        public void GetProjectAsync_ShouldReturnProjectForCurrentPeriod()
-        {
-            //Arrange
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var courseCode = Guid.NewGuid().ToString();
-            var existingProject = new ProjectBuilder().WithId()
-                .WithCourse(courseCode)
-                .WithPeriod(existingPeriod).Build();
-
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(existingProject);
-
-            //Act
-            var result = _service.GetProjectAsync(courseCode, existingProject.Code).Result;
-
-            //Assert
-            _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
-            _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(courseCode, existingProject.Code, existingPeriod.Id), Times.Once());
-            Assert.That(result, Is.EqualTo(existingProject));
+                _assignmentServiceMock.Object,
+                _projectAssessmentRepositoryMock.Object, _projectAssessmentFactoryMock.Object, null); //TODO: use actual mock
         }
 
         [Test]
@@ -255,7 +237,13 @@ namespace Guts.Business.Tests.Services
                 .WithTeams(0)
                 .Build();
             var teamBaseName = _random.NextString();
-            var numberOfTeams = _random.Next(5, 101);
+            int from = _random.Next(5, 101);
+            int to = from + _random.Next(3, 10);
+            List<string> expectedTeamNumbers = new List<string>();
+            for (int i = from; i <= to; i++)
+            {
+                expectedTeamNumbers.Add(i.ToString());
+            }
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
             _projectRepositoryMock.Setup(repo =>
@@ -263,64 +251,33 @@ namespace Guts.Business.Tests.Services
                 .ReturnsAsync(existingProject);
 
             //Act
-            _service.GenerateTeamsForProject(existingProject.CourseId, existingProject.Code, teamBaseName, numberOfTeams).Wait();
+            _service.GenerateTeamsForProject(existingProject.CourseId, existingProject.Code, teamBaseName, from, to).Wait();
 
             //Assert
             _projectTeamRepositoryMock.Verify(
                 repo => repo.AddAsync(
-                    It.Is<ProjectTeam>(projectTeam => projectTeam.Name.StartsWith(teamBaseName)
+                    It.Is<ProjectTeam>(projectTeam => projectTeam.Name.StartsWith(teamBaseName) 
+                                                      && expectedTeamNumbers.Any(number => projectTeam.Name.Contains(number))
                                                       && projectTeam.Name.Length > teamBaseName.Length
                                                       && projectTeam.ProjectId == existingProject.Id)
                 ),
-                Times.Exactly(numberOfTeams));
+                Times.Exactly(expectedTeamNumbers.Count));
         }
 
         [Test]
-        public void GenerateTeamsForProject_ShouldNotResultInTheProjectHavingMoreTeamsThanSpecified()
+        public void GenerateTeamsForProject_ShouldNotCreateTeamsThatAlreadyExist()
         {
             //Arrange
             var teamBaseName = _random.NextString();
-            var desiredNumberOfTeams = _random.Next(20, 101);
-            var actualNumberOfTeams = desiredNumberOfTeams - _random.Next(1, 20);
+            int from = _random.Next(5, 101);
+            int to = from + 1;
+
+            var existingTeam = new ProjectTeamBuilder().WithId().WithName($"{teamBaseName} {to}").Build();
+
             var existingPeriod = new Period { Id = _random.NextPositive() };
             var existingProject = new ProjectBuilder()
                 .WithId()
-                .WithTeams(actualNumberOfTeams)
-                .Build();
-
-
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo =>
-                    repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync(existingProject);
-
-            //Act
-            _service.GenerateTeamsForProject(existingProject.CourseId, existingProject.Code, teamBaseName, desiredNumberOfTeams).Wait();
-
-            //Assert
-            for (int teamNumber = actualNumberOfTeams + 1; teamNumber <= desiredNumberOfTeams; teamNumber++)
-            {
-                var number = teamNumber;
-                _projectTeamRepositoryMock.Verify(
-                    repo => repo.AddAsync(
-                        It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {number}"
-                                                          && projectTeam.ProjectId == existingProject.Id)
-                    ),
-                    Times.Once);
-            }
-        }
-
-        [Test]
-        public void GenerateTeamsForProject_ShouldDoNothingWhenTheProjectAlreadyContainsTheDesiredAmountOfTeams()
-        {
-            //Arrange
-            var teamBaseName = _random.NextString();
-            var desiredNumberOfTeams = _random.Next(20, 101);
-            var actualNumberOfTeams = desiredNumberOfTeams + 1;
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var existingProject = new ProjectBuilder()
-                .WithId()
-                .WithTeams(actualNumberOfTeams)
+                .WithTeam(existingTeam)
                 .Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
@@ -329,11 +286,15 @@ namespace Guts.Business.Tests.Services
                 .ReturnsAsync(existingProject);
 
             //Act
-            _service.GenerateTeamsForProject(existingProject.CourseId, existingProject.Code, teamBaseName, desiredNumberOfTeams).Wait();
+            _service.GenerateTeamsForProject(existingProject.CourseId, existingProject.Code, teamBaseName, from, to).Wait();
 
             //Assert
             _projectTeamRepositoryMock.Verify(
-                repo => repo.AddAsync(It.IsAny<ProjectTeam>()),
+                repo => repo.AddAsync( It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {from}")),
+                Times.Once);
+
+            _projectTeamRepositoryMock.Verify(
+                repo => repo.AddAsync(It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {to}")),
                 Times.Never);
         }
 
@@ -425,6 +386,28 @@ namespace Guts.Business.Tests.Services
             _assignmentServiceMock.Verify(service => service.GetAssignmentTeamStatisticsAsync(
                 It.IsIn<int>(existingProject.Assignments.Select(a => a.Id)),
                 date), Times.Exactly(numberOfAssignments));
+        }
+
+        [Test]
+        public void CreateProjectAssessmentAsync_ShouldUseFactoryToCreateAndRepositoryToSave()
+        {
+            //Arrange
+            int projectId = _random.NextPositive();
+            string description = _random.NextString();
+            DateTime openOnUtc = _random.NextDateTimeInFuture().ToUniversalTime();
+            DateTime deadlineUtc = openOnUtc.AddDays(7);
+          
+            IProjectAssessment createdAssessment = new ProjectAssessmentMockBuilder().Build().Object;
+            _projectAssessmentFactoryMock
+                .Setup(factory => factory.CreateNew(projectId, description, openOnUtc, deadlineUtc))
+                .Returns(createdAssessment);
+
+            //Act
+            IProjectAssessment result = _service.CreateProjectAssessmentAsync(projectId, description, openOnUtc, deadlineUtc).Result;
+
+            //Assert
+            _projectAssessmentRepositoryMock.Verify(repo => repo.AddAsync(createdAssessment), Times.Once);
+            Assert.That(result, Is.SameAs(createdAssessment));
         }
     }
 }

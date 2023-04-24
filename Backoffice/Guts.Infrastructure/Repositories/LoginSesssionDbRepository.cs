@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class LoginSesssionDbRepository : BaseDbRepository<LoginSession>, ILoginSesssionRepository
+    internal class LoginSesssionDbRepository : BaseDbRepository<LoginSession, LoginSession>, ILoginSesssionRepository
     {
         public LoginSesssionDbRepository(GutsContext context) : base(context)
         {

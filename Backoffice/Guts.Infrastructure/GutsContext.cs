@@ -7,6 +7,7 @@ using Guts.Domain.ExamAggregate;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
@@ -25,7 +26,7 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Guts.Infrastructure
 {
-    public class GutsContext : IdentityDbContext<User, Role, int>
+    internal class GutsContext : IdentityDbContext<User, Role, int>
     {
         public DbSet<Period> Periods { get; set; }
         public DbSet<Course> Courses { get; set; }
@@ -42,6 +43,10 @@ namespace Guts.Infrastructure
         public DbSet<Exam> Exams { get; set; }
         public DbSet<ExamPart> ExamParts { get; set; }
         public DbSet<LoginSession> LoginSessions { get; set; }
+
+        public DbSet<ProjectTeamAssessment> ProjectTeamAssessments { get; set; }
+        public DbSet<PeerAssessment> PeerAssessments { get; set; }
+
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
         }
@@ -67,6 +72,11 @@ namespace Guts.Infrastructure
             builder.ApplyConfiguration(new ExamConfiguration());
             builder.ApplyConfiguration(new ExamPartConfiguration());
             builder.ApplyConfiguration(new AssignmentEvaluationConfiguration());
+            builder.ApplyConfiguration(new ProjectConfiguration());
+            builder.ApplyConfiguration(new ProjectTeamConfiguration());
+            builder.ApplyConfiguration(new ProjectAssessmentConfiguration());
+            builder.ApplyConfiguration(new ProjectTeamAssessmentConfiguration());
+            builder.ApplyConfiguration(new PeerAssessmentConfiguration());
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

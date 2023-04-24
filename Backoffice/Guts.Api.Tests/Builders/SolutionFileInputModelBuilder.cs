@@ -13,7 +13,7 @@ internal class SolutionFileInputModelBuilder
         _inputModel = new SolutionFileInputModel
         {
             Content = Guid.NewGuid().ToString().TryFromBase64(),
-            FilePath = Guid.NewGuid().ToString()
+            FilePath = $"{Guid.NewGuid()}.cs"
         };
     }
 

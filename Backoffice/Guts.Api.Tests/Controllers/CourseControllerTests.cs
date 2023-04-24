@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Domain.CourseAggregate;
@@ -90,7 +89,7 @@ namespace Guts.Api.Tests.Controllers
 
             var convertedCourse = new CourseContentsModel();
             _courseConverterMock
-                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IList<Chapter>>(), It.IsAny<IList<Project>>()))
+                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IReadOnlyList<Chapter>>(), It.IsAny<IReadOnlyList<Project>>()))
                 .Returns(convertedCourse);
 
             //Act
@@ -99,7 +98,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _chapterServiceMock.Verify(service => service.GetChaptersOfCourseAsync(existingCourse.Id), Times.Once);
-            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, existingChapters, It.IsAny<IList<Project>>()), Times.Once);
+            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, existingChapters, It.IsAny<IReadOnlyList<Project>>()), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(convertedCourse));
         }
 
@@ -120,7 +119,7 @@ namespace Guts.Api.Tests.Controllers
 
             var convertedCourse = new CourseContentsModel();
             _courseConverterMock
-                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IList<Chapter>>(), It.IsAny<IList<Project>>()))
+                .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IReadOnlyList<Chapter>>(), It.IsAny<IReadOnlyList<Project>>()))
                 .Returns(convertedCourse);
 
             //Act
@@ -129,7 +128,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _projectServiceMock.Verify(service => service.GetProjectsOfCourseAsync(existingCourse.Id), Times.Once);
-            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, It.IsAny<IList<Chapter>>(), existingProjects), Times.Once);
+            _courseConverterMock.Verify(converter => converter.ToCourseContentsModel(existingCourse, It.IsAny<IReadOnlyList<Chapter>>(), existingProjects), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(convertedCourse));
         }
 

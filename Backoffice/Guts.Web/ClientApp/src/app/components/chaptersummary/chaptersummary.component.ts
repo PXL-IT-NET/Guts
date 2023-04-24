@@ -1,26 +1,26 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, SimpleChanges, OnChanges } from '@angular/core';
 import { ChapterService } from '../../services/chapter.service';
-import { TopicContextProvider } from "../../services/topic.context.provider";
 import { TopicStatisticsModel, TopicSummaryModel } from '../../viewmodels/topic.model';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import * as moment from "moment";
 
 @Component({
+  selector: 'app-chapter-summary',
   templateUrl: './chaptersummary.component.html'
 })
-export class ChapterSummaryComponent implements OnInit, OnDestroy {
+export class ChapterSummaryComponent implements OnChanges {
   public model: TopicSummaryModel;
   public statistics: TopicStatisticsModel;
   public loadingSummary: boolean = false;
   public loadingStatistics: boolean = false;
 
-  private userId: number;
-  private chapterContextSubscription: Subscription;
-  private chapterStatisticsSubscription: Subscription;
+  @Input() public courseId: number;
+  @Input() public userId: number;
+  @Input() public chapterCode: string;
+  @Input() public statusDate: moment.Moment;
 
   constructor(private chapterService: ChapterService,
-    private topicContextProvider: TopicContextProvider,
     private route: ActivatedRoute,
     private toastr: ToastrService) {
     this.model = new TopicSummaryModel();
@@ -30,49 +30,48 @@ export class ChapterSummaryComponent implements OnInit, OnDestroy {
       description: '',
       assignmentStatistics: []
     };
+    this.courseId = 0;
     this.userId = 0;
+    this.chapterCode = '';
+    this.statusDate = moment();
     
   }
 
-  ngOnInit() {
-    this.route.params.subscribe(params => {
-      this.userId = +params['userId']; // (+) converts 'userId' to a number
-      this.loadChapterSummary();
-    });
+  ngOnChanges(changes: SimpleChanges) {
+    if (this.courseId <= 0) return;
+    let chapterHasValue: boolean = this.chapterCode && this.chapterCode.length > 0;
+    if (!chapterHasValue) return;
+    let chapterHasChanged: boolean = (changes.chapterCode ?? false) && changes.chapterCode.previousValue != this.chapterCode;
+    let statusDateHasChanged: boolean = (changes.statusDate ?? false) && changes.statusDate.previousValue != this.statusDate;
 
-    this.chapterContextSubscription = this.topicContextProvider.topicChanged$.subscribe(() => {
-      this.loadChapterSummary();
-    });
+    if (chapterHasChanged || (statusDateHasChanged && chapterHasValue)) {
+      this.loadChapterStatistics();
+    }
 
-    this.loadingStatistics = true;
-    this.chapterStatisticsSubscription = this.topicContextProvider.statisticsChanged$.subscribe(() => {
-      this.loadingStatistics = false;
-      this.statistics = this.topicContextProvider.currentContext.statistics;
-    });
+    if (this.userId <= 0) return;
+    this.loadChapterSummary();
   }
 
-  ngOnDestroy() {
-    this.chapterContextSubscription.unsubscribe();
-    this.chapterStatisticsSubscription.unsubscribe();
-    this.statistics = {
-      id: 0,
-      code: '',
-      description: '',
-      assignmentStatistics: []
-    };
+  private loadChapterStatistics() {
+    this.loadingStatistics = true;
+    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.statusDate).subscribe((result) => {
+      if (result.success) {
+        this.statistics = result.value;
+      } else {
+        this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "API error");
+      }
+      this.loadingStatistics = false;
+    });
   }
 
   private loadChapterSummary() {
-    if (!this.topicContextProvider.currentContext.topic) return;
-
     this.loadingSummary = true;
-    this.chapterService.getChapterSummary(this.topicContextProvider.currentContext.courseId,
-      this.topicContextProvider.currentContext.topic.code,
+    this.chapterService.getChapterSummary(this.courseId,
+      this.chapterCode,
       this.userId,
-      this.topicContextProvider.currentContext.statusDate)
+      this.statusDate)
       .subscribe((result) => {
         this.loadingSummary = false;
-
         if (result.success) {
           this.model = result.value;
         } else {

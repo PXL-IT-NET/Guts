@@ -11,6 +11,8 @@ namespace Guts.Business.Repositories
 
         Task<IList<TestRun>> GetLastTestRunForAssignmentOfAllUsersAsync(int assignmentId);
 
+        Task RemoveAllTopicTestRunsOfUserAsync(int topicId, int userId);
+
         Task<IList<TestRun>> GetTeamTestRunsForAssignmentAsync(int assignmentId, int teamId, DateTime? dateUtc);
     }
 }

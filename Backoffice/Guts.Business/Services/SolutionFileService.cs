@@ -8,7 +8,7 @@ namespace Guts.Business.Services
 {
     public class SolutionFileService : ISolutionFileService
     {
-        public async Task<byte[]> CreateZipFromFiles(IList<SolutionDto> solutions)
+        public async Task<byte[]> CreateZipFromFiles(IReadOnlyList<SolutionDto> solutions)
         {
             await using var memoryStream = new MemoryStream();
 

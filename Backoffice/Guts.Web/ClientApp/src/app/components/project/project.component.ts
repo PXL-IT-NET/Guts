@@ -1,31 +1,27 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IProjectDetailsModel } from '../../viewmodels/project.model';
-import { TopicContextProvider, TopicContext } from "../../services/topic.context.provider";
 import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
 
 @Component({
-  templateUrl: './project.component.html',
-  providers: [TopicContextProvider]
+  templateUrl: './project.component.html'
 })
-export class ProjectComponent implements OnInit, OnDestroy {
+export class ProjectComponent implements OnInit {
 
   public model: IProjectDetailsModel;
-  public context: TopicContext;
-  public selectedDate: Date;
+  public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
   public selectedTeamId: number;
   public datePickerSettings: any;
   public loading: boolean = false;
 
-  private courseId: number;
-  private projectCode: string;
+  public courseId: number;
+  public projectCode: string;
 
   constructor(private projectService: ProjectService, 
-    private topicContextProvider: TopicContextProvider,
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService) {
@@ -41,7 +37,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     };
 
     this.selectedAssignmentId = 0;
-    this.selectedDate = new Date();
+    this.selectedDate = moment();
     this.selectedTeamId = 0;
     this.datePickerSettings = {
       bigBanner: true,
@@ -64,12 +60,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
           this.model = result.value;
           this.selectedAssignmentId = 0;
 
-          if (this.model.teams.length <= 0) {
-            this.navigateToTeamOverview();
-          } else {
+          if (this.model.teams.length >= 0) {
             this.selectedTeamId = this.model.teams[0].id;
-            this.navigateToSummaryForSelectedTeam();
-            this.loadStatistics();
           }
 
         } else {
@@ -78,44 +70,5 @@ export class ProjectComponent implements OnInit, OnDestroy {
       });
 
     });
-  }
-
-  ngOnDestroy() {
-
-  }
-
-  public onSelectionChanged() {
-    if (this.selectedAssignmentId > 0) {
-      this.router.navigate(['teams', this.selectedTeamId, 'components', this.selectedAssignmentId], { relativeTo: this.route });
-    } else {
-      this.navigateToSummaryForSelectedTeam();
-    }
-  }
-
-  public onDateChanged() {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
-    this.loadStatistics();
-  }
-
-  private navigateToTeamOverview() {
-    this.router.navigate(['teams'], { relativeTo: this.route }).then(() => {
-      this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
-    });
-  }
-
-  private navigateToSummaryForSelectedTeam() {
-    this.topicContextProvider.setTopic(this.courseId, this.model, moment(this.selectedDate));
-    this.router.navigate(['teams', this.selectedTeamId, 'summary'], { relativeTo: this.route });
-  }
-
-  private loadStatistics() {
-    this.projectService.getProjectStatistics(this.courseId, this.projectCode, moment(this.selectedDate))
-      .subscribe((result) => {
-        if (result.success) {
-          this.topicContextProvider.setStatistics(result.value);
-        } else {
-          this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "API error");
-        }
-      });
   }
 }

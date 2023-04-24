@@ -7,17 +7,13 @@ using Guts.Domain.TopicAggregate;
 
 namespace Guts.Domain.Tests.Builders
 {
-    public class AssignmentBuilder
+    internal class AssignmentBuilder : BaseBuilder<Assignment>
     {
-        private readonly Assignment _assignment;
-        private readonly Random _random;
-
         public AssignmentBuilder()
         {
-            _random = new Random();
-            _assignment = new Assignment
+            Item = new Assignment
             {
-                TopicId = _random.NextPositive(),
+                TopicId = Random.NextPositive(),
                 Code = Guid.NewGuid().ToString(),
                 Description = Guid.NewGuid().ToString(),
                 Tests = new List<Test>()
@@ -26,19 +22,19 @@ namespace Guts.Domain.Tests.Builders
 
         public AssignmentBuilder WithId()
         {
-            _assignment.Id = _random.NextPositive();
+            Item.Id = Random.NextPositive();
             return this;
         }
 
         public AssignmentBuilder WithId(int id)
         {
-            _assignment.Id = id;
+            Item.Id = id;
             return this;
         }
 
         public AssignmentBuilder WithCode(string code)
         {
-            _assignment.Code = code;
+            Item.Code = code;
             return this;
         }
 
@@ -49,52 +45,44 @@ namespace Guts.Domain.Tests.Builders
             {
                 var test = new Test
                 {
-                    Id = _random.NextPositive(),
+                    Id = Random.NextPositive(),
                     TestName = Guid.NewGuid().ToString(),
-                    AssignmentId = _assignment.Id
+                    AssignmentId = Item.Id
                 };
                 tests.Add(test);
             }
-            _assignment.Tests = tests;
+            Item.Tests = tests;
             return this;
         }
 
         public AssignmentBuilder WithTopic(Topic topic)
         {
-            _assignment.Topic = topic;
-            _assignment.TopicId = topic.Id;
+            Item.Topic = topic;
+            Item.TopicId = topic.Id;
             return this;
         }
 
-
         public AssignmentBuilder WithoutTopicLoaded()
         {
-            _assignment.Topic = null;
+            Item.Topic = null;
             return this;
         }
 
         public AssignmentBuilder WithoutTestsLoaded()
         {
-            _assignment.Tests = null;
+            Item.Tests = null;
             return this;
         }
 
         public AssignmentBuilder WithTestCodeHash(string testCodeHash)
         {
-            _assignment.TestCodeHashes.Add(new TestCodeHash
+            Item.TestCodeHashes.Add(new TestCodeHash
             {
-                Id = _random.NextPositive(),
-                AssignmentId = _assignment.Id,
+                Id = Random.NextPositive(),
+                AssignmentId = Item.Id,
                 Hash = testCodeHash
             });
             return this;
         }
-
-        public Assignment Build()
-        {
-            return _assignment;
-        }
-
-       
     }
 }

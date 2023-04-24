@@ -1,19 +1,18 @@
 ﻿using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class CourseController : ControllerBase
     {
         private readonly ICourseService _courseService;
@@ -60,8 +59,8 @@ namespace Guts.Api.Controllers
             }
 
             var course = await _courseService.GetCourseByIdAsync(courseId);
-            var chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
-            var projects = await _projectService.GetProjectsOfCourseAsync(courseId);
+            IReadOnlyList<Chapter> chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
+            IReadOnlyList<IProject> projects = await _projectService.GetProjectsOfCourseAsync(courseId);
             var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public abstract class BaseDbRepository<T> : IBasicRepository<T> where T : Entity
+    internal abstract class BaseDbRepository<T, TConcrete> : IBasicRepository<T> where T : IEntity where TConcrete : class, T
     {
         protected readonly GutsContext _context;
 
@@ -19,7 +19,7 @@ namespace Guts.Infrastructure.Repositories
 
         public async Task<T> GetByIdAsync(int id)
         {
-            var entity = await _context.Set<T>().FindAsync(id);
+            var entity = await _context.Set<TConcrete>().FindAsync(id);
             if (entity == null)
             {
                 throw new DataNotFoundException();
@@ -29,7 +29,7 @@ namespace Guts.Infrastructure.Repositories
 
         public async Task<IList<T>> GetAllAsync()
         {
-            return await _context.Set<T>().ToListAsync();
+            return (IList<T>)await _context.Set<TConcrete>().ToListAsync();
         }
 
         public async Task<T> AddAsync(T newEntity)
@@ -39,7 +39,7 @@ namespace Guts.Infrastructure.Repositories
                 throw new ArgumentException("Cannot add an existing entity (Id > 0).");
             }
 
-            var entry = await _context.Set<T>().AddAsync(newEntity);
+            var entry = await _context.Set<TConcrete>().AddAsync((TConcrete)newEntity);
             await _context.SaveChangesAsync();
             return entry.Entity;
         }
@@ -51,7 +51,7 @@ namespace Guts.Infrastructure.Repositories
                 throw new ArgumentException("Cannot update a non-existing entity (Id <= 0).");
             }
 
-            var entry = _context.Set<T>().Update(existingEntity);
+            var entry = _context.Set<TConcrete>().Update((TConcrete)existingEntity);
             await _context.SaveChangesAsync();
 
             return entry.Entity;
@@ -59,19 +59,19 @@ namespace Guts.Infrastructure.Repositories
 
         public virtual async Task DeleteAsync(T entityToDelete)
         {
-            _context.Set<T>().Remove(entityToDelete);
+            _context.Set<TConcrete>().Remove((TConcrete)entityToDelete);
             await _context.SaveChangesAsync();
         }
 
         public virtual async Task DeleteByIdAsync(int id)
         {
-            var entityToDelete = await _context.Set<T>().FindAsync();
+            var entityToDelete = await _context.Set<TConcrete>().FindAsync();
             await DeleteAsync(entityToDelete);
         }
 
         public async Task DeleteBulkAsync(IEnumerable<T> entitiesToDelete)
         {
-            _context.Set<T>().RemoveRange(entitiesToDelete);
+            _context.Set<TConcrete>().RemoveRange((IEnumerable<TConcrete>)entitiesToDelete);
             await _context.SaveChangesAsync();
         }
     }

@@ -1,13 +1,10 @@
 ﻿using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -16,12 +13,12 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
+using Guts.Api.Models.ProjectModels;
 
 namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/projects")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ProjectController : ControllerBase
     {
         public const int CacheTimeInSeconds = 60;
@@ -62,7 +59,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            Project project;
+            IProject project;
             if (IsLector())
             {
                 project = await _projectService.LoadProjectAsync(courseId, projectCode);
@@ -99,6 +96,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> GenerateProjectTeams(int courseId, string projectCode, [FromBody] TeamGenerationModel model)
         {
             //TODO: technical dept -> write unit tests
@@ -112,12 +110,7 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
-            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.NumberOfTeams);
+            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.TeamNumberFrom, model.TeamNumberTo);
             
             return Ok();
         }
@@ -151,6 +144,23 @@ namespace Guts.Api.Controllers
             }
 
             await _projectService.AddUserToProjectTeamAsync(teamId, GetUserId());
+            return Ok();
+        }
+
+        [HttpPost("{projectCode}/teams/{teamId}/leave")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Conflict)]
+        public async Task<IActionResult> LeaveProjectTeam(int courseId, string projectCode, int teamId)
+        {
+            //TODO: technical dept -> write unit tests
+            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
+            {
+                return BadRequest();
+            }
+
+            await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
             return Ok();
         }
 
@@ -194,7 +204,7 @@ namespace Guts.Api.Controllers
 
                 project.Assignments = await _assignmentRepository.GetByTopicWithTests(project.Id);
 
-                var assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
+                IReadOnlyList<AssignmentResultDto> assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
 
                 var model = _topicConverter.ToTopicSummaryModel(project, assignmentResults);
                 return Ok(model);
@@ -250,15 +260,11 @@ namespace Guts.Api.Controllers
         }
 
         [HttpGet("{projectCode}/getsourcecodezip")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> DownloadSourceCodesAsZip(int courseId, string projectCode, [FromQuery] DateTime? date)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
-            Project project = await _projectService.LoadProjectAsync(courseId, projectCode);
-            IList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
+            IProject project = await _projectService.LoadProjectAsync(courseId, projectCode);
+            IReadOnlyList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
 
             byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
             var result = new FileContentResult(bytes, "application/zip")

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class AssignmentDbRepository : BaseDbRepository<Assignment>, IAssignmentRepository
+    internal class AssignmentDbRepository : BaseDbRepository<Assignment, Assignment>, IAssignmentRepository
     {
         public AssignmentDbRepository(GutsContext context) : base(context)
         {

@@ -1,0 +1,83 @@
+<div class="row">
+    <div class="col-12">
+        <h5>Peer evaluation form</h5>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <p>
+            Give each team member (including yourself) a score for the following criteria:
+        </p>
+        <ul>
+            <li>
+                <strong>Contribution</strong>: What is the persons actual technical contribution to the code of the project compared to other team members?
+            </li>
+            <li>
+                <strong>Effort</strong>: What is the persons time investment in the project compared to other team members?
+            </li>
+            <li>
+                <strong>Cooperation</strong>: How does the person communicate in the team? Does the person honor agreements made? How does the person cooperate with team members?
+            </li>
+        </ul>
+        <p>
+            Optionally you can explain your scores in the 'Additional explanation' fields.<br />
+            <strong>Click on the 'save' button below</strong> to submit the evaluation of your peers!
+        </p>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Team member</th>
+                    <th scope="col">Contribution</th>
+                    <th scope="col">Effort</th>
+                    <th scope="col">Cooperation</th>
+                    <th scope="col">Additional explanation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let peerAssessment of peerAssessments">
+                    <td>{{peerAssessment.subject.fullName}}</td>
+                    <td>
+                        <select name="contributionScore" [(ngModel)]="peerAssessment.contributionScore">
+                            <option value="0">No added value (0)</option>
+                            <option value="1">Way below group average (1)</option>
+                            <option value="2">Below group average (2)</option>
+                            <option value="3">Equal to group average (3)</option>
+                            <option value="4">Above group average (4)</option>
+                            <option value="5">Way above group average (5)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="effortScore" [(ngModel)]="peerAssessment.effortScore">
+                            <option value="0">No added value (0)</option>
+                            <option value="1">Way below group average (1)</option>
+                            <option value="2">Below group average (2)</option>
+                            <option value="3">Equal to group average (3)</option>
+                            <option value="4">Above group average (4)</option>
+                            <option value="5">Way above group average (5)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="coperationScore" [(ngModel)]="peerAssessment.cooperationScore">
+                            <option value="0">No added value (0)</option>
+                            <option value="1">Way below group average (1)</option>
+                            <option value="2">Below group average (2)</option>
+                            <option value="3">Equal to group average (3)</option>
+                            <option value="4">Above group average (4)</option>
+                            <option value="5">Way above group average (5)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <textarea [(ngModel)]="peerAssessment.explanation" rows="4" cols="60">
+                        </textarea>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <button type="button" class="btn btn-sm btn-outline-success padding-8" (click)="savePeerAssessments()">Save</button>
+    </div>
+</div>

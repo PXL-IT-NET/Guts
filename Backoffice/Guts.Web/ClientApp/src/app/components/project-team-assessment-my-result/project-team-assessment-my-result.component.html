@@ -1,0 +1,60 @@
+<div class="row">
+    <div class="col-12">
+        <h5>Your peer evaluation result</h5>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card m-2">
+            <h5 class="card-header">
+                General
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <form>
+                        <div class="mb-2 row">
+                            <label for="averageSelfcore" class="col-4 col-form-label">You rate yourself</label>
+                            <div class="col-8">
+                              <select class="form-control" disabled name="averageSelfcore" [value]="result.averageResult.selfScore">
+                                  <option value="0">No added value (0)</option>
+                                  <option value="1">Way below group average (1)</option>
+                                  <option value="2">Below group average (2)</option>
+                                  <option value="3">Equal to group average (3)</option>
+                                  <option value="4">Above group average (4)</option>
+                                  <option value="5">Way above group average (5)</option>
+                              </select>
+                            </div>
+                          </div>
+                        <div class="mb-2 row">
+                          <label for="averagePeerScore" class="col-4 col-form-label">Your peers rate you</label>
+                          <div class="col-8">
+                            <select class="form-control" disabled name="averagePeerScore" [value]="result.averageResult.peerScore">
+                                <option value="0">No added value (0)</option>
+                                <option value="1">Way below group average (1)</option>
+                                <option value="2">Below group average (2)</option>
+                                <option value="3">Equal to group average (3)</option>
+                                <option value="4">Above group average (4)</option>
+                                <option value="5">Way above group average (5)</option>
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card m-2">
+            <h5 class="card-header">
+                Peer vs. self evaluation
+            </h5>
+            <div class="card-body">
+                <div class="card-text">
+                    <canvas baseChart [datasets]="chartData.datasets"
+                        [labels]="chartData.labels" [options]="radarChartOptions"
+                        [type]="'radar'"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,15 +4,22 @@ export interface ITeamModel {
 }
 
 export interface ITeamDetailsModel extends  ITeamModel {
-  members: string[];
+  members: ITeamMemberModel[];
+}
+
+export interface ITeamMemberModel {
+  userId: number;
+  name: string;
 }
 
 export class TeamGenerationModel {
   teamBaseName: string;
-  numberOfTeams: number;
+  teamNumberFrom: number;
+  teamNumberTo: number;
 
-  constructor(baseName: string, number: number) {
+  constructor(baseName: string, from: number, to: number) {
     this.teamBaseName = baseName;
-    this.numberOfTeams = number;
+    this.teamNumberFrom = from;
+    this.teamNumberTo = to;
   }
 }

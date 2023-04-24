@@ -1,20 +1,29 @@
 <div class="row">
-  <div class="col-md-12">
-    <h5>{{course.name}}<span class="small" *ngIf="userProfile.isLector()"> (<a routerLink="config">configure</a>)</span></h5>
+  <div class="col-12">
+    <h4>{{course.name}}<span class="small" *ngIf="userProfile.isLector()"> (<a routerLink="config">configure</a>)</span></h4>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 col-xl-3"> 
     <form *ngIf="hasContent">
-      <div class="form-group row">
-        <label for="chapters" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.chapters.length > 0">Chapter</label>
-        <div class="col-md-10 col-xl-2" *ngIf="course.chapters.length > 0">
-          <select name="chapters" class="form-control" [(ngModel)]="selectedChapter" (ngModelChange)="onChapterChanged()">
+      <div class="mb-2 row">
+        <label for="chapters" class="col-2 col-form-label"
+          *ngIf="course.chapters.length > 0">Chapter</label>
+        <div class="col-10" *ngIf="course.chapters.length > 0">
+          <select name="chapters" class="form-control" [(ngModel)]="selectedChapter"
+            (ngModelChange)="onChapterChanged()">
             <option *ngFor="let chapter of course.chapters" [ngValue]="chapter">
               {{chapter.description}}
             </option>
           </select>
         </div>
 
-        <label for="projects" class="col-md-2 col-xl-1 col-form-label" *ngIf="course.projects.length > 0">Project</label>
-        <div class="col-md-10 col-xl-2" *ngIf="course.projects.length > 0">
-          <select name="projects" class="form-control" [(ngModel)]="selectedProject" (ngModelChange)="onProjectChanged()">
+        <label for="projects" class="col-2 col-form-label"
+          *ngIf="course.projects.length > 0">Project</label>
+        <div class="col-10" *ngIf="course.projects.length > 0">
+          <select name="projects" class="form-control" [(ngModel)]="selectedProject"
+            (ngModelChange)="onProjectChanged()">
             <option *ngFor="let project of course.projects" [ngValue]="project">
               {{project.description}}
             </option>
@@ -23,13 +32,26 @@
       </div>
     </form>
     <p *ngIf="!hasContent">
-      This course has no exercises or projects yet. 
+      This course has no exercises or projects yet.
     </p>
     <ngx-loading [show]="loading"></ngx-loading>
   </div>
+  <div class="col-md-6 col-lg-8 col-xl-9" *ngIf="selectedProject">
+    <ul class="nav nav-pills">
+      <li class="nav-item">
+        <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'testresults']">Test results</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'assessments']">Peer assessment</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'teams']">Team</a>
+      </li>
+    </ul>
+  </div>
 </div>
 <div class="row">
-  <div class="col-md-12">
+  <div class="col-12">
     <router-outlet></router-outlet>
   </div>
 </div>

@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ProjectDbRepository : BaseDbRepository<Project>, IProjectRepository
+    internal class ProjectDbRepository : BaseDbRepository<IProject, Project>, IProjectRepository
     {
         public ProjectDbRepository(GutsContext context) : base(context)
         {
         }
 
-        public async Task<Project> GetSingleAsync(string courseCode, string projectCode, int periodId)
+        public async Task<IProject> GetSingleAsync(string courseCode, string projectCode, int periodId)
         {
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.Course.Code == courseCode && p.Code == projectCode && p.PeriodId == periodId);
             if (project == null)
@@ -24,7 +24,7 @@ namespace Guts.Infrastructure.Repositories
             return project;
         }
 
-        public async Task<Project> GetSingleAsync(int courseId, string projectCode, int periodId)
+        public async Task<IProject> GetSingleAsync(int courseId, string projectCode, int periodId)
         {
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.CourseId == courseId && p.Code == projectCode && p.PeriodId == periodId);
             if (project == null)
@@ -34,14 +34,14 @@ namespace Guts.Infrastructure.Repositories
             return project;
         }
 
-        public async Task<IList<Project>> GetByCourseIdAsync(int courseId, int periodId)
+        public async Task<IReadOnlyList<IProject>> GetByCourseIdAsync(int courseId, int periodId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
 
             return await query.ToListAsync();
         }
 
-        public async Task<Project> LoadWithAssignmentsAndTeamsAsync(int courseId, string projectCode, int periodId)
+        public async Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, string projectCode, int periodId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
@@ -54,12 +54,12 @@ namespace Guts.Infrastructure.Repositories
             return project;
         }
 
-        public async Task<Project> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, string projectCode, int periodId, int userId)
+        public async Task<IProject> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, string projectCode, int periodId, int userId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
 
-            var project = await query.FirstOrDefaultAsync();
+            var project = await query.AsNoTracking().FirstOrDefaultAsync();
             if (project == null)
             {
                 throw new DataNotFoundException();

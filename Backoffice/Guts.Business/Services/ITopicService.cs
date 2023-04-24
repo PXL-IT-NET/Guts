@@ -6,8 +6,8 @@ namespace Guts.Business.Services
 {
     public interface ITopicService
     {
-        Task<Topic> GetTopicAsync(string courseCode, string topicCode);
+        Task<ITopic> GetTopicAsync(string courseCode, string topicCode);
 
-        Task<IList<Topic>> GetTopicsByCourseWithAssignmentsAndTestsAsync(int courseId);
+        Task<IReadOnlyList<ITopic>> GetTopicsByCourseWithAssignmentsAndTestsAsync(int courseId);
     }
 }

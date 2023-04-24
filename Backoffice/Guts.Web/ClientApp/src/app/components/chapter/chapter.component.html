@@ -1,11 +1,10 @@
 <div class="row">
-  <div class="col-md-12">
+  <div class="col-12">
     <form>
-      <div class="form-group row">
-
-        <label for="exercises" class="col-md-2 col-xl-1 col-form-label">Exercise</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
-          <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId" (ngModelChange)="onSelectionChanged()">
+      <div class="mb-2 row">
+        <label for="exercises" class="col-lg-1 col-md-2 col-form-label">Exercise</label>
+        <div class="col-lg-3 col-md-4">
+          <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
               {{exercise.code}}
@@ -13,14 +12,13 @@
           </select>
         </div>
 
-        <label for="users" class="col-md-2 col-xl-1 col-form-label">User</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
+        <label for="users" class="col-lg-1 col-md-2 col-form-label">User</label>
+        <div class="col-lg-3 col-md-4">
           <input id="users"
                  name="users"
                  type="text"
                  class="form-control"
                  [(ngModel)]="selectedUser"
-                 (ngModelChange)="onSelectionChanged()"
                  [ngbTypeahead]="searchUsers"
                  (click)="onUserClick()"
                  [inputFormatter]="formatUser"
@@ -29,9 +27,9 @@
                  [readonly]="model.users.length <= 1" />
         </div>
 
-        <label for="date" class="col-md-2 col-xl-1 col-form-label">Status on</label>
-        <div class="col-md-10 col-md-4 col-xl-3">
-          <app-ng-datetime [(date)]="selectedDate" (dateChange)="onDateChanged()"></app-ng-datetime>
+        <label for="date" class="col-lg-1 col-md-2 col-form-label">Status on</label>
+        <div class="col-lg-3 col-md-4">
+          <app-ng-datetime [(date)]="selectedDate"></app-ng-datetime>
         </div>
 
       </div>
@@ -40,7 +38,13 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-md-12">
-    <router-outlet></router-outlet>
+  <div class="col-12">
+    <app-chapter-summary *ngIf="selectedAssignmentId <= 0" [courseId]="courseId" [chapterCode]="chapterCode"
+      [userId]="selectedUser?.id" [statusDate]="selectedDate">
+    </app-chapter-summary>
+
+    <app-assignment-detail *ngIf="selectedAssignmentId > 0" [assignmentId]="selectedAssignmentId" 
+      [userId]="selectedUser?.id" [statusDate]="selectedDate">
+    </app-assignment-detail>
   </div>
 </div>

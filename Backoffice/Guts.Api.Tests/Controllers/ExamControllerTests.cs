@@ -5,6 +5,7 @@ using System.Linq;
 using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
+using Guts.Api.Models.ExamModels;
 using Guts.Api.Tests.Builders;
 using Guts.Business;
 using Guts.Business.Dtos;
@@ -15,7 +16,6 @@ using Guts.Domain.ExamAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.Tests.Builders;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 using Moq;
 using NUnit.Framework;
 using ControllerBase = Guts.Api.Controllers.ControllerBase;
@@ -185,25 +185,6 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void PostExam_ShouldReturnForbidResultForStudents()
-        {
-            //Arrange
-            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
-
-            var inputModel = new ExamCreationModel
-            {
-                CourseId = _random.NextPositive(),
-                Name = _random.NextString()
-            };
-
-            //Act
-            var forbidResult = _controller.PostExam(inputModel).Result as ForbidResult;
-
-            //Assert
-            Assert.That(forbidResult, Is.Not.Null);
-        }
-
-        [Test]
         public void GetExamPart_ShouldReturnAnExamPartOutputModel()
         {
             //Arrange
@@ -318,21 +299,6 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void PostExamPart_ShouldReturnForbidResultForStudents()
-        {
-            //Arrange
-            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
-            int examId = _random.NextPositive();
-            var inputModel = new ExamPartDto();
-
-            //Act
-            var forbidResult = _controller.PostExamPart(examId, inputModel).Result as ForbidResult;
-
-            //Assert
-            Assert.That(forbidResult, Is.Not.Null);
-        }
-
-        [Test]
         public void DeleteExamPart_ShouldReturnOkWhenOperationSucceeds()
         {
             //Arrange
@@ -374,21 +340,6 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void DeleteExamPart_ShouldReturnForbidResultForStudents()
-        {
-            //Arrange
-            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
-            int examId = _random.NextPositive();
-            int examPartId = _random.NextPositive();
-
-            //Act
-            var forbidResult = _controller.DeleteExamPart(examId, examPartId).Result as ForbidResult;
-
-            //Assert
-            Assert.That(forbidResult, Is.Not.Null);
-        }
-
-        [Test]
         public void DownloadExamScores_ShouldReturnFileStreamResultOfExamScores()
         {
             //Arrange
@@ -416,21 +367,6 @@ namespace Guts.Api.Tests.Controllers
             _examServiceMock.Verify();
             Assert.That(fileStreamResult.FileDownloadName, Is.EqualTo(expectedFileName));
             Assert.That(fileStreamResult.ContentType, Is.EqualTo("text/csv"));
-        }
-
-        [Test]
-        public void DownloadExamScores_ShouldReturnForbidResultForStudents()
-        {
-            //Arrange
-            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
-
-            int examId = _random.NextPositive();
-
-            //Act
-            var forbidResult = _controller.DownloadExamScores(examId).Result as ForbidResult;
-
-            //Assert
-            Assert.That(forbidResult, Is.Not.Null);
         }
 
         [Test]

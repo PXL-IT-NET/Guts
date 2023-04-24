@@ -6,6 +6,7 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Business.Services.Exam
 {
@@ -36,11 +37,11 @@ namespace Guts.Business.Services.Exam
             _examTestResultLoader = examTestResultLoader;
         }
 
-        public async Task<Domain.ExamAggregate.Exam> CreateExamAsync(int courseId, string name)
+        public async Task<IExam> CreateExamAsync(int courseId, string name)
         {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-            var newExam = _examFactory.CreateNew(courseId, currentPeriod.Id, name);
-            var savedExam = await _examRepository.AddAsync(newExam);
+            Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            IExam newExam = _examFactory.CreateNew(courseId, currentPeriod.Id, name);
+            IExam savedExam = await _examRepository.AddAsync(newExam);
             return savedExam;
         }
 
@@ -49,7 +50,7 @@ namespace Guts.Business.Services.Exam
             return await _examRepository.LoadDeepAsync(id);
         }
 
-        public async Task<IReadOnlyList<Domain.ExamAggregate.Exam>> GetExamsAsync(int? courseId)
+        public async Task<IReadOnlyList<IExam>> GetExamsAsync(int? courseId)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
             return await _examRepository.FindWithPartsAndEvaluationsAsync(currentPeriod.Id, courseId);
@@ -60,7 +61,7 @@ namespace Guts.Business.Services.Exam
             Contracts.Require(examPartDto.AssignmentEvaluations.Count > 0,
                 "An exam part must have at least one assignment evaluation.");
             IExam exam = await GetExamAsync(examId);
-            var examPart = exam.AddExamPart(examPartDto.Name, examPartDto.Deadline);
+            IExamPart examPart = exam.AddExamPart(examPartDto.Name, examPartDto.Deadline);
             foreach (var evaluation in examPartDto.AssignmentEvaluations)
             {
                 var assignment = await _assignmentRepository.GetSingleWithTestsAsync(evaluation.AssignmentId);

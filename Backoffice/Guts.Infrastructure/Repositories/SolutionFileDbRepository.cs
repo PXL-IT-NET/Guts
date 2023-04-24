@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class SolutionFileDbRepository : ISolutionFileRepository
+    internal class SolutionFileDbRepository : ISolutionFileRepository
     {
         private readonly GutsContext _context;
 

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
 using Guts.Domain.ProjectTeamAggregate;
+using Guts.Domain.UserAggregate;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters
@@ -34,8 +36,10 @@ namespace Guts.Api.Tests.Models.Converters
 
             foreach (var teamUser in team.TeamUsers)
             {
-                var user = teamUser.User;
-                Assert.That(model.Members, Has.One.EqualTo(user.FirstName + " " + user.LastName));
+                User user = teamUser.User;
+                var matchingTeamUserModel = model.Members.FirstOrDefault(m => m.UserId == user.Id);
+                Assert.That(matchingTeamUserModel, Is.Not.Null);
+                Assert.That(matchingTeamUserModel.Name, Is.EqualTo(user.FirstName + " " + user.LastName));
             }
         }
 
@@ -55,7 +59,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             //Arrange
             var team = new ProjectTeamBuilder().WithId().Build();
-            team.TeamUsers = new List<ProjectTeamUser>
+            team.TeamUsers = new List<IProjectTeamUser>
             {
                 new ProjectTeamUser
                 {

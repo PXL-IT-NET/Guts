@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using AutoMapper;
-using Guts.Api.Models;
+using Guts.Api.Models.ExamModels;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 

@@ -5,14 +5,14 @@ using System.Reflection;
 
 namespace Guts.Domain.Tests.Builders
 {
-    internal abstract class BaseBuilder<T> where T: class
+    internal abstract class BaseBuilder<T> where T : class
     {
         protected static readonly Random Random = new Random();
 
         private Type _itemType;
 
         protected T Item;
-        
+
         /// <summary>
         /// Use this method when the constructor of the item to build is private or internal
         /// </summary>

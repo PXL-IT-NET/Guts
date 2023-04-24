@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ChapterDbRepository : BaseDbRepository<Chapter>, IChapterRepository
+    internal class ChapterDbRepository : BaseDbRepository<Chapter, Chapter>, IChapterRepository
     {
         public ChapterDbRepository(GutsContext context) : base(context)
         {

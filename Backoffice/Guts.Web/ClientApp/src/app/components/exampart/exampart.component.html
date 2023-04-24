@@ -1,6 +1,6 @@
 <div class="mb-2">
   <span *ngIf="model.id > 0">{{model.name}}</span>
-  <button class="btn btn-sm ml-3 btn-light" type="button" (click)="isCollapsed = !isCollapsed">
+  <button class="btn btn-sm ms-3 btn-light" type="button" (click)="isCollapsed = !isCollapsed">
     <span class="fa fa-plus" *ngIf="model.id > 0 && isCollapsed"></span>
     <span class="fa fa-minus" *ngIf="model.id > 0 && !isCollapsed"></span>
     <span *ngIf="model.id <= 0">Add new part</span>
@@ -10,13 +10,13 @@
   <div class="card card-body">
     <form name="form" (ngSubmit)="f.form.valid && saveExampart()" #f="ngForm" novalidate>
       <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="mb-2 col-md-6">
           <label for="name">Name</label>
           <input type="text" class="form-control" id="name" name="name" [(ngModel)]="model.name" #name="ngModel"
             required [ngClass]="{ 'is-invalid': f.submitted && !name.valid }" [disabled]="model.id > 0" />
           <div class="invalid-feedback">Name is required</div>
         </div>
-        <div class="form-group col-md-6">
+        <div class="mb-2 col-md-6">
           <label for="deadlinedate">Deadline date and time</label>
           <div class="input-group">
             <input class="form-control" placeholder="yyyy-mm-dd" id="deadlinedate" name="deadlinedate"
@@ -31,7 +31,7 @@
           </ngb-timepicker>
         </div>
       </div>
-      <div class="form-row">
+      <div class="form-row mb-2">
         <div class="col-sm-12">
           <h6>Assignments</h6>
           <div>
@@ -41,10 +41,10 @@
                   {{getAssignmentName(assignmentEvaluation.assignmentId)}}
                 </span>
                 <span>, Maximum score: </span>
-                <span class="badge badge-primary badge-pill">{{assignmentEvaluation.maximumScore}}</span>
+                <span class="badge rounded-pill text-bg-primary">{{assignmentEvaluation.maximumScore}}</span>
                 <span>, #tests green at start: </span>
                 <span
-                  class="badge badge-primary badge-pill">{{assignmentEvaluation.numberOfTestsAlreadyGreenAtStart}}</span>
+                  class="badge rounded-pill text-bg-primary">{{assignmentEvaluation.numberOfTestsAlreadyGreenAtStart}}</span>
               </li>
               <li class="list-group-item" *ngIf="model.id <= 0">
                 <form class="form-inline" [formGroup]="newAssignmentEvaluationForm"
@@ -64,7 +64,7 @@
                     formControlName="numberOfTestsAlreadyGreenAtStart"
                     [(ngModel)]="newAssigmnentEvaluation.numberOfTestsAlreadyGreenAtStart"
                     [class.is-invalid]="numberOfTestsAlreadyGreenAtStart.invalid" placeholder="#tests green at start">
-                  <button type="submit" class="btn btn-primary mb-2"
+                  <button type="submit" class="btn btn-outline-primary mb-2"
                     [disabled]="newAssignmentEvaluationForm.invalid">Add</button>
                 </form>
               </li>
@@ -73,11 +73,11 @@
         </div>
 
       </div>
-      <div class="form-group" *ngIf="model.id <= 0">
-        <button class="btn btn-primary btn-sm" type="submit">Add exam part</button>
+      <div class="mb-2" *ngIf="model.id <= 0">
+        <button class="btn btn-outline-primary btn-sm" type="submit">Add exam part</button>
       </div>
-      <div class="form-group" *ngIf="model.id > 0">
-        <button class="btn btn-primary btn-sm" (click)="deleteExampart()">
+      <div class="mb-2" *ngIf="model.id > 0">
+        <button class="btn btn-outline-primary btn-sm" (click)="deleteExampart()">
           <span>Delete exam part</span>
         </button>
       </div>

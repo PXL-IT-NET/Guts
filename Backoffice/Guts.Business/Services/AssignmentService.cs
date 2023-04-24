@@ -130,7 +130,7 @@ namespace Guts.Business.Services
             return ConstructTestRunInfoFromTestRuns(testRuns);
         }
 
-        public async Task<IList<SolutionDto>> GetAllSolutions(int assignmentId)
+        public async Task<IReadOnlyList<SolutionDto>> GetAllSolutions(int assignmentId)
         {
             var assignmentSolutions = new List<SolutionDto>();
 

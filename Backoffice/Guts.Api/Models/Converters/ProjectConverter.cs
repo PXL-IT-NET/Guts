@@ -1,11 +1,13 @@
 ﻿using System.Linq;
+using Guts.Api.Models.AssignmentModels;
+using Guts.Api.Models.ProjectModels;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
 {
     public class ProjectConverter : IProjectConverter
     {
-        public TopicModel ToTopicModel(Project project)
+        public TopicModel ToTopicModel(IProject project)
         {
             return new TopicModel
             {
@@ -15,7 +17,7 @@ namespace Guts.Api.Models.Converters
             };
         }
 
-        public ProjectDetailModel ToProjectDetailModel(Project project)
+        public ProjectDetailModel ToProjectDetailModel(IProject project)
         {
             var model = new ProjectDetailModel
             {

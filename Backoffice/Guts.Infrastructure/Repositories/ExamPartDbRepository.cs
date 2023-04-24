@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    public class ExamPartDbRepository : BaseDbRepository<ExamPart>, IExamPartRepository
+    internal class ExamPartDbRepository : BaseDbRepository<IExamPart, ExamPart>, IExamPartRepository
     {
         public ExamPartDbRepository(GutsContext context) : base(context)
         {
         }
 
-        public async Task<ExamPart> LoadWithAssignmentEvaluationsAsync(int examPartId)
+        public async Task<IExamPart> LoadWithAssignmentEvaluationsAsync(int examPartId)
         {
             var evaluation = await _context.ExamParts.Where(e => e.Id == examPartId)
                 .Include(e => e.AssignmentEvaluations)
@@ -27,7 +27,7 @@ namespace Guts.Infrastructure.Repositories
             return evaluation;
         }
 
-        public override async Task DeleteAsync(ExamPart entityToDelete)
+        public override async Task DeleteAsync(IExamPart entityToDelete)
         {
             var entry = _context.Entry(entityToDelete);
             await entry.Collection(ep => ep.AssignmentEvaluations).LoadAsync();

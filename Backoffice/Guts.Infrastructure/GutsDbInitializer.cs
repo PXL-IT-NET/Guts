@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Guts.Infrastructure
 {
-    public class GutsDbInitializer
+    internal class GutsDbInitializer
     {
         private readonly GutsContext _context;
         private readonly ILogger _logger;

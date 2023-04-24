@@ -6,16 +6,14 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Guts.Api.Models;
+using Guts.Api.Models.ExamModels;
 using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Exam;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
-using Guts.Domain.RoleAggregate;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +21,7 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/exams")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Constants.Lector)]
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     public class ExamController : ControllerBase
     {
         private readonly IExamService _examService;
@@ -87,11 +85,6 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
         {
-            if (!IsLector()) 
-            {
-                return Forbid();
-            }
-
             try
             {
                 var exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
@@ -138,11 +131,6 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExamPart(int id, [FromBody]ExamPartDto model)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
             try
             {
                 var examPart = await _examService.CreateExamPartAsync(id, model);
@@ -164,11 +152,6 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> DeleteExamPart(int id, int examPartId)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
             try
             {
                 var exam = await _examService.GetExamAsync(id);
@@ -184,11 +167,6 @@ namespace Guts.Api.Controllers
         [HttpGet("{id}/downloadscores")]
         public async Task<IActionResult> DownloadExamScores(int id)
         {
-            if (!IsLector())
-            {
-                return Forbid();
-            }
-
             IExam exam;
             try
             {

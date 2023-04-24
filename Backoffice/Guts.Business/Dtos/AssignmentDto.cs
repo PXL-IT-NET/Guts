@@ -16,4 +16,5 @@ namespace Guts.Business.Dtos
         [MaxLength(20)]
         public string AssignmentCode { get; set; }
     }
+
 }

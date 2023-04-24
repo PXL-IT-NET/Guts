@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Guts.Domain\Guts.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Assessment\" />
+  </ItemGroup>
+
 </Project>

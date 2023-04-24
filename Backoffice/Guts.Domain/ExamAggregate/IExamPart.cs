@@ -7,6 +7,7 @@ namespace Guts.Domain.ExamAggregate
     public interface IExamPart : IEntity
     {
         int ExamId { get; }
+        string Name { get; }
         double MaximumScore { get; }
         IReadOnlyCollection<IAssignmentEvaluation> AssignmentEvaluations { get; }
         DateTime Deadline { get; }

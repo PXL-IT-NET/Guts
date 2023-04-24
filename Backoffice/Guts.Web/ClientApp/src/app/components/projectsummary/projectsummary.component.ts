@@ -1,27 +1,26 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, SimpleChanges } from '@angular/core';
 import { ProjectService } from '../../services/project.service';
-import { TopicContextProvider } from "../../services/topic.context.provider";
 import { TopicStatisticsModel, TopicSummaryModel } from '../../viewmodels/topic.model';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import * as moment from "moment";
 
 @Component({
+  selector: 'app-project-summary',
   templateUrl: './projectsummary.component.html'
 })
-export class ProjectSummaryComponent implements OnInit, OnDestroy {
+export class ProjectSummaryComponent {
   public model: TopicSummaryModel;
   public statistics: TopicStatisticsModel;
   public loadingSummary: boolean = false;
   public loadingStatistics: boolean = false;
 
-  private teamId: number;
-  private projectContextSubscription: Subscription;
-  private projectStatisticsSubscription: Subscription;
+  @Input() public courseId: number;
+  @Input() public teamId: number;
+  @Input() public projectCode: string;
+  @Input() public statusDate: moment.Moment;
 
   constructor(private projectService: ProjectService,
-    private topicContextProvider: TopicContextProvider,
-    private route: ActivatedRoute,
     private toastr: ToastrService) {
     this.model = new TopicSummaryModel();
     this.statistics = {
@@ -30,55 +29,53 @@ export class ProjectSummaryComponent implements OnInit, OnDestroy {
       description: '',
       assignmentStatistics: []
     };
+
+    this.courseId = 0;
     this.teamId = 0;
-
-    this.route.params.subscribe(params => {
-      this.teamId = +params['teamId']; // (+) converts 'userId' to a number
-      this.loadProjectSummary();
-    });
-
-    this.projectContextSubscription = this.topicContextProvider.topicChanged$.subscribe(() => {
-      this.loadProjectSummary();
-    });
-
-    this.loadingStatistics = true;
-    this.projectStatisticsSubscription = this.topicContextProvider.statisticsChanged$.subscribe(() => {
-      this.loadingStatistics = false;
-      this.statistics = this.topicContextProvider.currentContext.statistics;
-    });
+    this.projectCode = '';
+    this.statusDate = moment();
   }
 
-  ngOnInit() {
+  ngOnChanges(changes: SimpleChanges) {
+    if (this.courseId <= 0) return;
+    let projectHasValue: boolean = this.projectCode && this.projectCode.length > 0;
+    if (!projectHasValue) return;
+    let projectHasChanged: boolean = (changes.projectCode ?? false) && changes.projectCode.previousValue != this.projectCode;
+    let statusDateHasChanged: boolean = (changes.statusDate ?? false) && changes.statusDate.previousValue != this.statusDate;
 
-  }
+    if (projectHasChanged || (statusDateHasChanged && projectHasValue)) {
+      this.loadProjectStatistics();
+    }
 
-  ngOnDestroy() {
-    this.projectContextSubscription.unsubscribe();
-    this.projectStatisticsSubscription.unsubscribe();
-    this.statistics = {
-      id: 0,
-      code: '',
-      description: '',
-      assignmentStatistics: []
-    };
+    if (this.teamId <= 0) return;
+    this.loadProjectSummary();
   }
 
   private loadProjectSummary() {
-    if (!this.topicContextProvider.currentContext.topic) return;
-
     this.loadingSummary = true;
-    this.projectService.getProjectSummary(this.topicContextProvider.currentContext.courseId,
-      this.topicContextProvider.currentContext.topic.code,
+    this.projectService.getProjectSummary(this.courseId,
+      this.projectCode,
       this.teamId,
-      this.topicContextProvider.currentContext.statusDate)
+      this.statusDate)
       .subscribe((result) => {
         this.loadingSummary = false;
-
         if (result.success) {
           this.model = result.value;
         } else {
           this.toastr.error("Could not load project summary from API. Message: " + (result.message || "unknown error"), "API error");
         }
       });
+  }
+
+  private loadProjectStatistics() {
+    this.loadingStatistics = true;
+    this.projectService.getProjectStatistics(this.courseId, this.projectCode, this.statusDate).subscribe((result) => {
+      if (result.success) {
+        this.statistics = result.value;
+      } else {
+        this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "API error");
+      }
+      this.loadingStatistics = false;
+    });
   }
 }

@@ -1,11 +1,6 @@
- <h4 class="list-group-item-heading">
+<h5>
   {{model.description}} <small>({{model.totalNumberOfUnits}} {{model.unit}})</small>
-</h4>
-<div class="list-group-item-text">
-  <div style="width: 400px; height: 200px;">
-    <canvas baseChart
-            [datasets]="model.chartData.datasets"
-            [labels]="model.chartData.labels"
-            chartType="bar"></canvas>
-  </div>
+</h5>
+<div>
+  <canvas baseChart [datasets]="model.chartData.datasets" [labels]="model.chartData.labels" [type]="'bar'"></canvas>
 </div>
