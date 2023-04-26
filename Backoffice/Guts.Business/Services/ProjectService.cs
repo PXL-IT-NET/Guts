@@ -93,6 +93,10 @@ namespace Guts.Business.Services
 
         public async Task<IProject> LoadProjectForUserAsync(int courseId, string projectCode, int userId)
         {
+            Contracts.Require(courseId > 0, "Invalid course identifier");
+            Contracts.Require(!string.IsNullOrEmpty(projectCode), "Project code cannot be empty");
+            Contracts.Require(userId > 0, "Invalid user id");
+
             var period = await _periodRepository.GetCurrentPeriodAsync();
             var project = await _projectRepository.LoadWithAssignmentsAndTeamsOfUserAsync(courseId, projectCode, period.Id, userId);
             return project;

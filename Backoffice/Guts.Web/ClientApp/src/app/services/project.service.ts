@@ -74,6 +74,16 @@ export class ProjectService {
       );
   }
 
+  public removeFromTeam(courseId: number, projectCode: string, teamId: number, userId: number): Observable<PostResult> {
+    return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/remove', userId)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
+  }
+
   public getProjectSummary(courseId: number, projectCode: string, teamId: number, date?: moment.Moment): Observable<GetResult<TopicSummaryModel>> {
     var apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/summary';
     if (date) {

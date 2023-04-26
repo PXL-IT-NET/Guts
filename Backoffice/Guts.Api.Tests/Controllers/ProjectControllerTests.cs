@@ -158,6 +158,39 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(okResult.Value, Has.All.TypeOf<TeamDetailsModel>());
         }
 
+        [Test]
+        public void LeaveProjectTeam_ShouldUseServiceForLoggedInUser()
+        {
+            //Arrange
+            var courseId = _random.NextPositive();
+            var projectCode = Guid.NewGuid().ToString();
+            var teamId = _random.NextPositive();
+
+            //Act
+            var okResult = _controller.LeaveProjectTeam(courseId, projectCode, teamId).Result as OkResult;
+
+            //Assert
+            Assert.That(okResult, Is.Not.Null);
+            _projectServiceMock.Verify(service => service.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, _userId), Times.Once);
+        }
+
+        [Test]
+        public void RemoveFromProjectTeam_ShouldUseService()
+        {
+            //Arrange
+            var courseId = _random.NextPositive();
+            var projectCode = Guid.NewGuid().ToString();
+            var teamId = _random.NextPositive();
+            var userId = _random.NextPositive();
+
+            //Act
+            var okResult = _controller.RemoveFromProjectTeam(courseId, projectCode, teamId, userId).Result as OkResult;
+
+            //Assert
+            Assert.That(okResult, Is.Not.Null);
+            _projectServiceMock.Verify(service => service.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId), Times.Once);
+        }
+
         private ProjectController CreateControllerWithUserInContext(string role)
         {
             return new ProjectController(_projectServiceMock.Object, 

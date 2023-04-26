@@ -32,7 +32,10 @@
           <ul class="list-group mb-3">
             <li class="list-group-item text-warning" *ngIf="!team.members || team.members.length <=  0">This team has no
               members yet. Be the first to join...</li>
-            <li class="list-group-item" *ngFor="let member of team.members">{{member.name}}</li>
+            <li class="list-group-item" *ngFor="let member of team.members">
+              <span>{{member.name}}</span>
+              <button *ngIf="userProfile.isLector()" type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="removeFromTeam(team, member)">Remove</button>
+            </li>
           </ul>
           <p>
             <button type="button" class="btn btn-outline-primary" (click)="joinTeam(team.id)">Join {{team.name}}</button>

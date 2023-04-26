@@ -4,7 +4,7 @@ import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/Result";
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
-import { ITeamDetailsModel, TeamGenerationModel } from "../../viewmodels/team.model";
+import { ITeamDetailsModel, ITeamMemberModel, TeamGenerationModel } from "../../viewmodels/team.model";
 import { PostResult } from "../../util/Result";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -64,6 +64,21 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
           this.loadData(true);
         } else {
           this.toastr.error(result.message || "unknown error", "Could not leave team");
+        }
+      });
+    }
+  }
+
+  public removeFromTeam(team: ITeamDetailsModel, member: ITeamMemberModel){
+    let confirmMessage = "Are you sure you want to remove '" + member.name + "' from '" + team.name + "'?";
+    if(confirm(confirmMessage)){
+      this.projectService.removeFromTeam(this.courseId, this.projectCode, team.id, member.userId)
+      .subscribe((result: PostResult) => {
+        this.loading = false;
+        if (result.success) {
+          this.loadData(true);
+        } else {
+          this.toastr.error(result.message || "unknown error", "Could not remove user from team");
         }
       });
     }

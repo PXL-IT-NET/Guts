@@ -154,13 +154,19 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.Conflict)]
         public async Task<IActionResult> LeaveProjectTeam(int courseId, string projectCode, int teamId)
         {
-            //TODO: technical dept -> write unit tests
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-
             await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
+            return Ok();
+        }
+
+        [HttpPost("{projectCode}/teams/{teamId}/remove")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.Conflict)]
+        public async Task<IActionResult> RemoveFromProjectTeam(int courseId, string projectCode, int teamId, [FromBody] int userId)
+        {
+            await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId);
             return Ok();
         }
 

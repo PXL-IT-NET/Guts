@@ -22,6 +22,7 @@ namespace Guts.Business.Tests.Builders
                 Id = 0,
                 CourseId = _random.NextPositive(),
                 PeriodId = _random.NextPositive(),
+                Code = Guid.NewGuid().ToString(),
                 Description = Guid.NewGuid().ToString(),
                 Assignments = new Collection<Assignment>(),
                 Teams = new Collection<IProjectTeam>()

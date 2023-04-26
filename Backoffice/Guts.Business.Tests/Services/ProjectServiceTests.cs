@@ -5,6 +5,7 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
+using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
@@ -28,6 +29,7 @@ namespace Guts.Business.Tests.Services
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
         private Mock<IProjectAssessmentFactory> _projectAssessmentFactoryMock;
         private Mock<IProjectAssessmentRepository> _projectAssessmentRepositoryMock;
+        private Mock<ITestRunRepository> _testRunRepositoryMock;
 
         [SetUp]
         public void Setup()
@@ -41,6 +43,7 @@ namespace Guts.Business.Tests.Services
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
             _projectAssessmentFactoryMock = new Mock<IProjectAssessmentFactory>();
             _projectAssessmentRepositoryMock = new Mock<IProjectAssessmentRepository>();
+            _testRunRepositoryMock = new Mock<ITestRunRepository>();
 
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
@@ -48,7 +51,9 @@ namespace Guts.Business.Tests.Services
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object,
-                _projectAssessmentRepositoryMock.Object, _projectAssessmentFactoryMock.Object, null); //TODO: use actual mock
+                _projectAssessmentRepositoryMock.Object, 
+                _projectAssessmentFactoryMock.Object,
+                _testRunRepositoryMock.Object);
         }
 
         [Test]
@@ -410,6 +415,49 @@ namespace Guts.Business.Tests.Services
             //Assert
             _projectAssessmentRepositoryMock.Verify(repo => repo.AddAsync(createdAssessment), Times.Once);
             Assert.That(result, Is.SameAs(createdAssessment));
+        }
+
+        [Test]
+        public void RemoveUserFromProjectTeamAsync_UseRepositoryAndRemoveProjectTestRunsOfUser()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var existingProject = new ProjectBuilder().WithId().WithTeams(1).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+
+            int teamId = _random.NextPositive();
+            int userId = _random.NextPositive();
+
+            //Act
+            _service.RemoveUserFromProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamId, userId).Wait();
+
+            //Assert
+            _projectTeamRepositoryMock.Verify(repo => repo.RemoveUserFromTeam(teamId, userId), Times.Once);
+            _testRunRepositoryMock.Verify(repo => repo.RemoveAllTopicTestRunsOfUserAsync(existingProject.Id, userId),
+                Times.Once);
+        }
+
+        [Test]
+        public void RemoveUserFromProjectTeamAsync_UserNotPartOfTheTeam_ShouldThrowContractException()
+        {
+            //Arrange
+            var existingPeriod = new Period { Id = _random.NextPositive() };
+            var existingProject = new ProjectBuilder().WithId().Build(); //no teams, so user is not part of the team
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+
+            int teamId = _random.NextPositive();
+            int userId = _random.NextPositive();
+
+            //Act + Assert
+            Assert.That(
+                () => _service.RemoveUserFromProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamId,
+                    userId), Throws.InstanceOf<ContractException>());
         }
     }
 }
