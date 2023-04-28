@@ -126,7 +126,7 @@
             <div class="card-body">
                 <div class="card-text">
                     <ngb-accordion [closeOthers]="true">
-                        <ngb-panel [title]="result.subject.fullName" *ngFor="let result of results">
+                        <ngb-panel [title]="'About ' + result.subject.fullName" *ngFor="let result of results">
                             <ng-template ngbPanelContent>
                                 <div>
                                     <table class="table table-bordered">

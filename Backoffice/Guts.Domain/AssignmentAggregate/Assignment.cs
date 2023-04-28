@@ -20,10 +20,6 @@ namespace Guts.Domain.AssignmentAggregate
             {
                 if (!string.IsNullOrEmpty(_description)) return _description;
                 var alternativeDescription = Code;
-                if (Topic != null)
-                {
-                    alternativeDescription = $"{Topic.Code}.{alternativeDescription}";
-                }
                 return alternativeDescription;
             }
             set => _description = value;
