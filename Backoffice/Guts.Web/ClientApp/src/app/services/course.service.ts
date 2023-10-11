@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ICourseModel, ICourseContentsModel } from "../viewmodels/course.model"
-import { GetResult } from "../util/Result";
+import { GetResult } from "../util/result";
 
 @Injectable()
 export class CourseService {

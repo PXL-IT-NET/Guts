@@ -1,0 +1,39 @@
+version: '3.4'
+
+services:
+  sqldata:
+    environment:
+      - SA_PASSWORD=Pass@word
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433" #make db server accessible for host system on port 1433(Server name: localhost)
+    volumes:
+      - guts-sqldata:/var/opt/mssql
+
+  guts.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ConnectionStrings__GutsDatabase=Data Source=sqldata;Database=Guts;User Id=sa;Password=Pass@word;TrustServerCertificate=True;
+      - Tokens__Key=AsZ*!/~T'(77)z%qaV
+      #- Captcha__secret=insecrets.json
+      - Mail__webappbaseurl=http://localhost:4200/
+      #- Mail__password=insecrets.json
+    ports:
+      - "5000:80"
+      - "5001:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - sqldata
+
+  guts.web.angular:
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./Guts.Web/ClientApp:/app
+
+volumes:
+  guts-sqldata:
+    external: false

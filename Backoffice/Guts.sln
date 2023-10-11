@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29324.140
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Api", "Guts.Api\Guts.Api.csproj", "{012A8C54-F4DE-4EB7-B62A-0E9450398A58}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Domain.Tests", "Guts.Domain.Tests\Guts.Domain.Tests.csproj", "{FC57E221-CAA1-4DBD-B35F-D21095E4E89A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Bootstrapper", "Guts.Bootstrapper\Guts.Bootstrapper.csproj", "{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{4520912A-D7A6-4A83-ABAA-53A993B0145B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2B5AAB7-9F9D-4EE2-8E10-3B63F4B2E61F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

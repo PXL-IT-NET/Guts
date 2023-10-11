@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
-import { GetResult } from "../../util/Result";
+import { GetResult } from "../../util/result";
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { ITeamDetailsModel, ITeamMemberModel, TeamGenerationModel } from "../../viewmodels/team.model";
-import { PostResult } from "../../util/Result";
+import { PostResult } from "../../util/result";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
 

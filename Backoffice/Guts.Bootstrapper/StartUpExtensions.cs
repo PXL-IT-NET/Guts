@@ -46,6 +46,10 @@ namespace Guts.Bootstrapper
                     .UseSqlServer(configuration.GetConnectionString("GutsDatabase"), sqlOptions =>
                     {
                         sqlOptions.MigrationsAssembly("Guts.Infrastructure");
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 15,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
                     });
 
 #if DEBUG

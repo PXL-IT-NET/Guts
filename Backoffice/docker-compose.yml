@@ -1,0 +1,18 @@
+version: '3.4'
+
+services:
+  sqldata:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+
+  guts.api:
+    image: ${DOCKER_REGISTRY-}gutsapi
+    build:
+      context: .
+      dockerfile: Guts.Api/Dockerfile
+
+  guts.web.angular:
+    image: ${DOCKER_REGISTRY-}gutswebangular
+    build:
+      context: .
+      dockerfile: Guts.Web/ClientApp/Dockerfile
+

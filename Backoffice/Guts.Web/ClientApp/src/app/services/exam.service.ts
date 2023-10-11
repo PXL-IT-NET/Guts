@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { GetResult, CreateResult, Result, PostResult } from "../util/Result";
+import { GetResult, CreateResult, Result, PostResult } from "../util/result";
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IExamModel, ExamModel, IExamPartModel, ExamPartModel } from "../viewmodels/exam.model";

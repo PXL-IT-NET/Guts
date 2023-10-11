@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IChapterDetailsModel } from "../viewmodels/chapter.model"
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
-import { GetResult } from "../util/Result";
+import { GetResult } from "../util/result";
 import * as moment from 'moment';
 
 @Injectable()

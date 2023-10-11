@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IProjectDetailsModel } from '../../viewmodels/project.model';
 import { ProjectService } from '../../services/project.service';
-import { GetResult } from "../../util/Result";
+import { GetResult } from "../../util/result";
 import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
 

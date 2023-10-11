@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
-import { CreateResult, GetResult } from "../util/Result";
+import { CreateResult, GetResult } from "../util/result";
 import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from "../viewmodels/projectassessment.model";
 
 @Injectable()

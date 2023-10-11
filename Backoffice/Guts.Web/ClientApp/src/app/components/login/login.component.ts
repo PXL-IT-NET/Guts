@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginModel } from '../../viewmodels/login.model';
-import { PostResult} from "../../util/Result";
+import { PostResult} from "../../util/result";
 
 
 @Component({

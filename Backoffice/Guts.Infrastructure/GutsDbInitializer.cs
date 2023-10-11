@@ -5,8 +5,10 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace Guts.Infrastructure
 {
@@ -38,7 +40,16 @@ namespace Guts.Infrastructure
 
             try
             {
-                _context.Database.Migrate();
+
+                var retry = Policy.Handle<SqlException>()
+                    .WaitAndRetry(new TimeSpan[]
+                    {
+                        TimeSpan.FromSeconds(3),
+                        TimeSpan.FromSeconds(5),
+                        TimeSpan.FromSeconds(8),
+                    });
+                retry.Execute(() => _context.Database.Migrate());
+
                 _logger.LogInformation("Migration succeeded");
             }
             catch (Exception e)

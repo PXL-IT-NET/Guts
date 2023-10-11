@@ -7,7 +7,7 @@ import { TokenModel } from '../viewmodels/token.model';
 import { RegisterModel } from '../viewmodels/register.model';
 import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
-import { PostResult } from "../util/Result";
+import { PostResult } from "../util/result";
 import { ConfirmEmailModel } from '../viewmodels/confirmemail.model';
 import { ForgotPasswordModel } from '../viewmodels/forgotpassword.model';
 import { ResetPasswordModel } from '../viewmodels/resetpassword.model';

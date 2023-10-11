@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ChapterService } from '../../services/chapter.service';
-import { GetResult } from "../../util/Result";
+import { GetResult } from "../../util/result";
 import { IChapterDetailsModel } from '../../viewmodels/chapter.model';
 import { IUserModel } from '../../viewmodels/user.model';
 import { Observable, Subject } from 'rxjs';

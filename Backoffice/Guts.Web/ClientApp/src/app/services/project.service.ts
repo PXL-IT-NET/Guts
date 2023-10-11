@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel } from "../viewmodels/team.model"
-import { GetResult, PostResult } from "../util/Result";
+import { GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
 import { TeamGenerationModel } from "../viewmodels/team.model"
