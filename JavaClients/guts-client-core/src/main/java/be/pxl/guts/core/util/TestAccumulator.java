@@ -3,6 +3,7 @@ package be.pxl.guts.core.util;
 import be.pxl.guts.core.enums.TestRunType;
 import be.pxl.guts.core.models.Assignment;
 import be.pxl.guts.core.models.AssignmentTestRun;
+import be.pxl.guts.core.models.SolutionFile;
 import be.pxl.guts.core.models.TestResult;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class TestAccumulator {
 
     private Assignment assignment;
     private TestRunType testRunType;
-    private String sourceCode;
+    private List<SolutionFile> solutionFiles;
     private String hash;
 
     private List<TestResult> testResults;
@@ -27,13 +28,13 @@ public class TestAccumulator {
      * @param chapterCode identifier code for the chapter
      * @param exerciseCode identifier code for the exercise
      * @param testRunType type of test run
-     * @param sourceCode contents of source files
+     * @param solutionFiles list of SolutionFile objects that were used
      * @param hash hash of the test file
      */
-    public TestAccumulator(String courseCode, String chapterCode, String exerciseCode, TestRunType testRunType, String sourceCode, String hash) {
+    public TestAccumulator(String courseCode, String chapterCode, String exerciseCode, TestRunType testRunType, List<SolutionFile> solutionFiles, String hash) {
         this.assignment = new Assignment(courseCode, chapterCode, exerciseCode);
         this.testRunType = testRunType;
-        this.sourceCode = sourceCode;
+        this.solutionFiles = solutionFiles;
         this.hash = hash;
 
         this.testResults = new ArrayList<>();
@@ -65,7 +66,7 @@ public class TestAccumulator {
      * @return {@link AssignmentTestRun}
      */
     public AssignmentTestRun toAssignmentTestRun() {
-        return new AssignmentTestRun(this.assignment, this.testResults, this.sourceCode, this.hash);
+        return new AssignmentTestRun(this.assignment, this.testResults, this.solutionFiles, this.hash);
     }
 
     /**

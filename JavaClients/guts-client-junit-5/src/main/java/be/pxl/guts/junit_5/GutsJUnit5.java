@@ -2,6 +2,7 @@ package be.pxl.guts.junit_5;
 
 import be.pxl.guts.core.GutsCore;
 import be.pxl.guts.core.http.ApiResult;
+import be.pxl.guts.core.models.SolutionFile;
 import be.pxl.guts.core.util.CodeCleaner;
 import be.pxl.guts.core.util.FileUtil;
 import be.pxl.guts.core.util.TestAccumulator;
@@ -48,10 +49,10 @@ public class GutsJUnit5 implements TestExecutionListener {
                         classSource.getJavaClass().getPackage().getName().replace(".", File.separator), // package to path
                         classSource.getJavaClass().getSimpleName() + ".java"); // .java source file
 
-                String sourceCode = FileUtil.getSourceCodeFiles(gutsCore.getConfig().getSourceDirectory(), fixture.sourceCodeRelativeFilePaths());
-                sourceCode = CodeCleaner.removeCommentsAndRemoveMultipleBlankLines(sourceCode);
+                List<SolutionFile> solutionFiles = FileUtil.getSolutionFiles(gutsCore.getConfig().getSourceDirectory(), fixture.sourceCodeRelativeFilePaths());
+                solutionFiles.stream().forEach(s -> s.cleanCode());
 
-                this.testAccumulator = new JUnitTestAccumulator(fixture, sourceCode, testCodePath.toString());
+                this.testAccumulator = new JUnitTestAccumulator(fixture, solutionFiles, testCodePath.toString());
             }
         }
     }

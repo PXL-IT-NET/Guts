@@ -1,5 +1,6 @@
 package be.pxl.guts.core.util;
 
+import be.pxl.guts.core.models.SolutionFile;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.annotation.Nonnull;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,6 +65,20 @@ public class FileUtil {
         List<String> codePaths = codeRelativePathsList.stream().map(path -> Paths.get(basePath, path).toString()).collect(Collectors.toList());
 
         return getSourceCodeFiles(codePaths);
+    }
+
+    public static List<SolutionFile> getSolutionFiles(String basePath, @Nonnull String pathsSeparatedBySemicolon) {
+        String[] codeRelativePaths = pathsSeparatedBySemicolon.split(";");
+        List<String> codeRelativePathsList = Arrays.asList(codeRelativePaths);
+
+        List<SolutionFile> solutionFiles = codeRelativePathsList.stream()
+                .map(path -> {
+                    String sourceCode = getSourceCode(Paths.get(basePath, path).toString());
+                    return new SolutionFile(path, sourceCode);
+                })
+                .collect(Collectors.toList());
+
+        return solutionFiles;
     }
 
     /**

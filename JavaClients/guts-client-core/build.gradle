@@ -17,9 +17,9 @@ repositories {
 
 dependencies {
     // guts client core dependencies
-    compile 'com.google.guava:guava:23.0'
-    compile 'com.google.code.gson:gson:2.8.5'
-    compile 'org.apache.httpcomponents:httpclient:4.5.7'
+    implementation 'com.google.guava:guava:23.0'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.7'
 
     // for guts client core testing
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.0'

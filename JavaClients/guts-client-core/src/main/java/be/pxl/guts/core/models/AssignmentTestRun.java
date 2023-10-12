@@ -6,13 +6,13 @@ public class AssignmentTestRun {
 
     private Assignment assignment;
     private List<TestResult> results;
-    private String sourceCode;
+    private List<SolutionFile> solutionFiles;
     private String testCodeHash;
 
-    public AssignmentTestRun(Assignment assignment, List<TestResult> results, String sourceCode, String testCodeHash) {
+    public AssignmentTestRun(Assignment assignment, List<TestResult> results, List<SolutionFile> solutionFiles, String testCodeHash) {
         this.assignment = assignment;
         this.results = results;
-        this.sourceCode = sourceCode;
+        this.solutionFiles = solutionFiles;
         this.testCodeHash = testCodeHash;
     }
 
@@ -24,12 +24,12 @@ public class AssignmentTestRun {
         return results;
     }
 
-    public String getSourceCode() {
-        return sourceCode;
+    public List<SolutionFile> getSolutionFiles() {
+        return solutionFiles;
     }
 
-    public void setSourceCode(String sourceCode) {
-        this.sourceCode = sourceCode;
+    public void setSolutionFiles(List<SolutionFile> solutionFiles) {
+        this.solutionFiles = solutionFiles;
     }
 
     public String getTestCodeHash() {
