@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@GutsFixture(courseCode = "java1", chapterCode = "H05", exerciseCode = "Exercises02", sourceCodeRelativeFilePaths = "Calculator.java")
+@GutsFixture(courseCode = "javaEss1", chapterCode = "HT1", exerciseCode = "Exercises02", sourceCodeRelativeFilePaths = "Calculator.java")
 class CalculatorTest2 {
 
     @Test

@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@GutsFixture(courseCode = "java1", chapterCode = "H05", exerciseCode = "Exercises01", sourceCodeRelativeFilePaths = "Calculator.java")
+@GutsFixture(courseCode = "javaEss1", chapterCode = "HT1", exerciseCode = "Exercises01", sourceCodeRelativeFilePaths = "Calculator.java")
 class CalculatorTest {
 
     @Test
