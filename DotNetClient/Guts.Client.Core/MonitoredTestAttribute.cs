@@ -39,7 +39,7 @@ namespace Guts.Client.Core
                 Message = (resultAdapter.Message ?? string.Empty).Trim()
             };
 
-            TestRunResultAccumulator.Instance.AddTestResult(result);
+            TestRunResultAccumulator.Instance.AddTestResult(result, test.Method?.TypeInfo);
         }
 
         private int GetTestCaseNumber(ITest test)
