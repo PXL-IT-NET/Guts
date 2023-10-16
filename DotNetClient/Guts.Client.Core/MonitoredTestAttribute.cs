@@ -2,15 +2,20 @@
 using Guts.Client.Core.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using System.Reflection;
 
 namespace Guts.Client.Core
 {
     public class MonitoredTestAttribute : TestAttribute, ITestAction
     {
-
         private readonly string _displayName;
 
         public ActionTargets Targets => ActionTargets.Test;
+
+        public MonitoredTestAttribute()
+        {
+            _displayName = null;
+        }
 
         public MonitoredTestAttribute(string displayName)
         {
@@ -24,7 +29,7 @@ namespace Guts.Client.Core
 
         public void AfterTest(ITest test)
         {
-            var testName = _displayName ?? test.MethodName;
+            var testName = _displayName ?? new CamelCaseConverter().ToNormalSentence(test.MethodName);
 
             if (IsTestCase(test))
             {

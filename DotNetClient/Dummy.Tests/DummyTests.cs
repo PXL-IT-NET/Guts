@@ -7,8 +7,8 @@ namespace Dummy.Tests
     [Ignore("These tests could actually send testresults")]
     public class DummyTests
     {
-        [MonitoredTest("Test something")]
-        public void TestSomething()
+        [MonitoredTest]
+        public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
         {
             Assert.True(true);
         }
