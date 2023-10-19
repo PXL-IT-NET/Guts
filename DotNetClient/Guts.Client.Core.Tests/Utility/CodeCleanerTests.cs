@@ -1,7 +1,7 @@
 ﻿using Guts.Client.Core.TestTools;
 using NUnit.Framework;
 
-namespace Guts.Client.Tests.TestTools
+namespace Guts.Client.Core.Tests.Utility
 {
     [TestFixture]
     public class CodeCleanerTests

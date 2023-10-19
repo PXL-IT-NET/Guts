@@ -10,10 +10,10 @@
     <Description>Utilities to write unit tests and send the results to the Guts API</Description>
     <Copyright>Copyright ©  2019</Copyright>
     <PackageTags>Guts;Unit Test;Client</PackageTags>
-    <Version>4.0.2</Version>
+    <Version>4.0.3</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.0.0</AssemblyVersion>
-    <FileVersion>4.0.0</FileVersion>
+    <AssemblyVersion>4.0.3</AssemblyVersion>
+    <FileVersion>4.0.3</FileVersion>
     <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
   </PropertyGroup>
 
@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
-    <PackageReference Include="NUnit" Version="3.13.2" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,7 +2,7 @@ using Guts.Client.Core.Utility;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Client.Core.Tests
+namespace Guts.Client.Core.Tests.Utility
 {
     [TestFixture]
     public class AuthorizationHandlerTests

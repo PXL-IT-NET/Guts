@@ -53,7 +53,7 @@ namespace Guts.Client.Core
                     TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
                 };
 
-                SendTestResults(testRun, TestRunType.ForExercise);
+               SendTestResults(testRun, TestRunType.ForExercise);
             }
             catch (Exception ex)
             {

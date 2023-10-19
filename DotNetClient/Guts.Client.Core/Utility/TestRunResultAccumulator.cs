@@ -6,6 +6,7 @@ using System.Reflection;
 using Guts.Client.Core.Models;
 using Guts.Client.Core.TestTools;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace Guts.Client.Core.Utility
 {
@@ -29,9 +30,9 @@ namespace Guts.Client.Core.Utility
 
         public static TestRunResultAccumulator Instance => _instance ?? (_instance = new TestRunResultAccumulator());
 
-        public void AddTestResult(TestResult result)
+        public void AddTestResult(TestResult result, ITypeInfo testClassTypeInfo)
         {
-            EnsureMetaDataIsLoaded();
+            EnsureMetaDataIsLoaded(testClassTypeInfo);
 
             if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated) tests
 
@@ -46,41 +47,40 @@ namespace Guts.Client.Core.Utility
             TestCodeHash = string.Empty;
         }
 
-        private void EnsureMetaDataIsLoaded()
+        private void EnsureMetaDataIsLoaded(ITypeInfo testClassTypeInfo)
         {
             if (NumberOfTestsInCurrentFixture > 0) return;
 
+            if (testClassTypeInfo == null) return;
 
-            var testClassName = TestContext.CurrentContext.Test.ClassName;
-            var dotIndex = testClassName.LastIndexOf('.');
-            if (dotIndex >= 0)
-            {
-                testClassName = testClassName.Substring(dotIndex + 1);
-            }
-            var relativeFilePath = testClassName + ".cs";
-            var testProjectDirectoryInfo = new DirectoryInfo(AppContext.BaseDirectory);
-            var fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
-            while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
+            TestClassName = testClassTypeInfo.Name;
+
+            //Find test project directory
+            DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassTypeInfo.Assembly.Location).Parent;
+            bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
+            while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
             {
                 testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
-                fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+                hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
             }
-            var testAssemblyName = testProjectDirectoryInfo.Name;
 
+            //Find test code file in test project directory
+            FileInfo fileInfo = testProjectDirectoryInfo
+                .GetFiles(TestClassName + ".cs", SearchOption.AllDirectories).FirstOrDefault();
 
-            var fullQualifiedTestClassName = $"{TestContext.CurrentContext.Test.ClassName}, {testAssemblyName}";
-            var testClassType = Type.GetType(fullQualifiedTestClassName, false);
-
-            if (testClassType != null)
+            if (fileInfo == null)
             {
-                TestClassName = TestContext.CurrentContext.Test.ClassName;
-
-                NumberOfTestsInCurrentFixture = testClassType.GetMethods().Where(m => m.GetCustomAttributes().OfType<TestAttribute>().Any())
-                    .Select(m => Math.Max(1, m.GetCustomAttributes().OfType<TestCaseAttribute>().Count())).Sum();
-
-                var testCodePath = Path.Combine(testProjectDirectoryInfo.FullName, testClassType.Name + ".cs");
-                TestCodeHash = FileUtil.GetFileHash(testCodePath);
+                TestContext.Error.WriteLine(
+                    $"Could not find test code file for test class {TestClassName}. " +
+                    $"Searched for {TestClassName}.cs in directory {testProjectDirectoryInfo.FullName} (and subdirectories)");
             }
+
+            NumberOfTestsInCurrentFixture = testClassTypeInfo
+                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
+                .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
+
+            TestCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
         }
     }
 }
