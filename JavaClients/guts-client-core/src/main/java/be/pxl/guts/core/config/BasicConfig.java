@@ -5,8 +5,8 @@ package be.pxl.guts.core.config;
  */
 public class BasicConfig implements IConfig {
 
-    private String apiUrl = "http://localhost:54830/";
-    private String webUrl = "http://localhost:54831/";
+    private String apiUrl = "http://localhost:5000/";
+    private String webUrl = "localhost:4200/";
     private String sourceDirectory = "src/main/java/";
     private String testDirectory = "src/test/java/";
 

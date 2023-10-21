@@ -40,12 +40,13 @@ root folder = folder that contains the *guts.json* file.
 The default configuration file is configured for maven and gradle projects
 ```json
 {  
-   "baseUrl":"http://localhost:54830/",
-   "webUrl":"http://localhost:54831/",
+   "baseUrl":"http://localhost:5000/",
+   "webUrl":"localhost:4200/",
    "sourceDirectory":"src/main/java/",
    "testDirectory":"src/test/java/"
 }
 ```
+These settings should match a local GUTS instance, when this was started using the provided Docker container in the ```Backoffice``` folder.
 
 ## Build to local maven
 To build the project to the local maven repository run the command below in the project folder.
