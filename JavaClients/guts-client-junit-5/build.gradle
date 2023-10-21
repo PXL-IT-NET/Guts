@@ -35,7 +35,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'be.pxl.guts'
-            artifactId = 'client-junit-5'
+            artifactId = 'client-junit'
 
             from components.java
         }
