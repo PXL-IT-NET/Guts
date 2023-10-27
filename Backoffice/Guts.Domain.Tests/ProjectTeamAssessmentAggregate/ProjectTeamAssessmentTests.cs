@@ -156,6 +156,25 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
                 Throws.InstanceOf<ContractException>());
         }
 
+        [TestCase(-1, 3 ,3)]
+        [TestCase(3, -1, 3)]
+        [TestCase(3, 3, -1)]
+        public void AddOrUpdatePeerAssessment_NullScorePassedIn_ShouldThrowContractException(
+            int cooperationScore, int contributionScore, int effortScore)
+        {
+            //Arrange
+            User user = _projectTeamAssessment.Team.TeamUsers.First().User;
+            User subject = _projectTeamAssessment.Team.TeamUsers.Last().User;
+
+            string explanation = Random.NextString();
+
+            //Act + Assert
+            Assert.That(
+                () => _projectTeamAssessment.AddOrUpdatePeerAssessment(user.Id, subject.Id,
+                    cooperationScore, contributionScore, effortScore, explanation),
+                Throws.InstanceOf<ContractException>());
+        }
+
         [Test]
         public void GetMissingPeerAssessmentsOf_UserNotATeamMember_ShouldThrowContractException()
         {
@@ -179,9 +198,9 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
 
             //Assert
             Assert.That(results, Has.Count.EqualTo(_projectTeamAssessment.Team.TeamUsers.Count));
-            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.ContributionScore == AssessmentScore.NoAddedValue));
-            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.EffortScore == AssessmentScore.NoAddedValue));
-            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.CooperationScore == AssessmentScore.NoAddedValue));
+            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.ContributionScore == AssessmentScore.NullScore));
+            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.EffortScore == AssessmentScore.NullScore));
+            Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.CooperationScore == AssessmentScore.NullScore));
             Assert.That(results, Has.All.Matches<IPeerAssessment>(pa => pa.User.Id == user.Id));
             foreach (IProjectTeamUser teamUser in _projectTeamAssessment.Team.TeamUsers)
             {

@@ -52,7 +52,8 @@ import { ToastrModule } from 'ngx-toastr';
     c.ProjectAssessmentOverviewComponent,
     c.ProjectTeamAssessmentEvaluationFormComponent,
     c.ProjectTeamAssessmentDetailedResultsComponent,
-    c.ProjectTeamAssessmentMyResultComponent
+    c.ProjectTeamAssessmentMyResultComponent,
+    c.AssessmentScoreDropdownComponent
   ],
   imports: [
     BrowserModule,

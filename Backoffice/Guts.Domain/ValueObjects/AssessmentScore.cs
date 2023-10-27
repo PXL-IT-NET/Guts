@@ -6,6 +6,7 @@ namespace Guts.Domain.ValueObjects
 {
     public class AssessmentScore : ValueObject<AssessmentScore>
     {
+        public static AssessmentScore NullScore = new AssessmentScore(-1);
         public static AssessmentScore NoAddedValue = new AssessmentScore(0);
         public static AssessmentScore WayBelowAverage = new AssessmentScore(1);
         public static AssessmentScore BelowAverage = new AssessmentScore(2);
@@ -17,9 +18,12 @@ namespace Guts.Domain.ValueObjects
 
         internal AssessmentScore(int value)
         {
-            Contracts.Require(value >= 0, "Assessment score must be zero or positive");
             Contracts.Require(value <= 5, "Assessment score must be less than or equal to 5");
             Value = value;
+            if (value < 0)
+            {
+                Value = -1;
+            }
         }
 
         public static implicit operator int(AssessmentScore score)

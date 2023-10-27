@@ -54,6 +54,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             RequireUserToBeATeamMember(userId);
             RequireUserToBeATeamMember(subjectId);
             Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change a peer assessment.");
+            Contracts.Require(cooperationScore != AssessmentScore.NullScore, "An empty score for 'cooperation' is not allowed.");
+            Contracts.Require(contributionScore != AssessmentScore.NullScore, "An empty score for 'contribution' is not allowed.");
+            Contracts.Require(effortScore != AssessmentScore.NullScore, "An empty score for 'effort' is not allowed.");
 
             IPeerAssessment peerAssessment = _peerAssessments.SingleOrDefault(pa => pa.User.Id == userId && pa.Subject.Id == subjectId);
             if (peerAssessment == null)
@@ -104,16 +107,6 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             }
             return peers;
         }
-
-        //public IAssessmentResult GetAssessmentResultFor(int userId, IAssessmentResultFactory resultFactory)
-        //{
-        //    RequireUserToBeATeamMember(userId);
-        //    Contracts.Require(IsComplete, "The team assessment is not completed by all peers. Assessment results are only available when all members completed the assessment.");
-
-        //    User subject = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
-
-        //    return resultFactory.Create(subject, PeerAssessments);
-        //}
 
         public void ValidateAssessmentsOf(int userId)
         {

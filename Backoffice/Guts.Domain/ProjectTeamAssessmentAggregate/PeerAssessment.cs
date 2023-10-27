@@ -45,9 +45,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             User = user;
             Subject = subject;
 
-            CooperationScore = AssessmentScore.NoAddedValue;
-            ContributionScore = AssessmentScore.NoAddedValue;
-            EffortScore = AssessmentScore.NoAddedValue;
+            CooperationScore = AssessmentScore.NullScore;
+            ContributionScore = AssessmentScore.NullScore;
+            EffortScore = AssessmentScore.NullScore;
         }
 
         public void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, string explanation)

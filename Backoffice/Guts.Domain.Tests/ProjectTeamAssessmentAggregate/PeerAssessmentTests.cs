@@ -25,9 +25,9 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             Assert.That(assessment.User, Is.SameAs(user));
             Assert.That(assessment.Subject, Is.SameAs(subject));
 
-            Assert.That(assessment.CooperationScore, Is.SameAs(AssessmentScore.NoAddedValue));
-            Assert.That(assessment.ContributionScore, Is.SameAs(AssessmentScore.NoAddedValue));
-            Assert.That(assessment.EffortScore, Is.SameAs(AssessmentScore.NoAddedValue));
+            Assert.That(assessment.CooperationScore, Is.SameAs(AssessmentScore.NullScore));
+            Assert.That(assessment.ContributionScore, Is.SameAs(AssessmentScore.NullScore));
+            Assert.That(assessment.EffortScore, Is.SameAs(AssessmentScore.NullScore));
         }
 
         [Test]

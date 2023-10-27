@@ -133,9 +133,9 @@ export class PeerAssessmentModel implements IPeerAssessmentModel{
   constructor(source?: IPeerAssessmentModel) {
     this.subject = new UserModel();
     this.user = new UserModel();
-    this.contributionScore = 3;
-    this.cooperationScore = 3;
-    this.effortScore = 3;
+    this.contributionScore = -1;
+    this.cooperationScore = -1;
+    this.effortScore = -1;
     this.isSelfAssessment = false;
     this.explanation = '';
 

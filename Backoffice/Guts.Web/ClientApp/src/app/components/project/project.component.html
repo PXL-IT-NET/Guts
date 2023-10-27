@@ -5,7 +5,7 @@
 </div>
 <div class="row">
   <div class="col-md-12">
-    <form *ngIf="model.teams.length > 0">
+    <form *ngIf="model.components.length > 0 && model.teams.length > 0">
       <div class="mb-2 row">
         <label for="components" class="col-lg-1 col-md-2 col-form-label">Component</label>
         <div class="col-lg-3 col-md-4">
@@ -33,10 +33,13 @@
 
       </div>
     </form>
+    <p *ngIf="model.components.length == 0">
+      This project has no components configured yet.
+  </p>
     <ngx-loading [show]="loading"></ngx-loading>
   </div>
 </div>
-<div class="row">
+<div class="row" *ngIf="model.components.length > 0">
   <div class="col-md-12">
     <app-project-summary *ngIf="selectedAssignmentId <= 0" [courseId]="courseId" [projectCode]="projectCode"
       [teamId]="selectedTeamId" [statusDate]="selectedDate">
