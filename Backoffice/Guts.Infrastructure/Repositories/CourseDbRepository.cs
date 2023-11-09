@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
@@ -20,6 +22,11 @@ namespace Guts.Infrastructure.Repositories
                 throw new DataNotFoundException();
             }
             return course;
+        }
+
+        public override async Task<IList<Course>> GetAllAsync()
+        {
+            return await _context.Set<Course>().OrderBy(c => c.Name).ToListAsync();
         }
     }
 }

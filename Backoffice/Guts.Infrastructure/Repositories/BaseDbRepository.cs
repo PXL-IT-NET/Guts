@@ -27,7 +27,7 @@ namespace Guts.Infrastructure.Repositories
             return entity;
         }
 
-        public async Task<IList<T>> GetAllAsync()
+        public virtual async Task<IList<T>> GetAllAsync()
         {
             return (IList<T>)await _context.Set<TConcrete>().ToListAsync();
         }
