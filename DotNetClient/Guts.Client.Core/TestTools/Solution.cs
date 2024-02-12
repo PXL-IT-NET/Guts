@@ -13,12 +13,12 @@ namespace Guts.Client.Core.TestTools
             Path = path;
         }
 
-        private static Solution _current;
+        private static Solution? _current;
         public static Solution Current
         {
             get
             {
-                if (_current != null) return _current;
+                if (_current is not null) return _current;
 
                 var solutionDirectoryInfo = new DirectoryInfo(AppContext.BaseDirectory);
                 var isSolutionDirectory = solutionDirectoryInfo.GetFiles("*.sln").Length > 0;
@@ -29,7 +29,7 @@ namespace Guts.Client.Core.TestTools
                     isSolutionDirectory = solutionDirectoryInfo.GetFiles("*.sln").Length > 0;
                 }
 
-                Assert.That(isSolutionDirectory, Is.True, () => "Technical error: could not find the path of the solution.");
+                Assert.That(isSolutionDirectory, Is.True, "Technical error: could not find the path of the solution.");
                 _current = new Solution(solutionDirectoryInfo.FullName);
                 return _current;
             }

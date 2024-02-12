@@ -2,10 +2,10 @@
 {
     public class Assignment
     {
-        public string CourseCode { get; set; }
+        public string CourseCode { get; set; } = string.Empty;
 
-        public string TopicCode { get; set; }
+        public string TopicCode { get; set; } = string.Empty;
 
-        public string AssignmentCode { get; set; }
+        public string AssignmentCode { get; set; } = string.Empty;
     }
 }

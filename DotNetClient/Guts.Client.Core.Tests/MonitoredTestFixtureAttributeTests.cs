@@ -21,16 +21,16 @@ namespace Guts.Client.Core.Tests
             var testFixture = new ExerciseTestFixtureAttribute(courseCode, chapterCode, exerciseCode);
 
             //Assert
-            var sender = testFixture.GetPrivateFieldValue<TestRunResultSender>();
+            TestRunResultSender? sender = testFixture.GetPrivateFieldValue<TestRunResultSender>();
             Assert.That(sender, Is.Not.Null);
 
-            var authorizationHandler = sender.GetPrivateFieldValue<IAuthorizationHandler>() as AuthorizationHandler;
+            AuthorizationHandler? authorizationHandler = sender!.GetPrivateFieldValue<IAuthorizationHandler>() as AuthorizationHandler;
             Assert.That(authorizationHandler, Is.Not.Null);
 
-            var loginWindowFactory = authorizationHandler.GetPrivateFieldValue<ILoginWindowFactory>() as LoginWindowFactory;
+            LoginWindowFactory? loginWindowFactory = authorizationHandler!.GetPrivateFieldValue<ILoginWindowFactory>() as LoginWindowFactory;
             Assert.That(loginWindowFactory, Is.Not.Null);
 
-            var factoryFields = loginWindowFactory.GetAllPrivateFieldValues<string>().ToList();
+            var factoryFields = loginWindowFactory!.GetAllPrivateFieldValues<string>().ToList();
             Assert.That(factoryFields, Has.All.StartWith("http"));
         }
     }

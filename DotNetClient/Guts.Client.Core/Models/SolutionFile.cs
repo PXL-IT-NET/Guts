@@ -2,7 +2,13 @@
 {
     public class SolutionFile
     {
-        public string FilePath { get; set; }
-        public string Content { get; set; }
+        public string FilePath { get; }
+        public string Content { get; }
+
+        public SolutionFile(string filePath, string content)        
+        {
+            FilePath = filePath;
+            Content = content;
+        }
     }
 }

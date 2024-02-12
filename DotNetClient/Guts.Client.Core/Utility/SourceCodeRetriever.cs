@@ -21,11 +21,7 @@ namespace Guts.Client.Core.Utility
                 string content = Solution.Current.GetFileContent(trimmedPath) ?? string.Empty;
                 string contentBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content));
 
-                sourceFiles.Add(new SolutionFile
-                {
-                    FilePath = trimmedPath,
-                    Content = contentBase64
-                });
+                sourceFiles.Add(new SolutionFile(trimmedPath, contentBase64));
             }
 
             return sourceFiles;

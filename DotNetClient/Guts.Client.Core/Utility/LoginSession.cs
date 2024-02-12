@@ -2,10 +2,10 @@
 {
     public class LoginSession
     {
-        public string PublicIdentifier { get; set; }
-        public string SessionToken { get; set; }
-        public string IpAddress { get; set; }
-        public string LoginToken { get; set; }
+        public string PublicIdentifier { get; set; } = string.Empty;
+        public string SessionToken { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+        public string LoginToken { get; set; } = string.Empty;
         public bool IsCancelled { get; set; }
     }
 }

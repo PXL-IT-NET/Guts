@@ -10,7 +10,7 @@ namespace Dummy.Tests.Nested
         [MonitoredTest("A nested test")]
         public void NestedTestShouldAlsoBeFound()
         {
-            Assert.True(true);
+            Assert.Pass();
         }
     }
 }

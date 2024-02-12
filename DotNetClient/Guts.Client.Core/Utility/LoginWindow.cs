@@ -11,8 +11,8 @@ namespace Guts.Client.Core.Utility
         private readonly IHttpHandler _httpHandler;
         private readonly string _webAppBaseUrl;
 
-        public event TokenRetrievedHandler TokenRetrieved;
-        public event EventHandler Closed;
+        public event TokenRetrievedHandler? TokenRetrieved;
+        public event EventHandler? Closed;
 
         public LoginWindow(IHttpHandler httpHandler, string webAppBaseUrl)
         {
@@ -51,7 +51,7 @@ namespace Guts.Client.Core.Utility
 
         private async Task<LoginSession> CreateLoginSessionAsync()
         {
-            return await _httpHandler.PostAsJsonAsync<object, LoginSession>("api/auth/loginsession", null);
+            return await _httpHandler.PostAsJsonAsync<object, LoginSession>("api/auth/loginsession", new object());
         }
 
         private void OpenUrlInBrowser(string url)
@@ -92,7 +92,7 @@ namespace Guts.Client.Core.Utility
                 stopWatch.Start();
                 while (!cancellationToken.IsCancellationRequested && stopWatch.Elapsed.TotalSeconds < timeoutInSeconds)
                 {
-                    var session =
+                    LoginSession session =
                         await _httpHandler.PostAsJsonAsync<string, LoginSession>(
                             $"api/auth/loginsession/{loginSessionPublicIdentifier}", sessionToken);
 
@@ -103,14 +103,14 @@ namespace Guts.Client.Core.Utility
 
                     if (session.IsCancelled)
                     {
-                        Closed?.Invoke(this, new EventArgs());
+                        Closed?.Invoke(this, EventArgs.Empty);
                         return string.Empty;
                     }
 
                     Thread.Sleep(delayInMilliSeconds);
                 }
                 stopWatch.Stop();
-                Closed?.Invoke(this, new EventArgs());
+                Closed?.Invoke(this, EventArgs.Empty);
                 return string.Empty;
             }, cancellationToken);
 

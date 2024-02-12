@@ -12,7 +12,7 @@ namespace Guts.Client.Core.Utility
 {
     public class TestRunResultAccumulator
     {
-        private static TestRunResultAccumulator _instance;
+        private static TestRunResultAccumulator? _instance;
 
         public IList<TestResult> TestResults { get; }
 
@@ -24,11 +24,13 @@ namespace Guts.Client.Core.Utility
 
         private TestRunResultAccumulator()
         {
+            TestClassName = string.Empty;
+            TestCodeHash = string.Empty;
             TestResults = new List<TestResult>();
             Clear();
         }
 
-        public static TestRunResultAccumulator Instance => _instance ?? (_instance = new TestRunResultAccumulator());
+        public static TestRunResultAccumulator Instance => _instance ??= new TestRunResultAccumulator();
 
         public void AddTestResult(TestResult result, ITypeInfo testClassTypeInfo)
         {
@@ -47,16 +49,16 @@ namespace Guts.Client.Core.Utility
             TestCodeHash = string.Empty;
         }
 
-        private void EnsureMetaDataIsLoaded(ITypeInfo testClassTypeInfo)
+        private void EnsureMetaDataIsLoaded(ITypeInfo? testClassTypeInfo)
         {
             if (NumberOfTestsInCurrentFixture > 0) return;
 
-            if (testClassTypeInfo == null) return;
+            if (testClassTypeInfo is null) return;
 
             TestClassName = testClassTypeInfo.Name;
 
             //Find test project directory
-            DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassTypeInfo.Assembly.Location).Parent;
+            DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassTypeInfo.Assembly.Location).Parent!;
             bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
             while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
             {
@@ -65,22 +67,24 @@ namespace Guts.Client.Core.Utility
             }
 
             //Find test code file in test project directory
-            FileInfo fileInfo = testProjectDirectoryInfo
+            FileInfo? fileInfo = testProjectDirectoryInfo
                 .GetFiles(TestClassName + ".cs", SearchOption.AllDirectories).FirstOrDefault();
 
-            if (fileInfo == null)
+            if (fileInfo is null)
             {
                 TestContext.Error.WriteLine(
                     $"Could not find test code file for test class {TestClassName}. " +
                     $"Searched for {TestClassName}.cs in directory {testProjectDirectoryInfo.FullName} (and subdirectories)");
+            }
+            else
+            {
+                TestCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
             }
 
             NumberOfTestsInCurrentFixture = testClassTypeInfo
                 .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
                 .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
-
-            TestCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
         }
     }
 }

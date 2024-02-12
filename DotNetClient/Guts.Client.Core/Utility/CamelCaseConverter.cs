@@ -6,10 +6,10 @@ namespace Guts.Client.Core.Utility
 {
     internal class CamelCaseConverter
     {
-        public string ToNormalSentence(string camelCaseSentence)
+        public string ToNormalSentence(string? camelCaseSentence)
         {
             if (string.IsNullOrEmpty(camelCaseSentence))
-                return camelCaseSentence;
+                return string.Empty;
 
             string[] subSentences = camelCaseSentence.Split(new[] { '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
             if (subSentences.Length > 1)

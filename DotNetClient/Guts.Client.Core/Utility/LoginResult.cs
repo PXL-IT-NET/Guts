@@ -3,11 +3,11 @@
     public class LoginResult
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public static LoginResult CreateSuccess()
         {
-            return new LoginResult { Success = true };
+            return new LoginResult { Success = true};
         }
 
         public static LoginResult CreateError(string errorMessage)

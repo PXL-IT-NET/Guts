@@ -34,7 +34,7 @@ namespace Guts.Client.Core.Utility
             }
 
             TestContext.Progress.WriteLine("Sending data...");
-            HttpResponseMessage response = null;
+            HttpResponseMessage? response = null;
             bool sendFailed = false;
             try
             {
@@ -47,7 +47,7 @@ namespace Guts.Client.Core.Utility
                 sendFailed = true;
             }
 
-            if (sendFailed || response.StatusCode == HttpStatusCode.Unauthorized)
+            if (sendFailed || response?.StatusCode == HttpStatusCode.Unauthorized)
             {
                 TestContext.Progress.WriteLine("First try failed (unauthorized).");
                 //retry with token retrieved remotely
@@ -55,7 +55,7 @@ namespace Guts.Client.Core.Utility
                 response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
             }
 
-            var result = new Result(response.IsSuccessStatusCode);
+            var result = new Result(response!.IsSuccessStatusCode);
             if (!result.Success)
             {
                 result.Message = await response.Content.ReadAsStringAsync();

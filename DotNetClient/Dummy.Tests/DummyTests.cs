@@ -10,7 +10,7 @@ namespace Dummy.Tests
         [MonitoredTest]
         public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
         {
-            Assert.True(true);
+            Assert.Pass();
         }
 
         [MonitoredTest("Test with cases")]
@@ -18,7 +18,7 @@ namespace Dummy.Tests
         [TestCase(2, 3)]
         public void TestWithCases(int a, int b)
         {
-            Assert.True(a < b);
+            Assert.That(a < b, Is.True);
         }
     }
 }

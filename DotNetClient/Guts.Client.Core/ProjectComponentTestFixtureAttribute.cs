@@ -16,11 +16,12 @@ namespace Guts.Client.Core
         {
             _projectCode = projectCode;
             _componentCode = componentCode;
+            SourceCodeRelativeFilePaths = null;
         }
 
         public ProjectComponentTestFixtureAttribute(string courseCode, string projectCode, string componentCode, string sourceCodeRelativeFilePaths) : this(courseCode, projectCode, componentCode)
         {
-            _sourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
+            SourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
         }
 
         public override void BeforeTest(ITest test)
@@ -38,18 +39,16 @@ namespace Guts.Client.Core
 
                 var projectComponent = new Assignment
                 {
-                    CourseCode = _courseCode,
+                    CourseCode = CourseCode,
                     TopicCode = _projectCode,
                     AssignmentCode = _componentCode,
                 };
 
-                var testRun = new AssignmentTestRun
-                {
-                    Assignment = projectComponent,
-                    Results = TestRunResultAccumulator.Instance.TestResults,
-                    SolutionFiles = GetSourceCodeFiles(),
-                    TestCodeHash = TestRunResultAccumulator.Instance.TestCodeHash
-                };
+                var testRun = new AssignmentTestRun(
+                    projectComponent,
+                    TestRunResultAccumulator.Instance.TestResults,
+                    GetSourceCodeFiles(),
+                    TestRunResultAccumulator.Instance.TestCodeHash);
 
                 SendTestResults(testRun, TestRunType.ForProject);
             }

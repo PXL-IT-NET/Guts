@@ -1,14 +1,14 @@
 ﻿using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
+using System.Reflection;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using System.Reflection;
 
 namespace Guts.Client.Core
 {
     public class MonitoredTestAttribute : TestAttribute, ITestAction
     {
-        private readonly string _displayName;
+        private readonly string? _displayName;
 
         public ActionTargets Targets => ActionTargets.Test;
 
@@ -37,23 +37,24 @@ namespace Guts.Client.Core
             }
 
             var resultAdapter = TestContext.CurrentContext.Result;
-            var result = new TestResult
-            {
-                TestName = testName,
-                Passed = Equals(resultAdapter.Outcome, ResultState.Success),
-                Message = (resultAdapter.Message ?? string.Empty).Trim()
-            };
+            var result = new TestResult(
+                testName,
+                passed:Equals(resultAdapter.Outcome, ResultState.Success),
+                message:(resultAdapter.Message ?? string.Empty).Trim()
+            );
 
-            TestRunResultAccumulator.Instance.AddTestResult(result, test.Method?.TypeInfo);
+            ITypeInfo methodTypeInfo = test.Method?.TypeInfo!;
+            TestRunResultAccumulator.Instance.AddTestResult(result, methodTypeInfo);
         }
 
         private int GetTestCaseNumber(ITest test)
         {
             int testCaseNumber = 1;
             bool found = false;
-            while (!found && testCaseNumber <= test.Parent.TestCaseCount)
+            ITest parentTest = test.Parent!;
+            while (!found && testCaseNumber <= parentTest.TestCaseCount)
             {
-                if (test.Parent.Tests[testCaseNumber - 1].Id == test.Id)
+                if (parentTest.Tests[testCaseNumber - 1].Id == test.Id)
                 {
                     found = true;
                 }

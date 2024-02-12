@@ -20,14 +20,14 @@ namespace Guts.Client.Core.TestTools
             return fields.Any(filterFunc);
         }
 
-        public static bool HasPrivateFieldValue<T>(this object obj, Func<T, bool> filterFunc)
+        public static bool HasPrivateFieldValue<T>(this object obj, Func<T?, bool> filterFunc)
         {
             var objectType = obj.GetType();
-            var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+            IEnumerable<FieldInfo> fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
 
             try
             {
-                var values = fields.Select(field => (T)field.GetValue(obj));
+                IEnumerable<T?> values = fields.Select(field => (T?)field.GetValue(obj));
                 return values.Any(filterFunc);
             }
             catch (Exception)
@@ -36,17 +36,17 @@ namespace Guts.Client.Core.TestTools
             }
         }
 
-        public static T GetPrivateFieldValue<T>(this object obj)
+        public static T? GetPrivateFieldValue<T>(this object obj)
         {
             return obj.GetPrivateFieldValue<T>((field) => true);
         }
 
-        public static T GetPrivateFieldValueByName<T>(this object oject, string fieldName)
+        public static T? GetPrivateFieldValueByName<T>(this object obj, string fieldName)
         {
-            return oject.GetPrivateFieldValue<T>(field => field.Name.ToLower() == fieldName.ToLower());
+            return obj.GetPrivateFieldValue<T>(field => field.Name.ToLower() == fieldName.ToLower());
         }
 
-        public static T GetPrivateFieldValue<T>(this object obj, Func<FieldInfo, bool> filterFunc)
+        public static T? GetPrivateFieldValue<T>(this object obj, Func<FieldInfo, bool> filterFunc)
         {
             var objectType = obj.GetType();
             var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
@@ -55,15 +55,15 @@ namespace Guts.Client.Core.TestTools
 
             if (theField == null) throw new FieldAccessException("Could not find a matching field");
 
-            return (T)theField.GetValue(obj);
+            return (T?)theField.GetValue(obj);
         }
 
-        public static IEnumerable<T> GetAllPrivateFieldValues<T>(this object obj)
+        public static IEnumerable<T?> GetAllPrivateFieldValues<T>(this object obj)
         {
             var objectType = obj.GetType();
             var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
 
-            return fields.Select(field => (T)field.GetValue(obj));
+            return fields.Select(field => (T?)field.GetValue(obj));
         }
 
         public static bool HasPrivateMethod(this object obj, Func<MethodInfo, bool> filterFunc)

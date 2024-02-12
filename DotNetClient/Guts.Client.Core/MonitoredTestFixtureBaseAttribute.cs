@@ -14,16 +14,19 @@ namespace Guts.Client.Core
 {
     public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, ITestAction
     {
-        protected readonly string _courseCode;
-        protected string _sourceCodeRelativeFilePaths;
-        protected readonly TestRunResultSender _resultSender;
-        private Exception _initializationException;
+        protected readonly string CourseCode;
+        protected string? SourceCodeRelativeFilePaths;
+        protected readonly TestRunResultSender? ResultSender;
+
+        private readonly Exception? _initializationException;
 
         public ActionTargets Targets => ActionTargets.Suite;
 
-        protected MonitoredTestFixtureBaseAttribute(string courseCode) : base(new object[0])
+        protected MonitoredTestFixtureBaseAttribute(string courseCode) : base(Array.Empty<object>())
         {
-            _courseCode = courseCode;
+            SourceCodeRelativeFilePaths = null;
+            CourseCode = courseCode;
+            ResultSender = null;
 
             try
             {
@@ -35,20 +38,20 @@ namespace Guts.Client.Core
                 if (string.IsNullOrEmpty(gutsSettingsDirectory))
                 {
                     throw new Exception("Could not find 'gutssettings.json' Searched in the following directories (and upper directories): " +
-                                        $"{AppContext.BaseDirectory} and {Assembly.GetEntryAssembly().Location}.");
+                                        $"{AppContext.BaseDirectory} and {Assembly.GetEntryAssembly()!.Location}.");
                 }
 
                 var provider = new PhysicalFileProvider(gutsSettingsDirectory);
                 IConfigurationRoot gutsConfig = new ConfigurationBuilder().AddJsonFile(provider,"gutssettings.json", optional: false, reloadOnChange: false).Build();
                 IConfigurationSection gutsSection = gutsConfig.GetSection("Guts");
 
-                string apiBaseUrl = gutsSection["apiBaseUrl"];
+                string? apiBaseUrl = gutsSection["apiBaseUrl"];
                 if (string.IsNullOrEmpty(apiBaseUrl))
                 {
                     throw new Exception("Could not find 'apiBaseUrl' setting in 'gutssettings.json'.");
                 }
 
-                string webAppBaseUrl = gutsSection["webAppBaseUrl"];
+                string? webAppBaseUrl = gutsSection["webAppBaseUrl"];
                 if (string.IsNullOrEmpty(webAppBaseUrl))
                 {
                     throw new Exception("Could not find 'webAppBaseUrl' setting in 'gutssettings.json'.");
@@ -57,7 +60,7 @@ namespace Guts.Client.Core
                 var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
 
                 var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl));
-                _resultSender = new TestRunResultSender(httpHandler, authorizationHandler);
+                ResultSender = new TestRunResultSender(httpHandler, authorizationHandler);
             }
             catch (Exception e)
             {
@@ -67,7 +70,7 @@ namespace Guts.Client.Core
 
         public virtual void BeforeTest(ITest test)
         {
-            if (_initializationException != null)
+            if (_initializationException is not null)
             {
                 throw _initializationException;
             }
@@ -94,10 +97,10 @@ namespace Guts.Client.Core
 
         protected IEnumerable<SolutionFile> GetSourceCodeFiles()
         {
-            if (string.IsNullOrEmpty(_sourceCodeRelativeFilePaths)) return new List<SolutionFile>();
+            if (string.IsNullOrEmpty(SourceCodeRelativeFilePaths)) return new List<SolutionFile>();
 
-            TestContext.Progress.WriteLine($"Reading source code files: {_sourceCodeRelativeFilePaths}");
-            return SourceCodeRetriever.ReadSourceCodeFiles(_sourceCodeRelativeFilePaths);
+            TestContext.Progress.WriteLine($"Reading source code files: {SourceCodeRelativeFilePaths}");
+            return SourceCodeRetriever.ReadSourceCodeFiles(SourceCodeRelativeFilePaths);
         }
 
         protected void SendTestResults(AssignmentTestRun testRun, TestRunType type)
@@ -106,7 +109,7 @@ namespace Guts.Client.Core
             {
                 TestContext.Progress.WriteLine("Test run completed. Trying to send results...");
 
-                var result = _resultSender.SendAsync(testRun, type).Result;
+                var result = ResultSender!.SendAsync(testRun, type).Result;
 
                 if (result.Success)
                 {
@@ -136,9 +139,9 @@ namespace Guts.Client.Core
         private string GetSettingsFileDirectory(string baseDirectory)
         {
             var relativeFilePath = "gutssettings.json";
-            var testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
-            var fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
-            while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
+            DirectoryInfo? testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
+            FileInfo? fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+            while (!fileInfo!.Exists && testProjectDirectoryInfo!.Parent != null)
             {
                 testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
                 fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
@@ -148,9 +151,9 @@ namespace Guts.Client.Core
                 {
                     var nugetDirectory = testProjectDirectoryInfo
                         .EnumerateDirectories("guts.client.core", SearchOption.TopDirectoryOnly).FirstOrDefault();
-                    var lastVersionDirectory = nugetDirectory?.EnumerateDirectories()
+                    DirectoryInfo? lastVersionDirectory = nugetDirectory?.EnumerateDirectories()
                         .OrderByDescending(di => di.Name).FirstOrDefault();
-                    if (lastVersionDirectory != null)
+                    if (lastVersionDirectory is not null)
                     {
                         fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).FirstOrDefault();
                         if (fileInfo != null)
@@ -160,7 +163,7 @@ namespace Guts.Client.Core
                     }
                 }
             }
-            return fileInfo.Exists ? testProjectDirectoryInfo.FullName : string.Empty;
+            return fileInfo.Exists ? testProjectDirectoryInfo!.FullName : string.Empty;
         }
     }
 }
