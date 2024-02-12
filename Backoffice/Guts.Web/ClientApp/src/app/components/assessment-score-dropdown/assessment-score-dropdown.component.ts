@@ -6,7 +6,12 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 })
 export class AssessmentScoreDropdownComponent {
   @Input() public value: number;
+  @Input() public disabled: boolean;
   @Output() valueChange = new EventEmitter<number>();
+
+  public constructor() {
+    this.disabled = false;
+  }
 
   onValueChange(newValue: number) {
     this.value = newValue;

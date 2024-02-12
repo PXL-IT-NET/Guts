@@ -20,7 +20,7 @@ namespace Guts.Domain.ProjectTeamAggregate
         {
             IProjectTeamUser teamUser = TeamUsers.SingleOrDefault(tu => tu.UserId == userId);
             Contracts.Require(teamUser != null, $"The user with id '{userId}' is not a member of the team.");
-            return teamUser.User;
+            return teamUser!.User;
         }
     }
 }

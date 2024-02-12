@@ -10,6 +10,14 @@
     <RootNamespace>Guts.Infrastructure</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;2254</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;2254</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Migrations\20181016085703_AddProject.cs" />
     <Compile Remove="Migrations\20181016093930_AddProject.cs" />

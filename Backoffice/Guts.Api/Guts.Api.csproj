@@ -8,11 +8,13 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile>bin\Debug\net6.0\Guts.Api.xml</DocumentationFile>
+    <NoWarn>1701;1702;1591;2254</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile>bin\Release\net6.0\Guts.Api.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <NoWarn>1701;1702;1591;2254</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -129,7 +129,7 @@
                         <ngb-panel [title]="'About ' + result.subject.fullName" *ngFor="let result of results">
                             <ng-template ngbPanelContent>
                                 <div>
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered" [attr.aria-label]="'Assessements about ' + result.subject.fullName">
                                         <thead>
                                             <tr>
                                                 <th scope="col">Team member</th>
@@ -143,40 +143,13 @@
                                             <tr>
                                                 <td>{{result.selfAssessment.user.fullName}}</td>
                                                 <td>
-                                                    <select name="contributionScore"
-                                                        [(ngModel)]="result.selfAssessment.contributionScore"
-                                                        disabled="disabled">
-                                                        <option value="0">No added value (0)</option>
-                                                        <option value="1">Way below group average (1)</option>
-                                                        <option value="2">Below group average (2)</option>
-                                                        <option value="3">Equal to group average (3)</option>
-                                                        <option value="4">Above group average (4)</option>
-                                                        <option value="5">Way above group average (5)</option>
-                                                    </select>
+                                                  <app-assessment-score-dropdown [(value)]="result.selfAssessment.contributionScore" [disabled]="true" />
                                                 </td>
                                                 <td>
-                                                    <select name="effortScore"
-                                                        [(ngModel)]="result.selfAssessment.effortScore"
-                                                        disabled="disabled">
-                                                        <option value="0">No added value (0)</option>
-                                                        <option value="1">Way below group average (1)</option>
-                                                        <option value="2">Below group average (2)</option>
-                                                        <option value="3">Equal to group average (3)</option>
-                                                        <option value="4">Above group average (4)</option>
-                                                        <option value="5">Way above group average (5)</option>
-                                                    </select>
+                                                  <app-assessment-score-dropdown [(value)]="result.selfAssessment.effortScore" [disabled]="true" />
                                                 </td>
                                                 <td>
-                                                    <select name="coperationScore"
-                                                        [(ngModel)]="result.selfAssessment.cooperationScore"
-                                                        disabled="disabled">
-                                                        <option value="0">No added value (0)</option>
-                                                        <option value="1">Way below group average (1)</option>
-                                                        <option value="2">Below group average (2)</option>
-                                                        <option value="3">Equal to group average (3)</option>
-                                                        <option value="4">Above group average (4)</option>
-                                                        <option value="5">Way above group average (5)</option>
-                                                    </select>
+                                                  <app-assessment-score-dropdown [(value)]="result.selfAssessment.cooperationScore" [disabled]="true" />
                                                 </td>
                                                 <td>
                                                     <textarea [(ngModel)]="result.selfAssessment.explanation" rows="4"
@@ -188,40 +161,13 @@
                                                 <tr>
                                                     <td>{{peerAssessment.user.fullName}}</td>
                                                     <td>
-                                                        <select name="contributionScore"
-                                                            [(ngModel)]="peerAssessment.contributionScore"
-                                                            disabled="disabled">
-                                                            <option value="0">No added value (0)</option>
-                                                            <option value="1">Way below group average (1)</option>
-                                                            <option value="2">Below group average (2)</option>
-                                                            <option value="3">Equal to group average (3)</option>
-                                                            <option value="4">Above group average (4)</option>
-                                                            <option value="5">Way above group average (5)</option>
-                                                        </select>
+                                                      <app-assessment-score-dropdown [(value)]="peerAssessment.contributionScore" [disabled]="true" />
                                                     </td>
                                                     <td>
-                                                        <select name="effortScore"
-                                                            [(ngModel)]="peerAssessment.effortScore"
-                                                            disabled="disabled">
-                                                            <option value="0">No added value (0)</option>
-                                                            <option value="1">Way below group average (1)</option>
-                                                            <option value="2">Below group average (2)</option>
-                                                            <option value="3">Equal to group average (3)</option>
-                                                            <option value="4">Above group average (4)</option>
-                                                            <option value="5">Way above group average (5)</option>
-                                                        </select>
+                                                      <app-assessment-score-dropdown [(value)]="peerAssessment.effortScore" [disabled]="true" />
                                                     </td>
                                                     <td>
-                                                        <select name="coperationScore"
-                                                            [(ngModel)]="peerAssessment.cooperationScore"
-                                                            disabled="disabled">
-                                                            <option value="0">No added value (0)</option>
-                                                            <option value="1">Way below group average (1)</option>
-                                                            <option value="2">Below group average (2)</option>
-                                                            <option value="3">Equal to group average (3)</option>
-                                                            <option value="4">Above group average (4)</option>
-                                                            <option value="5">Way above group average (5)</option>
-                                                        </select>
+                                                      <app-assessment-score-dropdown [(value)]="peerAssessment.cooperationScore" [disabled]="true" />
                                                     </td>
                                                     <td>
                                                         <textarea [(ngModel)]="peerAssessment.explanation" rows="4"

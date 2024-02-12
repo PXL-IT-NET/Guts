@@ -60,7 +60,7 @@ export class ProjectComponent implements OnInit {
           this.model = result.value;
           this.selectedAssignmentId = 0;
 
-          if (this.model.teams.length >= 0) {
+          if (this.model.teams.length > 0) {
             this.selectedTeamId = this.model.teams[0].id;
           }
 

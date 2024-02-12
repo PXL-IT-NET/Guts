@@ -24,7 +24,7 @@ namespace Guts.Domain.ValueObjects
             Contracts.Require(assignmentId > 0, "The assignment Id must be a positive number.");
             Contracts.Require(userId > 0, "The user Id must be a positive number.");
             Contracts.Require(filePath != null, "The filePath cannot be empty.");
-            Contracts.Require(filePath.FullPath.Length <= 255, "The length of the filePath can not be more than 255.");
+            Contracts.Require(filePath!.FullPath.Length <= 255, "The length of the filePath can not be more than 255.");
             Contracts.Require(content != null, "The content cannot be null.");
             var solutionFile = new SolutionFile
             {

@@ -8,15 +8,18 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 namespace Guts.Api.Filters
 {
+    /// <inheritdoc />
     public class ApplicationExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly ILogger _logger;
 
+        /// <inheritdoc />
         public ApplicationExceptionFilterAttribute(ILogger<ApplicationExceptionFilterAttribute> logger)
         {
             _logger = logger;
         }
 
+        /// <inheritdoc />
         public override void OnException(ExceptionContext context)
         {
             switch (context.Exception)

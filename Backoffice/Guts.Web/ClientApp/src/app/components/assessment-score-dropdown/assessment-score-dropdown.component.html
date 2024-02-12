@@ -1,9 +1,9 @@
-<select [ngModel]="value" (ngModelChange)="onValueChange($event)">
-    <option [value]="-1"></option>
-    <option [value]="0">No added value (0)</option>
-    <option [value]="1">Way below group average (1)</option>
-    <option [value]="2">Below group average (2)</option>
-    <option [value]="3">Equal to group average (3)</option>
-    <option [value]="4">Above group average (4)</option>
-    <option [value]="5">Way above group average (5)</option>
+<select [ngModel]="value" (ngModelChange)="onValueChange($event)" [disabled]="disabled">
+  <option [value]="-1"></option>
+  <option [value]="0">No added value (0)</option>
+  <option [value]="1">Way below group average (1)</option>
+  <option [value]="2">Below group average (2)</option>
+  <option [value]="3">Equal to group average (3)</option>
+  <option [value]="4">Above group average (4)</option>
+  <option [value]="5">Way above group average (5)</option>
 </select>

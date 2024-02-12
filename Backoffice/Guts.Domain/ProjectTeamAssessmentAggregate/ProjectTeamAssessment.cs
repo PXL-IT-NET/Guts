@@ -42,7 +42,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
             {
                 Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
-                Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
+                Contracts.Require(projectAssessment!.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
                 return new ProjectTeamAssessment(projectAssessment, team);
             }
         }

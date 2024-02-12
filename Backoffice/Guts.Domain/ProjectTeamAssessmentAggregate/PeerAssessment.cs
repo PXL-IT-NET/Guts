@@ -37,9 +37,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         {
             Contracts.Require(projectTeamAssessmentId > 0, "An existing project team assessment identifier must be provided.");
             Contracts.Require(user != null, "A user must be provided.");
-            Contracts.Require(user.Id > 0, "An existing user must be provided.");
+            Contracts.Require(user!.Id > 0, "An existing user must be provided.");
             Contracts.Require(subject != null, "A subject must be provided.");
-            Contracts.Require(subject.Id > 0, "An existing subject must be provided.");
+            Contracts.Require(subject!.Id > 0, "An existing subject must be provided.");
 
             ProjectTeamAssessmentId = projectTeamAssessmentId;
             User = user;
