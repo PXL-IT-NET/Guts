@@ -29,8 +29,22 @@ namespace Guts.Client.Core
 
         public void AfterTest(ITest test)
         {
-            var testName = _displayName ?? new CamelCaseConverter().ToNormalSentence(test.MethodName);
-
+            string testName = _displayName ?? string.Empty;
+            if (string.IsNullOrEmpty(testName))
+            {
+                testName = new CamelCaseConverter().ToNormalSentence(test.MethodName);
+                if (!string.IsNullOrEmpty(test.ClassName))
+                {
+                    string className = test.ClassName;
+                    int dotIndex = className.LastIndexOf('.');
+                    if (dotIndex >= 0)
+                    {
+                        className = className.Substring(dotIndex + 1);
+                    }
+                    testName = $"({className}) {testName}";
+                }
+            }
+            
             if (IsTestCase(test))
             {
                 testName += $" (Case {GetTestCaseNumber(test)})";
