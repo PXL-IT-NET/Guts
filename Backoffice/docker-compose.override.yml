@@ -15,7 +15,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ConnectionStrings__GutsDatabase=Data Source=sqldata;Database=Guts;User Id=sa;Password=Pass@word;TrustServerCertificate=True;
-      - Tokens__Key=AsZ*!/~T'(77)z%qaV
+      - Tokens__Key=^>Ue*a*/~Q6pz%e6ps3KVh=qw!z,r+eVS%HB4mY_:ZUa
       #- Captcha__secret=insecrets.json
       - Mail__webappbaseurl=http://localhost:4200/
       #- Mail__password=insecrets.json

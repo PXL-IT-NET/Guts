@@ -137,7 +137,7 @@ namespace Guts.Api
             app.UseCookiePolicy();
 
             app.UseOpenApi();
-            app.UseSwaggerUi3();
+            app.UseSwaggerUi();
 
             app.UseCors(builder =>
             {
