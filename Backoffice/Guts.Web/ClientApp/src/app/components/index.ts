@@ -1,5 +1,6 @@
 import { from } from 'rxjs'
 
+export * from './sidebar-menu/sidebar-menu.component'
 export * from './assignmentdetail/assignmentdetail.component'
 export * from './assignmentstatistics/assignmentstatistics.component'
 export * from './assignmentsummary/assignmentsummary.component'

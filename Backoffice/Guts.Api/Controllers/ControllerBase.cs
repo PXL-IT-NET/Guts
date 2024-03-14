@@ -27,6 +27,19 @@ namespace Guts.Api.Controllers
             throw new AuthenticationException($"The NameIdentifier ('{nameIdentifierClaim.Value}') of the user should be a positive integer.");
         }
 
+        protected string GetUserEmail()
+        {
+            if (User == null) return string.Empty;
+
+            Claim emailClaim = User.FindFirst(ClaimTypes.Email);
+            if (emailClaim is null)
+            {
+                return string.Empty;
+            }
+
+            return emailClaim.Value;
+        }
+
         protected IList<string> GetUserRoles()
         {
             var roleClaims = User.FindAll(ClaimTypes.Role);

@@ -55,14 +55,16 @@ export class CourseComponent implements OnInit, OnDestroy {
     this.userProfileSubscription.unsubscribe();
   }
 
-  public onChapterChanged() {
+  public selectChapter(chapter: ITopicModel) {
+    this.selectedChapter = chapter;
     if (this.selectedChapter) {
       this.selectedProject = null;
       this.router.navigate(['chapters', this.selectedChapter.code], { relativeTo: this.route });
     }
   }
 
-  public onProjectChanged() {
+  public selectProject(project: ITopicModel) {
+    this.selectedProject = project;
     if (this.selectedProject) {
       this.selectedChapter = null;
       this.router.navigate(['projects', this.selectedProject.code], { relativeTo: this.route });
@@ -79,11 +81,9 @@ export class CourseComponent implements OnInit, OnDestroy {
       if (result.success) {
         this.course = result.value;
         if (this.course.chapters.length > 0) {
-          this.selectedChapter = this.course.chapters[0];
-          this.onChapterChanged();
+          this.selectChapter(this.course.chapters[0]);
         } else if (this.course.projects.length > 0) {
-          this.selectedProject = this.course.projects[0];
-          this.onProjectChanged();
+          this.selectProject(this.course.projects[0]);
         } else {
           this.hasContent = false;
         }

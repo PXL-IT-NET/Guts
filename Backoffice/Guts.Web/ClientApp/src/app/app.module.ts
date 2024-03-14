@@ -29,6 +29,7 @@ import { ToastrModule } from 'ngx-toastr';
     c.AppComponent,
     c.EmptyComponent,
     c.NavMenuComponent,
+    c.SidebarMenuComponent,
     c.HomeComponent,
     c.LoginComponent,
     c.RegisterComponent,

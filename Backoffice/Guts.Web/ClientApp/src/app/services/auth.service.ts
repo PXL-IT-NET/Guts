@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subject, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { LoginModel } from '../viewmodels/login.model';
 import { TokenModel } from '../viewmodels/token.model';
@@ -17,18 +17,17 @@ import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 @Injectable()
 export class AuthService {
   private tokenModel: TokenModel | null;
-  private loggedInStateSubject: Subject<boolean>;
+  private loggedInStateSubject: BehaviorSubject<boolean>;
   private currentUserProfile: UserProfile;
 
   constructor(private http: HttpClient,
     private localStorageService: LocalStorageService) {
-
-    this.loggedInStateSubject = new Subject<boolean>();
-
     this.currentUserProfile = null;
 
     // set token if saved in local storage
     this.tokenModel = JSON.parse(String(this.localStorageService.get(LocalStorageKeys.currentToken)));
+    let isLoggedIn: boolean = Boolean(this.tokenModel && this.tokenModel.token);
+    this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
   }
 
   public getToken(): string | null {

@@ -1,0 +1,23 @@
+<nav id="sidebarMenu" class="flex-shrink-0 p-2">
+  <ul class="list-unstyled ps-0">
+    <li class="mb-1" *ngIf="courses.length > 0">
+      <a class="btn btn-toggle d-inline-flex align-items-center rounded border-0 active"
+         data-bs-toggle="collapse" data-bs-target="#courses-collapse" aria-expanded="true">
+        <span class="fa fa-book px-1"></span>
+        <span>Courses</span>
+      </a>
+      <div id="courses-collapse" class="collapse" [ngClass]="{'show': isCourseRouteActive}">
+        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+          <li class="nav-item" *ngFor="let course of courses">
+            <a [routerLink]="['/courses', course.id]"
+               [ngClass]="{'active': isCourseRouteActive(course.id)}"
+               class="nav-link">
+              <span>{{course.name}}</span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+    </li>
+  </ul>
+</nav>

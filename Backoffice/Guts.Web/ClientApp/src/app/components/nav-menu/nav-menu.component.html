@@ -1,33 +1,44 @@
-<nav class="navbar navbar-expand-md navbar-light bg-light">
+<header class="navbar navbar-expand-md navbar-dark bg-dark">
 
-  <a class='navbar-brand' [routerLink]="['/home']">Guts</a>
-  <button class="navbar-toggler" type="button" (click)="isNavbarCollapsed = !isNavbarCollapsed" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+  <a [routerLink]="['/home']" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6">
+    <small>
+      <span>Guts</span>
+    </small>
+  </a>
+  <button class="navbar-toggler position-absolute d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
+  <div class="w-100"> <!-- This is a hack to make the following ul align to the right -->
 
-  <div [ngbCollapse]="isNavbarCollapsed" class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav mr-auto" (click)="isNavbarCollapsed = true">
+    <ul class="navbar-nav me-auto">
       <li class="nav-item">
         <a [routerLink]="['/home']" [routerLinkActive]="['active']" class="nav-link">
           <span class='oi oi-home'></span> Home
         </a>
       </li>
-      <li class="nav-item" *ngIf="!isLoggedIn()">
-        <a [routerLink]="['/login']" [routerLinkActive]="['active']" class="nav-link">
-          <span class='oi oi-account-login'></span> Log in
-        </a>
-      </li>
-
-      <li class="nav-item" *ngFor="let course of courses">
-        <a [routerLink]="['/courses', course.id]" [routerLinkActive]="['active']" class="nav-link">
-          <span class='oi oi-book'></span> {{course.name}}
-        </a>
-      </li>
-      <li class="nav-item" *ngIf="isLoggedIn()">
-        <a href="#" (click)="logout()" [routerLinkActive]="['active']" class="nav-link">
-          <span class='oi oi-account-logout'></span> Log out
-        </a>
-      </li>
     </ul>
-  </div>
-</nav>
+
+  </div> 
+  <ul class="navbar-nav pe-3 ps-3">
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle show" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="fa fa-user"></span>
+        <span> {{userProfile.email}}</span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li *ngIf="userProfile.isAuthenticated">
+          <a class="dropdown-item" (click)="logout()">
+            <span class="fa fa-power-off"></span>
+            <span> Afmelden</span>
+          </a>
+        </li>
+        <li *ngIf="!userProfile.isAuthenticated">
+          <a class="dropdown-item" [routerLink]="['/login']">
+            <span class="fa fa-sign-in"></span>
+            <span> Aanmelden</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</header>

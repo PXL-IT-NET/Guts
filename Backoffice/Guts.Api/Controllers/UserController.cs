@@ -26,6 +26,7 @@ namespace Guts.Api.Controllers
             var model = new UserProfileModel
             {
                 Id = GetUserId(),
+                Email = GetUserEmail(),
                 Roles = GetUserRoles(),
                 Teams = (await _projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList()
             };
