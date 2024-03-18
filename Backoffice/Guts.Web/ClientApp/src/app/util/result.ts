@@ -21,7 +21,7 @@ export class Result {
 
     if (response.status == 401) {
       result.isAuthenticated = false;
-    } else if (response.status >= 500) {
+    } else if (response.status >= 500 || response.error instanceof ProgressEvent) {
       message = "There is a technical problem with the Guts server. (status: " + response.status + " " + response.statusText + ")";
       console.log("API server error:");
       console.log(response);
@@ -32,7 +32,7 @@ export class Result {
           if (propertyName === '0') {
             message = <string>messageContainer;
           }
-          else if(typeof(messageContainer[propertyName]) == 'string'){
+          else if (typeof (messageContainer[propertyName]) == 'string') {
             message = <string>messageContainer[propertyName];
           }
           else if (messageContainer[propertyName] instanceof Array) {

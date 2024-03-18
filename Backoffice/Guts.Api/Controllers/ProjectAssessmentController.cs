@@ -7,6 +7,7 @@ using Guts.Api.Models.ProjectModels;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -63,5 +64,22 @@ public class ProjectAssessmentController : ControllerBase
         ProjectAssessmentModel outputModel = _mapper.Map<ProjectAssessmentModel>(assessment);
 
         return CreatedAtAction(nameof(GetProjectAssessment), new { id = assessment.Id }, outputModel);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> DeleteProjectAssessment(int id)
+    {
+        if (id < 1)
+        {
+            return BadRequest();
+        }
+
+        IProjectAssessment assessmentToDelete = await _projectAssessmentRepository.GetByIdAsync(id);
+        await _projectAssessmentRepository.DeleteAsync(assessmentToDelete);
+        return Ok();
     }
 }

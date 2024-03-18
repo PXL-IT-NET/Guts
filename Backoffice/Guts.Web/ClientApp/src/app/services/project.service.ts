@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel } from "../viewmodels/team.model"
-import { GetResult, PostResult } from "../util/result";
+import { CreateResult, GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
 import { TeamGenerationModel } from "../viewmodels/team.model"
@@ -44,6 +44,26 @@ export class ProjectService {
       );
   }
 
+  public updateTeam(courseId: number, projectCode: string, team: ITeamDetailsModel): Observable<PostResult> {
+    return this.http.put('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + team.id, team)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
+  }
+
+  public addTeam(courseId: number, projectCode: string, teamName: string): Observable<CreateResult<ITeamDetailsModel>> {
+    return this.http.post<ITeamDetailsModel>('api/courses/' + courseId + '/projects/' + projectCode + '/teams', { 'name': teamName })
+      .pipe(
+        map((addedTeam: ITeamDetailsModel) => CreateResult.success(addedTeam)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(CreateResult.fromHttpErrorResponse<ITeamDetailsModel>(errorResponse));
+        })
+      );
+  }
+
   public generateTeams(courseId: number, projectCode: string, model: TeamGenerationModel) {
     return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/generate', model)
       .pipe(
@@ -54,8 +74,18 @@ export class ProjectService {
       );
   }
 
+  public deleteTeam(courseId: number, projectCode: string, teamId: number): Observable<PostResult> {
+    return this.http.delete('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId, {})
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        })
+      );
+  }
+
   public joinTeam(courseId: number, projectCode: string, teamId: number): Observable<PostResult> {
-    return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId, {})
+    return this.http.post('api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/join', {})
       .pipe(
         map(() => PostResult.success()),
         catchError((errorResponse: HttpErrorResponse) => {

@@ -1,0 +1,49 @@
+<ngx-loading [show]="loading"></ngx-loading>
+<div class="modal-header">
+  <h1 class="modal-title fs-5">Edit team</h1>
+  <button type="button" class="btn-close" (click)="modalRef.hide()"></button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="editTeamForm" (ngSubmit)="onSubmit()" #editForm="ngForm">
+    <div class="row mb-2">
+      <label for="name" class="col-3 col-form-label">Team name</label>
+      <div class="col-9">
+        <input type="text" class="form-control" id="name" formControlName="name"
+               [class.is-invalid]="isInvalid(editTeamForm.controls.name)">
+        <div *ngIf="isInvalid(editTeamForm.controls.name)" class="text-danger">
+          Team name is required.
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="row">
+    <div class="col-12">
+      <label class="form-label">Members</label>
+    </div>
+   
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <ul class="list-group mb-3 col-12">
+        <li class="list-group-item text-warning" *ngIf="!team.members || team.members.length <=  0">
+          This team has no members yet
+        </li>
+        <li class="list-group-item" *ngFor="let member of team.members">
+          <span>{{member.name}}</span>
+          <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="removeFromTeam(member)">
+            <span class="fa fa-times pe-2"></span>
+            <span>Remove</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary"
+          [disabled]="editTeamForm.pristine || !editTeamForm.valid" (click)="editForm.ngSubmit.emit()">Save changes</button>
+</div>
+
+

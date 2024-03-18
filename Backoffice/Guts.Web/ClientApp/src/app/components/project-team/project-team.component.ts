@@ -8,6 +8,9 @@ import { ITeamDetailsModel, ITeamMemberModel, TeamGenerationModel } from "../../
 import { PostResult } from "../../util/result";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
+import { BsModalRef, BsModalService, ModalOptions } from 'ngx-bootstrap/modal';
+import { ProjectTeamEditComponent } from '../project-team-edit/project-team-edit.component';
+import { ProjectTeamAddComponent } from '../project-team-add/project-team-add.component';
 
 @Component({
   templateUrl: './project-team.component.html'
@@ -23,6 +26,8 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
   public teamNumberFrom: number;
   public teamNumberTo: number;
 
+  public modalRef: BsModalRef;
+
   private userProfileSubscription: Subscription;
 
   private courseId: number;
@@ -32,7 +37,8 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService) {
+    private toastr: ToastrService,
+    private modalService: BsModalService) {
     this.teams = [];
     this.myTeam = null;
     this.teamBaseName = '';
@@ -56,31 +62,31 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
 
   public leaveMyTeam() {
     let confirmMessage = "Are you sure you want to leave '" + this.myTeam.name + "'? All your submitted test results and peer assessments for this project will be deleted.";
-    if(confirm(confirmMessage)){
+    if (confirm(confirmMessage)) {
       this.projectService.leaveTeam(this.courseId, this.projectCode, this.myTeam.id)
-      .subscribe((result: PostResult) => {
-        this.loading = false;
-        if (result.success) {
-          this.loadData(true);
-        } else {
-          this.toastr.error(result.message || "unknown error", "Could not leave team");
-        }
-      });
+        .subscribe((result: PostResult) => {
+          this.loading = false;
+          if (result.success) {
+            this.loadData(true);
+          } else {
+            this.toastr.error(result.message || "unknown error", "Could not leave team");
+          }
+        });
     }
   }
 
-  public removeFromTeam(team: ITeamDetailsModel, member: ITeamMemberModel){
-    let confirmMessage = "Are you sure you want to remove '" + member.name + "' from '" + team.name + "'?";
-    if(confirm(confirmMessage)){
-      this.projectService.removeFromTeam(this.courseId, this.projectCode, team.id, member.userId)
-      .subscribe((result: PostResult) => {
-        this.loading = false;
-        if (result.success) {
-          this.loadData(true);
-        } else {
-          this.toastr.error(result.message || "unknown error", "Could not remove user from team");
-        }
-      });
+  public deleteTeam(team: ITeamDetailsModel) {
+    let confirmMessage = "Are you sure you want to remove '" + team.name + "'? All test results and peer assessments of this team will also be deleted.";
+    if (confirm(confirmMessage)) {
+      this.projectService.deleteTeam(this.courseId, this.projectCode, team.id)
+        .subscribe((result: PostResult) => {
+          this.loading = false;
+          if (result.success) {
+            this.loadData(true);
+          } else {
+            this.toastr.error(result.message || "unknown error", "Could not delete team");
+          }
+        });
     }
   }
 
@@ -97,25 +103,36 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
       });
   }
 
-  public onGenerateTeamsSubmit() {
-    this.loading = true;
-    var model = new TeamGenerationModel(this.teamBaseName, this.teamNumberFrom, this.teamNumberTo);
-    this.projectService.generateTeams(this.courseId, this.projectCode, model)
-      .subscribe((result: PostResult) => {
-        this.loading = false;
-        if (result.success) {
-          this.toastr.success("Teams generated");
-          this.loadData(false);
-        } else {
-          this.toastr.error(result.message || "unknown error", "Could not generate teams");
-        }
-      });
+  public openTeamEditModal(team: ITeamDetailsModel) {
+    let modalState: ModalOptions = {
+      initialState: {
+        courseId: this.courseId,
+        projectCode: this.projectCode,
+        team: team
+      }
+    };
+    this.modalRef = this.modalService.show(ProjectTeamEditComponent, modalState);
+    this.modalRef.setClass('modal-lg')
   }
 
-  private loadData(clearCachedUserProfile: boolean){
+  public openTeamAddModal() {
+    let modalState: ModalOptions = {
+      initialState: {
+        courseId: this.courseId,
+        projectCode: this.projectCode,
+      }
+    };
+    this.modalRef = this.modalService.show(ProjectTeamAddComponent, modalState);
+    this.modalRef.setClass('modal-lg');
+    this.modalRef.content.teamsAdded.subscribe(() => {
+      this.loadData(false);
+    });
+  }
+
+  private loadData(clearCachedUserProfile: boolean) {
     this.loading = true;
     this.userProfileSubscription?.unsubscribe();
-    if(clearCachedUserProfile){
+    if (clearCachedUserProfile) {
       this.authService.invalidateUserProfileCache();
     }
     this.userProfileSubscription = this.authService.getUserProfile().subscribe(profile => {
@@ -125,13 +142,12 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     });
   }
 
-
   private loadTeams() {
     this.loading = true;
     this.projectService.getTeams(this.courseId, this.projectCode).subscribe((result: GetResult<ITeamDetailsModel[]>) => {
       this.loading = false;
       if (result.success) {
-        this.teams = result.value.sort((a,b) => a.name.localeCompare(b.name));
+        this.teams = result.value.sort((a, b) => a.name.localeCompare(b.name));
         this.myTeam = this.teams.find(team => team.members.some(member => member.userId == this.userProfile.id)) || null;
       } else {
         this.toastr.error("Could not load teams from API. Message: " + (result.message || "unknown error"), "API error");

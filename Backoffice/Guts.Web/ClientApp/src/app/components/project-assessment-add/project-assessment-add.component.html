@@ -1,0 +1,45 @@
+<ngx-loading [show]="loading"></ngx-loading>
+<div class="modal-header">
+  <h1 class="modal-title fs-5">Add peer assessment</h1>
+  <button type="button" class="btn-close" (click)="modalRef.hide()"></button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="addAssessmentForm" (ngSubmit)="onSubmit()" #addForm="ngForm">
+    <div class="row mb-2">
+      <label for="description" class="col-3 col-form-label">Description</label>
+      <div class="col-9">
+        <input type="text" class="form-control" formControlName="description"
+               [class.is-invalid]="isInvalid(addAssessmentForm.controls.description)">
+        <div *ngIf="isInvalid(addAssessmentForm.controls.description)">
+          <span class="text-danger">Verplicht veld</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-2">
+      <label for="openOn" class="col-3 col-form-label">Open on</label>
+      <div class="col-9">
+        <app-ng-datetime name="openOn" formControlName="openOn"></app-ng-datetime>
+        <div *ngIf="isInvalid(addAssessmentForm.controls.openOn)">
+          <span class="text-danger">Verplicht veld</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-2">
+      <label for="deadline" class="col-3 col-form-label">Deadline</label>
+      <div class="col-9">
+        <app-ng-datetime name="deadline" formControlName="deadline"></app-ng-datetime>
+        <div *ngIf="isInvalid(addAssessmentForm.controls.deadline)">
+          <span class="text-danger">Verplicht veld</span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary"
+          [disabled]="addAssessmentForm.pristine || !addAssessmentForm.valid" (click)="addForm.ngSubmit.emit()">
+    Save
+  </button>
+</div>

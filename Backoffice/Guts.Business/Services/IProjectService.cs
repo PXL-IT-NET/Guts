@@ -22,6 +22,12 @@ namespace Guts.Business.Services
         /// </summary>
         Task<IProject> LoadProjectForUserAsync(int courseId, string projectCode, int userId);
 
+        Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName);
+
+        Task UpdateProjectTeamAsync(int courseId, string projectCode, int teamId, string teamName);
+
+        Task DeleteProjectTeamAsync(int courseId, string projectCode, int teamId);
+
         Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo);
 
         Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
@@ -39,5 +45,6 @@ namespace Guts.Business.Services
 
         Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc,
             DateTime deadlineUtc);
+
     }
 }

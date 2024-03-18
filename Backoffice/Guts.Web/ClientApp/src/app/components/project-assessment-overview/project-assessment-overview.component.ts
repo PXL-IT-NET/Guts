@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { BsModalRef, BsModalService, ModalOptions } from 'ngx-bootstrap/modal';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { AuthService, ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
@@ -8,6 +9,8 @@ import { ProjectAssessmentService } from 'src/app/services/project.assessment.se
 import { IProjectDetailsModel } from 'src/app/viewmodels/project.model';
 import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from 'src/app/viewmodels/projectassessment.model';
 import { UserProfile } from 'src/app/viewmodels/user.model';
+import { ProjectAssessmentAddComponent } from '../project-assessment-add/project-assessment-add.component';
+import { PostResult } from '../../util/result';
 
 @Component({
   selector: 'app-project-assessment-overview',
@@ -16,10 +19,13 @@ import { UserProfile } from 'src/app/viewmodels/user.model';
 export class ProjectAssessmentOverviewComponent implements OnInit {
   private userProfileSubscription: Subscription;
 
+  public loading: boolean;
   public project: IProjectDetailsModel;
   public assessments: ProjectAssessmentModel[];
   public selectedTeamId: number;
   public userProfile: UserProfile;
+
+  public modalRef: BsModalRef;
 
   //#Form
   public assessmentForm: UntypedFormGroup;
@@ -34,9 +40,11 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private projectService: ProjectService,
     private projectAssessmentService: ProjectAssessmentService,
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private modalService: BsModalService,
     private authService: AuthService,
     private toastr: ToastrService,
     private route: ActivatedRoute) {
+    this.loading = false;
     this.project = {
       id: 0,
       code: '',
@@ -84,30 +92,23 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this.userProfileSubscription.unsubscribe();
   }
 
-  public onAssessmentSubmit() {
-    this.assessmentForm.markAllAsTouched();
-    if (this.assessmentForm.invalid) return;
-    if (this.project == null) return;
-
-    let model = new ProjectAssessmentCreateModel(this.project.id);
-    Object.assign(model, this.assessmentForm.getRawValue());
-
-    this.projectAssessmentService.addProjectAssessment(model).subscribe(result => {
-      if (result.success) {
-        this.toastr.success("Project peer assessment added");
-        this.assessments.push(result.value);
-      } else {
-        this.toastr.error("Could not add project peer assessment. Message: " + (result.message || "unknown error"), "API error");
+  public openAssessmentAddModal() {
+    let modalState: ModalOptions = {
+      initialState: {
+        projectId: this.project.id,
       }
-    })
-  }
-
-  public canShowErrors(fc: UntypedFormControl): boolean {
-    return fc.dirty || fc.touched
+    };
+    this.modalRef = this.modalService.show(ProjectAssessmentAddComponent, modalState);
+    this.modalRef.setClass('modal-lg');
+    this.modalRef.content.assessmentAdded.subscribe((addedAssessment) => {
+      this.loadProjectAssessments();
+    });
   }
 
   public loadProjectAssessments() {
+    this.loading = true;
     this.projectAssessmentService.getAssessmentsOfProject(this.project.id).subscribe(result => {
+      this.loading = false;
       if (result.success) {
         this.assessments = result.value;
         if (this.selectedTeamId > 0) {
@@ -130,6 +131,23 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
         this.toastr.error("Could not load project assessments from API. Message: " + (result.message || "unknown error"), "API error");
       }
     });
+  }
+
+  public deleteAssessment(assessment: ProjectAssessmentModel) {
+    let confirmMessage = "Are you sure you want to remove '" + assessment.description + "'?";
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      this.projectAssessmentService.deleteProjectAssessment(assessment.id)
+        .subscribe((result: PostResult) => {
+          this.loading = false;
+          if (result.success) {
+            this.toastr.success("Peer assessment successfully deleted");
+            this.loadProjectAssessments();
+          } else {
+            this.toastr.error(result.message || "unknown error", "Could not delete peer assessment");
+          }
+        });
+    }
   }
 
 }

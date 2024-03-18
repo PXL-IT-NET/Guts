@@ -6,6 +6,7 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.ValueObjects;
@@ -102,6 +103,48 @@ namespace Guts.Business.Services
             return project;
         }
 
+        public async Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName)
+        {
+            var period = await _periodRepository.GetCurrentPeriodAsync();
+            var project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+
+            var newTeam = new ProjectTeam
+            {
+                Name = teamName,
+                ProjectId = project.Id
+            };
+
+            ICollection<IProjectTeam> allTeams = project.Teams;
+            bool alreadyExists = allTeams.Any(team => team.Name.ToLower() == newTeam.Name.ToLower());
+            Contracts.Require(!alreadyExists, "A team with the same name already exists");
+
+            return await _projectTeamRepository.AddAsync(newTeam);
+        }
+
+        public async Task UpdateProjectTeamAsync(int courseId, string projectCode, int teamId, string teamName)
+        {
+            Period period = await _periodRepository.GetCurrentPeriodAsync();
+            IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+            IProjectTeam teamToUpdate = await _projectTeamRepository.LoadByIdAsync(teamId);
+
+            Contracts.Require(teamToUpdate.ProjectId == project.Id, "The team does not belong to the project");
+
+            teamToUpdate.Name = teamName;
+
+            await _projectTeamRepository.UpdateAsync(teamToUpdate);
+        }
+
+        public async Task DeleteProjectTeamAsync(int courseId, string projectCode, int teamId)
+        {
+            Period period = await _periodRepository.GetCurrentPeriodAsync();
+            IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+            IProjectTeam teamToDelete = await _projectTeamRepository.LoadByIdAsync(teamId);
+
+            Contracts.Require(teamToDelete.ProjectId == project.Id, "The team does not belong to the project");
+
+            await _projectTeamRepository.DeleteAsync(teamToDelete);
+        }
+
         public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo)
         {
             var period = await _periodRepository.GetCurrentPeriodAsync();
@@ -113,7 +156,7 @@ namespace Guts.Business.Services
             {
                 var newTeam = new ProjectTeam
                 {
-                    Name = $"{teamBaseName} {teamNumber}",
+                    Name = $"{teamBaseName} {teamNumber:D2}",
                     ProjectId = project.Id
                 };
 
@@ -139,7 +182,7 @@ namespace Guts.Business.Services
 
         public async Task RemoveUserFromProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
         {
-            IProject project  = await LoadProjectForUserAsync(courseId, projectCode, userId);
+            IProject project = await LoadProjectForUserAsync(courseId, projectCode, userId);
 
             Contracts.Require(project.Teams.Count == 1, "The user is not a member ot the team");
 

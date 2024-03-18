@@ -23,6 +23,8 @@ import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage
 import { RecaptchaModule } from 'ng-recaptcha';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
+import { ModalModule } from 'ngx-bootstrap/modal';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
 
 @NgModule({
   declarations: [
@@ -45,8 +47,11 @@ import { ToastrModule } from 'ngx-toastr';
     c.AssignmentSummaryComponent,
     c.AssignmentStatisticsComponent,
     c.ProjectTeamComponent,
+    c.ProjectTeamAddComponent,
+    c.ProjectTeamEditComponent,
     c.ProjectSummaryComponent,
     c.ProjectAssessmentOverviewComponent,
+    c.ProjectAssessmentAddComponent,
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
@@ -79,7 +84,9 @@ import { ToastrModule } from 'ngx-toastr';
       secondaryColour: '#e0e0d1',
       tertiaryColour: '#ccccb3'
     }),
-    ToastrModule.forRoot()
+    ToastrModule.forRoot(),
+    ModalModule.forRoot(),
+    TooltipModule.forRoot()
   ],
   providers: [
     AuthGuard,

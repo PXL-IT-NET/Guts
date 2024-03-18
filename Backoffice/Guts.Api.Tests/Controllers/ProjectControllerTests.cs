@@ -194,6 +194,7 @@ namespace Guts.Api.Tests.Controllers
         private ProjectController CreateControllerWithUserInContext(string role)
         {
             return new ProjectController(_projectServiceMock.Object, 
+                null, //TODO: add mock
                 _assignmentRepositoryMock.Object,
                 _projectConverterMock.Object, 
                 _topicConverterMock.Object, 
