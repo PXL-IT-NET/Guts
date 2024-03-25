@@ -70,7 +70,9 @@ namespace Guts.Infrastructure.Repositories
 
         public async Task<IProjectTeam> LoadByIdAsync(int teamId)
         {
+            Contracts.Require(teamId > 0, "Cannot load team. Team id must be a positive number");
             var team = await _context.ProjectTeams.Where(pt => pt.Id == teamId)
+                .Include(pt => pt.Project)
                 .Include(pt => pt.TeamUsers)
                 .ThenInclude(tu => tu.User)
                 .FirstOrDefaultAsync();

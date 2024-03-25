@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Guts.Api.Controllers;
@@ -23,6 +24,7 @@ using NSwag.Generation.Processors.Security;
 
 namespace Guts.Api
 {
+    [ExcludeFromCodeCoverage]
     public class Startup
     {
         public Startup(IConfiguration configuration)

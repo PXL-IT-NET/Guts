@@ -12,6 +12,8 @@ internal class ProjectTeamConfiguration : IEntityTypeConfiguration<ProjectTeam>
     {
         builder.ToTable("ProjectTeams");
 
+        builder.Property(t => t.Name).IsRequired(true);
+
         builder.HasOne(pt => (Project)pt.Project)
             .WithMany(p => (ICollection<ProjectTeam>)p.Teams)
             .HasForeignKey(pt => pt.ProjectId)

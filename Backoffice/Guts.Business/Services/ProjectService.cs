@@ -6,6 +6,7 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -175,8 +176,15 @@ namespace Guts.Business.Services
             return teams;
         }
 
-        public async Task AddUserToProjectTeamAsync(int teamId, int userId)
+        public async Task AddUserToProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
         {
+            IReadOnlyList<IProjectTeam> allTeams = await LoadTeamsOfProjectAsync(courseId, projectCode);
+            IProjectTeam currentTeam = allTeams.FirstOrDefault(t => t.TeamUsers.Any(tu => tu.UserId == userId));
+            Contracts.Require(currentTeam is null, () => $"The user is already a member of '{currentTeam.Name}'. It is not allowed to be in multiple teams.");
+            
+            IProjectTeam targetTeam = allTeams.FirstOrDefault(t => t.Id == teamId);
+            Contracts.Require(targetTeam != null, $"The team you want to join is not a team of project '{projectCode}'.");
+
             await _projectTeamRepository.AddUserToTeam(teamId, userId);
         }
 

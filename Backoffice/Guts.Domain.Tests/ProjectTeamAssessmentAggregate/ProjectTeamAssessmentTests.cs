@@ -156,6 +156,26 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
                 Throws.InstanceOf<ContractException>());
         }
 
+        [Test]
+        public void AddOrUpdatePeerAssessment_ScoresNotAllAverage_NoExplanation_ShouldThrowContractException()
+        {
+            //Arrange
+            User user = _projectTeamAssessment.Team.TeamUsers.Last().User;
+            User subject = _projectTeamAssessment.Team.TeamUsers.Last().User;
+
+         
+            AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
+            AssessmentScore contributionScore = AssessmentScore.Average;
+            AssessmentScore effortScore = AssessmentScore.WayAboveAverage;
+            string explanation = string.Empty;
+
+            //Act + Assert
+            Assert.That(
+                () => _projectTeamAssessment.AddOrUpdatePeerAssessment(user.Id, subject.Id,
+                    cooperationScore, contributionScore, effortScore, explanation),
+                Throws.InstanceOf<ContractException>());
+        }
+
         [TestCase(-1, 3 ,3)]
         [TestCase(3, -1, 3)]
         [TestCase(3, 3, -1)]

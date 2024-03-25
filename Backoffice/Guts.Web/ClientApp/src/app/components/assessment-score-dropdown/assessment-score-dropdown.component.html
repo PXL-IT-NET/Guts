@@ -1,4 +1,4 @@
-<select [ngModel]="value" (ngModelChange)="onValueChange($event)" [disabled]="disabled">
+<select class="form-select" [ngModel]="value" (ngModelChange)="onValueChange($event)" [disabled]="disabled">
   <option [value]="-1"></option>
   <option [value]="0">No added value (0)</option>
   <option [value]="1">Way below group average (1)</option>

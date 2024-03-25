@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Newtonsoft.Json;
 
 namespace Guts.Api.Filters
 {
+    [ExcludeFromCodeCoverage]
     public class LogBadRequestFilterAttribute : ResultFilterAttribute
     {
         private readonly ILogger _logger;

@@ -4,7 +4,7 @@
       <div class="mb-2 row">
         <label for="exercises" class="col-lg-1 col-md-2 col-form-label">Exercise</label>
         <div class="col-lg-3 col-md-4">
-          <select name="exercises" class="form-control" [(ngModel)]="selectedAssignmentId">
+          <select name="exercises" class="form-select" [(ngModel)]="selectedAssignmentId">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
               {{exercise.code}}

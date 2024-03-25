@@ -58,6 +58,13 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             Contracts.Require(contributionScore != AssessmentScore.NullScore, "An empty score for 'contribution' is not allowed.");
             Contracts.Require(effortScore != AssessmentScore.NullScore, "An empty score for 'effort' is not allowed.");
 
+            //require that explanation is not empty when any of the scores is not 'Average'
+            if (cooperationScore != AssessmentScore.Average || contributionScore != AssessmentScore.Average ||
+                effortScore != AssessmentScore.Average)
+            {
+                Contracts.Require(!string.IsNullOrWhiteSpace(explanation), "An explanation is required when a score is not 'Equal to group average' (3).");
+            }
+
             IPeerAssessment peerAssessment = _peerAssessments.SingleOrDefault(pa => pa.User.Id == userId && pa.Subject.Id == subjectId);
             if (peerAssessment == null)
             {

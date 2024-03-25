@@ -59,4 +59,9 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
     }
   }
 
+  public isInvalid(peerAssessment: PeerAssessmentModel): boolean {
+    const isNotAverage = peerAssessment.contributionScore != 3 || peerAssessment.cooperationScore != 3 || peerAssessment.effortScore != 3;
+    const explanationIsMisssing = isNotAverage && (!peerAssessment.explanation || peerAssessment.explanation.trim().length == 0);
+    return explanationIsMisssing;
+  }
 }

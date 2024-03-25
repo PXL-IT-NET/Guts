@@ -49,7 +49,7 @@
               <li class="list-group-item" *ngIf="model.id <= 0">
                 <form class="form-inline" [formGroup]="newAssignmentEvaluationForm"
                   (ngSubmit)="newAssignmentEvaluationForm.valid && addAssignment()">
-                  <select class="form-control mb-2 mr-sm-2" id="assignmentId" formControlName="assignmentId"
+                  <select class="form-select mb-2 mr-sm-2" id="assignmentId" formControlName="assignmentId"
                     [(ngModel)]="newAssigmnentEvaluation.assignmentId" [class.is-invalid]="assignmentId.invalid">
                     <option value="0">Select an assignment</option>
                     <option [ngValue]="assignment.assignmentId" *ngFor="let assignment of allAssignments">

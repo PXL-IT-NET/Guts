@@ -21,32 +21,25 @@ namespace Guts.Api.Tests.Controllers
     [TestFixture]
     public class ProjectControllerTests
     {
-        private Random _random;
         private int _userId;
         private ProjectController _controller;
         private Mock<IProjectService> _projectServiceMock;
         private Mock<IProjectConverter> _projectConverterMock;
-        private Mock<ITeamConverter> _teamConverterMock;
         private Mock<IMemoryCache> _memoryCacheMock;
         private Mock<ITopicConverter> _topicConverterMock;
-        private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<ISolutionFileService> _solutionFileServiceMock;
 
         [SetUp]
         public void Setup()
         {
-            _random = new Random();
-            _userId = _random.NextPositive();
+            _userId = Random.Shared.NextPositive();
             _projectServiceMock = new Mock<IProjectService>();
-            _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
             _projectConverterMock = new Mock<IProjectConverter>();
             _topicConverterMock = new Mock<ITopicConverter>();
-            _teamConverterMock = new Mock<ITeamConverter>();
             _solutionFileServiceMock = new Mock<ISolutionFileService>();
             _memoryCacheMock = new Mock<IMemoryCache>();
             _controller = CreateControllerWithUserInContext(Role.Constants.Student);
         }
-
         [Test]
         [TestCase(-1, "validCode")]
         [TestCase(1, null)]
@@ -64,7 +57,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetProjectDetails_Lector_ShouldReturnComponentsAndAllTeamsOfProject()
         {
             //Arrange
-            var courseId = _random.NextPositive();
+            var courseId = Random.Shared.NextPositive();
             var projectCode = Guid.NewGuid().ToString();
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
 
@@ -93,7 +86,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetProjectDetails_Student_ShouldReturnComponentsAndOnlyOwnTeamOfProject()
         {
             //Arrange
-            var courseId = _random.NextPositive();
+            var courseId = Random.Shared.NextPositive();
             var projectCode = Guid.NewGuid().ToString();
 
             var project = new ProjectBuilder().WithId().Build();
@@ -115,90 +108,11 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(okResult.Value, Is.EqualTo(model));
         }
 
-        [Test]
-        [TestCase(-1, "validCode")]
-        [TestCase(1, null)]
-        [TestCase(1, "")]
-        public void GetProjectTeams_ShouldReturnBadRequestOnInvalidInput(int courseId, string projectCode)
-        {
-            //Act
-            var badRequestResult = _controller.GetProjectTeams(courseId, projectCode).Result as BadRequestResult;
-
-            //Assert
-            Assert.That(badRequestResult, Is.Not.Null);
-        }
-
-        [Test]
-        public void GetProjectTeams_ShouldLoadTeamsOfProjectAndReturnThem()
-        {
-            //Arrange
-            var courseId = _random.NextPositive();
-            var projectCode = Guid.NewGuid().ToString();
-
-            var teams = new List<ProjectTeam>
-            {
-                new ProjectTeamBuilder().Build(),
-                new ProjectTeamBuilder().Build()
-            };
-            _projectServiceMock.Setup(service => service.LoadTeamsOfProjectAsync(It.IsAny<int>(), It.IsAny<string>()))
-                .ReturnsAsync(teams);
-
-
-            _teamConverterMock.Setup(converter => converter.ToTeamDetailsModel(It.IsAny<ProjectTeam>()))
-                .Returns(new TeamDetailsModel());
-
-            //Act
-            var okResult = _controller.GetProjectTeams(courseId, projectCode).Result as OkObjectResult;
-
-            //Assert
-            Assert.That(okResult, Is.Not.Null);
-            _projectServiceMock.Verify(service => service.LoadTeamsOfProjectAsync(courseId, projectCode), Times.Once);
-            _teamConverterMock.Verify(converter => converter.ToTeamDetailsModel(It.IsIn<ProjectTeam>(teams)), Times.Exactly(teams.Count));
-            Assert.That(okResult.Value, Has.Count.EqualTo(teams.Count));
-            Assert.That(okResult.Value, Has.All.TypeOf<TeamDetailsModel>());
-        }
-
-        [Test]
-        public void LeaveProjectTeam_ShouldUseServiceForLoggedInUser()
-        {
-            //Arrange
-            var courseId = _random.NextPositive();
-            var projectCode = Guid.NewGuid().ToString();
-            var teamId = _random.NextPositive();
-
-            //Act
-            var okResult = _controller.LeaveProjectTeam(courseId, projectCode, teamId).Result as OkResult;
-
-            //Assert
-            Assert.That(okResult, Is.Not.Null);
-            _projectServiceMock.Verify(service => service.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, _userId), Times.Once);
-        }
-
-        [Test]
-        public void RemoveFromProjectTeam_ShouldUseService()
-        {
-            //Arrange
-            var courseId = _random.NextPositive();
-            var projectCode = Guid.NewGuid().ToString();
-            var teamId = _random.NextPositive();
-            var userId = _random.NextPositive();
-
-            //Act
-            var okResult = _controller.RemoveFromProjectTeam(courseId, projectCode, teamId, userId).Result as OkResult;
-
-            //Assert
-            Assert.That(okResult, Is.Not.Null);
-            _projectServiceMock.Verify(service => service.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId), Times.Once);
-        }
-
         private ProjectController CreateControllerWithUserInContext(string role)
         {
             return new ProjectController(_projectServiceMock.Object, 
-                null, //TODO: add mock
-                _assignmentRepositoryMock.Object,
                 _projectConverterMock.Object, 
                 _topicConverterMock.Object, 
-                _teamConverterMock.Object,
                 _solutionFileServiceMock.Object,
                 _memoryCacheMock.Object)
             {

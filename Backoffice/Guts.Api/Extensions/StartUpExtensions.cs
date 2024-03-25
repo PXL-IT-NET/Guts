@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -13,6 +14,7 @@ using Newtonsoft.Json;
 
 namespace Guts.Api.Extensions
 {
+    [ExcludeFromCodeCoverage]
     public static class StartUpExtensions
     {
         public static void AddApplicationServices(this IServiceCollection services, IConfiguration configuration)

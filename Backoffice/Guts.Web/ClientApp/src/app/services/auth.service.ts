@@ -41,6 +41,7 @@ export class AuthService {
     this.tokenModel = null;
     this.localStorageService.remove(LocalStorageKeys.currentToken);
     this.currentUserProfile = null;
+    this.loggedInStateSubject.next(false);
   }
 
   public invalidateUserProfileCache(): void {

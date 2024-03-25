@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Guts.Api.Models;
+using Guts.Business;
 using Guts.Common;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace Guts.Api.Filters
 {
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public class ApplicationExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly ILogger _logger;
@@ -28,6 +31,11 @@ namespace Guts.Api.Filters
                 case InvalidOperationException _:
                     _logger.LogWarning(context.Exception, $"Bad request detected: {GetRequestUrl(context)}");
                     context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    context.Result = new JsonResult(ErrorModel.FromException(context.Exception));
+                    break;
+                case DataNotFoundException _:
+                    _logger.LogWarning(context.Exception, $"Resources not found: {GetRequestUrl(context)}");
+                    context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
                     context.Result = new JsonResult(ErrorModel.FromException(context.Exception));
                     break;
                 default:

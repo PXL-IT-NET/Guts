@@ -9,7 +9,7 @@
       <div class="mb-2 row">
         <label for="components" class="col-lg-1 col-md-2 col-form-label">Component</label>
         <div class="col-lg-3 col-md-4">
-          <select name="components" class="form-control" [(ngModel)]="selectedAssignmentId">
+          <select name="components" class="form-select" [(ngModel)]="selectedAssignmentId">
             <option [ngValue]="0" selected>Overview</option>
             <option *ngFor="let component of model.components" [ngValue]="component.assignmentId">
               {{component.code}}
@@ -19,7 +19,7 @@
 
         <label for="teams" class="col-lg-1 col-md-2 col-form-label">Team</label>
         <div class="col-lg-3 col-md-4">
-          <select name="teams" class="form-control" [(ngModel)]="selectedTeamId">
+          <select name="teams" class="form-select" [(ngModel)]="selectedTeamId">
             <option *ngFor="let team of model.teams" [ngValue]="team.id">
               {{team.name}}
             </option>

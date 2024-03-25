@@ -327,17 +327,72 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
-        public void AddUserToProjectTeamAsync_ShouldUseTheProjectTeamRepository()
+        public void AddUserToProjectTeamAsync_UserNotInTeamYet_ShouldUseTheProjectTeamRepository()
         {
             //Arrange
-            var teamId = _random.NextPositive();
+            Period existingPeriod = new Period { Id = _random.NextPositive() };
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam team = new ProjectTeamBuilder().WithId().Build();
+            var existingTeams = new List<ProjectTeam>(){team};
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
+
             var userId = _random.NextPositive();
 
             //Act
-            _service.AddUserToProjectTeamAsync(teamId, userId).Wait();
+            _service.AddUserToProjectTeamAsync(existingProject.CourseId, existingProject.Code, team.Id, userId).Wait();
 
             //Assert
-            _projectTeamRepositoryMock.Verify(repo => repo.AddUserToTeam(teamId, userId), Times.Once);
+            _projectTeamRepositoryMock.Verify(repo => repo.AddUserToTeam(team.Id, userId), Times.Once);
+        }
+
+        [Test]
+        public void AddUserToProjectTeamAsync_UserAlreadyInOtherTeam_ShouldThrowContractException()
+        {
+            //Arrange
+            var userId = _random.NextPositive();
+            Period existingPeriod = new Period { Id = _random.NextPositive() };
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam team = new ProjectTeamBuilder().WithId().WithUser(userId).Build();
+            var existingTeams = new List<ProjectTeam>() { team };
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
+
+            
+            //Act + Assert
+            Assert.That(() => _service.AddUserToProjectTeamAsync(existingProject.CourseId, existingProject.Code, team.Id, userId),
+                               Throws.InstanceOf<ContractException>());
+            
+            _projectTeamRepositoryMock.Verify(repo => repo.AddUserToTeam(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public void AddUserToProjectTeamAsync_TeamIsNotPartOfTheProject_ShouldThrowContractException()
+        {
+            //Arrange
+            var userId = _random.NextPositive();
+            Period existingPeriod = new Period { Id = _random.NextPositive() };
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam otherProjectTeam = new ProjectTeamBuilder().WithId().Build();
+            var existingTeams = new List<ProjectTeam>();
+
+            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(new List<ProjectTeam>());
+
+
+            //Act + Assert
+            Assert.That(() => _service.AddUserToProjectTeamAsync(existingProject.CourseId, existingProject.Code, otherProjectTeam.Id, userId),
+                Throws.InstanceOf<ContractException>());
+
+            _projectTeamRepositoryMock.Verify(repo => repo.AddUserToTeam(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         }
 
         [Test]

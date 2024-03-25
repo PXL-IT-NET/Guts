@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace Guts.Common
 {
@@ -9,6 +10,13 @@ namespace Guts.Common
         {
             if (!precondition)
                 throw new ContractException(message);
+        }
+
+        [DebuggerStepThrough]
+        public static void Require(bool precondition, Func<string> message)
+        {
+            if (!precondition)
+                throw new ContractException(message());
         }
     }
 }

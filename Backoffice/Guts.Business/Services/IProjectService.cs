@@ -32,7 +32,7 @@ namespace Guts.Business.Services
 
         Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
 
-        Task AddUserToProjectTeamAsync(int teamId, int userId);
+        Task AddUserToProjectTeamAsync(int courseId, string projectCode, int teamId, int userId);
 
         Task RemoveUserFromProjectTeamAsync(int courseId, string projectCode, int teamId, int userId);
 

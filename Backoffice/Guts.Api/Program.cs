@@ -8,9 +8,11 @@ using Guts.Bootstrapper.Logging;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.Extensions.Hosting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Guts.Api;
 
+[ExcludeFromCodeCoverage]
 public static class Program
 {
     public static void Main(string[] args)

@@ -95,7 +95,7 @@
                         <div class="mb-2 row">
                             <label for="correctionType" class="col-6 col-form-label">Correction based on</label>
                             <div class="col-6">
-                                <select name="correctionType" class="form-control" [(ngModel)]="gradeCorrectionType" (ngModelChange)="calculateIndividualGrades()">
+                                <select name="correctionType" class="form-select" [(ngModel)]="gradeCorrectionType" (ngModelChange)="calculateIndividualGrades()">
                                     <option [ngValue]="0">Peers only</option>
                                     <option [ngValue]="1">Self only</option>
                                     <option [ngValue]="2">Peer and self average</option>

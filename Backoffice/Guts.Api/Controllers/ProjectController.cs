@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Business;
@@ -14,7 +13,6 @@ using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
 using Guts.Api.Models.ProjectModels;
-using Guts.Domain.ProjectTeamAggregate;
 
 namespace Guts.Api.Controllers
 {
@@ -25,29 +23,23 @@ namespace Guts.Api.Controllers
         public const int CacheTimeInSeconds = 60;
 
         private readonly IProjectService _projectService;
-        private readonly IProjectTeamRepository _projectTeamRepository;
-        private readonly IAssignmentRepository _assignmentRepository;
+        //private readonly IProjectTeamRepository _projectTeamRepository;
+        //private readonly IAssignmentRepository _assignmentRepository;
         private readonly IProjectConverter _projectConverter;
         private readonly ITopicConverter _topicConverter;
-        private readonly ITeamConverter _teamConverter;
+        //private readonly ITeamConverter _teamConverter;
         private readonly ISolutionFileService _solutionFileService;
         private readonly IMemoryCache _memoryCache;
 
         public ProjectController(IProjectService projectService,
-            IProjectTeamRepository projectTeamRepository,
-            IAssignmentRepository assignmentRepository,
             IProjectConverter projectConverter,
             ITopicConverter topicConverter,
-            ITeamConverter teamConverter,
             ISolutionFileService solutionFileService,
             IMemoryCache memoryCache)
         {
             _projectService = projectService;
-            _projectTeamRepository = projectTeamRepository;
-            _assignmentRepository = assignmentRepository;
             _projectConverter = projectConverter;
             _topicConverter = topicConverter;
-            _teamConverter = teamConverter;
             _solutionFileService = solutionFileService;
             _memoryCache = memoryCache;
         }
@@ -78,230 +70,6 @@ namespace Guts.Api.Controllers
             return Ok(model);
         }
 
-        [HttpGet("{projectCode}/teams")]
-        [ProducesResponseType(typeof(IList<TeamDetailsModel>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectTeams(int courseId, string projectCode)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode))
-            {
-                return BadRequest();
-            }
-
-            var teams = await _projectService.LoadTeamsOfProjectAsync(courseId, projectCode);
-
-            var models = teams.Select(team => _teamConverter.ToTeamDetailsModel(team)).ToList();
-
-            return Ok(models);
-        }
-
-        [HttpGet("{projectCode}/teams/{teamId}")]
-        [ProducesResponseType(typeof(TeamDetailsModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectTeam(int courseId, string projectCode, int teamId)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-
-            IProjectTeam team = await _projectTeamRepository.LoadByIdAsync(teamId);
-            TeamDetailsModel model = _teamConverter.ToTeamDetailsModel(team);
-
-            return Ok(model);
-        }
-
-        [HttpPost("{projectCode}/teams")]
-        [ProducesResponseType((int)HttpStatusCode.Created)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        public async Task<IActionResult> AddProjectTeam(int courseId, string projectCode, [FromBody] TeamEditModel model)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode))
-            {
-                return BadRequest();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            IProjectTeam createdTeam = await _projectService.AddProjectTeamAsync(courseId, projectCode, model.Name);
-            TeamDetailsModel createdTeamModel = _teamConverter.ToTeamDetailsModel(createdTeam);
-
-            return CreatedAtAction(nameof(GetProjectTeam),
-                new { courseId = courseId, projectCode = projectCode, teamId = createdTeamModel.Id }, createdTeamModel);
-        }
-
-        [HttpPut("{projectCode}/teams/{teamId}")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        public async Task<IActionResult> UpdateProjectTeam(int courseId, string projectCode, int teamId, [FromBody] TeamEditModel model)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            await _projectService.UpdateProjectTeamAsync(courseId, projectCode, teamId, model.Name);
-
-            return Ok();
-        }
-
-        [HttpPost("{projectCode}/teams/generate")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        public async Task<IActionResult> GenerateProjectTeams(int courseId, string projectCode, [FromBody] TeamGenerationModel model)
-        {
-            //TODO: technical dept -> write unit tests
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode))
-            {
-                return BadRequest();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.TeamNumberFrom, model.TeamNumberTo);
-            
-            return Ok();
-        }
-
-        [HttpPost("{projectCode}/teams/{teamId}/join")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.Conflict)]
-        public async Task<IActionResult> JoinProjectTeam(int courseId, string projectCode, int teamId)
-        {
-            //TODO: technical dept -> write unit tests
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-
-            var allTeams = await _projectService.LoadTeamsOfProjectAsync(courseId, projectCode);
-            var currentTeam = allTeams.FirstOrDefault(t => t.TeamUsers.Any(tu => tu.UserId == GetUserId()));
-            if (currentTeam != null)
-            {
-                ModelState.AddModelError("OtherTeam", $"You are already a member of '{currentTeam.Name}'. It is not allowed to be in multiple teams.");
-                return Conflict(ModelState);
-            }
-
-            var targetTeam = allTeams.FirstOrDefault(t => t.Id == teamId);
-            if (targetTeam == null)
-            {
-                ModelState.AddModelError("InvalidTeam", $"The team you want to join is not a team of project '{projectCode}'.");
-                return BadRequest(ModelState);
-            }
-
-            await _projectService.AddUserToProjectTeamAsync(teamId, GetUserId());
-            return Ok();
-        }
-
-        [HttpPost("{projectCode}/teams/{teamId}/leave")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.Conflict)]
-        public async Task<IActionResult> LeaveProjectTeam(int courseId, string projectCode, int teamId)
-        {
-            await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
-            return Ok();
-        }
-
-        [HttpPost("{projectCode}/teams/{teamId}/remove")]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.Conflict)]
-        public async Task<IActionResult> RemoveFromProjectTeam(int courseId, string projectCode, int teamId, [FromBody] int userId)
-        {
-            await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId);
-            return Ok();
-        }
-
-        /// <summary>
-        /// Retrieves an overview of the testresults for a project of a course (for the current period).
-        /// The overview contains testresults for the team of the authorized user.
-        /// </summary>
-        /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="projectCode"></param>
-        /// <param name="teamId">Identifier of the team for which the summary should be retrieved.</param>
-        /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
-        [HttpGet("{projectCode}/teams/{teamId}/summary")]
-        [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectSummary(int courseId, string projectCode, int teamId, [FromQuery] DateTime? date)
-        {
-            //TODO: write tests
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-            try
-            {
-                var project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId());
-
-                if (IsStudent())
-                {
-                    //students can only see the summary of own team
-                    if (project.Teams.All(team => team.Id != teamId))
-                    {
-                        return Forbid();
-                    }
-                }
-                else if (!IsLector())
-                {
-                    return Forbid();
-                }
-
-                var dateUtc = date?.ToUniversalTime();
-
-                project.Assignments = await _assignmentRepository.GetByTopicWithTests(project.Id);
-
-                IReadOnlyList<AssignmentResultDto> assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
-
-                var model = _topicConverter.ToTopicSummaryModel(project, assignmentResults);
-                return Ok(model);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
-        }
-
-        [HttpDelete("{projectCode}/teams/{teamId}")]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> DeleteProjectTeam(int courseId, string projectCode, int teamId)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(projectCode) || teamId < 1)
-            {
-                return BadRequest();
-            }
-            await _projectService.DeleteProjectTeamAsync(courseId, projectCode, teamId);
-            return Ok();
-        }
 
         /// <summary>
         /// Retrieves an overview of the assignment statistics for a project of a course (for the current period).
