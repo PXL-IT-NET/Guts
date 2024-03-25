@@ -46,5 +46,8 @@ namespace Guts.Business.Services
         Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc,
             DateTime deadlineUtc);
 
+        Task UpdateProjectAssessmentAsync(int id, string description, DateTime openOnUtc,
+            DateTime deadlineUtc);
+
     }
 }

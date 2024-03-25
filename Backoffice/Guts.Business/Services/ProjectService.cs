@@ -251,5 +251,12 @@ namespace Guts.Business.Services
             await _projectAssessmentRepository.AddAsync(assessment);
             return assessment;
         }
+
+        public async Task UpdateProjectAssessmentAsync(int id, string description, DateTime openOnUtc, DateTime deadlineUtc)
+        {
+            IProjectAssessment existingAssessment = await _projectAssessmentRepository.GetByIdAsync(id);
+            existingAssessment.Update(description, openOnUtc, deadlineUtc);
+            await _projectAssessmentRepository.UpdateAsync(existingAssessment);
+        }
     }
 }

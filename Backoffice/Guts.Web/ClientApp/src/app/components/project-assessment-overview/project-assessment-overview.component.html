@@ -76,6 +76,10 @@
             </div>
           </td>
           <td class="text-center" *ngIf="userProfile.isLector()">
+            <button type="submit" class="btn btn-outline-success mb-2" (click)="openAssessmentEditModal(assessment)">
+              <span class="fa fa-pencil pe-2"></span>
+              <span>Edit</span>
+            </button><br />
             <button type="submit" class="btn btn-outline-danger" (click)="deleteAssessment(assessment)">
               <span class="fa fa-trash pe-2"></span>
               <span>Delete</span>

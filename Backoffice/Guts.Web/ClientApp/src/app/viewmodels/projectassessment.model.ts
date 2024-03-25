@@ -14,6 +14,20 @@ export class ProjectAssessmentCreateModel {
   }
 }
 
+export class ProjectAssessmentUpdateModel {
+  id: number;
+  description: string;
+  openOn: moment.Moment;
+  deadline: moment.Moment;
+
+  constructor() {
+    this.id = 0;
+    this.description = '';
+    this.openOn = null;
+    this.deadline = null;
+  }
+}
+
 export interface IProjectAssessmentModel {
   id: number;
   description: string;

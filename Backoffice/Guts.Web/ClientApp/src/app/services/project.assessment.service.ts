@@ -3,7 +3,7 @@ import { Injectable } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { CreateResult, GetResult, PostResult } from "../util/result";
-import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from "../viewmodels/projectassessment.model";
+import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel, ProjectAssessmentUpdateModel } from "../viewmodels/projectassessment.model";
 
 @Injectable()
 export class ProjectAssessmentService {
@@ -26,6 +26,16 @@ export class ProjectAssessmentService {
         map(model => CreateResult.success<ProjectAssessmentModel>(new ProjectAssessmentModel(model))),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(CreateResult.fromHttpErrorResponse<ProjectAssessmentModel>(errorResponse));
+        })
+      );
+  }
+
+  public updateProjectAssessment(model: ProjectAssessmentUpdateModel): Observable<PostResult> {
+    return this.http.put('api/project-assessments/' + model.id, model)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
         })
       );
   }

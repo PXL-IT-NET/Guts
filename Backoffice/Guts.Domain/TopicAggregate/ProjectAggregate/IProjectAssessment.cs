@@ -29,5 +29,7 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate
         /// Utc date until teams can create and modify <see cref="IProjectTeamAssessment">team assessments</see> for this project assessment.
         /// </summary>
         DateTime DeadlineUtc { get; }
+
+        void Update(string description, DateTime openOnUtc, DateTime deadlineUtc);
     }
 }

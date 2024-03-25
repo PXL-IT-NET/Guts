@@ -10,6 +10,7 @@ import { IProjectDetailsModel } from 'src/app/viewmodels/project.model';
 import { IProjectAssessmentModel, ProjectAssessmentCreateModel, ProjectAssessmentModel } from 'src/app/viewmodels/projectassessment.model';
 import { UserProfile } from 'src/app/viewmodels/user.model';
 import { ProjectAssessmentAddComponent } from '../project-assessment-add/project-assessment-add.component';
+import { ProjectAssessmentEditComponent } from '../project-assessment-edit/project-assessment-edit.component';
 import { PostResult } from '../../util/result';
 
 @Component({
@@ -105,6 +106,20 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     });
   }
 
+  public openAssessmentEditModal(assessment: ProjectAssessmentModel) {
+    let modalState: ModalOptions = {
+      initialState: {
+        projectId: this.project.id,
+        projectAssessment: assessment
+      }
+    };
+    this.modalRef = this.modalService.show(ProjectAssessmentEditComponent, modalState);
+    this.modalRef.setClass('modal-lg');
+    this.modalRef.content.assessmentEdited.subscribe(() => {
+      this.loadProjectAssessments();
+    });
+  }
+
   public loadProjectAssessments() {
     this.loading = true;
     this.projectAssessmentService.getAssessmentsOfProject(this.project.id).subscribe(result => {
@@ -134,7 +149,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
   }
 
   public deleteAssessment(assessment: ProjectAssessmentModel) {
-    let confirmMessage = "Are you sure you want to remove '" + assessment.description + "'?";
+    let confirmMessage = "Are you sure you want to remove '" + assessment.description + "'? This will also delete all team assessments of this project assessment...";
     if (confirm(confirmMessage)) {
       this.loading = true;
       this.projectAssessmentService.deleteProjectAssessment(assessment.id)

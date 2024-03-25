@@ -66,6 +66,19 @@ public class ProjectAssessmentController : ControllerBase
         return CreatedAtAction(nameof(GetProjectAssessment), new { id = assessment.Id }, outputModel);
     }
 
+    [HttpPut("{id}")]
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> UpdateProjectAssessment(int id, [FromBody] UpdateProjectAssessmentModel model)
+    {
+        await _projectService.UpdateProjectAssessmentAsync(id, model.Description,
+            model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
+
+        return Ok();
+    }
+
     [HttpDelete("{id}")]
     [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     [ProducesResponseType((int)HttpStatusCode.OK)]
