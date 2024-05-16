@@ -1,6 +1,8 @@
 ﻿using System.Linq;
+using AutoMapper;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
+using Moq;
 using NUnit.Framework;
 
 namespace Guts.Api.Tests.Models.Converters
@@ -9,11 +11,13 @@ namespace Guts.Api.Tests.Models.Converters
     internal class ProjectConverterTests
     {
         private ProjectConverter _converter;
+        private Mock<IMapper> _mapperMock;
 
         [SetUp]
         public void Setup()
         {
-            _converter = new ProjectConverter();
+            _mapperMock = new Mock<IMapper>();
+            _converter = new ProjectConverter(_mapperMock.Object);
         }
 
         [Test]

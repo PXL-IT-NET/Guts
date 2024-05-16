@@ -1,24 +1,24 @@
 <div class="col-md-10 col-md-offset-1" *ngIf="model.assignmentId > 0">
   <div class="mb-2 row">
-    <label for="firstrun" class="col-sm-2 col-form-label">First test run</label>
-    <div class="col-sm-10">
+    <label for="firstrun" class="col-lg-2 col-md-3 col-form-label">First test run</label>
+    <div class="col-lg-10 col-md-9">
       <input type="text" class="form-control" readonly id="firstrun" value="{{model.firstRun}}">
     </div>
   </div>
   <div class="mb-2 row">
-    <label for="lastrun" class="col-sm-2 col-form-label">Last test run</label>
-    <div class="col-sm-10">
+    <label for="lastrun" class="col-lg-2 col-md-3 col-form-label">Last test run</label>
+    <div class="col-lg-10 col-md-9">
       <input type="text" class="form-control" readonly id="lastrun" value="{{model.lastRun}}">
     </div>
   </div>
   <div class="mb-2 row">
-    <label for="numberofruns" class="col-sm-2 col-form-label">Number of test runs</label>
-    <div class="col-sm-10">
+    <label for="numberofruns" class="col-lg-2 col-md-3 col-form-label">Number of test runs</label>
+    <div class="col-lg-10 col-md-9">
       <input type="number" class="form-control" readonly id="numberofruns" value="{{model.numberOfRuns}}">
     </div>
   </div>
   <div class="mb-2 row" *ngIf="model.solutionFiles.length > 0">
-    <div class="col-sm-12">
+    <div class="col-12">
       <div class="card">
         <h5 class="card-header">Source code</h5>
         <ul class="list-group list-group-flush">
@@ -64,7 +64,7 @@
                     <span class="ms-2">{{testResult.testName}}</span>
                   </td>
                   <td>
-                    <pre class="text-danger">{{testResult.message}}</pre>
+                    <pre class="text-danger pre-wrap">{{testResult.message}}</pre>
                   </td>
                 </tr>
               </tbody>

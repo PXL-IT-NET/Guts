@@ -19,7 +19,6 @@ import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.compon
 // 3th party
 import { NgChartsModule } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
-import { LocalStorageModule, LocalStorageService } from 'angular-2-local-storage';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
 import { ToastrModule } from 'ngx-toastr';
@@ -72,10 +71,6 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     FormsModule,
     ReactiveFormsModule,
     NgbModule,
-    LocalStorageModule.forRoot({
-      prefix: 'guts',
-      storageType: 'localStorage'
-    }),
     RecaptchaModule,
     NgxLoadingModule.forRoot({
       animationType: ngxLoadingAnimationTypes.threeBounce,
@@ -100,7 +95,6 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     s.AssignmentService,
     s.ExamService,
     s.ClientSettingsService,
-    LocalStorageService,
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,

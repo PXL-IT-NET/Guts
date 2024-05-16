@@ -1,3 +1,4 @@
+import { IAssignmentModel } from "./assignment.model";
 import { IAssignmentStatisticsModel, AssignmentStatisticsModel } from "./assignmentstatistics.model";
 import { IAssignmentSummaryModel, AssignmentSummaryModel } from "./assignmentsummary.model"
 
@@ -5,6 +6,7 @@ export interface ITopicModel {
   id: number;
   code: string;
   description: string;
+  assignments: IAssignmentModel[];
 }
 
 export interface ITopicStatisticsModel extends ITopicModel {
@@ -15,12 +17,14 @@ export class TopicStatisticsModel implements ITopicStatisticsModel {
   public id: number;
   public code: string;
   public description: string;
+  public assignments: IAssignmentModel[];
   public assignmentStatistics: AssignmentStatisticsModel[];
 
   constructor(source: ITopicStatisticsModel) {
     this.id = source.id;
     this.code = source.code;
     this.description = source.description;
+    this.assignments = source.assignments;
     this.assignmentStatistics = [];
 
     if (source.assignmentStatistics) {
@@ -43,12 +47,14 @@ export class TopicSummaryModel implements ITopicSummaryModel {
   public assignmentSummaries: AssignmentSummaryModel[];
   public totalGreenTests: number;
   public totalTests: number;
+  public assignments: IAssignmentModel[];
 
   constructor(source?: ITopicSummaryModel) {
     this.id = 0;
     this.code = '';
     this.description = '';
     this.assignmentSummaries = [];
+    this.assignments = [];
     this.totalGreenTests = 0;
     this.totalTests = 0;
 
@@ -64,6 +70,10 @@ export class TopicSummaryModel implements ITopicSummaryModel {
           this.totalGreenTests += assignmentSummary.numberOfPassedTests;
           this.assignmentSummaries.push(summary);
         }
+      }
+
+      if (source.assignments) {
+        this.assignments = source.assignments;
       }
     } 
   }

@@ -7,25 +7,68 @@
 <div class="row">
   <div class="col-12">
     <ul class="nav nav-tabs" role="tablist">
-      <li class="nav-item dropdown" *ngIf="course.chapters.length > 0">
+      <!-- Chapters -->
+      <li class="nav-item dropdown nav-item-main" *ngIf="course.chapters.length > 0">
         <a class="nav-link dropdown-toggle"
-           [ngClass]="{'active': selectedChapter}"
            data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
           <span>Chapter&nbsp;</span><span class="fw-bold" *ngIf="selectedChapter">&apos;{{selectedChapter.description}}&apos;</span>
         </a>
-        <div class="dropdown-menu" style="">
+        <div class="dropdown-menu">
           <a class="dropdown-item" *ngFor="let chapter of course.chapters" (click)="selectChapter(chapter)">{{chapter.description}}</a>
         </div>
       </li>
-      <li class="nav-item dropdown" *ngIf="course.projects.length > 0">
+      <li class="nav-item" *ngIf="selectedChapter">
+        <a class="nav-link" (click)="selectChapter(selectedChapter)"
+           [ngClass]="{'active': selectedChapter && !selectedExercise}">
+          <span>Test results - Overview</span>
+        </a>
+      </li>
+      <li class="nav-item dropdown" *ngIf="selectedChapter && selectedChapter.assignments.length > 0">
+        <a class="nav-link dropdown-toggle" 
+           [ngClass]="{'active': selectedExercise}"
+           data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+          <span>Test results - Detail&nbsp;</span><span class="fw-bold" *ngIf="selectedExercise">&apos;{{selectedExercise.description}}&apos;</span>
+        </a>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" *ngFor="let exercise of selectedChapter.assignments" (click)="selectExercise(exercise)">{{exercise.description}}</a>
+        </div>
+      </li>
+
+      <!-- Projects -->
+      <li class="nav-item dropdown nav-item-main" *ngIf="course.projects.length > 0">
         <a class="nav-link dropdown-toggle"
-           [ngClass]="{'active': selectedProject}"
            data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
           <span>Project&nbsp;</span><span class="fw-bold" *ngIf="selectedProject">&apos;{{selectedProject.description}}&apos;</span>
         </a>
-        <div class="dropdown-menu" style="">
+        <div class="dropdown-menu">
           <a class="dropdown-item" *ngFor="let project of course.projects" (click)="selectProject(project)">{{project.description}}</a>
         </div>
+      </li>
+      <li class="nav-item" *ngIf="selectedProject">
+        <a class="nav-link" [routerLink]="['projects', selectedProject.code, 'assessments']" routerLinkActive="active">
+          <span>Peer assessment</span>
+        </a>
+      </li>
+      <li class="nav-item" *ngIf="selectedProject && selectedProject.assignments.length > 0">
+        <a class="nav-link" (click)="selectProject(selectedProject, true)"
+           [ngClass]="{'active': projectTestResultsOverviewActive}">
+          <span>Test results - Overview</span>
+        </a>
+      </li>
+      <li class="nav-item dropdown" *ngIf="selectedProject && selectedProject.assignments.length > 0">
+        <a class="nav-link dropdown-toggle" 
+           [ngClass]="{'active': projectTestResultsDetailActive}"
+           data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+          <span>Test results - Detail&nbsp;</span><span class="fw-bold" *ngIf="projectTestResultsDetailActive">&apos;{{selectedComponent.description}}&apos;</span>
+        </a>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" *ngFor="let component of selectedProject.assignments" (click)="selectComponent(component)">{{component.description}}</a>
+        </div>
+      </li>
+      <li class="nav-item" *ngIf="selectedProject">
+        <a class="nav-link" [routerLink]="['projects', selectedProject.code, 'teams']" routerLinkActive="active">
+          <span>Team</span>
+        </a>
       </li>
     </ul>
     <div class="tab-content">
@@ -33,26 +76,6 @@
       <p *ngIf="!hasContent">
         This course has no exercises or projects yet.
       </p>
-      <div class="row" *ngIf="selectedProject">
-        <div class="col-12">
-
-          <div class="card mb-2">
-            <div class="card-body">
-              <ul class="nav nav-pills">
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'testresults']">Test results</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'assessments']">Peer assessment</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" [routerLink]="['projects', selectedProject.code, 'teams']">Team</a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
       <div class="row">
         <div class="col-12 ms-1">
           <router-outlet></router-outlet>

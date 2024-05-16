@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;
@@ -9,10 +10,12 @@ namespace Guts.Api.Models.Converters
     public class ChapterConverter : IChapterConverter
     {
         private readonly IUserConverter _userConverter;
+        private readonly IMapper _mapper;
 
-        public ChapterConverter(IUserConverter userConverter)
+        public ChapterConverter(IUserConverter userConverter, IMapper mapper)
         {
             _userConverter = userConverter;
+            _mapper = mapper;
         }
 
         public TopicModel ToTopicModel(Chapter chapter)
@@ -21,7 +24,9 @@ namespace Guts.Api.Models.Converters
             {
                 Id = chapter.Id,
                 Code = chapter.Code,
-                Description = chapter.Description
+                Description = chapter.Description,
+                Assignments = chapter.Assignments.Select(a => _mapper.Map<AssignmentModel>(a)).OrderBy(m => m.Code)
+                    .ToList()
             };
         }
 

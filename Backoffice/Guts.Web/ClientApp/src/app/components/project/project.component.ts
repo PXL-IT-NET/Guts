@@ -33,7 +33,8 @@ export class ProjectComponent implements OnInit {
       code: '',
       description: '',
       components: [],
-      teams: []
+      teams: [],
+      assignments: []
     };
 
     this.selectedAssignmentId = 0;
@@ -58,7 +59,6 @@ export class ProjectComponent implements OnInit {
         this.loading = false;
         if (result.success) {
           this.model = result.value;
-          this.selectedAssignmentId = 0;
 
           if (this.model.teams.length > 0) {
             this.selectedTeamId = this.model.teams[0].id;
@@ -69,6 +69,16 @@ export class ProjectComponent implements OnInit {
         }
       });
 
+    });
+
+     // Subscribe to queryParams to detect changes in query string parameters
+     this.route.queryParams.subscribe((queryParams) => {
+      if (queryParams["assignmentId"]) {
+        this.selectedAssignmentId = +queryParams["assignmentId"];
+      } else{
+        this.selectedAssignmentId = 0;
+      }
+      
     });
   }
 }

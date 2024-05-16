@@ -1,19 +1,30 @@
 ﻿using System.Linq;
+using AutoMapper;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.ProjectModels;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
 {
     public class ProjectConverter : IProjectConverter
     {
+        private readonly IMapper _mapper;
+
+        public ProjectConverter(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
         public TopicModel ToTopicModel(IProject project)
         {
             return new TopicModel
             {
                 Id = project.Id,
                 Code = project.Code,
-                Description = project.Description
+                Description = project.Description,
+                Assignments = project.Assignments.Select(a => _mapper.Map<AssignmentModel>(a)).OrderBy(m => m.Code)
+                    .ToList()
             };
         }
 

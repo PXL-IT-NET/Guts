@@ -14,6 +14,13 @@
   margin-bottom: .5rem;
 }
 
+.nav-tabs {
+  .nav-item-main .nav-link {
+    font-size : 1.1rem;
+  }
+}
+
+
 /* Forms */
 input[readonly] {
   background-color: $light;

@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { UserProfile } from "../../viewmodels/user.model";
 import { Subscription } from 'rxjs';
+import { IAssignmentModel } from 'src/app/viewmodels/assignment.model';
 
 @Component({
   templateUrl: './course.component.html'
@@ -14,7 +15,11 @@ import { Subscription } from 'rxjs';
 export class CourseComponent implements OnInit, OnDestroy {
   public course: ICourseContentsModel;
   public selectedChapter: ITopicModel;
+  public selectedExercise: IAssignmentModel;
+
   public selectedProject: ITopicModel;
+  public selectedComponent: IAssignmentModel;
+
   public loading: boolean = false;
   public userProfile: UserProfile;
   public hasContent: boolean;
@@ -34,7 +39,9 @@ export class CourseComponent implements OnInit, OnDestroy {
       projects: []
     };
     this.selectedChapter = null;
+    this.selectedExercise = null;
     this.selectedProject = null;
+    this.selectedComponent = null;
     this.hasContent = true;
 
     this.route.params.subscribe(params => {
@@ -57,18 +64,54 @@ export class CourseComponent implements OnInit, OnDestroy {
 
   public selectChapter(chapter: ITopicModel) {
     this.selectedChapter = chapter;
+    this.selectedExercise = null;
+    this.selectedProject = null;
+    this.selectedComponent = null;
     if (this.selectedChapter) {
       this.selectedProject = null;
-      this.router.navigate(['chapters', this.selectedChapter.code], { relativeTo: this.route });
+      this.router.navigate(['chapters', this.selectedChapter.code, 'testresults'], { relativeTo: this.route });
     }
   }
 
-  public selectProject(project: ITopicModel) {
+  public selectExercise(exercise: IAssignmentModel) {
+    this.selectedExercise = exercise;
+    this.router.navigate(
+      ['chapters', this.selectedChapter.code, 'testresults'], 
+      { relativeTo: this.route, queryParams: { assignmentId: exercise.assignmentId } });
+  }
+
+  public selectProject(project: ITopicModel, showTestResults: boolean = false) {
     this.selectedProject = project;
+    this.selectedChapter = null;
+    this.selectedExercise = null;
+    this.selectedComponent = null;
     if (this.selectedProject) {
       this.selectedChapter = null;
-      this.router.navigate(['projects', this.selectedProject.code], { relativeTo: this.route });
+      if (showTestResults) {
+        this.router.navigate(['projects', this.selectedProject.code, 'testresults'], { relativeTo: this.route });
+      } else{
+        this.router.navigate(['projects', this.selectedProject.code, 'assessments'], { relativeTo: this.route });
+      } 
     }
+  }
+
+  public get projectTestResultsOverviewActive() : boolean {
+    if(!this.selectedProject) return false;
+    if(this.selectedComponent) return false;
+    return this.router.url.indexOf('testresults') > 0;
+  }
+
+  public get projectTestResultsDetailActive() : boolean {
+    if(!this.selectedProject) return false;
+    if(!this.selectedComponent) return false;
+    return this.router.url.indexOf('testresults') > 0;
+  }
+
+  public selectComponent(component: IAssignmentModel) {
+    this.selectedComponent = component;
+    this.router.navigate(
+      ['projects', this.selectedProject.code, 'testresults'], 
+      { relativeTo: this.route, queryParams: { assignmentId: component.assignmentId } });
   }
 
   private loadCourseContents(courseId: number) {

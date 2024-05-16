@@ -27,7 +27,8 @@ export class ProjectSummaryComponent {
       id: 0,
       code: '',
       description: '',
-      assignmentStatistics: []
+      assignmentStatistics: [],
+      assignments: []
     };
 
     this.courseId = 0;

@@ -1,19 +1,10 @@
 <div class="row">
-  <div class="col-12">
+  <div class="col-md-10 col-md-offset-1">
     <form>
       <div class="mb-2 row">
-        <label for="exercises" class="col-lg-1 col-md-2 col-form-label">Exercise</label>
-        <div class="col-lg-3 col-md-4">
-          <select name="exercises" class="form-select" [(ngModel)]="selectedAssignmentId">
-            <option [ngValue]="0" selected>Overview</option>
-            <option *ngFor="let exercise of model.exercises" [ngValue]="exercise.assignmentId">
-              {{exercise.code}}
-            </option>
-          </select>
-        </div>
 
-        <label for="users" class="col-lg-1 col-md-2 col-form-label">User</label>
-        <div class="col-lg-3 col-md-4">
+        <label for="users" class="col-lg-2 col-md-3 col-form-label" *ngIf="model.users.length > 1">User</label>
+        <div class="col-lg-4 col-md-3" *ngIf="model.users.length > 1">
           <input id="users"
                  name="users"
                  type="text"
@@ -27,8 +18,8 @@
                  [readonly]="model.users.length <= 1" />
         </div>
 
-        <label for="date" class="col-lg-1 col-md-2 col-form-label">Status on</label>
-        <div class="col-lg-3 col-md-4">
+        <label for="date" class="col-lg-2 col-md-3 col-form-label">Status on</label>
+        <div class="col-lg-4 col-md-3">
           <app-ng-datetime [(date)]="selectedDate"></app-ng-datetime>
         </div>
 

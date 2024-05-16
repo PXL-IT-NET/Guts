@@ -37,13 +37,13 @@ namespace Guts.Infrastructure.Repositories
         public async Task<IReadOnlyList<IProject>> GetByCourseIdAsync(int courseId, int periodId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
-
+            query = query.Include(p => p.Assignments);
             return await query.ToListAsync();
         }
 
         public async Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, string projectCode, int periodId)
         {
-            var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
+            var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId && p.Code == projectCode);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
 
             var project = await query.FirstOrDefaultAsync();
@@ -56,7 +56,7 @@ namespace Guts.Infrastructure.Repositories
 
         public async Task<IProject> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, string projectCode, int periodId, int userId)
         {
-            var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId);
+            var query = _context.Projects.Where(p => p.CourseId == courseId && p.Code == projectCode && p.PeriodId == periodId);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
 
             var project = await query.AsNoTracking().FirstOrDefaultAsync();

@@ -5,7 +5,6 @@ import { map, catchError } from 'rxjs/operators';
 import { LoginModel } from '../viewmodels/login.model';
 import { TokenModel } from '../viewmodels/token.model';
 import { RegisterModel } from '../viewmodels/register.model';
-import { LocalStorageService } from 'angular-2-local-storage';
 import { LocalStorageKeys } from '../util/localstorage.keys';
 import { PostResult } from "../util/result";
 import { ConfirmEmailModel } from '../viewmodels/confirmemail.model';
@@ -20,12 +19,11 @@ export class AuthService {
   private loggedInStateSubject: BehaviorSubject<boolean>;
   private currentUserProfile: UserProfile;
 
-  constructor(private http: HttpClient,
-    private localStorageService: LocalStorageService) {
+  constructor(private http: HttpClient) {
     this.currentUserProfile = null;
 
     // set token if saved in local storage
-    this.tokenModel = JSON.parse(String(this.localStorageService.get(LocalStorageKeys.currentToken)));
+    this.tokenModel = JSON.parse(String(localStorage.getItem(LocalStorageKeys.currentToken)));
     let isLoggedIn: boolean = Boolean(this.tokenModel && this.tokenModel.token);
     this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
   }
@@ -39,7 +37,7 @@ export class AuthService {
 
   public clearToken(): void {
     this.tokenModel = null;
-    this.localStorageService.remove(LocalStorageKeys.currentToken);
+    localStorage.removeItem(LocalStorageKeys.currentToken);
     this.currentUserProfile = null;
     this.loggedInStateSubject.next(false);
   }
@@ -58,7 +56,7 @@ export class AuthService {
             this.tokenModel = tokenModel;
 
             // store username and jwt token in local storage to keep user logged in between page refreshes
-            this.localStorageService.set(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
+            localStorage.setItem(LocalStorageKeys.currentToken, JSON.stringify(tokenModel));
 
             // return true to indicate successful login
             this.loggedInStateSubject.next(true);
@@ -107,7 +105,7 @@ export class AuthService {
   public logout(): void {
     // clear token remove user from local storage to log user out
     this.tokenModel = null;
-    this.localStorageService.remove(LocalStorageKeys.currentToken);
+    localStorage.removeItem(LocalStorageKeys.currentToken);
     this.loggedInStateSubject.next(false);
     this.currentUserProfile = null;
   }

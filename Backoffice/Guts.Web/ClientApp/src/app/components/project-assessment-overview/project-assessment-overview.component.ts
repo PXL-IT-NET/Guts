@@ -51,7 +51,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
       code: '',
       description: '',
       components: [],
-      teams: []
+      teams: [],
+      assignments: []
     };
 
     this.assessments = [];

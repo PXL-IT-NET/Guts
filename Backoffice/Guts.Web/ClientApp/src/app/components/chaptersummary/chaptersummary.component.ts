@@ -28,7 +28,8 @@ export class ChapterSummaryComponent implements OnChanges {
       id: 0,
       code: '',
       description: '',
-      assignmentStatistics: []
+      assignments: [],
+      assignmentStatistics: [],
     };
     this.courseId = 0;
     this.userId = 0;

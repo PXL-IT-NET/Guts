@@ -16,7 +16,7 @@ const routes: Routes = [
     children: [
       { path: 'chapters/:chapterCode', redirectTo: 'chapters/:chapterCode/testresults', pathMatch: 'full' },
       { path: 'chapters/:chapterCode/testresults', component: c.ChapterComponent, canActivate: [AuthGuard] },
-      { path: 'projects/:code', redirectTo: 'projects/:code/testresults', pathMatch: 'full' },
+      { path: 'projects/:code', redirectTo: 'projects/:code/assessments', pathMatch: 'full' },
       { path: 'projects/:code/testresults', component: c.ProjectComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/teams', component: c.ProjectTeamComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments', component: c.ProjectAssessmentOverviewComponent, canActivate: [AuthGuard] },
