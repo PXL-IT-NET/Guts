@@ -36,6 +36,7 @@ namespace Guts.Api.Models.Converters
             {
                 Id = chapter.Id,
                 Code = chapter.Code,
+                Description = chapter.Description,
                 Exercises = chapter.Assignments.Select(assignment => new AssignmentModel
                 {
                     AssignmentId = assignment.Id,

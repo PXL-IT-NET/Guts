@@ -51,7 +51,7 @@ export class ExampartComponent implements OnInit {
             return descriptionA.localeCompare(descriptionB);
           });
         } else {
-          this.toastr.error("Could not retrieve assignments from API. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.error("Could not retrieve assignments from API. Message: " + (result.message || "unknown error"), "System error");
         }
       });
 
@@ -88,7 +88,7 @@ export class ExampartComponent implements OnInit {
           this.model = new ExamPartModel();
           this.isCollapsed = true;
         } else {
-          this.toastr.error("Could not save exam part. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.error("Could not save exam part. Message: " + (result.message || "unknown error"), "System error");
         }
       }
     );
@@ -100,7 +100,7 @@ export class ExampartComponent implements OnInit {
         if (result.success) {
           this.examPartDeleted.emit(this.model);
         } else {
-          this.toastr.error("Could not delete exam part. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.error("Could not delete exam part. Message: " + (result.message || "unknown error"), "System error");
         }
       }
     );

@@ -41,10 +41,13 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.CourseConfigComponent,
     c.ChapterComponent,
     c.ProjectComponent,
+    c.ChapterSettingsComponent,
     c.ChapterSummaryComponent,
     c.AssignmentDetailComponent,
     c.AssignmentSummaryComponent,
     c.AssignmentStatisticsComponent,
+    c.ProjectAddComponent,
+    c.ProjectSettingsComponent,
     c.ProjectTeamComponent,
     c.ProjectTeamAddComponent,
     c.ProjectTeamEditComponent,
@@ -52,6 +55,7 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.ProjectAssessmentOverviewComponent,
     c.ProjectAssessmentAddComponent,
     c.ProjectAssessmentEditComponent,
+    c.ExamComponent,
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
@@ -59,7 +63,8 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.ProjectTeamAssessmentEvaluationFormComponent,
     c.ProjectTeamAssessmentDetailedResultsComponent,
     c.ProjectTeamAssessmentMyResultComponent,
-    c.AssessmentScoreDropdownComponent
+    c.AssessmentScoreDropdownComponent,
+    c.ExamComponent
   ],
   imports: [
     BrowserModule,

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.TopicAggregate
 {
@@ -10,9 +11,7 @@ namespace Guts.Domain.TopicAggregate
     {
         private string _code;
 
-        [Required]
-        [MaxLength(20)]
-        public string Code
+        public Code Code
         {
             get => _code;
             set
@@ -25,7 +24,6 @@ namespace Guts.Domain.TopicAggregate
             }
         }
 
-        [Required]
         public string Description { get; set; }
 
         public virtual Course Course { get; set; }

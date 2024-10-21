@@ -48,7 +48,7 @@ export class ProjectAssessmentAddComponent {
         this.assessmentAdded.emit(result.value);
         this.modalRef.hide();
       } else {
-        this.toastr.error("Could not add project peer assessment. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not add project peer assessment. Message: " + (result.message || "unknown error"), "System error");
       }
     });
   }

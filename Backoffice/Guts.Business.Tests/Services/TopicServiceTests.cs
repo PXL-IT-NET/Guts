@@ -33,9 +33,10 @@ namespace Guts.Business.Tests.Services
         public void GetTopicAsync_ShouldGetCurrentPeriodAndUseRepository()
         {
             //Arrange
+            var courseCode = _random.NextString();
             var existingPeriod = new Period { Id = _random.NextPositive() };
             var existingTopic = new ChapterBuilder().WithId().Build();
-            var courseCode = _random.NextString();
+            
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
             _topicRepositoryMock.Setup(repo => repo.GetSingleAsync(courseCode, existingTopic.Code, existingPeriod.Id)).ReturnsAsync(existingTopic);

@@ -55,7 +55,6 @@ namespace Guts.Infrastructure
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Topic>().ToTable("Topics");
             builder.Entity<ProjectTeamUser>().ToTable("ProjectTeamUsers");
             builder.Entity<User>().ToTable("Users");
             builder.Entity<Role>().ToTable("Roles");
@@ -65,6 +64,7 @@ namespace Guts.Infrastructure
             builder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
             builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
 
+            builder.ApplyConfiguration(new TopicConfiguration());
             builder.ApplyConfiguration(new AssignmentConfiguration());
             builder.ApplyConfiguration(new SolutionFileConfiguration());
             builder.ApplyConfiguration(new TestResultConfiguration());

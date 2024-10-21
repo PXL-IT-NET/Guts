@@ -4,12 +4,16 @@ using System.Threading.Tasks;
 using Guts.Business.Dtos;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services
 {
     public interface IProjectService
     {
         Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode);
+        Task<IProject> CreateProjectAsync(int courseId, Code projectCode, int? periodId, string description);
+        Task UpdateProjectAsync(int courseId, string projectCode, int? periodId, string description);
+
         Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId);
 
         /// <summary>
@@ -48,6 +52,5 @@ namespace Guts.Business.Services
 
         Task UpdateProjectAssessmentAsync(int id, string description, DateTime openOnUtc,
             DateTime deadlineUtc);
-
     }
 }

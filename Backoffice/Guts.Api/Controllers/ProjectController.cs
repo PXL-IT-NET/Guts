@@ -70,6 +70,42 @@ namespace Guts.Api.Controllers
             return Ok(model);
         }
 
+        [HttpPost("")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType(typeof(ProjectDetailModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> AddProject(int courseId, [FromBody] TopicAddModel model)
+        {
+            if (courseId < 1)
+            {
+                return BadRequest();
+            }
+
+            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, null, model.Description);
+
+            ProjectDetailModel outputModel = _projectConverter.ToProjectDetailModel(project);
+
+            return CreatedAtAction(nameof(GetProjectDetails), new{ courseId = courseId, projectCode = outputModel.Code }, outputModel);
+        }
+
+        [HttpPut("{projectCode}")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> UpdateProject(int courseId, string projectCode, [FromBody]TopicUpdateModel model)
+        {
+            if (courseId < 1 || string.IsNullOrEmpty(projectCode))
+            {
+                return BadRequest();
+            }
+
+            await _projectService.UpdateProjectAsync(courseId, projectCode, null, model.Description);
+
+            return Ok();
+        }
+
 
         /// <summary>
         /// Retrieves an overview of the assignment statistics for a project of a course (for the current period).

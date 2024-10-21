@@ -19,6 +19,7 @@ namespace Guts.Business.Services
         private readonly IProjectRepository _projectRepository;
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
+        private readonly ITopicRepository _topicRepository;
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly ISolutionFileRepository _solutionFileRepository;
         private readonly IAssignmentService _assignmentService;
@@ -29,6 +30,7 @@ namespace Guts.Business.Services
         public ProjectService(IProjectRepository projectRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
+            ITopicRepository topicRepository,
             IProjectTeamRepository projectTeamRepository,
             ISolutionFileRepository solutionFileRepository,
             IAssignmentService assignmentService,
@@ -39,6 +41,7 @@ namespace Guts.Business.Services
             _projectRepository = projectRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
+            _topicRepository = topicRepository;
             _projectTeamRepository = projectTeamRepository;
             _solutionFileRepository = solutionFileRepository;
             _assignmentService = assignmentService;
@@ -70,6 +73,46 @@ namespace Guts.Business.Services
             }
 
             return project;
+        }
+
+        public async Task<IProject> CreateProjectAsync(int courseId, Code projectCode, int? periodId,
+            string description)
+        {
+            if (!periodId.HasValue)
+            {
+                Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+                periodId = currentPeriod.Id;
+            }
+
+            IProject project;
+            try
+            {
+                project = await _projectRepository.GetSingleAsync(courseId, projectCode, periodId.Value);
+                throw new ContractException($"A project with code {projectCode} already exists");
+            }
+            catch (DataNotFoundException)
+            {
+                project = new Project
+                {
+                    Code = projectCode,
+                    CourseId = courseId,
+                    PeriodId = periodId.Value,
+                    Description = description
+                };
+                project = await _projectRepository.AddAsync(project);
+            }
+            return project;
+        }
+
+        public async Task UpdateProjectAsync(int courseId, string projectCode, int? periodId, string description)
+        {
+            if(!periodId.HasValue)
+            {
+                Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+                periodId = currentPeriod.Id;
+            }
+
+            await _topicRepository.UpdateAsync(courseId, projectCode, periodId.Value, description);
         }
 
         public async Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId)

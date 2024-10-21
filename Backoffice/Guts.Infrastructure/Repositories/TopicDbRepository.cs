@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
+using Guts.Common;
 using Guts.Domain.TopicAggregate;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,15 @@ namespace Guts.Infrastructure.Repositories
                 throw new DataNotFoundException();
             }
             return topic;
+        }
+
+        public async Task UpdateAsync(int courseId, string code, int periodId, string description)
+        {
+            Topic topic = await _context.Topics.FirstOrDefaultAsync(t => t.Course.Id == courseId && t.Code == code && t.PeriodId == periodId);
+            Contracts.Require(topic is not null, $"Project or chapter with code '{code}' could not be found");
+
+            topic!.Description = description;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<IReadOnlyList<ITopic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId)

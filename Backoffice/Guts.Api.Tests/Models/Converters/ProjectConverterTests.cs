@@ -32,7 +32,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(project.Id));
-            Assert.That(model.Code, Is.EqualTo(project.Code));
+            Assert.That(model.Code, Is.EqualTo(project.Code.Value));
             Assert.That(model.Description, Is.EqualTo(project.Description));
         }
 
@@ -48,7 +48,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(project.Id));
-            Assert.That(model.Code, Is.EqualTo(project.Code));
+            Assert.That(model.Code, Is.EqualTo(project.Code.Value));
             Assert.That(model.Description, Is.EqualTo(project.Description));
 
             Assert.That(model.Components.Count, Is.EqualTo(project.Assignments.Count));

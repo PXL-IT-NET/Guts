@@ -65,7 +65,7 @@ export class ProjectTeamAssessmentMyResultComponent implements OnInit {
           this.chartData.labels = ['Average', 'Effort', 'Contribution', 'Cooperation' ];
 
         } else {
-          this.toastr.warning("Could not retrieve project team assment result. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.warning("Could not retrieve project team assment result. Message: " + (result.message || "unknown error"), "Warning");
         }
       });
     });

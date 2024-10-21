@@ -1,5 +1,5 @@
 <h5>
-  {{model.description}}
+  <a href="javascript:void(0)" (click)="navigateToDetail()">{{model.description}}</a>
 </h5>
 <div>
   <canvas baseChart [datasets]="model.chartData.datasets" [labels]="model.chartData.labels" [type]="'doughnut'"

@@ -57,7 +57,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.userProfileSubscription.unsubscribe();
+    this.userProfileSubscription?.unsubscribe();
   }
 
   public leaveMyTeam() {
@@ -150,7 +150,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
         this.teams = result.value.sort((a, b) => a.name.localeCompare(b.name));
         this.myTeam = this.teams.find(team => team.members.some(member => member.userId == this.userProfile.id)) || null;
       } else {
-        this.toastr.error("Could not load teams from API. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not load teams from API. Message: " + (result.message || "unknown error"), "System error");
       }
     });
   }

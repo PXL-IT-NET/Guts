@@ -252,7 +252,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("ProjectTeams");
+                    b.ToTable("ProjectTeams", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeamUser", b =>
@@ -494,8 +494,8 @@ namespace Guts.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("CourseId")
                         .HasColumnType("int");

@@ -78,3 +78,12 @@ export class TopicSummaryModel implements ITopicSummaryModel {
     } 
   }
 }
+
+export interface ITopicUpdateModel {
+  description: string;
+}
+
+export interface ITopicAddModel {
+  code: string;
+  description: string;
+}

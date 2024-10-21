@@ -3,8 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { IChapterDetailsModel } from "../viewmodels/chapter.model"
-import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
-import { GetResult } from "../util/result";
+import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel } from "../viewmodels/topic.model"
+import { GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
 
 @Injectable()
@@ -18,6 +18,16 @@ export class ChapterService {
         map(model => GetResult.success(model)),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(GetResult.fromHttpErrorResponse<IChapterDetailsModel>(errorResponse));
+        })
+      );
+  }
+
+  public updateChapter(courseId: number, chapterCode: string, model: ITopicUpdateModel): Observable<PostResult> {
+    return this.http.put('api/courses/' + courseId + '/chapters/' + chapterCode , model)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
         })
       );
   }

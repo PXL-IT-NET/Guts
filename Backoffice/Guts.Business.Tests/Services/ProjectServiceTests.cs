@@ -11,6 +11,7 @@ using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
 
@@ -48,6 +49,7 @@ namespace Guts.Business.Tests.Services
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
                 _periodRepositoryMock.Object,
+                null,
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object,
@@ -68,7 +70,7 @@ namespace Guts.Business.Tests.Services
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
 
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             //Act
@@ -106,7 +108,7 @@ namespace Guts.Business.Tests.Services
             _courseRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<string>())).ReturnsAsync(existingCourse);
 
             _projectRepositoryMock
-                .Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .Setup(repo => repo.GetSingleAsync(It.IsAny<string>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .Throws<DataNotFoundException>();
 
             var addedProject = new ProjectBuilder().WithId().Build();
@@ -198,7 +200,7 @@ namespace Guts.Business.Tests.Services
             var existingProject = new ProjectBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             //Act
@@ -220,7 +222,7 @@ namespace Guts.Business.Tests.Services
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
             _projectRepositoryMock.Setup(repo =>
-                    repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+                    repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             //Act
@@ -252,7 +254,7 @@ namespace Guts.Business.Tests.Services
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
             _projectRepositoryMock.Setup(repo =>
-                    repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                    repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             //Act
@@ -287,7 +289,7 @@ namespace Guts.Business.Tests.Services
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
             _projectRepositoryMock.Setup(repo =>
-                    repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+                    repo.LoadWithAssignmentsAndTeamsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             //Act
@@ -312,7 +314,7 @@ namespace Guts.Business.Tests.Services
             var existingTeams = new List<ProjectTeam>();
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
             _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
 
@@ -336,7 +338,7 @@ namespace Guts.Business.Tests.Services
             var existingTeams = new List<ProjectTeam>(){team};
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
             _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
 
@@ -360,7 +362,7 @@ namespace Guts.Business.Tests.Services
             var existingTeams = new List<ProjectTeam>() { team };
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
             _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(existingTeams);
 
@@ -383,7 +385,7 @@ namespace Guts.Business.Tests.Services
             var existingTeams = new List<ProjectTeam>();
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
             _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(new List<ProjectTeam>());
 
@@ -480,7 +482,7 @@ namespace Guts.Business.Tests.Services
             var existingProject = new ProjectBuilder().WithId().WithTeams(1).Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             int teamId = _random.NextPositive();
@@ -503,7 +505,7 @@ namespace Guts.Business.Tests.Services
             var existingProject = new ProjectBuilder().WithId().Build(); //no teams, so user is not part of the team
 
             _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsOfUserAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(existingProject);
 
             int teamId = _random.NextPositive();

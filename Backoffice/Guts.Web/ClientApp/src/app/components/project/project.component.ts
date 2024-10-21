@@ -65,7 +65,7 @@ export class ProjectComponent implements OnInit {
           }
 
         } else {
-          this.toastr.error("Could not load project details from API. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.error("Could not load project details from API. Message: " + (result.message || "unknown error"), "System error");
         }
       });
 

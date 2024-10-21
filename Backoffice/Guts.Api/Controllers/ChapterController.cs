@@ -9,6 +9,7 @@ using Guts.Business;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Domain.UserAggregate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -81,6 +82,23 @@ namespace Guts.Api.Controllers
             {
                 return NotFound();
             }
+        }
+
+        [HttpPut("{chapterCode}")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> UpdateChapter(int courseId, string chapterCode, [FromBody] TopicUpdateModel model)
+        {
+            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
+            {
+                return BadRequest();
+            }
+
+            await _chapterService.UpdateChapterAsync(courseId, chapterCode, null, model.Description);
+
+            return Ok();
         }
 
         /// <summary>

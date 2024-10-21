@@ -34,7 +34,8 @@ namespace Guts.Business.Tests.Services
             _courseRepositoryMock = new Mock<ICourseRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
 
-            _service = new ChapterService(_chapterRepositoryMock.Object, 
+            _service = new ChapterService(_chapterRepositoryMock.Object,
+                null,
                 _courseRepositoryMock.Object, 
                 _periodRepositoryMock.Object,
                 _assignmentServiceMock.Object);
@@ -76,30 +77,6 @@ namespace Guts.Business.Tests.Services
             _periodRepositoryMock.Verify(repo => repo.GetCurrentPeriodAsync(), Times.Once);
             _chapterRepositoryMock.Verify(repo => repo.GetByCourseIdAsync(courseId, existingPeriod.Id), Times.Once);
             Assert.That(result, Is.Not.Null);
-        }
-
-        [Test]
-        public void GetChaptersOfCourseAsyncShouldSortChaptersByCode()
-        {
-            //Arrange
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var courseId = _random.NextPositive();
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
-
-            var chaptersOfCourse = new List<Chapter>
-            {
-                new ChapterBuilder().WithCode("2").Build(),
-                new ChapterBuilder().WithCode("1").Build()
-            };
-            _chapterRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync(chaptersOfCourse);
-
-            //Act
-            var results = _service.GetChaptersOfCourseAsync(courseId).Result;
-
-            //Assert
-            Assert.That(results.Count, Is.EqualTo(chaptersOfCourse.Count));
-            Assert.That(results.ElementAt(0).Code, Is.LessThan(results.ElementAt(1).Code));
         }
 
         [Test]

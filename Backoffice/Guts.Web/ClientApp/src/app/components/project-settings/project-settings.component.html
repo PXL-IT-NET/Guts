@@ -1,0 +1,60 @@
+<ngx-loading [show]="loading"></ngx-loading>
+<div class="row">
+  <div class="col-12">
+    <h5>Settings</h5>
+  </div>
+</div>
+
+<div class="row mb-2">
+  <div class="col-md-6">
+    <form
+      [formGroup]="editProjectForm"
+      (ngSubmit)="onSubmit()"
+      #editForm="ngForm"
+    >
+      <div class="row mb-2">
+        <label for="name" class="col-3 col-form-label">Code</label>
+        <div class="col-9">
+          <input
+            type="text"
+            class="form-control"
+            id="code"
+            formControlName="code"
+            readonly="readonly"
+          />
+        </div>
+      </div>
+
+      <div class="row mb-2">
+        <label for="name" class="col-3 col-form-label">Description</label>
+        <div class="col-9">
+          <input
+            type="text"
+            class="form-control"
+            id="description"
+            formControlName="description"
+            [class.is-invalid]="isInvalid(editProjectForm.controls.description)"
+          />
+          <div
+            *ngIf="isInvalid(editProjectForm.controls.description)"
+            class="text-danger"
+          >
+            Project description is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-2">
+        <div class="col-12">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="editProjectForm.pristine || !editProjectForm.valid"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

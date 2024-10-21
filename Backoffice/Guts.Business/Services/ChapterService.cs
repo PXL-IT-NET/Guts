@@ -6,28 +6,32 @@ using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services
 {
     internal class ChapterService : IChapterService
     {
         private readonly IChapterRepository _chapterRepository;
+        private readonly ITopicRepository _topicRepository;
         private readonly ICourseRepository _courseRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly IAssignmentService _assignmentService;
 
         public ChapterService(IChapterRepository chapterRepository,
+            ITopicRepository topicRepository,
             ICourseRepository courseRepository,
             IPeriodRepository periodRepository,
             IAssignmentService assignmentService)
         {
             _chapterRepository = chapterRepository;
+            _topicRepository = topicRepository;
             _courseRepository = courseRepository;
             _periodRepository = periodRepository;
             _assignmentService = assignmentService;
         }
 
-        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, string chapterCode)
+        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, Code chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
@@ -51,7 +55,18 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<Chapter> LoadChapterAsync(int courseId, string chapterCode)
+        public async Task UpdateChapterAsync(int courseId, Code chapterCode, int? periodId, string description)
+        {
+            if (!periodId.HasValue)
+            {
+                Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+                periodId = currentPeriod.Id;
+            }
+
+            await _topicRepository.UpdateAsync(courseId, chapterCode, periodId.Value, description);
+        }
+
+        public async Task<Chapter> LoadChapterAsync(int courseId, Code chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
@@ -60,7 +75,7 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, string chapterCode)
+        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, Code chapterCode)
         {
             var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
 
@@ -104,8 +119,8 @@ namespace Guts.Business.Services
                 return new List<Chapter>();
             }
 
-            var chapters = await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
-            return chapters.OrderBy(chapter => chapter.Code).ToList();
+            IList<Chapter> chapters = await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
+            return chapters.ToList();
         }
     }
 }

@@ -77,7 +77,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
             this.toastr.error(
               "Could not load chapter details from API. Message: " +
                 (result.message || "unknown error"),
-              "API error"
+              "System error"
             );
           }
         });

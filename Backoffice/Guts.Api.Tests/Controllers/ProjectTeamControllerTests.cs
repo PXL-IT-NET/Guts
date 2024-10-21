@@ -125,7 +125,7 @@ public class ProjectTeamControllerTests
         _teamConverterMock.Verify(converter => converter.ToTeamDetailsModel(createdTeam), Times.Once);
         Assert.That(result.Value, Is.SameAs(convertedModel));
         Assert.That(result.RouteValues["courseId"], Is.EqualTo(project.CourseId));
-        Assert.That(result.RouteValues["projectCode"], Is.EqualTo(project.Code));
+        Assert.That(result.RouteValues["projectCode"], Is.EqualTo(project.Code.Value));
         Assert.That(result.RouteValues["teamId"], Is.EqualTo(convertedModel.Id));
         Assert.That(result.ActionName, Is.EqualTo(nameof(ProjectTeamController.GetProjectTeam)));
     }

@@ -63,7 +63,7 @@ export class ProjectSummaryComponent {
         if (result.success) {
           this.model = result.value;
         } else {
-          this.toastr.error("Could not load project summary from API. Message: " + (result.message || "unknown error"), "API error");
+          this.toastr.error("Could not load project summary from API. Message: " + (result.message || "unknown error"), "System error");
         }
       });
   }
@@ -74,7 +74,7 @@ export class ProjectSummaryComponent {
       if (result.success) {
         this.statistics = result.value;
       } else {
-        this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "System error");
       }
       this.loadingStatistics = false;
     });

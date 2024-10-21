@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
@@ -14,7 +15,7 @@ namespace Guts.Infrastructure.Repositories
         {
         }
 
-        public async Task<IProject> GetSingleAsync(string courseCode, string projectCode, int periodId)
+        public async Task<IProject> GetSingleAsync(string courseCode, Code projectCode, int periodId)
         {
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.Course.Code == courseCode && p.Code == projectCode && p.PeriodId == periodId);
             if (project == null)
@@ -24,7 +25,7 @@ namespace Guts.Infrastructure.Repositories
             return project;
         }
 
-        public async Task<IProject> GetSingleAsync(int courseId, string projectCode, int periodId)
+        public async Task<IProject> GetSingleAsync(int courseId, Code projectCode, int periodId)
         {
             var project = await _context.Projects.FirstOrDefaultAsync(p => p.CourseId == courseId && p.Code == projectCode && p.PeriodId == periodId);
             if (project == null)
@@ -41,7 +42,7 @@ namespace Guts.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, string projectCode, int periodId)
+        public async Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, Code projectCode, int periodId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId && p.Code == projectCode);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);
@@ -54,7 +55,8 @@ namespace Guts.Infrastructure.Repositories
             return project;
         }
 
-        public async Task<IProject> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, string projectCode, int periodId, int userId)
+        public async Task<IProject> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, Code projectCode, int periodId,
+            int userId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.Code == projectCode && p.PeriodId == periodId);
             query = query.Include(p => p.Assignments).Include(p => p.Teams);

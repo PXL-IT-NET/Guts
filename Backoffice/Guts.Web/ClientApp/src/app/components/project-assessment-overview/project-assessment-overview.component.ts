@@ -85,7 +85,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
         }
         this.loadProjectAssessments();
       } else {
-        this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not load project from API. Message: " + (result.message || "unknown error"), "System error");
       }
     });
   }
@@ -134,7 +134,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
                 if (result.success) {
                   assessment.teamStatus = result.value;
                 } else {
-                  this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "API error");
+                  this.toastr.warning("Could not retrieve project team assment status. Message: " + (result.message || "unknown error"), "Warning");
                 }
               });
             }
@@ -144,7 +144,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
           this.toastr.warning("You are not a member of a team. Please join a team first.", "No team found");
         }
       } else {
-        this.toastr.error("Could not load project assessments from API. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not load project assessments from API. Message: " + (result.message || "unknown error"), "System error");
       }
     });
   }

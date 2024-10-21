@@ -11,7 +11,7 @@
               <div class="col-lg-4 col-xl-2" *ngFor="let assignment of model.assignmentSummaries">
                 <div class="card mb-2">
                   <div class="card-body">
-                    <assignment-summary [model]="assignment"></assignment-summary>
+                    <assignment-summary [model]="assignment" topicType="project" [topicCode]="model.code" [courseId]="courseId"></assignment-summary>
                   </div>
                 </div>
               </div>

@@ -32,7 +32,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
       if (result.success) {
         this.peerAssessments = result.value;
       } else {
-        this.toastr.error("Could not load assessments from API. Message: " + (result.message || "unknown error"), "API error");
+        this.toastr.error("Could not load assessments from API. Message: " + (result.message || "unknown error"), "System error");
       }
     });
 

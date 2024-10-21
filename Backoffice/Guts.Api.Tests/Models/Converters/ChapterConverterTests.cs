@@ -43,7 +43,7 @@ namespace Guts.Api.Tests.Models.Converters
             //Assert
             Assert.That(model, Is.Not.Null);
             Assert.That(model.Id, Is.EqualTo(chapter.Id));
-            Assert.That(model.Code, Is.EqualTo(chapter.Code));
+            Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
             Assert.That(model.Description, Is.EqualTo(chapter.Description));
             Assert.That(model.Assignments.Count, Is.EqualTo(chapter.Assignments.Count));
             foreach (Assignment assignment in chapter.Assignments)

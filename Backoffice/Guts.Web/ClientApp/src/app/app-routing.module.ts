@@ -16,13 +16,15 @@ const routes: Routes = [
     children: [
       { path: 'chapters/:chapterCode', redirectTo: 'chapters/:chapterCode/testresults', pathMatch: 'full' },
       { path: 'chapters/:chapterCode/testresults', component: c.ChapterComponent, canActivate: [AuthGuard] },
+      { path: 'chapters/:chapterCode/settings', component: c.ChapterSettingsComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code', redirectTo: 'projects/:code/assessments', pathMatch: 'full' },
       { path: 'projects/:code/testresults', component: c.ProjectComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/teams', component: c.ProjectTeamComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments', component: c.ProjectAssessmentOverviewComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/evaluate', component: c.ProjectTeamAssessmentEvaluationFormComponent, canActivate: [AuthGuard] },
       { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/detailed-results', component: c.ProjectTeamAssessmentDetailedResultsComponent, canActivate: [AuthGuard] },
-      { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/my-result', component: c.ProjectTeamAssessmentMyResultComponent, canActivate: [AuthGuard] }
+      { path: 'projects/:code/assessments/:assessmentId/teams/:teamId/my-result', component: c.ProjectTeamAssessmentMyResultComponent, canActivate: [AuthGuard] },
+      { path: 'projects/:code/settings', component: c.ProjectSettingsComponent, canActivate: [AuthGuard] }
     ],
   },
   {

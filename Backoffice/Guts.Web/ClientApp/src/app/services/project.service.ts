@@ -6,7 +6,7 @@ import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel } from "../viewmodels/team.model"
 import { CreateResult, GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
-import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel } from "../viewmodels/topic.model"
+import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel, ITopicAddModel } from "../viewmodels/topic.model"
 import { TeamGenerationModel } from "../viewmodels/team.model"
 
 @Injectable()
@@ -20,6 +20,26 @@ export class ProjectService {
         map(model => GetResult.success(model)),
         catchError((errorResponse: HttpErrorResponse) => {
           return of(GetResult.fromHttpErrorResponse<IProjectDetailsModel>(errorResponse));
+        })
+      );
+  }
+
+  public addProject(courseId: number, model: ITopicAddModel): Observable<CreateResult<IProjectDetailsModel>> {
+    return this.http.post('api/courses/' + courseId + '/projects' , model)
+      .pipe(
+        map((addedProject: IProjectDetailsModel) => CreateResult.success(addedProject)),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(CreateResult.fromHttpErrorResponse<IProjectDetailsModel>(errorResponse));
+        })
+      );
+  }
+
+  public updateProject(courseId: number, projectCode: string, model: ITopicUpdateModel): Observable<PostResult> {
+    return this.http.put('api/courses/' + courseId + '/projects/' + projectCode , model)
+      .pipe(
+        map(() => PostResult.success()),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
         })
       );
   }

@@ -9,5 +9,7 @@ namespace Guts.Business.Repositories
         Task<ITopic> GetSingleAsync(string courseCode, string code, int periodId);
 
         Task<IReadOnlyList<ITopic>> GetByCourseWithAssignmentsAndTestsAsync(int courseId, int periodId);
+
+        Task UpdateAsync(int courseId, string code, int periodId, string description);
     }
 }
