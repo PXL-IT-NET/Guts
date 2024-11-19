@@ -1,60 +1,98 @@
 <ngx-loading [show]="loading"></ngx-loading>
 <div class="row">
-  <div class="col-12">
-    <h5>Settings</h5>
-  </div>
-</div>
-
-<div class="row mb-2">
   <div class="col-md-6">
-    <form
-      [formGroup]="editChapterForm"
-      (ngSubmit)="onSubmit()"
-      #editForm="ngForm"
-    >
-      <div class="row mb-2">
-        <label for="name" class="col-3 col-form-label">Code</label>
-        <div class="col-9">
-          <input
-            type="text"
-            class="form-control"
-            id="code"
-            formControlName="code"
-            readonly="readonly"
-          />
-        </div>
-      </div>
-
-      <div class="row mb-2">
-        <label for="name" class="col-3 col-form-label">Description</label>
-        <div class="col-9">
-          <input
-            type="text"
-            class="form-control"
-            id="description"
-            formControlName="description"
-            [class.is-invalid]="isInvalid(editChapterForm.controls.description)"
-          />
-          <div
-            *ngIf="isInvalid(editChapterForm.controls.description)"
-            class="text-danger"
-          >
-            Project description is required.
+    <div class="card mb-2">
+      <h5 class="card-header">
+        Properties
+      </h5>
+      <div class="card-body">
+        <div class="row mb-2">
+          <div class="col-12">
+            <form
+              [formGroup]="editChapterForm"
+              (ngSubmit)="onSubmit()"
+              #editForm="ngForm"
+            >
+              <div class="row mb-2">
+                <label for="name" class="col-3 col-form-label">Code</label>
+                <div class="col-9">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="code"
+                    formControlName="code"
+                    readonly="readonly"
+                  />
+                </div>
+              </div>
+        
+              <div class="row mb-2">
+                <label for="name" class="col-3 col-form-label">Description</label>
+                <div class="col-9">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="description"
+                    formControlName="description"
+                    [class.is-invalid]="isInvalid(editChapterForm.controls.description)"
+                  />
+                  <div
+                    *ngIf="isInvalid(editChapterForm.controls.description)"
+                    class="text-danger"
+                  >
+                    Project description is required.
+                  </div>
+                </div>
+              </div>
+        
+              <div class="row mb-2">
+                <div class="col-12">
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    [disabled]="editChapterForm.pristine || !editChapterForm.valid"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="row mb-2">
-        <div class="col-12">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            [disabled]="editChapterForm.pristine || !editChapterForm.valid"
-          >
-            Save
-          </button>
+
+<div class="row mb-2">
+  <div class="col-md-12">
+    <div class="card mb-2">
+      <h5 class="card-header">
+        Exercises
+      </h5>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12" *ngFor="let exercise of chapter.exercises">
+            <div class="card mb-2">
+              <div class="card-body">
+                <h5>{{exercise.description}}</h5>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item" *ngFor="let test of exercise.tests">
+                    <div class="mb-2">
+                      <span>{{test.testName}}</span>
+                      <button class="btn btn-sm ms-2 btn-outline-danger" type="button">
+                        <span class="fa fa-trash pe-2"></span>
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </form>
+    </div>
   </div>
 </div>

@@ -1,4 +1,4 @@
-import { IAssignmentModel } from "./assignment.model";
+import { IAssignmentModel, ITestModel } from "./assignment.model";
 
 export interface IAssignmentSummaryModel extends IAssignmentModel {
   numberOfTests: number;
@@ -15,6 +15,7 @@ export class AssignmentSummaryModel implements IAssignmentSummaryModel {
   public numberOfPassedTests: number;
   public numberOfFailedTests: number;
   public numberOfUsers: number;
+  public tests: ITestModel[];
 
   constructor(source?: IAssignmentSummaryModel) {
     this.assignmentId = 0;
@@ -24,6 +25,7 @@ export class AssignmentSummaryModel implements IAssignmentSummaryModel {
     this.numberOfPassedTests = 0;
     this.numberOfFailedTests = 0;
     this.numberOfUsers = 0;
+    this.tests = [];
 
     if (source) {
       this.assignmentId = source.assignmentId;
@@ -33,6 +35,7 @@ export class AssignmentSummaryModel implements IAssignmentSummaryModel {
       this.numberOfPassedTests = source.numberOfPassedTests;
       this.numberOfFailedTests = source.numberOfFailedTests;
       this.numberOfUsers = source.numberOfUsers;
+      this.tests = source.tests;
     }
   }
 

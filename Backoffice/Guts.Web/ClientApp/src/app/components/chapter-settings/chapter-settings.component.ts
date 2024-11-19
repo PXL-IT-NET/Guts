@@ -3,6 +3,7 @@ import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/fo
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ChapterService } from 'src/app/services';
+import { IChapterDetailsModel } from 'src/app/viewmodels/chapter.model';
 import { ITopicUpdateModel } from 'src/app/viewmodels/topic.model';
 
 @Component({
@@ -13,7 +14,7 @@ export class ChapterSettingsComponent {
   public loading: boolean;
   public editChapterForm: FormGroup;
   private courseId: number;
-  private chapterCode: string;
+  public chapter: IChapterDetailsModel;
 
   constructor(
     private chapterService: ChapterService,
@@ -22,7 +23,14 @@ export class ChapterSettingsComponent {
   ) {
     this.loading = false;
     this.courseId = 0;
-    this.chapterCode = "";
+    this.chapter = {
+      id: 0,
+      code: "",
+      description: "",
+      exercises: [],
+      assignments: [],
+      users: []
+    };
   }
 
   ngOnInit() {
@@ -32,19 +40,19 @@ export class ChapterSettingsComponent {
     });
 
     this.courseId = +this.route.parent.snapshot.params['courseId']
-    this.chapterCode = this.route.snapshot.params['chapterCode'];
+    let chapterCode = this.route.snapshot.params['chapterCode'];
 
-    this.loadChapter();
+    this.loadChapter(chapterCode);
   }
 
-  private loadChapter() {
+  private loadChapter(chapterCode: string) {
 
     this.loading = true;
-    this.chapterService.getChapterDetails(this.courseId, this.chapterCode).subscribe({
+    this.chapterService.getChapterDetails(this.courseId, chapterCode).subscribe({
       next: result => {
         this.loading = false;
         if (result.success) {
-          console.log(result.value);
+          this.chapter = result.value;
           this.editChapterForm.controls.code.setValue(result.value.code);
           this.editChapterForm.controls.description.setValue(result.value.description);
         } else {
@@ -61,7 +69,7 @@ export class ChapterSettingsComponent {
       description: this.editChapterForm.controls.description.value
     };
 
-    this.chapterService.updateChapter(this.courseId, this.chapterCode, model).subscribe({
+    this.chapterService.updateChapter(this.courseId, this.chapter.code, model).subscribe({
       next: result => {
         if (result.success) {
           this.toastr.success("Chapter updated successfully");

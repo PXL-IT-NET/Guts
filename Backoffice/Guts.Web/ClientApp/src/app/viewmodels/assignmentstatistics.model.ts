@@ -1,4 +1,4 @@
-import { IAssignmentModel } from "./assignment.model";
+import { IAssignmentModel, ITestModel } from "./assignment.model";
 
 export interface IAssignmentStatisticsModel extends IAssignmentModel {
   totalNumberOfUnits: number;
@@ -18,6 +18,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
   public totalNumberOfUnits: number;
   public unit: string;
   public testPassageStatistics: ITestPassageStatisticModel[];
+  public tests: ITestModel[];
 
   constructor(source?: IAssignmentStatisticsModel) {
     this.assignmentId = 0;
@@ -26,6 +27,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
     this.totalNumberOfUnits = 0;
     this.unit = '';
     this.testPassageStatistics = [];
+    this.tests = [];
 
     if (source) {
       this.assignmentId = source.assignmentId;
@@ -34,6 +36,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
       this.totalNumberOfUnits = source.totalNumberOfUnits;
       this.unit = source.unit;
       this.testPassageStatistics = source.testPassageStatistics;
+      this.tests = source.tests;
     }
   }
 

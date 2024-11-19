@@ -1,5 +1,5 @@
 import { ITestResultModel } from './testresult.model';
-import { IAssignmentModel } from "./assignment.model";
+import { IAssignmentModel, ITestModel } from "./assignment.model";
 import * as moment from 'moment';
 import { ISolutionFileModel, SolutionFileModel } from './solutionfile.model';
 
@@ -21,6 +21,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
   public topicCode: string;
   public courseName: string;
   public courseId: number;
+  public tests: ITestModel[];
   public testResults: ITestResultModel[];
   public firstRun: string;
   public lastRun: string;
@@ -34,6 +35,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
     this.topicCode = '';
     this.courseName = '';
     this.courseId = 0;
+    this.tests = [];
     this.testResults = [];
     this.firstRun = '';
     this.lastRun = '';
@@ -47,6 +49,7 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
       this.topicCode = source.topicCode;
       this.courseName = source.courseName;
       this.courseId = source.courseId;
+      this.tests = source.tests;
       this.testResults = source.testResults;
       this.numberOfRuns = source.numberOfRuns;
       this.solutionFiles = source.solutionFiles.map(file => new SolutionFileModel(file));

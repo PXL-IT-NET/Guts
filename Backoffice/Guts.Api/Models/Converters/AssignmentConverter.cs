@@ -42,6 +42,7 @@ namespace Guts.Api.Models.Converters
                 AssignmentId = assignment.Id,
                 CourseName = assignment.Topic.Course.Name,
                 CourseId= assignment.Topic.CourseId,
+                Tests = assignment.Tests.Select(t => new TestModel{Id = t.Id, TestName = t.TestName}).ToList(),
                 TestResults = new List<TestResultModel>(),
                 FirstRun =  testRunInfo.FirstRunDateTime, 
                 LastRun = testRunInfo.LastRunDateTime,
