@@ -76,14 +76,20 @@
           <div class="col-md-12" *ngFor="let exercise of chapter.exercises">
             <div class="card mb-2">
               <div class="card-body">
-                <h5>{{exercise.description}}</h5>
+                <h5>
+                  <span>{{exercise.description}}</span>
+                  <button class="btn btn-sm ms-2 btn-outline-danger" type="button" (click)="deleteExercise(exercise)">
+                    <span class="fa fa-trash pe-2"></span>
+                    <span>Delete exercise</span>
+                  </button>
+                </h5>
                 <ul class="list-group list-group-flush">
                   <li class="list-group-item" *ngFor="let test of exercise.tests">
                     <div class="mb-2">
                       <span>{{test.testName}}</span>
-                      <button class="btn btn-sm ms-2 btn-outline-danger" type="button">
+                      <button class="btn btn-sm ms-2 btn-outline-danger" type="button" (click)="deleteTest(exercise, test)">
                         <span class="fa fa-trash pe-2"></span>
-                        <span>Delete</span>
+                        <span>Delete test</span>
                       </button>
                     </div>
                   </li>

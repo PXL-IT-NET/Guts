@@ -11,6 +11,9 @@ using Guts.Api.Models;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Guts.Domain.TestAggregate;
+using System.Net;
+using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Api.Controllers
 {
@@ -133,6 +136,25 @@ namespace Guts.Api.Controllers
                 FileDownloadName = $"Assignment_{assignmentId}_sources.zip"
             };
             return result;
+        }
+
+        [HttpDelete("{assignmentId}")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> Delete(int assignmentId)
+        {
+            //TODO: write test
+            Assignment assignmentToDelete = await _assignmentRepository.GetByIdAsync(assignmentId);
+            if (assignmentToDelete is null)
+            {
+                return NotFound();
+            }
+
+            await _assignmentRepository.DeleteAsync(assignmentToDelete);
+            return Ok();
         }
     }
 }
