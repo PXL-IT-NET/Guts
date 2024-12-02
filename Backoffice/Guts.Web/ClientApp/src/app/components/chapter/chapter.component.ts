@@ -71,7 +71,6 @@ export class ChapterComponent implements OnInit, OnDestroy {
           this.loading = false;
           if (result.success) {
             this.model = result.value;
-            this.selectedAssignmentId = 0;
             this.selectedUser = result.value.users[0];
           } else {
             this.toastr.error(

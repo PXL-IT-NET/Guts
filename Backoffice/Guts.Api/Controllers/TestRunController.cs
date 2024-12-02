@@ -9,6 +9,7 @@ using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Services;
+using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
@@ -178,7 +179,7 @@ namespace Guts.Api.Controllers
 
             IList<SolutionFile> solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
                 SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath,
-                    sourceFileModel.Content.TryFromBase64())).ToList();
+                    sourceFileModel.Content.TryConvertFromBase64())).ToList();
 
             TestRun savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
 

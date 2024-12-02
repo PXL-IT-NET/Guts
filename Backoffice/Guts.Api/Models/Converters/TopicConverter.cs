@@ -64,7 +64,8 @@ namespace Guts.Api.Models.Converters
                 AssignmentId = assignment.Id,
                 Code = assignment.Code,
                 Description = assignment.Description,
-                NumberOfTests = assignment.Tests.Count
+                NumberOfTests = assignment.Tests.Count,
+                Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList(),
             };
 
             EnsureAssignmentDescription(assignmentSummaryModel, assignment);
@@ -90,7 +91,8 @@ namespace Guts.Api.Models.Converters
                 Description = assignment.Description,
                 TotalNumberOfUnits = 0,
                 Unit = unit,
-                TestPassageStatistics = new List<TestPassageStatisticModel>()
+                TestPassageStatistics = new List<TestPassageStatisticModel>(),
+                Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
             };
 
             EnsureAssignmentDescription(model, assignment);

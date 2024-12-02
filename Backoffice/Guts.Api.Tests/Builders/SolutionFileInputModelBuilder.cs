@@ -1,6 +1,7 @@
 using System;
 using Guts.Api.Extensions;
 using Guts.Api.Models;
+using Guts.Common.Extensions;
 
 namespace Guts.Api.Tests.Builders;
 
@@ -12,7 +13,7 @@ internal class SolutionFileInputModelBuilder
     {
         _inputModel = new SolutionFileInputModel
         {
-            Content = Guid.NewGuid().ToString().TryFromBase64(),
+            Content = Guid.NewGuid().ToString().TryConvertFromBase64(),
             FilePath = $"{Guid.NewGuid()}.cs"
         };
     }

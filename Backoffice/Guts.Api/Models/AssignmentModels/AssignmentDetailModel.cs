@@ -10,6 +10,7 @@ namespace Guts.Api.Models.AssignmentModels
         public string TopicCode { get; set; }
         public string CourseName { get; set; }
         public int CourseId { get; set; }
+        public IList<TestModel> Tests { get; set; }
         public IList<TestResultModel> TestResults { get; set; }
         public DateTime? FirstRun { get; set; }
         public DateTime? LastRun { get; set; }

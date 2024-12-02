@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -31,6 +32,24 @@ namespace Guts.Common.Extensions
             }
 
             return true;
+        }
+
+        public static string TryConvertFromBase64(this string value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                var bytes = Convert.FromBase64String(value);
+                return Encoding.UTF8.GetString(bytes);
+            }
+            catch (FormatException)
+            {
+                return value;
+            }
         }
     }
 }

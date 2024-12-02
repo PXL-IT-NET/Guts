@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Bootstrapper", "Guts.B
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{4520912A-D7A6-4A83-ABAA-53A993B0145B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Guts.Common.Tests", "..\Guts.Common.Tests\Guts.Common.Tests.csproj", "{6A113FDE-70EC-4F55-91D0-7DCDF5E152BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4520912A-D7A6-4A83-ABAA-53A993B0145B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A113FDE-70EC-4F55-91D0-7DCDF5E152BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A113FDE-70EC-4F55-91D0-7DCDF5E152BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A113FDE-70EC-4F55-91D0-7DCDF5E152BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A113FDE-70EC-4F55-91D0-7DCDF5E152BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

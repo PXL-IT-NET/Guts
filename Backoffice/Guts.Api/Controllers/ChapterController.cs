@@ -8,6 +8,7 @@ using Guts.Api.Models.Converters;
 using Guts.Business;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -44,8 +45,8 @@ namespace Guts.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
-        /// The overview contains testresults for the authorized user and the average results of all users.
+        /// Retrieves the properties of a chapter of a course (for the current period).
+        /// This includes the assignments of the chapter with their tests and the users that submitted testresults
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode">Sequence number of the chapter</param>
@@ -62,7 +63,7 @@ namespace Guts.Api.Controllers
 
             try
             {
-                var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
+                Chapter chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode);
 
                 List<User> chapterUsers = new List<User>();
                 if (IsLector())
