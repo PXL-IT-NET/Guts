@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models.AssignmentModels;
@@ -12,6 +13,7 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
+using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.ValueObjects;
@@ -259,6 +261,36 @@ namespace Guts.Api.Tests.Controllers
                 converter => converter.ToAssignmentDetailModel(It.IsAny<Assignment>(),
                     It.IsAny<AssignmentTestRunInfoDto>(), It.IsAny<IList<TestResult>>(),
                     It.IsAny<IList<SolutionFile>>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Delete_TestExists_ShouldUseRepoToDeleteTest_ShouldReturnOk()
+        {
+            // Arrange
+            Assignment assignmentToDelete = new AssignmentBuilder().WithId().Build();
+            _assignmentRepositoryMock.Setup(r => r.GetByIdAsync(assignmentToDelete.Id)).ReturnsAsync(assignmentToDelete);
+
+            // Act
+            var result = (await _controller.Delete(assignmentToDelete.Id)) as OkResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            _assignmentRepositoryMock.Verify(r => r.DeleteAsync(assignmentToDelete), Times.Once);
+        }
+
+        [Test]
+        public async Task Delete_TestDoesNotExist_ShouldReturnNotFound()
+        {
+            // Arrange
+            int assignmentId = Random.Shared.NextPositive();
+            _assignmentRepositoryMock.Setup(r => r.GetByIdAsync(assignmentId)).ReturnsAsync(() => null);
+
+            // Act
+            var result = (await _controller.Delete(assignmentId)) as NotFoundResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            _assignmentRepositoryMock.Verify(r => r.GetByIdAsync(assignmentId), Times.Once);
         }
     }
 }

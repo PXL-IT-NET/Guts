@@ -4,6 +4,7 @@ using System.Linq;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Business.Dtos;
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
 
@@ -60,7 +61,7 @@ namespace Guts.Api.Models.Converters
         private void AddTestResults(AssignmentDetailModel model, Assignment assignment,
             IList<TestResult> results)
         {
-            foreach (var test in assignment.Tests)
+            foreach (Test test in assignment.Tests)
             {
                 var testResultModel = new TestResultModel
                 {
@@ -70,7 +71,7 @@ namespace Guts.Api.Models.Converters
                     Message = string.Empty
                 };
 
-                var matchingResult = results?.FirstOrDefault(r => r.TestId == test.Id);
+                TestResult matchingResult = results?.FirstOrDefault(r => r.TestId == test.Id);
                 if (matchingResult != null)
                 {
                     testResultModel.Runned = true;

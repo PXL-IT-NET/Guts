@@ -146,7 +146,6 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> Delete(int assignmentId)
         {
-            //TODO: write test
             Assignment assignmentToDelete = await _assignmentRepository.GetByIdAsync(assignmentId);
             if (assignmentToDelete is null)
             {

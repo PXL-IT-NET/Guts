@@ -27,7 +27,6 @@ public class TestController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> Delete(int id)
     {
-        //TODO: write test
         Test testToDelete = await _testRepository.GetByIdAsync(id);
         if (testToDelete is null)
         {

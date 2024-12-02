@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
+using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -61,9 +62,21 @@ namespace Guts.Api.Tests.Builders
             return this;
         }
 
+        public ControllerContextBuilder WithEmail(string email)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, email)
+            };
+            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+            return this;
+        }
+
         public ControllerContext Build()
         {
             return _context;
         }
+
+        
     }
 }
