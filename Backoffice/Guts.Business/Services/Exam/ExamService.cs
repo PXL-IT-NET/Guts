@@ -39,13 +39,13 @@ namespace Guts.Business.Services.Exam
 
         public async Task<IReadOnlyList<IExam>> GetExamsAsync(int courseId, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             return await _examRepository.FindWithPartsAndEvaluationsAsync(courseId, period.Id);
         }
 
         public async Task<IExam> CreateExamAsync(int courseId, string name)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
             IExam newExam = _examFactory.CreateNew(courseId, period.Id, name);
             IExam savedExam = await _examRepository.AddAsync(newExam);
             return savedExam;

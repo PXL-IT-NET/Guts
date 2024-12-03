@@ -10,21 +10,21 @@ namespace Guts.Domain.Tests.Builders
         public ExamPartBuilder()
         {
             int examId = 0;
-            string name = Random.NextString();
-            var deadline = DateTime.UtcNow.AddDays(Random.Next(1, 101));
+            string name = Random.Shared.NextString();
+            var deadline = DateTime.UtcNow.AddDays(Random.Shared.Next(1, 101));
 
             ConstructItem(examId, name, deadline);
         }
 
         public ExamPartBuilder WithId()
         {
-            SetProperty(part => part.Id, Random.NextPositive());
+            SetProperty(part => part.Id, Random.Shared.NextPositive());
             return this;
         }
 
         public ExamPartBuilder WithExamId()
         {
-            SetProperty(part => part.ExamId, Random.NextPositive());
+            SetProperty(part => part.ExamId, Random.Shared.NextPositive());
             return this;
         }
 

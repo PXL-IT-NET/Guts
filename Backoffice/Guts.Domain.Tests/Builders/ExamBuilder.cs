@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
 
@@ -8,9 +9,9 @@ namespace Guts.Domain.Tests.Builders
     {
         public ExamBuilder()
         {
-            int courseId = Random.NextPositive();
-            int periodId = Random.NextPositive();
-            string name = Random.NextString();
+            int courseId = Random.Shared.NextPositive();
+            int periodId = Random.Shared.NextPositive();
+            string name = Random.Shared.NextString();
 
             ConstructItem(courseId, periodId, name);
         }

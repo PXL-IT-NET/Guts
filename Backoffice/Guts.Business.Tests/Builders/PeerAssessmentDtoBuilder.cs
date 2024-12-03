@@ -1,3 +1,4 @@
+using System;
 using Guts.Business.Dtos;
 using Guts.Common.Extensions;
 using Guts.Domain.Tests.Builders;
@@ -10,12 +11,12 @@ internal class PeerAssessmentDtoBuilder : BaseBuilder<PeerAssessmentDto>
     {
         Item = new PeerAssessmentDto
         {
-            SubjectId = Random.NextPositive(),
-            UserId = Random.NextPositive(),
-            ContributionScore = Random.Next(0,6),
-            CooperationScore = Random.Next(0, 6),
-            EffortScore = Random.Next(0, 6),
-            Explanation = Random.NextString()
+            SubjectId = Random.Shared.NextPositive(),
+            UserId = Random.Shared.NextPositive(),
+            ContributionScore = Random.Shared.Next(0,6),
+            CooperationScore = Random.Shared.Next(0, 6),
+            EffortScore = Random.Shared.Next(0, 6),
+            Explanation = Random.Shared.NextString()
         };
     }
 

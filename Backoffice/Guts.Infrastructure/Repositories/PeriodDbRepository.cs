@@ -7,16 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    internal class PeriodDbRepository : IPeriodRepository
+    internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRepository
     {
-        private readonly GutsContext _context;
 
-        public PeriodDbRepository(GutsContext context)
+        public PeriodDbRepository(GutsContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<Period> GetPeriodAsync(int? periodId = null)
+        public async Task<IPeriod> GetPeriodAsync(int? periodId = null)
         {
             Period period = null;
             if (periodId.HasValue)

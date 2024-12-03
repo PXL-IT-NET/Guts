@@ -3,8 +3,8 @@ using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Business.Repositories
 {
-    public interface IPeriodRepository
+    public interface IPeriodRepository : IBasicRepository<IPeriod>
     {
-        Task<Period> GetPeriodAsync(int? periodId = null);
+        Task<IPeriod> GetPeriodAsync(int? periodId = null);
     }
 }

@@ -5,6 +5,7 @@ using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Moq;
@@ -33,7 +34,7 @@ namespace Guts.Business.Tests.Services
         {
             //Arrange
             string courseCode = Random.Shared.NextString();
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Chapter existingTopic = new ChapterBuilder().WithId().Build();
             
 
@@ -53,7 +54,7 @@ namespace Guts.Business.Tests.Services
         public void GetTopicsByCourseWithAssignmentsAndTestsAsync_ShouldGetCurrentPeriodAndUseRepository()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             List<Topic> existingTopics = new List<Topic>();
             var courseId = Random.Shared.NextPositive();
 

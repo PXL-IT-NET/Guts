@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Business.Repositories
 {

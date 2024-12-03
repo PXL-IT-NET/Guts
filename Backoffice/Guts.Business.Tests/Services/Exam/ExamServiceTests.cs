@@ -56,7 +56,7 @@ namespace Guts.Business.Tests.Services.Exam
             int courseId = Random.Shared.NextPositive();
             string name = Random.Shared.NextString();
 
-            var existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            var existingPeriod = new PeriodBuilder().WithId().Build();
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
             Domain.ExamAggregate.Exam createdExam = new ExamBuilder().Build();
@@ -92,7 +92,7 @@ namespace Guts.Business.Tests.Services.Exam
         public void GetExamsAsync_ShouldFindAllExamsOfACourseForTheCurrentPeriod()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
             int courseId = Random.Shared.NextPositive();

@@ -33,7 +33,7 @@ namespace Guts.Business.Services
 
         public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, Code chapterCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
 
             Chapter chapter;
             try
@@ -57,14 +57,14 @@ namespace Guts.Business.Services
 
         public async Task UpdateChapterAsync(int courseId, Code chapterCode, string description)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
 
             await _topicRepository.UpdateAsync(courseId, chapterCode, period.Id, description);
         }
 
         public async Task<Chapter> LoadChapterAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
 
             var chapter = await _chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, period.Id);
 
@@ -73,7 +73,7 @@ namespace Guts.Business.Services
 
         public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             Chapter chapter = await _chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, period.Id);
 
             return chapter;
@@ -104,7 +104,7 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<Chapter>> GetChaptersOfCourseAsync(int courseId, int? periodId = null)
         {
-            Period period;
+            IPeriod period;
             try
             {
                 period = await _periodRepository.GetPeriodAsync(periodId);

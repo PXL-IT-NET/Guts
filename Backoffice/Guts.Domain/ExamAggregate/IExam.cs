@@ -10,7 +10,7 @@ namespace Guts.Domain.ExamAggregate
     {
         Course Course { get; }
         int CourseId { get; }
-        Period Period { get; }
+        IPeriod Period { get; }
         int PeriodId { get; set; }
         string Name { get; }
         int MaximumScore { get; } //TODO: rename to NormalizedMaximumScore

@@ -24,7 +24,7 @@ internal class ProjectTeamAssessmentBuilder : BaseBuilder<ProjectTeamAssessment>
 
     public ProjectTeamAssessmentBuilder WithId()
     {
-        SetProperty(pta => pta.Id, Random.NextPositive());
+        SetProperty(pta => pta.Id, Random.Shared.NextPositive());
         return this;
     }
 

@@ -52,7 +52,7 @@ namespace Guts.Business.Services
 
         public async Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
 
             IProject project;
             try
@@ -78,7 +78,7 @@ namespace Guts.Business.Services
         public async Task<IProject> CreateProjectAsync(int courseId, Code projectCode,
             string description)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
 
             IProject project;
             try
@@ -102,7 +102,7 @@ namespace Guts.Business.Services
 
         public async Task UpdateProjectAsync(int courseId, string projectCode, string description)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
 
             await _topicRepository.UpdateAsync(courseId, projectCode, period.Id, description);
         }
@@ -111,7 +111,7 @@ namespace Guts.Business.Services
         {
             try
             {
-                Period period = await _periodRepository.GetPeriodAsync(periodId);
+                IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
                 IReadOnlyList<IProject> projects = await _projectRepository.GetByCourseIdAsync(courseId, period.Id);
                 return projects.OrderBy(p => p.Description).ToList();
             }
@@ -123,7 +123,7 @@ namespace Guts.Business.Services
 
         public async Task<IProject> LoadProjectAsync(int courseId, string projectCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
             return project;
         }
@@ -134,14 +134,14 @@ namespace Guts.Business.Services
             Contracts.Require(!string.IsNullOrEmpty(projectCode), "Project code cannot be empty");
             Contracts.Require(userId > 0, "Invalid user id");
 
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsOfUserAsync(courseId, projectCode, period.Id, userId);
             return project;
         }
 
         public async Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
             IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
             ProjectTeam newTeam = new ProjectTeam
@@ -159,7 +159,7 @@ namespace Guts.Business.Services
 
         public async Task UpdateProjectTeamAsync(int courseId, string projectCode, int teamId, string teamName)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
             IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
             IProjectTeam teamToUpdate = await _projectTeamRepository.LoadByIdAsync(teamId);
 
@@ -172,7 +172,7 @@ namespace Guts.Business.Services
 
         public async Task DeleteProjectTeamAsync(int courseId, string projectCode, int teamId)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
             IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
             IProjectTeam teamToDelete = await _projectTeamRepository.LoadByIdAsync(teamId);
 
@@ -183,7 +183,7 @@ namespace Guts.Business.Services
 
         public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo)
         {
-            Period period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
             IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
             ICollection<IProjectTeam> allTeams = project.Teams;
@@ -205,7 +205,7 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
             IReadOnlyList<IProjectTeam> teams = await _projectTeamRepository.GetByProjectWithUsersAsync(project.Id);
             return teams;

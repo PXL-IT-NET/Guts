@@ -16,7 +16,7 @@ namespace Guts.Api.Tests.Models.Mappings
         {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.AddMaps(typeof(ExamOutputModel).Assembly);
+                cfg.AddMaps(typeof(PeriodOutputModel).Assembly);
             });
             _mapper = config.CreateMapper();
         }
@@ -38,7 +38,7 @@ namespace Guts.Api.Tests.Models.Mappings
                 .WithExamPart(examPart).Build();
 
             //Act
-            var model = _mapper.Map<ExamOutputModel>(exam);
+            var model = _mapper.Map<PeriodOutputModel>(exam);
 
             //Assert
             Assert.That(model, Is.Not.Null);

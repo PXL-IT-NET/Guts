@@ -26,13 +26,13 @@ namespace Guts.Domain.TopicAggregate
 
         public string Description { get; set; }
 
-        public virtual Course Course { get; set; }
+        public Course Course { get; set; }
         public int CourseId { get; set; }
 
-        public virtual Period Period { get; set; }
+        public IPeriod Period { get; set; }
         public int PeriodId { get; set; }
 
-        public virtual ICollection<Assignment> Assignments { get; set; } = new HashSet<Assignment>();
+        public ICollection<Assignment> Assignments { get; set; } = new HashSet<Assignment>();
 
         protected Topic()
         {

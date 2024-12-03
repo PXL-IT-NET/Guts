@@ -8,6 +8,7 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Moq;
 using NUnit.Framework;
@@ -61,7 +62,7 @@ namespace Guts.Business.Tests.Services
         public void GetChaptersOfCourseAsyncShouldRetrieveChaptersFromRepository()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             int courseId = Random.Shared.NextPositive();
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
 
@@ -82,7 +83,7 @@ namespace Guts.Business.Tests.Services
         public void GetOrCreateChapterAsyncShouldReturnChapterIfItExistsForTheCurrentPeriod()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             string courseCode = Guid.NewGuid().ToString();
             Chapter existingChapter = new ChapterBuilder().WithId()
                 .WithCourse(courseCode)
@@ -122,10 +123,7 @@ namespace Guts.Business.Tests.Services
         public void GetOrCreateChapterAsyncShouldCreateChapterIfItDoesNotExist()
         {
             //Arrange
-            Period existingPeriod = new Period()
-            {
-                Id = Random.Shared.NextPositive()
-            };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
 
@@ -161,7 +159,7 @@ namespace Guts.Business.Tests.Services
         public void LoadChapterAsync_ShouldLoadTheChapterWithItsAssignments()
         {
             //Arrange
-            var existingPeriod = new Period();
+            var existingPeriod = new PeriodBuilder().WithId().Build();
             Chapter existingChapter = new ChapterBuilder().WithId()
                 .WithPeriod(existingPeriod).Build();
 
@@ -183,7 +181,7 @@ namespace Guts.Business.Tests.Services
         public void LoadChapterWithTestsAsync_ShouldLoadTheChapterItsAssignmentsAndItsTests()
         {
             //Arrange
-            Period existingPeriod = new Period{Id = Random.Shared.NextPositive()};
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             var courseCode = Guid.NewGuid().ToString();
             var existingChapter = new ChapterBuilder().WithId()
                 .WithCourse(courseCode)
@@ -211,7 +209,7 @@ namespace Guts.Business.Tests.Services
         public void LoadChapterWithTestsAsync_ShouldThrowDataNotFoundExceptionWhenChapterDoesNotExists()
         {
             //Arrange
-            Period existingPeriod = new Period();
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
             _chapterRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTestsAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))

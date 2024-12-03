@@ -61,7 +61,7 @@ namespace Guts.Business.Tests.Services
         public void GetOrCreateProjectAsync_ShouldReturnProjectIfItExists()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             string courseCode = Guid.NewGuid().ToString();
             Project existingProject = new ProjectBuilder().WithId()
                 .WithCourse(courseCode)
@@ -101,7 +101,7 @@ namespace Guts.Business.Tests.Services
         public void GetOrCreateProjectAsync_ShouldCreateProjectIfItDoesNotExist()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Course existingCourse = new CourseBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
@@ -151,7 +151,7 @@ namespace Guts.Business.Tests.Services
         public void GetProjectsOfCourseAsync_ShouldRetrieveChaptersFromRepository()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             int courseId = Random.Shared.NextPositive();
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
 
@@ -173,7 +173,7 @@ namespace Guts.Business.Tests.Services
         public void GetProjectsOfCourseAsyncShouldSortProjectsByDescription()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             int courseId = Random.Shared.NextPositive();
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
@@ -197,7 +197,7 @@ namespace Guts.Business.Tests.Services
         public void LoadProjectAsync_ShouldReturnProjectForCurrentPeriodWithAssignmentsAndTeams()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
@@ -218,7 +218,7 @@ namespace Guts.Business.Tests.Services
         {
             //Arrange
             int userId = Random.Shared.NextPositive();
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
@@ -239,7 +239,7 @@ namespace Guts.Business.Tests.Services
         public void GenerateTeamsForProject_ShouldCreateTeamsAndLinkThemToTheProject()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder()
                 .WithId()
                 .WithTeams(0)
@@ -282,7 +282,7 @@ namespace Guts.Business.Tests.Services
 
             ProjectTeam existingTeam = new ProjectTeamBuilder().WithId().WithName($"{teamBaseName} {to}").Build();
 
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder()
                 .WithId()
                 .WithTeam(existingTeam)
@@ -310,7 +310,7 @@ namespace Guts.Business.Tests.Services
         public void LoadTeamsOfProject_ShouldLoadTheTeamsOfTheProjectForTheCurrentPeriodWithUsers()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
             List<ProjectTeam> existingTeams = new List<ProjectTeam>();
 
@@ -333,7 +333,7 @@ namespace Guts.Business.Tests.Services
         public void AddUserToProjectTeamAsync_UserNotInTeamYet_ShouldUseTheProjectTeamRepository()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
             ProjectTeam team = new ProjectTeamBuilder().WithId().Build();
             List<ProjectTeam> existingTeams = new List<ProjectTeam>(){team};
@@ -357,7 +357,7 @@ namespace Guts.Business.Tests.Services
         {
             //Arrange
             int userId = Random.Shared.NextPositive();
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
             ProjectTeam team = new ProjectTeamBuilder().WithId().WithUser(userId).Build();
             List<ProjectTeam> existingTeams = new List<ProjectTeam>() { team };
@@ -380,7 +380,7 @@ namespace Guts.Business.Tests.Services
         {
             //Arrange
             int userId = Random.Shared.NextPositive();
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build();
             ProjectTeam otherProjectTeam = new ProjectTeamBuilder().WithId().Build();
             List<ProjectTeam> existingTeams = new List<ProjectTeam>();
@@ -479,7 +479,7 @@ namespace Guts.Business.Tests.Services
         public void RemoveUserFromProjectTeamAsync_UseRepositoryAndRemoveProjectTestRunsOfUser()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().WithTeams(1).Build();
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
@@ -502,7 +502,7 @@ namespace Guts.Business.Tests.Services
         public void RemoveUserFromProjectTeamAsync_UserNotPartOfTheTeam_ShouldThrowContractException()
         {
             //Arrange
-            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder().WithId().Build(); //no teams, so user is not part of the team
 
             _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);

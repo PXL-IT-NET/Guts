@@ -19,13 +19,13 @@ namespace Guts.Business.Services
         }
         public async Task<ITopic> GetTopicAsync(string courseCode, string topicCode, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             return await _topicRepository.GetSingleAsync(courseCode, topicCode, period.Id);
         }
 
         public async Task<IReadOnlyList<ITopic>> GetTopicsByCourseWithAssignmentsAndTestsAsync(int courseId, int? periodId = null)
         {
-            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
             return await _topicRepository.GetByCourseWithAssignmentsAndTestsAsync(courseId, period.Id);
         }
     }

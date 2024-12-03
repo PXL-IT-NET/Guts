@@ -60,17 +60,17 @@ namespace Guts.Api.Tests.Controllers
             _examServiceMock.Setup(service => service.GetExamsAsync(courseId, periodId))
                 .ReturnsAsync(retrievedExams).Verifiable();
 
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(new ExamOutputModel());
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(new PeriodOutputModel());
 
             //Act
             var actionResult = _controller.GetExams(courseId, periodId).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            var results = actionResult.Value as IEnumerable<ExamOutputModel>;
+            var results = actionResult.Value as IEnumerable<PeriodOutputModel>;
             Assert.That(results.Count(), Is.EqualTo(retrievedExams.Count));
             _examServiceMock.Verify();
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsIn<Exam>(retrievedExams)), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsIn<Exam>(retrievedExams)), Times.Once);
         }
 
         [Test]
@@ -93,19 +93,19 @@ namespace Guts.Api.Tests.Controllers
             //Arrange
             var examId = Random.Shared.NextPositive();
             var existingExam = new ExamBuilder().WithId(examId).Build();
-            var convertedExam = new ExamOutputModel();
+            var convertedExam = new PeriodOutputModel();
 
             _examServiceMock.Setup(service => service.GetExamAsync(It.IsAny<int>()))
                 .ReturnsAsync(existingExam);
 
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
 
             //Act
             var actionResult = _controller.GetExam(examId).Result as OkObjectResult;
 
             //Assert
             _examServiceMock.Verify(service => service.GetExamAsync(examId), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(existingExam), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(existingExam), Times.Once);
             Assert.That(actionResult, Is.Not.Null);
             Assert.That(actionResult.Value, Is.SameAs(convertedExam));
         }
@@ -126,7 +126,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.GetExamAsync(examId), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsAny<Exam>()), Times.Never);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>()), Times.Never);
         }
 
         [Test]
@@ -141,8 +141,8 @@ namespace Guts.Api.Tests.Controllers
             var createdExam = new ExamBuilder().WithId(Random.Shared.NextPositive()).Build();
             _examServiceMock.Setup(service => service.CreateExamAsync(It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(createdExam);
-            var convertedExam = new ExamOutputModel { Id = createdExam.Id };
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
+            var convertedExam = new PeriodOutputModel { Id = createdExam.Id };
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
 
             //Act
             var actionResult = _controller.PostExam(inputModel).Result as CreatedAtActionResult;
@@ -150,7 +150,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.CreateExamAsync(inputModel.CourseId, inputModel.Name), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(createdExam), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(createdExam), Times.Once);
 
             Assert.That(actionResult.Value, Is.SameAs(convertedExam));
             Assert.That(actionResult.ActionName, Is.EqualTo(nameof(ExamController.GetExam)));
@@ -177,7 +177,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.CreateExamAsync(inputModel.CourseId, inputModel.Name), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsAny<Exam>()), Times.Never);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>()), Times.Never);
             var errorModel = actionResult.Value as ErrorModel;
             Assert.That(errorModel, Is.Not.Null);
             Assert.That(errorModel.Message, Is.EqualTo(contractException.Message));

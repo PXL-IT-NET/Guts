@@ -13,7 +13,7 @@ namespace Guts.Domain.Tests.Builders
         {
             Item = new Assignment
             {
-                TopicId = Random.NextPositive(),
+                TopicId = Random.Shared.NextPositive(),
                 Code = Guid.NewGuid().ToString(),
                 Description = Guid.NewGuid().ToString(),
                 Tests = new List<Test>()
@@ -22,7 +22,7 @@ namespace Guts.Domain.Tests.Builders
 
         public AssignmentBuilder WithId()
         {
-            Item.Id = Random.NextPositive();
+            Item.Id = Random.Shared.NextPositive();
             return this;
         }
 
@@ -45,7 +45,7 @@ namespace Guts.Domain.Tests.Builders
             {
                 var test = new Test
                 {
-                    Id = Random.NextPositive(),
+                    Id = Random.Shared.NextPositive(),
                     TestName = Guid.NewGuid().ToString(),
                     AssignmentId = Item.Id
                 };
@@ -78,7 +78,7 @@ namespace Guts.Domain.Tests.Builders
         {
             Item.TestCodeHashes.Add(new TestCodeHash
             {
-                Id = Random.NextPositive(),
+                Id = Random.Shared.NextPositive(),
                 AssignmentId = Item.Id,
                 Hash = testCodeHash
             });
