@@ -6,6 +6,7 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TopicAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Moq;
 using NUnit.Framework;
 
@@ -18,12 +19,10 @@ namespace Guts.Business.Tests.Services
 
         private Mock<ITopicRepository> _topicRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
-        private Random _random;
 
         [SetUp]
         public void Setup()
         {
-            _random = new Random();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _topicRepositoryMock = new Mock<ITopicRepository>();
             _service = new TopicService(_topicRepositoryMock.Object, _periodRepositoryMock.Object);
@@ -33,16 +32,16 @@ namespace Guts.Business.Tests.Services
         public void GetTopicAsync_ShouldGetCurrentPeriodAndUseRepository()
         {
             //Arrange
-            var courseCode = _random.NextString();
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var existingTopic = new ChapterBuilder().WithId().Build();
+            string courseCode = Random.Shared.NextString();
+            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            Chapter existingTopic = new ChapterBuilder().WithId().Build();
             
 
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
             _topicRepositoryMock.Setup(repo => repo.GetSingleAsync(courseCode, existingTopic.Code, existingPeriod.Id)).ReturnsAsync(existingTopic);
 
             //Act
-            var result = _service.GetTopicAsync(courseCode, existingTopic.Code).Result;
+            ITopic result = _service.GetTopicAsync(courseCode, existingTopic.Code, existingPeriod.Id).Result;
 
             //Assert
             _periodRepositoryMock.Verify();
@@ -54,17 +53,17 @@ namespace Guts.Business.Tests.Services
         public void GetTopicsByCourseWithAssignmentsAndTestsAsync_ShouldGetCurrentPeriodAndUseRepository()
         {
             //Arrange
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            var existingTopics = new List<Topic>();
-            var courseId = _random.NextPositive();
+            Period existingPeriod = new Period { Id = Random.Shared.NextPositive() };
+            List<Topic> existingTopics = new List<Topic>();
+            var courseId = Random.Shared.NextPositive();
 
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
             _topicRepositoryMock
                 .Setup(repo => repo.GetByCourseWithAssignmentsAndTestsAsync(courseId, existingPeriod.Id))
                 .ReturnsAsync(existingTopics);
 
             //Act
-            var results = _service.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId).Result;
+            IReadOnlyList<ITopic> results = _service.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId, null).Result;
 
             //Assert
             _periodRepositoryMock.Verify();

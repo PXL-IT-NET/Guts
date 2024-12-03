@@ -16,10 +16,19 @@ namespace Guts.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Period> GetCurrentPeriodAsync()
+        public async Task<Period> GetPeriodAsync(int? periodId = null)
         {
-            var today = DateTime.Today;
-            var period = await _context.Periods.FirstOrDefaultAsync(p => p.From <= today && p.Until >= today);
+            Period period = null;
+            if (periodId.HasValue)
+            {
+                period = await _context.Periods.FirstOrDefaultAsync(p => p.Id == periodId);
+            }
+            else
+            {
+                DateTime today = DateTime.Today;
+                period = await _context.Periods.FirstOrDefaultAsync(p => p.From <= today && p.Until >= today);
+            }
+
             if (period == null)
             {
                 throw new DataNotFoundException();

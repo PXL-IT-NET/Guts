@@ -5,6 +5,6 @@ namespace Guts.Business.Repositories
 {
     public interface IPeriodRepository
     {
-        Task<Period> GetCurrentPeriodAsync();
+        Task<Period> GetPeriodAsync(int? periodId = null);
     }
 }

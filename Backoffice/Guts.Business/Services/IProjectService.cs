@@ -10,21 +10,21 @@ namespace Guts.Business.Services
 {
     public interface IProjectService
     {
-        Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode);
-        Task<IProject> CreateProjectAsync(int courseId, Code projectCode, int? periodId, string description);
-        Task UpdateProjectAsync(int courseId, string projectCode, int? periodId, string description);
+        Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode, int? periodId = null);
+        Task<IProject> CreateProjectAsync(int courseId, Code projectCode, string description);
+        Task UpdateProjectAsync(int courseId, string projectCode, string description);
 
-        Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId);
+        Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId, int? periodId = null);
 
         /// <summary>
         /// Loads a project with its assignments and all teams
         /// </summary>
-        Task<IProject> LoadProjectAsync(int courseId, string projectCode);
+        Task<IProject> LoadProjectAsync(int courseId, string projectCode, int? periodId = null);
 
         /// <summary>
         /// Loads a project with its assignments and only the team(s) of the user
         /// </summary>
-        Task<IProject> LoadProjectForUserAsync(int courseId, string projectCode, int userId);
+        Task<IProject> LoadProjectForUserAsync(int courseId, string projectCode, int userId, int? periodId = null);
 
         Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName);
 
@@ -34,7 +34,7 @@ namespace Guts.Business.Services
 
         Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo);
 
-        Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode);
+        Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode, int? periodId = null);
 
         Task AddUserToProjectTeamAsync(int courseId, string projectCode, int teamId, int userId);
 

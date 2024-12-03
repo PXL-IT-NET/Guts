@@ -8,7 +8,7 @@ namespace Guts.Business.Services.Exam
 {
     public interface IExamService
     {
-        Task<IReadOnlyList<IExam>> GetExamsAsync(int? courseId);
+        Task<IReadOnlyList<IExam>> GetExamsAsync(int courseId, int? periodId = null);
         Task<IExam> CreateExamAsync(int courseId, string name);
         Task<IExam> GetExamAsync(int id);
         Task<IExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto);

@@ -8,6 +8,6 @@ namespace Guts.Business.Repositories
     {
         Task<IExam> LoadDeepAsync(int examId);
 
-        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId);
+        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int courseId, int periodId);
     }
 }

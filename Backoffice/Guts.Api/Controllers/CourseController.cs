@@ -47,11 +47,12 @@ namespace Guts.Api.Controllers
         /// This includes a list of chapters.
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet("{courseId}")]
         [ProducesResponseType(typeof(CourseContentsModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetCourseContents(int courseId)
+        public async Task<IActionResult> GetCourseContents(int courseId, [FromQuery] int? periodId = null)
         {
             if (courseId < 1)
             {
@@ -59,8 +60,8 @@ namespace Guts.Api.Controllers
             }
 
             var course = await _courseService.GetCourseByIdAsync(courseId);
-            IReadOnlyList<Chapter> chapters = await _chapterService.GetChaptersOfCourseAsync(courseId);
-            IReadOnlyList<IProject> projects = await _projectService.GetProjectsOfCourseAsync(courseId);
+            IReadOnlyList<Chapter> chapters = await _chapterService.GetChaptersOfCourseAsync(courseId, periodId);
+            IReadOnlyList<IProject> projects = await _projectService.GetProjectsOfCourseAsync(courseId, periodId);
             var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);

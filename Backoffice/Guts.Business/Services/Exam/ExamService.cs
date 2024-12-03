@@ -37,10 +37,16 @@ namespace Guts.Business.Services.Exam
             _examTestResultLoader = examTestResultLoader;
         }
 
+        public async Task<IReadOnlyList<IExam>> GetExamsAsync(int courseId, int? periodId = null)
+        {
+            Period period = await _periodRepository.GetPeriodAsync(periodId);
+            return await _examRepository.FindWithPartsAndEvaluationsAsync(courseId, period.Id);
+        }
+
         public async Task<IExam> CreateExamAsync(int courseId, string name)
         {
-            Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-            IExam newExam = _examFactory.CreateNew(courseId, currentPeriod.Id, name);
+            Period period = await _periodRepository.GetPeriodAsync(null);
+            IExam newExam = _examFactory.CreateNew(courseId, period.Id, name);
             IExam savedExam = await _examRepository.AddAsync(newExam);
             return savedExam;
         }
@@ -48,12 +54,6 @@ namespace Guts.Business.Services.Exam
         public async Task<IExam> GetExamAsync(int id)
         {
             return await _examRepository.LoadDeepAsync(id);
-        }
-
-        public async Task<IReadOnlyList<IExam>> GetExamsAsync(int? courseId)
-        {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-            return await _examRepository.FindWithPartsAndEvaluationsAsync(currentPeriod.Id, courseId);
         }
 
         public async Task<IExamPart> CreateExamPartAsync(int examId, ExamPartDto examPartDto)

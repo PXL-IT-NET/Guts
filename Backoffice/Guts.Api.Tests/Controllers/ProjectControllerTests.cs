@@ -47,7 +47,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetProjectDetails_ShouldReturnBadRequestOnInvalidInput(int courseId, string projectCode)
         {
             //Act
-            var badRequestResult = _controller.GetProjectDetails(courseId, projectCode).Result as BadRequestResult;
+            BadRequestResult badRequestResult = _controller.GetProjectDetails(courseId, projectCode).Result as BadRequestResult;
 
             //Assert
             Assert.That(badRequestResult, Is.Not.Null);
@@ -57,26 +57,27 @@ namespace Guts.Api.Tests.Controllers
         public void GetProjectDetails_Lector_ShouldReturnComponentsAndAllTeamsOfProject()
         {
             //Arrange
-            var courseId = Random.Shared.NextPositive();
-            var projectCode = Guid.NewGuid().ToString();
+            int courseId = Random.Shared.NextPositive();
+            int periodId = Random.Shared.NextPositive();
+            string projectCode = Guid.NewGuid().ToString();
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
 
-            var project = new ProjectBuilder().WithId().Build();
-            _projectServiceMock.Setup(service => service.LoadProjectAsync(It.IsAny<int>(), It.IsAny<string>()))
+            Project project = new ProjectBuilder().WithId().Build();
+            _projectServiceMock.Setup(service => service.LoadProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(project);
 
-            var model = new ProjectDetailModel();
+            ProjectDetailModel model = new ProjectDetailModel();
             _projectConverterMock.Setup(converter => converter.ToProjectDetailModel(It.IsAny<Project>()))
                 .Returns(model);
 
             //Act
-            var okResult = _controller.GetProjectDetails(courseId, projectCode).Result as OkObjectResult;
+            OkObjectResult okResult = _controller.GetProjectDetails(courseId, projectCode, periodId).Result as OkObjectResult;
 
             //Assert
             Assert.That(okResult, Is.Not.Null);
-            _projectServiceMock.Verify(service => service.LoadProjectAsync(courseId, projectCode), Times.Once);
+            _projectServiceMock.Verify(service => service.LoadProjectAsync(courseId, projectCode, periodId), Times.Once);
             _projectServiceMock.Verify(
-                service => service.LoadProjectForUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()),
+                service => service.LoadProjectForUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>()),
                 Times.Never);
             _projectConverterMock.Verify(converter => converter.ToProjectDetailModel(project), Times.Once);
             Assert.That(okResult.Value, Is.EqualTo(model));
@@ -86,24 +87,25 @@ namespace Guts.Api.Tests.Controllers
         public void GetProjectDetails_Student_ShouldReturnComponentsAndOnlyOwnTeamOfProject()
         {
             //Arrange
-            var courseId = Random.Shared.NextPositive();
-            var projectCode = Guid.NewGuid().ToString();
+            int courseId = Random.Shared.NextPositive();
+            int periodId = Random.Shared.NextPositive();
+            string projectCode = Guid.NewGuid().ToString();
 
-            var project = new ProjectBuilder().WithId().Build();
-            _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>()))
+            Project project = new ProjectBuilder().WithId().Build();
+            _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>()))
                 .ReturnsAsync(project);
 
-            var model = new ProjectDetailModel();
+            ProjectDetailModel model = new ProjectDetailModel();
             _projectConverterMock.Setup(converter => converter.ToProjectDetailModel(It.IsAny<Project>()))
                 .Returns(model);
 
             //Act
-            var okResult = _controller.GetProjectDetails(courseId, projectCode).Result as OkObjectResult;
+            OkObjectResult okResult = _controller.GetProjectDetails(courseId, projectCode, periodId).Result as OkObjectResult;
 
             //Assert
             Assert.That(okResult, Is.Not.Null);
-            _projectServiceMock.Verify(service => service.LoadProjectForUserAsync(courseId, projectCode, _userId), Times.Once);
-            _projectServiceMock.Verify(service => service.LoadProjectAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+            _projectServiceMock.Verify(service => service.LoadProjectForUserAsync(courseId, projectCode, _userId, periodId), Times.Once);
+            _projectServiceMock.Verify(service => service.LoadProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
             _projectConverterMock.Verify(converter => converter.ToProjectDetailModel(project), Times.Once);
             Assert.That(okResult.Value, Is.EqualTo(model));
         }

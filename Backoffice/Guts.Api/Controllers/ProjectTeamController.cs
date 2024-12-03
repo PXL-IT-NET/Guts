@@ -45,11 +45,11 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType(typeof(IList<TeamDetailsModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-    public async Task<IActionResult> GetProjectTeams(int courseId, string projectCode)
+    public async Task<IActionResult> GetProjectTeams(int courseId, string projectCode, [FromQuery] int? periodId = null)
     {
-        var teams = await _projectService.LoadTeamsOfProjectAsync(courseId, projectCode);
+        IReadOnlyList<IProjectTeam> teams = await _projectService.LoadTeamsOfProjectAsync(courseId, projectCode, periodId);
 
-        var models = teams.Select(team => _teamConverter.ToTeamDetailsModel(team)).ToList();
+        List<TeamDetailsModel> models = teams.Select(team => _teamConverter.ToTeamDetailsModel(team)).ToList();
 
         return Ok(models);
     }

@@ -48,7 +48,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(ProjectDetailModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectDetails(int courseId, string projectCode)
+        public async Task<IActionResult> GetProjectDetails(int courseId, string projectCode, [FromQuery] int? periodId = null)
         {
             if (courseId < 1 || string.IsNullOrEmpty(projectCode))
             {
@@ -58,11 +58,11 @@ namespace Guts.Api.Controllers
             IProject project;
             if (IsLector())
             {
-                project = await _projectService.LoadProjectAsync(courseId, projectCode);
+                project = await _projectService.LoadProjectAsync(courseId, projectCode, periodId);
             }
             else
             {
-                project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId());
+                project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
             }
 
             var model = _projectConverter.ToProjectDetailModel(project);
@@ -82,7 +82,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, null, model.Description);
+            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, model.Description);
 
             ProjectDetailModel outputModel = _projectConverter.ToProjectDetailModel(project);
 
@@ -101,7 +101,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            await _projectService.UpdateProjectAsync(courseId, projectCode, null, model.Description);
+            await _projectService.UpdateProjectAsync(courseId, projectCode, model.Description);
 
             return Ok();
         }

@@ -29,9 +29,9 @@ namespace Guts.Infrastructure.Repositories
             return exam;
         }
 
-        public async Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId)
+        public async Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int courseId, int periodId)
         {
-            List<Exam> exams = await _context.Exams.Where(e => (courseId == null || e.CourseId == courseId) && e.PeriodId == periodId)
+            List<Exam> exams = await _context.Exams.Where(e => e.CourseId == courseId && e.PeriodId == periodId)
                 .Include(e => e.Parts)
                 .ThenInclude(ep => ep.AssignmentEvaluations)
                 .ToListAsync();

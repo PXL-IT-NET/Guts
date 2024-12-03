@@ -92,7 +92,7 @@ namespace Guts.Api.Controllers
             {
                 try
                 {
-                    assignment = await _assignmentService.GetAssignmentAsync(model.Assignment);
+                    assignment = await _assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
                 }
                 catch (DataNotFoundException)
                 {
@@ -135,14 +135,14 @@ namespace Guts.Api.Controllers
             Assignment component;
             if (IsLector())
             {
-                var project = await _projectService.GetOrCreateProjectAsync(model.Assignment.CourseCode, model.Assignment.TopicCode);
+                var project = await _projectService.GetOrCreateProjectAsync(model.Assignment.CourseCode, model.Assignment.TopicCode, null);
                 component = await _assignmentService.GetOrCreateAssignmentAsync(project.Id, model.Assignment.AssignmentCode);
             }
             else
             {
                 try
                 {
-                    component = await _assignmentService.GetAssignmentAsync(model.Assignment);
+                    component = await _assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
                 }
                 catch (DataNotFoundException)
                 {

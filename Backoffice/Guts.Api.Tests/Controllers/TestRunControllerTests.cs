@@ -68,7 +68,7 @@ namespace Guts.Api.Tests.Controllers
             var assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
 
-            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode))
+            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode, null))
                 .ReturnsAsync(chapter);
             _assignmentServiceMock
                 .Setup(service => service.GetOrCreateAssignmentAsync(chapter.Id, assignmentDto.AssignmentCode))
@@ -115,7 +115,7 @@ namespace Guts.Api.Tests.Controllers
 
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
 
-            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode))
+            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode, null))
                 .ReturnsAsync(chapter);
             _assignmentServiceMock
                 .Setup(service => service.GetOrCreateAssignmentAsync(chapter.Id, assignmentDto.AssignmentCode))
@@ -148,7 +148,7 @@ namespace Guts.Api.Tests.Controllers
         {
             //Arrange
             var assignment = new AssignmentBuilder().WithId().Build();
-            _assignmentServiceMock.Setup(service => service.GetAssignmentAsync(It.IsAny<AssignmentDto>()))
+            _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(It.IsAny<AssignmentDto>()))
                 .ReturnsAsync(assignment);
 
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
@@ -177,7 +177,7 @@ namespace Guts.Api.Tests.Controllers
             var assignment = new AssignmentBuilder().WithId().WithTopic(project).Build();
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
 
-            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode))
+            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode, null))
                 .ReturnsAsync(project);
             _assignmentServiceMock
                 .Setup(service => service.GetOrCreateAssignmentAsync(project.Id, assignmentDto.AssignmentCode))
@@ -223,7 +223,7 @@ namespace Guts.Api.Tests.Controllers
             var assignment = new AssignmentBuilder().WithId().WithTopic(project).Build();
             var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
 
-            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode))
+            _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(assignmentDto.CourseCode, assignmentDto.TopicCode, null))
                 .ReturnsAsync(project);
             _assignmentServiceMock
                 .Setup(service => service.GetOrCreateAssignmentAsync(project.Id, assignmentDto.AssignmentCode))

@@ -44,15 +44,16 @@ public class ProjectTeamControllerTests
     public void GetProjectTeams_ShouldLoadTeamsOfProjectAndReturnThem()
     {
         //Arrange
-        var courseId = Random.Shared.NextPositive();
-        var projectCode = Guid.NewGuid().ToString();
+        int courseId = Random.Shared.NextPositive();
+        int periodId = Random.Shared.NextPositive();
+        string projectCode = Guid.NewGuid().ToString();
 
-        var teams = new List<ProjectTeam>
+        List<ProjectTeam> teams = new List<ProjectTeam>
         {
             new ProjectTeamBuilder().Build(),
             new ProjectTeamBuilder().Build()
         };
-        _projectServiceMock.Setup(service => service.LoadTeamsOfProjectAsync(It.IsAny<int>(), It.IsAny<string>()))
+        _projectServiceMock.Setup(service => service.LoadTeamsOfProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()))
             .ReturnsAsync(teams);
 
 
@@ -60,11 +61,11 @@ public class ProjectTeamControllerTests
             .Returns(new TeamDetailsModel());
 
         //Act
-        var okResult = _controller.GetProjectTeams(courseId, projectCode).Result as OkObjectResult;
+        OkObjectResult okResult = _controller.GetProjectTeams(courseId, projectCode, periodId).Result as OkObjectResult;
 
         //Assert
         Assert.That(okResult, Is.Not.Null);
-        _projectServiceMock.Verify(service => service.LoadTeamsOfProjectAsync(courseId, projectCode), Times.Once);
+        _projectServiceMock.Verify(service => service.LoadTeamsOfProjectAsync(courseId, projectCode, periodId), Times.Once);
         _teamConverterMock.Verify(converter => converter.ToTeamDetailsModel(It.IsIn<ProjectTeam>(teams)), Times.Exactly(teams.Count));
         Assert.That(okResult.Value, Has.Count.EqualTo(teams.Count));
         Assert.That(okResult.Value, Has.All.TypeOf<TeamDetailsModel>());
@@ -80,12 +81,12 @@ public class ProjectTeamControllerTests
         _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(team);
 
-        var convertedModel = new TeamDetailsModel();
+        TeamDetailsModel convertedModel = new TeamDetailsModel();
         _teamConverterMock.Setup(converter => converter.ToTeamDetailsModel(It.IsAny<ProjectTeam>()))
             .Returns(convertedModel);
 
         //Act
-        var okResult = _controller.GetProjectTeam(project.CourseId, project.Code, team.Id).Result as OkObjectResult;
+        OkObjectResult okResult = _controller.GetProjectTeam(project.CourseId, project.Code, team.Id).Result as OkObjectResult;
 
         //Assert
         Assert.That(okResult, Is.Not.Null);
@@ -104,20 +105,20 @@ public class ProjectTeamControllerTests
         _projectServiceMock.Setup(service => service.AddProjectTeamAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(createdTeam);
 
-        var convertedModel = new TeamDetailsModel
+        TeamDetailsModel convertedModel = new TeamDetailsModel
         {
             Id = createdTeam.Id
         };
         _teamConverterMock.Setup(converter => converter.ToTeamDetailsModel(It.IsAny<ProjectTeam>()))
             .Returns(convertedModel);
 
-        var inputModel = new TeamEditModel
+        TeamEditModel inputModel = new TeamEditModel
         {
             Name = createdTeam.Name
         };
 
         //Act
-        var result = _controller.AddProjectTeam(project.CourseId, project.Code, inputModel).Result as CreatedAtActionResult;
+        CreatedAtActionResult result = _controller.AddProjectTeam(project.CourseId, project.Code, inputModel).Result as CreatedAtActionResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -140,13 +141,13 @@ public class ProjectTeamControllerTests
         _projectServiceMock.Setup(service => service.UpdateProjectTeamAsync(
                 It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()));
 
-        var inputModel = new TeamEditModel
+        TeamEditModel inputModel = new TeamEditModel
         {
             Name = team.Name
         };
 
         //Act
-        var result = _controller.UpdateProjectTeam(project.CourseId, project.Code, team.Id, inputModel).Result as OkResult;
+        OkResult result = _controller.UpdateProjectTeam(project.CourseId, project.Code, team.Id, inputModel).Result as OkResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -163,7 +164,7 @@ public class ProjectTeamControllerTests
         _projectServiceMock.Setup(service => service.GenerateTeamsForProject(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));
 
-        var inputModel = new TeamGenerationModel()
+        TeamGenerationModel inputModel = new TeamGenerationModel()
         {
             TeamBaseName = Random.Shared.NextString(),
             TeamNumberFrom = Random.Shared.Next(1, 500),
@@ -171,7 +172,7 @@ public class ProjectTeamControllerTests
         };
 
         //Act
-        var result = _controller.GenerateProjectTeams(project.CourseId, project.Code, inputModel).Result as OkResult;
+        OkResult result = _controller.GenerateProjectTeams(project.CourseId, project.Code, inputModel).Result as OkResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -191,7 +192,7 @@ public class ProjectTeamControllerTests
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));
 
         _controller.ModelState.AddModelError("TeamNumberFrom", "Invalid number");
-        var inputModel = new TeamGenerationModel()
+        TeamGenerationModel inputModel = new TeamGenerationModel()
         {
             TeamBaseName = Random.Shared.NextString(),
             TeamNumberFrom = 0,
@@ -199,7 +200,7 @@ public class ProjectTeamControllerTests
         };
 
         //Act + Assert
-        var result = _controller.GenerateProjectTeams(project.CourseId, project.Code, inputModel).Result as BadRequestObjectResult;
+        BadRequestObjectResult result = _controller.GenerateProjectTeams(project.CourseId, project.Code, inputModel).Result as BadRequestObjectResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -217,7 +218,7 @@ public class ProjectTeamControllerTests
 
 
         //Act
-        var result = _controller.JoinProjectTeam(project.CourseId, project.Code, team.Id).Result as OkResult;
+        OkResult result = _controller.JoinProjectTeam(project.CourseId, project.Code, team.Id).Result as OkResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -229,12 +230,12 @@ public class ProjectTeamControllerTests
     public void LeaveProjectTeam_ShouldUseServiceForLoggedInUser()
     {
         //Arrange
-        var courseId = Random.Shared.NextPositive();
-        var projectCode = Guid.NewGuid().ToString();
-        var teamId = Random.Shared.NextPositive();
+        int courseId = Random.Shared.NextPositive();
+        string projectCode = Guid.NewGuid().ToString();
+        int teamId = Random.Shared.NextPositive();
 
         //Act
-        var okResult = _controller.LeaveProjectTeam(courseId, projectCode, teamId).Result as OkResult;
+        OkResult okResult = _controller.LeaveProjectTeam(courseId, projectCode, teamId).Result as OkResult;
 
         //Assert
         Assert.That(okResult, Is.Not.Null);
@@ -245,13 +246,13 @@ public class ProjectTeamControllerTests
     public void RemoveFromProjectTeam_ShouldUseService()
     {
         //Arrange
-        var courseId = Random.Shared.NextPositive();
-        var projectCode = Guid.NewGuid().ToString();
-        var teamId = Random.Shared.NextPositive();
-        var userId = Random.Shared.NextPositive();
+        int courseId = Random.Shared.NextPositive();
+        string projectCode = Guid.NewGuid().ToString();
+        int teamId = Random.Shared.NextPositive();
+        int userId = Random.Shared.NextPositive();
 
         //Act
-        var okResult = _controller.RemoveFromProjectTeam(courseId, projectCode, teamId, userId).Result as OkResult;
+        OkResult okResult = _controller.RemoveFromProjectTeam(courseId, projectCode, teamId, userId).Result as OkResult;
 
         //Assert
         Assert.That(okResult, Is.Not.Null);
@@ -266,7 +267,7 @@ public class ProjectTeamControllerTests
         ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
 
         //Act
-        var result = _controller.DeleteProjectTeam(project.CourseId, project.Code, team.Id).Result as OkResult;
+        OkResult result = _controller.DeleteProjectTeam(project.CourseId, project.Code, team.Id).Result as OkResult;
 
         //Assert
         Assert.That(result, Is.Not.Null);

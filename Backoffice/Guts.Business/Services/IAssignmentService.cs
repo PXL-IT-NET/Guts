@@ -8,7 +8,7 @@ namespace Guts.Business.Services
 {
     public interface IAssignmentService
     {
-        Task<Assignment> GetAssignmentAsync(AssignmentDto assignmentDto);
+        Task<Assignment> GetAssignmentOfCurrentPeriodAsync(AssignmentDto assignmentDto);
 
         Task<Assignment> GetOrCreateAssignmentAsync(int topicId, string assignmentCode);
 
