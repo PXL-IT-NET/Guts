@@ -58,3 +58,22 @@
     </form>
   </div>
 </div>
+
+<div class="row mb-2">
+  <div class="col-md-12">
+    <div class="card mb-2">
+      <h5 class="card-header">Components</h5>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12" *ngFor="let component of project.components">
+            <app-assignment-settings
+              [assignment]="component"
+              assignmentKind="component"
+              (assignmentChanged)="onAssignmentChanged($event)"
+            ></app-assignment-settings>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

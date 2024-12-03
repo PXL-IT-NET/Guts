@@ -2,9 +2,7 @@
 <div class="row">
   <div class="col-md-6">
     <div class="card mb-2">
-      <h5 class="card-header">
-        Properties
-      </h5>
+      <h5 class="card-header">Properties</h5>
       <div class="card-body">
         <div class="row mb-2">
           <div class="col-12">
@@ -25,16 +23,20 @@
                   />
                 </div>
               </div>
-        
+
               <div class="row mb-2">
-                <label for="name" class="col-3 col-form-label">Description</label>
+                <label for="name" class="col-3 col-form-label"
+                  >Description</label
+                >
                 <div class="col-9">
                   <input
                     type="text"
                     class="form-control"
                     id="description"
                     formControlName="description"
-                    [class.is-invalid]="isInvalid(editChapterForm.controls.description)"
+                    [class.is-invalid]="
+                      isInvalid(editChapterForm.controls.description)
+                    "
                   />
                   <div
                     *ngIf="isInvalid(editChapterForm.controls.description)"
@@ -44,13 +46,15 @@
                   </div>
                 </div>
               </div>
-        
+
               <div class="row mb-2">
                 <div class="col-12">
                   <button
                     type="submit"
                     class="btn btn-primary"
-                    [disabled]="editChapterForm.pristine || !editChapterForm.valid"
+                    [disabled]="
+                      editChapterForm.pristine || !editChapterForm.valid
+                    "
                   >
                     Save
                   </button>
@@ -64,38 +68,18 @@
   </div>
 </div>
 
-
 <div class="row mb-2">
   <div class="col-md-12">
     <div class="card mb-2">
-      <h5 class="card-header">
-        Exercises
-      </h5>
+      <h5 class="card-header">Exercises</h5>
       <div class="card-body">
         <div class="row">
           <div class="col-md-12" *ngFor="let exercise of chapter.exercises">
-            <div class="card mb-2">
-              <div class="card-body">
-                <h5>
-                  <span>{{exercise.description}}</span>
-                  <button class="btn btn-sm ms-2 btn-outline-danger" type="button" (click)="deleteExercise(exercise)">
-                    <span class="fa fa-trash pe-2"></span>
-                    <span>Delete exercise</span>
-                  </button>
-                </h5>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item" *ngFor="let test of exercise.tests">
-                    <div class="mb-2">
-                      <span>{{test.testName}}</span>
-                      <button class="btn btn-sm ms-2 btn-outline-danger" type="button" (click)="deleteTest(exercise, test)">
-                        <span class="fa fa-trash pe-2"></span>
-                        <span>Delete test</span>
-                      </button>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <app-assignment-settings
+              [assignment]="exercise"
+              assignmentKind="exercise"
+              (assignmentChanged)="onAssignmentChanged($event)"
+            ></app-assignment-settings>
           </div>
         </div>
       </div>

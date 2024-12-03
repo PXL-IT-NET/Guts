@@ -1,0 +1,31 @@
+<div class="card mb-2">
+  <div class="card-body">
+    <ngx-loading [show]="loading"></ngx-loading>
+    <h5>
+      <span>{{ assignment.description }}</span>
+      <button
+        class="btn btn-sm ms-2 btn-outline-danger"
+        type="button"
+        (click)="deleteAssignment(assignment)"
+      >
+        <span class="fa fa-trash pe-2"></span>
+        <span>Delete {{assignmentKind}}</span>
+      </button>
+    </h5>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item" *ngFor="let test of assignment.tests">
+        <div class="mb-2">
+          <span>{{ test.testName }}</span>
+          <button
+            class="btn btn-sm ms-2 btn-outline-danger"
+            type="button"
+            (click)="deleteTest(assignment, test)"
+          >
+            <span class="fa fa-trash pe-2"></span>
+            <span>Delete test</span>
+          </button>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>

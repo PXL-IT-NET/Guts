@@ -43,7 +43,9 @@ namespace Guts.Api.Models.Converters
                 Components = project.Assignments.Select(a => new AssignmentModel
                 {
                     AssignmentId = a.Id,
-                    Code = a.Code
+                    Code = a.Code,
+                    Description = a.Description,
+                    Tests = a.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
                 }).OrderBy(c => c.Code).ToList()
             };
 

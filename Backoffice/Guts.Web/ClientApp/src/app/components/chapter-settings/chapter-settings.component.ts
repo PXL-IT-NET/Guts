@@ -2,9 +2,7 @@ import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { AssignmentService, ChapterService } from 'src/app/services';
-import { TestService } from 'src/app/services/test.service';
-import { PostResult } from 'src/app/util/result';
+import { ChapterService } from 'src/app/services';
 import { IAssignmentModel, ITestModel } from 'src/app/viewmodels/assignment.model';
 import { IChapterDetailsModel } from 'src/app/viewmodels/chapter.model';
 import { ITopicUpdateModel } from 'src/app/viewmodels/topic.model';
@@ -25,8 +23,6 @@ export class ChapterSettingsComponent {
 
   constructor(
     private chapterService: ChapterService,
-    private testService: TestService,
-    private assignmentService: AssignmentService,
     private route: ActivatedRoute,
     private toastr: ToastrService
   ) {
@@ -94,35 +90,7 @@ export class ChapterSettingsComponent {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  public deleteExercise(exercise: IAssignmentModel) {
-    let confirmMessage = "Are you sure you want to remove '" + exercise.description + "'? All tests and test results will also be deleted.";
-    if (confirm(confirmMessage)) {
-      this.assignmentService.deleteAssignment(exercise.assignmentId)
-        .subscribe((result: PostResult) => {
-          this.loading = false;
-          if (result.success) {
-            this.toastr.info("The exercise '" + exercise.description + "' is succesfully deleted", "Exercise deleted");
-            this.loadChapter();
-          } else {
-            this.toastr.error(result.message || "unknown error", "Could not delete exercise");
-          }
-        });
-    }
-  }
-
-  public deleteTest(exercise: IAssignmentModel, test: ITestModel) {
-    let confirmMessage = "Are you sure you want to remove the test '" + test.testName + "' from the exercise '" + exercise.description + "'? The linked test results will also be deleted.";
-    if (confirm(confirmMessage)) {
-      this.testService.deleteTest(test.id)
-        .subscribe((result: PostResult) => {
-          this.loading = false;
-          if (result.success) {
-            this.toastr.info("The test '" + test.testName + "' is succesfully deleted", "Test deleted");
-            this.loadChapter();
-          } else {
-            this.toastr.error(result.message || "unknown error", "Could not delete test");
-          }
-        });
-    }
+  public onAssignmentChanged(assignment: IAssignmentModel) {
+    this.loadChapter();
   }
 }

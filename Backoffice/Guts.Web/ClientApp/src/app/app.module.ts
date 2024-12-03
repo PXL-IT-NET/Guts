@@ -64,7 +64,8 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.ProjectTeamAssessmentDetailedResultsComponent,
     c.ProjectTeamAssessmentMyResultComponent,
     c.AssessmentScoreDropdownComponent,
-    c.ExamComponent
+    c.ExamComponent,
+    c.AssignmentSettingsComponent
   ],
   imports: [
     BrowserModule,

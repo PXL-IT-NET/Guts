@@ -45,7 +45,9 @@ namespace Guts.Infrastructure.Repositories
         public async Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, Code projectCode, int periodId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId && p.Code == projectCode);
-            query = query.Include(p => p.Assignments).Include(p => p.Teams);
+            query = query
+                .Include(p => p.Assignments).ThenInclude(a => a.Tests)
+                .Include(p => p.Teams);
 
             var project = await query.FirstOrDefaultAsync();
             if (project == null)

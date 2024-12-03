@@ -3,6 +3,8 @@ import { AbstractControl, FormControl, FormGroup, Validators } from "@angular/fo
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectService } from "src/app/services";
+import { IAssignmentModel } from "src/app/viewmodels/assignment.model";
+import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 
 @Component({
@@ -10,11 +12,13 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
   templateUrl: "./project-settings.component.html",
 })
 export class ProjectSettingsComponent {
-  
-  public loading: boolean;
-  public editProjectForm: FormGroup;
   private courseId: number;
   private projectCode: string;
+
+  public loading: boolean;
+  public editProjectForm: FormGroup;
+  public project: IProjectDetailsModel;
+
 
   constructor(
     private projectService: ProjectService,
@@ -24,6 +28,7 @@ export class ProjectSettingsComponent {
     this.loading = false;
     this.courseId = 0;
     this.projectCode = "";
+    this.project = {} as IProjectDetailsModel;
   }
 
   ngOnInit() {
@@ -45,6 +50,7 @@ export class ProjectSettingsComponent {
       next: result => {
         this.loading = false;
         if (result.success) {
+          this.project = result.value;
           this.editProjectForm.controls.code.setValue(result.value.code);
           this.editProjectForm.controls.description.setValue(result.value.description);
         } else {
@@ -74,5 +80,9 @@ export class ProjectSettingsComponent {
 
   public isInvalid(formControl: AbstractControl): boolean {
     return formControl.invalid && (formControl.dirty || formControl.touched);
+  }
+
+  public onAssignmentChanged(assignment: IAssignmentModel) {
+    this.loadProject();
   }
 }
