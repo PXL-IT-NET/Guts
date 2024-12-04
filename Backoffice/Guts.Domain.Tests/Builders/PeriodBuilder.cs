@@ -20,4 +20,11 @@ internal class PeriodBuilder : BaseBuilder<Period>
         SetProperty(p => p.Id, Random.Shared.NextPositive());
         return this;
     }
+
+    public PeriodBuilder WithRange(DateTime from, DateTime until)
+    {
+        SetProperty(p => p.From, from);
+        SetProperty(p => p.Until, until);
+        return this;
+    }
 }

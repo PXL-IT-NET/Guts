@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using Guts.Common.Extensions;
@@ -9,7 +10,7 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class ExamScoreTests : DomainTestBase
+    public class ExamScoreTests
     {
         [Test]
         public void Constructor_ShouldSetPropertiesUsingUserAndExam()
@@ -18,10 +19,10 @@ namespace Guts.Domain.Tests.ExamAggregate
             var user = new UserBuilder().Build();
             var examBuilder = new ExamBuilder();
             double maximumScore = 0.0;
-            for (int i = 0; i < Random.Next(2,11); i++)
+            for (int i = 0; i < Random.Shared.Next(2,11); i++)
             {
                 var examPartMock = new Mock<IExamPart>();
-                var examPartMaximumScore = Random.Next(10, 100);
+                var examPartMaximumScore = Random.Shared.Next(10, 100);
                 maximumScore += examPartMaximumScore;
                 examPartMock.SetupGet(part => part.MaximumScore).Returns(examPartMaximumScore);
                 examBuilder.WithExamPart(examPartMock.Object);
@@ -108,22 +109,22 @@ namespace Guts.Domain.Tests.ExamAggregate
 
         private void AddSomeExamPartScores(ExamScore examScore)
         {
-            for (int i = 0; i < Random.Next(1, 5); i++)
+            for (int i = 0; i < Random.Shared.Next(1, 5); i++)
             {
                 List<IAssignmentEvaluationScore> assignmentEvaluationScores = new List<IAssignmentEvaluationScore>();
-                for (int j = 0; j < Random.Next(1, 5); j++)
+                for (int j = 0; j < Random.Shared.Next(1, 5); j++)
                 {
                     var assignmentEvaluationScoreMock = new Mock<IAssignmentEvaluationScore>();
                     assignmentEvaluationScoreMock.SetupGet(score => score.AssignmentDescription)
-                        .Returns(Random.NextString());
+                        .Returns(Random.Shared.NextString());
                     assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfTests)
-                        .Returns(Random.Next(5, 11));
+                        .Returns(Random.Shared.Next(5, 11));
                     assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfPassedTests)
-                        .Returns(Random.Next(0, 6));
+                        .Returns(Random.Shared.Next(0, 6));
                     assignmentEvaluationScoreMock.SetupGet(score => score.MaximumScore)
-                        .Returns(Random.Next(10, 21));
+                        .Returns(Random.Shared.Next(10, 21));
                     assignmentEvaluationScoreMock.SetupGet(score => score.Score)
-                        .Returns(Random.Next(0, 11));
+                        .Returns(Random.Shared.Next(0, 11));
                     assignmentEvaluationScores.Add(assignmentEvaluationScoreMock.Object);
                 }
 
@@ -131,11 +132,11 @@ namespace Guts.Domain.Tests.ExamAggregate
                 examPartScoreMock.SetupGet(examPartScore => examPartScore.AssignmentEvaluationScores)
                     .Returns(assignmentEvaluationScores);
                 examPartScoreMock.SetupGet(examPartScore => examPartScore.ExamPartDescription)
-                    .Returns(Random.NextString());
+                    .Returns(Random.Shared.NextString());
                 examPartScoreMock.SetupGet(examPartScore => examPartScore.MaximumScore)
-                    .Returns(Random.Next(10, 21));
+                    .Returns(Random.Shared.Next(10, 21));
                 examPartScoreMock.SetupGet(examPartScore => examPartScore.Score)
-                    .Returns(Random.Next(0, 11));
+                    .Returns(Random.Shared.Next(0, 11));
 
                 examScore.AddExamPartScore(examPartScoreMock.Object);
             }

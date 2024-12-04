@@ -12,7 +12,7 @@ using NUnit.Framework;
 
 namespace Guts.Domain.Tests.AssessmentResultAggregate
 {
-    public class AssessmentResultFactoryTests : DomainTestBase
+    public class AssessmentResultFactoryTests
     {
         private AssessmentResult.Factory _factory;
         private Mock<IAssessmentSubResultFactory> _assessmentSubResultFactoryMock;
@@ -87,10 +87,10 @@ namespace Guts.Domain.Tests.AssessmentResultAggregate
             //Arrange
             ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
 
-            int unknownSubjectId = Random.NextPositive();
+            int unknownSubjectId = Random.Shared.NextPositive();
             while (projectTeamAssessment.Team.TeamUsers.Any(tu => tu.UserId == unknownSubjectId))
             {
-                unknownSubjectId = Random.NextPositive();
+                unknownSubjectId = Random.Shared.NextPositive();
             }
 
             //Act + Assert

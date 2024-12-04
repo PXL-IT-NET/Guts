@@ -6,6 +6,7 @@ using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.ExamModels;
+using Guts.Api.Models.PeriodModels;
 using Guts.Api.Tests.Builders;
 using Guts.Business;
 using Guts.Business.Dtos;

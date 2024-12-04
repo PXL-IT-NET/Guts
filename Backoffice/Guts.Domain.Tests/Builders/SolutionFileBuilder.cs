@@ -17,7 +17,7 @@ namespace Guts.Domain.Tests.Builders
 
         public SolutionFileBuilder WithUser()
         {
-            var user = new UserBuilder(Random.Shared).WithId().Build();
+            var user = new UserBuilder().WithId().Build();
             SetProperty(sf => sf.User, user);
             SetProperty(sf => sf.UserId, user.Id);
             return this;

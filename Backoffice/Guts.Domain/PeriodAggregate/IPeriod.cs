@@ -10,6 +10,8 @@ namespace Guts.Domain.PeriodAggregate
         DateTime From { get; }
         DateTime Until { get; }
 
-        void Update(string description, DateTime from, DateTime until, IList<IPeriod> allPeriods);
+        void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods);
+
+        bool OverlapsWith(DateTime from, DateTime until);
     }
 }

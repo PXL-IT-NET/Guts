@@ -37,13 +37,15 @@ namespace Guts.Domain.PeriodAggregate
             Until = until;
         }
 
-        public void Update(string description, DateTime from, DateTime until, IList<IPeriod> allPeriods)
+        public void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods)
         {
+            Contracts.Require(from < until, "The 'from' date must be before the 'until' date.");
+
             //check if the new dates overlap with another period
             List<IPeriod> otherPeriods = allPeriods.Where(p => p.Id != this.Id).ToList();
             foreach (IPeriod otherPeriod in otherPeriods)
             {
-                Contracts.Require(from < otherPeriod.Until && until > otherPeriod.From,
+                Contracts.Require(!otherPeriod.OverlapsWith(from, until),
                     $"The changes would make this period overlap with the period '{otherPeriod.Description}'.");
             }
 
@@ -52,17 +54,21 @@ namespace Guts.Domain.PeriodAggregate
             Until = until;
         }
 
+        public bool OverlapsWith(DateTime from, DateTime until)
+        {
+            bool isBefore = Until < from;
+            bool isAfter = From > until;
+            return !isBefore && !isAfter;
+        }
+
         public class Factory : IPeriodFactory
         {
-            public Period CreateNew(string description, DateTime from, DateTime until, IList<IPeriod> existingPeriods)
+            public Period CreateNew(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> existingPeriods)
             {
                 //check if the new period overlaps with an existing period
                 foreach (IPeriod existingPeriod in existingPeriods)
                 {
-
-                    bool isBefore = from < existingPeriod.From && until < existingPeriod.From;
-                    bool isAfter = from > existingPeriod.Until && until > existingPeriod.Until;
-                    Contracts.Require(isBefore || isAfter,
+                    Contracts.Require(!existingPeriod.OverlapsWith(from, until),
                         $"The new period overlaps with the period '{existingPeriod.Description}'.");
                 }
 

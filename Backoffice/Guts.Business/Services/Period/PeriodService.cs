@@ -18,7 +18,7 @@ namespace Guts.Business.Services.Period
         }
         public async Task<IPeriod> CreatePeriodAsync(string description, DateTime from, DateTime until)
         {
-            IList<IPeriod> allPeriods = await _repository.GetAllAsync();
+            IReadOnlyList<IPeriod> allPeriods = await _repository.GetAllAsync();
             IPeriod period = _factory.CreateNew(description, from, until, allPeriods);
             period = await _repository.AddAsync(period);
             return period;
@@ -26,7 +26,7 @@ namespace Guts.Business.Services.Period
 
         public async Task UpdatePeriodAsync(int periodId, string newDescription, DateTime newFrom, DateTime newUntil)
         {
-            IList<IPeriod> allPeriods = await _repository.GetAllAsync();
+            IReadOnlyList<IPeriod> allPeriods = await _repository.GetAllAsync();
             IPeriod period = await _repository.GetPeriodAsync(periodId);
             period.Update(newDescription, newFrom, newUntil, allPeriods);
             await _repository.UpdateAsync(period);

@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using AutoMapper;
 using Guts.Api.Models.ExamModels;
+using Guts.Api.Models.PeriodModels;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
@@ -38,7 +39,7 @@ namespace Guts.Api.Tests.Models.Mappings
                 .WithExamPart(examPart).Build();
 
             //Act
-            var model = _mapper.Map<PeriodOutputModel>(exam);
+            var model = _mapper.Map<ExamOutputModel>(exam);
 
             //Assert
             Assert.That(model, Is.Not.Null);

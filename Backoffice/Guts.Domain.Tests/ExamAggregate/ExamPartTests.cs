@@ -11,13 +11,13 @@ using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ExamAggregate
 {
-    public class ExamPartTests : DomainTestBase
+    public class ExamPartTests
     {
         [Test]
         public void Constructor_ShouldConstructValidExamPart()
         {
-            var validExamId = Random.NextPositive();
-            var validName = Random.NextString();
+            var validExamId = Random.Shared.NextPositive();
+            var validName = Random.Shared.NextString();
             var validDeadline = DateTime.UtcNow.AddDays(1);
 
             var examPart = new ExamPart(validExamId, validName, validDeadline);
@@ -52,8 +52,8 @@ namespace Guts.Domain.Tests.ExamAggregate
         {
             var existingAssignment = new AssignmentBuilder().WithId().WithRandomTests(5).Build();
             var existingExamPart = new ExamPartBuilder().WithId().Build();
-            var maximumScore = Random.Next(5, 101);
-            var numberOfTestsAlreadyGreenAtStart = Random.Next(1, 5);
+            var maximumScore = Random.Shared.Next(5, 101);
+            var numberOfTestsAlreadyGreenAtStart = Random.Shared.Next(1, 5);
 
             var addedEvaluation = existingExamPart.AddAssignmentEvaluation(existingAssignment, maximumScore,
                 numberOfTestsAlreadyGreenAtStart);
@@ -70,12 +70,12 @@ namespace Guts.Domain.Tests.ExamAggregate
         public void CalculateScores_ShouldAggregateAssignmentEvaluationScoresForUser()
         {
             //Arrange
-            int userId = Random.NextPositive();
+            int userId = Random.Shared.NextPositive();
             var examPartBuilder = new ExamPartBuilder();
 
             var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
             var verifyAssignmentEvaluationActions = new List<Action<IExamPartScore>>();
-            for (int i = 0; i < Random.Next(2, 10); i++)
+            for (int i = 0; i < Random.Shared.Next(2, 10); i++)
             {
                 verifyAssignmentEvaluationActions.Add(AddAssignmentEvaluationMockToExamPart(examPartBuilder, userId, examPartTestResultCollectionMock));
             }
@@ -100,7 +100,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             IAssignmentEvaluationScore assignmentEvaluationScore = assignmentEvaluationScoreMock.Object;
 
             var assignmentEvaluationMock = new Mock<IAssignmentEvaluation>();
-            var assignmentId = Random.NextPositive();
+            var assignmentId = Random.Shared.NextPositive();
             assignmentEvaluationMock.SetupGet(evaluation => evaluation.AssignmentId).Returns(assignmentId);
             assignmentEvaluationMock
                 .Setup(evaluation => evaluation.CalculateScore(It.IsAny<IAssignmentResult>()))

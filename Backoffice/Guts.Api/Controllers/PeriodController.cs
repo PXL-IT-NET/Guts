@@ -41,7 +41,7 @@ public class PeriodController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetAll()
     {
-        IList<IPeriod> periods = await _periodRepository.GetAllAsync();
+        IReadOnlyList<IPeriod> periods = await _periodRepository.GetAllAsync();
         IList<PeriodOutputModel> models = periods.Select(p => _mapper.Map<PeriodOutputModel>(p)).ToList();
         return Ok(models);
     }

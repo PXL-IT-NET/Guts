@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -10,18 +11,18 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class AssignmentEvaluationTests : DomainTestBase
+    public class AssignmentEvaluationTests
     {
         [Test]
         public void Constructor_ShouldConstructValidExamPart()
         {
-            var validExamPartId = Random.NextPositive();
+            var validExamPartId = Random.Shared.NextPositive();
             var assignment = new AssignmentBuilder()
                 .WithId()
-                .WithRandomTests(Random.Next(2, 11))
+                .WithRandomTests(Random.Shared.Next(2, 11))
                 .Build();
-            var validMaximumScore = Random.Next(1, 101);
-            var validNumberOfTestsAlreadyGreenAtStart = Random.Next(0, assignment.Tests.Count);
+            var validMaximumScore = Random.Shared.Next(1, 101);
+            var validNumberOfTestsAlreadyGreenAtStart = Random.Shared.Next(0, assignment.Tests.Count);
 
             var evaluation = new AssignmentEvaluation(validExamPartId, assignment, 
                 validMaximumScore, validNumberOfTestsAlreadyGreenAtStart);
@@ -45,7 +46,7 @@ namespace Guts.Domain.Tests.ExamAggregate
         {
             var validAssignment = new AssignmentBuilder()
                 .WithId()
-                .WithRandomTests(Random.Next(2, 11))
+                .WithRandomTests(Random.Shared.Next(2, 11))
                 .Build();
             Assert.That(() => new AssignmentEvaluation(
                 examPartId, 
@@ -101,12 +102,12 @@ namespace Guts.Domain.Tests.ExamAggregate
         public void CalculateScore_ShouldReturnAnAssignmentEvaluationScoreBasedOnTheNumberOfPassingTests()
         {
             //Arrange
-            int numberOfTests = Random.Next(5, 21);
+            int numberOfTests = Random.Shared.Next(5, 21);
             var assignment = new AssignmentBuilder().WithRandomTests(numberOfTests).Build();
             var assignmentEvaluation = new AssignmentEvaluationBuilder().WithId().WithAssignment(assignment).Build();
 
             var assignmentResultMock = new Mock<IAssignmentResult>();
-            int numberOfPassingTests = Random.Next(0, numberOfTests + 1);
+            int numberOfPassingTests = Random.Shared.Next(0, numberOfTests + 1);
             assignmentResultMock.SetupGet(assignmentResult => assignmentResult.NumberOfPassingTests)
                 .Returns(numberOfPassingTests);
             

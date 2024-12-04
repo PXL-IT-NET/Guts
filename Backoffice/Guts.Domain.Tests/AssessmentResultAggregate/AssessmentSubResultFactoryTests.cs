@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace Guts.Domain.Tests.AssessmentResultAggregate
 {
-    public class AssessmentSubResultFactoryTests : DomainTestBase
+    public class AssessmentSubResultFactoryTests
     {
         private AssessmentSubResult.Factory _factory;
 

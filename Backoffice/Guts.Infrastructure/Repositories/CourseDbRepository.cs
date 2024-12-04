@@ -24,7 +24,7 @@ namespace Guts.Infrastructure.Repositories
             return course;
         }
 
-        public override async Task<IList<Course>> GetAllAsync()
+        public override async Task<IReadOnlyList<Course>> GetAllAsync()
         {
             return await _context.Set<Course>().OrderBy(c => c.Name).ToListAsync();
         }
