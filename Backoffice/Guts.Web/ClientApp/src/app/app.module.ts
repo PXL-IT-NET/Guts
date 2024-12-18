@@ -102,6 +102,8 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     s.ExamService,
     s.ClientSettingsService,
     s.TestService,
+    s.PeriodService,
+    s.PeriodProvider,
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,

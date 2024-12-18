@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
@@ -12,6 +14,11 @@ namespace Guts.Infrastructure.Repositories
 
         public PeriodDbRepository(GutsContext context) : base(context)
         {
+        }
+
+        public override async Task<IReadOnlyList<IPeriod>> GetAllAsync()
+        {
+            return await _context.Periods.OrderBy(p => p.From).ToListAsync();
         }
 
         public async Task<IPeriod> GetPeriodAsync(int? periodId = null)
