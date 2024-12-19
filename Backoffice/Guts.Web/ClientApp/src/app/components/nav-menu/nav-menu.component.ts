@@ -43,7 +43,7 @@ export class NavMenuComponent {
         this.allPeriods = result.value;
         if (this.allPeriods.length > 0) {
           const lastPeriod : IPeriodModel = this.allPeriods[this.allPeriods.length - 1];
-          this.periodProvider.setPeriod(lastPeriod);
+          this.periodProvider.period = lastPeriod;
         }
       }
     });
@@ -62,6 +62,6 @@ export class NavMenuComponent {
   }
 
   public selectPeriod(period: IPeriodModel) {
-    this.periodProvider.setPeriod(period);
+    this.periodProvider.period = period;
   }
 }

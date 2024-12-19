@@ -6,11 +6,13 @@ import { Injectable } from "@angular/core";
 export class PeriodProvider{
     public period$: BehaviorSubject<IPeriodModel> = new BehaviorSubject<IPeriodModel>(null);
 
-    public getPeriod(): IPeriodModel {
+    //transform into getter
+
+    get period(): IPeriodModel {
         return this.period$.getValue();
     }
 
-    public setPeriod(period: IPeriodModel): void {
-        this.period$.next(period);
+    set period(p: IPeriodModel) {
+        this.period$.next(p);
     }
 }
