@@ -28,6 +28,15 @@ namespace Guts.Domain.PeriodAggregate
 
         public DateTime Until { get; private set; }
 
+        public bool IsActive
+        {
+            get
+            {
+                DateTime today = DateTime.Today;
+                return From <= today && Until >= today;
+            }
+        }
+
         private Period(string description, DateTime from, DateTime until)
         {
             Contracts.Require(from < until, "The 'from' date must be before the 'until' date.");

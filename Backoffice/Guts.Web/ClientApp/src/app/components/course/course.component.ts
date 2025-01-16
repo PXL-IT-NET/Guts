@@ -29,6 +29,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   public loading: boolean = false;
   public userProfile: UserProfile;
   public hasContent: boolean;
+  public activePeriod: boolean = true;
 
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
@@ -66,6 +67,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     this.periodProvider.period$.subscribe((period) => {
       if(period) {
+        this.activePeriod = period.isActive;
         this.handleNavigationEvent(true);
       }
     });

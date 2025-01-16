@@ -32,19 +32,19 @@ export class NavMenuComponent {
         this.authService.getUserProfile().subscribe((profile) => {
           this.userProfile = profile;
         });
+
+        this.periodService.getAll().subscribe((result) => {
+          if (result.success) {
+            this.allPeriods = result.value;
+            if (this.allPeriods.length > 0) {
+              const lastPeriod : IPeriodModel = this.allPeriods[this.allPeriods.length - 1];
+              this.periodProvider.period = lastPeriod;
+            }
+          }
+        });
       } else {
         // clear the user profile when logged out
         this.userProfile = new UserProfile();
-      }
-    });
-
-    this.periodService.getAll().subscribe((result) => {
-      if (result.success) {
-        this.allPeriods = result.value;
-        if (this.allPeriods.length > 0) {
-          const lastPeriod : IPeriodModel = this.allPeriods[this.allPeriods.length - 1];
-          this.periodProvider.period = lastPeriod;
-        }
       }
     });
 

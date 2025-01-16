@@ -12,7 +12,7 @@
           <ul class="list-group mb-3">
             <li class="list-group-item" *ngFor="let member of myTeam.members">{{member.name}}</li>
           </ul>
-          <p>
+          <p *ngIf="activePeriod">
             <button type="button" class="btn btn-outline-warning" (click)="leaveMyTeam()">Leave {{myTeam.name}}</button>
             <button type="button" class="btn btn-outline-primary ms-2"
                     *ngIf="userProfile.isLector()" (click)="openTeamEditModal(myTeam)">
@@ -50,13 +50,13 @@
               <span>{{member.name}}</span>
             </li>
           </ul>
-          <p>
+          <p *ngIf="activePeriod">
             <button type="button" class="btn btn-outline-primary" (click)="joinTeam(team.id)">
               <span class="fa fa-user-plus pe-2"></span>
               <span>Join {{team.name}}</span>
             </button>
           </p>
-          <p *ngIf="userProfile.isLector()">
+          <p *ngIf="userProfile.isLector() && activePeriod">
             <button type="button" class="btn btn-outline-secondary"
                     (click)="openTeamEditModal(team)">
               <span class="fa fa-pencil pe-2"></span>
@@ -74,7 +74,7 @@
   </div>
 </div>
 
-<div class="row mt-2" *ngIf="userProfile.isLector()">
+<div class="row mt-2" *ngIf="userProfile.isLector() && activePeriod">
   <div class="col-12">
     <button type="submit" class="btn btn-outline-success" (click)="openTeamAddModal()">
       <span class="fa fa-plus pe-2"></span>

@@ -13,6 +13,7 @@ namespace Guts.Api.Models.PeriodModels
         public string Description { get; set; }
         public DateTime From { get; set; }
         public DateTime Until { get; set; }
+        public bool IsActive { get; set; }
 
         private class MappingProfile : Profile
         {

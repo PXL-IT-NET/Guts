@@ -9,6 +9,7 @@ namespace Guts.Domain.PeriodAggregate
         string Description { get; set; }
         DateTime From { get; }
         DateTime Until { get; }
+        bool IsActive { get; }
 
         void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods);
 

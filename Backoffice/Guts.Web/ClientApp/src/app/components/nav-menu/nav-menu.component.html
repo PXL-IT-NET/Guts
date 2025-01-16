@@ -35,7 +35,7 @@
   </div>
   <ul class="navbar-nav pe-3 ps-3">
     <!-- show period dropdown -->
-    <li class="nav-item dropdown">
+    <li class="nav-item dropdown" *ngIf="allPeriods.length > 0">
       <a
         class="nav-link dropdown-toggle show"
         role="button"

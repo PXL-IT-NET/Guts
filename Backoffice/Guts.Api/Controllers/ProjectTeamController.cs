@@ -155,13 +155,14 @@ public class ProjectTeamController : ControllerBase
     /// <param name="projectCode"></param>
     /// <param name="teamId">Identifier of the team for which the summary should be retrieved.</param>
     /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+    /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
     [HttpGet("{teamId}/summary")]
     [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-    public async Task<IActionResult> GetProjectSummary(int courseId, string projectCode, int teamId, [FromQuery] DateTime? date)
+    public async Task<IActionResult> GetProjectSummary(int courseId, string projectCode, int teamId, [FromQuery] DateTime? date, [FromQuery] int? periodId)
     {
-        IProject project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId());
+        IProject project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
 
         if (IsStudent())
         {

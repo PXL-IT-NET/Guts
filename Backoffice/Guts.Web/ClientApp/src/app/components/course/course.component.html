@@ -40,7 +40,7 @@
       </li>
 
       <!-- Manage chapter -->
-      <li class="nav-item" *ngIf="userProfile.isLector() && selectedChapter">
+      <li class="nav-item" *ngIf="userProfile.isLector() && selectedChapter && activePeriod">
         <a class="nav-link" [routerLink]="['chapters', selectedChapter.code, 'settings']" routerLinkActive="active">
           <span class="bi-gear me-1"></span>
           <span>Chapter settings</span>
@@ -89,7 +89,7 @@
       </li>
 
       <!-- Manage project -->
-      <li class="nav-item" *ngIf="userProfile.isLector() && selectedProject">
+      <li class="nav-item" *ngIf="userProfile.isLector() && selectedProject && activePeriod">
         <a class="nav-link" [routerLink]="['projects', selectedProject.code, 'settings']" routerLinkActive="active">
           <span class="bi-gear me-1"></span>
           <span>Project settings</span>

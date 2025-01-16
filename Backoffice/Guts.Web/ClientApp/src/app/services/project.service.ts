@@ -8,14 +8,21 @@ import { CreateResult, GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel, ITopicAddModel } from "../viewmodels/topic.model"
 import { TeamGenerationModel } from "../viewmodels/team.model"
+import { PeriodProvider } from './period.provider';
 
 @Injectable()
 export class ProjectService {
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient, 
+    private periodProvider: PeriodProvider) {
   }
 
   public getProjectDetails(courseId: number, projectCode: string): Observable<GetResult<IProjectDetailsModel>> {
-    return this.http.get<IProjectDetailsModel>('api/courses/' + courseId + '/projects/' + projectCode)
+    let apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode;
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
+    return this.http.get<IProjectDetailsModel>(apiUrl)
       .pipe(
         map(model => GetResult.success(model)),
         catchError((errorResponse: HttpErrorResponse) => {
@@ -45,7 +52,11 @@ export class ProjectService {
   }
 
   public getTeams(courseId: number, projectCode: string): Observable<GetResult<ITeamDetailsModel[]>> {
-    return this.http.get<ITeamDetailsModel[]>('api/courses/' + courseId + '/projects/' + projectCode + '/teams')
+    let apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/teams';
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
+    return this.http.get<ITeamDetailsModel[]>(apiUrl)
       .pipe(
         map(model => GetResult.success(model)),
         catchError((errorResponse: HttpErrorResponse) => {
@@ -136,8 +147,11 @@ export class ProjectService {
 
   public getProjectSummary(courseId: number, projectCode: string, teamId: number, date?: moment.Moment): Observable<GetResult<TopicSummaryModel>> {
     var apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/teams/' + teamId + '/summary';
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
     if (date) {
-      apiUrl += '?date=' + date.toISOString();
+      apiUrl += (this.periodProvider.period ? '&' : '?') +'date=' + date.toISOString();
     }
 
     return this.http.get<ITopicSummaryModel>(apiUrl)
@@ -151,8 +165,11 @@ export class ProjectService {
 
   public getProjectStatistics(courseId: number, projectCode: string, date?: moment.Moment): Observable<GetResult<TopicStatisticsModel>> {
     var apiUrl = 'api/courses/' + courseId + '/projects/' + projectCode + '/statistics';
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
     if (date) {
-      apiUrl += '?date=' + date.toISOString();
+      apiUrl += (this.periodProvider.period ? '&' : '?') +'date=' + date.toISOString();
     }
     return this.http.get<ITopicStatisticsModel>(apiUrl)
       .pipe(
