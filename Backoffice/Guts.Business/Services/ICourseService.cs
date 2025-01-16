@@ -6,7 +6,7 @@ namespace Guts.Business.Services
 {
     public interface ICourseService
     {
-        Task<IList<Course>> GetAllCoursesAsync();
+        Task<IReadOnlyList<Course>> GetAllCoursesAsync();
         Task<Course> GetCourseByIdAsync(int courseId);
     }
 }

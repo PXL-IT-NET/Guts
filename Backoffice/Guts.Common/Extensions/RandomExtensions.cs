@@ -30,6 +30,11 @@ namespace Guts.Common.Extensions
             return DateTime.Now.AddDays(random.Next(1, 10001));
         }
 
+        public static DateTime NextDateTimeInPast(this Random random)
+        {
+            return DateTime.Now.AddDays(-1 * random.Next(1, 10001));
+        }
+
         public static T NextEnum<T>(this Random random) where T : struct, IConvertible
         {
             if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");

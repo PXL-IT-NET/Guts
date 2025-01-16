@@ -7,18 +7,12 @@ namespace Guts.Domain.Tests.Builders
     public class UserBuilder
     {
         private readonly User _user;
-        private readonly Random _random;
 
-        public UserBuilder() : this(new Random())
+        public UserBuilder()
         {
-        }
-
-        public UserBuilder(Random random)
-        {
-            _random = random;
             _user = new User
             {
-                Id = _random.NextPositive(),
+                Id = Random.Shared.NextPositive(),
                 FirstName = Guid.NewGuid().ToString(),
                 LastName = Guid.NewGuid().ToString()
             };
@@ -32,7 +26,7 @@ namespace Guts.Domain.Tests.Builders
 
         public UserBuilder WithId()
         {
-            _user.Id = _random.NextPositive();
+            _user.Id = Random.Shared.NextPositive();
             return this;
         }
 

@@ -3,17 +3,17 @@ import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
 import { ITopicModel } from "../../viewmodels/topic.model";
-import { ActivatedRoute, NavigationEnd, Router } from "@angular/router";
+import { NavigationEnd, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { UserProfile } from "../../viewmodels/user.model";
-import { combineLatest, of, Subscription } from "rxjs";
+import { of, Subscription } from "rxjs";
 import { IAssignmentModel } from "src/app/viewmodels/assignment.model";
-import { filter, map, switchMap } from "rxjs/operators";
+import { filter, map } from "rxjs/operators";
 import { GetResult } from "src/app/util/result";
-import { checkMargins } from "ngx-bootstrap/positioning";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ProjectAddComponent } from "../project-add/project-add.component";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
+import { PeriodProvider } from "src/app/services";
 
 @Component({
   templateUrl: "./course.component.html",
@@ -29,6 +29,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   public loading: boolean = false;
   public userProfile: UserProfile;
   public hasContent: boolean;
+  public activePeriod: boolean = true;
 
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
@@ -38,9 +39,10 @@ export class CourseComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private courseService: CourseService,
+    private periodProvider: PeriodProvider,
     private authService: AuthService,
     private toastr: ToastrService,
-    private modalService: BsModalService,
+    private modalService: BsModalService
   ) {
     this.course = {
       id: 0,
@@ -63,8 +65,15 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.handleNavigationEvent();
       });
 
+    this.periodProvider.period$.subscribe((period) => {
+      if(period) {
+        this.activePeriod = period.isActive;
+        this.handleNavigationEvent(true);
+      }
+    });
+
     // Manually trigger the event handler on initial load
-    this.handleNavigationEvent();
+    //this.handleNavigationEvent();
 
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
@@ -116,10 +125,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     );
   }
 
-  private handleNavigationEvent() {
+  private handleNavigationEvent(forceReload: boolean = false) {
     const url = this.router.url;
-    //console.log("Navigated to: " + url);
-
     const courseIdMatch = url.match(/courses\/(?<courseId>\d+)/);
     const courseId = courseIdMatch ? +courseIdMatch.groups.courseId : 0;
 
@@ -140,7 +147,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       ? +assignmentIdMatch.groups.assignmentId
       : 0;
 
-    this.loadCourseContents(courseId, topicCode, assignmentId);
+    this.loadCourseContents(courseId, topicCode, assignmentId, forceReload);
   }
 
   private isChapterRouteActive() {
@@ -204,18 +211,23 @@ export class CourseComponent implements OnInit, OnDestroy {
   private loadCourseContents(
     courseId: number,
     selectedTopicCode: string = null,
-    selectedAssignmentId: number = 0
+    selectedAssignmentId: number = 0,
+    forceReload: boolean = false
   ) {
     this.loading = true;
     this.hasContent = true;
     this.selectedChapter = null;
     this.selectedProject = null;
 
+    if(courseId <= 0) {
+      return;
+    }
+
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c))
     );
-    if (this.course.id != courseId) {
-      courseContents$ = this.courseService.getCourseContentsById(courseId);
+    if (this.course.id != courseId || forceReload) {
+      courseContents$ = this.courseService.getCourseContentsById(courseId, this.periodProvider.period.id);
     }
 
     courseContents$.subscribe((result) => {
@@ -267,6 +279,10 @@ export class CourseComponent implements OnInit, OnDestroy {
           }
         } else {
           this.hasContent = false;
+          this.router.navigate([
+            "courses",
+            this.course.id
+          ]);
         }
       } else {
         this.toastr.error(
@@ -281,14 +297,16 @@ export class CourseComponent implements OnInit, OnDestroy {
   public showAddProjectModal() {
     let modalState: ModalOptions = {
       initialState: {
-        courseId: this.course.id
-      }
+        courseId: this.course.id,
+      },
     };
     this.modalRef = this.modalService.show(ProjectAddComponent, modalState);
-    this.modalRef.setClass('modal-lg');
-    this.modalRef.content.projectAdded.subscribe((addedProject: IProjectDetailsModel) => {     
-      this.navigateToProject(addedProject);
-      this.course.id = 0; //force reload of course contents
-    });
+    this.modalRef.setClass("modal-lg");
+    this.modalRef.content.projectAdded.subscribe(
+      (addedProject: IProjectDetailsModel) => {
+        this.navigateToProject(addedProject);
+        this.course.id = 0; //force reload of course contents
+      }
+    );
   }
 }

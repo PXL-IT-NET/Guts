@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -13,7 +14,7 @@ using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
 {
-    public class ProjectTeamAssessmentTests : DomainTestBase
+    public class ProjectTeamAssessmentTests
     {
         private IProjectTeamAssessment _projectTeamAssessment;
 
@@ -53,7 +54,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
             AssessmentScore contributionScore = AssessmentScore.Average;
             AssessmentScore effortScore = AssessmentScore.AboveAverage;
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act
             IPeerAssessment result = _projectTeamAssessment.AddOrUpdatePeerAssessment(user.Id, subject.Id, cooperationScore, contributionScore, effortScore, explanation);
@@ -82,7 +83,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
             AssessmentScore contributionScore = AssessmentScore.Average;
             AssessmentScore effortScore = AssessmentScore.AboveAverage;
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act
             IPeerAssessment result = _projectTeamAssessment.AddOrUpdatePeerAssessment(peerAssessmentToUpdate.User.Id,
@@ -108,7 +109,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
             AssessmentScore contributionScore = AssessmentScore.Average;
             AssessmentScore effortScore = AssessmentScore.AboveAverage;
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act + Assert
             Assert.That(
@@ -128,7 +129,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
             AssessmentScore contributionScore = AssessmentScore.Average;
             AssessmentScore effortScore = AssessmentScore.AboveAverage;
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act + Assert
             Assert.That(
@@ -147,7 +148,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore cooperationScore = AssessmentScore.BelowAverage;
             AssessmentScore contributionScore = AssessmentScore.Average;
             AssessmentScore effortScore = AssessmentScore.AboveAverage;
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act + Assert
             Assert.That(
@@ -186,7 +187,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             User user = _projectTeamAssessment.Team.TeamUsers.First().User;
             User subject = _projectTeamAssessment.Team.TeamUsers.Last().User;
 
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act + Assert
             Assert.That(

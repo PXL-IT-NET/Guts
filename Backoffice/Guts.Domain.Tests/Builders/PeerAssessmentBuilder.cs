@@ -2,6 +2,7 @@
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
+using System;
 
 namespace Guts.Domain.Tests.Builders
 {
@@ -9,14 +10,14 @@ namespace Guts.Domain.Tests.Builders
     {
         public PeerAssessmentBuilder()
         {
-            Item = new PeerAssessment(Random.NextPositive(), 
+            Item = new PeerAssessment(Random.Shared.NextPositive(), 
                 new UserBuilder().WithId().Build(),
                 new UserBuilder().WithId().Build());
 
             SetProperty(pa => pa.ContributionScore, AssessmentScore.Average);
             SetProperty(pa => pa.EffortScore, AssessmentScore.Average);
             SetProperty(pa => pa.CooperationScore, AssessmentScore.Average);
-            SetProperty(pa => pa.Explanation, Random.NextString());
+            SetProperty(pa => pa.Explanation, Random.Shared.NextString());
         }
 
         public PeerAssessmentBuilder WithProjectTeamAssessmentId(int id)

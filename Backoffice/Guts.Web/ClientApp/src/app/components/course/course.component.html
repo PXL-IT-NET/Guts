@@ -2,7 +2,7 @@
   <div class="col-12">
     <h4>
       <span>{{course.name}}</span>
-      <a routerLink="config" *ngIf="userProfile.isLector()" class="btn btn-outline-success ms-3" tooltip="Configure course">
+      <a routerLink="config" *ngIf="userProfile.isLector() && activePeriod" class="btn btn-outline-success ms-3" tooltip="Configure course">
         <span class="bi-gear"></span>
       </a>
     </h4>
@@ -40,7 +40,7 @@
       </li>
 
       <!-- Manage chapter -->
-      <li class="nav-item" *ngIf="userProfile.isLector() && selectedChapter">
+      <li class="nav-item" *ngIf="userProfile.isLector() && selectedChapter && activePeriod">
         <a class="nav-link" [routerLink]="['chapters', selectedChapter.code, 'settings']" routerLinkActive="active">
           <span class="bi-gear me-1"></span>
           <span>Chapter settings</span>
@@ -55,7 +55,7 @@
         </a>
         <div class="dropdown-menu">
           <a class="dropdown-item" *ngFor="let project of course.projects" (click)="navigateToProject(project)">{{project.description}}</a>
-          <a *ngIf="userProfile.isLector()" class="dropdown-item" (click)="showAddProjectModal()">
+          <a *ngIf="userProfile.isLector() && activePeriod" class="dropdown-item" (click)="showAddProjectModal()">
             <span class="bi-plus-square me-1"></span>
             <span>Add project</span>
           </a>
@@ -89,7 +89,7 @@
       </li>
 
       <!-- Manage project -->
-      <li class="nav-item" *ngIf="userProfile.isLector() && selectedProject">
+      <li class="nav-item" *ngIf="userProfile.isLector() && selectedProject && activePeriod">
         <a class="nav-link" [routerLink]="['projects', selectedProject.code, 'settings']" routerLinkActive="active">
           <span class="bi-gear me-1"></span>
           <span>Project settings</span>
@@ -105,7 +105,7 @@
           </p>
         </div>
       </div>
-      <div class="row" *ngIf="!hasContent && userProfile.isLector()">
+      <div class="row" *ngIf="!hasContent && userProfile.isLector() && activePeriod">
         <div class="col-12">
           <button type="submit" class="btn btn-outline-success" (click)="showAddProjectModal()">
             <span class="fa fa-plus pe-2"></span>

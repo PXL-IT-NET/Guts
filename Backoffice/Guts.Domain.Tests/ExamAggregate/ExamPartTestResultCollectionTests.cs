@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common.Extensions;
@@ -10,14 +11,14 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class ExamPartTestResultCollectionTests : DomainTestBase
+    public class ExamPartTestResultCollectionTests
     {
         [Test]
         public void FromLastTestResults_ShouldOrganizeTestResultsByUserAndAssignment()
         {
             //Arrange
-            var user1Id = Random.NextPositive();
-            var user2Id = Random.NextPositive();
+            var user1Id = Random.Shared.NextPositive();
+            var user2Id = Random.Shared.NextPositive();
 
             var assignment1 = new AssignmentBuilder().WithId().WithRandomTests(2).Build();
             var assignment2 = new AssignmentBuilder().WithId().WithRandomTests(1).Build();

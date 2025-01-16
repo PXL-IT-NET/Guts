@@ -9,15 +9,15 @@ namespace Guts.Domain.Tests.Builders
         public SolutionFileBuilder()
         {
             Item = SolutionFile.CreateNew(
-                Random.NextPositive(),
-                Random.NextPositive(),
-                $"{Random.NextString()}.cs", 
-                Random.NextString());
+                Random.Shared.NextPositive(),
+                Random.Shared.NextPositive(),
+                $"{Random.Shared.NextString()}.cs",
+                Random.Shared.NextString());
         }
 
         public SolutionFileBuilder WithUser()
         {
-            var user = new UserBuilder(Random).WithId().Build();
+            var user = new UserBuilder().WithId().Build();
             SetProperty(sf => sf.User, user);
             SetProperty(sf => sf.UserId, user.Id);
             return this;

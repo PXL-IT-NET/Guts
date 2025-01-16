@@ -7,19 +7,17 @@ namespace Guts.Business.Tests.Builders
 {
     public class TestRunBuilder
     {
-        private readonly Random _random;
         private readonly TestRun _testRun;
 
         public TestRunBuilder(Random random)
         {
-            _random = random;
 
             _testRun = new TestRun
             {
                 Id = 0,
-                UserId = _random.NextPositive(),
-                AssignmentId = _random.NextPositive(),
-                CreateDateTime = DateTime.UtcNow.AddDays(-_random.Next(1, 100))
+                UserId = Random.Shared.NextPositive(),
+                AssignmentId = Random.Shared.NextPositive(),
+                CreateDateTime = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100))
             };
         }
 
@@ -31,7 +29,7 @@ namespace Guts.Business.Tests.Builders
 
         public TestRunBuilder WithUser()
         {
-            var user = new UserBuilder(_random).WithId().Build();
+            var user = new UserBuilder().WithId().Build();
             _testRun.User = user;
             _testRun.UserId = user.Id;
             return this;

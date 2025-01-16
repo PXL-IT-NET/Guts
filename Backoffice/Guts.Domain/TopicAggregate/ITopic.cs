@@ -13,7 +13,7 @@ namespace Guts.Domain.TopicAggregate
         Course Course { get; }
         int CourseId { get; }
         string Description { get; }
-        Period Period { get; }
+        IPeriod Period { get; }
         int PeriodId { get; }
     }
 }

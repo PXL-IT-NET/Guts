@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
@@ -7,19 +9,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories
 {
-    internal class PeriodDbRepository : IPeriodRepository
+    internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRepository
     {
-        private readonly GutsContext _context;
 
-        public PeriodDbRepository(GutsContext context)
+        public PeriodDbRepository(GutsContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<Period> GetCurrentPeriodAsync()
+        public override async Task<IReadOnlyList<IPeriod>> GetAllAsync()
         {
-            var today = DateTime.Today;
-            var period = await _context.Periods.FirstOrDefaultAsync(p => p.From <= today && p.Until >= today);
+            return await _context.Periods.OrderBy(p => p.From).ToListAsync();
+        }
+
+        public async Task<IPeriod> GetPeriodAsync(int? periodId = null)
+        {
+            Period period = null;
+            if (periodId.HasValue)
+            {
+                period = await _context.Periods.FirstOrDefaultAsync(p => p.Id == periodId);
+            }
+            else
+            {
+                DateTime today = DateTime.Today;
+                period = await _context.Periods.FirstOrDefaultAsync(p => p.From <= today && p.Until >= today);
+            }
+
             if (period == null)
             {
                 throw new DataNotFoundException();

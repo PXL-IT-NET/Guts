@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -13,14 +14,14 @@ namespace Guts.Domain.Tests.Builders
         public ProjectTeamMockBuilder()
         {
             Item = new Mock<IProjectTeam>();
-            Item.SetupGet(pt => pt.ProjectId).Returns(Random.NextPositive());
-            Item.SetupGet(pt => pt.Name).Returns(Random.NextString());
+            Item.SetupGet(pt => pt.ProjectId).Returns(Random.Shared.NextPositive());
+            Item.SetupGet(pt => pt.Name).Returns(Random.Shared.NextString());
             Item.SetupGet(pt => pt.TeamUsers).Returns(new List<IProjectTeamUser>());
         }
 
         public ProjectTeamMockBuilder WithId()
         {
-            Item.SetupGet(pt => pt.Id).Returns(Random.NextPositive());
+            Item.SetupGet(pt => pt.Id).Returns(Random.Shared.NextPositive());
             return this;
         }
 

@@ -1,4 +1,5 @@
-﻿using Guts.Common.Extensions;
+﻿using System;
+using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
@@ -7,13 +8,13 @@ using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
 {
-    public class PeerAssessmentTests : DomainTestBase
+    public class PeerAssessmentTests
     {
         [Test]
         public void Constructor_ValidInput_ShouldInitializeCorrectly()
         {
             //Arrange
-            int projectTeamAssessmentId = Random.NextPositive();
+            int projectTeamAssessmentId = Random.Shared.NextPositive();
             User user = new UserBuilder().Build();
             User subject = new UserBuilder().Build();
 
@@ -34,7 +35,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
         public void SetScores_ShouldSetMatchingProperties()
         {
             //Arrange
-            int projectTeamAssessmentId = Random.NextPositive();
+            int projectTeamAssessmentId = Random.Shared.NextPositive();
             User user = new UserBuilder().Build();
             User subject = new UserBuilder().Build();
             var assessment = new PeerAssessment(projectTeamAssessmentId, user, subject);
@@ -43,7 +44,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             AssessmentScore contributionScore = AssessmentScore.AboveAverage;
             AssessmentScore effortScore = AssessmentScore.Average;
             
-            string explanation = Random.NextString();
+            string explanation = Random.Shared.NextString();
 
             //Act
             assessment.SetScores(cooperationScore, contributionScore, effortScore, explanation);
@@ -59,7 +60,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
         public void IsSelfAssessment_UserIsSameAsSubject_ShouldReturnTrue()
         {
             //Arrange
-            int projectTeamAssessmentId = Random.NextPositive();
+            int projectTeamAssessmentId = Random.Shared.NextPositive();
             User user = new UserBuilder().Build();
             User subject = user;
             var assessment = new PeerAssessment(projectTeamAssessmentId, user, subject);
@@ -75,7 +76,7 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
         public void IsSelfAssessment_UserDifferentFromSubject_ShouldReturnFalse()
         {
             //Arrange
-            int projectTeamAssessmentId = Random.NextPositive();
+            int projectTeamAssessmentId = Random.Shared.NextPositive();
             User user = new UserBuilder().Build();
             User subject = new UserBuilder().Build();
             var assessment = new PeerAssessment(projectTeamAssessmentId, user, subject);

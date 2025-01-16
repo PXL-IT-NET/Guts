@@ -6,14 +6,21 @@ import { IChapterDetailsModel } from "../viewmodels/chapter.model"
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel } from "../viewmodels/topic.model"
 import { GetResult, PostResult } from "../util/result";
 import * as moment from 'moment';
+import { PeriodProvider } from './period.provider';
 
 @Injectable()
 export class ChapterService {
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient, 
+    private periodProvider: PeriodProvider) {
   }
 
   public getChapterDetails(courseId: number, chapterCode: string): Observable<GetResult<IChapterDetailsModel>> {
-    return this.http.get<IChapterDetailsModel>('api/courses/' + courseId + '/chapters/' + chapterCode)
+    var apiUrl = 'api/courses/' + courseId + '/chapters/' + chapterCode;
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
+    return this.http.get<IChapterDetailsModel>(apiUrl)
       .pipe(
         map(model => GetResult.success(model)),
         catchError((errorResponse: HttpErrorResponse) => {
@@ -34,8 +41,11 @@ export class ChapterService {
 
   public getChapterSummary(courseId: number, chapterCode: string, userId: number, date?: moment.Moment): Observable<GetResult<TopicSummaryModel>> {
     var apiUrl = 'api/courses/' + courseId + '/chapters/' + chapterCode + '/users/' + userId + '/summary';
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
     if (date) {
-      apiUrl += '?date=' + date.toISOString();
+      apiUrl += (this.periodProvider.period ? '&' : '?') +'date=' + date.toISOString();
     }
 
     return this.http.get<ITopicSummaryModel>(apiUrl)
@@ -49,8 +59,11 @@ export class ChapterService {
 
   public getChapterStatistics(courseId: number, chapterCode: string, date?: moment.Moment): Observable<GetResult<TopicStatisticsModel>> {
     var apiUrl = 'api/courses/' + courseId + '/chapters/' + chapterCode + '/statistics';
+    if(this.periodProvider.period){
+      apiUrl += '?periodId=' + this.periodProvider.period.id;
+    }
     if (date) {
-      apiUrl += '?date=' + date.toISOString();
+      apiUrl += (this.periodProvider.period ? '&' : '?') +'date=' + date.toISOString();
     }
 
     return this.http.get<ITopicStatisticsModel>(apiUrl)

@@ -31,7 +31,6 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterConverter> _chapterConverterMock;
         private Mock<ITopicConverter> _topicConverterMock;
         private ChapterController _controller;
-        private Random _random;
         private int _userId;
         private Mock<UserManager<User>> _userManagerMock;
         private Mock<IMemoryCache> _memoryCacheMock;
@@ -40,19 +39,18 @@ namespace Guts.Api.Tests.Controllers
         [SetUp]
         public void Setup()
         {
-            _random = new Random();
-            _userId = _random.NextPositive();
+            _userId = Random.Shared.NextPositive();
             _chapterServiceMock = new Mock<IChapterService>();
             _topicConverterMock = new Mock<ITopicConverter>();
             _chapterConverterMock = new Mock<IChapterConverter>();
             _memoryCacheMock = new Mock<IMemoryCache>();
             _userRepositoryMock = new Mock<IUserRepository>();
 
-            var userStoreMock = new Mock<IUserStore<User>>();
-            var passwordHasherMock = new Mock<IPasswordHasher<User>>();
-            var lookupNormalizerMock = new Mock<ILookupNormalizer>();
-            var errorsMock = new Mock<IdentityErrorDescriber>();
-            var loggerMock = new Mock<ILogger<UserManager<User>>>();
+            Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
+            Mock<IPasswordHasher<User>> passwordHasherMock = new Mock<IPasswordHasher<User>>();
+            Mock<ILookupNormalizer> lookupNormalizerMock = new Mock<ILookupNormalizer>();
+            Mock<IdentityErrorDescriber> errorsMock = new Mock<IdentityErrorDescriber>();
+            Mock<ILogger<UserManager<User>>> loggerMock = new Mock<ILogger<UserManager<User>>>();
 
             _userManagerMock = new Mock<UserManager<User>>(
                 userStoreMock.Object,
@@ -87,14 +85,15 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
-        public void GetChapterSummaryShouldReturnContentsIfParamatersAreValid()
+        public void GetChapterSummaryShouldReturnContentsIfParametersAreValid()
         {
             //Arrange
-            var existingChapter = new ChapterBuilder().WithId().Build();
-            var chapterContents = new TopicSummaryModel();
+            Chapter existingChapter = new ChapterBuilder().WithId().Build();
+            TopicSummaryModel chapterContents = new TopicSummaryModel();
             var userAssignmentResults = new List<AssignmentResultDto>();
+            int periodId = Random.Shared.NextPositive();
           
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>()))
+            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .ReturnsAsync(existingChapter);
             _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<Chapter>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
                 .ReturnsAsync(userAssignmentResults);
@@ -103,11 +102,13 @@ namespace Guts.Api.Tests.Controllers
                 .Returns(chapterContents);
 
             //Act
-            var actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, _userId, null).Result as OkObjectResult;
+            OkObjectResult actionResult =
+                _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, _userId, null, periodId)
+                    .Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
 
             _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter, _userId, null), Times.Once);
 
@@ -122,29 +123,29 @@ namespace Guts.Api.Tests.Controllers
         public void GetChapterSummaryShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode, int userId)
         {
             //Act
-            var actionResult = _controller.GetChapterSummary(courseId, chapterCode, userId, null).Result as BadRequestResult;
+            BadRequestResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, userId, null, null).Result as BadRequestResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode), Times.Never);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, null), Times.Never);
         }
 
         [Test]
         public void GetChapterSummaryShouldReturnNotFoundWhenServiceCannotFindChapter()
         {
             //Arrange
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>()))
+            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .Throws<DataNotFoundException>();
 
-            var courseId = _random.NextPositive();
-            var chapterCode = Guid.NewGuid().ToString();
+            int courseId = Random.Shared.NextPositive();
+            string chapterCode = Guid.NewGuid().ToString();
 
             //Act
-            var actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as NotFoundResult;
+            NotFoundResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as NotFoundResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapterCode), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapterCode, null), Times.Once);
         }
 
         [Test]
@@ -155,42 +156,44 @@ namespace Guts.Api.Tests.Controllers
         public void GetChapterStatisticsShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
         {
             //Act
-            var actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null).Result as BadRequestResult;
+            BadRequestResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null).Result as BadRequestResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()), Times.Never);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
         }
 
         [Test]
         public void GetChapterStatisticsShouldReturnNotFoundWhenServiceCannotFindChapter()
         {
             //Arrange
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()))
+            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .Throws<DataNotFoundException>();
 
-            var courseId = _random.NextPositive();
-            var chapterCode = Guid.NewGuid().ToString();
+            int courseId = Random.Shared.NextPositive();
+            string chapterCode = Guid.NewGuid().ToString();
+            int periodId = Random.Shared.NextPositive();
 
             //Act
-            var actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null).Result as NotFoundResult;
+            NotFoundResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null, periodId).Result as NotFoundResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, periodId), Times.Once);
         }
 
         [Test]
-        public void GetChapterStatisticsShouldReturnStatisticsIfParamatersAreValid()
+        public void GetChapterStatisticsShouldReturnStatisticsIfParametersAreValid()
         {
             //Arrange
-            var existingChapter = new ChapterBuilder().WithId().Build();
+            Chapter existingChapter = new ChapterBuilder().WithId().Build();
             var chapterStatistics = new List<AssignmentStatisticsDto>();
-            var chapterStatisticsModel = new TopicStatisticsModel();
-            var date = DateTime.Now.AddDays(-1);
-           
+            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+            DateTime date = DateTime.Now.AddDays(-1);
+            int periodId = Random.Shared.NextPositive();
 
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()))
+
+            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .ReturnsAsync(existingChapter);
 
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
@@ -200,11 +203,13 @@ namespace Guts.Api.Tests.Controllers
                 .Returns(chapterStatisticsModel);
 
             //Act
-            var actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date).Result as OkObjectResult;
+            OkObjectResult actionResult =
+                _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
+                    .Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
             _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, date.ToUniversalTime()), Times.Once);
             _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
@@ -214,37 +219,37 @@ namespace Guts.Api.Tests.Controllers
         public void GetChapterStatisticsShouldUseCacheWhenDateIsCloseToNow()
         {
             //Arrange
-            var courseId = _random.NextPositive();
-            var chapterCode = Guid.NewGuid().ToString();
-            var date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
-            var expectedCacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}";
+            int courseId = Random.Shared.NextPositive();
+            string chapterCode = Guid.NewGuid().ToString();
+            DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
+            string expectedCacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-0";
 
             object cachedChapterStatisticsModel = new TopicStatisticsModel();
             _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
                 .Returns(true);
           
             //Act
-            var actionResult = _controller.GetChapterStatistics(courseId, chapterCode, date).Result as OkObjectResult;
+            OkObjectResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, date, null).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             Assert.That(actionResult.Value, Is.EqualTo(cachedChapterStatisticsModel));
 
             _memoryCacheMock.Verify(cache => cache.TryGetValue(expectedCacheKey, out cachedChapterStatisticsModel), Times.Once);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()), Times.Never);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
         }
 
         [Test]
         public void GetChapterStatisticsShouldNotUseCacheWhenDateIsTooFarInThePast()
         {
             //Arrange
-            var existingChapter = new ChapterBuilder().WithId().Build();
-            var chapterStatistics = new List<AssignmentStatisticsDto>();
-            var chapterStatisticsModel = new TopicStatisticsModel();
-            var aLongTimeAgo = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds - 1);
+            Chapter existingChapter = new ChapterBuilder().WithId().Build();
+            List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
+            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+            DateTime aLongTimeAgo = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds - 1);
 
 
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()))
+            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .ReturnsAsync(existingChapter);
 
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
@@ -254,14 +259,14 @@ namespace Guts.Api.Tests.Controllers
                 .Returns(chapterStatisticsModel);
 
             //Act
-            var actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, aLongTimeAgo).Result as OkObjectResult;
+            OkObjectResult actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, aLongTimeAgo, null).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             object cachedEntry;
             _memoryCacheMock.Verify(cache => cache.TryGetValue(It.IsAny<object>(), out cachedEntry), Times.Never);
 
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code), Times.Once);
+            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, null), Times.Once);
             _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, aLongTimeAgo.ToUniversalTime()), Times.Once);
             _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
             Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
@@ -271,14 +276,15 @@ namespace Guts.Api.Tests.Controllers
         public void GetChapterStatisticsShouldCacheCreatedModel()
         {
             //Arrange
-            var existingChapter = new ChapterBuilder().WithId().Build();
-            var chapterStatistics = new List<AssignmentStatisticsDto>();
-            var chapterStatisticsModel = new TopicStatisticsModel();
-            var date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
-            var expectedCacheKey = $"GetChapterStatistics-{existingChapter.CourseId}-{existingChapter.Code}";
+            Chapter existingChapter = new ChapterBuilder().WithId().Build();
+            List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
+            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+            DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
+            int periodId = Random.Shared.NextPositive();
+            string expectedCacheKey = $"GetChapterStatistics-{existingChapter.CourseId}-{existingChapter.Code}-{periodId}";
+            
 
-
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>()))
+            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
                 .ReturnsAsync(existingChapter);
 
             _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
@@ -291,11 +297,13 @@ namespace Guts.Api.Tests.Controllers
             _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
                 .Returns(false);
 
-            var cacheEntryMock = new Mock<ICacheEntry>();
+            Mock<ICacheEntry> cacheEntryMock = new Mock<ICacheEntry>();
             _memoryCacheMock.Setup(cache => cache.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
 
             //Act
-            var actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date).Result as OkObjectResult;
+            OkObjectResult actionResult =
+                _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
+                    .Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);

@@ -7,7 +7,7 @@ namespace Guts.Business.Repositories
     public interface IBasicRepository<T> where T : IEntity
     {
         Task<T> GetByIdAsync(int id);
-        Task<IList<T>> GetAllAsync();
+        Task<IReadOnlyList<T>> GetAllAsync();
         Task<T> AddAsync(T newEntity);
         Task<T> UpdateAsync(T existingEntity);
         Task DeleteAsync(T entityToDelete);

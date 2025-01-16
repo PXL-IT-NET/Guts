@@ -23,11 +23,8 @@ namespace Guts.Api.Controllers
         public const int CacheTimeInSeconds = 60;
 
         private readonly IProjectService _projectService;
-        //private readonly IProjectTeamRepository _projectTeamRepository;
-        //private readonly IAssignmentRepository _assignmentRepository;
         private readonly IProjectConverter _projectConverter;
         private readonly ITopicConverter _topicConverter;
-        //private readonly ITeamConverter _teamConverter;
         private readonly ISolutionFileService _solutionFileService;
         private readonly IMemoryCache _memoryCache;
 
@@ -48,7 +45,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(ProjectDetailModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectDetails(int courseId, string projectCode)
+        public async Task<IActionResult> GetProjectDetails(int courseId, string projectCode, [FromQuery] int? periodId = null)
         {
             if (courseId < 1 || string.IsNullOrEmpty(projectCode))
             {
@@ -58,11 +55,11 @@ namespace Guts.Api.Controllers
             IProject project;
             if (IsLector())
             {
-                project = await _projectService.LoadProjectAsync(courseId, projectCode);
+                project = await _projectService.LoadProjectAsync(courseId, projectCode, periodId);
             }
             else
             {
-                project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId());
+                project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
             }
 
             var model = _projectConverter.ToProjectDetailModel(project);
@@ -82,7 +79,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, null, model.Description);
+            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, model.Description);
 
             ProjectDetailModel outputModel = _projectConverter.ToProjectDetailModel(project);
 
@@ -101,7 +98,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            await _projectService.UpdateProjectAsync(courseId, projectCode, null, model.Description);
+            await _projectService.UpdateProjectAsync(courseId, projectCode, model.Description);
 
             return Ok();
         }
@@ -113,11 +110,12 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="projectCode">Short code of the project.</param>
         /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet("{projectCode}/statistics")]
         [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetProjectStatistics(int courseId, string projectCode, [FromQuery] DateTime? date)
+        public async Task<IActionResult> GetProjectStatistics(int courseId, string projectCode, [FromQuery] DateTime? date, [FromQuery] int? periodId)
         {
             //TODO: write tests
             if (courseId < 1 || string.IsNullOrEmpty(projectCode))
@@ -128,12 +126,12 @@ namespace Guts.Api.Controllers
             var dateUtc = date?.ToUniversalTime();
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
-            var cacheKey = $"GetProjectStatistics-{courseId}-{projectCode}";
+            var cacheKey = $"GetProjectStatistics-{courseId}-{projectCode}-{periodId ?? 0}";
             if (!useCache || !_memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
             {
                 try
                 {
-                    var project = await _projectService.LoadProjectAsync(courseId, projectCode);
+                    var project = await _projectService.LoadProjectAsync(courseId, projectCode, periodId);
                     var projectStatistics = await _projectService.GetProjectStatisticsAsync(project, dateUtc);
                     model = _topicConverter.ToTopicStatisticsModel(project, projectStatistics, "Teams");
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Repositories;
@@ -27,9 +28,9 @@ namespace Guts.Infrastructure.Repositories
             return entity;
         }
 
-        public virtual async Task<IList<T>> GetAllAsync()
+        public virtual async Task<IReadOnlyList<T>> GetAllAsync()
         {
-            return (IList<T>)await _context.Set<TConcrete>().ToListAsync();
+            return await _context.Set<TConcrete>().OfType<T>().ToListAsync();
         }
 
         public async Task<T> AddAsync(T newEntity)

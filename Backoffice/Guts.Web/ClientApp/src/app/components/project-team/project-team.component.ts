@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/result";
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
-import { ITeamDetailsModel, ITeamMemberModel, TeamGenerationModel } from "../../viewmodels/team.model";
+import { ITeamDetailsModel} from "../../viewmodels/team.model";
 import { PostResult } from "../../util/result";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
 import { BsModalRef, BsModalService, ModalOptions } from 'ngx-bootstrap/modal';
 import { ProjectTeamEditComponent } from '../project-team-edit/project-team-edit.component';
 import { ProjectTeamAddComponent } from '../project-team-add/project-team-add.component';
+import { PeriodProvider } from 'src/app/services/period.provider';
 
 @Component({
   templateUrl: './project-team.component.html'
@@ -21,6 +22,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
   public teams: ITeamDetailsModel[];
   public myTeam: ITeamDetailsModel;
   public userProfile: UserProfile;
+  public activePeriod: boolean = true;
 
   public teamBaseName: string;
   public teamNumberFrom: number;
@@ -35,7 +37,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
 
   constructor(private projectService: ProjectService,
     private authService: AuthService,
-    private router: Router,
+    private periodProvider: PeriodProvider,
     private route: ActivatedRoute,
     private toastr: ToastrService,
     private modalService: BsModalService) {
@@ -53,6 +55,13 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.projectCode = this.route.snapshot.params['code'];
 
     this.userProfile = new UserProfile();
+
+    this.periodProvider.period$.subscribe((period) => {
+      if(period) {
+        this.activePeriod = period.isActive;
+      }
+    });
+
     this.loadData(false);
   }
 

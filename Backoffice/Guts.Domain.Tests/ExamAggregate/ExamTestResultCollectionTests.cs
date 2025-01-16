@@ -1,3 +1,4 @@
+using System;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
 using Moq;
@@ -6,14 +7,14 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class ExamTestResultCollectionTests : DomainTestBase
+    public class ExamTestResultCollectionTests
     {
         [Test]
         public void AddedExamPartResultCollection_ShouldBeRetrievableByExamPartId()
         {
             //Arrange
             var collection =new ExamTestResultCollection();
-            int examPartId = Random.NextPositive();
+            int examPartId = Random.Shared.NextPositive();
             var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
 
             //Act

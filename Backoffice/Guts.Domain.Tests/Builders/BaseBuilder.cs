@@ -7,8 +7,6 @@ namespace Guts.Domain.Tests.Builders
 {
     internal abstract class BaseBuilder<T> where T : class
     {
-        protected static readonly Random Random = new Random();
-
         private Type _itemType;
 
         protected T Item;

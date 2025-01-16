@@ -21,7 +21,7 @@
             </option>
           </select>
         </th>
-        <th *ngIf="userProfile.isLector()"></th>
+        <th *ngIf="userProfile.isLector() && activePeriod"></th>
       </tr>
       </thead>
       <tbody>
@@ -51,7 +51,7 @@
                 </div>
               </div>
             </div>
-            <div *ngIf="assessment.isAfterOpenOn && !assessment.teamStatus.isComplete && userProfile.isMemberOf(assessment.teamStatus.teamId)"
+            <div *ngIf="assessment.isAfterOpenOn && !assessment.teamStatus.isComplete && userProfile.isMemberOf(assessment.teamStatus.teamId) && activePeriod"
                  class="m-2">
               <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']"
                  class="btn btn-outline-success">
@@ -75,7 +75,7 @@
               </a>
             </div>
           </td>
-          <td class="text-center" *ngIf="userProfile.isLector()">
+          <td class="text-center" *ngIf="userProfile.isLector() && activePeriod">
             <button type="submit" class="btn btn-outline-success mb-2" (click)="openAssessmentEditModal(assessment)">
               <span class="fa fa-pencil pe-2"></span>
               <span>Edit</span>
@@ -93,7 +93,7 @@
     </p>
   </div>
 </div>
-<div class="row" *ngIf="userProfile.isLector()">
+<div class="row" *ngIf="userProfile.isLector() && activePeriod">
   <div class="col-12">
     <button type="submit" class="btn btn-outline-success" (click)="openAssessmentAddModal()">
       <span class="fa fa-plus pe-2"></span>

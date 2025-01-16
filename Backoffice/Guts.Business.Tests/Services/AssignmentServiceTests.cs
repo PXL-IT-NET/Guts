@@ -59,140 +59,20 @@ namespace Guts.Business.Tests.Services
             var existingTopic = new ChapterBuilder().WithId().Build();
             var existingAssignment = new AssignmentBuilder().WithId().Build();
 
-            _topicServiceMock.Setup(service => service.GetTopicAsync(It.IsAny<string>(), It.IsAny<string>()))
+            _topicServiceMock.Setup(service => service.GetTopicAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
                 .ReturnsAsync(existingTopic);
 
             _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(existingAssignment);
 
             //Act
-            var assignment = _service.GetAssignmentAsync(dto).Result;
+            var assignment = _service.GetAssignmentOfCurrentPeriodAsync(dto).Result;
 
             //Assert
             Assert.That(assignment, Is.SameAs(existingAssignment));
-            _topicServiceMock.Verify(service => service.GetTopicAsync(dto.CourseCode, dto.TopicCode), Times.Once);
+            _topicServiceMock.Verify(service => service.GetTopicAsync(dto.CourseCode, dto.TopicCode, null), Times.Once);
             _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingTopic.Id, dto.AssignmentCode), Times.Once);
         }
-
-        //[Test]
-        //public void GetOrCreateExerciseAsync_ShouldReturnExerciseIfItExists()
-        //{
-        //    //Arrange
-        //    var assignmentDto = new AssignmentDtoBuilder().Build();
-        //    var existingChapter = new Chapter
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = assignmentDto.TopicCode
-        //    };
-
-        //    _chapterServiceMock.Setup(repo => repo.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingChapter);
-
-        //    var existingAssignment = new AssignmentBuilder()
-        //        .WithId()
-        //        .WithCode(assignmentDto.AssignmentCode).Build();
-
-        //    _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingAssignment);
-
-        //    //Act
-        //    var result = _service.GetOrCreateExerciseAsync(assignmentDto).Result;
-
-        //    //Assert
-        //    _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, existingAssignment.Code), Times.Once());
-        //    _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Never);
-        //    Assert.That(result, Is.EqualTo(existingAssignment));
-        //}
-
-        //[Test]
-        //public void GetOrCreateExerciseAsync_ShouldCreateExerciseIfItDoesNotExist()
-        //{
-        //    //Arrange
-        //    var assignmentDto = new AssignmentDtoBuilder().Build();
-
-        //    var existingChapter = new Chapter
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = assignmentDto.TopicCode
-        //    };
-            
-        //    _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(It.IsAny<string>(), It.IsAny<string>()))
-        //        .ReturnsAsync(existingChapter);
-
-        //    var addedAssignment = new AssignmentBuilder()
-        //        .WithId()
-        //        .WithCode(assignmentDto.AssignmentCode).Build();
-
-        //    _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();
-        //    _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>())).ReturnsAsync(addedAssignment);
-
-        //    //Act
-        //    var result = _service.GetOrCreateExerciseAsync(assignmentDto).Result;
-
-        //    //Assert
-        //    _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingChapter.Id, addedAssignment.Code), Times.Once());
-        //    _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Once);
-        //    Assert.That(result, Is.EqualTo(addedAssignment));
-        //}
-
-        //[Test]
-        //public void GetOrCreateProjectComponentAsync_ShouldReturnComponentIfItExists()
-        //{
-        //    //Arrange
-        //    var projectComponentDto = new AssignmentDtoBuilder().Build();
-        //    var existingProject = new Project
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = projectComponentDto.TopicCode
-        //    };
-
-        //    _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingProject);
-
-        //    var existingComponent = new Assignment()
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = projectComponentDto.AssignmentCode
-        //    };
-
-        //    _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(existingComponent);
-
-        //    //Act
-        //    var result = _service.GetOrCreateProjectComponentAsync(projectComponentDto).Result;
-
-        //    //Assert
-        //    _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingProject.Id, existingComponent.Code), Times.Once());
-        //    _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Never);
-        //    Assert.That(result, Is.EqualTo(existingComponent));
-        //}
-
-        //[Test]
-        //public void GetOrCreateProjectComponentAsync_ShouldCreateComponentIfItDoesNotExist()
-        //{
-        //    //Arrange
-        //    var assignmentDto = new AssignmentDtoBuilder().Build();
-        //    var existingProject = new Project
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = assignmentDto.TopicCode
-        //    };
-
-        //    _projectServiceMock.Setup(service => service.GetOrCreateProjectAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(existingProject);
-
-        //    var addedComponent = new Assignment()
-        //    {
-        //        Id = _random.NextPositive(),
-        //        Code = assignmentDto.AssignmentCode
-        //    };
-
-        //    _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>())).Throws<DataNotFoundException>();
-        //    _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>())).ReturnsAsync(addedComponent);
-
-        //    //Act
-        //    var result = _service.GetOrCreateProjectComponentAsync(assignmentDto).Result;
-
-        //    //Assert
-        //    _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingProject.Id, addedComponent.Code), Times.Once());
-        //    _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Once);
-        //    Assert.That(result, Is.EqualTo(addedComponent));
-        //}
 
         [Test]
         public void LoadTestsForAssignmentAsync_ShouldLoadExistingTests()
@@ -274,33 +154,6 @@ namespace Guts.Business.Tests.Services
             Assert.That(assignment.Tests, Is.Not.Null);
             Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
         }
-
-        //[Test]
-        //public void LoadOrCreateTestsForAssignmentAsync_ShouldRemoveExistingTestsThatAreNotInTestNamesParameter() //Mistake: a TestRun does not always contain all tests
-        //{
-        //    //Arrange
-        //    Test test1 = new TestBuilder().Build();
-        //    Test deprecatedTest = new TestBuilder().Build();
-
-        //    var testNames = new List<string> { test1.TestName };
-        //    var assignment = new Assignment
-        //    {
-        //        Id = _random.NextPositive()
-        //    };
-
-        //    _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>{test1, deprecatedTest});
-
-        //    //Act
-        //    _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
-
-        //    //Assert
-        //    _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
-        //    _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
-        //    _testRepositoryMock.Verify(repo => repo.DeleteAsync(deprecatedTest), Times.Once);
-
-        //    Assert.That(assignment.Tests, Is.Not.Null);
-        //    Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
-        //}
 
         [Test]
         public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToAnAssignmentResultDto()

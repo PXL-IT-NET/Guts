@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class ExamTests : DomainTestBase
+    public class ExamTests
     {
         private Exam.Factory _factory;
         private Exam _existingExam;
@@ -21,16 +21,16 @@ namespace Guts.Domain.Tests.ExamAggregate
         public void SetUp()
         {
             _factory = new Exam.Factory();
-            var examId = Random.NextPositive();
+            var examId = Random.Shared.NextPositive();
             _existingExam = new ExamBuilder().WithId(examId).Build();
         }
 
         [Test]
         public void Factory_CreateNew_ShouldConstructExamCorrectly()
         {
-            var validCourseId = Random.NextPositive();
-            var validPeriodId = Random.NextPositive();
-            var validName = Random.NextString();
+            var validCourseId = Random.Shared.NextPositive();
+            var validPeriodId = Random.Shared.NextPositive();
+            var validName = Random.Shared.NextString();
             var exam = _factory.CreateNew(validCourseId, validPeriodId, validName);
 
             Assert.That(exam, Is.Not.Null);
@@ -56,7 +56,7 @@ namespace Guts.Domain.Tests.ExamAggregate
         [Test]
         public void AddExamPart_ShouldCorrectlyCreateAndAddAnExamPart()
         {
-            var validName = Random.NextString();
+            var validName = Random.Shared.NextString();
             var validDeadline = DateTime.UtcNow.AddDays(1);
 
             var addedPart = _existingExam.AddExamPart(validName, validDeadline);
@@ -110,7 +110,7 @@ namespace Guts.Domain.Tests.ExamAggregate
 
             var examTestResultCollectionMock = new Mock<IExamTestResultCollection>();
             var verifyExamPartActions = new List<Action<int, IExamScore>>();
-            for (int i = 0; i < Random.Next(2,10); i++)
+            for (int i = 0; i < Random.Shared.Next(2,10); i++)
             {
                 verifyExamPartActions.Add(AddExamPartMockToExam(examBuilder, examTestResultCollectionMock));
             }
@@ -135,7 +135,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             IExamPartScore examPartScore = examPartScoreMock.Object;
 
             var examPartMock = new Mock<IExamPart>();
-            var examPartId = Random.NextPositive();
+            var examPartId = Random.Shared.NextPositive();
             examPartMock.SetupGet(part => part.Id).Returns(examPartId);
             examPartMock
                 .Setup(part => part.CalculateScoreForUser(It.IsAny<int>(), It.IsAny<IExamPartTestResultCollection>()))

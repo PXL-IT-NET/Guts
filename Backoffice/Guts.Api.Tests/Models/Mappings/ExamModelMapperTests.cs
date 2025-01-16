@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using AutoMapper;
 using Guts.Api.Models.ExamModels;
+using Guts.Api.Models.PeriodModels;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
@@ -16,7 +17,7 @@ namespace Guts.Api.Tests.Models.Mappings
         {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.AddMaps(typeof(ExamOutputModel).Assembly);
+                cfg.AddMaps(typeof(PeriodOutputModel).Assembly);
             });
             _mapper = config.CreateMapper();
         }

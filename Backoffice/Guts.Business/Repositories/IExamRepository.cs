@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Business.Repositories
 {
@@ -8,6 +9,6 @@ namespace Guts.Business.Repositories
     {
         Task<IExam> LoadDeepAsync(int examId);
 
-        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int periodId, int? courseId);
+        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int courseId, int periodId);
     }
 }

@@ -55,6 +55,7 @@ export class ChapterSummaryComponent implements OnChanges {
 
   private loadChapterStatistics() {
     this.loadingStatistics = true;
+
     this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.statusDate).subscribe((result) => {
       if (result.success) {
         this.statistics = result.value;

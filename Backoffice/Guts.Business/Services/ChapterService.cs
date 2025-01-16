@@ -31,14 +31,14 @@ namespace Guts.Business.Services
             _assignmentService = assignmentService;
         }
 
-        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, Code chapterCode)
+        public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, Code chapterCode, int? periodId = null)
         {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
 
             Chapter chapter;
             try
             {
-                chapter = await _chapterRepository.GetSingleAsync(courseCode, chapterCode, currentPeriod.Id);
+                chapter = await _chapterRepository.GetSingleAsync(courseCode, chapterCode, period.Id);
             }
             catch (DataNotFoundException)
             {
@@ -47,7 +47,7 @@ namespace Guts.Business.Services
                 {
                     Code = chapterCode,
                     CourseId = course.Id,
-                    PeriodId = currentPeriod.Id
+                    PeriodId = period.Id
                 };
                 chapter = await _chapterRepository.AddAsync(chapter);
             }
@@ -55,31 +55,26 @@ namespace Guts.Business.Services
             return chapter;
         }
 
-        public async Task UpdateChapterAsync(int courseId, Code chapterCode, int? periodId, string description)
+        public async Task UpdateChapterAsync(int courseId, Code chapterCode, string description)
         {
-            if (!periodId.HasValue)
-            {
-                Period currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-                periodId = currentPeriod.Id;
-            }
+            IPeriod period = await _periodRepository.GetPeriodAsync(null);
 
-            await _topicRepository.UpdateAsync(courseId, chapterCode, periodId.Value, description);
+            await _topicRepository.UpdateAsync(courseId, chapterCode, period.Id, description);
         }
 
-        public async Task<Chapter> LoadChapterAsync(int courseId, Code chapterCode)
+        public async Task<Chapter> LoadChapterAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
 
-            var chapter = await _chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, currentPeriod.Id);
+            var chapter = await _chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, period.Id);
 
             return chapter;
         }
 
-        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, Code chapterCode)
+        public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            var currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
-
-            var chapter = await _chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, currentPeriod.Id);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
+            Chapter chapter = await _chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, period.Id);
 
             return chapter;
         }
@@ -107,19 +102,19 @@ namespace Guts.Business.Services
             return results;
         }
 
-        public async Task<IReadOnlyList<Chapter>> GetChaptersOfCourseAsync(int courseId)
+        public async Task<IReadOnlyList<Chapter>> GetChaptersOfCourseAsync(int courseId, int? periodId = null)
         {
-            Period currentPeriod;
+            IPeriod period;
             try
             {
-                currentPeriod = await _periodRepository.GetCurrentPeriodAsync();
+                period = await _periodRepository.GetPeriodAsync(periodId);
             }
             catch (DataNotFoundException)
             {
                 return new List<Chapter>();
             }
 
-            IList<Chapter> chapters = await _chapterRepository.GetByCourseIdAsync(courseId, currentPeriod.Id);
+            IList<Chapter> chapters = await _chapterRepository.GetByCourseIdAsync(courseId, period.Id);
             return chapters.ToList();
         }
     }

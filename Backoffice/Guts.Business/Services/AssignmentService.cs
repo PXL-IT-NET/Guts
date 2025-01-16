@@ -8,6 +8,7 @@ using Guts.Business.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.TopicAggregate;
 
 namespace Guts.Business.Services
 {
@@ -38,9 +39,9 @@ namespace Guts.Business.Services
             _assignmentWithResultsConverter = assignmentWithResultsConverter;
         }
 
-        public async Task<Assignment> GetAssignmentAsync(AssignmentDto assignmentDto)
+        public async Task<Assignment> GetAssignmentOfCurrentPeriodAsync(AssignmentDto assignmentDto)
         {
-            var topic = await _topicService.GetTopicAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
+            ITopic topic = await _topicService.GetTopicAsync(assignmentDto.CourseCode, assignmentDto.TopicCode);
             return await _assignmentRepository.GetSingleAsync(topic.Id, assignmentDto.AssignmentCode);
         }
 

@@ -8,6 +8,7 @@ using AutoMapper;
 using CsvHelper;
 using Guts.Api.Models;
 using Guts.Api.Models.ExamModels;
+using Guts.Api.Models.PeriodModels;
 using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Exam;
@@ -35,22 +36,22 @@ namespace Guts.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves all exams.
-        /// Optionally filtered by course.
+        /// Retrieves all exams of a course.
         /// </summary>
-        /// <param name="courseId"></param>
+        /// <param name="courseId">Identifier of the course</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ExamOutputModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(IEnumerable<PeriodOutputModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult> GetExams([FromQuery] int? courseId = null)
+        public async Task<ActionResult> GetExams([FromQuery] int courseId, [FromQuery] int? periodId = null)
         {
             if (courseId <= 0)
             {
                 return BadRequest(ErrorModel.FromString("Invalid course Id."));
             }
-            var exams = await _examService.GetExamsAsync(courseId);
-            var model = exams.Select(e => _mapper.Map<ExamOutputModel>(e));
+            var exams = await _examService.GetExamsAsync(courseId, periodId);
+            var model = exams.Select(e => _mapper.Map<PeriodOutputModel>(e));
             return Ok(model);
         }
 
@@ -59,7 +60,7 @@ namespace Guts.Api.Controllers
         /// </summary>
         /// <param name="id">Identifier of the exam in the database</param>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(PeriodOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<ActionResult> GetExam(int id)
@@ -67,7 +68,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var exam = await _examService.GetExamAsync(id);
-                var model = _mapper.Map<ExamOutputModel>(exam);
+                var model = _mapper.Map<PeriodOutputModel>(exam);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -80,7 +81,7 @@ namespace Guts.Api.Controllers
         /// Creates a new exam
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType(typeof(PeriodOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
@@ -88,7 +89,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
-                var outputModel = _mapper.Map<ExamOutputModel>(exam);
+                var outputModel = _mapper.Map<PeriodOutputModel>(exam);
                 return CreatedAtAction(nameof(GetExam), new { id = outputModel.Id }, outputModel);
             }
             catch (ContractException ex)

@@ -1,6 +1,7 @@
 ﻿using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ExamAggregate;
+using System;
 
 namespace Guts.Domain.Tests.Builders
 {
@@ -10,15 +11,15 @@ namespace Guts.Domain.Tests.Builders
         {
             ConstructItem();
             Item.Id = 0;
-            SetProperty(ae => ae.AssignmentId, Random.NextPositive());
-            SetProperty(ae => ae.ExamPartId, Random.NextPositive());
-            SetProperty(ae => ae.MaximumScore, Random.NextPositive());
-            SetProperty(ae => ae.NumberOfTestsAlreadyGreenAtStart, Random.Next(0, 6));
+            SetProperty(ae => ae.AssignmentId, Random.Shared.NextPositive());
+            SetProperty(ae => ae.ExamPartId, Random.Shared.NextPositive());
+            SetProperty(ae => ae.MaximumScore, Random.Shared.NextPositive());
+            SetProperty(ae => ae.NumberOfTestsAlreadyGreenAtStart, Random.Shared.Next(0, 6));
         }
 
         public AssignmentEvaluationBuilder WithId()
         {
-            SetProperty(ae => ae.Id, Random.NextPositive());
+            SetProperty(ae => ae.Id, Random.Shared.NextPositive());
             return this;
         }
 

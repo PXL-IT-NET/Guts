@@ -50,11 +50,12 @@ namespace Guts.Api.Controllers
         /// </summary>
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode">Sequence number of the chapter</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet("{chapterCode}")]
         [ProducesResponseType(typeof(ChapterDetailModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterDetails(int courseId, string chapterCode)
+        public async Task<IActionResult> GetChapterDetails(int courseId, string chapterCode, [FromQuery] int? periodId = null)
         {
             if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
             {
@@ -63,7 +64,7 @@ namespace Guts.Api.Controllers
 
             try
             {
-                Chapter chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode);
+                Chapter chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
 
                 List<User> chapterUsers = new List<User>();
                 if (IsLector())
@@ -97,7 +98,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            await _chapterService.UpdateChapterAsync(courseId, chapterCode, null, model.Description);
+            await _chapterService.UpdateChapterAsync(courseId, chapterCode, model.Description);
 
             return Ok();
         }
@@ -109,13 +110,14 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode"></param>
         /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
-        /// <param name="date">Optional date paramter. If provided the status of the summary on that date will be returned.</param>
+        /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet("{chapterCode}/users/{userId}/summary")]
         [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> GetChapterSummary(int courseId, string chapterCode, int userId,
-            [FromQuery] DateTime? date)
+            [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
         {
             if (courseId < 1 || string.IsNullOrEmpty(chapterCode) || userId < 1)
             {
@@ -136,7 +138,7 @@ namespace Guts.Api.Controllers
 
             try
             {
-                var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode);
+                var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
                 var assignmentResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
                 var model = _topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
                 return Ok(model);
@@ -153,11 +155,13 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course in the database.</param>
         /// <param name="chapterCode">Sequence number of the chapter.</param>
         /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet("{chapterCode}/statistics")]
         [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, [FromQuery] DateTime? date)
+        public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, 
+            [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
         {
             if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
             {
@@ -167,12 +171,12 @@ namespace Guts.Api.Controllers
             var dateUtc = date?.ToUniversalTime();
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
-            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}";
+            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-{periodId ?? 0}";
             if (!useCache || !_memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
             {
                 try
                 {
-                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode);
+                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode, periodId);
                     var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
                     model = _topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
 

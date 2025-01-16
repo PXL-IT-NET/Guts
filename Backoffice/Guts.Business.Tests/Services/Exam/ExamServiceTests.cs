@@ -24,18 +24,11 @@ namespace Guts.Business.Tests.Services.Exam
         private Mock<IExamRepository> _examRepositoryMock;
         private Mock<IExamFactory> _examFactoryMock;
 
-        private Random _random;
         private Mock<IExamPartRepository> _examPartRepositoryMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<IUserRepository> _userRepositoryMock;
         private Mock<IExamTestResultLoader> _examTestResultLoaderMock;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            _random = new Random();
-        }
 
         [SetUp]
         public void Setup()
@@ -60,21 +53,21 @@ namespace Guts.Business.Tests.Services.Exam
         [Test]
         public void CreateExamAsync_ShouldCreateAndSaveAnExam()
         {
-            var courseId = _random.NextPositive();
-            var name = _random.NextString();
+            int courseId = Random.Shared.NextPositive();
+            string name = Random.Shared.NextString();
 
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            var existingPeriod = new PeriodBuilder().WithId().Build();
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
-            var createdExam = new ExamBuilder().Build();
+            Domain.ExamAggregate.Exam createdExam = new ExamBuilder().Build();
             _examFactoryMock
                 .Setup(f => f.CreateNew(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
                 .Returns(createdExam);
-            var savedExam = new ExamBuilder().Build();
+            Domain.ExamAggregate.Exam savedExam = new ExamBuilder().Build();
             _examRepositoryMock
                 .Setup(repo => repo.AddAsync(It.IsAny<Domain.ExamAggregate.Exam>())).ReturnsAsync(savedExam);
 
-            var result = _service.CreateExamAsync(courseId, name).Result;
+            IExam result = _service.CreateExamAsync(courseId, name).Result;
 
             _examFactoryMock.Verify(f => f.CreateNew(courseId, existingPeriod.Id, name), Times.Once);
             _examRepositoryMock.Verify(repo => repo.AddAsync(createdExam), Times.Once);
@@ -84,12 +77,12 @@ namespace Guts.Business.Tests.Services.Exam
         [Test]
         public void GetExamAsync_ShouldReturnExamWithPartsAndEvaluationsLoaded()
         {
-            var examId = _random.NextPositive();
-            var existingExam = new ExamBuilder().WithId(examId).Build();
+            var examId = Random.Shared.NextPositive();
+            Domain.ExamAggregate.Exam existingExam = new ExamBuilder().WithId(examId).Build();
             _examRepositoryMock
                 .Setup(repo => repo.LoadDeepAsync(It.IsAny<int>())).ReturnsAsync(existingExam);
 
-            var result = _service.GetExamAsync(examId).Result;
+            IExam result = _service.GetExamAsync(examId).Result;
 
             _examRepositoryMock.Verify(repo => repo.LoadDeepAsync(examId), Times.Once);
             Assert.That(result, Is.SameAs(existingExam));
@@ -99,17 +92,17 @@ namespace Guts.Business.Tests.Services.Exam
         public void GetExamsAsync_ShouldFindAllExamsOfACourseForTheCurrentPeriod()
         {
             //Arrange
-            var existingPeriod = new Period { Id = _random.NextPositive() };
-            _periodRepositoryMock.Setup(repo => repo.GetCurrentPeriodAsync()).ReturnsAsync(existingPeriod);
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
-            int? courseId = _random.NextPositive();
+            int courseId = Random.Shared.NextPositive();
 
-            var retrievedExams = new List<Domain.ExamAggregate.Exam>();
+            List<Domain.ExamAggregate.Exam> retrievedExams = new List<Domain.ExamAggregate.Exam>();
             _examRepositoryMock
-                .Setup(repo => repo.FindWithPartsAndEvaluationsAsync(existingPeriod.Id, courseId)).ReturnsAsync(retrievedExams).Verifiable();
+                .Setup(repo => repo.FindWithPartsAndEvaluationsAsync(courseId, existingPeriod.Id)).ReturnsAsync(retrievedExams).Verifiable();
 
             //Act
-            var results = _service.GetExamsAsync(courseId).Result;
+            IReadOnlyList<IExam> results = _service.GetExamsAsync(courseId).Result;
 
             //Assert
             _examRepositoryMock.Verify();
@@ -120,12 +113,12 @@ namespace Guts.Business.Tests.Services.Exam
         public void CreateExamPartAsync_ShouldCreateAndSaveAnExam()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
 
-            var examPartDto = new ExamPartDto
+            ExamPartDto examPartDto = new ExamPartDto
             {
-                Name = _random.NextString(),
-                Deadline = _random.NextDateTimeInFuture(),
+                Name = Random.Shared.NextString(),
+                Deadline = Random.Shared.NextDateTimeInFuture(),
                 AssignmentEvaluations = new List<AssignmentEvaluationDto>
                 {
                     new AssignmentEvaluationDtoBuilder().Build(),
@@ -134,10 +127,10 @@ namespace Guts.Business.Tests.Services.Exam
                 }
             };
 
-            var examMock = new Mock<IExam>();
+            Mock<IExam> examMock = new Mock<IExam>();
             _examRepositoryMock.Setup(repo => repo.LoadDeepAsync(examId)).ReturnsAsync(examMock.Object);
 
-            var createdExamPart = new ExamPartBuilder().Build();
+            ExamPart createdExamPart = new ExamPartBuilder().Build();
             examMock.Setup(exam => exam.AddExamPart(examPartDto.Name, examPartDto.Deadline)).Returns(createdExamPart).Verifiable();
 
             _assignmentRepositoryMock
@@ -149,7 +142,7 @@ namespace Guts.Business.Tests.Services.Exam
             _examPartRepositoryMock.Setup(repo => repo.AddAsync(createdExamPart)).ReturnsAsync(createdExamPart);
 
             //Act
-            var result = _service.CreateExamPartAsync(examId, examPartDto).Result;
+            IExamPart result = _service.CreateExamPartAsync(examId, examPartDto).Result;
 
             //Assert
             examMock.Verify();
@@ -168,12 +161,12 @@ namespace Guts.Business.Tests.Services.Exam
         public void CreateExamPartAsync_ShouldThrowContractException_WhenDtoContainsNoAssignmentEvaluations()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
 
-            var examPartDto = new ExamPartDto
+            ExamPartDto examPartDto = new ExamPartDto
             {
-                Name = _random.NextString(),
-                Deadline = _random.NextDateTimeInFuture(),
+                Name = Random.Shared.NextString(),
+                Deadline = Random.Shared.NextDateTimeInFuture(),
                 AssignmentEvaluations = new List<AssignmentEvaluationDto>()
             };
 
@@ -185,8 +178,8 @@ namespace Guts.Business.Tests.Services.Exam
         public void DeleteExamPartAsync_ShouldThrowContractException_WhenDtoContainsNoAssignmentEvaluations()
         {
             //Arrange
-            int examPartId = _random.NextPositive();
-            var examMock = new Mock<IExam>();
+            int examPartId = Random.Shared.NextPositive();
+            Mock<IExam> examMock = new Mock<IExam>();
 
             //Act 
             _service.DeleteExamPartAsync(examMock.Object, examPartId).Wait();
@@ -200,22 +193,22 @@ namespace Guts.Business.Tests.Services.Exam
         public void CalculateExamScoresForCsvAsync_ShouldCalculateTheScoreForAllUsersOfTheCourse()
         {
             //Arrange
-            int examId = _random.NextPositive();
-            int courseId = _random.NextPositive();
-            var examMock = new Mock<IExam>();
+            int examId = Random.Shared.NextPositive();
+            int courseId = Random.Shared.NextPositive();
+            Mock<IExam> examMock = new Mock<IExam>();
             _examRepositoryMock.Setup(repo => repo.LoadDeepAsync(examId)).ReturnsAsync(examMock.Object);
 
-            var examTestResultCollection = new ExamTestResultCollection();
+            ExamTestResultCollection examTestResultCollection = new ExamTestResultCollection();
             _examTestResultLoaderMock.Setup(loader => loader.GetExamResultsAsync(examMock.Object))
                 .ReturnsAsync(examTestResultCollection);
 
-            var examScoreMock = new Mock<IExamScore>();
+            Mock<IExamScore> examScoreMock = new Mock<IExamScore>();
             examMock.SetupGet(exam => exam.CourseId).Returns(courseId);
             examMock.Setup(exam => exam.CalculateScoreForUser(It.IsAny<User>(), examTestResultCollection))
                 .Returns(examScoreMock.Object);
 
-            int numberOfUsers = _random.Next(2, 11);
-            var users = new List<User>();
+            int numberOfUsers = Random.Shared.Next(2, 11);
+            List<User> users = new List<User>();
             for (int i = 0; i < numberOfUsers; i++)
             {
                 users.Add(new UserBuilder().Build());

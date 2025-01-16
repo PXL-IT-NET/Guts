@@ -6,6 +6,7 @@ using AutoMapper;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.ExamModels;
+using Guts.Api.Models.PeriodModels;
 using Guts.Api.Tests.Builders;
 using Guts.Business;
 using Guts.Business.Dtos;
@@ -26,7 +27,6 @@ namespace Guts.Api.Tests.Controllers
     public class ExamControllerTests
     {
         private ExamController _controller;
-        private Random _random;
         private Mock<IExamService> _examServiceMock;
         private Mock<IMapper> _mapperMock;
         private int _userId;
@@ -34,7 +34,6 @@ namespace Guts.Api.Tests.Controllers
         [SetUp]
         public void Setup()
         {
-            _random = new Random();
             _examServiceMock = new Mock<IExamService>();
             _mapperMock = new Mock<IMapper>();
 
@@ -51,34 +50,35 @@ namespace Guts.Api.Tests.Controllers
         public void GetExams_ShouldReturnExamsOfCourse()
         {
             //Arrange
-            int? courseId = _random.NextPositive();
+            int courseId = Random.Shared.NextPositive();
+            int periodId = Random.Shared.NextPositive();
 
             var retrievedExams = new List<Exam>()
             {
                 new ExamBuilder().Build()
             };
 
-            _examServiceMock.Setup(service => service.GetExamsAsync(courseId))
+            _examServiceMock.Setup(service => service.GetExamsAsync(courseId, periodId))
                 .ReturnsAsync(retrievedExams).Verifiable();
 
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(new ExamOutputModel());
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(new PeriodOutputModel());
 
             //Act
-            var actionResult = _controller.GetExams(courseId).Result as OkObjectResult;
+            var actionResult = _controller.GetExams(courseId, periodId).Result as OkObjectResult;
 
             //Assert
             Assert.That(actionResult, Is.Not.Null);
-            var results = actionResult.Value as IEnumerable<ExamOutputModel>;
+            var results = actionResult.Value as IEnumerable<PeriodOutputModel>;
             Assert.That(results.Count(), Is.EqualTo(retrievedExams.Count));
             _examServiceMock.Verify();
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsIn<Exam>(retrievedExams)), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsIn<Exam>(retrievedExams)), Times.Once);
         }
 
         [Test]
         public void GetExams_ShouldReturnBadRequestOnInvalidCourseId()
         {
             //Arrange
-            int? invalidCourseId = _random.NextZeroOrNegative();
+            int invalidCourseId = Random.Shared.NextZeroOrNegative();
 
             //Act
             var badRequestResult = _controller.GetExams(invalidCourseId).Result as BadRequestObjectResult;
@@ -92,21 +92,21 @@ namespace Guts.Api.Tests.Controllers
         public void GetExam_ShouldReturnOkWhenExamExists()
         {
             //Arrange
-            var examId = _random.NextPositive();
+            var examId = Random.Shared.NextPositive();
             var existingExam = new ExamBuilder().WithId(examId).Build();
-            var convertedExam = new ExamOutputModel();
+            var convertedExam = new PeriodOutputModel();
 
             _examServiceMock.Setup(service => service.GetExamAsync(It.IsAny<int>()))
                 .ReturnsAsync(existingExam);
 
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
 
             //Act
             var actionResult = _controller.GetExam(examId).Result as OkObjectResult;
 
             //Assert
             _examServiceMock.Verify(service => service.GetExamAsync(examId), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(existingExam), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(existingExam), Times.Once);
             Assert.That(actionResult, Is.Not.Null);
             Assert.That(actionResult.Value, Is.SameAs(convertedExam));
         }
@@ -115,7 +115,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetExam_ShouldReturnNotFoundWhenExamDoesNotExist()
         {
             //Arrange
-            var examId = _random.NextPositive();
+            var examId = Random.Shared.NextPositive();
 
             _examServiceMock.Setup(service => service.GetExamAsync(It.IsAny<int>()))
                 .Throws<DataNotFoundException>();
@@ -127,7 +127,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.GetExamAsync(examId), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsAny<Exam>()), Times.Never);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>()), Times.Never);
         }
 
         [Test]
@@ -136,14 +136,14 @@ namespace Guts.Api.Tests.Controllers
             //Arrange
             var inputModel = new ExamCreationModel
             {
-                CourseId = _random.NextPositive(),
-                Name = _random.NextString()
+                CourseId = Random.Shared.NextPositive(),
+                Name = Random.Shared.NextString()
             };
-            var createdExam = new ExamBuilder().WithId(_random.NextPositive()).Build();
+            var createdExam = new ExamBuilder().WithId(Random.Shared.NextPositive()).Build();
             _examServiceMock.Setup(service => service.CreateExamAsync(It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(createdExam);
-            var convertedExam = new ExamOutputModel { Id = createdExam.Id };
-            _mapperMock.Setup(m => m.Map<ExamOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
+            var convertedExam = new PeriodOutputModel { Id = createdExam.Id };
+            _mapperMock.Setup(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>())).Returns(convertedExam);
 
             //Act
             var actionResult = _controller.PostExam(inputModel).Result as CreatedAtActionResult;
@@ -151,7 +151,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.CreateExamAsync(inputModel.CourseId, inputModel.Name), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(createdExam), Times.Once);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(createdExam), Times.Once);
 
             Assert.That(actionResult.Value, Is.SameAs(convertedExam));
             Assert.That(actionResult.ActionName, Is.EqualTo(nameof(ExamController.GetExam)));
@@ -168,7 +168,7 @@ namespace Guts.Api.Tests.Controllers
                 Name = ""
             };
 
-            var contractException = new ContractException(_random.NextString());
+            var contractException = new ContractException(Random.Shared.NextString());
             _examServiceMock.Setup(service => service.CreateExamAsync(It.IsAny<int>(), It.IsAny<string>()))
                 .Throws(contractException);
 
@@ -178,7 +178,7 @@ namespace Guts.Api.Tests.Controllers
             //Assert
             Assert.That(actionResult, Is.Not.Null);
             _examServiceMock.Verify(service => service.CreateExamAsync(inputModel.CourseId, inputModel.Name), Times.Once);
-            _mapperMock.Verify(m => m.Map<ExamOutputModel>(It.IsAny<Exam>()), Times.Never);
+            _mapperMock.Verify(m => m.Map<PeriodOutputModel>(It.IsAny<Exam>()), Times.Never);
             var errorModel = actionResult.Value as ErrorModel;
             Assert.That(errorModel, Is.Not.Null);
             Assert.That(errorModel.Message, Is.EqualTo(contractException.Message));
@@ -188,7 +188,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetExamPart_ShouldReturnAnExamPartOutputModel()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
             IExamPart examPart1 = new ExamPartBuilder().WithId().Build();
             IExamPart examPart2 = new ExamPartBuilder().WithId().Build();
             var examParts = new List<IExamPart> { examPart1, examPart2 };
@@ -215,8 +215,8 @@ namespace Guts.Api.Tests.Controllers
         public void GetExamPart_ShouldReturnNotFoundResultWhenExamDoesNotExist()
         {
             //Arrange
-            int examId = _random.NextPositive();
-            int examPartId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
+            int examPartId = Random.Shared.NextPositive();
 
             _examServiceMock.Setup(service => service.GetExamAsync(examId)).Throws<DataNotFoundException>().Verifiable();
 
@@ -232,7 +232,7 @@ namespace Guts.Api.Tests.Controllers
         public void GetExamPart_ShouldReturnNotFoundResultWhenExamPartDoesNotExist()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
             IExamPart examPart1 = new ExamPartBuilder().WithId().Build();
             IExamPart examPart2 = new ExamPartBuilder().WithId().Build();
             var examParts = new List<IExamPart> { examPart1, examPart2 };
@@ -256,7 +256,7 @@ namespace Guts.Api.Tests.Controllers
         public void PostExamPart_ShouldReturnCreatedWhenInputIsValid()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
             var inputModel = new ExamPartDto();
 
             var createdExamPart = new ExamPartBuilder().WithId().Build();
@@ -283,7 +283,7 @@ namespace Guts.Api.Tests.Controllers
         public void PostExamPart_ShouldReturnBadRequestResultWhenInputIsInvalid()
         {
             //Arrange
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
             var inputModel = new ExamPartDto();
 
             _examServiceMock.Setup(service => service.CreateExamPartAsync(examId, inputModel))
@@ -302,8 +302,8 @@ namespace Guts.Api.Tests.Controllers
         public void DeleteExamPart_ShouldReturnOkWhenOperationSucceeds()
         {
             //Arrange
-            int examId = _random.NextPositive();
-            int examPartId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
+            int examPartId = Random.Shared.NextPositive();
 
             var examMock = new Mock<IExam>();
 
@@ -322,8 +322,8 @@ namespace Guts.Api.Tests.Controllers
         public void DeleteExamPart_ReturnBadRequestWhenExamPartDoesNotExist()
         {
             //Arrange
-            int examId = _random.NextPositive();
-            int examPartId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
+            int examPartId = Random.Shared.NextPositive();
 
             var examMock = new Mock<IExam>();
 
@@ -343,8 +343,8 @@ namespace Guts.Api.Tests.Controllers
         public void DownloadExamScores_ShouldReturnFileStreamResultOfExamScores()
         {
             //Arrange
-            int examId = _random.NextPositive();
-            string examName = _random.NextString();
+            int examId = Random.Shared.NextPositive();
+            string examName = Random.Shared.NextString();
             string expectedFileName = $"{examName.ToValidFilePath()}.csv";
 
             var examMock = new Mock<IExam>();
@@ -375,7 +375,7 @@ namespace Guts.Api.Tests.Controllers
             //Arrange
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
 
-            int examId = _random.NextPositive();
+            int examId = Random.Shared.NextPositive();
 
             _examServiceMock.Setup(service => service.GetExamAsync(examId)).Throws<DataNotFoundException>().Verifiable();
 
@@ -389,7 +389,7 @@ namespace Guts.Api.Tests.Controllers
 
         private ExamController CreateControllerWithUserInContext(string role)
         {
-            _userId = _random.Next(1, int.MaxValue);
+            _userId = Random.Shared.Next(1, int.MaxValue);
             return new ExamController(_examServiceMock.Object, _mapperMock.Object)
             {
                 ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()

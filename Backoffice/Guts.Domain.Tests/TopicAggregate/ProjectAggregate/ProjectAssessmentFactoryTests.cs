@@ -6,7 +6,7 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
 {
-    public class ProjectAssessmentFactoryTests : DomainTestBase
+    public class ProjectAssessmentFactoryTests
     {
         private ProjectAssessment.Factory _factory;
 
@@ -20,8 +20,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_ValidInput_ShouldInitializeCorrectly()
         {
             //Arrange
-            int projectId = Random.NextPositive();
-            string description = Random.NextString();
+            int projectId = Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOnUtc = DateTime.UtcNow;
             DateTime deadlineUtc = openOnUtc.AddDays(15);
 
@@ -39,8 +39,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_ProjectIdNotPositive_ShouldThrowContractException()
         {
             //Arrange
-            int invalidProjectId = -1 * Random.NextPositive();
-            string description = Random.NextString();
+            int invalidProjectId = -1 * Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOnUtc = DateTime.UtcNow;
             DateTime deadlineUtc = openOnUtc.AddDays(15);
 
@@ -52,7 +52,7 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_EmptyDescription_ShouldThrowContractException()
         {
             //Arrange
-            int projectId = Random.NextPositive();
+            int projectId = Random.Shared.NextPositive();
             string emptyDescription = string.Empty;
             DateTime openOnUtc = DateTime.UtcNow;
             DateTime deadlineUtc = openOnUtc.AddDays(15);
@@ -65,8 +65,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_OpenOnIsNotUtc_ShouldThrowContractException()
         {
             //Arrange
-            int projectId = Random.NextPositive();
-            string description = Random.NextString();
+            int projectId = Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOn = DateTime.Now;
             DateTime deadlineUtc = DateTime.UtcNow.AddDays(15);
 
@@ -78,8 +78,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_DeadlineIsNotUtc_ShouldThrowContractException()
         {
             //Arrange
-            int projectId = Random.NextPositive();
-            string description = Random.NextString();
+            int projectId = Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOnUtc = DateTime.UtcNow;
             DateTime deadline = DateTime.Now.AddDays(15);
 
@@ -91,8 +91,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_DeadlineNotInFuture_ShouldThrowContractException()
         {
             //Arrange
-            int projectId = Random.NextPositive();
-            string description = Random.NextString();
+            int projectId = Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOnUtc = DateTime.UtcNow;
             DateTime deadlineInPastUtc = DateTime.UtcNow.AddMinutes(-1);
 
@@ -104,8 +104,8 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
         public void CreateNew_DeadlineIsBeforeOpenOn_ShouldThrowContractException()
         {
             //Arrange
-            int projectId = Random.NextPositive();
-            string description = Random.NextString();
+            int projectId = Random.Shared.NextPositive();
+            string description = Random.Shared.NextString();
             DateTime openOnUtc = DateTime.UtcNow.AddDays(1);
             DateTime deadlineUtc = openOnUtc.AddMinutes(-1);
 

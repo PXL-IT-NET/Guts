@@ -1,3 +1,4 @@
+using System;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
@@ -5,7 +6,7 @@ using NUnit.Framework;
 namespace Guts.Domain.Tests.ExamAggregate
 {
     [TestFixture]
-    public class AssignmentEvaluationScoreTests : DomainTestBase
+    public class AssignmentEvaluationScoreTests
     {
         [Test]
         public void Constructor_ShouldCopyPropertiesFromAssignmentEvaluation()
@@ -50,7 +51,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             var assignmentEvaluation = BuildRandomAssignmentEvaluation();
             var score1 = new AssignmentEvaluationScore(assignmentEvaluation);
             var score2 = new AssignmentEvaluationScore(assignmentEvaluation);
-            var numberOfPassedTests = Random.Next(0, score1.NumberOfTests + 1);
+            var numberOfPassedTests = Random.Shared.Next(0, score1.NumberOfTests + 1);
             score1.NumberOfPassedTests = numberOfPassedTests;
             score2.NumberOfPassedTests = numberOfPassedTests;
 
@@ -60,7 +61,7 @@ namespace Guts.Domain.Tests.ExamAggregate
 
         private AssignmentEvaluation BuildRandomAssignmentEvaluation()
         {
-            return BuildAssignmentEvaluation(Random.Next(10, 101), Random.Next(5, 21), 0);
+            return BuildAssignmentEvaluation(Random.Shared.Next(10, 101), Random.Shared.Next(5, 21), 0);
         }
 
         private AssignmentEvaluation BuildAssignmentEvaluation(int maximumScore, int numberOfTests, int numberOfTestsAlreadyGreen)

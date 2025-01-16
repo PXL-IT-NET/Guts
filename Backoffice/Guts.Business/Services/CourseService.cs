@@ -14,7 +14,7 @@ namespace Guts.Business.Services
             _courseRepository = courseRepository;
         }
 
-        public async Task<IList<Course>> GetAllCoursesAsync()
+        public async Task<IReadOnlyList<Course>> GetAllCoursesAsync()
         {
             return await _courseRepository.GetAllAsync();
         }

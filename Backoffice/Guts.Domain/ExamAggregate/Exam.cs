@@ -13,10 +13,10 @@ namespace Guts.Domain.ExamAggregate
     {
         private readonly HashSet<IExamPart> _parts;
 
-        public virtual Course Course { get; private set; }
+        public Course Course { get; private set; }
         public int CourseId { get; private set; }
 
-        public virtual Period Period { get; private set; }
+        public IPeriod Period { get; private set; }
         public int PeriodId { get; set; }
 
         [Required]

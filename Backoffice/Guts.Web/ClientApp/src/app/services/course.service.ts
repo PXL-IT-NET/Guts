@@ -20,8 +20,12 @@ export class CourseService {
       );
   }
 
-  public getCourseContentsById(courseId: number): Observable<GetResult<ICourseContentsModel>> {
-    return this.http.get<ICourseContentsModel>('api/courses/' + courseId)
+  public getCourseContentsById(courseId: number, periodId: number = 0): Observable<GetResult<ICourseContentsModel>> {
+    let url = 'api/courses/' + courseId;
+    if(periodId > 0) {
+      url += '?periodId=' + periodId;
+    }
+    return this.http.get<ICourseContentsModel>(url)
       .pipe(
         map(model => GetResult.success<ICourseContentsModel>(model)),
         catchError((errorResponse: HttpErrorResponse) => {

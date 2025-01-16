@@ -11,6 +11,7 @@ import { ToastrService } from "ngx-toastr";
 import { Subscription } from "rxjs";
 import {
   AuthService,
+  PeriodProvider,
   ProjectService,
   ProjectTeamAssessmentService,
 } from "src/app/services";
@@ -38,6 +39,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
   public assessments: ProjectAssessmentModel[];
   public selectedTeamId: number;
   public userProfile: UserProfile;
+  public activePeriod: boolean = true;
 
   public modalRef: BsModalRef;
 
@@ -63,7 +65,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private modalService: BsModalService,
     private authService: AuthService,
     private toastr: ToastrService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private periodProvider: PeriodProvider
   ) {
     this.loading = false;
     this.project = {
@@ -117,6 +120,13 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
           }
         });
     });
+
+    this.periodProvider.period$.subscribe((period) => {
+      if(period) {
+        this.activePeriod = period.isActive;
+      }
+    });
+
   }
 
   ngOnDestroy() {

@@ -1,29 +1,73 @@
 <header class="navbar navbar-expand-md navbar-dark bg-dark">
-
-  <a [routerLink]="['/home']" class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6">
+  <a
+    [routerLink]="['/home']"
+    class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6"
+  >
     <small>
       <span>Guts</span>
     </small>
   </a>
-  <button class="navbar-toggler position-absolute d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+  <button
+    class="navbar-toggler position-absolute d-md-none"
+    type="button"
+    data-bs-toggle="collapse"
+    data-bs-target="#sidebarMenu"
+    aria-controls="sidebarMenu"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
     <span class="navbar-toggler-icon"></span>
   </button>
-  <div class="w-100"> <!-- This is a hack to make the following ul align to the right -->
+  <div class="w-100">
+    <!-- This is a hack to make the following ul align to the right -->
 
     <ul class="navbar-nav me-auto">
       <li class="nav-item">
-        <a [routerLink]="['/home']" [routerLinkActive]="['active']" class="nav-link">
-          <span class='oi oi-home'></span> Home
+        <a
+          [routerLink]="['/home']"
+          [routerLinkActive]="['active']"
+          class="nav-link"
+        >
+          <span class="oi oi-home"></span> Home
         </a>
       </li>
     </ul>
-
-  </div> 
+  </div>
   <ul class="navbar-nav pe-3 ps-3">
+    <!-- show period dropdown -->
+    <li class="nav-item dropdown" *ngIf="allPeriods.length > 0">
+      <a
+        class="nav-link dropdown-toggle show"
+        role="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        <span class="fa fa-calendar"></span>
+        <span> {{selectedPeriod.description}}</span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li *ngFor="let period of allPeriods">
+          <a
+            class="dropdown-item"
+            (click)="selectPeriod(period)"
+          >
+            <span [ngClass]="{'bi-lock': !period.isActive, 'bi-unlock': period.isActive}"></span>
+            <!-- <span class="fa fa-calendar"></span> -->
+            <span> {{ period.description }}</span>
+            <span> ({{ period.from | date: 'dd/MM/yyyy' }} - {{ period.until | date: 'dd/MM/yyyy' }})</span>
+          </a>
+        </li>
+      </ul>
+    </li>
     <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle show" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <a
+        class="nav-link dropdown-toggle show"
+        role="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
         <span class="fa fa-user"></span>
-        <span> {{userProfile.email}}</span>
+        <span> {{ userProfile.email }}</span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end">
         <li *ngIf="userProfile.isAuthenticated">
