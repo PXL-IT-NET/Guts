@@ -34,11 +34,19 @@ export class NavMenuComponent {
         });
 
         this.periodService.getAll().subscribe((result) => {
-          if (result.success) {
-            this.allPeriods = result.value;
+          if (result.success) {        
+            if (result.value.length > 0) {
+              //find the index of the active period and remove all periods after it
+              let pastAndPresentPeriods = result.value;
+              let activePeriodIndex = pastAndPresentPeriods.findIndex((p) => p.isActive);
+              if (activePeriodIndex !== -1) {
+                pastAndPresentPeriods = pastAndPresentPeriods.slice(0, activePeriodIndex + 1);
+              }
+              this.allPeriods = pastAndPresentPeriods;
+            }
+
             if (this.allPeriods.length > 0) {
-              const lastPeriod : IPeriodModel = this.allPeriods[this.allPeriods.length - 1];
-              this.periodProvider.period = lastPeriod;
+              this.periodProvider.period = this.allPeriods[this.allPeriods.length - 1];
             }
           }
         });

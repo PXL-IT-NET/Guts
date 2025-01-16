@@ -127,8 +127,6 @@ export class CourseComponent implements OnInit, OnDestroy {
 
   private handleNavigationEvent(forceReload: boolean = false) {
     const url = this.router.url;
-    //console.log("Navigated to: " + url);
-
     const courseIdMatch = url.match(/courses\/(?<courseId>\d+)/);
     const courseId = courseIdMatch ? +courseIdMatch.groups.courseId : 0;
 
@@ -220,6 +218,10 @@ export class CourseComponent implements OnInit, OnDestroy {
     this.hasContent = true;
     this.selectedChapter = null;
     this.selectedProject = null;
+
+    if(courseId <= 0) {
+      return;
+    }
 
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c))
