@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Guts.Client.Core.Models;
+using NUnit.Framework;
+using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Guts.Client.Core.Models;
-using NUnit.Framework;
 
 namespace Guts.Client.Core.Utility
 {
@@ -55,13 +56,24 @@ namespace Guts.Client.Core.Utility
                 response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
             }
 
-            var result = new Result(response!.IsSuccessStatusCode);
-            if (!result.Success)
+            //Expect status code 201 Created
+            bool operationSucceeded = response?.StatusCode == HttpStatusCode.Created;
+            if (operationSucceeded) return new Result(true);
+
+            string errorMessage = await response!.Content.ReadAsStringAsync();
+
+            // Check if this is a fake success response from firewall (PXL firewall rejection HTML page with status code 200 OK)
+            if (response.IsSuccessStatusCode)
             {
-                result.Message = await response.Content.ReadAsStringAsync();
+                Match match = Regex.Match(errorMessage, @"support ID is:\s*(\d+)");
+                if (match.Success)
+                {
+                    string supportId = match.Groups[1].Value;
+                    errorMessage = $"Your request was blocked by the PXL firewall. Make sure you are sending from within the PXL network (VPN). Your support ID is: {supportId}.";
+                }
             }
 
-            return result;
+            return new Result(false) { Message = errorMessage };
         }
 
         private async Task RefreshAccessToken(bool allowCachedToken = true)
