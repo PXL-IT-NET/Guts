@@ -1,89 +1,84 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
-namespace Guts.Client.Core.Utility
+namespace Guts.Client.Core.Utility;
+
+public class AuthorizationHandler : IAuthorizationHandler
 {
-    public class AuthorizationHandler : IAuthorizationHandler
+    private readonly ILoginWindowFactory _loginWindowFactory;
+
+    public AuthorizationHandler(ILoginWindowFactory loginWindowFactory)
     {
-        private readonly ILoginWindowFactory _loginWindowFactory;
+        _loginWindowFactory = loginWindowFactory;
+    }
 
-        public AuthorizationHandler(ILoginWindowFactory loginWindowFactory)
+    public string RetrieveLocalAccessToken()
+    {
+        return !File.Exists(LocalTokenFilePath) ? string.Empty : File.ReadAllText(LocalTokenFilePath);
+    }
+
+    public async Task<string> RetrieveRemoteAccessTokenAsync()
+    {
+        var retrieveTokenTaskCompletionSource = new TaskCompletionSource<string>();
+
+        Thread thread = new Thread(async () =>
         {
-            _loginWindowFactory = loginWindowFactory;
-        }
-
-        public string RetrieveLocalAccessToken()
-        {
-            return !File.Exists(LocalTokenFilePath) ? string.Empty : File.ReadAllText(LocalTokenFilePath);
-        }
-
-        public async Task<string> RetrieveRemoteAccessTokenAsync()
-        {
-            var retrieveTokenTaskCompletionSource = new TaskCompletionSource<string>();
-
-            Thread thread = new Thread(async () =>
+            try
             {
-                try
+                var loginWindow = _loginWindowFactory.Create();
+
+                loginWindow.TokenRetrieved += token =>
                 {
-                    var loginWindow = _loginWindowFactory.Create();
+                    StoreTokenLocally(token);
+                    retrieveTokenTaskCompletionSource.TrySetResult(token);
+                };
 
-                    loginWindow.TokenRetrieved += token =>
-                    {
-                        StoreTokenLocally(token);
-                        retrieveTokenTaskCompletionSource.TrySetResult(token);
-                    };
-
-                    loginWindow.Closed += (sender, e) =>
-                    {
-                        retrieveTokenTaskCompletionSource.TrySetCanceled();
-                    };
-
-                    TestContext.Progress.WriteLine("Opening login window...");
-                    await loginWindow.StartLoginProcedureAsync();
-                    TestContext.Progress.WriteLine("Login window open.");
-                }
-                catch (Exception ex)
+                loginWindow.Closed += (sender, e) =>
                 {
-                    retrieveTokenTaskCompletionSource.TrySetException(ex);
-                }
-            });
+                    retrieveTokenTaskCompletionSource.TrySetCanceled();
+                };
 
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-
-            var maxLoginTimeInSeconds = 90;
-            TestContext.Progress.WriteLine($"Waiting {maxLoginTimeInSeconds} seconds (at most) for the user to login...");
-            if (await Task.WhenAny(retrieveTokenTaskCompletionSource.Task, Task.Delay(maxLoginTimeInSeconds * 1000)) != retrieveTokenTaskCompletionSource.Task)
-            {
-                //timeout
-                retrieveTokenTaskCompletionSource.SetException(new Exception($"Login timeout. You must login within {maxLoginTimeInSeconds} seconds."));
+                TestContext.Progress.WriteLine("Opening login window...");
+                await loginWindow.StartLoginProcedureAsync();
+                TestContext.Progress.WriteLine("Login window open.");
             }
+            catch (Exception ex)
+            {
+                retrieveTokenTaskCompletionSource.TrySetException(ex);
+            }
+        });
 
-            return await retrieveTokenTaskCompletionSource.Task;
-        }
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
 
-        private string GutsAppDataPath
+        var maxLoginTimeInSeconds = 90;
+        TestContext.Progress.WriteLine($"Waiting {maxLoginTimeInSeconds} seconds (at most) for the user to login...");
+        if (await Task.WhenAny(retrieveTokenTaskCompletionSource.Task, Task.Delay(maxLoginTimeInSeconds * 1000)) != retrieveTokenTaskCompletionSource.Task)
         {
-            get
-            {
-                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                return Path.Combine(appDataPath, "Guts");
-            }
+            //timeout
+            retrieveTokenTaskCompletionSource.SetException(new Exception($"Login timeout. You must login within {maxLoginTimeInSeconds} seconds."));
         }
 
-        private string LocalTokenFilePath => Path.Combine(GutsAppDataPath, "_cache.txt");
+        return await retrieveTokenTaskCompletionSource.Task;
+    }
 
-        private void StoreTokenLocally(string token)
+    private string GutsAppDataPath
+    {
+        get
         {
-            if (!Directory.Exists(GutsAppDataPath))
-            {
-                Directory.CreateDirectory(GutsAppDataPath);
-            }
-
-            File.WriteAllText(LocalTokenFilePath, token);
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Combine(appDataPath, "Guts");
         }
+    }
+
+    private string LocalTokenFilePath => Path.Combine(GutsAppDataPath, "_cache.txt");
+
+    private void StoreTokenLocally(string token)
+    {
+        if (!Directory.Exists(GutsAppDataPath))
+        {
+            Directory.CreateDirectory(GutsAppDataPath);
+        }
+
+        File.WriteAllText(LocalTokenFilePath, token);
     }
 }

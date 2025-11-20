@@ -1,83 +1,79 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace Guts.Client.Core.TestTools
+namespace Guts.Client.Core.TestTools;
+
+public static class ObjectExtensions
 {
-    public static class ObjectExtensions
+    public static bool HasPrivateField<T>(this object obj)
     {
-        public static bool HasPrivateField<T>(this object obj)
+        return obj.HasPrivateField<T>(field => true);
+    }
+
+    public static bool HasPrivateField<T>(this object obj, Func<FieldInfo, bool> filterFunc)
+    {
+        var objectType = obj.GetType();
+        var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+
+        return fields.Any(filterFunc);
+    }
+
+    public static bool HasPrivateFieldValue<T>(this object obj, Func<T?, bool> filterFunc)
+    {
+        var objectType = obj.GetType();
+        IEnumerable<FieldInfo> fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+
+        try
         {
-            return obj.HasPrivateField<T>(field => true);
+            IEnumerable<T?> values = fields.Select(field => (T?)field.GetValue(obj));
+            return values.Any(filterFunc);
         }
-
-        public static bool HasPrivateField<T>(this object obj, Func<FieldInfo, bool> filterFunc)
+        catch (Exception)
         {
-            var objectType = obj.GetType();
-            var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
-
-            return fields.Any(filterFunc);
+            return false;
         }
+    }
 
-        public static bool HasPrivateFieldValue<T>(this object obj, Func<T?, bool> filterFunc)
+    public static T? GetPrivateFieldValue<T>(this object obj)
+    {
+        return obj.GetPrivateFieldValue<T>((field) => true);
+    }
+
+    public static T? GetPrivateFieldValueByName<T>(this object obj, string fieldName)
+    {
+        return obj.GetPrivateFieldValue<T>(field => field.Name.ToLower() == fieldName.ToLower());
+    }
+
+    public static T? GetPrivateFieldValue<T>(this object obj, Func<FieldInfo, bool> filterFunc)
+    {
+        var objectType = obj.GetType();
+        var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+
+        var theField = fields.FirstOrDefault(filterFunc);
+
+        if (theField == null) throw new FieldAccessException("Could not find a matching field");
+
+        return (T?)theField.GetValue(obj);
+    }
+
+    public static IEnumerable<T?> GetAllPrivateFieldValues<T>(this object obj)
+    {
+        var objectType = obj.GetType();
+        var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
+
+        return fields.Select(field => (T?)field.GetValue(obj));
+    }
+
+    public static bool HasPrivateMethod(this object obj, Func<MethodInfo, bool> filterFunc)
+    {
+        var objectType = obj.GetType();
+        try
         {
-            var objectType = obj.GetType();
-            IEnumerable<FieldInfo> fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
-
-            try
-            {
-                IEnumerable<T?> values = fields.Select(field => (T?)field.GetValue(obj));
-                return values.Any(filterFunc);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            var methodInfos = objectType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Where(filterFunc);
+            return methodInfos.Any();
         }
-
-        public static T? GetPrivateFieldValue<T>(this object obj)
+        catch (Exception)
         {
-            return obj.GetPrivateFieldValue<T>((field) => true);
-        }
-
-        public static T? GetPrivateFieldValueByName<T>(this object obj, string fieldName)
-        {
-            return obj.GetPrivateFieldValue<T>(field => field.Name.ToLower() == fieldName.ToLower());
-        }
-
-        public static T? GetPrivateFieldValue<T>(this object obj, Func<FieldInfo, bool> filterFunc)
-        {
-            var objectType = obj.GetType();
-            var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
-
-            var theField = fields.FirstOrDefault(filterFunc);
-
-            if (theField == null) throw new FieldAccessException("Could not find a matching field");
-
-            return (T?)theField.GetValue(obj);
-        }
-
-        public static IEnumerable<T?> GetAllPrivateFieldValues<T>(this object obj)
-        {
-            var objectType = obj.GetType();
-            var fields = objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Where(field => field.FieldType == typeof(T));
-
-            return fields.Select(field => (T?)field.GetValue(obj));
-        }
-
-        public static bool HasPrivateMethod(this object obj, Func<MethodInfo, bool> filterFunc)
-        {
-            var objectType = obj.GetType();
-            try
-            {
-                var methodInfos = objectType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance).Where(filterFunc);
-                return methodInfos.Any();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return false;
         }
     }
 }

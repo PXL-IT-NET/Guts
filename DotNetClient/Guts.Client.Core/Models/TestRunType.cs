@@ -1,8 +1,7 @@
-﻿namespace Guts.Client.Core.Models
+﻿namespace Guts.Client.Core.Models;
+
+public enum TestRunType
 {
-    public enum TestRunType
-    {
-        ForExercise,
-        ForProject
-    }
+    ForExercise,
+    ForProject
 }

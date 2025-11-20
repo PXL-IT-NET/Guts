@@ -1,89 +1,87 @@
 ﻿using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
-using System.Reflection;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Core
+namespace Guts.Client.Core;
+
+public class MonitoredTestAttribute : TestAttribute, ITestAction
 {
-    public class MonitoredTestAttribute : TestAttribute, ITestAction
+    private readonly string? _displayName;
+
+    public ActionTargets Targets => ActionTargets.Test;
+
+    public MonitoredTestAttribute()
     {
-        private readonly string? _displayName;
+        _displayName = null;
+    }
 
-        public ActionTargets Targets => ActionTargets.Test;
+    public MonitoredTestAttribute(string displayName)
+    {
+        _displayName = displayName;
+    }
 
-        public MonitoredTestAttribute()
+    public void BeforeTest(ITest test)
+    {
+        //do nothing before
+    }
+
+    public void AfterTest(ITest test)
+    {
+        string testName = _displayName ?? string.Empty;
+        if (string.IsNullOrEmpty(testName))
         {
-            _displayName = null;
-        }
-
-        public MonitoredTestAttribute(string displayName)
-        {
-            _displayName = displayName;
-        }
-
-        public void BeforeTest(ITest test)
-        {
-            //do nothing before
-        }
-
-        public void AfterTest(ITest test)
-        {
-            string testName = _displayName ?? string.Empty;
-            if (string.IsNullOrEmpty(testName))
+            testName = new CamelCaseConverter().ToNormalSentence(test.MethodName);
+            if (!string.IsNullOrEmpty(test.ClassName))
             {
-                testName = new CamelCaseConverter().ToNormalSentence(test.MethodName);
-                if (!string.IsNullOrEmpty(test.ClassName))
+                string className = test.ClassName;
+                int dotIndex = className.LastIndexOf('.');
+                if (dotIndex >= 0)
                 {
-                    string className = test.ClassName;
-                    int dotIndex = className.LastIndexOf('.');
-                    if (dotIndex >= 0)
-                    {
-                        className = className.Substring(dotIndex + 1);
-                    }
-                    testName = $"({className}) {testName}";
+                    className = className.Substring(dotIndex + 1);
                 }
+                testName = $"({className}) {testName}";
             }
+        }
             
-            if (IsTestCase(test))
-            {
-                testName += $" (Case {GetTestCaseNumber(test)})";
-            }
-
-            var resultAdapter = TestContext.CurrentContext.Result;
-            var result = new TestResult(
-                testName,
-                passed:Equals(resultAdapter.Outcome, ResultState.Success),
-                message:(resultAdapter.Message ?? string.Empty).Trim()
-            );
-
-            ITypeInfo methodTypeInfo = test.Method?.TypeInfo!;
-            TestRunResultAccumulator.Instance.AddTestResult(result, methodTypeInfo);
-        }
-
-        private int GetTestCaseNumber(ITest test)
+        if (IsTestCase(test))
         {
-            int testCaseNumber = 1;
-            bool found = false;
-            ITest parentTest = test.Parent!;
-            while (!found && testCaseNumber <= parentTest.TestCaseCount)
-            {
-                if (parentTest.Tests[testCaseNumber - 1].Id == test.Id)
-                {
-                    found = true;
-                }
-                else
-                {
-                    testCaseNumber++;
-                }
-            }
-
-            return testCaseNumber;
+            testName += $" (Case {GetTestCaseNumber(test)})";
         }
 
-        private bool IsTestCase(ITest test)
+        var resultAdapter = TestContext.CurrentContext.Result;
+        var result = new TestResult(
+            testName,
+            passed:Equals(resultAdapter.Outcome, ResultState.Success),
+            message:(resultAdapter.Message ?? string.Empty).Trim()
+        );
+
+        ITypeInfo methodTypeInfo = test.Method?.TypeInfo!;
+        TestRunResultAccumulator.Instance.AddTestResult(result, methodTypeInfo);
+    }
+
+    private int GetTestCaseNumber(ITest test)
+    {
+        int testCaseNumber = 1;
+        bool found = false;
+        ITest parentTest = test.Parent!;
+        while (!found && testCaseNumber <= parentTest.TestCaseCount)
         {
-            return test.Arguments != null && test.Arguments.Length > 0;
+            if (parentTest.Tests[testCaseNumber - 1].Id == test.Id)
+            {
+                found = true;
+            }
+            else
+            {
+                testCaseNumber++;
+            }
         }
+
+        return testCaseNumber;
+    }
+
+    private bool IsTestCase(ITest test)
+    {
+        return test.Arguments != null && test.Arguments.Length > 0;
     }
 }

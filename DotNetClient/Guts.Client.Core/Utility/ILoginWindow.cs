@@ -1,20 +1,16 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿namespace Guts.Client.Core.Utility;
 
-namespace Guts.Client.Core.Utility
+public delegate void TokenRetrievedHandler(string token);
+
+public interface ILoginWindow
 {
-    public delegate void TokenRetrievedHandler(string token);
+    event TokenRetrievedHandler TokenRetrieved;
+    event EventHandler Closed;
 
-    public interface ILoginWindow
-    {
-        event TokenRetrievedHandler TokenRetrieved;
-        event EventHandler Closed;
+    Task StartLoginProcedureAsync();
+}
 
-        Task StartLoginProcedureAsync();
-    }
-
-    public interface ILoginWindowFactory
-    {
-        ILoginWindow Create();
-    }
+public interface ILoginWindowFactory
+{
+    ILoginWindow Create();
 }
