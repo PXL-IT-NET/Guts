@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Version>1.1.0</Version>
+		<Version>8.0.0</Version>
 		<Company>PXL</Company>
 		<Description>Utilities to write unit tests for WPF applications.</Description>
 		<Copyright>Copyright ©  2022</Copyright>
