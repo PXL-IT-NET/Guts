@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Company>PXL</Company>
     <Description>Utilities to write unit tests and send the results to the Guts API</Description>
     <Copyright>Copyright © 2019</Copyright>
