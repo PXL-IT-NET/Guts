@@ -1,90 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using Guts.Client.Core.Models;
 using Guts.Client.Core.TestTools;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Core.Utility
+namespace Guts.Client.Core.Utility;
+
+public class TestRunResultAccumulator
 {
-    public class TestRunResultAccumulator
+    private static TestRunResultAccumulator? _instance;
+
+    public IList<TestResult> TestResults { get; }
+
+    public int NumberOfTestsInCurrentFixture { get; set; }
+
+    public string TestClassName { get; set; }
+
+    public string TestCodeHash { get; set; }
+
+    private TestRunResultAccumulator()
     {
-        private static TestRunResultAccumulator? _instance;
+        TestClassName = string.Empty;
+        TestCodeHash = string.Empty;
+        TestResults = new List<TestResult>();
+        Clear();
+    }
 
-        public IList<TestResult> TestResults { get; }
+    public static TestRunResultAccumulator Instance => _instance ??= new TestRunResultAccumulator();
 
-        public int NumberOfTestsInCurrentFixture { get; set; }
+    public void AddTestResult(TestResult result, ITypeInfo testClassTypeInfo)
+    {
+        EnsureMetaDataIsLoaded(testClassTypeInfo);
 
-        public string TestClassName { get; set; }
+        if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated) tests
 
-        public string TestCodeHash { get; set; }
+        TestResults.Add(result);
+    }
 
-        private TestRunResultAccumulator()
+    public void Clear()
+    {
+        TestResults.Clear();
+        NumberOfTestsInCurrentFixture = 0;
+        TestClassName = string.Empty;
+        TestCodeHash = string.Empty;
+    }
+
+    private void EnsureMetaDataIsLoaded(ITypeInfo? testClassTypeInfo)
+    {
+        if (NumberOfTestsInCurrentFixture > 0) return;
+
+        if (testClassTypeInfo is null) return;
+
+        TestClassName = testClassTypeInfo.Name;
+
+        //Find test project directory
+        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassTypeInfo.Assembly.Location).Parent!;
+        bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
+        while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
         {
-            TestClassName = string.Empty;
-            TestCodeHash = string.Empty;
-            TestResults = new List<TestResult>();
-            Clear();
+            testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
+            hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
         }
 
-        public static TestRunResultAccumulator Instance => _instance ??= new TestRunResultAccumulator();
+        //Find test code file in test project directory
+        FileInfo? fileInfo = testProjectDirectoryInfo
+            .GetFiles(TestClassName + ".cs", SearchOption.AllDirectories).FirstOrDefault();
 
-        public void AddTestResult(TestResult result, ITypeInfo testClassTypeInfo)
+        if (fileInfo is null)
         {
-            EnsureMetaDataIsLoaded(testClassTypeInfo);
-
-            if (TestResults.Any(r => r.TestName == result.TestName)) return; //avoid duplicated (repeated) tests
-
-            TestResults.Add(result);
+            TestContext.Error.WriteLine(
+                $"Could not find test code file for test class {TestClassName}. " +
+                $"Searched for {TestClassName}.cs in directory {testProjectDirectoryInfo.FullName} (and subdirectories)");
+        }
+        else
+        {
+            TestCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
         }
 
-        public void Clear()
-        {
-            TestResults.Clear();
-            NumberOfTestsInCurrentFixture = 0;
-            TestClassName = string.Empty;
-            TestCodeHash = string.Empty;
-        }
-
-        private void EnsureMetaDataIsLoaded(ITypeInfo? testClassTypeInfo)
-        {
-            if (NumberOfTestsInCurrentFixture > 0) return;
-
-            if (testClassTypeInfo is null) return;
-
-            TestClassName = testClassTypeInfo.Name;
-
-            //Find test project directory
-            DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassTypeInfo.Assembly.Location).Parent!;
-            bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
-            while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
-            {
-                testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
-                hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
-            }
-
-            //Find test code file in test project directory
-            FileInfo? fileInfo = testProjectDirectoryInfo
-                .GetFiles(TestClassName + ".cs", SearchOption.AllDirectories).FirstOrDefault();
-
-            if (fileInfo is null)
-            {
-                TestContext.Error.WriteLine(
-                    $"Could not find test code file for test class {TestClassName}. " +
-                    $"Searched for {TestClassName}.cs in directory {testProjectDirectoryInfo.FullName} (and subdirectories)");
-            }
-            else
-            {
-                TestCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
-            }
-
-            NumberOfTestsInCurrentFixture = testClassTypeInfo
-                .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
-                .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
-        }
+        NumberOfTestsInCurrentFixture = testClassTypeInfo
+            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
+            .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
     }
 }

@@ -1,10 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿namespace Guts.Client.Core.Utility;
 
-namespace Guts.Client.Core.Utility
+public interface IAuthorizationHandler
 {
-    public interface IAuthorizationHandler
-    {
-        string RetrieveLocalAccessToken();
-        Task<string> RetrieveRemoteAccessTokenAsync();
-    }
+    string RetrieveLocalAccessToken();
+    Task<string> RetrieveRemoteAccessTokenAsync();
 }

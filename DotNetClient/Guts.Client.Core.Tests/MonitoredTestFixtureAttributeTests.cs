@@ -1,37 +1,34 @@
-using System;
-using System.Linq;
 using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
 using NUnit.Framework;
 
-namespace Guts.Client.Core.Tests
+namespace Guts.Client.Core.Tests;
+
+[TestFixture]
+public class MonitoredTestFixtureAttributeTests
 {
-    [TestFixture]
-    public class MonitoredTestFixtureAttributeTests
+    [Test]
+    public void Constructor_ShouldUseGutsSettingsJson()
     {
-        [Test]
-        public void Constructor_ShouldUseGutsSettingsJson()
-        {
-            //Arrange
-            var courseCode = Guid.NewGuid().ToString();
-            var chapterCode = Guid.NewGuid().ToString();
-            var exerciseCode = Guid.NewGuid().ToString();
+        //Arrange
+        var courseCode = Guid.NewGuid().ToString();
+        var chapterCode = Guid.NewGuid().ToString();
+        var exerciseCode = Guid.NewGuid().ToString();
 
-            //Act
-            var testFixture = new ExerciseTestFixtureAttribute(courseCode, chapterCode, exerciseCode);
+        //Act
+        var testFixture = new ExerciseTestFixtureAttribute(courseCode, chapterCode, exerciseCode);
 
-            //Assert
-            TestRunResultSender? sender = testFixture.GetPrivateFieldValue<TestRunResultSender>();
-            Assert.That(sender, Is.Not.Null);
+        //Assert
+        TestRunResultSender? sender = testFixture.GetPrivateFieldValue<TestRunResultSender>();
+        Assert.That(sender, Is.Not.Null);
 
-            AuthorizationHandler? authorizationHandler = sender!.GetPrivateFieldValue<IAuthorizationHandler>() as AuthorizationHandler;
-            Assert.That(authorizationHandler, Is.Not.Null);
+        AuthorizationHandler? authorizationHandler = sender!.GetPrivateFieldValue<IAuthorizationHandler>() as AuthorizationHandler;
+        Assert.That(authorizationHandler, Is.Not.Null);
 
-            LoginWindowFactory? loginWindowFactory = authorizationHandler!.GetPrivateFieldValue<ILoginWindowFactory>() as LoginWindowFactory;
-            Assert.That(loginWindowFactory, Is.Not.Null);
+        LoginWindowFactory? loginWindowFactory = authorizationHandler!.GetPrivateFieldValue<ILoginWindowFactory>() as LoginWindowFactory;
+        Assert.That(loginWindowFactory, Is.Not.Null);
 
-            var factoryFields = loginWindowFactory!.GetAllPrivateFieldValues<string>().ToList();
-            Assert.That(factoryFields, Has.All.StartWith("http"));
-        }
+        var factoryFields = loginWindowFactory!.GetAllPrivateFieldValues<string>().ToList();
+        Assert.That(factoryFields, Has.All.StartWith("http"));
     }
 }

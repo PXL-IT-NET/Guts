@@ -1,18 +1,17 @@
-﻿namespace Guts.Client.Core.Utility
+﻿namespace Guts.Client.Core.Utility;
+
+public class LoginResult
 {
-    public class LoginResult
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+
+    public static LoginResult CreateSuccess()
     {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
+        return new LoginResult { Success = true};
+    }
 
-        public static LoginResult CreateSuccess()
-        {
-            return new LoginResult { Success = true};
-        }
-
-        public static LoginResult CreateError(string errorMessage)
-        {
-            return new LoginResult { Success = false, Message = errorMessage };
-        }
+    public static LoginResult CreateError(string errorMessage)
+    {
+        return new LoginResult { Success = false, Message = errorMessage };
     }
 }
