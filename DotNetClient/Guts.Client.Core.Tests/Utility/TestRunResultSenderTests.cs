@@ -11,15 +11,18 @@ public class TestRunResultSenderTests
 {
     private Mock<IHttpHandler> _httpHandlerMock = null!;
     private Mock<IAuthorizationHandler> _authorizationHandlerMock = null!;
+    private Mock<ITestOutputWriter> _outputWriterMock = null!;
     private TestRunResultSender _testRunResultSender = null!;
     private AssignmentTestRun _testRun = null!;
+   
 
     [SetUp]
     public void SetUp()
     {
         _httpHandlerMock = new Mock<IHttpHandler>();
         _authorizationHandlerMock = new Mock<IAuthorizationHandler>();
-        _testRunResultSender = new TestRunResultSender(_httpHandlerMock.Object, _authorizationHandlerMock.Object);
+        _outputWriterMock = new Mock<ITestOutputWriter>();
+        _testRunResultSender = new TestRunResultSender(_httpHandlerMock.Object, _authorizationHandlerMock.Object, _outputWriterMock.Object);
 
         var assignment = new Assignment
         {

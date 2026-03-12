@@ -1,8 +1,7 @@
 using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
-using NUnit.Framework;
 
-namespace Guts.Client.Core.Tests;
+namespace Guts.Client.NUnit.Tests;
 
 [TestFixture]
 public class MonitoredTestFixtureAttributeTests

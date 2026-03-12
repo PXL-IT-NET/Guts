@@ -2,7 +2,7 @@
 
 namespace Guts.Client.Core.Utility;
 
-internal class CamelCaseConverter
+public class CamelCaseConverter
 {
     public string ToNormalSentence(string? camelCaseSentence)
     {

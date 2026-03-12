@@ -1,12 +1,13 @@
 ﻿using System.Reflection;
 using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
+using Guts.Client.NUnit.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Core;
+namespace Guts.Client.NUnit;
 
 public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, ITestAction
 {
@@ -55,8 +56,9 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
 
             var httpHandler = new HttpClientToHttpHandlerAdapter(apiBaseUrl);
 
-            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl));
-            ResultSender = new TestRunResultSender(httpHandler, authorizationHandler);
+            var outputWriter = new NUnitTestOutputWriter();
+            var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl), outputWriter);
+            ResultSender = new TestRunResultSender(httpHandler, authorizationHandler, outputWriter);
         }
         catch (Exception e)
         {
@@ -74,18 +76,18 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
 
     public abstract void AfterTest(ITest test);
 
-    protected bool AllTestsOfFixtureWereRunned()
+    protected bool AllTestsOfFixtureWereRun()
     {
         var results = TestRunResultAccumulator.Instance.TestResults;
 
         TestContext.Progress.WriteLine(
-            $"You runned {results.Count} tests " +
+            $"You ran {results.Count} tests " +
             $"of {TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture} tests " +
             $"in the test class '{TestRunResultAccumulator.Instance.TestClassName}'");
 
         if (results.Count >= TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture) return true;
 
-        TestContext.Progress.WriteLine("Not all tests of the test class (fixture) were runned. " +
+        TestContext.Progress.WriteLine("Not all tests of the test class (fixture) were run. " +
                                        "So the results will not be sent to the GUTS Api. " +
                                        "Run all the tests of a fixture at once to send the results.");
         return false;

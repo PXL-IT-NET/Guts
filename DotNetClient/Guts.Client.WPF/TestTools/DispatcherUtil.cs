@@ -40,7 +40,7 @@ public static class DispatcherUtil
         }
     }
 
-    private static object ExitFrame(object frame)
+    private static object? ExitFrame(object frame)
     {
         ((DispatcherFrame)frame).Continue = false;
         return null;

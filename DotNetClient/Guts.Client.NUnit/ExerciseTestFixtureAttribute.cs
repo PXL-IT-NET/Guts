@@ -3,7 +3,7 @@ using Guts.Client.Core.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Core;
+namespace Guts.Client.NUnit;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class ExerciseTestFixtureAttribute : MonitoredTestFixtureBaseAttribute
@@ -36,7 +36,7 @@ public class ExerciseTestFixtureAttribute : MonitoredTestFixtureBaseAttribute
 
         try
         {
-            if (!AllTestsOfFixtureWereRunned()) return;
+            if (!AllTestsOfFixtureWereRun()) return;
 
             var exercise = new Assignment
             {

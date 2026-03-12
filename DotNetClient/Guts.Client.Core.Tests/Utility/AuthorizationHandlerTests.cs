@@ -13,6 +13,7 @@ public class AuthorizationHandlerTests
     {
 
         var loginWindowFactoryMock = new Mock<ILoginWindowFactory>();
+        var outputWriterMock = new Mock<ITestOutputWriter>();
 
         var apiBaseUrl = "https://localhost:44318/";
         var webAppBaseUrl = "https://localhost:44376/";
@@ -27,7 +28,7 @@ public class AuthorizationHandlerTests
                 return new LoginWindow(httpHandler, webAppBaseUrl);
             });
 
-        var authorizationHandler = new AuthorizationHandler(loginWindowFactoryMock.Object);
+        var authorizationHandler = new AuthorizationHandler(loginWindowFactoryMock.Object, outputWriterMock.Object);
 
         var retrieveTokenTask = authorizationHandler.RetrieveRemoteAccessTokenAsync();
 

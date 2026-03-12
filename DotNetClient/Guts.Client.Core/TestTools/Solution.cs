@@ -1,6 +1,4 @@
-﻿using NUnit.Framework;
-
-namespace Guts.Client.Core.TestTools;
+﻿namespace Guts.Client.Core.TestTools;
 
 public class Solution
 {
@@ -11,12 +9,11 @@ public class Solution
         Path = path;
     }
 
-    private static Solution? _current;
     public static Solution Current
     {
         get
         {
-            if (_current is not null) return _current;
+            if (field is not null) return field;
 
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
                 
@@ -27,9 +24,12 @@ public class Solution
                 isSolutionDirectory = IsSolutionDirectory(directory);
             }
 
-            Assert.That(isSolutionDirectory, Is.True, "Technical error: could not find the path of the solution.");
-            _current = new Solution(directory.FullName);
-            return _current;
+            if (!isSolutionDirectory)
+            {
+                throw new InvalidOperationException("Technical error: could not find the path of the solution.");
+            }
+            field = new Solution(directory.FullName);
+            return field;
         }
     }
 

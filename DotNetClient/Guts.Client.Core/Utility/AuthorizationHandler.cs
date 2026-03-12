@@ -1,8 +1,6 @@
-﻿using NUnit.Framework;
+﻿namespace Guts.Client.Core.Utility;
 
-namespace Guts.Client.Core.Utility;
-
-public class AuthorizationHandler(ILoginWindowFactory loginWindowFactory) : IAuthorizationHandler
+public class AuthorizationHandler(ILoginWindowFactory loginWindowFactory, ITestOutputWriter outputWriter) : IAuthorizationHandler
 {
     public string RetrieveLocalAccessToken()
     {
@@ -30,9 +28,9 @@ public class AuthorizationHandler(ILoginWindowFactory loginWindowFactory) : IAut
                     retrieveTokenTaskCompletionSource.TrySetCanceled();
                 };
 
-                TestContext.Progress.WriteLine("Opening login window...");
+                outputWriter.WriteProgress("Opening login window...");
                 await loginWindow.StartLoginProcedureAsync();
-                TestContext.Progress.WriteLine("Login window open.");
+                outputWriter.WriteProgress("Login window open.");
             }
             catch (Exception ex)
             {
@@ -47,7 +45,7 @@ public class AuthorizationHandler(ILoginWindowFactory loginWindowFactory) : IAut
         thread.Start();
 
         var maxLoginTimeInSeconds = 90;
-        TestContext.Progress.WriteLine($"Waiting {maxLoginTimeInSeconds} seconds (at most) for the user to login...");
+        outputWriter.WriteProgress($"Waiting {maxLoginTimeInSeconds} seconds (at most) for the user to login...");
         if (await Task.WhenAny(retrieveTokenTaskCompletionSource.Task, Task.Delay(maxLoginTimeInSeconds * 1000)) != retrieveTokenTaskCompletionSource.Task)
         {
             //timeout

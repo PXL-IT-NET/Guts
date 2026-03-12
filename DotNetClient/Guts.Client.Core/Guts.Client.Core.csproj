@@ -24,7 +24,6 @@
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.4" />
-    <PackageReference Include="NUnit" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>

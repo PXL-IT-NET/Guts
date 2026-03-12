@@ -16,6 +16,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Guts.Client.Core\Guts.Client.Core.csproj" />
+	  <ProjectReference Include="..\Guts.Client.NUnit\Guts.Client.NUnit.csproj" />
 	</ItemGroup>
 	
 </Project>

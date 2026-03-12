@@ -1,9 +1,10 @@
 ﻿using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
+using Guts.Client.NUnit.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
-namespace Guts.Client.Core;
+namespace Guts.Client.NUnit;
 
 public class MonitoredTestAttribute : TestAttribute, ITestAction
 {
@@ -56,8 +57,7 @@ public class MonitoredTestAttribute : TestAttribute, ITestAction
             message:(resultAdapter.Message ?? string.Empty).Trim()
         );
 
-        ITypeInfo methodTypeInfo = test.Method?.TypeInfo!;
-        TestRunResultAccumulator.Instance.AddTestResult(result, methodTypeInfo);
+        TestRunResultAccumulator.Instance.AddTestResult(result, NUnitTestFixtureInfo.CreateFromTest(test), NUnitTestOutputWriter.Instance);
     }
 
     private int GetTestCaseNumber(ITest test)

@@ -1,4 +1,4 @@
-﻿using Guts.Client.Core;
+﻿using Guts.Client.NUnit;
 using NUnit.Framework;
 
 namespace Dummy.Tests;
