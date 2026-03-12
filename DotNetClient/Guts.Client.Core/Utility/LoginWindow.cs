@@ -3,19 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace Guts.Client.Core.Utility;
 
-public class LoginWindow : ILoginWindow
+public class LoginWindow(IHttpHandler httpHandler, string webAppBaseUrl) : ILoginWindow
 {
-    private readonly IHttpHandler _httpHandler;
-    private readonly string _webAppBaseUrl;
-
     public event TokenRetrievedHandler? TokenRetrieved;
     public event EventHandler? Closed;
-
-    public LoginWindow(IHttpHandler httpHandler, string webAppBaseUrl)
-    {
-        _httpHandler = httpHandler;
-        _webAppBaseUrl = webAppBaseUrl;
-    }
 
     public async Task StartLoginProcedureAsync()
     {
@@ -32,7 +23,7 @@ public class LoginWindow : ILoginWindow
         var session = await CreateLoginSessionAsync();
 
         //open login window
-        Uri webAppBaseUri = new Uri(_webAppBaseUrl);
+        Uri webAppBaseUri = new Uri(webAppBaseUrl);
         Uri loginPageUri = new Uri(webAppBaseUri, $"login?s={session.PublicIdentifier}");
         OpenUrlInBrowser(loginPageUri.AbsoluteUri);
 
@@ -48,7 +39,7 @@ public class LoginWindow : ILoginWindow
 
     private async Task<LoginSession> CreateLoginSessionAsync()
     {
-        return await _httpHandler.PostAsJsonAsync<object, LoginSession>("api/auth/loginsession", new object());
+        return await httpHandler.PostAsJsonAsync<object, LoginSession>("api/auth/loginsession", new object());
     }
 
     private void OpenUrlInBrowser(string url)
@@ -90,7 +81,7 @@ public class LoginWindow : ILoginWindow
             while (!cancellationToken.IsCancellationRequested && stopWatch.Elapsed.TotalSeconds < timeoutInSeconds)
             {
                 LoginSession session =
-                    await _httpHandler.PostAsJsonAsync<string, LoginSession>(
+                    await httpHandler.PostAsJsonAsync<string, LoginSession>(
                         $"api/auth/loginsession/{loginSessionPublicIdentifier}", sessionToken);
 
                 if (!string.IsNullOrEmpty(session.LoginToken))

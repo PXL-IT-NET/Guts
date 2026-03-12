@@ -1,17 +1,10 @@
 ﻿namespace Guts.Client.Core.Models;
 
-public class TestResult
+public class TestResult(string testName, bool passed, string message)
 {
-    public string TestName { get; }
+    public string TestName { get; } = testName;
 
-    public bool Passed { get; }
+    public bool Passed { get; } = passed;
 
-    public string Message { get; }
-
-    public TestResult(string testName, bool passed, string message)
-    {
-        TestName = testName;
-        Passed = passed;
-        Message = message;
-    }
+    public string Message { get; } = message;
 }

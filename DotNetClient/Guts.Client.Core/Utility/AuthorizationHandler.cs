@@ -2,15 +2,8 @@
 
 namespace Guts.Client.Core.Utility;
 
-public class AuthorizationHandler : IAuthorizationHandler
+public class AuthorizationHandler(ILoginWindowFactory loginWindowFactory) : IAuthorizationHandler
 {
-    private readonly ILoginWindowFactory _loginWindowFactory;
-
-    public AuthorizationHandler(ILoginWindowFactory loginWindowFactory)
-    {
-        _loginWindowFactory = loginWindowFactory;
-    }
-
     public string RetrieveLocalAccessToken()
     {
         return !File.Exists(LocalTokenFilePath) ? string.Empty : File.ReadAllText(LocalTokenFilePath);
@@ -24,7 +17,7 @@ public class AuthorizationHandler : IAuthorizationHandler
         {
             try
             {
-                var loginWindow = _loginWindowFactory.Create();
+                var loginWindow = loginWindowFactory.Create();
 
                 loginWindow.TokenRetrieved += token =>
                 {
@@ -47,7 +40,10 @@ public class AuthorizationHandler : IAuthorizationHandler
             }
         });
 
-        thread.SetApartmentState(ApartmentState.STA);
+        if (OperatingSystem.IsWindows())
+        {
+            thread.SetApartmentState(ApartmentState.STA);
+        }
         thread.Start();
 
         var maxLoginTimeInSeconds = 90;

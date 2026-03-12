@@ -3,16 +3,11 @@ using System.Text;
 
 namespace Guts.Client.Core.Utility;
 
-public class HttpResponseException : Exception
+public class HttpResponseException(string requestUri, HttpStatusCode responseStatusCode, string message)
+    : Exception(message)
 {
-    public HttpStatusCode ResponseStatusCode { get; }
-    public string RequestUri { get; }
-
-    public HttpResponseException(string requestUri, HttpStatusCode responseStatusCode, string message) : base(message)
-    {
-        ResponseStatusCode = responseStatusCode;
-        RequestUri = requestUri;
-    }
+    public HttpStatusCode ResponseStatusCode { get; } = responseStatusCode;
+    public string RequestUri { get; } = requestUri;
 
     public override string ToString()
     {

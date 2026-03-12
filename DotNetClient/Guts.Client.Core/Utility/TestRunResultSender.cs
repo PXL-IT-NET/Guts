@@ -5,17 +5,8 @@ using System.Text.RegularExpressions;
 
 namespace Guts.Client.Core.Utility;
 
-public class TestRunResultSender
+public class TestRunResultSender(IHttpHandler httpHandler, IAuthorizationHandler authorizationHandler)
 {
-    private readonly IHttpHandler _httpHandler;
-    private readonly IAuthorizationHandler _authorizationHandler;
-
-    public TestRunResultSender(IHttpHandler httpHandler, IAuthorizationHandler authorizationHandler)
-    {
-        _httpHandler = httpHandler;
-        _authorizationHandler = authorizationHandler;
-    }
-
     public async Task<Result> SendAsync(AssignmentTestRun testRun, TestRunType type)
     {
         await RefreshAccessToken();
@@ -36,7 +27,7 @@ public class TestRunResultSender
         bool sendFailed = false;
         try
         {
-            response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
+            response = await httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
         }
         catch (Exception e)
         {
@@ -50,7 +41,7 @@ public class TestRunResultSender
             TestContext.Progress.WriteLine("First try failed (unauthorized).");
             //retry with token retrieved remotely
             await RefreshAccessToken(allowCachedToken: false);
-            response = await _httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
+            response = await httpHandler.PostAsJsonAsync(webApiTestRunsUrl, testRun);
         }
 
         //Expect status code 201 Created
@@ -79,17 +70,17 @@ public class TestRunResultSender
 
         if (allowCachedToken)
         {
-            token = _authorizationHandler.RetrieveLocalAccessToken();
+            token = authorizationHandler.RetrieveLocalAccessToken();
             TestContext.Progress.WriteLine("Retrieved authentication token from cache.");
         }
 
         if (string.IsNullOrEmpty(token))
         {
             TestContext.Progress.WriteLine("Retrieving an authentication token online...");
-            token = await _authorizationHandler.RetrieveRemoteAccessTokenAsync();
+            token = await authorizationHandler.RetrieveRemoteAccessTokenAsync();
             TestContext.Progress.WriteLine("Retrieved authentication token.");
         }
 
-        _httpHandler.UseBearerToken(token);
+        httpHandler.UseBearerToken(token);
     }
 }

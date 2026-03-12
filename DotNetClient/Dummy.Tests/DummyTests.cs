@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Dummy.Tests;
 
 [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
-[Ignore("These tests could actually send testresults")]
+[Ignore("These tests could actually send test results")]
 public class DummyTests
 {
     [MonitoredTest]

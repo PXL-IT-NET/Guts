@@ -18,7 +18,7 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
 
     public ActionTargets Targets => ActionTargets.Suite;
 
-    protected MonitoredTestFixtureBaseAttribute(string courseCode) : base(Array.Empty<object>())
+    protected MonitoredTestFixtureBaseAttribute(string courseCode) : base([])
     {
         SourceCodeRelativeFilePaths = null;
         CourseCode = courseCode;

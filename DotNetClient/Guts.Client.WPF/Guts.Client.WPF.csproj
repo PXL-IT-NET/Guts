@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0-windows</TargetFramework>
+		<TargetFramework>net10.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<Version>8.0.0</Version>
+		<Version>10.0.0</Version>
 		<Company>PXL</Company>
 		<Description>Utilities to write unit tests for WPF applications.</Description>
 		<Copyright>Copyright ©  2022</Copyright>
 		<PackageTags>Guts;Unit Test;WPF</PackageTags>
-		<PackageReleaseNotes>Added DispatcherUtil class. Made TestsWindow obsolete.</PackageReleaseNotes>
+		<PackageReleaseNotes>Moved to .NET 10.</PackageReleaseNotes>
 	</PropertyGroup>
 
 </Project>

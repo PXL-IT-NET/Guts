@@ -1,13 +1,7 @@
 ﻿namespace Guts.Client.Core.Models;
 
-public class SolutionFile
+public class SolutionFile(string filePath, string content)
 {
-    public string FilePath { get; }
-    public string Content { get; }
-
-    public SolutionFile(string filePath, string content)        
-    {
-        FilePath = filePath;
-        Content = content;
-    }
+    public string FilePath { get; } = filePath;
+    public string Content { get; } = content;
 }

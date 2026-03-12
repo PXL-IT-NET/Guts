@@ -5,26 +5,26 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Company>PXL</Company>
     <Description>Utilities to write unit tests and send the results to the Guts API</Description>
     <Copyright>Copyright © 2019</Copyright>
     <PackageTags>Guts;Unit Test;Client</PackageTags>
-    <Version>8.0.0</Version>
+    <Version>10.0.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>8.0.0</AssemblyVersion>
-    <FileVersion>8.0.0</FileVersion>
+    <AssemblyVersion>10.0.0</AssemblyVersion>
+    <FileVersion>10.0.0</FileVersion>
     <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageReleaseNotes>Moved to .NET 8.</PackageReleaseNotes>
+    <PackageReleaseNotes>Moved to .NET 10 and updated package dependencies.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-    <PackageReference Include="NUnit" Version="4.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.4" />
+    <PackageReference Include="NUnit" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>

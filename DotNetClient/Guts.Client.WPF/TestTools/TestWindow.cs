@@ -16,25 +16,25 @@ public class TestWindow<TWindow> : IDisposable where TWindow : Window, new()
     }
 
     [Obsolete("Use the GetPrivateFieldValue extension method on Object instead (Guts.Client.Core).")]
-    public T GetPrivateField<T>(Func<FieldInfo, bool> filterFunc) where T : class
+    public T? GetPrivateField<T>(Func<FieldInfo, bool> filterFunc) where T : class
     {
         return GetPrivateFields<T>(filterFunc).FirstOrDefault();
     }
 
     [Obsolete("Use the GetPrivateFieldValue extension method on Object instead (Guts.Client.Core).")]
-    public object GetPrivateField(Type fieldType, Func<FieldInfo, bool> filterFunc)
+    public object? GetPrivateField(Type fieldType, Func<FieldInfo, bool> filterFunc)
     {
         return GetPrivateFields(fieldType, filterFunc).FirstOrDefault();
     }
 
     [Obsolete("Use the GetPrivateFieldValue extension method on Object instead (Guts.Client.Core).")]
-    public T GetPrivateField<T>() where T : class
+    public T? GetPrivateField<T>() where T : class
     {
         return GetPrivateField<T>(field => true);
     }
 
     [Obsolete("Use the GetPrivateFieldValue extension method on Object instead (Guts.Client.Core).")]
-    public object GetPrivateField(Type fieldType)
+    public object? GetPrivateField(Type fieldType)
     {
         return GetPrivateField(fieldType, field => true);
     }
@@ -56,7 +56,7 @@ public class TestWindow<TWindow> : IDisposable where TWindow : Window, new()
         var values = new List<object>();
         foreach (var field in fields)
         {
-            values.Add(field.GetValue(Window));
+            values.Add(field.GetValue(Window)!);
         }
 
         return values;
@@ -74,7 +74,7 @@ public class TestWindow<TWindow> : IDisposable where TWindow : Window, new()
         return Window.FindVisualChildren<T>().ToList();
     }
 
-    public T GetContentControlByPartialContentText<T>(string contentTextPart) where T : ContentControl
+    public T? GetContentControlByPartialContentText<T>(string contentTextPart) where T : ContentControl
     {
         var contentControls = Window.FindVisualChildren<T>().ToList();
         return contentControls.FirstOrDefault(c =>
