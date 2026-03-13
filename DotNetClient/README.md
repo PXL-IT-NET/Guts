@@ -7,14 +7,16 @@ A teacher creates a C# solution that contains one or more projects, one for each
 For each exercise project the teacher adds a test project that will hold the automated tests for the exercise (e.g. a class library named *Exercise01.Tests*).
 
 There are 2 packages available:
-* Guts.Client.Core -> package that can be used for creating automated tests in .NET test projects targeting .NET Core 3.1 or higher.
-* Guts.Client.WPF -> the package that can be used when creating automated tests on a WPF application (.net6).
+* Guts.Client.NUnit -> package for writing monitored NUnit tests and sending results to GUTS.
+* Guts.Client.WPF -> package with helpers for testing WPF applications.
+
+The *Guts.Client.Core* package is now a core dependency package. For NUnit tests, install *Guts.Client.NUnit*.
 
 ## Installation
 ### Add NuGet packages
-Add the *Guts.Client.Core* package to your test project.
+Add the *Guts.Client.NUnit* package to your test project.
 ```
-Install-Package Guts.Client.Core
+Install-Package Guts.Client.NUnit
 ```
 
 Optionally, when writing tests for a WPF project, add the *Guts.Client.WPF* package to your test project.
@@ -22,6 +24,12 @@ Optionally, when writing tests for a WPF project, add the *Guts.Client.WPF* pack
 Install-Package Guts.Client.WPF
 ```
 The WPF package contains some helper classes and extension methods to test a _WPF Window_.
+
+### Upgrading existing projects
+If your test project currently references *Guts.Client.Core* directly for monitored NUnit tests:
+1. Install *Guts.Client.NUnit*.
+2. Update usings from `Guts.Client.Core` to `Guts.Client.NUnit` where needed.
+3. Keep *Guts.Client.Core* only if you use its standalone helper utilities directly.
 
 
 ## Writing a first test
@@ -148,5 +156,4 @@ public void ShouldCalculateBtwAtRate21WhenCheckBoxIsUnchecked()
     Assert.That(_btwTextBox.Text, Is.EqualTo("10,5"), () => $"Btw for net price of '{netPrice}' is not correct");
     Assert.That(_totalTextBox.Text, Is.EqualTo("60,5"), () => $"Total for net price of '{netPrice}' is not correct");
 }
-```
 

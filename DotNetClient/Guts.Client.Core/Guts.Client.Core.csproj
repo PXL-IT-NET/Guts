@@ -7,7 +7,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Company>PXL</Company>
-    <Description>Utilities to write unit tests and send the results to the Guts API</Description>
+    <Description>Core utilities used by Guts .NET client packages.</Description>
     <Copyright>Copyright © 2019</Copyright>
     <PackageTags>Guts;Unit Test;Client</PackageTags>
     <Version>10.0.0</Version>
@@ -17,7 +17,7 @@
     <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageReleaseNotes>Moved to .NET 10 and updated package dependencies.</PackageReleaseNotes>
+    <PackageReleaseNotes>Moved to .NET 10. NUnit dependent components moved to Guts.Client.NUnit. Install Guts.Client.NUnit for monitored NUnit tests.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +32,7 @@
       <PackageCopyToOutput>true</PackageCopyToOutput>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="buildTransitive\Guts.Client.Core.targets" Pack="true" PackagePath="buildTransitive\Guts.Client.Core.targets" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <GutsClientCoreSuppressMigrationWarning Condition="'$(GutsClientCoreSuppressMigrationWarning)' == ''">false</GutsClientCoreSuppressMigrationWarning>
+  </PropertyGroup>
+
+  <Target Name="GutsClientCoreMigrationNotice"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(GutsClientCoreSuppressMigrationWarning)' != 'true' and '@(PackageReference->AnyHaveMetadataValue('Identity', 'NUnit'))' == 'true' and '@(PackageReference->AnyHaveMetadataValue('Identity', 'Guts.Client.NUnit'))' != 'true'">
+    <Warning Text="Guts.Client.Core no longer provides NUnit integration attributes. Install Guts.Client.NUnit and update your usings to Guts.Client.NUnit for a smooth upgrade path." />
+  </Target>
+</Project>
