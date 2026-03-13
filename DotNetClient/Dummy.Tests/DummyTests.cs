@@ -1,12 +1,26 @@
-﻿using Guts.Client.NUnit;
+﻿using Dummy.Tests.Infrastructure;
+using Guts.Client.NUnit;
 using NUnit.Framework;
 
 namespace Dummy.Tests;
 
 [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
-[Ignore("These tests could actually send test results")]
 public class DummyTests
 {
+    private MockGutsApiServer _backendMock = null!;
+
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
+    {
+        _backendMock = MockGutsApiServer.Start();
+    }
+
+    [OneTimeTearDown]
+    public void OneTimeTearDown()
+    {
+        _backendMock.Dispose();
+    }
+
     [MonitoredTest]
     public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
     {
