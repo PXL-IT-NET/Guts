@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Company>PXL</Company>
+    <Description>Utilities to write unit tests with xUnit and send the results to the Guts API</Description>
+    <Copyright>Copyright © 2019</Copyright>
+    <PackageTags>Guts;Unit Test;Client;xUnit</PackageTags>
+    <Version>10.0.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>10.0.0</AssemblyVersion>
+    <FileVersion>10.0.0</FileVersion>
+    <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageReleaseNotes>Added xUnit dependent components to this package.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
+    <PackageReference Include="xunit.extensibility.execution" Version="2.9.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Guts.Client.Core\Guts.Client.Core.csproj" />
+  </ItemGroup>
+
+</Project>
