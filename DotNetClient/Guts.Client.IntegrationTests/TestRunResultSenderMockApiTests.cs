@@ -1,9 +1,9 @@
-using Dummy.Tests.Infrastructure;
 using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
+using Guts.Client.NUnit.IntegrationTests.Infrastructure;
 using NUnit.Framework;
 
-namespace Dummy.Tests;
+namespace Guts.Client.NUnit.IntegrationTests;
 
 public class TestRunResultSenderMockApiTests
 {

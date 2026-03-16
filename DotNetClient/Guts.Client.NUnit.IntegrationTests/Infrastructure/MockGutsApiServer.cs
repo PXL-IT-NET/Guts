@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
+using NUnit.Framework;
 
-namespace Dummy.Tests.Infrastructure;
+namespace Guts.Client.NUnit.IntegrationTests.Infrastructure;
 
 internal sealed class MockGutsApiServer : IDisposable
 {
@@ -71,6 +72,8 @@ internal sealed class MockGutsApiServer : IDisposable
             context.Request.Headers["Authorization"] ?? string.Empty,
             requestBody);
 
+        await TestContext.Progress.WriteLineAsync($"Backend received {request.Method} request: '{request.Path}'");
+
         _capturedRequests.Enqueue(request);
 
         var statusCode = HttpStatusCode.NotFound;
@@ -82,10 +85,29 @@ internal sealed class MockGutsApiServer : IDisposable
             statusCode = HttpStatusCode.Created;
         }
 
+        string sessionPublicIdentifier = "7d9a8f3b-2f8f-4e12-9d41-6b9b6d0e5c12";
+        string sessionSecretToken = "0f7c2d7a9d1b4f7ab2f4d9c8e6a1b3c5";
+
+        if (request.Path.Equals("/api/auth/loginsession", StringComparison.OrdinalIgnoreCase)||
+            request.Path.Equals($"/api/auth/loginsession/{sessionPublicIdentifier}", StringComparison.OrdinalIgnoreCase))
+        {
+            statusCode = HttpStatusCode.OK;
+            responseBody =
+                $"{{\"publicIdentifier\": \"{sessionPublicIdentifier}\",\n" +
+                $"  \"sessionToken\": \"{sessionSecretToken}\",\n" +
+                "  \"ipAddress\": \"127.0.0.1\",\n" +
+                "  \"loginToken\": \"dummy-access-token\",\n" +
+                "  \"isCancelled\": false,\n" +
+                "  \"createDateTime\": \"2020-03-16T10:15:30Z\"\n}";
+        }
+
         context.Response.StatusCode = (int)statusCode;
         var buffer = Encoding.UTF8.GetBytes(responseBody);
         context.Response.ContentType = "application/json";
         context.Response.ContentLength64 = buffer.Length;
+
+        await TestContext.Progress.WriteLineAsync($"Backend responds with {context.Response.StatusCode} status code");
+
         await context.Response.OutputStream.WriteAsync(buffer);
         context.Response.OutputStream.Close();
     }

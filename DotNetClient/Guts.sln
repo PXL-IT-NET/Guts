@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.Core", "Guts.Cl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.Core.Tests", "Guts.Client.Core.Tests\Guts.Client.Core.Tests.csproj", "{351E1CB6-AC02-4C76-8E22-4C97BCACB2AF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dummy.Tests", "Dummy.Tests\Dummy.Tests.csproj", "{8C43566C-E7E4-41BE-B760-5F1C2D28E358}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Guts.Client.NUnit.IntegrationTests", "Guts.Client.NUnit.IntegrationTests\Guts.Client.NUnit.IntegrationTests.csproj", "{8C43566C-E7E4-41BE-B760-5F1C2D28E358}"
 	ProjectSection(ProjectDependencies) = postProject
 		{09083AD7-9505-4095-9657-BBA364588CE0} = {09083AD7-9505-4095-9657-BBA364588CE0}
 	EndProjectSection

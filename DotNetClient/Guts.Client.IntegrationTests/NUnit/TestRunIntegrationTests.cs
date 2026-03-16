@@ -1,11 +1,11 @@
-﻿using Dummy.Tests.Infrastructure;
+﻿using Guts.Client.NUnit.IntegrationTests.Infrastructure;
 using Guts.Client.NUnit;
 using NUnit.Framework;
 
-namespace Dummy.Tests.Nested;
+namespace Guts.Client.NUnit.IntegrationTests;
 
 [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
-public class NestedTests
+public class TestRunIntegrationTests
 {
     private MockGutsApiServer _backendMock = null!;
 
@@ -21,9 +21,17 @@ public class NestedTests
         _backendMock.Dispose();
     }
 
-    [MonitoredTest("A nested test")]
-    public void NestedTestShouldAlsoBeFound()
+    [MonitoredTest]
+    public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
     {
         Assert.Pass();
+    }
+
+    [MonitoredTest("Test with cases")]
+    [TestCase(1, 2)]
+    [TestCase(2, 3)]
+    public void TestWithCases(int a, int b)
+    {
+        Assert.That(a < b, Is.True);
     }
 }

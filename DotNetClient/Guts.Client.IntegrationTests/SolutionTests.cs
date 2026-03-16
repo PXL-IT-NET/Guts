@@ -1,7 +1,7 @@
 ﻿using Guts.Client.Core.TestTools;
 using NUnit.Framework;
 
-namespace Dummy.Tests;
+namespace Guts.Client.NUnit.IntegrationTests;
 
 public class SolutionTests
 {

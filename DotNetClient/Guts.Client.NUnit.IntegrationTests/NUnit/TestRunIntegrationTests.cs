@@ -1,11 +1,11 @@
-﻿using Dummy.Tests.Infrastructure;
+﻿using Guts.Client.NUnit.IntegrationTests.Infrastructure;
 using Guts.Client.NUnit;
 using NUnit.Framework;
 
-namespace Dummy.Tests;
+namespace Guts.Client.NUnit.IntegrationTests;
 
 [ExerciseTestFixture("dummyCourse", "dummyChapter", "dummyExercise")]
-public class DummyTests
+public class TestRunIntegrationTests
 {
     private MockGutsApiServer _backendMock = null!;
 

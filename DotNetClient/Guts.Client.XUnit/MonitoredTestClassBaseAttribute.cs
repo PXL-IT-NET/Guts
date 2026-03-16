@@ -122,8 +122,8 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
     private string GetSettingsFileDirectory(string baseDirectory)
     {
         const string relativeFilePath = "gutssettings.json";
-        DirectoryInfo? testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
-        FileInfo? fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
+        FileInfo fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
         while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
         {
             testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
@@ -137,11 +137,8 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
                     .OrderByDescending(di => di.Name).FirstOrDefault();
                 if (lastVersionDirectory is not null)
                 {
-                    fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).FirstOrDefault();
-                    if (fileInfo is not null)
-                    {
-                        testProjectDirectoryInfo = fileInfo.Directory;
-                    }
+                    fileInfo = lastVersionDirectory.EnumerateFiles(relativeFilePath, SearchOption.AllDirectories).First();
+                    testProjectDirectoryInfo = fileInfo.Directory!;
                 }
             }
         }
