@@ -17,7 +17,7 @@ public class HttpClientToHttpHandlerAdapter : IHttpHandler
 
         _apiBaseUrl = apiBaseUrl;
 
-        _httpClient = new HttpClient { BaseAddress = new Uri(_apiBaseUrl), Timeout = TimeSpan.FromSeconds(6000) };
+        _httpClient = new HttpClient { BaseAddress = new Uri(_apiBaseUrl), Timeout = TimeSpan.FromSeconds(10) };
         _httpClient.DefaultRequestHeaders.Accept.Clear();
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }

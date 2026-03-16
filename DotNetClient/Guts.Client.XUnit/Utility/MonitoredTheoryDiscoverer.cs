@@ -1,3 +1,4 @@
+using System.Data;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
@@ -13,11 +14,8 @@ public class MonitoredTheoryDiscoverer : TheoryDiscoverer
         _diagnosticMessageSink = diagnosticMessageSink;
     }
 
-    protected override IXunitTestCase CreateTestCaseForDataRow(
-        ITestFrameworkDiscoveryOptions discoveryOptions,
-        ITestMethod testMethod,
-        IAttributeInfo theoryAttribute,
-        object[] dataRow)
+    protected override IEnumerable<IXunitTestCase> CreateTestCasesForDataRow(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod,
+        IAttributeInfo theoryAttribute, object[] dataRow)
     {
         string? displayName = theoryAttribute.GetNamedArgument<string>(nameof(TheoryAttribute.DisplayName));
         if (!string.IsNullOrWhiteSpace(displayName))
@@ -25,7 +23,7 @@ public class MonitoredTheoryDiscoverer : TheoryDiscoverer
             displayName = $"{displayName} ({string.Join(", ", dataRow.Select(FormatArgument))})";
         }
 
-        return new MonitoredXunitTestCase(
+        yield return new MonitoredXunitTestCase(
             _diagnosticMessageSink,
             discoveryOptions.MethodDisplayOrDefault(),
             discoveryOptions.MethodDisplayOptionsOrDefault(),

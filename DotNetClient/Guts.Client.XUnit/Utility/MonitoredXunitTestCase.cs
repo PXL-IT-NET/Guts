@@ -1,4 +1,5 @@
-using System.Data;
+using Guts.Client.Core.Models;
+using Guts.Client.Core.Utility;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -56,8 +57,33 @@ public class MonitoredXunitTestCase : XunitTestCase
         string message = passed ? string.Empty : capturingMessageBus.FailureMessage;
         string? displayName = string.IsNullOrWhiteSpace(_displayNameOverride) ? DisplayName : _displayNameOverride;
 
-        XUnitTestResultReporter.Report(TestMethod, displayName, passed, message);
+        var result = new TestResult(displayName, passed, message);
+
+        XUnitTestClassInfo classInfo = XUnitTestClassInfo.CreateFromTestMethod(TestMethod);
+
+
+        await TestRunResultAccumulator2.AddTestResultAsync(result, classInfo, XUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync);
+
+
+        //XUnitTestResultReporter.Report(TestMethod, displayName, passed, message);
 
         return summary;
+    }
+
+    private async Task OnAllTestOfClassCompletedAsync(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)
+    {
+        // Find the testclass attribute
+        MonitoredTestClassBaseAttribute? monitoredClassAttribute = testClassInfo.Type
+            .GetCustomAttributes(inherit: true)
+            .OfType<MonitoredTestClassBaseAttribute>()
+            .FirstOrDefault();
+
+        if (monitoredClassAttribute is null)
+        {
+            XUnitTestOutputWriter.Instance.WriteError(
+                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}");
+        }
+
+        await monitoredClassAttribute!.SendTestResults(testClassInfo, results);
     }
 }

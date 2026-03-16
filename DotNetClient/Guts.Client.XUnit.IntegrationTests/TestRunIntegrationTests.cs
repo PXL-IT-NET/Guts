@@ -27,3 +27,17 @@ public class TestRunIntegrationTests : IClassFixture<BackendFixture>
         Assert.True(a < b);
     }
 }
+
+[ExerciseTestClass("dummyCourse", "dummyChapter", "dummyExercise", "Guts.Client.XUnit/MonitoredFactAttribute.cs")]
+public class OtherTestRunIntegrationTests : IClassFixture<BackendFixture>
+{
+    public OtherTestRunIntegrationTests(BackendFixture fixture)
+    {
+    }
+
+    [MonitoredFact]
+    public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
+    {
+        Assert.True(true);
+    }
+}

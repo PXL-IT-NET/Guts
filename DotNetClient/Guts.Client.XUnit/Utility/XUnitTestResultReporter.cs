@@ -1,92 +1,98 @@
-using Guts.Client.Core.Models;
-using Guts.Client.Core.TestTools;
-using Guts.Client.Core.Utility;
-using Xunit.Abstractions;
+//using Guts.Client.Core.Models;
+//using Guts.Client.Core.TestTools;
+//using Guts.Client.Core.Utility;
+//using Xunit.Abstractions;
 
-namespace Guts.Client.XUnit.Utility;
+//namespace Guts.Client.XUnit.Utility;
 
-internal static class XUnitTestResultReporter
-{
-    private static readonly Dictionary<string, XUnitTestRunState> TestRunStateByClassName = new();
-    private static readonly object Lock = new();
+//internal static class XUnitTestResultReporter
+//{
+//    private static readonly Dictionary<string, XUnitTestRunState> TestRunStateByClassName = new();
+//    private static readonly object Lock = new();
 
-    public static void Report(ITestMethod testMethod, string testName, bool passed, string message)
-    {
-        var testClassType = testMethod.TestClass.Class.ToRuntimeType();
-        var className = testClassType.FullName ?? testClassType.Name;
+//    public static void Report(ITestMethod testMethod, string testName, bool passed, string message)
+//    {
+//        Type? testClassType = testMethod.TestClass.Class.ToRuntimeType();
+//        string className = testClassType.FullName ?? testClassType.Name;
 
-        lock (Lock)
-        {
-            if (!TestRunStateByClassName.TryGetValue(className, out var runState))
-            {
-                var classInfo = XUnitTestClassInfo.CreateFromTestMethod(testMethod);
-                runState = XUnitTestRunState.Create(classInfo);
-                TestRunStateByClassName[className] = runState;
-            }
+//        lock (Lock)
+//        {
+//            if (!TestRunStateByClassName.TryGetValue(className, out var runState))
+//            {
+//                runState = AddRunStateEntryForTestClass(testMethod, className);
+//            }
 
-            if (runState.Sent) return;
-            if (runState.TestResults.Any(r => r.TestName == testName)) return;
+//            if (runState.Sent) return;
+//            if (runState.TestResults.Any(r => r.TestName == testName)) return;
 
-            runState.TestResults.Add(new TestResult(testName, passed, message?.Trim() ?? string.Empty));
+//            runState.TestResults.Add(new TestResult(testName, passed, message?.Trim() ?? string.Empty));
 
-            XUnitTestOutputWriter.Instance.WriteProgress(
-                $"You ran {runState.TestResults.Count} tests of {runState.NumberOfTestsInCurrentClass} tests in the test class '{runState.TestClassName}'");
+//            XUnitTestOutputWriter.Instance.WriteProgress(
+//                $"You ran {runState.TestResults.Count} tests of {runState.NumberOfTestsInCurrentClass} tests in the test class '{runState.TestClassName}'");
 
-            if (runState.TestResults.Count < runState.NumberOfTestsInCurrentClass) return;
+//            if (runState.TestResults.Count < runState.NumberOfTestsInCurrentClass) return;
 
-            //All tests of a testclass have been runned => Send the results
+//            //All tests of a testclass have been runned => Send the results
 
-            var monitoredClassAttribute = testClassType
-                .GetCustomAttributes(inherit: true)
-                .OfType<MonitoredTestClassBaseAttribute>()
-                .FirstOrDefault();
+//            var monitoredClassAttribute = testClassType
+//                .GetCustomAttributes(inherit: true)
+//                .OfType<MonitoredTestClassBaseAttribute>()
+//                .FirstOrDefault();
 
-            if (monitoredClassAttribute is null)
-            {
-                runState.Sent = true;
-                return;
-            }
+//            if (monitoredClassAttribute is null)
+//            {
+//                runState.Sent = true;
+//                return;
+//            }
 
-            monitoredClassAttribute.SendTestResults(runState);
-            runState.Sent = true;
-        }
-    }
-}
+//            monitoredClassAttribute.SendTestResults(runState);
+//            runState.Sent = true;
+//        }
+//    }
 
-internal class XUnitTestRunState
-{
-    public string TestClassName { get; }
-    public int NumberOfTestsInCurrentClass { get; }
-    public string TestCodeHash { get; }
-    public IList<TestResult> TestResults { get; }
-    public bool Sent { get; set; }
+//    private static XUnitTestRunState AddRunStateEntryForTestClass(ITestMethod testMethod, string className)
+//    {
+//        var classInfo = XUnitTestClassInfo.CreateFromTestMethod(testMethod);
+//        var runState = XUnitTestRunState.Create(classInfo);
+//        TestRunStateByClassName[className] = runState;
+//        return runState;
+//    }
+//}
 
-    private XUnitTestRunState(string testClassName, int numberOfTestsInCurrentClass, string testCodeHash)
-    {
-        TestClassName = testClassName;
-        NumberOfTestsInCurrentClass = numberOfTestsInCurrentClass;
-        TestCodeHash = testCodeHash;
-        TestResults = new List<TestResult>();
-    }
+//internal class XUnitTestRunState
+//{
+//    public string TestClassName { get; }
+//    public int NumberOfTestsInCurrentClass { get; }
+//    public string TestCodeHash { get; }
+//    public IList<TestResult> TestResults { get; }
+//    public bool Sent { get; set; }
 
-    public static XUnitTestRunState Create(ITestClassInfo classInfo)
-    {
-        var testCodeHash = string.Empty;
+//    private XUnitTestRunState(string testClassName, int numberOfTestsInCurrentClass, string testCodeHash)
+//    {
+//        TestClassName = testClassName;
+//        NumberOfTestsInCurrentClass = numberOfTestsInCurrentClass;
+//        TestCodeHash = testCodeHash;
+//        TestResults = new List<TestResult>();
+//    }
 
-        FileInfo? fileInfo = classInfo.TestProjectDirectory
-            .GetFiles(classInfo.Name + ".cs", SearchOption.AllDirectories).FirstOrDefault();
+//    public static XUnitTestRunState Create(ITestClassInfo classInfo)
+//    {
+//        var testCodeHash = string.Empty;
 
-        if (fileInfo is null)
-        {
-            XUnitTestOutputWriter.Instance.WriteError(
-                $"Could not find test code file for test class {classInfo.Name}. " +
-                $"Searched for {classInfo.Name}.cs in directory {classInfo.TestProjectDirectory.FullName} (and subdirectories)");
-        }
-        else
-        {
-            testCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
-        }
+//        FileInfo? fileInfo = classInfo.TestProjectDirectory
+//            .GetFiles(classInfo.Name + ".cs", SearchOption.AllDirectories).FirstOrDefault();
 
-        return new XUnitTestRunState(classInfo.Name, classInfo.NumberOfTests, testCodeHash);
-    }
-}
+//        if (fileInfo is null)
+//        {
+//            XUnitTestOutputWriter.Instance.WriteError(
+//                $"Could not find test code file for test class {classInfo.Name}. " +
+//                $"Searched for {classInfo.Name}.cs in directory {classInfo.TestProjectDirectory.FullName} (and subdirectories)");
+//        }
+//        else
+//        {
+//            testCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
+//        }
+
+//        return new XUnitTestRunState(classInfo.Name, classInfo.NumberOfTests, testCodeHash);
+//    }
+//}

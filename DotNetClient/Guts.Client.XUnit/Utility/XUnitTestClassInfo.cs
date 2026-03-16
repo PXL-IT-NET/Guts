@@ -1,5 +1,6 @@
-using System.Reflection;
+using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
+using System.Reflection;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -9,11 +10,13 @@ internal class XUnitTestClassInfo : ITestClassInfo
 {
     public string Name { get; }
     public DirectoryInfo TestProjectDirectory { get; }
+    public Type Type { get; }
     public int NumberOfTests { get; }
 
-    private XUnitTestClassInfo(string name, DirectoryInfo testProjectDirectory, int numberOfTests)
+    private XUnitTestClassInfo(string name, Type type, DirectoryInfo testProjectDirectory, int numberOfTests)
     {
         Name = name;
+        Type = type;
         TestProjectDirectory = testProjectDirectory;
         NumberOfTests = numberOfTests;
     }
@@ -34,6 +37,6 @@ internal class XUnitTestClassInfo : ITestClassInfo
             .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Sum(m => m.GetCustomAttributes(inherit: true).Count(a => a is FactAttribute and not TheoryAttribute || a is InlineDataAttribute));
 
-        return new XUnitTestClassInfo(testClassRuntimeType.Name, testProjectDirectoryInfo, numberOfTestsInCurrentClass);
+        return new XUnitTestClassInfo(testClassRuntimeType.Name, testClassRuntimeType, testProjectDirectoryInfo, numberOfTestsInCurrentClass);
     }
 }

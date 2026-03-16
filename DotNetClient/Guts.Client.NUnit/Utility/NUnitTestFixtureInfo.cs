@@ -9,11 +9,13 @@ internal class NUnitTestFixtureInfo : ITestClassInfo
 {
     public string Name { get; }
     public DirectoryInfo TestProjectDirectory { get; }
+    public Type Type { get; }
     public int NumberOfTests { get; }
 
-    private NUnitTestFixtureInfo(string name, DirectoryInfo testProjectDirectory, int numberOfTests)
+    private NUnitTestFixtureInfo(string name, Type type, DirectoryInfo testProjectDirectory, int numberOfTests)
     {
         Name = name;
+        Type = type;
         TestProjectDirectory = testProjectDirectory;
         NumberOfTests = numberOfTests;
     }
@@ -36,6 +38,6 @@ internal class NUnitTestFixtureInfo : ITestClassInfo
             .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
             .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
 
-        return new NUnitTestFixtureInfo(testClassName, testProjectDirectoryInfo, numberOfTestsInCurrentFixture);
+        return new NUnitTestFixtureInfo(testClassName, testClassTypeInfo.Type, testProjectDirectoryInfo, numberOfTestsInCurrentFixture);
     }
 }

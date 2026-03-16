@@ -15,8 +15,7 @@ public class ExerciseTestClassAttribute : MonitoredTestClassBaseAttribute
         SourceCodeRelativeFilePaths = null;
     }
 
-    public ExerciseTestClassAttribute(string courseCode, string chapterCode, string exerciseCode, string sourceCodeRelativeFilePaths)
-        : this(courseCode, chapterCode, exerciseCode)
+    public ExerciseTestClassAttribute(string courseCode, string chapterCode, string exerciseCode, string sourceCodeRelativeFilePaths) : this(courseCode, chapterCode, exerciseCode)
     {
         SourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
     }

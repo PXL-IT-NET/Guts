@@ -1,5 +1,7 @@
+using System.Net.Mail;
 using System.Reflection;
 using Guts.Client.Core.Models;
+using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
 using Guts.Client.XUnit.Utility;
 using Microsoft.Extensions.Configuration;
@@ -55,6 +57,7 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
             var outputWriter = XUnitTestOutputWriter.Instance;
             var authorizationHandler = new AuthorizationHandler(new LoginWindowFactory(httpHandler, webAppBaseUrl), outputWriter);
             ResultSender = new TestRunResultSender(httpHandler, authorizationHandler, outputWriter);
+            
         }
         catch (Exception e)
         {
@@ -62,7 +65,7 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
         }
     }
 
-    internal void SendTestResults(XUnitTestRunState state)
+    public async Task SendTestResults(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)
     {
         if (_initializationException is not null)
         {
@@ -72,15 +75,16 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
 
         try
         {
-            XUnitTestOutputWriter.Instance.WriteProgress("Test run completed. Trying to send results...");
+            XUnitTestOutputWriter.Instance.WriteProgress(
+                $"{results.Count} of {testClassInfo.NumberOfTests} tests of class '{testClassInfo.Name}' completed. Trying to send results...");
 
             var testRun = new AssignmentTestRun(
                 CreateAssignment(),
-                state.TestResults,
+                results,
                 GetSourceCodeFiles(),
-                state.TestCodeHash);
+                GetTestClassHash(testClassInfo));
 
-            var result = ResultSender!.SendAsync(testRun, RunType).Result;
+            Result result = await ResultSender!.SendAsync(testRun, RunType);
 
             if (result.Success)
             {
@@ -144,5 +148,25 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
         }
 
         return fileInfo.Exists ? testProjectDirectoryInfo.FullName : string.Empty;
+    }
+
+    private string GetTestClassHash(ITestClassInfo testClassInfo)
+    {
+        var testCodeHash = string.Empty;
+
+        FileInfo? fileInfo = testClassInfo.TestProjectDirectory
+            .GetFiles(testClassInfo.Name + ".cs", SearchOption.AllDirectories).FirstOrDefault();
+
+        if (fileInfo is null)
+        {
+            XUnitTestOutputWriter.Instance.WriteError(
+                $"Could not find test code file for test class {testClassInfo.Name}. " +
+                $"Searched for {testClassInfo.Name}.cs in directory {testClassInfo.TestProjectDirectory.FullName} (and subdirectories)");
+        }
+        else
+        {
+            testCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
+        }
+        return testCodeHash;
     }
 }

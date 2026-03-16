@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
-using Xunit.Abstractions;
 
 namespace Guts.Client.XUnit.IntegrationTests.Infrastructure;
 
