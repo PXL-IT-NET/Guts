@@ -6,6 +6,8 @@ namespace Guts.Client.Core.Utility;
 
 public class TestRunResultSender(IHttpHandler httpHandler, IAuthorizationHandler authorizationHandler, ITestOutputWriter outputWriter)
 {
+    private static readonly SemaphoreSlim RefreshAccessTokenSemaphore = new(1, 1);
+
     public async Task<Result> SendAsync(AssignmentTestRun testRun, TestRunType type)
     {
         await RefreshAccessToken();
@@ -65,21 +67,29 @@ public class TestRunResultSender(IHttpHandler httpHandler, IAuthorizationHandler
 
     private async Task RefreshAccessToken(bool allowCachedToken = true)
     {
-        var token = string.Empty;
-
-        if (allowCachedToken)
+        await RefreshAccessTokenSemaphore.WaitAsync();
+        try
         {
-            token = authorizationHandler.RetrieveLocalAccessToken();
-            outputWriter.WriteProgress("Retrieved authentication token from cache.");
-        }
+            var token = string.Empty;
 
-        if (string.IsNullOrEmpty(token))
+            if (allowCachedToken)
+            {
+                token = authorizationHandler.RetrieveLocalAccessToken();
+                outputWriter.WriteProgress("Retrieved authentication token from cache.");
+            }
+
+            if (string.IsNullOrEmpty(token))
+            {
+                outputWriter.WriteProgress("Retrieving an authentication token online...");
+                token = await authorizationHandler.RetrieveRemoteAccessTokenAsync();
+                outputWriter.WriteProgress("Retrieved authentication token.");
+            }
+
+            httpHandler.UseBearerToken(token);
+        }
+        finally
         {
-            outputWriter.WriteProgress("Retrieving an authentication token online...");
-            token = await authorizationHandler.RetrieveRemoteAccessTokenAsync();
-            outputWriter.WriteProgress("Retrieved authentication token.");
+            RefreshAccessTokenSemaphore.Release();
         }
-
-        httpHandler.UseBearerToken(token);
     }
 }
