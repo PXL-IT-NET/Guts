@@ -100,11 +100,14 @@ public class MonitoredXunitTestCase : XunitTestCase
 
         if (monitoredClassAttribute is null)
         {
-            XUnitTestOutputWriter.Instance.WriteError(
-                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}");
+            XUnitTestOutputWriter.Instance.WriteProgress(
+                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}. " +
+                "The test results will therefore not be sent to the GUTS system.");
         }
-
-        await monitoredClassAttribute!.SendTestResults(testClassInfo, results);
+        else
+        {
+            await monitoredClassAttribute!.SendTestResults(testClassInfo, results);
+        }
     }
 
     private static string FormatArgument(object? argument)

@@ -71,11 +71,14 @@ public class MonitoredTestAttribute : TestAttribute, ITestAction
 
         if (monitoredFixtureAttribute is null)
         {
-            NUnitTestOutputWriter.Instance.WriteError(
-                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}");
+            NUnitTestOutputWriter.Instance.WriteProgress(
+                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}. " +
+                "The test results will therefore not be sent to the GUTS system.");
         }
-
-        await monitoredFixtureAttribute!.SendTestResults(testClassInfo, results);
+        else
+        {
+            await monitoredFixtureAttribute!.SendTestResults(testClassInfo, results);
+        }
     }
 
     private int GetTestCaseNumber(ITest test)
