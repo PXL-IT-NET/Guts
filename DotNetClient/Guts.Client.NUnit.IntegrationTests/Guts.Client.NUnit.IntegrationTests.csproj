@@ -25,8 +25,5 @@
 	  <ProjectReference Include="..\Guts.Client.Core\Guts.Client.Core.csproj" />
 	  <ProjectReference Include="..\Guts.Client.NUnit\Guts.Client.NUnit.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Nested\" />
-	</ItemGroup>
 	
 </Project>

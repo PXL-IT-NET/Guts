@@ -32,7 +32,7 @@ internal class XUnitTestClassInfo : ITestClassInfo
 
         int numberOfTestsInCurrentClass = testClassRuntimeType
             .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Count(m => m.GetCustomAttributes(inherit: true).Any(a => a is FactAttribute));
+            .Sum(m => m.GetCustomAttributes(inherit: true).Count(a => a is FactAttribute and not TheoryAttribute || a is InlineDataAttribute));
 
         return new XUnitTestClassInfo(testClassRuntimeType.Name, testProjectDirectoryInfo, numberOfTestsInCurrentClass);
     }

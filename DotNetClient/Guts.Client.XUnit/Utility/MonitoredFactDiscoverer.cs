@@ -15,6 +15,7 @@ public class MonitoredFactDiscoverer(IMessageSink diagnosticMessageSink) : IXuni
             discoveryOptions.MethodDisplayOrDefault(),
             discoveryOptions.MethodDisplayOptionsOrDefault(),
             testMethod,
-            displayName);
+            displayName, 
+            []);
     }
 }

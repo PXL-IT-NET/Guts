@@ -1,3 +1,4 @@
+using System.Data;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -17,8 +18,9 @@ public class MonitoredXunitTestCase : XunitTestCase
         TestMethodDisplay defaultMethodDisplay,
         TestMethodDisplayOptions defaultMethodDisplayOptions,
         ITestMethod testMethod,
-        string? displayNameOverride)
-        : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod)
+        string? displayNameOverride, 
+        object[] arguments)
+        : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, arguments)
     {
         _displayNameOverride = displayNameOverride;
     }

@@ -34,6 +34,8 @@ internal static class XUnitTestResultReporter
 
             if (runState.TestResults.Count < runState.NumberOfTestsInCurrentClass) return;
 
+            //All tests of a testclass have been runned => Send the results
+
             var monitoredClassAttribute = testClassType
                 .GetCustomAttributes(inherit: true)
                 .OfType<MonitoredTestClassBaseAttribute>()
