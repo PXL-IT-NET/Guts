@@ -1,5 +1,4 @@
 ﻿using Guts.Client.Core.Models;
-using Guts.Client.Core.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
@@ -10,9 +9,11 @@ public class ProjectComponentTestFixtureAttribute : MonitoredTestFixtureBaseAttr
 {
     private readonly string _projectCode;
     private readonly string _componentCode;
+    private readonly string _courseCode;
 
     public ProjectComponentTestFixtureAttribute(string courseCode, string projectCode, string componentCode) : base(courseCode)
     {
+        _courseCode = courseCode;
         _projectCode = projectCode;
         _componentCode = componentCode;
         SourceCodeRelativeFilePaths = null;
@@ -23,38 +24,21 @@ public class ProjectComponentTestFixtureAttribute : MonitoredTestFixtureBaseAttr
         SourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
     }
 
+    protected override TestRunType RunType => TestRunType.ForProject;
+
     public override void BeforeTest(ITest test)
     {
         base.BeforeTest(test);
-        TestRunResultAccumulator.Instance.Clear();
         TestContext.Progress.WriteLine($"Starting test run. Project '{_projectCode}', component '{_componentCode}'.");
     }
 
-    public override void AfterTest(ITest test)
+    protected override Assignment CreateAssignment()
     {
-        try
+        return new Assignment
         {
-            if (!AllTestsOfFixtureWereRun()) return;
-
-            var projectComponent = new Assignment
-            {
-                CourseCode = CourseCode,
-                TopicCode = _projectCode,
-                AssignmentCode = _componentCode,
-            };
-
-            var testRun = new AssignmentTestRun(
-                projectComponent,
-                TestRunResultAccumulator.Instance.TestResults,
-                GetSourceCodeFiles(),
-                TestRunResultAccumulator.Instance.TestCodeHash);
-
-            SendTestResults(testRun, TestRunType.ForProject);
-        }
-        catch (Exception ex)
-        {
-            TestContext.Error.WriteLine("Something went wrong while sending the test results.");
-            TestContext.Error.WriteLine($"Exception: {ex}");
-        }
+            AssignmentCode = _projectCode,
+            CourseCode = _courseCode,
+            TopicCode = _componentCode
+        };
     }
 }

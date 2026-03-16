@@ -33,10 +33,13 @@ internal class NUnitTestFixtureInfo : ITestClassInfo
             hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
         }
 
-        int numberOfTestsInCurrentFixture = testClassTypeInfo
+        var testMethods = testClassTypeInfo
             .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any())
-            .Select(m => Math.Max(1, m.GetCustomAttributes<TestAttribute>(inherit: true).Count())).Sum();
+            .Where(m => m.GetCustomAttributes<TestAttribute>(inherit: true).Any()).ToList();
+
+        int numberOfTestsInCurrentFixture = testMethods
+            .Select(m => Math.Max(1, m.GetCustomAttributes<TestCaseAttribute>(inherit: true).Length)).Sum();
+
 
         return new NUnitTestFixtureInfo(testClassName, testClassTypeInfo.Type, testProjectDirectoryInfo, numberOfTestsInCurrentFixture);
     }

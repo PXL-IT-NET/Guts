@@ -23,41 +23,21 @@ public class ExerciseTestFixtureAttribute : MonitoredTestFixtureBaseAttribute
         SourceCodeRelativeFilePaths = sourceCodeRelativeFilePaths;
     }
 
+    protected override TestRunType RunType => TestRunType.ForExercise;
+
     public override void BeforeTest(ITest test)
     {
         base.BeforeTest(test);
-        TestRunResultAccumulator.Instance.Clear();
         TestContext.Progress.WriteLine($"Starting test run. Chapter {_chapterCode}, exercise {_exerciseCode}");
     }
 
-    public override void AfterTest(ITest test)
+    protected override Assignment CreateAssignment()
     {
-        TestContext.Progress.WriteLine("Test run completed.");
-
-        try
+        return new Assignment
         {
-            if (!AllTestsOfFixtureWereRun()) return;
-
-            var exercise = new Assignment
-            {
-                CourseCode = CourseCode,
-                TopicCode = _chapterCode,
-                AssignmentCode = _exerciseCode
-            };
-
-            var testRun = new AssignmentTestRun(
-                exercise, 
-                TestRunResultAccumulator.Instance.TestResults,
-                GetSourceCodeFiles(), 
-                TestRunResultAccumulator.Instance.TestCodeHash);
-
-
-            SendTestResults(testRun, TestRunType.ForExercise);
-        }
-        catch (Exception ex)
-        {
-            TestContext.Error.WriteLine("Something went wrong while sending the test results.");
-            TestContext.Error.WriteLine($"Exception: {ex}");
-        }
+            CourseCode = CourseCode,
+            TopicCode = _chapterCode,
+            AssignmentCode = _exerciseCode
+        };
     }
 }

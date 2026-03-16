@@ -57,7 +57,25 @@ public class MonitoredTestAttribute : TestAttribute, ITestAction
             message:(resultAdapter.Message ?? string.Empty).Trim()
         );
 
-        TestRunResultAccumulator.Instance.AddTestResult(result, NUnitTestFixtureInfo.CreateFromTest(test), NUnitTestOutputWriter.Instance);
+        ITestClassInfo testClassInfo = NUnitTestFixtureInfo.CreateFromTest(test);
+        TestRunResultAccumulator.AddTestResultAsync(result, testClassInfo, NUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync).Wait();
+    }
+
+    private async Task OnAllTestOfClassCompletedAsync(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)
+    {
+        // Find the testclass attribute
+        MonitoredTestFixtureBaseAttribute? monitoredFixtureAttribute = testClassInfo.Type
+            .GetCustomAttributes(inherit: true)
+            .OfType<MonitoredTestFixtureBaseAttribute>()
+            .FirstOrDefault();
+
+        if (monitoredFixtureAttribute is null)
+        {
+            NUnitTestOutputWriter.Instance.WriteError(
+                $"Cannot find a test class attribute ('ExerciseTestClass' or 'ProjectComponentTestClass' on class {testClassInfo.Name}");
+        }
+
+        await monitoredFixtureAttribute!.SendTestResults(testClassInfo, results);
     }
 
     private int GetTestCaseNumber(ITest test)

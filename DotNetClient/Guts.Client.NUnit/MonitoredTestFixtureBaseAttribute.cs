@@ -1,11 +1,12 @@
-﻿using System.Reflection;
-using Guts.Client.Core.Models;
+﻿using Guts.Client.Core.Models;
+using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
 using Guts.Client.NUnit.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using System.Reflection;
 
 namespace Guts.Client.NUnit;
 
@@ -66,6 +67,8 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
         }
     }
 
+    protected abstract TestRunType RunType { get; }
+
     public virtual void BeforeTest(ITest test)
     {
         if (_initializationException is not null)
@@ -74,23 +77,57 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
         }
     }
 
-    public abstract void AfterTest(ITest test);
-
-    protected bool AllTestsOfFixtureWereRun()
+    public void AfterTest(ITest test)
     {
-        var results = TestRunResultAccumulator.Instance.TestResults;
+        
+    }
 
-        TestContext.Progress.WriteLine(
-            $"You ran {results.Count} tests " +
-            $"of {TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture} tests " +
-            $"in the test class '{TestRunResultAccumulator.Instance.TestClassName}'");
+    protected abstract Assignment CreateAssignment();
 
-        if (results.Count >= TestRunResultAccumulator.Instance.NumberOfTestsInCurrentFixture) return true;
+    public async Task SendTestResults(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)
+    {
+        if (_initializationException is not null)
+        {
+            NUnitTestOutputWriter.Instance.WriteError(_initializationException);
+            return;
+        }
 
-        TestContext.Progress.WriteLine("Not all tests of the test class (fixture) were run. " +
-                                       "So the results will not be sent to the GUTS Api. " +
-                                       "Run all the tests of a fixture at once to send the results.");
-        return false;
+        try
+        {
+            NUnitTestOutputWriter.Instance.WriteProgress(
+                $"{results.Count} of {testClassInfo.NumberOfTests} tests of class '{testClassInfo.Name}' completed. Trying to send results...");
+
+            var testRun = new AssignmentTestRun(
+                CreateAssignment(),
+                results,
+                GetSourceCodeFiles(),
+                GetTestClassHash(testClassInfo));
+
+            Result result = await ResultSender!.SendAsync(testRun, RunType);
+
+            if (result.Success)
+            {
+                NUnitTestOutputWriter.Instance.WriteProgress("Results successfully sent.");
+            }
+            else
+            {
+                NUnitTestOutputWriter.Instance.WriteProgress("Sending results failed.");
+                NUnitTestOutputWriter.Instance.WriteProgress(result.Message);
+            }
+        }
+        catch (AggregateException ex)
+        {
+            NUnitTestOutputWriter.Instance.WriteError("Something went wrong while sending the test results.");
+            foreach (var innerException in ex.InnerExceptions)
+            {
+                NUnitTestOutputWriter.Instance.WriteError(innerException);
+            }
+        }
+        catch (Exception ex)
+        {
+            NUnitTestOutputWriter.Instance.WriteError("Something went wrong while sending the test results.");
+            NUnitTestOutputWriter.Instance.WriteError(ex);
+        }
     }
 
     protected IEnumerable<SolutionFile> GetSourceCodeFiles()
@@ -99,39 +136,6 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
 
         TestContext.Progress.WriteLine($"Reading source code files: {SourceCodeRelativeFilePaths}");
         return SourceCodeRetriever.ReadSourceCodeFiles(SourceCodeRelativeFilePaths);
-    }
-
-    protected void SendTestResults(AssignmentTestRun testRun, TestRunType type)
-    {
-        try
-        {
-            TestContext.Progress.WriteLine("Test run completed. Trying to send results...");
-
-            var result = ResultSender!.SendAsync(testRun, type).Result;
-
-            if (result.Success)
-            {
-                TestContext.Progress.WriteLine("Results successfully sent.");
-            }
-            else
-            {
-                TestContext.Progress.WriteLine("Sending results failed.");
-                TestContext.Progress.WriteLine(result.Message);
-            }
-        }
-        catch (AggregateException ex)
-        {
-            TestContext.Error.WriteLine("Something went wrong while sending the test results.");
-            foreach (var innerException in ex.InnerExceptions)
-            {
-                TestContext.Error.WriteLine($"Exception: {innerException}");
-            }
-        }
-        catch (Exception ex)
-        {
-            TestContext.Error.WriteLine("Something went wrong while sending the test results.");
-            TestContext.Error.WriteLine($"Exception: {ex}");
-        }
     }
 
     private string GetSettingsFileDirectory(string baseDirectory)
@@ -162,5 +166,25 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
             }
         }
         return fileInfo.Exists ? testProjectDirectoryInfo!.FullName : string.Empty;
+    }
+
+    private string GetTestClassHash(ITestClassInfo testClassInfo)
+    {
+        var testCodeHash = string.Empty;
+
+        FileInfo? fileInfo = testClassInfo.TestProjectDirectory
+            .GetFiles(testClassInfo.Name + ".cs", SearchOption.AllDirectories).FirstOrDefault();
+
+        if (fileInfo is null)
+        {
+            NUnitTestOutputWriter.Instance.WriteError(
+                $"Could not find test code file for test class {testClassInfo.Name}. " +
+                $"Searched for {testClassInfo.Name}.cs in directory {testClassInfo.TestProjectDirectory.FullName} (and subdirectories)");
+        }
+        else
+        {
+            testCodeHash = FileUtil.GetFileHash(fileInfo.FullName);
+        }
+        return testCodeHash;
     }
 }

@@ -1,7 +1,9 @@
 using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
+using System.Data;
 using Xunit.Abstractions;
 using Xunit.Sdk;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Guts.Client.XUnit.Utility;
 
@@ -19,7 +21,7 @@ public class MonitoredXunitTestCase : XunitTestCase
         TestMethodDisplay defaultMethodDisplay,
         TestMethodDisplayOptions defaultMethodDisplayOptions,
         ITestMethod testMethod,
-        string? displayNameOverride, 
+        string? displayNameOverride,
         object[] arguments)
         : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, arguments)
     {
@@ -55,14 +57,32 @@ public class MonitoredXunitTestCase : XunitTestCase
 
         bool passed = summary.Failed == 0;
         string message = passed ? string.Empty : capturingMessageBus.FailureMessage;
-        string? displayName = string.IsNullOrWhiteSpace(_displayNameOverride) ? DisplayName : _displayNameOverride;
 
-        var result = new TestResult(displayName, passed, message);
+        string testName = string.IsNullOrEmpty(_displayNameOverride)
+            ? new CamelCaseConverter().ToNormalSentence(TestMethod.Method.Name)
+            : _displayNameOverride;
+
+        string className = TestMethod.TestClass.Class.Name;
+
+        int dotIndex = className.LastIndexOf('.');
+        if (dotIndex >= 0)
+        {
+            className = className.Substring(dotIndex + 1);
+        }
+        testName = $"({className}) {testName}";
+
+        if (TestMethodArguments.Any())
+        {
+
+            testName = $"{testName} ({string.Join(", ", TestMethodArguments.Select(FormatArgument))})";
+        }
+
+        var result = new TestResult(testName, passed, message);
 
         XUnitTestClassInfo classInfo = XUnitTestClassInfo.CreateFromTestMethod(TestMethod);
 
 
-        await TestRunResultAccumulator2.AddTestResultAsync(result, classInfo, XUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync);
+        await TestRunResultAccumulator.AddTestResultAsync(result, classInfo, XUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync);
 
 
         //XUnitTestResultReporter.Report(TestMethod, displayName, passed, message);
@@ -85,5 +105,10 @@ public class MonitoredXunitTestCase : XunitTestCase
         }
 
         await monitoredClassAttribute!.SendTestResults(testClassInfo, results);
+    }
+
+    private static string FormatArgument(object? argument)
+    {
+        return argument?.ToString() ?? "null";
     }
 }
