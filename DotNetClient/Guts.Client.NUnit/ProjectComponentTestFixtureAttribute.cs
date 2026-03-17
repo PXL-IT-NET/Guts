@@ -36,9 +36,9 @@ public class ProjectComponentTestFixtureAttribute : MonitoredTestFixtureBaseAttr
     {
         return new Assignment
         {
-            AssignmentCode = _projectCode,
             CourseCode = _courseCode,
-            TopicCode = _componentCode
+            TopicCode = _projectCode,
+            AssignmentCode = _componentCode
         };
     }
 }
