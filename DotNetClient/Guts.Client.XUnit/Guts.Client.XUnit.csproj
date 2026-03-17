@@ -6,10 +6,10 @@
     <Description>Utilities to write unit tests with xUnit and send the results to the Guts API</Description>
     <Copyright>Copyright © 2019</Copyright>
     <PackageTags>Guts;Unit Test;Client;xUnit</PackageTags>
-    <Version>10.0.1</Version>
+    <Version>10.0.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>10.0.1</AssemblyVersion>
-    <FileVersion>10.0.1</FileVersion>
+    <AssemblyVersion>10.0.2</AssemblyVersion>
+    <FileVersion>10.0.2</FileVersion>
     <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
