@@ -27,11 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="gutssettings.json">
-      <Pack>true</Pack>
-      <PackageCopyToOutput>true</PackageCopyToOutput>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="buildTransitive\Guts.Client.Core.targets" Pack="true" PackagePath="buildTransitive\Guts.Client.Core.targets" />
   </ItemGroup>
 
