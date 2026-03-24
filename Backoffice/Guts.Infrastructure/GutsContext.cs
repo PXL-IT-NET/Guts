@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Linq.Expressions;
-using System.Reflection;
+using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.ExamAggregate;
@@ -21,13 +20,28 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.EntityFrameworkCore.Query.Internal;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Guts.Infrastructure
 {
     internal class GutsContext : IdentityDbContext<User, Role, int>
     {
+        private static readonly ValueConverter<DateTime, DateTime> UtcDateTimeConverter =
+            new(
+                value => value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime(),
+                value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+
+        private static readonly ValueConverter<DateTime?, DateTime?> NullableUtcDateTimeConverter =
+            new(
+                value => value.HasValue
+                    ? value.Value.Kind == DateTimeKind.Utc
+                        ? value
+                        : value.Value.ToUniversalTime()
+                    : value,
+                value => value.HasValue
+                    ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+                    : value);
+
         public DbSet<Period> Periods { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Topic> Topics { get; set; }
@@ -77,12 +91,12 @@ namespace Guts.Infrastructure
             builder.ApplyConfiguration(new ProjectAssessmentConfiguration());
             builder.ApplyConfiguration(new ProjectTeamAssessmentConfiguration());
             builder.ApplyConfiguration(new PeerAssessmentConfiguration());
+
+            ApplyUtcDateTimeConverters(builder);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //Make sure datetimes returned from the database are UTC datetimes
-            optionsBuilder.ReplaceService<IEntityMaterializerSource, UtcAwareEntityMaterializerSource>();
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=Guts;Integrated Security=True;", sqlOptions =>
@@ -92,34 +106,20 @@ namespace Guts.Infrastructure
             }
         }
 
-    }
-
-    public static class DateTimeMapper
-    {
-        public static DateTime SetKindToUtc(DateTime value)
+        private static void ApplyUtcDateTimeConverters(ModelBuilder builder)
         {
-            return DateTime.SpecifyKind(value, DateTimeKind.Utc);
-        }
-    }
-
-    public class UtcAwareEntityMaterializerSource : EntityMaterializerSource
-    {
-        private static readonly MethodInfo SetKindToUtcMethod = typeof(DateTimeMapper).GetTypeInfo().GetMethod(nameof(DateTimeMapper.SetKindToUtc));
-
-        public UtcAwareEntityMaterializerSource(EntityMaterializerSourceDependencies dependencies) : base(dependencies)
-        {
-        }
-
-        public override Expression CreateMaterializeExpression(IEntityType entityType, string entityInstanceName, Expression materializationContextExpression)
-        {
-            if (entityType.ClrType == typeof(DateTime))
+            foreach (var property in builder.Model.GetEntityTypes().SelectMany(entityType => entityType.GetProperties()))
             {
-                return Expression.Call(
-                    SetKindToUtcMethod,
-                    base.CreateMaterializeExpression(entityType, entityInstanceName, materializationContextExpression)
-                );
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(UtcDateTimeConverter);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(NullableUtcDateTimeConverter);
+                }
             }
-            return base.CreateMaterializeExpression(entityType, entityInstanceName, materializationContextExpression);
         }
+
     }
 }
