@@ -1,5 +1,4 @@
 using Guts.Api.Controllers;
-using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 

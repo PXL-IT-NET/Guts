@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.Tests.Builders;
-using Guts.Domain.UserAggregate;
-using Moq;
 using NUnit.Framework;
 
 namespace Guts.Domain.Tests.PeriodAggregate

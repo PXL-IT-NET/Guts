@@ -9,7 +9,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Guts.Business;
 using Guts.Business.Dtos;
-using Guts.Business.Repositories;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
 using Guts.Api.Models.ProjectModels;

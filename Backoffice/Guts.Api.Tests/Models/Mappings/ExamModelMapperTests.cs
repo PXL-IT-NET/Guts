@@ -1,7 +1,5 @@
 ﻿using System.Linq;
-using AutoMapper;
-using Guts.Api.Models.ExamModels;
-using Guts.Api.Models.PeriodModels;
+using Guts.Api.Models;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
@@ -15,11 +13,7 @@ namespace Guts.Api.Tests.Models.Mappings
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.AddMaps(typeof(PeriodOutputModel).Assembly);
-            });
-            _mapper = config.CreateMapper();
+            _mapper = new Mapper();
         }
 
         [Test]
@@ -39,7 +33,7 @@ namespace Guts.Api.Tests.Models.Mappings
                 .WithExamPart(examPart).Build();
 
             //Act
-            var model = _mapper.Map<ExamOutputModel>(exam);
+            var model = _mapper.MapToExamOutputModel(exam);
 
             //Assert
             Assert.That(model, Is.Not.Null);

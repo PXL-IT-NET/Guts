@@ -4,7 +4,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using Guts.Api.Extensions;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business;

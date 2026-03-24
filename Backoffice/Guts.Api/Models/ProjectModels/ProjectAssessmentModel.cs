@@ -1,6 +1,4 @@
 ﻿using System;
-using AutoMapper;
-using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.ProjectModels;
 
@@ -12,12 +10,4 @@ public class ProjectAssessmentModel
     public DateTime OpenOnUtc { get; set; }
 
     public DateTime DeadlineUtc { get; set; }
-
-    private class MappingProfile : Profile
-    {
-        public MappingProfile()
-        {
-            CreateMap<IProjectAssessment, ProjectAssessmentModel>();
-        }
-    }
 }

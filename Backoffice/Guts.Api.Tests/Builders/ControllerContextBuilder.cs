@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
-using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

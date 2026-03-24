@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
+using Guts.Api.Models;
 using Guts.Api.Models.ProjectModels;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Assessment;
@@ -45,7 +45,7 @@ public class ProjectTeamAssessmentController : ControllerBase
         int userId = GetUserId();
         IReadOnlyList<IPeerAssessment> userAssessments = await _projectTeamAssessmentService.GetPeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId);
 
-        IList<PeerAssessmentModel> models = userAssessments.Select(a => _mapper.Map<PeerAssessmentModel>(a)).ToList();
+        IList<PeerAssessmentModel> models = userAssessments.Select(a => _mapper.MapToPeerAssessmentModel(a)).ToList();
         return Ok(models);
     }
 
@@ -55,7 +55,7 @@ public class ProjectTeamAssessmentController : ControllerBase
     {
         int userId = GetUserId();
         
-        List<PeerAssessmentDto> dtos = models.Select(model => _mapper.Map<PeerAssessmentDto>(model)).ToList();
+        List<PeerAssessmentDto> dtos = models.Select(model => _mapper.MapToPeerAssessmentDto(model)).ToList();
 
         await _projectTeamAssessmentService.SavePeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId, dtos);
 
@@ -69,7 +69,7 @@ public class ProjectTeamAssessmentController : ControllerBase
     public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
     {
         IReadOnlyList<IAssessmentResult> results = await _projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
-        IList<AssessmentResultModel> models = results.Select(result => _mapper.Map<AssessmentResultModel>(result)).ToList();
+        IList<AssessmentResultModel> models = results.Select(result => _mapper.MapToAssessmentResultModel(result)).ToList();
         return Ok(models);
     }
 
@@ -82,7 +82,7 @@ public class ProjectTeamAssessmentController : ControllerBase
         
         IAssessmentResult result = await _projectTeamAssessmentService.GetResultForStudent(projectAssessmentId, teamId, userId);
 
-        AssessmentResultModel model = _mapper.Map<AssessmentResultModel>(result);
+        AssessmentResultModel model = _mapper.MapToAssessmentResultModel(result);
         return Ok(model);
     }
 }

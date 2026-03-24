@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
 using Guts.Api.Models;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.Converters;
@@ -26,7 +25,7 @@ namespace Guts.Api.Tests.Models.Converters
         {
             _userConverterMock = new Mock<IUserConverter>();
             var mapperMock = new Mock<IMapper>();
-            mapperMock.Setup(m => m.Map<AssignmentModel>(It.IsAny<Assignment>()))
+            mapperMock.Setup(m => m.MapToAssignmentModel(It.IsAny<Assignment>()))
                 .Returns<Assignment>(a => new AssignmentModel
                 {
                     AssignmentId = a.Id,

@@ -14,6 +14,7 @@ namespace Guts.Business
         {
         }
 
+        [Obsolete("Obsolete")]
         protected DataNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }

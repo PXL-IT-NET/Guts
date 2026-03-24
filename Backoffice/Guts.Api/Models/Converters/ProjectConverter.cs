@@ -1,9 +1,6 @@
 ﻿using System.Linq;
-using AutoMapper;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.ProjectModels;
-using Guts.Domain.AssignmentAggregate;
-using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
@@ -23,7 +20,7 @@ namespace Guts.Api.Models.Converters
                 Id = project.Id,
                 Code = project.Code,
                 Description = project.Description,
-                Assignments = project.Assignments.Select(a => _mapper.Map<AssignmentModel>(a)).OrderBy(m => m.Code)
+                Assignments = project.Assignments.Select(a => _mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
                     .ToList()
             };
         }

@@ -1,11 +1,8 @@
 using Guts.Common;
-using Guts.Domain.CourseAggregate;
-using Guts.Domain.ExamAggregate;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace Guts.Domain.PeriodAggregate
 {

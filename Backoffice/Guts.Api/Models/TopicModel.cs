@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using AutoMapper;
 using Guts.Api.Models.AssignmentModels;
-using Guts.Domain.AssignmentAggregate;
 
 namespace Guts.Api.Models
 {

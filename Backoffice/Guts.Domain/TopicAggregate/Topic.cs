@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;
@@ -25,7 +24,7 @@ namespace Guts.Api.Models.Converters
                 Id = chapter.Id,
                 Code = chapter.Code,
                 Description = chapter.Description,
-                Assignments = chapter.Assignments.Select(a => _mapper.Map<AssignmentModel>(a)).OrderBy(m => m.Code)
+                Assignments = chapter.Assignments.Select(a => _mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
                     .ToList()
             };
         }

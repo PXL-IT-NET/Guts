@@ -6,12 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using Guts.Api.Models;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Guts.Domain.TestAggregate;
 using System.Net;
 using Guts.Domain.AssignmentAggregate;
 
@@ -61,7 +59,7 @@ namespace Guts.Api.Controllers
         {
             //TODO: write tests
             var topics = await _topicService.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId);
-            var models = topics.SelectMany(t => t.Assignments).Select(a => _mapper.Map<TopicAssignmentModel>(a));
+            var models = topics.SelectMany(t => t.Assignments).Select(a => _mapper.MapToTopicAssignmentModel(a));
             return Ok(models);
         }
 

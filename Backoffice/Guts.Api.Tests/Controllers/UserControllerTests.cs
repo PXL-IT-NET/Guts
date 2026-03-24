@@ -10,7 +10,6 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.RoleAggregate;
-using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;

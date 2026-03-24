@@ -1,5 +1,4 @@
-﻿using Guts.Domain.AssignmentAggregate;
-using Guts.Domain.PeriodAggregate;
+﻿using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TopicAggregate;
 using Guts.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;

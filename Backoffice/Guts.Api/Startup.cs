@@ -14,8 +14,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using Guts.Api.Controllers;
 using Guts.Api.Filters;
+using Guts.Api.Models;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -109,8 +109,7 @@ namespace Guts.Api
 
             services.AddMemoryCache();
 
-            var apiAssembly = typeof(CourseController).Assembly;
-            services.AddAutoMapper(apiAssembly);
+            services.AddScoped<IMapper, Mapper>();
 
             services.AddApplicationServices(Configuration);
         }

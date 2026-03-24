@@ -1,5 +1,4 @@
 using System;
-using Guts.Api.Extensions;
 using Guts.Api.Models;
 using Guts.Common.Extensions;
 

@@ -4,11 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
-using CsvHelper;
 using Guts.Api.Models;
+using CsvHelper;
 using Guts.Api.Models.ExamModels;
-using Guts.Api.Models.PeriodModels;
 using Guts.Business;
 using Guts.Business.Dtos;
 using Guts.Business.Services.Exam;
@@ -41,7 +39,7 @@ namespace Guts.Api.Controllers
         /// <param name="courseId">Identifier of the course</param>
         /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<PeriodOutputModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(IEnumerable<ExamOutputModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<ActionResult> GetExams([FromQuery] int courseId, [FromQuery] int? periodId = null)
@@ -50,8 +48,8 @@ namespace Guts.Api.Controllers
             {
                 return BadRequest(ErrorModel.FromString("Invalid course Id."));
             }
-            var exams = await _examService.GetExamsAsync(courseId, periodId);
-            var model = exams.Select(e => _mapper.Map<PeriodOutputModel>(e));
+            IReadOnlyList<IExam> exams = await _examService.GetExamsAsync(courseId, periodId);
+            IEnumerable<ExamOutputModel> model = exams.Select(e => _mapper.MapToExamOutputModel(e));
             return Ok(model);
         }
 
@@ -60,15 +58,15 @@ namespace Guts.Api.Controllers
         /// </summary>
         /// <param name="id">Identifier of the exam in the database</param>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(PeriodOutputModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<ActionResult> GetExam(int id)
         {
             try
             {
-                var exam = await _examService.GetExamAsync(id);
-                var model = _mapper.Map<PeriodOutputModel>(exam);
+                IExam exam = await _examService.GetExamAsync(id);
+                ExamOutputModel model = _mapper.MapToExamOutputModel(exam);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -81,15 +79,15 @@ namespace Guts.Api.Controllers
         /// Creates a new exam
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(typeof(PeriodOutputModel), (int)HttpStatusCode.Created)]
+        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
         {
             try
             {
-                var exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
-                var outputModel = _mapper.Map<PeriodOutputModel>(exam);
+                IExam exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
+                ExamOutputModel outputModel = _mapper.MapToExamOutputModel(exam);
                 return CreatedAtAction(nameof(GetExam), new { id = outputModel.Id }, outputModel);
             }
             catch (ContractException ex)
@@ -114,7 +112,7 @@ namespace Guts.Api.Controllers
                 var exam = await _examService.GetExamAsync(id);
                 var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
                 if(examPart == null) throw new DataNotFoundException();
-                var model = _mapper.Map<ExamPartOutputModel>(examPart);
+                var model = _mapper.MapToExamPartOutputModel(examPart);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -135,7 +133,7 @@ namespace Guts.Api.Controllers
             try
             {
                 var examPart = await _examService.CreateExamPartAsync(id, model);
-                var outputModel = _mapper.Map<ExamPartOutputModel>(examPart);
+                var outputModel = _mapper.MapToExamPartOutputModel(examPart);
                 return CreatedAtAction(nameof(GetExamPart), new { id = id, examPartId = outputModel.Id }, outputModel);
             }
             catch (ContractException ex)

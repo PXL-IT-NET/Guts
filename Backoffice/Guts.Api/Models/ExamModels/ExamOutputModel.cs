@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using AutoMapper;
-using Guts.Domain.ExamAggregate;
 
 namespace Guts.Api.Models.ExamModels
 {
@@ -11,13 +9,5 @@ namespace Guts.Api.Models.ExamModels
         public string Name { get; set; }
         public int MaximumScore { get; set; }
         public IList<ExamPartOutputModel> Parts { get; set; }
-
-        private class MappingProfile : Profile
-        {
-            public MappingProfile()
-            {
-                CreateMap<Exam, ExamOutputModel>();
-            }
-        }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using AutoMapper;
+using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
 using Moq;

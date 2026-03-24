@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using AutoMapper;
+using Guts.Api.Models;
 using Guts.Api.Controllers;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
@@ -54,7 +54,7 @@ public class ProjectAssessmentControllerTests
             .ReturnsAsync(existingAssessments);
 
         var model = new ProjectAssessmentModel();
-        _mapperMock.Setup(mapper => mapper.Map<ProjectAssessmentModel>(It.IsAny<object>())).Returns(model);
+        _mapperMock.Setup(mapper => mapper.MapToProjectAssessmentModel(It.IsAny<IProjectAssessment>())).Returns(model);
 
         //Act
         OkObjectResult result = _controller.GetProjectAssessments(projectId).Result as OkObjectResult;
@@ -66,7 +66,7 @@ public class ProjectAssessmentControllerTests
         Assert.That(returnedModels, Has.Count.EqualTo(existingAssessments.Count));
         foreach (IProjectAssessment existingAssessment in existingAssessments)
         {
-            _mapperMock.Verify(mapper => mapper.Map<ProjectAssessmentModel>(existingAssessment), Times.Once);
+            _mapperMock.Verify(mapper => mapper.MapToProjectAssessmentModel(existingAssessment), Times.Once);
         }
     }
 
@@ -80,7 +80,7 @@ public class ProjectAssessmentControllerTests
             .ReturnsAsync(existingAssessment);
 
         var model = new ProjectAssessmentModel();
-        _mapperMock.Setup(mapper => mapper.Map<ProjectAssessmentModel>(It.IsAny<object>())).Returns(model);
+        _mapperMock.Setup(mapper => mapper.MapToProjectAssessmentModel(It.IsAny<IProjectAssessment>())).Returns(model);
 
         //Act
         OkObjectResult result = _controller.GetProjectAssessment(existingAssessment.Id).Result as OkObjectResult;
@@ -89,7 +89,7 @@ public class ProjectAssessmentControllerTests
         Assert.That(result, Is.Not.Null);
         var returnedModel = result.Value as ProjectAssessmentModel;
         Assert.That(returnedModel, Is.Not.Null);
-        _mapperMock.Verify(mapper => mapper.Map<ProjectAssessmentModel>(existingAssessment), Times.Once);
+        _mapperMock.Verify(mapper => mapper.MapToProjectAssessmentModel(existingAssessment), Times.Once);
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class ProjectAssessmentControllerTests
                 It.IsAny<DateTime>(), It.IsAny<DateTime>())).ReturnsAsync(createdAssessment);
 
         var outputModel = new ProjectAssessmentModel();
-        _mapperMock.Setup(mapper => mapper.Map<ProjectAssessmentModel>(createdAssessment)).Returns(outputModel);
+        _mapperMock.Setup(mapper => mapper.MapToProjectAssessmentModel(createdAssessment)).Returns(outputModel);
 
         var inputModel = new CreateProjectAssessmentModel
         {

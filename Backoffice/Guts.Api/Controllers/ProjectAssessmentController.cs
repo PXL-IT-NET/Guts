@@ -2,12 +2,11 @@
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
+using Guts.Api.Models;
 using Guts.Api.Models.ProjectModels;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
-using Guts.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,7 +35,7 @@ public class ProjectAssessmentController : ControllerBase
     public async Task<IActionResult> GetProjectAssessments(int projectId)
     {
         IReadOnlyList<IProjectAssessment> assessments = await _projectAssessmentRepository.FindByProjectIdAsync(projectId);
-        var models = assessments.Select(a => _mapper.Map<ProjectAssessmentModel>(a)).ToList();
+        var models = assessments.Select(a => _mapper.MapToProjectAssessmentModel(a)).ToList();
         return Ok(models);
     }
 
@@ -47,7 +46,7 @@ public class ProjectAssessmentController : ControllerBase
     public async Task<IActionResult> GetProjectAssessment(int id)
     {
         IProjectAssessment assessment = await _projectAssessmentRepository.GetByIdAsync(id);
-        ProjectAssessmentModel model = _mapper.Map<ProjectAssessmentModel>(assessment);
+        ProjectAssessmentModel model = _mapper.MapToProjectAssessmentModel(assessment);
         return Ok(model);
     }
 
@@ -61,7 +60,7 @@ public class ProjectAssessmentController : ControllerBase
         IProjectAssessment assessment = await _projectService.CreateProjectAssessmentAsync(model.ProjectId, model.Description,
             model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
 
-        ProjectAssessmentModel outputModel = _mapper.Map<ProjectAssessmentModel>(assessment);
+        ProjectAssessmentModel outputModel = _mapper.MapToProjectAssessmentModel(assessment);
 
         return CreatedAtAction(nameof(GetProjectAssessment), new { id = assessment.Id }, outputModel);
     }

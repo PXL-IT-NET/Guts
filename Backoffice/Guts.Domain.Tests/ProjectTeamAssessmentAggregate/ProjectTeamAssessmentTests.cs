@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
-using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
-using Moq;
 using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate

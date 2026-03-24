@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using Guts.Api.Controllers;
 using Guts.Api.Models.Converters;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
-using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.AspNetCore.Mvc;

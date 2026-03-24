@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using AutoMapper;
-using Guts.Domain.AssessmentResultAggregate;
 
 namespace Guts.Api.Models.ProjectModels;
 
@@ -17,12 +15,4 @@ public class AssessmentResultModel
     public AssessmentSubResultModel EffortResult { get; set; }
     public AssessmentSubResultModel CooperationResult { get; set; }
     public AssessmentSubResultModel ContributionResult { get; set; }
-
-    private class MappingProfile : Profile
-    {
-        public MappingProfile()
-        {
-            CreateMap<IAssessmentResult, AssessmentResultModel>();
-        }
-    }
 }

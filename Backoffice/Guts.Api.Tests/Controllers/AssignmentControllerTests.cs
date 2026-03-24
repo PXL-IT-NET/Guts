@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AutoMapper;
+using Guts.Api.Models;
 using Guts.Api.Controllers;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.Converters;
@@ -13,7 +13,6 @@ using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
-using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.ValueObjects;

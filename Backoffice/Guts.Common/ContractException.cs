@@ -20,6 +20,7 @@ namespace Guts.Common
         {
         }
 
+        [Obsolete("Obsolete")]
         protected ContractException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

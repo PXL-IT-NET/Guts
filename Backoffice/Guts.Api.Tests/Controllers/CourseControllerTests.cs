@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using AutoMapper.Configuration.Conventions;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
