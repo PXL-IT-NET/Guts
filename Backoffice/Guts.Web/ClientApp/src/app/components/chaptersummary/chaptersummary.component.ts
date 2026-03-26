@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import * as moment from "moment";
 
 @Component({
+  standalone: false,
   selector: 'app-chapter-summary',
   templateUrl: './chaptersummary.component.html'
 })
@@ -82,3 +83,5 @@ export class ChapterSummaryComponent implements OnChanges {
       });
   }
 }
+
+

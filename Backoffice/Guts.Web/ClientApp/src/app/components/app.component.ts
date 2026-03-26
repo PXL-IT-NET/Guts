@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Chart } from 'chart.js';
 
 @Component({
+  standalone: false,
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
@@ -9,3 +10,5 @@ import { Chart } from 'chart.js';
 export class AppComponent {
   title = 'app';
 }
+
+

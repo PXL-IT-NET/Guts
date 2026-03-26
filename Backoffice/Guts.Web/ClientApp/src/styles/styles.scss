@@ -1,7 +1,7 @@
 @import "sandstone/variables";
-@import "../../node_modules/bootstrap/scss/bootstrap";
+@import "bootstrap/scss/bootstrap";
 @import "sandstone/bootswatch";
-@import "../../node_modules/bootstrap-icons/font/bootstrap-icons.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
 
 /*Tabs*/
 
@@ -27,8 +27,5 @@ input[readonly] {
   background-color: $light;
 }
 
-/* Importing Bootstrap SCSS file. */
-@import "./node_modules/bootstrap/scss/bootstrap";
-
 /* Importing Datepicker SCSS file. */
-@import "node_modules/ngx-bootstrap/datepicker/bs-datepicker";
+@import "ngx-bootstrap/datepicker/bs-datepicker";

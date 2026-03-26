@@ -8,6 +8,7 @@ import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 
 @Component({
+  standalone: false,
   selector: "app-project-settings",
   templateUrl: "./project-settings.component.html",
 })
@@ -86,3 +87,5 @@ export class ProjectSettingsComponent {
     this.loadProject();
   }
 }
+
+

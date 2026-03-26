@@ -3,6 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
 
 @Component({
+  standalone: false,
   selector: 'app-ng-datetime',
   template: '<input type="datetime-local" class="form-control" [value]="_dateString" (change)="onDateChange($event.target.value)" />',
   providers: [{
@@ -74,3 +75,5 @@ export class NgDatetimeComponent implements OnInit, ControlValueAccessor {
   setDisabledState?(isDisabled: boolean): void {
   }
 }
+
+

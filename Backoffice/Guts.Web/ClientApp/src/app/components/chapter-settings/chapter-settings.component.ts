@@ -8,6 +8,7 @@ import { IChapterDetailsModel } from 'src/app/viewmodels/chapter.model';
 import { ITopicUpdateModel } from 'src/app/viewmodels/topic.model';
 
 @Component({
+  standalone: false,
   selector: 'app-chapter-settings',
   templateUrl: './chapter-settings.component.html'
 })
@@ -94,3 +95,5 @@ export class ChapterSettingsComponent {
     this.loadChapter();
   }
 }
+
+

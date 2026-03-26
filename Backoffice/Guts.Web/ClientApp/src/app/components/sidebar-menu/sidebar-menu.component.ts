@@ -5,6 +5,7 @@ import { CourseService } from '../../services/course.service';
 import { ICourseModel } from '../../viewmodels/course.model';
 
 @Component({
+  standalone: false,
   selector: 'app-sidebar-menu',
   templateUrl: './sidebar-menu.component.html',
   styleUrls: ['./sidebar-menu.component.scss']
@@ -39,3 +40,5 @@ export class SidebarMenuComponent {
   }
 
 }
+
+

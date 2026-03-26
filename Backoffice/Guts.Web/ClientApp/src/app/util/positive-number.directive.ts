@@ -2,6 +2,7 @@ import { NG_VALIDATORS, Validator, Validators, AbstractControl } from '@angular/
 import { Directive } from '@angular/core';
 
 @Directive({
+  standalone: false,
     selector: '[positive-number]',
     providers: [{provide: NG_VALIDATORS, useExisting: PositiveNumberValidatorDirective, multi: true}]
   })
@@ -11,3 +12,4 @@ import { Directive } from '@angular/core';
         return Validators.min(1)(control);
     }
   }
+

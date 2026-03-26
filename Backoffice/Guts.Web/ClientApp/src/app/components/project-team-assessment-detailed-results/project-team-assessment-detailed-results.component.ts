@@ -7,6 +7,7 @@ import { IAssessmentResultModel } from 'src/app/viewmodels/projectassessment.mod
 import { ITeamModel } from 'src/app/viewmodels/team.model';
 
 @Component({
+  standalone: false,
   selector: 'app-project-team-assessment-detailed-results',
   templateUrl: './project-team-assessment-detailed-results.component.html'
 })
@@ -246,3 +247,5 @@ export enum GradeCorrectionType {
   Self = 1,
   PeersAndSelf = 2
 }
+
+

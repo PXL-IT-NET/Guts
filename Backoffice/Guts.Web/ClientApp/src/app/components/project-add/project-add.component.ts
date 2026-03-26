@@ -8,6 +8,7 @@ import { IProjectDetailsModel } from 'src/app/viewmodels/project.model';
 import { ITopicAddModel } from 'src/app/viewmodels/topic.model';
 
 @Component({
+  standalone: false,
   selector: 'app-project-add',
   templateUrl: './project-add.component.html'
 })
@@ -67,4 +68,6 @@ export class ProjectAddComponent {
       });
   }
 }
+
+
 

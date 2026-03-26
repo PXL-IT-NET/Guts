@@ -16,6 +16,7 @@ import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import { PeriodProvider } from "src/app/services";
 
 @Component({
+  standalone: false,
   templateUrl: "./course.component.html",
 })
 export class CourseComponent implements OnInit, OnDestroy {
@@ -310,3 +311,5 @@ export class CourseComponent implements OnInit, OnDestroy {
     );
   }
 }
+
+

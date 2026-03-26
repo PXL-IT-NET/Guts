@@ -5,6 +5,7 @@ import { IAssignmentDetailModel, AssignmentDetailModel } from "../../viewmodels/
 import * as moment from "moment";
 
 @Component({
+  standalone: false,
   selector: 'app-assignment-detail',
   templateUrl: './assignmentdetail.component.html',
   styleUrls: ['./assignmentdetail.component.css']
@@ -42,3 +43,5 @@ export class AssignmentDetailComponent implements OnChanges {
     });
   }
 }
+
+

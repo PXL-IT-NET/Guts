@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
+  standalone: false,
   templateUrl: './courseconfig.component.html'
 })
 export class CourseConfigComponent implements OnInit {
@@ -17,3 +18,5 @@ export class CourseConfigComponent implements OnInit {
     });
   }
 }
+
+

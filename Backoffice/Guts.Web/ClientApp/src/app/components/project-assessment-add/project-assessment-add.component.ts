@@ -6,6 +6,7 @@ import { ProjectAssessmentCreateModel, IProjectAssessmentModel } from '../../vie
 import { ProjectAssessmentService } from '../../services/project.assessment.service';
 
 @Component({
+  standalone: false,
   selector: 'app-project-assessment-add',
   templateUrl: './project-assessment-add.component.html'
 })
@@ -57,3 +58,5 @@ export class ProjectAssessmentAddComponent {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 }
+
+

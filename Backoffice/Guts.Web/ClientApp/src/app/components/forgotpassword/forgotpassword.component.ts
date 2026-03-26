@@ -1,9 +1,10 @@
-﻿import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { ForgotPasswordModel } from '../../viewmodels/forgotpassword.model';
 import { RecaptchaComponent } from 'ng-recaptcha';
 
 @Component({
+  standalone: false,
     templateUrl: './forgotpassword.component.html'
 })
 export class ForgotPasswordComponent {
@@ -46,3 +47,4 @@ export class ForgotPasswordComponent {
         this.model.captchaToken = token;
     }
 }
+

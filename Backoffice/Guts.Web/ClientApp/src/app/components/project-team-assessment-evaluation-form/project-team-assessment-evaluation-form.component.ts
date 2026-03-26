@@ -5,6 +5,7 @@ import { ProjectTeamAssessmentService } from 'src/app/services';
 import { PeerAssessmentModel } from 'src/app/viewmodels/projectassessment.model';
 
 @Component({
+  standalone: false,
   selector: 'app-project-team-assessment-evaluation-form',
   templateUrl: './project-team-assessment-evaluation-form.component.html'
 })
@@ -65,3 +66,5 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
     return explanationIsMisssing;
   }
 }
+
+

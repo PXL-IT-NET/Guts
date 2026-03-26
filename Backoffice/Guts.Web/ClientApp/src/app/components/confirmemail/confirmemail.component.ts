@@ -1,9 +1,10 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Params, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 
 @Component({
+  standalone: false,
     templateUrl: './confirmemail.component.html'
 })
 export class ConfirmEmailComponent implements OnInit {
@@ -40,3 +41,4 @@ export class ConfirmEmailComponent implements OnInit {
         });
     }
 }
+

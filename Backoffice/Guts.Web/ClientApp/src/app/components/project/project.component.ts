@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import * as moment from 'moment';
 
 @Component({
+  standalone: false,
   templateUrl: './project.component.html'
 })
 export class ProjectComponent implements OnInit {
@@ -82,3 +83,4 @@ export class ProjectComponent implements OnInit {
     });
   }
 }
+

@@ -4,6 +4,7 @@ import { AssignmentSummaryModel } from "../../viewmodels/assignmentsummary.model
 import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
+  standalone: false,
   selector: "assignment-summary",
   templateUrl: "./assignmentsummary.component.html",
 })
@@ -42,3 +43,5 @@ export class AssignmentSummaryComponent {
     }
   }
 }
+
+

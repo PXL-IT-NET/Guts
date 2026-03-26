@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ProjectAssessmentModel, ProjectAssessmentUpdateModel } from '../../viewmodels/projectassessment.model';
 
 @Component({
+  standalone: false,
   selector: 'app-project-assessment-edit',
   templateUrl: './project-assessment-edit.component.html'
 })
@@ -65,3 +66,5 @@ export class ProjectAssessmentEditComponent {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 }
+
+

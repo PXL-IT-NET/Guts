@@ -5,6 +5,7 @@ import { RegisterModel } from '../../viewmodels/register.model';
 import { RecaptchaComponent } from 'ng-recaptcha';
 
 @Component({
+  standalone: false,
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {
@@ -51,3 +52,5 @@ export class RegisterComponent {
     this.model.captchaToken = token;
   }
 }
+
+

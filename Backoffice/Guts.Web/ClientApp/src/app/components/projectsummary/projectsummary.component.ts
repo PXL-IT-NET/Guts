@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import * as moment from "moment";
 
 @Component({
+  standalone: false,
   selector: 'app-project-summary',
   templateUrl: './projectsummary.component.html'
 })
@@ -80,3 +81,5 @@ export class ProjectSummaryComponent {
     });
   }
 }
+
+

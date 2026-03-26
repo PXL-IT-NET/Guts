@@ -6,7 +6,7 @@
     <ProjectGuid>4520912a-d7a6-4a83-abaa-53a993b0145b</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/{Scheme}://{ServiceHost}:{ServicePort}</DockerServiceUrl>
-    <DockerServiceName>guts.web</DockerServiceName>
+    <DockerServiceName>guts.web.angular</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">

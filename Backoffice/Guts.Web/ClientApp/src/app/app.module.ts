@@ -3,8 +3,9 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 //own
 import { AppRoutingModule } from './app-routing.module';
@@ -17,7 +18,6 @@ import { PositiveNumberValidatorDirective } from './util/positive-number.directi
 import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.component';
 
 // 3th party
-import { NgChartsModule } from 'ng2-charts';
 import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
 import { RecaptchaModule } from 'ng-recaptcha';
 import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
@@ -59,12 +59,10 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
-    c.ProjectAssessmentOverviewComponent,
     c.ProjectTeamAssessmentEvaluationFormComponent,
     c.ProjectTeamAssessmentDetailedResultsComponent,
     c.ProjectTeamAssessmentMyResultComponent,
     c.AssessmentScoreDropdownComponent,
-    c.ExamComponent,
     c.AssignmentSettingsComponent
   ],
   imports: [
@@ -72,8 +70,7 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     AppRoutingModule,
     CommonModule,
     BrowserAnimationsModule,
-    NgChartsModule,
-    HttpClientModule,
+    BaseChartDirective,
     FormsModule,
     ReactiveFormsModule,
     NgbModule,
@@ -107,8 +104,10 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,
-    {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true},
-    {provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true}
+    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true },
+    provideHttpClient(withInterceptorsFromDi()),
+    provideCharts(withDefaultRegisterables())
   ],
   bootstrap: [c.AppComponent]
 })

@@ -7,6 +7,7 @@ import { PeriodProvider } from "src/app/services/period.provider";
 import { IPeriodModel, PeriodModel } from "src/app/viewmodels/period.model";
 
 @Component({
+  standalone: false,
   selector: "app-nav-menu",
   templateUrl: "./nav-menu.component.html",
   styleUrls: ["./nav-menu.component.scss"],
@@ -73,3 +74,5 @@ export class NavMenuComponent {
     this.periodProvider.period = period;
   }
 }
+
+

@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { UntypedFormGroup, UntypedFormControl, Validators } from '@angular/forms';
 
 @Component({
+  standalone: false,
   selector: 'app-exampart',
   templateUrl: './exampart.component.html',
 })
@@ -113,3 +114,5 @@ export class ExampartComponent implements OnInit {
     return assignment.topicDescription + ' - ' + (assignment.description || assignment.code);
   }
 }
+
+

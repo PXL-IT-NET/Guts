@@ -7,6 +7,7 @@ import { PostResult } from '../../util/result';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
+  standalone: false,
   selector: 'app-project-team-edit',
   templateUrl: './project-team-edit.component.html'
 })
@@ -75,3 +76,5 @@ export class ProjectTeamEditComponent {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 }
+
+

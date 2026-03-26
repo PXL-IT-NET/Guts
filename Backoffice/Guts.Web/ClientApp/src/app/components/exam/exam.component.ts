@@ -8,6 +8,7 @@ import { Subscription } from "rxjs";
 import { ToastrService } from "ngx-toastr";
 
 @Component({
+  standalone: false,
   selector: "app-exam",
   templateUrl: "./exam.component.html",
 })
@@ -109,3 +110,5 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 }
+
+

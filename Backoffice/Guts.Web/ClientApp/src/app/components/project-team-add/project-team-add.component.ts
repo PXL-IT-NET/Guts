@@ -7,6 +7,7 @@ import { CreateResult, PostResult } from '../../util/result';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
+  standalone: false,
   selector: 'app-project-team-add',
   templateUrl: './project-team-add.component.html'
 })
@@ -87,3 +88,5 @@ export class ProjectTeamAddComponent {
       });
   }
 }
+
+

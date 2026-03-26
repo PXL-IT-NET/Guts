@@ -28,6 +28,7 @@ import { ProjectAssessmentEditComponent } from "../project-assessment-edit/proje
 import { PostResult } from "../../util/result";
 
 @Component({
+  standalone: false,
   selector: "app-project-assessment-overview",
   templateUrl: "./project-assessment-overview.component.html",
 })
@@ -235,3 +236,5 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     }
   }
 }
+
+

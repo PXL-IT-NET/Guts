@@ -6,6 +6,7 @@ import { PostResult} from "../../util/result";
 
 
 @Component({
+  standalone: false,
   templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
@@ -55,3 +56,5 @@ export class LoginComponent implements OnInit {
     this.loading = false;
   }
 }
+
+

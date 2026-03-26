@@ -14,6 +14,7 @@ import { ProjectTeamAddComponent } from '../project-team-add/project-team-add.co
 import { PeriodProvider } from 'src/app/services/period.provider';
 
 @Component({
+  standalone: false,
   templateUrl: './project-team.component.html'
 })
 export class ProjectTeamComponent implements OnInit, OnDestroy {
@@ -164,3 +165,5 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     });
   }
 }
+
+

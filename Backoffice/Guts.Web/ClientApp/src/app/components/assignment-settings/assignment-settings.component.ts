@@ -5,6 +5,7 @@ import { PostResult } from 'src/app/util/result';
 import { IAssignmentModel, ITestModel } from 'src/app/viewmodels/assignment.model';
 
 @Component({
+  standalone: false,
   selector: 'app-assignment-settings',
   templateUrl: './assignment-settings.component.html'
 })
@@ -67,3 +68,5 @@ export class AssignmentSettingsComponent {
     return input.charAt(0).toUpperCase() + input.slice(1);
   }
 }
+
+

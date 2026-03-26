@@ -1,10 +1,11 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Params, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ResetPasswordModel } from '../../viewmodels/resetpassword.model';
 
 
 @Component({
+  standalone: false,
     templateUrl: './resetpassword.component.html'
 })
 export class ResetPasswordComponent implements OnInit {
@@ -53,3 +54,4 @@ export class ResetPasswordComponent implements OnInit {
             });
     }
 }
+

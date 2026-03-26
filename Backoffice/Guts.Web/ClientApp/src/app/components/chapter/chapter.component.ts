@@ -17,6 +17,7 @@ import { NgbTypeahead } from "@ng-bootstrap/ng-bootstrap";
 import * as moment from "moment";
 
 @Component({
+  standalone: false,
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit, OnDestroy {
@@ -127,3 +128,5 @@ export class ChapterComponent implements OnInit, OnDestroy {
     return user.fullName;
   };
 }
+
+

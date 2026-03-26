@@ -6,6 +6,7 @@ import { ProjectService, ProjectTeamAssessmentService } from 'src/app/services';
 import { IAssessmentResultModel } from 'src/app/viewmodels/projectassessment.model';
 
 @Component({
+  standalone: false,
   selector: 'app-project-team-assessment-my-result',
   templateUrl: './project-team-assessment-my-result.component.html'
 })
@@ -72,3 +73,5 @@ export class ProjectTeamAssessmentMyResultComponent implements OnInit {
   }
 
 }
+
+
