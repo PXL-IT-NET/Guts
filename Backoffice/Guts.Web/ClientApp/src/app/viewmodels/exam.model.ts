@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import moment from 'moment';
 import { NgbTimeStruct, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 
 export interface IExamModel {

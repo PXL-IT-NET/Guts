@@ -1,14 +1,23 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { AssignmentService } from '../../services/assignment.service';
-import { ActivatedRoute } from '@angular/router';
-import { IAssignmentDetailModel, AssignmentDetailModel } from "../../viewmodels/assignmentdetail.model";
-import * as moment from "moment";
+import {
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from "@angular/core";
+import { AssignmentService } from "../../services/assignment.service";
+import { ActivatedRoute } from "@angular/router";
+import {
+  IAssignmentDetailModel,
+  AssignmentDetailModel,
+} from "../../viewmodels/assignmentdetail.model";
+import moment from "moment";
 
 @Component({
   standalone: false,
-  selector: 'app-assignment-detail',
-  templateUrl: './assignmentdetail.component.html',
-  styleUrls: ['./assignmentdetail.component.css']
+  selector: "app-assignment-detail",
+  templateUrl: "./assignmentdetail.component.html",
+  styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges {
   public model: AssignmentDetailModel;
@@ -19,9 +28,11 @@ export class AssignmentDetailComponent implements OnChanges {
   @Input() public userId: number;
   @Input() public statusDate: moment.Moment;
 
-  constructor(private route: ActivatedRoute,
-    private assignmentService: AssignmentService) {
-
+  constructor(
+    private route: ActivatedRoute,
+    private assignmentService: AssignmentService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.model = new AssignmentDetailModel();
     this.assignmentId = 0;
     this.userId = 0;
@@ -30,18 +41,24 @@ export class AssignmentDetailComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.assignmentId > 0  && (this.userId > 0 || this.teamId > 0) ) {
+    if (this.assignmentId > 0 && (this.userId > 0 || this.teamId > 0)) {
       this.loadAssignment();
     }
   }
 
   private loadAssignment() {
     this.loading = true;
-    this.assignmentService.getAssignmentDetail(this.assignmentId, this.userId, this.teamId, this.statusDate).subscribe((assignmentDetail: IAssignmentDetailModel) => {
-      this.loading = false;
-      this.model = new AssignmentDetailModel(assignmentDetail);
-    });
+    this.assignmentService
+      .getAssignmentDetail(
+        this.assignmentId,
+        this.userId,
+        this.teamId,
+        this.statusDate,
+      )
+      .subscribe((assignmentDetail: IAssignmentDetailModel) => {
+        this.loading = false;
+        this.model = new AssignmentDetailModel(assignmentDetail);
+        this.cdr.detectChanges();
+      });
   }
 }
-
-

@@ -5,7 +5,7 @@ import { map, catchError } from 'rxjs/operators';
 import { IChapterDetailsModel } from "../viewmodels/chapter.model"
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel } from "../viewmodels/topic.model"
 import { GetResult, PostResult } from "../util/result";
-import * as moment from 'moment';
+import moment from 'moment';
 import { PeriodProvider } from './period.provider';
 
 @Injectable()

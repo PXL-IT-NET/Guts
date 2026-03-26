@@ -4,7 +4,7 @@ import { IProjectDetailsModel } from '../../viewmodels/project.model';
 import { ProjectService } from '../../services/project.service';
 import { GetResult } from "../../util/result";
 import { ToastrService } from 'ngx-toastr';
-import * as moment from 'moment';
+import moment from 'moment';
 
 @Component({
   standalone: false,

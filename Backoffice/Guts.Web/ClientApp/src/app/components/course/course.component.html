@@ -97,7 +97,7 @@
       </li>
     </ul>
     <div class="tab-content">
-      <ngx-loading [show]="loading"></ngx-loading>
+      <app-loading-overlay [show]="loading"></app-loading-overlay>
       <div class="row" *ngIf="!hasContent">
         <div class="col-12">
           <p>

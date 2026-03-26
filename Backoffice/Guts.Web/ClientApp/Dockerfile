@@ -1,4 +1,4 @@
-FROM node:22-alpine AS client
+FROM node:22-slim AS client
 EXPOSE 4200
 USER node
 
@@ -12,6 +12,6 @@ RUN npm install -g @angular/cli@21
 
 RUN echo "Serving app..."
 WORKDIR /app
-CMD ["ng", "serve", "--port", "4200", "--configuration", "development", "--host", "0.0.0.0", "--poll", "2000"]
+CMD ["sh", "-c", "npm install && ng serve --port 4200 --configuration development --host 0.0.0.0 --poll 2000"]
 
 #"--ssl", "--ssl-cert", "%APPDATA%\\ASP.NET\\https\\client-app.pem", "--ssl-key", "%APPDATA%\\ASP.NET\\https\\client-app.key"

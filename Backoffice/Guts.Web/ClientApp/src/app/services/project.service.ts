@@ -5,7 +5,7 @@ import { map, catchError } from 'rxjs/operators';
 import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel } from "../viewmodels/team.model"
 import { CreateResult, GetResult, PostResult } from "../util/result";
-import * as moment from 'moment';
+import moment from 'moment';
 import { ITopicStatisticsModel, TopicStatisticsModel, ITopicSummaryModel, TopicSummaryModel, ITopicUpdateModel, ITopicAddModel } from "../viewmodels/topic.model"
 import { TeamGenerationModel } from "../viewmodels/team.model"
 import { PeriodProvider } from './period.provider';

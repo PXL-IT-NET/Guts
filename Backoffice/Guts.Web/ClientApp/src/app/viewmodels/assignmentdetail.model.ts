@@ -1,6 +1,6 @@
 import { ITestResultModel } from './testresult.model';
 import { IAssignmentModel, ITestModel } from "./assignment.model";
-import * as moment from 'moment';
+import moment from 'moment';
 import { ISolutionFileModel, SolutionFileModel } from './solutionfile.model';
 
 export interface IAssignmentDetailModel extends IAssignmentModel {

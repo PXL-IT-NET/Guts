@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -43,7 +43,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     private periodProvider: PeriodProvider,
     private authService: AuthService,
     private toastr: ToastrService,
-    private modalService: BsModalService
+    private modalService: BsModalService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.course = {
       id: 0,
@@ -67,7 +68,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       });
 
     this.periodProvider.period$.subscribe((period) => {
-      if(period) {
+      if (period) {
         this.activePeriod = period.isActive;
         this.handleNavigationEvent(true);
       }
@@ -122,7 +123,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       ],
       {
         queryParams: { assignmentId: exercise.assignmentId },
-      }
+      },
     );
   }
 
@@ -164,7 +165,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
   public navigateToProject(
     project: ITopicModel,
-    showTestResults: boolean = false
+    showTestResults: boolean = false,
   ) {
     this.router.navigate([
       "courses",
@@ -198,7 +199,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       ],
       {
         queryParams: { assignmentId: component.assignmentId },
-      }
+      },
     );
   }
 
@@ -213,22 +214,25 @@ export class CourseComponent implements OnInit, OnDestroy {
     courseId: number,
     selectedTopicCode: string = null,
     selectedAssignmentId: number = 0,
-    forceReload: boolean = false
+    forceReload: boolean = false,
   ) {
     this.loading = true;
     this.hasContent = true;
     this.selectedChapter = null;
     this.selectedProject = null;
 
-    if(courseId <= 0) {
+    if (courseId <= 0) {
       return;
     }
 
     let courseContents$ = of(this.course).pipe(
-      map((c) => GetResult.success<ICourseContentsModel>(c))
+      map((c) => GetResult.success<ICourseContentsModel>(c)),
     );
     if (this.course.id != courseId || forceReload) {
-      courseContents$ = this.courseService.getCourseContentsById(courseId, this.periodProvider.period.id);
+      courseContents$ = this.courseService.getCourseContentsById(
+        courseId,
+        this.periodProvider.period.id,
+      );
     }
 
     courseContents$.subscribe((result) => {
@@ -238,7 +242,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         if (this.course.chapters.length > 0) {
           //Set selected chapter
           let selectedChapter = this.course.chapters.find(
-            (c) => c.code == selectedTopicCode
+            (c) => c.code == selectedTopicCode,
           );
           if (selectedChapter) {
             this.selectChapter(selectedChapter);
@@ -250,7 +254,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedChapter.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId
+              (a) => a.assignmentId == selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedExercise = selectedAssignment;
@@ -260,7 +264,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         } else if (this.course.projects.length > 0) {
           //Set selected project
           let selectedProject = this.course.projects.find(
-            (p) => p.code == selectedTopicCode
+            (p) => p.code == selectedTopicCode,
           );
           if (selectedProject) {
             this.selectProject(selectedProject);
@@ -271,7 +275,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedProject.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId
+              (a) => a.assignmentId == selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedComponent = selectedAssignment;
@@ -280,18 +284,16 @@ export class CourseComponent implements OnInit, OnDestroy {
           }
         } else {
           this.hasContent = false;
-          this.router.navigate([
-            "courses",
-            this.course.id
-          ]);
+          this.router.navigate(["courses", this.course.id]);
         }
       } else {
         this.toastr.error(
           "Could not course details from API. Message: " +
             (result.message || "unknown error"),
-          "System error"
+          "System error",
         );
       }
+      this.cdr.detectChanges();
     });
   }
 
@@ -307,9 +309,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       (addedProject: IProjectDetailsModel) => {
         this.navigateToProject(addedProject);
         this.course.id = 0; //force reload of course contents
-      }
+      },
     );
   }
 }
-
-

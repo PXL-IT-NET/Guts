@@ -26,7 +26,7 @@
     <p *ngIf="model.components.length == 0">
       This project has no components configured yet.
   </p>
-    <ngx-loading [show]="loading"></ngx-loading>
+    <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
 </div>
 <div class="row" *ngIf="model.components.length > 0">

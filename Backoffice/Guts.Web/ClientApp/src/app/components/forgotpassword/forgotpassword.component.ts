@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { ForgotPasswordModel } from '../../viewmodels/forgotpassword.model';
-import { RecaptchaComponent } from 'ng-recaptcha';
+import { RecaptchaDirective } from '../../directives/recaptcha.directive';
 
 @Component({
   standalone: false,
@@ -13,7 +13,7 @@ export class ForgotPasswordComponent {
     public error = '';
     public success = false;
 
-    @ViewChild(RecaptchaComponent, {static: false}) public captcha?: RecaptchaComponent;
+    @ViewChild(RecaptchaDirective, {static: false}) public captcha?: RecaptchaDirective;
 
     constructor(private authenticationService: AuthService) {
         this.model = {

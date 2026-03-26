@@ -1,14 +1,23 @@
-import { Component, Input, SimpleChanges, OnChanges } from '@angular/core';
-import { ChapterService } from '../../services/chapter.service';
-import { TopicStatisticsModel, TopicSummaryModel } from '../../viewmodels/topic.model';
-import { ActivatedRoute } from '@angular/router';
-import { ToastrService } from 'ngx-toastr';
-import * as moment from "moment";
+import {
+  Component,
+  Input,
+  SimpleChanges,
+  OnChanges,
+  ChangeDetectorRef,
+} from "@angular/core";
+import { ChapterService } from "../../services/chapter.service";
+import {
+  TopicStatisticsModel,
+  TopicSummaryModel,
+} from "../../viewmodels/topic.model";
+import { ActivatedRoute } from "@angular/router";
+import { ToastrService } from "ngx-toastr";
+import moment from "moment";
 
 @Component({
   standalone: false,
-  selector: 'app-chapter-summary',
-  templateUrl: './chaptersummary.component.html'
+  selector: "app-chapter-summary",
+  templateUrl: "./chaptersummary.component.html",
 })
 export class ChapterSummaryComponent implements OnChanges {
   public model: TopicSummaryModel;
@@ -21,30 +30,37 @@ export class ChapterSummaryComponent implements OnChanges {
   @Input() public chapterCode: string;
   @Input() public statusDate: moment.Moment;
 
-  constructor(private chapterService: ChapterService,
+  constructor(
+    private chapterService: ChapterService,
     private route: ActivatedRoute,
-    private toastr: ToastrService) {
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.model = new TopicSummaryModel();
     this.statistics = {
       id: 0,
-      code: '',
-      description: '',
+      code: "",
+      description: "",
       assignments: [],
       assignmentStatistics: [],
     };
     this.courseId = 0;
     this.userId = 0;
-    this.chapterCode = '';
+    this.chapterCode = "";
     this.statusDate = moment();
-    
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.courseId <= 0) return;
-    let chapterHasValue: boolean = this.chapterCode && this.chapterCode.length > 0;
+    let chapterHasValue: boolean =
+      this.chapterCode && this.chapterCode.length > 0;
     if (!chapterHasValue) return;
-    let chapterHasChanged: boolean = (changes.chapterCode ?? false) && changes.chapterCode.previousValue != this.chapterCode;
-    let statusDateHasChanged: boolean = (changes.statusDate ?? false) && changes.statusDate.previousValue != this.statusDate;
+    let chapterHasChanged: boolean =
+      (changes.chapterCode ?? false) &&
+      changes.chapterCode.previousValue != this.chapterCode;
+    let statusDateHasChanged: boolean =
+      (changes.statusDate ?? false) &&
+      changes.statusDate.previousValue != this.statusDate;
 
     if (chapterHasChanged || (statusDateHasChanged && chapterHasValue)) {
       this.loadChapterStatistics();
@@ -57,31 +73,44 @@ export class ChapterSummaryComponent implements OnChanges {
   private loadChapterStatistics() {
     this.loadingStatistics = true;
 
-    this.chapterService.getChapterStatistics(this.courseId, this.chapterCode, this.statusDate).subscribe((result) => {
-      if (result.success) {
-        this.statistics = result.value;
-      } else {
-        this.toastr.error("Could not load project statistics from API. Message: " + (result.message || "unknown error"), "System error");
-      }
-      this.loadingStatistics = false;
-    });
+    this.chapterService
+      .getChapterStatistics(this.courseId, this.chapterCode, this.statusDate)
+      .subscribe((result) => {
+        if (result.success) {
+          this.statistics = result.value;
+        } else {
+          this.toastr.error(
+            "Could not load project statistics from API. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
+        }
+        this.loadingStatistics = false;
+        this.cdr.detectChanges();
+      });
   }
 
   private loadChapterSummary() {
     this.loadingSummary = true;
-    this.chapterService.getChapterSummary(this.courseId,
-      this.chapterCode,
-      this.userId,
-      this.statusDate)
+    this.chapterService
+      .getChapterSummary(
+        this.courseId,
+        this.chapterCode,
+        this.userId,
+        this.statusDate,
+      )
       .subscribe((result) => {
         this.loadingSummary = false;
         if (result.success) {
           this.model = result.value;
         } else {
-          this.toastr.error("Could not load chapter summary from API. Message: " + (result.message || "unknown error"), "System error");
+          this.toastr.error(
+            "Could not load chapter summary from API. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
         }
+        this.cdr.detectChanges();
       });
   }
 }
-
-

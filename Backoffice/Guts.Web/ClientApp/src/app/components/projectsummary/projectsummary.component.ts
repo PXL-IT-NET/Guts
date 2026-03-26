@@ -3,7 +3,7 @@ import { ProjectService } from '../../services/project.service';
 import { TopicStatisticsModel, TopicSummaryModel } from '../../viewmodels/topic.model';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import * as moment from "moment";
+import moment from "moment";
 
 @Component({
   standalone: false,

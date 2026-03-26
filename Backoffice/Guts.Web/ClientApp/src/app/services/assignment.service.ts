@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { IAssignmentDetailModel } from "../viewmodels/assignmentdetail.model";
-import * as moment from 'moment';
+import moment from 'moment';
 import { ITopicAssignmentModel } from '../viewmodels/assignment.model';
 import { GetResult, PostResult } from '../util/result';
 import { map, catchError } from 'rxjs/operators';
