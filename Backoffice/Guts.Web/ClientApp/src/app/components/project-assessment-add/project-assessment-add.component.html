@@ -8,7 +8,7 @@
     [formGroup]="addAssessmentForm"
     (ngSubmit)="onSubmit()"
     #addForm="ngForm"
-  >
+    >
     <div class="row mb-2">
       <label for="description" class="col-3 col-form-label">Description</label>
       <div class="col-9">
@@ -17,10 +17,12 @@
           class="form-control"
           formControlName="description"
           [class.is-invalid]="isInvalid(addAssessmentForm.controls.description)"
-        />
-        <div *ngIf="isInvalid(addAssessmentForm.controls.description)">
-          <span class="text-danger">Verplicht veld</span>
-        </div>
+          />
+        @if (isInvalid(addAssessmentForm.controls.description)) {
+          <div>
+            <span class="text-danger">Verplicht veld</span>
+          </div>
+        }
       </div>
     </div>
 
@@ -31,9 +33,11 @@
           name="openOn"
           formControlName="openOn"
         ></app-ng-datetime>
-        <div *ngIf="isInvalid(addAssessmentForm.controls.openOn)">
-          <span class="text-danger">Verplicht veld</span>
-        </div>
+        @if (isInvalid(addAssessmentForm.controls.openOn)) {
+          <div>
+            <span class="text-danger">Verplicht veld</span>
+          </div>
+        }
       </div>
     </div>
 
@@ -44,9 +48,11 @@
           name="deadline"
           formControlName="deadline"
         ></app-ng-datetime>
-        <div *ngIf="isInvalid(addAssessmentForm.controls.deadline)">
-          <span class="text-danger">Verplicht veld</span>
-        </div>
+        @if (isInvalid(addAssessmentForm.controls.deadline)) {
+          <div>
+            <span class="text-danger">Verplicht veld</span>
+          </div>
+        }
       </div>
     </div>
   </form>
@@ -57,7 +63,7 @@
     class="btn btn-primary"
     [disabled]="addAssessmentForm.pristine || !addAssessmentForm.valid"
     (click)="addForm.ngSubmit.emit()"
-  >
+    >
     Save
   </button>
 </div>

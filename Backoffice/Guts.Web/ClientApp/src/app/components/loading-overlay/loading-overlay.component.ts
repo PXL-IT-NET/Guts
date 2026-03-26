@@ -4,14 +4,16 @@ import { Component, Input } from "@angular/core";
   standalone: false,
   selector: "app-loading-overlay",
   template: `
-    <div class="app-loading-overlay" *ngIf="show">
-      <div
-        class="spinner-border text-light"
-        role="status"
-        aria-label="Loading"
-      ></div>
-    </div>
-  `,
+    @if (show) {
+      <div class="app-loading-overlay">
+        <div
+          class="spinner-border text-light"
+          role="status"
+          aria-label="Loading"
+        ></div>
+      </div>
+    }
+    `,
   styles: [
     `
       .app-loading-overlay {

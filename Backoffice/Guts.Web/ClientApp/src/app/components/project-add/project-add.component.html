@@ -14,13 +14,14 @@
           id="code"
           formControlName="code"
           [class.is-invalid]="isInvalid(addProjectForm.controls.code)"
-        />
-        <div
-          *ngIf="isInvalid(addProjectForm.controls.code)"
-          class="text-danger"
-        >
-          Code is required.
-        </div>
+          />
+        @if (isInvalid(addProjectForm.controls.code)) {
+          <div
+            class="text-danger"
+            >
+            Code is required.
+          </div>
+        }
       </div>
     </div>
     <div class="row mb-2">
@@ -32,13 +33,14 @@
           id="description"
           formControlName="description"
           [class.is-invalid]="isInvalid(addProjectForm.controls.description)"
-        />
-        <div
-          *ngIf="isInvalid(addProjectForm.controls.description)"
-          class="text-danger"
-        >
-          Description is required.
-        </div>
+          />
+        @if (isInvalid(addProjectForm.controls.description)) {
+          <div
+            class="text-danger"
+            >
+            Description is required.
+          </div>
+        }
       </div>
     </div>
   </form>
@@ -49,7 +51,7 @@
     class="btn btn-primary"
     [disabled]="addProjectForm.pristine || !addProjectForm.valid"
     (click)="addForm.ngSubmit.emit()"
-  >
+    >
     Save
   </button>
 </div>

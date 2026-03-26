@@ -42,34 +42,36 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let peerAssessment of peerAssessments">
-          <td>{{ peerAssessment.subject.fullName }}</td>
-          <td>
-            <app-assessment-score-dropdown
-              [(value)]="peerAssessment.contributionScore"
-            />
-          </td>
-          <td>
-            <app-assessment-score-dropdown
-              [(value)]="peerAssessment.effortScore"
-            />
-          </td>
-          <td>
-            <app-assessment-score-dropdown
-              [(value)]="peerAssessment.cooperationScore"
-            />
-          </td>
-          <td>
-            <textarea
-              class="form-control"
-              [class.is-invalid]="isInvalid(peerAssessment)"
-              [(ngModel)]="peerAssessment.explanation"
-              rows="4"
-              cols="60"
-            >
-            </textarea>
-          </td>
-        </tr>
+        @for (peerAssessment of peerAssessments; track peerAssessment) {
+          <tr>
+            <td>{{ peerAssessment.subject.fullName }}</td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.contributionScore"
+                />
+            </td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.effortScore"
+                />
+            </td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.cooperationScore"
+                />
+            </td>
+            <td>
+              <textarea
+                class="form-control"
+                [class.is-invalid]="isInvalid(peerAssessment)"
+                [(ngModel)]="peerAssessment.explanation"
+                rows="4"
+                cols="60"
+                >
+              </textarea>
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>
@@ -80,7 +82,7 @@
       type="button"
       class="btn btn-sm btn-outline-success padding-8"
       (click)="savePeerAssessments()"
-    >
+      >
       Save
     </button>
   </div>
