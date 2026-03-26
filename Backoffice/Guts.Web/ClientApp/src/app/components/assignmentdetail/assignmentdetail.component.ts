@@ -3,6 +3,7 @@ import {
   Component,
   Input,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
 } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
@@ -12,6 +13,8 @@ import {
   AssignmentDetailModel,
 } from "../../viewmodels/assignmentdetail.model";
 import moment from "moment";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -19,7 +22,8 @@ import moment from "moment";
   templateUrl: "./assignmentdetail.component.html",
   styleUrls: ["./assignmentdetail.component.css"],
 })
-export class AssignmentDetailComponent implements OnChanges {
+export class AssignmentDetailComponent implements OnChanges, OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: AssignmentDetailModel;
   public loading: boolean = false;
 
@@ -55,10 +59,16 @@ export class AssignmentDetailComponent implements OnChanges {
         this.teamId,
         this.statusDate,
       )
+      .pipe(takeUntil(this.destroy$))
       .subscribe((assignmentDetail: IAssignmentDetailModel) => {
         this.loading = false;
         this.model = new AssignmentDetailModel(assignmentDetail);
         this.cdr.detectChanges();
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

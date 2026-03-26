@@ -1,14 +1,17 @@
-import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
 import { PostResult } from "../../util/result";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   templateUrl: "./login.component.html",
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: LoginModel;
   public loading = false;
   public error = "";
@@ -21,7 +24,7 @@ export class LoginComponent implements OnInit {
   ) {
     this.model = new LoginModel();
 
-    route.queryParams.subscribe((params) => {
+    route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.model.loginSessionPublicIdentifier = params["s"];
     });
   }
@@ -34,10 +37,13 @@ export class LoginComponent implements OnInit {
   public login() {
     this.loading = true;
 
-    this.authenticationService.login(this.model).subscribe((result) => {
-      this.handleLoginResult(result);
-      this.cdr.detectChanges();
-    });
+    this.authenticationService
+      .login(this.model)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        this.handleLoginResult(result);
+        this.cdr.detectChanges();
+      });
   }
 
   public cancelSession() {
@@ -47,6 +53,7 @@ export class LoginComponent implements OnInit {
     ) {
       this.authenticationService
         .cancelLoginSession(this.model.loginSessionPublicIdentifier)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
           this.router.navigate(["/"]);
 
@@ -64,5 +71,10 @@ export class LoginComponent implements OnInit {
       this.error = result.message;
     }
     this.loading = false;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

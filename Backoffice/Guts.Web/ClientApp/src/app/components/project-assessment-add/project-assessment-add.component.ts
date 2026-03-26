@@ -1,9 +1,10 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
-  ChangeDetectorRef,
 } from "@angular/core";
 import {
   AbstractControl,
@@ -18,13 +19,16 @@ import {
   IProjectAssessmentModel,
 } from "../../viewmodels/projectassessment.model";
 import { ProjectAssessmentService } from "../../services/project.assessment.service";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-assessment-add",
   templateUrl: "./project-assessment-add.component.html",
 })
-export class ProjectAssessmentAddComponent {
+export class ProjectAssessmentAddComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   public loading: boolean;
   public addAssessmentForm: FormGroup;
 
@@ -60,6 +64,7 @@ export class ProjectAssessmentAddComponent {
     this.loading = true;
     this.projectAssessmentService
       .addProjectAssessment(model)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -79,5 +84,10 @@ export class ProjectAssessmentAddComponent {
 
   public isInvalid(formControl: AbstractControl): boolean {
     return formControl.invalid && (formControl.dirty || formControl.touched);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

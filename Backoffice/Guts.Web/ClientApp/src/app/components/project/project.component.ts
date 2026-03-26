@@ -5,12 +5,15 @@ import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import moment from "moment";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   templateUrl: "./project.component.html",
 })
-export class ProjectComponent implements OnInit {
+export class ProjectComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: IProjectDetailsModel;
   public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
@@ -51,7 +54,7 @@ export class ProjectComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       var parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.projectCode = params["code"];
@@ -59,6 +62,7 @@ export class ProjectComponent implements OnInit {
       this.loading = true;
       this.projectService
         .getProjectDetails(this.courseId, this.projectCode)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result: GetResult<IProjectDetailsModel>) => {
           this.loading = false;
           if (result.success) {
@@ -80,14 +84,21 @@ export class ProjectComponent implements OnInit {
     });
 
     // Subscribe to queryParams to detect changes in query string parameters
-    this.route.queryParams.subscribe((queryParams) => {
-      if (queryParams["assignmentId"]) {
-        this.selectedAssignmentId = +queryParams["assignmentId"];
-      } else {
-        this.selectedAssignmentId = 0;
-      }
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((queryParams) => {
+        if (queryParams["assignmentId"]) {
+          this.selectedAssignmentId = +queryParams["assignmentId"];
+        } else {
+          this.selectedAssignmentId = 0;
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

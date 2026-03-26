@@ -12,8 +12,9 @@ import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from "@angular/router";
 import { UserProfile } from "../../viewmodels/user.model";
 import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
-import { Subscription } from "rxjs";
+import { Subscription, Subject } from "rxjs";
 import { ToastrService } from "ngx-toastr";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -21,6 +22,7 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {
+  private destroy$ = new Subject<void>();
   public loading: boolean = false;
   public userProfile: UserProfile;
   public exams: ExamModel[];
@@ -46,6 +48,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
       .getUserProfile()
+      .pipe(takeUntil(this.destroy$))
       .subscribe((profile) => {
         this.userProfile = profile;
 
@@ -62,45 +65,53 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.userProfileSubscription?.unsubscribe();
   }
 
   public loadExams() {
     this.loading = true;
-    this.examService.getExamsOfCourse(this.courseId).subscribe((result) => {
-      this.loading = false;
-      if (result.success) {
-        this.exams = result.value;
-      } else {
-        this.toastr.error(
-          "Could not retrieve exams from API. Message: " +
-            (result.message || "unknown error"),
-          "System error",
-        );
-      }
+    this.examService
+      .getExamsOfCourse(this.courseId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        this.loading = false;
+        if (result.success) {
+          this.exams = result.value;
+        } else {
+          this.toastr.error(
+            "Could not retrieve exams from API. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
   }
 
   public saveNewExam() {
     this.loading = true;
     this.newExam.courseId = this.courseId;
-    this.examService.saveExam(this.newExam).subscribe((result) => {
-      this.loading = false;
-      if (result.success) {
-        this.exams.push(result.value);
-        this.newExam = new ExamModel();
-      } else {
-        this.toastr.error(
-          "Could not save exam. Message: " +
-            (result.message || "unknown error"),
-          "System error",
-        );
-      }
+    this.examService
+      .saveExam(this.newExam)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        this.loading = false;
+        if (result.success) {
+          this.exams.push(result.value);
+          this.newExam = new ExamModel();
+        } else {
+          this.toastr.error(
+            "Could not save exam. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
   }
 
   public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel) {
@@ -113,17 +124,20 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
 
   public downloadResults(exam: ExamModel) {
     this.loading = true;
-    this.examService.getExamResultsDownloadUrl(exam.id).subscribe((result) => {
-      this.loading = false;
-      if (!result.success) {
-        this.toastr.error(
-          "Could not download results. Message: " +
-            (result.message || "unknown error"),
-          "System error",
-        );
-      }
+    this.examService
+      .getExamResultsDownloadUrl(exam.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        this.loading = false;
+        if (!result.success) {
+          this.toastr.error(
+            "Could not download results. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
   }
 }

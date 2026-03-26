@@ -1,17 +1,22 @@
-import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
 import { ToastrService } from "ngx-toastr";
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
 import { ITeamModel } from "src/app/viewmodels/team.model";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-detailed-results",
   templateUrl: "./project-team-assessment-detailed-results.component.html",
 })
-export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
+export class ProjectTeamAssessmentDetailedResultsComponent
+  implements OnInit, OnDestroy
+{
+  private destroy$ = new Subject<void>();
   public allTeams: ITeamModel[];
   public currentTeam: ITeamModel;
   public previousTeam: ITeamModel;
@@ -90,12 +95,13 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
     let projectCode = this.route.snapshot.params["code"];
     let assessmentId = this.route.snapshot.params["assessmentId"];
 
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       let teamId = params["teamId"];
 
       if (this.allTeams.length <= 0) {
         this.projectService
           .getProjectDetails(courseId, projectCode)
+          .pipe(takeUntil(this.destroy$))
           .subscribe((result) => {
             if (result.success) {
               this.allTeams = result.value.teams;
@@ -117,6 +123,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
       this.resetResults();
       this.projectTeamAssessmentService
         .getDetailedResultsOfProjectTeamAssessment(assessmentId, teamId)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
           if (result.success) {
             this.results = result.value;
@@ -276,6 +283,11 @@ export class ProjectTeamAssessmentDetailedResultsComponent implements OnInit {
       indivdualGrade = Math.min(indivdualGrade, 20);
       result.individualGrade = +indivdualGrade.toFixed(2);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

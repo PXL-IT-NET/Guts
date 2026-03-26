@@ -18,6 +18,7 @@ import {
   distinctUntilChanged,
   filter,
   merge,
+  takeUntil,
 } from "rxjs/operators";
 import { NgbTypeahead } from "@ng-bootstrap/ng-bootstrap";
 import moment from "moment";
@@ -27,6 +28,7 @@ import moment from "moment";
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
   public selectedUser: IUserModel;
@@ -68,13 +70,14 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       var parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.chapterCode = params["chapterCode"];
       this.loading = true;
       this.chapterService
         .getChapterDetails(this.courseId, this.chapterCode)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result: GetResult<IChapterDetailsModel>) => {
           this.loading = false;
           if (result.success) {
@@ -92,16 +95,21 @@ export class ChapterComponent implements OnInit, OnDestroy {
     });
 
     // Subscribe to queryParams to detect changes in query string parameters
-    this.route.queryParams.subscribe((queryParams) => {
-      if (queryParams["assignmentId"]) {
-        this.selectedAssignmentId = +queryParams["assignmentId"];
-      } else {
-        this.selectedAssignmentId = 0;
-      }
-    });
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((queryParams) => {
+        if (queryParams["assignmentId"]) {
+          this.selectedAssignmentId = +queryParams["assignmentId"];
+        } else {
+          this.selectedAssignmentId = 0;
+        }
+      });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   public onUserClick() {
     this.selectedUser = null;

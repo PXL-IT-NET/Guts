@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectorRef } from "@angular/core";
+import { ChangeDetectorRef, Component, Input, OnDestroy } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -13,13 +13,16 @@ import {
 import { ProjectService } from "../../services";
 import { PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-edit",
   templateUrl: "./project-team-edit.component.html",
 })
-export class ProjectTeamEditComponent {
+export class ProjectTeamEditComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   @Input() public courseId: number;
   @Input() public projectCode: string;
   @Input() public team: ITeamDetailsModel;
@@ -53,6 +56,7 @@ export class ProjectTeamEditComponent {
     this.loading = true;
     this.projectService
       .updateTeam(this.courseId, this.projectCode, this.team)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -84,6 +88,7 @@ export class ProjectTeamEditComponent {
           this.team.id,
           member.userId,
         )
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
@@ -105,5 +110,10 @@ export class ProjectTeamEditComponent {
 
   public isInvalid(formControl: AbstractControl): boolean {
     return formControl.invalid && (formControl.dirty || formControl.touched);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

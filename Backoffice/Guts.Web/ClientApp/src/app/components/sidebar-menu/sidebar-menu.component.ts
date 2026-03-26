@@ -1,8 +1,10 @@
-import { Component, ChangeDetectorRef } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
 import { ICourseModel } from "../../viewmodels/course.model";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -10,7 +12,8 @@ import { ICourseModel } from "../../viewmodels/course.model";
   templateUrl: "./sidebar-menu.component.html",
   styleUrls: ["./sidebar-menu.component.scss"],
 })
-export class SidebarMenuComponent {
+export class SidebarMenuComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   public courses: ICourseModel[];
 
   constructor(
@@ -21,15 +24,18 @@ export class SidebarMenuComponent {
   ) {
     this.courses = [];
 
-    this.authService.getLoggedInState().subscribe((isLoggedIn) => {
-      if (isLoggedIn) {
-        this.loadCourses();
-      } else {
-        this.courses = [];
-      }
+    this.authService
+      .getLoggedInState()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((isLoggedIn) => {
+        if (isLoggedIn) {
+          this.loadCourses();
+        } else {
+          this.courses = [];
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
   }
 
   public isCourseRouteActive(courseId: number) {
@@ -40,12 +46,20 @@ export class SidebarMenuComponent {
   }
 
   private loadCourses() {
-    this.courseService.getCourses().subscribe((result) => {
-      if (result.success) {
-        this.courses = result.value;
-      }
+    this.courseService
+      .getCourses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        if (result.success) {
+          this.courses = result.value;
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

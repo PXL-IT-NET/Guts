@@ -1,9 +1,10 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
-  ChangeDetectorRef,
 } from "@angular/core";
 import {
   ITeamDetailsModel,
@@ -20,13 +21,16 @@ import {
 import { ProjectService } from "../../services";
 import { CreateResult, PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-add",
   templateUrl: "./project-team-add.component.html",
 })
-export class ProjectTeamAddComponent {
+export class ProjectTeamAddComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   @Input() public courseId: number;
   @Input() public projectCode: string;
 
@@ -81,6 +85,7 @@ export class ProjectTeamAddComponent {
     this.loading = true;
     this.projectService
       .generateTeams(this.courseId, this.projectCode, model)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -101,6 +106,7 @@ export class ProjectTeamAddComponent {
     this.loading = true;
     this.projectService
       .addTeam(this.courseId, this.projectCode, name)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result: CreateResult<ITeamDetailsModel>) => {
         this.loading = false;
         if (result.success) {
@@ -115,5 +121,10 @@ export class ProjectTeamAddComponent {
 
         this.cdr.detectChanges();
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

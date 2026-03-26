@@ -1,8 +1,9 @@
 import {
+  ChangeDetectorRef,
   Component,
   Input,
+  OnDestroy,
   SimpleChanges,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { ProjectService } from "../../services/project.service";
 import {
@@ -12,13 +13,16 @@ import {
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import moment from "moment";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-summary",
   templateUrl: "./projectsummary.component.html",
 })
-export class ProjectSummaryComponent {
+export class ProjectSummaryComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: TopicSummaryModel;
   public statistics: TopicStatisticsModel;
   public loadingSummary: boolean = false;
@@ -78,6 +82,7 @@ export class ProjectSummaryComponent {
         this.teamId,
         this.statusDate,
       )
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         this.loadingSummary = false;
         if (result.success) {
@@ -98,6 +103,7 @@ export class ProjectSummaryComponent {
     this.loadingStatistics = true;
     this.projectService
       .getProjectStatistics(this.courseId, this.projectCode, this.statusDate)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         if (result.success) {
           this.statistics = result.value;
@@ -112,5 +118,10 @@ export class ProjectSummaryComponent {
 
         this.cdr.detectChanges();
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

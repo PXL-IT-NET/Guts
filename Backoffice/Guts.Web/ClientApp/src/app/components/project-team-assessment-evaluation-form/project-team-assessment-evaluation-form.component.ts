@@ -1,15 +1,20 @@
-import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
 import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-evaluation-form",
   templateUrl: "./project-team-assessment-evaluation-form.component.html",
 })
-export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
+export class ProjectTeamAssessmentEvaluationFormComponent
+  implements OnInit, OnDestroy
+{
+  private destroy$ = new Subject<void>();
   private projectAssessmentId: number;
   private teamId: number;
 
@@ -32,6 +37,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
     this.teamId = this.route.snapshot.params["teamId"];
     this.projectTeamAssessmentService
       .getPeerAssessmentsOfUser(this.projectAssessmentId, this.teamId)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         if (result.success) {
           this.peerAssessments = result.value;
@@ -66,6 +72,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
           this.teamId,
           validPeerAssessments,
         )
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
           if (result.success) {
             if (validPeerAssessments.length == this.peerAssessments.length) {
@@ -99,5 +106,10 @@ export class ProjectTeamAssessmentEvaluationFormComponent implements OnInit {
       (!peerAssessment.explanation ||
         peerAssessment.explanation.trim().length == 0);
     return explanationIsMisssing;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
