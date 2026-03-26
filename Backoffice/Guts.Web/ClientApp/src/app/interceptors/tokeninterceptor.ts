@@ -1,8 +1,15 @@
-import { Injectable, Injector } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../services/auth.service';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Injectable, Injector } from "@angular/core";
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor,
+  HttpResponse,
+  HttpErrorResponse,
+} from "@angular/common/http";
+import { AuthService } from "../services/auth.service";
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
 
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
@@ -12,14 +19,16 @@ export class TokenInterceptor implements HttpInterceptor {
     this.authService = injector.get(AuthService);
   }
 
-  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-
+  intercept(
+    request: HttpRequest<any>,
+    next: HttpHandler,
+  ): Observable<HttpEvent<any>> {
     let token: string | null = this.authService.getToken();
     if (token) {
       request = request.clone({
         setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
     }
 
@@ -36,7 +45,8 @@ export class TokenInterceptor implements HttpInterceptor {
               this.authService.clearToken();
             }
           }
-        })
+        },
+      ),
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { Component, ViewChild, ChangeDetectorRef } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { RegisterModel } from "../../viewmodels/register.model";
@@ -20,6 +20,7 @@ export class RegisterComponent {
   constructor(
     private router: Router,
     private authenticationService: AuthService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.model = new RegisterModel();
   }
@@ -46,6 +47,8 @@ export class RegisterComponent {
         if (this.captcha) this.captcha.reset();
       }
       this.loading = false;
+
+      this.cdr.detectChanges();
     });
   }
 

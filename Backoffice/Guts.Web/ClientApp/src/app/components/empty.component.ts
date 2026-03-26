@@ -1,10 +1,7 @@
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
   standalone: false,
-  template: ''
+  template: "",
 })
-export class EmptyComponent {
-}
-
-
+export class EmptyComponent {}

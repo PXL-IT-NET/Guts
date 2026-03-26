@@ -1,21 +1,24 @@
-import { Component } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
-import { CourseService } from '../../services/course.service';
-import { ICourseModel } from '../../viewmodels/course.model';
+import { Component, ChangeDetectorRef } from "@angular/core";
+import { AuthService } from "../../services/auth.service";
+import { Router } from "@angular/router";
+import { CourseService } from "../../services/course.service";
+import { ICourseModel } from "../../viewmodels/course.model";
 
 @Component({
   standalone: false,
-  selector: 'app-sidebar-menu',
-  templateUrl: './sidebar-menu.component.html',
-  styleUrls: ['./sidebar-menu.component.scss']
+  selector: "app-sidebar-menu",
+  templateUrl: "./sidebar-menu.component.html",
+  styleUrls: ["./sidebar-menu.component.scss"],
 })
 export class SidebarMenuComponent {
   public courses: ICourseModel[];
 
-  constructor(private authService: AuthService,
+  constructor(
+    private authService: AuthService,
     private router: Router,
-    private courseService: CourseService) {
+    private courseService: CourseService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.courses = [];
 
     this.authService.getLoggedInState().subscribe((isLoggedIn) => {
@@ -24,11 +27,16 @@ export class SidebarMenuComponent {
       } else {
         this.courses = [];
       }
+
+      this.cdr.detectChanges();
     });
   }
 
   public isCourseRouteActive(courseId: number) {
-    return this.router.url.includes('/courses/' + courseId + '/') || this.router.url.endsWith('/courses/' + courseId);
+    return (
+      this.router.url.includes("/courses/" + courseId + "/") ||
+      this.router.url.endsWith("/courses/" + courseId)
+    );
   }
 
   private loadCourses() {
@@ -36,9 +44,8 @@ export class SidebarMenuComponent {
       if (result.success) {
         this.courses = result.value;
       }
+
+      this.cdr.detectChanges();
     });
   }
-
 }
-
-

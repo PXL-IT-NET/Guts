@@ -22,10 +22,10 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
 
   constructor(source?: IAssignmentStatisticsModel) {
     this.assignmentId = 0;
-    this.code = '';
-    this.description = '';
+    this.code = "";
+    this.description = "";
     this.totalNumberOfUnits = 0;
-    this.unit = '';
+    this.unit = "";
     this.testPassageStatistics = [];
     this.tests = [];
 
@@ -43,7 +43,6 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
   private _chartData: any | null = null;
   get chartData(): any {
     if (!this._chartData) {
-
       let data = [];
       let labels = [];
       for (var statistic of this.testPassageStatistics) {
@@ -56,10 +55,10 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
         datasets: [
           {
             data: data,
-            label: this.unit
-          }],
+            label: this.unit,
+          },
+        ],
       };
-
     }
     return this._chartData;
   }

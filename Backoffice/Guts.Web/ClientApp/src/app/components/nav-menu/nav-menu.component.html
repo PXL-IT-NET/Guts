@@ -43,18 +43,23 @@
         aria-expanded="false"
       >
         <span class="fa fa-calendar"></span>
-        <span> {{selectedPeriod.description}}</span>
+        <span> {{ selectedPeriod.description }}</span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end">
         <li *ngFor="let period of allPeriods">
-          <a
-            class="dropdown-item"
-            (click)="selectPeriod(period)"
-          >
-            <span [ngClass]="{'bi-lock': !period.isActive, 'bi-unlock': period.isActive}"></span>
+          <a class="dropdown-item" (click)="selectPeriod(period)">
+            <span
+              [ngClass]="{
+                'bi-lock': !period.isActive,
+                'bi-unlock': period.isActive,
+              }"
+            ></span>
             <!-- <span class="fa fa-calendar"></span> -->
             <span> {{ period.description }}</span>
-            <span> ({{ period.from?.toDate() | date: 'dd/MM/yyyy' }} - {{ period.until?.toDate() | date: 'dd/MM/yyyy' }})</span>
+            <span>
+              ({{ period.from?.toDate() | date: "dd/MM/yyyy" }} -
+              {{ period.until?.toDate() | date: "dd/MM/yyyy" }})</span
+            >
           </a>
         </li>
       </ul>

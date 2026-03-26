@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ChangeDetectorRef,
+} from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from "@angular/router";
@@ -26,7 +34,8 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     private route: ActivatedRoute,
     private examService: ExamService,
     private authService: AuthService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.exams = [];
     this.newExam = new ExamModel();
@@ -39,13 +48,15 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
       .getUserProfile()
       .subscribe((profile) => {
         this.userProfile = profile;
+
+        this.cdr.detectChanges();
       });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.courseId > 0) {
       this.loadExams();
-    } else{
+    } else {
       this.exams = [];
     }
   }
@@ -64,9 +75,11 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
         this.toastr.error(
           "Could not retrieve exams from API. Message: " +
             (result.message || "unknown error"),
-          "System error"
+          "System error",
         );
       }
+
+      this.cdr.detectChanges();
     });
   }
 
@@ -82,9 +95,11 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
         this.toastr.error(
           "Could not save exam. Message: " +
             (result.message || "unknown error"),
-          "System error"
+          "System error",
         );
       }
+
+      this.cdr.detectChanges();
     });
   }
 
@@ -104,11 +119,11 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
         this.toastr.error(
           "Could not download results. Message: " +
             (result.message || "unknown error"),
-          "System error"
+          "System error",
         );
       }
+
+      this.cdr.detectChanges();
     });
   }
 }
-
-

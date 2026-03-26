@@ -1,6 +1,12 @@
 import { IAssignmentModel } from "./assignment.model";
-import { IAssignmentStatisticsModel, AssignmentStatisticsModel } from "./assignmentstatistics.model";
-import { IAssignmentSummaryModel, AssignmentSummaryModel } from "./assignmentsummary.model"
+import {
+  IAssignmentStatisticsModel,
+  AssignmentStatisticsModel,
+} from "./assignmentstatistics.model";
+import {
+  IAssignmentSummaryModel,
+  AssignmentSummaryModel,
+} from "./assignmentsummary.model";
 
 export interface ITopicModel {
   id: number;
@@ -51,8 +57,8 @@ export class TopicSummaryModel implements ITopicSummaryModel {
 
   constructor(source?: ITopicSummaryModel) {
     this.id = 0;
-    this.code = '';
-    this.description = '';
+    this.code = "";
+    this.description = "";
     this.assignmentSummaries = [];
     this.assignments = [];
     this.totalGreenTests = 0;
@@ -75,7 +81,7 @@ export class TopicSummaryModel implements ITopicSummaryModel {
       if (source.assignments) {
         this.assignments = source.assignments;
       }
-    } 
+    }
   }
 }
 

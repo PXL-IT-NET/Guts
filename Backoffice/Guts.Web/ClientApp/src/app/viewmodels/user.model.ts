@@ -22,7 +22,7 @@ export class UserProfile implements IUserProfile {
     this.id = 0;
     this.roles = [];
     this.teams = [];
-    this.email = '';
+    this.email = "";
     this.isAuthenticated = false;
 
     if (source) {
@@ -35,7 +35,7 @@ export class UserProfile implements IUserProfile {
   }
 
   public isLector(): boolean {
-    return this.roles.indexOf('lector') >= 0;
+    return this.roles.indexOf("lector") >= 0;
   }
 
   public isMemberOf(teamId: number): boolean {

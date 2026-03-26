@@ -7,11 +7,11 @@ export class RegisterModel {
   captchaToken: string;
 
   constructor() {
-    this.firstName = '';
-    this.lastName = '';
-    this.email = '';
-    this.password = '';
-    this.repeatpassword = '';
-    this.captchaToken = '';
+    this.firstName = "";
+    this.lastName = "";
+    this.email = "";
+    this.password = "";
+    this.repeatpassword = "";
+    this.captchaToken = "";
   }
 }

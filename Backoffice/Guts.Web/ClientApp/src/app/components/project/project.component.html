@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-12">
-      <h5>Test results</h5>
+    <h5>Test results</h5>
   </div>
 </div>
 <div class="row">
@@ -11,32 +11,45 @@
         <div class="col-lg-3 col-md-4">
           <select name="teams" class="form-select" [(ngModel)]="selectedTeamId">
             <option *ngFor="let team of model.teams" [ngValue]="team.id">
-              {{team.name}}
+              {{ team.name }}
             </option>
           </select>
         </div>
 
-        <label for="date" class="col-lg-1 col-md-2 col-form-label">Status on</label>
+        <label for="date" class="col-lg-1 col-md-2 col-form-label"
+          >Status on</label
+        >
         <div class="col-lg-3 col-md-4">
-          <app-ng-datetime name="date" [(date)]="selectedDate"></app-ng-datetime>
+          <app-ng-datetime
+            name="date"
+            [(date)]="selectedDate"
+          ></app-ng-datetime>
         </div>
-
       </div>
     </form>
     <p *ngIf="model.components.length == 0">
       This project has no components configured yet.
-  </p>
+    </p>
     <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
 </div>
 <div class="row" *ngIf="model.components.length > 0">
   <div class="col-md-12">
-    <app-project-summary *ngIf="selectedAssignmentId <= 0" [courseId]="courseId" [projectCode]="projectCode"
-      [teamId]="selectedTeamId" [statusDate]="selectedDate">
+    <app-project-summary
+      *ngIf="selectedAssignmentId <= 0"
+      [courseId]="courseId"
+      [projectCode]="projectCode"
+      [teamId]="selectedTeamId"
+      [statusDate]="selectedDate"
+    >
     </app-project-summary>
 
-    <app-assignment-detail *ngIf="selectedAssignmentId > 0" [assignmentId]="selectedAssignmentId" 
-      [teamId]="selectedTeamId" [statusDate]="selectedDate">
+    <app-assignment-detail
+      *ngIf="selectedAssignmentId > 0"
+      [assignmentId]="selectedAssignmentId"
+      [teamId]="selectedTeamId"
+      [statusDate]="selectedDate"
+    >
     </app-assignment-detail>
   </div>
 </div>

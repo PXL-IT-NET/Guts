@@ -1,9 +1,9 @@
 ﻿export class TokenModel {
-    public token: string;
-    public expiration: string;
+  public token: string;
+  public expiration: string;
 
-    constructor() {
-        this.token = '';
-        this.expiration = '';
-    }
+  constructor() {
+    this.token = "";
+    this.expiration = "";
+  }
 }

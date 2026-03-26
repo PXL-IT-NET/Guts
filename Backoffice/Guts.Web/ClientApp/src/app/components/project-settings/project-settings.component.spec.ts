@@ -1,21 +1,21 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { ProjectSettingsComponent } from './project-settings.component';
+import { ProjectSettingsComponent } from "./project-settings.component";
 
-describe('ProjectSettingsComponent', () => {
+describe("ProjectSettingsComponent", () => {
   let component: ProjectSettingsComponent;
   let fixture: ComponentFixture<ProjectSettingsComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ProjectSettingsComponent]
+      declarations: [ProjectSettingsComponent],
     });
     fixture = TestBed.createComponent(ProjectSettingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 });

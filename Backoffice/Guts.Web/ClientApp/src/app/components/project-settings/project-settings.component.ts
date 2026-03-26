@@ -1,5 +1,10 @@
-import { Component } from "@angular/core";
-import { AbstractControl, FormControl, FormGroup, Validators } from "@angular/forms";
+import { ChangeDetectorRef, Component } from "@angular/core";
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  Validators,
+} from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectService } from "src/app/services";
@@ -20,11 +25,11 @@ export class ProjectSettingsComponent {
   public editProjectForm: FormGroup;
   public project: IProjectDetailsModel;
 
-
   constructor(
     private projectService: ProjectService,
     private route: ActivatedRoute,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.courseId = 0;
@@ -35,48 +40,62 @@ export class ProjectSettingsComponent {
   ngOnInit() {
     this.editProjectForm = new FormGroup({
       code: new FormControl("", Validators.required),
-      description: new FormControl("", Validators.required)
+      description: new FormControl("", Validators.required),
     });
 
-    this.courseId = +this.route.parent.snapshot.params['courseId']
-    this.projectCode = this.route.snapshot.params['code'];
+    this.courseId = +this.route.parent.snapshot.params["courseId"];
+    this.projectCode = this.route.snapshot.params["code"];
 
     this.loadProject();
   }
 
   private loadProject() {
-
     this.loading = true;
-    this.projectService.getProjectDetails(this.courseId, this.projectCode).subscribe({
-      next: result => {
-        this.loading = false;
-        if (result.success) {
-          this.project = result.value;
-          this.editProjectForm.controls.code.setValue(result.value.code);
-          this.editProjectForm.controls.description.setValue(result.value.description);
-        } else {
-          this.toastr.error("Could not load project. Message: " + (result.message || "unknown error"), "System error");
-        }
-      }
-    });
+    this.projectService
+      .getProjectDetails(this.courseId, this.projectCode)
+      .subscribe({
+        next: (result) => {
+          this.loading = false;
+          if (result.success) {
+            this.project = result.value;
+            this.editProjectForm.controls.code.setValue(result.value.code);
+            this.editProjectForm.controls.description.setValue(
+              result.value.description,
+            );
+          } else {
+            this.toastr.error(
+              "Could not load project. Message: " +
+                (result.message || "unknown error"),
+              "System error",
+            );
+          }
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   onSubmit() {
     if (this.editProjectForm.invalid) return;
 
     const model: ITopicUpdateModel = {
-      description: this.editProjectForm.controls.description.value
+      description: this.editProjectForm.controls.description.value,
     };
 
-    this.projectService.updateProject(this.courseId, this.projectCode, model).subscribe({
-      next: result => {
-        if (result.success) {
-          this.toastr.success("Project updated successfully");
-        } else {
-          this.toastr.error(result.message || "unknown error", "Could not update project");
-        }
-      }
-    });  
+    this.projectService
+      .updateProject(this.courseId, this.projectCode, model)
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.toastr.success("Project updated successfully");
+          } else {
+            this.toastr.error(
+              result.message || "unknown error",
+              "Could not update project",
+            );
+          }
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   public isInvalid(formControl: AbstractControl): boolean {
@@ -87,5 +106,3 @@ export class ProjectSettingsComponent {
     this.loadProject();
   }
 }
-
-

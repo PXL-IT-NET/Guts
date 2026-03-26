@@ -1,4 +1,4 @@
-import { ITopicModel } from "./topic.model"
+import { ITopicModel } from "./topic.model";
 
 export interface ICourseModel {
   id: number;

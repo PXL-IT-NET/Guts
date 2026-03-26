@@ -6,29 +6,37 @@
 </div>
 <div class="row">
   <div class="col-12">
-    <table class="table table-bordered" aria-label="peer assessments" *ngIf="assessments.length > 0">
+    <table
+      class="table table-bordered"
+      aria-label="peer assessments"
+      *ngIf="assessments.length > 0"
+    >
       <thead>
-      <tr>
-        <th scope="col">Description</th>
-        <th scope="col">Open on</th>
-        <th scope="col">Closed on</th>
-        <th scope="col">
-          <span>Team </span>
-          <select *ngIf="project.teams.length > 0" name="teams" [(ngModel)]="selectedTeamId"
-                  (change)="loadProjectAssessments()">
-            <option *ngFor="let team of project.teams" [ngValue]="team.id">
-              {{team.name}}
-            </option>
-          </select>
-        </th>
-        <th *ngIf="userProfile.isLector() && activePeriod"></th>
-      </tr>
+        <tr>
+          <th scope="col">Description</th>
+          <th scope="col">Open on</th>
+          <th scope="col">Closed on</th>
+          <th scope="col">
+            <span>Team </span>
+            <select
+              *ngIf="project.teams.length > 0"
+              name="teams"
+              [(ngModel)]="selectedTeamId"
+              (change)="loadProjectAssessments()"
+            >
+              <option *ngFor="let team of project.teams" [ngValue]="team.id">
+                {{ team.name }}
+              </option>
+            </select>
+          </th>
+          <th *ngIf="userProfile.isLector() && activePeriod"></th>
+        </tr>
       </thead>
       <tbody>
         <tr *ngFor="let assessment of assessments">
-          <td>{{assessment.description}}</td>
-          <td>{{assessment.openOnDisplay}}</td>
-          <td>{{assessment.deadlineDisplay}}</td>
+          <td>{{ assessment.description }}</td>
+          <td>{{ assessment.openOnDisplay }}</td>
+          <td>{{ assessment.deadlineDisplay }}</td>
           <td>
             <div *ngIf="assessment.teamStatus.isComplete">
               <span class="bi-check-square text-success"></span>
@@ -37,50 +45,112 @@
             <div *ngIf="!assessment.teamStatus.isComplete">
               <div>
                 <span class="bi-x-square text-danger"></span>
-                <span *ngIf="assessment.isOpen" class="text-danger"> Not completed</span>
-                <span *ngIf="!assessment.isOpen" class="text-danger"> Not open</span>
+                <span *ngIf="assessment.isOpen" class="text-danger">
+                  Not completed</span
+                >
+                <span *ngIf="!assessment.isOpen" class="text-danger">
+                  Not open</span
+                >
               </div>
-              <div *ngIf="assessment.teamStatus.peersThatNeedToEvaluateOthers.length > 0">
+              <div
+                *ngIf="
+                  assessment.teamStatus.peersThatNeedToEvaluateOthers.length > 0
+                "
+              >
                 <em>Peers that need to evaluate others:</em>
-                <div *ngFor="let peer of assessment.teamStatus.peersThatNeedToEvaluateOthers">
-                  <span>{{peer.fullName}}</span>
+                <div
+                  *ngFor="
+                    let peer of assessment.teamStatus
+                      .peersThatNeedToEvaluateOthers
+                  "
+                >
+                  <span>{{ peer.fullName }}</span>
                   <span *ngIf="assessment.isOver" class="text-danger">
-                    (Missed the closing
-                    deadline)
+                    (Missed the closing deadline)
                   </span>
                 </div>
               </div>
             </div>
-            <div *ngIf="assessment.isAfterOpenOn && !assessment.teamStatus.isComplete && userProfile.isMemberOf(assessment.teamStatus.teamId) && activePeriod"
-                 class="m-2">
-              <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'evaluate']"
-                 class="btn btn-outline-success">
+            <div
+              *ngIf="
+                assessment.isAfterOpenOn &&
+                !assessment.teamStatus.isComplete &&
+                userProfile.isMemberOf(assessment.teamStatus.teamId) &&
+                activePeriod
+              "
+              class="m-2"
+            >
+              <a
+                [routerLink]="[
+                  './',
+                  assessment.id,
+                  'teams',
+                  selectedTeamId,
+                  'evaluate',
+                ]"
+                class="btn btn-outline-success"
+              >
                 <span class="bi-pencil-square"></span>
                 <span> Evaluate self and others</span>
               </a>
             </div>
-            <div *ngIf="assessment.teamStatus.isComplete && userProfile.isLector()" class="m-2">
-              <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'detailed-results']"
-                 class="btn btn-outline-success">
+            <div
+              *ngIf="assessment.teamStatus.isComplete && userProfile.isLector()"
+              class="m-2"
+            >
+              <a
+                [routerLink]="[
+                  './',
+                  assessment.id,
+                  'teams',
+                  selectedTeamId,
+                  'detailed-results',
+                ]"
+                class="btn btn-outline-success"
+              >
                 <span class="bi-pencil-square"></span>
                 <span> View results</span>
               </a>
             </div>
-            <div *ngIf="assessment.teamStatus.isComplete && userProfile.isMemberOf(selectedTeamId)"
-                 class="m-2">
-              <a [routerLink]="['./', assessment.id, 'teams', selectedTeamId, 'my-result']"
-                 class="btn btn-outline-success">
+            <div
+              *ngIf="
+                assessment.teamStatus.isComplete &&
+                userProfile.isMemberOf(selectedTeamId)
+              "
+              class="m-2"
+            >
+              <a
+                [routerLink]="[
+                  './',
+                  assessment.id,
+                  'teams',
+                  selectedTeamId,
+                  'my-result',
+                ]"
+                class="btn btn-outline-success"
+              >
                 <span class="bi-pencil-square"></span>
                 <span> View my result</span>
               </a>
             </div>
           </td>
-          <td class="text-center" *ngIf="userProfile.isLector() && activePeriod">
-            <button type="submit" class="btn btn-outline-success mb-2" (click)="openAssessmentEditModal(assessment)">
+          <td
+            class="text-center"
+            *ngIf="userProfile.isLector() && activePeriod"
+          >
+            <button
+              type="submit"
+              class="btn btn-outline-success mb-2"
+              (click)="openAssessmentEditModal(assessment)"
+            >
               <span class="fa fa-pencil pe-2"></span>
-              <span>Edit</span>
-            </button><br />
-            <button type="submit" class="btn btn-outline-danger" (click)="deleteAssessment(assessment)">
+              <span>Edit</span></button
+            ><br />
+            <button
+              type="submit"
+              class="btn btn-outline-danger"
+              (click)="deleteAssessment(assessment)"
+            >
               <span class="fa fa-trash pe-2"></span>
               <span>Delete</span>
             </button>
@@ -95,7 +165,11 @@
 </div>
 <div class="row" *ngIf="userProfile.isLector() && activePeriod">
   <div class="col-12">
-    <button type="submit" class="btn btn-outline-success" (click)="openAssessmentAddModal()">
+    <button
+      type="submit"
+      class="btn btn-outline-success"
+      (click)="openAssessmentAddModal()"
+    >
       <span class="fa fa-plus pe-2"></span>
       <span>Add peer assessment</span>
     </button>

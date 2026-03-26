@@ -1,29 +1,68 @@
 <div class="col-md-6 col-md-offset-3">
   <h2>Login</h2>
-  <p *ngIf="model.loginSessionPublicIdentifier && model.loginSessionPublicIdentifier.length > 0">
-    Please login to send the results of the tests you have just carried out to the GUTS service...
+  <p
+    *ngIf="
+      model.loginSessionPublicIdentifier &&
+      model.loginSessionPublicIdentifier.length > 0
+    "
+  >
+    Please login to send the results of the tests you have just carried out to
+    the GUTS service...
   </p>
   <form name="form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
     <div class="mb-3">
       <label for="email">Email</label>
-      <input type="text" class="form-control" id="email" name="email" [(ngModel)]="model.email" #email="ngModel" required [ngClass]="{ 'is-invalid': f.submitted && !email.valid }" />
+      <input
+        type="text"
+        class="form-control"
+        id="email"
+        name="email"
+        [(ngModel)]="model.email"
+        #email="ngModel"
+        required
+        [ngClass]="{ 'is-invalid': f.submitted && !email.valid }"
+      />
       <div class="invalid-feedback">Email is required</div>
     </div>
     <div class="mb-2">
       <label for="password">Password</label>
-      <input type="password" class="form-control" id="password" name="password" [(ngModel)]="model.password" #password="ngModel" required [ngClass]="{ 'is-invalid': f.submitted && !password.valid }" />
+      <input
+        type="password"
+        class="form-control"
+        id="password"
+        name="password"
+        [(ngModel)]="model.password"
+        #password="ngModel"
+        required
+        [ngClass]="{ 'is-invalid': f.submitted && !password.valid }"
+      />
       <div class="invalid-feedback">Password is required</div>
     </div>
     <div class="mb-2">
-      <button [disabled]="loading" class="btn btn-outline-primary" type="submit">Login</button>
-      <button [disabled]="loading" class="btn btn-outline-secondary" type="button" (click)="cancelSession()" *ngIf="model.loginSessionPublicIdentifier && model.loginSessionPublicIdentifier.length > 0">Cancel</button>
+      <button
+        [disabled]="loading"
+        class="btn btn-outline-primary"
+        type="submit"
+      >
+        Login
+      </button>
+      <button
+        [disabled]="loading"
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="cancelSession()"
+        *ngIf="
+          model.loginSessionPublicIdentifier &&
+          model.loginSessionPublicIdentifier.length > 0
+        "
+      >
+        Cancel
+      </button>
     </div>
-    <pre *ngIf="error" class="alert alert-danger">{{error}}</pre>
+    <pre *ngIf="error" class="alert alert-danger">{{ error }}</pre>
     <app-loading-overlay [show]="loading"></app-loading-overlay>
   </form>
-  <p>
-    No account yet? <a routerLink="/register">Register</a>
-  </p>
+  <p>No account yet? <a routerLink="/register">Register</a></p>
   <p>
     <a routerLink="/forgotpassword">Forgot password?</a>
   </p>

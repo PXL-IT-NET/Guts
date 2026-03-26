@@ -49,6 +49,8 @@ export class LoginComponent implements OnInit {
         .cancelLoginSession(this.model.loginSessionPublicIdentifier)
         .subscribe((result) => {
           this.router.navigate(["/"]);
+
+          this.cdr.detectChanges();
         });
     }
   }

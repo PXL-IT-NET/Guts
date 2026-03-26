@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 
 @Component({
   standalone: false,
-  selector: 'app-assessment-score-dropdown',
-  templateUrl: './assessment-score-dropdown.component.html'
+  selector: "app-assessment-score-dropdown",
+  templateUrl: "./assessment-score-dropdown.component.html",
 })
 export class AssessmentScoreDropdownComponent {
   @Input() public value: number;
@@ -19,5 +19,3 @@ export class AssessmentScoreDropdownComponent {
     this.valueChange.emit(newValue);
   }
 }
-
-

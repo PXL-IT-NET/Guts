@@ -1,18 +1,25 @@
-import { Component, Input } from '@angular/core';
-import { ITeamDetailsModel, ITeamMemberModel } from '../../viewmodels/team.model';
-import { BsModalRef } from 'ngx-bootstrap/modal';
-import { FormGroup, FormControl, Validators, AbstractControl } from '@angular/forms';
-import { ProjectService } from '../../services';
-import { PostResult } from '../../util/result';
-import { ToastrService } from 'ngx-toastr';
+import { Component, Input, ChangeDetectorRef } from "@angular/core";
+import {
+  ITeamDetailsModel,
+  ITeamMemberModel,
+} from "../../viewmodels/team.model";
+import { BsModalRef } from "ngx-bootstrap/modal";
+import {
+  FormGroup,
+  FormControl,
+  Validators,
+  AbstractControl,
+} from "@angular/forms";
+import { ProjectService } from "../../services";
+import { PostResult } from "../../util/result";
+import { ToastrService } from "ngx-toastr";
 
 @Component({
   standalone: false,
-  selector: 'app-project-team-edit',
-  templateUrl: './project-team-edit.component.html'
+  selector: "app-project-team-edit",
+  templateUrl: "./project-team-edit.component.html",
 })
 export class ProjectTeamEditComponent {
-
   @Input() public courseId: number;
   @Input() public projectCode: string;
   @Input() public team: ITeamDetailsModel;
@@ -23,14 +30,15 @@ export class ProjectTeamEditComponent {
   constructor(
     public modalRef: BsModalRef,
     private projectService: ProjectService,
-    private toastr: ToastrService) {
-
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.loading = false;
   }
 
   ngOnInit() {
     this.editTeamForm = new FormGroup({
-      "name": new FormControl(null, Validators.required)
+      name: new FormControl(null, Validators.required),
     });
 
     this.editTeamForm.patchValue(this.team);
@@ -43,31 +51,54 @@ export class ProjectTeamEditComponent {
     Object.assign(this.team, this.editTeamForm.getRawValue());
 
     this.loading = true;
-    this.projectService.updateTeam(this.courseId, this.projectCode, this.team).subscribe(
-      (result: PostResult) => {
+    this.projectService
+      .updateTeam(this.courseId, this.projectCode, this.team)
+      .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
           this.modalRef.hide();
         } else {
-          this.toastr.error(result.message || "unknown error", "Could not update team");
+          this.toastr.error(
+            result.message || "unknown error",
+            "Could not update team",
+          );
         }
-      }
-    );
+
+        this.cdr.detectChanges();
+      });
   }
 
   public removeFromTeam(member: ITeamMemberModel) {
-    let confirmMessage = "Are you sure you want to remove '" + member.name + "' from '" + this.team.name + "'? All test results and peer assessments of this team will also be deleted.";
+    let confirmMessage =
+      "Are you sure you want to remove '" +
+      member.name +
+      "' from '" +
+      this.team.name +
+      "'? All test results and peer assessments of this team will also be deleted.";
     if (confirm(confirmMessage)) {
       this.loading = true;
-      this.projectService.removeFromTeam(this.courseId, this.projectCode, this.team.id, member.userId)
+      this.projectService
+        .removeFromTeam(
+          this.courseId,
+          this.projectCode,
+          this.team.id,
+          member.userId,
+        )
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
             //remove member from team
-            this.team.members = this.team.members.filter(m => m.userId !== member.userId);
+            this.team.members = this.team.members.filter(
+              (m) => m.userId !== member.userId,
+            );
           } else {
-            this.toastr.error(result.message || "unknown error", "Could not remove user from team");
+            this.toastr.error(
+              result.message || "unknown error",
+              "Could not remove user from team",
+            );
           }
+
+          this.cdr.detectChanges();
         });
     }
   }
@@ -76,5 +107,3 @@ export class ProjectTeamEditComponent {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 }
-
-

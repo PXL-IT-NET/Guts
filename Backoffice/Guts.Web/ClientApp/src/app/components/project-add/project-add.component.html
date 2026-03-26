@@ -8,28 +8,48 @@
     <div class="row mb-2">
       <label for="name" class="col-3 col-form-label">Code</label>
       <div class="col-9">
-        <input type="text" class="form-control" id="code" formControlName="code"
-               [class.is-invalid]="isInvalid(addProjectForm.controls.code)">
-        <div *ngIf="isInvalid(addProjectForm.controls.code)" class="text-danger">
+        <input
+          type="text"
+          class="form-control"
+          id="code"
+          formControlName="code"
+          [class.is-invalid]="isInvalid(addProjectForm.controls.code)"
+        />
+        <div
+          *ngIf="isInvalid(addProjectForm.controls.code)"
+          class="text-danger"
+        >
           Code is required.
         </div>
       </div>
     </div>
     <div class="row mb-2">
-        <label for="name" class="col-3 col-form-label">Description</label>
-        <div class="col-9">
-          <input type="text" class="form-control" id="description" formControlName="description"
-                 [class.is-invalid]="isInvalid(addProjectForm.controls.description)">
-          <div *ngIf="isInvalid(addProjectForm.controls.description)" class="text-danger">
-            Description is required.
-          </div>
+      <label for="name" class="col-3 col-form-label">Description</label>
+      <div class="col-9">
+        <input
+          type="text"
+          class="form-control"
+          id="description"
+          formControlName="description"
+          [class.is-invalid]="isInvalid(addProjectForm.controls.description)"
+        />
+        <div
+          *ngIf="isInvalid(addProjectForm.controls.description)"
+          class="text-danger"
+        >
+          Description is required.
         </div>
       </div>
+    </div>
   </form>
 </div>
 <div class="modal-footer">
-  <button type="button" class="btn btn-primary"
-          [disabled]="addProjectForm.pristine || !addProjectForm.valid" (click)="addForm.ngSubmit.emit()">Save</button>
+  <button
+    type="button"
+    class="btn btn-primary"
+    [disabled]="addProjectForm.pristine || !addProjectForm.valid"
+    (click)="addForm.ngSubmit.emit()"
+  >
+    Save
+  </button>
 </div>
-
-

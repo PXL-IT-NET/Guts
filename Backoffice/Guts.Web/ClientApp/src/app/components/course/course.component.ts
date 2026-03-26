@@ -65,6 +65,8 @@ export class CourseComponent implements OnInit, OnDestroy {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.handleNavigationEvent();
+
+        this.cdr.detectChanges();
       });
 
     this.periodProvider.period$.subscribe((period) => {
@@ -72,6 +74,8 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.activePeriod = period.isActive;
         this.handleNavigationEvent(true);
       }
+
+      this.cdr.detectChanges();
     });
 
     // Manually trigger the event handler on initial load
@@ -82,6 +86,8 @@ export class CourseComponent implements OnInit, OnDestroy {
       .getUserProfile()
       .subscribe((profile) => {
         this.userProfile = profile;
+
+        this.cdr.detectChanges();
       });
   }
 
@@ -309,6 +315,8 @@ export class CourseComponent implements OnInit, OnDestroy {
       (addedProject: IProjectDetailsModel) => {
         this.navigateToProject(addedProject);
         this.course.id = 0; //force reload of course contents
+
+        this.cdr.detectChanges();
       },
     );
   }

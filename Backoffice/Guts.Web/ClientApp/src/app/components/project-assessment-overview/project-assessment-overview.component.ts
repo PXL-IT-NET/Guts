@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -67,7 +67,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private authService: AuthService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private periodProvider: PeriodProvider
+    private periodProvider: PeriodProvider,
+    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.project = {
@@ -90,6 +91,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
       .getUserProfile()
       .subscribe((profile) => {
         this.userProfile = profile;
+
+        this.cdr.detectChanges();
       });
 
     //#Form
@@ -116,18 +119,20 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
             this.toastr.error(
               "Could not load project from API. Message: " +
                 (result.message || "unknown error"),
-              "System error"
+              "System error",
             );
           }
+          this.cdr.detectChanges();
         });
     });
 
     this.periodProvider.period$.subscribe((period) => {
-      if(period) {
+      if (period) {
         this.activePeriod = period.isActive;
       }
-    });
 
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnDestroy() {
@@ -142,11 +147,13 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     };
     this.modalRef = this.modalService.show(
       ProjectAssessmentAddComponent,
-      modalState
+      modalState,
     );
     this.modalRef.setClass("modal-lg");
     this.modalRef.content.assessmentAdded.subscribe((addedAssessment) => {
       this.loadProjectAssessments();
+
+      this.cdr.detectChanges();
     });
   }
 
@@ -159,11 +166,13 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     };
     this.modalRef = this.modalService.show(
       ProjectAssessmentEditComponent,
-      modalState
+      modalState,
     );
     this.modalRef.setClass("modal-lg");
     this.modalRef.content.assessmentEdited.subscribe(() => {
       this.loadProjectAssessments();
+
+      this.cdr.detectChanges();
     });
   }
 
@@ -181,7 +190,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
                 this.projectTeamAssessmentService
                   .getStatusOfProjectTeamAssessment(
                     assessment.id,
-                    this.selectedTeamId
+                    this.selectedTeamId,
                   )
                   .subscribe((result) => {
                     if (result.success) {
@@ -190,25 +199,29 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
                       this.toastr.warning(
                         "Could not retrieve project team assment status. Message: " +
                           (result.message || "unknown error"),
-                        "Warning"
+                        "Warning",
                       );
                     }
+
+                    this.cdr.detectChanges();
                   });
               }
             });
           } else {
             this.toastr.warning(
               "You are not a member of a team. Please join a team first.",
-              "No team found"
+              "No team found",
             );
           }
         } else {
           this.toastr.error(
             "Could not load project assessments from API. Message: " +
               (result.message || "unknown error"),
-            "System error"
+            "System error",
           );
         }
+
+        this.cdr.detectChanges();
       });
   }
 
@@ -229,12 +242,12 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
           } else {
             this.toastr.error(
               result.message || "unknown error",
-              "Could not delete peer assessment"
+              "Could not delete peer assessment",
             );
           }
+
+          this.cdr.detectChanges();
         });
     }
   }
 }
-
-

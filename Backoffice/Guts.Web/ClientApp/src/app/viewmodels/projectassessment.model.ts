@@ -8,7 +8,7 @@ export class ProjectAssessmentCreateModel {
 
   constructor(projectId: number) {
     this.projectId = projectId;
-    this.description = '';
+    this.description = "";
     this.openOn = null;
     this.deadline = null;
   }
@@ -22,7 +22,7 @@ export class ProjectAssessmentUpdateModel {
 
   constructor() {
     this.id = 0;
-    this.description = '';
+    this.description = "";
     this.openOn = null;
     this.deadline = null;
   }
@@ -40,24 +40,24 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
   public id: number;
   public description: string;
   public openOnUtc: moment.Moment;
-  public get openOnDisplay() : string {
+  public get openOnDisplay(): string {
     return this.openOnUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
   }
-  public get isOpen() : boolean {
+  public get isOpen(): boolean {
     let now = moment();
     return now.isAfter(this.openOnUtc) && this.deadlineUtc.isAfter(now);
   }
 
-  public get isAfterOpenOn() : boolean {
+  public get isAfterOpenOn(): boolean {
     let now = moment();
     return now.isAfter(this.openOnUtc);
   }
 
   public deadlineUtc: moment.Moment;
-  public get deadlineDisplay() : string {
+  public get deadlineDisplay(): string {
     return this.deadlineUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
   }
-  public get isOver() : boolean {
+  public get isOver(): boolean {
     let now = moment();
     return now.isAfter(this.deadlineUtc);
   }
@@ -66,7 +66,7 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
 
   constructor(source?: IProjectAssessmentModel) {
     this.id = 0;
-    this.description = '';
+    this.description = "";
     this.openOnUtc = null;
     this.deadlineUtc = null;
     this.teamStatus = new ProjectTeamAssessmentStatusModel();
@@ -101,7 +101,8 @@ export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentS
 
     if (source) {
       Object.assign(this, source);
-      this.peersThatNeedToEvaluateOthers = source.peersThatNeedToEvaluateOthers.map(peer => new UserModel(peer));
+      this.peersThatNeedToEvaluateOthers =
+        source.peersThatNeedToEvaluateOthers.map((peer) => new UserModel(peer));
     }
   }
 }
@@ -117,7 +118,7 @@ export class UserModel implements IUserModel {
 
   constructor(source?: IUserModel) {
     this.id = 0;
-    this.fullName = '';
+    this.fullName = "";
 
     if (source) {
       Object.assign(this, source);
@@ -125,7 +126,7 @@ export class UserModel implements IUserModel {
   }
 }
 
-export interface IPeerAssessmentModel{
+export interface IPeerAssessmentModel {
   subject: IUserModel;
   user: IUserModel;
   contributionScore: number;
@@ -135,7 +136,7 @@ export interface IPeerAssessmentModel{
   explanation: string;
 }
 
-export class PeerAssessmentModel implements IPeerAssessmentModel{
+export class PeerAssessmentModel implements IPeerAssessmentModel {
   public subject: IUserModel;
   public user: IUserModel;
   public contributionScore: number;
@@ -151,7 +152,7 @@ export class PeerAssessmentModel implements IPeerAssessmentModel{
     this.cooperationScore = -1;
     this.effortScore = -1;
     this.isSelfAssessment = false;
-    this.explanation = '';
+    this.explanation = "";
 
     if (source) {
       Object.assign(this, source);
@@ -161,7 +162,7 @@ export class PeerAssessmentModel implements IPeerAssessmentModel{
   }
 }
 
-export interface IAssessmentResultModel{
+export interface IAssessmentResultModel {
   subject: IUserModel;
   selfAssessment: IPeerAssessmentModel;
   peerAssessments: IPeerAssessmentModel[];
@@ -172,7 +173,7 @@ export interface IAssessmentResultModel{
   individualGrade: number;
 }
 
-export interface IAssessmentSubResultModel{
+export interface IAssessmentSubResultModel {
   value: number;
   selfValue: number;
   peerValue: number;
@@ -185,6 +186,3 @@ export interface IAssessmentSubResultModel{
   averageSelfValue: number;
   averagePeerValue: number;
 }
-
-
-
