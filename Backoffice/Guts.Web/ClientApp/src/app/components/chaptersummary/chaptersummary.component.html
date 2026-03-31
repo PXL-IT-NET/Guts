@@ -8,65 +8,65 @@
             <small
               >({{ model.totalGreenTests }} /
               {{ model.totalTests }} tests)</small
-              >
-            </h5>
-            <div class="card-body">
-              @if (userId > 0) {
-                <div class="row">
-                  @for (assignment of model.assignmentSummaries; track assignment) {
-                    <div
-                      class="col-lg-4 col-xl-2"
-                      >
-                      <div class="card mb-2">
-                        <div class="card-body">
-                          <assignment-summary
-                            [model]="assignment"
-                            topicType="chapter"
-                            [topicCode]="model.code"
-                            [courseId]="courseId"
-                          ></assignment-summary>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-              @if (userId <= 0) {
-                <div>
-                  You must select a user to see test outcomes.
-                </div>
-              }
-              <app-loading-overlay [show]="loadingSummary"></app-loading-overlay>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <h5 class="card-header">Number of passed tests of others</h5>
-            <div class="card-body">
+            >
+          </h5>
+          <div class="card-body">
+            @if (userId > 0) {
               <div class="row">
-                @for (assignment of statistics.assignmentStatistics; track assignment) {
-                  <div
-                    class="col-lg-4 col-xl-3"
-                    >
+                @for (
+                  assignment of model.assignmentSummaries;
+                  track assignment
+                ) {
+                  <div class="col-lg-4 col-xl-2">
                     <div class="card mb-2">
                       <div class="card-body">
-                        <assignment-statistics
+                        <assignment-summary
                           [model]="assignment"
-                        ></assignment-statistics>
+                          topicType="chapter"
+                          [topicCode]="model.code"
+                          [courseId]="courseId"
+                        ></assignment-summary>
                       </div>
                     </div>
                   </div>
                 }
               </div>
-              <app-loading-overlay
-                [show]="loadingStatistics"
-              ></app-loading-overlay>
+            }
+            @if (userId <= 0) {
+              <div>You must select a user to see test outcomes.</div>
+            }
+            <app-loading-overlay [show]="loadingSummary"></app-loading-overlay>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <h5 class="card-header">Number of passed tests of others</h5>
+          <div class="card-body">
+            <div class="row">
+              @for (
+                assignment of statistics.assignmentStatistics;
+                track assignment
+              ) {
+                <div class="col-lg-4 col-xl-3">
+                  <div class="card mb-2">
+                    <div class="card-body">
+                      <assignment-statistics
+                        [model]="assignment"
+                      ></assignment-statistics>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
+            <app-loading-overlay
+              [show]="loadingStatistics"
+            ></app-loading-overlay>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>

@@ -25,6 +25,7 @@ import { takeUntil } from "rxjs/operators";
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   public model: AssignmentDetailModel;
+  public inputsReady = false;
   public loading: boolean = false;
 
   @Input() public assignmentId: number;
@@ -48,6 +49,7 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
     if (this.assignmentId > 0 && (this.userId > 0 || this.teamId > 0)) {
       this.loadAssignment();
     }
+    this.inputsReady = true;
   }
 
   private loadAssignment() {

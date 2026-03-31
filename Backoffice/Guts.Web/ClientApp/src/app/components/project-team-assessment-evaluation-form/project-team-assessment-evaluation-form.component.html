@@ -11,7 +11,7 @@
     </p>
     <ul>
       <li>
-        <strong>Contribution</strong>: What is the persons actual technical
+        <strong>Contribution</strong>: What is the person's actual technical
         contribution compared to other team members?
       </li>
       <li>
@@ -21,15 +21,15 @@
       <li>
         <strong>Cooperation</strong>: How does the person communicate in the
         team? Does the person honor agreements made? How does the person
-        collaborate with the team members?
+        collaborate with other team members?
       </li>
     </ul>
     <p>
       An 'Additional explanation' for a team member is required when a score is
       below or above the group average. Try to answer the question: "Why did you
       give this score?"<br />
-      <strong>Click on the 'save' button below</strong> to submit the evaluation
-      of your peers!
+      <strong>Click the 'save' button below</strong> to submit the evaluation of
+      your peers!
     </p>
     <table class="table table-bordered" aria-label="peer assessments">
       <thead>
@@ -48,17 +48,17 @@
             <td>
               <app-assessment-score-dropdown
                 [(value)]="peerAssessment.contributionScore"
-                />
+              />
             </td>
             <td>
               <app-assessment-score-dropdown
                 [(value)]="peerAssessment.effortScore"
-                />
+              />
             </td>
             <td>
               <app-assessment-score-dropdown
                 [(value)]="peerAssessment.cooperationScore"
-                />
+              />
             </td>
             <td>
               <textarea
@@ -67,7 +67,7 @@
                 [(ngModel)]="peerAssessment.explanation"
                 rows="4"
                 cols="60"
-                >
+              >
               </textarea>
             </td>
           </tr>
@@ -82,7 +82,7 @@
       type="button"
       class="btn btn-sm btn-outline-success padding-8"
       (click)="savePeerAssessments()"
-      >
+    >
       Save
     </button>
   </div>

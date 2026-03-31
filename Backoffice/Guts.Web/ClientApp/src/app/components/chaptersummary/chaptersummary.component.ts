@@ -100,7 +100,6 @@ export class ChapterSummaryComponent implements OnChanges {
         this.statusDate,
       )
       .subscribe((result) => {
-        this.loadingSummary = false;
         if (result.success) {
           this.model = result.value;
         } else {
@@ -110,6 +109,7 @@ export class ChapterSummaryComponent implements OnChanges {
             "System error",
           );
         }
+        this.loadingSummary = false;
         this.cdr.detectChanges();
       });
   }
