@@ -6,23 +6,30 @@
 <div class="row">
   <div class="col-12">
     <p>
-      Give each team member (including yourself) a score for the following criteria:
+      Give each team member (including yourself) a score for the following
+      criteria:
     </p>
     <ul>
       <li>
-        <strong>Contribution</strong>: What is the persons actual technical contribution compared to other team members?
+        <strong>Contribution</strong>: What is the person's actual technical
+        contribution compared to other team members?
       </li>
       <li>
-        <strong>Effort</strong>: What is the persons time investment compared to other team members?
+        <strong>Effort</strong>: What is the persons time investment compared to
+        other team members?
       </li>
       <li>
-        <strong>Cooperation</strong>: How does the person communicate in the team? Does the person honor agreements made? How does the person collaborate with the team members?
+        <strong>Cooperation</strong>: How does the person communicate in the
+        team? Does the person honor agreements made? How does the person
+        collaborate with other team members?
       </li>
     </ul>
     <p>
-      An 'Additional explanation' for a team member is required when a score is below or above the group average.
-      Try to answer the question: "Why did you give this score?"<br />
-      <strong>Click on the 'save' button below</strong> to submit the evaluation of your peers!
+      An 'Additional explanation' for a team member is required when a score is
+      below or above the group average. Try to answer the question: "Why did you
+      give this score?"<br />
+      <strong>Click the 'save' button below</strong> to submit the evaluation of
+      your peers!
     </p>
     <table class="table table-bordered" aria-label="peer assessments">
       <thead>
@@ -35,32 +42,48 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let peerAssessment of peerAssessments">
-          <td>{{peerAssessment.subject.fullName}}</td>
-          <td>
-            <app-assessment-score-dropdown [(value)]="peerAssessment.contributionScore" />
-          </td>
-          <td>
-            <app-assessment-score-dropdown [(value)]="peerAssessment.effortScore" />
-          </td>
-          <td>
-            <app-assessment-score-dropdown [(value)]="peerAssessment.cooperationScore" />
-          </td>
-          <td>
-            <textarea class="form-control"
-                      [class.is-invalid]="isInvalid(peerAssessment)"
-                      [(ngModel)]="peerAssessment.explanation"
-                      rows="4" cols="60">
-                        </textarea>
-          </td>
-        </tr>
+        @for (peerAssessment of peerAssessments; track peerAssessment) {
+          <tr>
+            <td>{{ peerAssessment.subject.fullName }}</td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.contributionScore"
+              />
+            </td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.effortScore"
+              />
+            </td>
+            <td>
+              <app-assessment-score-dropdown
+                [(value)]="peerAssessment.cooperationScore"
+              />
+            </td>
+            <td>
+              <textarea
+                class="form-control"
+                [class.is-invalid]="isInvalid(peerAssessment)"
+                [(ngModel)]="peerAssessment.explanation"
+                rows="4"
+                cols="60"
+              >
+              </textarea>
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
-
   </div>
 </div>
 <div class="row">
   <div class="col-12">
-    <button type="button" class="btn btn-sm btn-outline-success padding-8" (click)="savePeerAssessments()">Save</button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-success padding-8"
+      (click)="savePeerAssessments()"
+    >
+      Save
+    </button>
   </div>
 </div>

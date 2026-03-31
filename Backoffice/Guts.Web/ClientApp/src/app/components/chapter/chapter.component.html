@@ -2,40 +2,57 @@
   <div class="col-md-10 col-md-offset-1">
     <form>
       <div class="mb-2 row">
+        @if (model.users.length > 1) {
+          <label for="users" class="col-lg-2 col-md-3 col-form-label"
+            >User</label
+          >
+        }
+        @if (model.users.length > 1) {
+          <div class="col-lg-4 col-md-3">
+            <input
+              id="users"
+              name="users"
+              type="text"
+              class="form-control"
+              [(ngModel)]="selectedUser"
+              [ngbTypeahead]="searchUsers"
+              (click)="onUserClick()"
+              [inputFormatter]="formatUser"
+              [resultFormatter]="formatUser"
+              #instance="ngbTypeahead"
+              [readonly]="model.users.length <= 1"
+            />
+          </div>
+        }
 
-        <label for="users" class="col-lg-2 col-md-3 col-form-label" *ngIf="model.users.length > 1">User</label>
-        <div class="col-lg-4 col-md-3" *ngIf="model.users.length > 1">
-          <input id="users"
-                 name="users"
-                 type="text"
-                 class="form-control"
-                 [(ngModel)]="selectedUser"
-                 [ngbTypeahead]="searchUsers"
-                 (click)="onUserClick()"
-                 [inputFormatter]="formatUser"
-                 [resultFormatter]="formatUser"
-                 #instance="ngbTypeahead"
-                 [readonly]="model.users.length <= 1" />
-        </div>
-
-        <label for="date" class="col-lg-2 col-md-3 col-form-label">Status on</label>
+        <label for="date" class="col-lg-2 col-md-3 col-form-label"
+          >Status on</label
+        >
         <div class="col-lg-4 col-md-3">
           <app-ng-datetime [(date)]="selectedDate"></app-ng-datetime>
         </div>
-
       </div>
     </form>
-    <ngx-loading [show]="loading"></ngx-loading>
+    <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
 </div>
 <div class="row">
   <div class="col-12">
-    <app-chapter-summary *ngIf="selectedAssignmentId <= 0" [courseId]="courseId" [chapterCode]="chapterCode"
-      [userId]="selectedUser?.id" [statusDate]="selectedDate">
-    </app-chapter-summary>
-
-    <app-assignment-detail *ngIf="selectedAssignmentId > 0" [assignmentId]="selectedAssignmentId" 
-      [userId]="selectedUser?.id" [statusDate]="selectedDate">
-    </app-assignment-detail>
+    @if (selectedAssignmentId <= 0) {
+      <app-chapter-summary
+        [courseId]="courseId"
+        [chapterCode]="chapterCode"
+        [userId]="selectedUser?.id"
+        [statusDate]="selectedDate"
+      >
+      </app-chapter-summary>
+    } @else {
+      <app-assignment-detail
+        [assignmentId]="selectedAssignmentId"
+        [userId]="selectedUser?.id"
+        [statusDate]="selectedDate"
+      >
+      </app-assignment-detail>
+    }
   </div>
 </div>

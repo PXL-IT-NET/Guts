@@ -1,4 +1,4 @@
-<ngx-loading [show]="loading"></ngx-loading>
+<app-loading-overlay [show]="loading"></app-loading-overlay>
 <div class="row">
   <div class="col-md-6">
     <div class="card mb-2">
@@ -10,7 +10,7 @@
               [formGroup]="editChapterForm"
               (ngSubmit)="onSubmit()"
               #editForm="ngForm"
-            >
+              >
               <div class="row mb-2">
                 <label for="name" class="col-3 col-form-label">Code</label>
                 <div class="col-9">
@@ -20,69 +20,72 @@
                     id="code"
                     formControlName="code"
                     readonly="readonly"
-                  />
+                    />
                 </div>
               </div>
 
               <div class="row mb-2">
                 <label for="name" class="col-3 col-form-label"
                   >Description</label
-                >
-                <div class="col-9">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="description"
-                    formControlName="description"
+                  >
+                  <div class="col-9">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="description"
+                      formControlName="description"
                     [class.is-invalid]="
                       isInvalid(editChapterForm.controls.description)
                     "
-                  />
-                  <div
-                    *ngIf="isInvalid(editChapterForm.controls.description)"
-                    class="text-danger"
-                  >
-                    Project description is required.
+                      />
+                    @if (isInvalid(editChapterForm.controls.description)) {
+                      <div
+                        class="text-danger"
+                        >
+                        Project description is required.
+                      </div>
+                    }
                   </div>
                 </div>
-              </div>
 
-              <div class="row mb-2">
-                <div class="col-12">
-                  <button
-                    type="submit"
-                    class="btn btn-primary"
+                <div class="row mb-2">
+                  <div class="col-12">
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
                     [disabled]="
                       editChapterForm.pristine || !editChapterForm.valid
                     "
-                  >
-                    Save
-                  </button>
+                      >
+                      Save
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="row mb-2">
-  <div class="col-md-12">
-    <div class="card mb-2">
-      <h5 class="card-header">Exercises</h5>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-12" *ngFor="let exercise of chapter.exercises">
-            <app-assignment-settings
-              [assignment]="exercise"
-              assignmentKind="exercise"
-              (assignmentChanged)="onAssignmentChanged($event)"
-            ></app-assignment-settings>
+  <div class="row mb-2">
+    <div class="col-md-12">
+      <div class="card mb-2">
+        <h5 class="card-header">Exercises</h5>
+        <div class="card-body">
+          <div class="row">
+            @for (exercise of chapter.exercises; track exercise) {
+              <div class="col-md-12">
+                <app-assignment-settings
+                  [assignment]="exercise"
+                  assignmentKind="exercise"
+                  (assignmentChanged)="onAssignmentChanged($event)"
+                ></app-assignment-settings>
+              </div>
+            }
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>

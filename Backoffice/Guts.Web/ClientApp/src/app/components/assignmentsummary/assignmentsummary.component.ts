@@ -4,6 +4,7 @@ import { AssignmentSummaryModel } from "../../viewmodels/assignmentsummary.model
 import { ActivatedRoute, Router } from "@angular/router";
 
 @Component({
+  standalone: false,
   selector: "assignment-summary",
   templateUrl: "./assignmentsummary.component.html",
 })
@@ -22,23 +23,32 @@ export class AssignmentSummaryComponent {
 
   public chartOptions: ChartOptions<"doughnut"> = {};
 
-  constructor(private router: Router, private route: ActivatedRoute) {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {
     this.model = new AssignmentSummaryModel();
     this.courseId = 0;
-    this.topicType = '';
-    this.topicCode = '';
+    this.topicType = "";
+    this.topicCode = "";
   }
 
   public navigateToDetail(): void {
     if (this.topicType == "chapter") {
-      this.router.navigate(["courses", this.courseId, "chapters", this.topicCode, "testresults"], {
-        queryParams: { assignmentId: this.model.assignmentId },
-      });
+      this.router.navigate(
+        ["courses", this.courseId, "chapters", this.topicCode, "testresults"],
+        {
+          queryParams: { assignmentId: this.model.assignmentId },
+        },
+      );
     }
     if (this.topicType == "project") {
-      this.router.navigate(["courses", this.courseId, "projects", this.topicCode, "testresults"], {
-        queryParams: { assignmentId: this.model.assignmentId },
-      });
+      this.router.navigate(
+        ["courses", this.courseId, "projects", this.topicCode, "testresults"],
+        {
+          queryParams: { assignmentId: this.model.assignmentId },
+        },
+      );
     }
   }
 }

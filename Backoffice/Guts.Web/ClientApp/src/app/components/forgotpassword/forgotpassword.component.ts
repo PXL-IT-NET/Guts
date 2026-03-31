@@ -1,48 +1,56 @@
-﻿import { Component, ViewChild } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
-import { ForgotPasswordModel } from '../../viewmodels/forgotpassword.model';
-import { RecaptchaComponent } from 'ng-recaptcha';
+import { Component, ViewChild, ChangeDetectorRef } from "@angular/core";
+import { AuthService } from "../../services/auth.service";
+import { ForgotPasswordModel } from "../../viewmodels/forgotpassword.model";
+import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 
 @Component({
-    templateUrl: './forgotpassword.component.html'
+  standalone: false,
+  templateUrl: "./forgotpassword.component.html",
 })
 export class ForgotPasswordComponent {
-    public model: ForgotPasswordModel;
-    public loading = false;
-    public error = '';
-    public success = false;
+  public model: ForgotPasswordModel;
+  public loading = false;
+  public error = "";
+  public success = false;
 
-    @ViewChild(RecaptchaComponent, {static: false}) public captcha?: RecaptchaComponent;
+  @ViewChild(RecaptchaDirective, { static: false })
+  public captcha?: RecaptchaDirective;
 
-    constructor(private authenticationService: AuthService) {
-        this.model = {
-            email: '',
-            captchaToken: ''
-        };
+  constructor(
+    private authenticationService: AuthService,
+    private cdr: ChangeDetectorRef,
+  ) {
+    this.model = {
+      email: "",
+      captchaToken: "",
+    };
+  }
+
+  public sendMail(): void {
+    if (!this.model.captchaToken || this.model.captchaToken === "") {
+      this.error = "Please proof that you are not a robot";
+      return;
     }
 
-    public sendMail(): void {
-        if (!this.model.captchaToken || this.model.captchaToken === '') {
-            this.error = 'Please proof that you are not a robot';
-            return;
+    this.loading = true;
+    this.authenticationService
+      .sendForgotPasswordMail(this.model)
+      .subscribe((result) => {
+        if (result.success) {
+          // registration successful
+          this.success = true;
+        } else {
+          // sending mail failed
+          this.error = result.message || "Sending reset password mail failed";
+          if (this.captcha) this.captcha.reset();
         }
+        this.loading = false;
 
-        this.loading = true;
-        this.authenticationService.sendForgotPasswordMail(this.model)
-            .subscribe(result => {
-                if (result.success) {
-                    // registration successful
-                    this.success = true;
-                } else {
-                    // sending mail failed
-                    this.error = result.message || 'Sending reset password mail failed';
-                    if(this.captcha) this.captcha.reset();
-                }
-                this.loading = false;
-            });
-    }
+        this.cdr.detectChanges();
+      });
+  }
 
-    public resolved(token: string) {
-        this.model.captchaToken = token;
-    }
+  public resolved(token: string) {
+    this.model.captchaToken = token;
+  }
 }

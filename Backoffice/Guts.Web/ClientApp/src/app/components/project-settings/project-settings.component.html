@@ -1,4 +1,4 @@
-<ngx-loading [show]="loading"></ngx-loading>
+<app-loading-overlay [show]="loading"></app-loading-overlay>
 <div class="row">
   <div class="col-12">
     <h5>Settings</h5>
@@ -11,7 +11,7 @@
       [formGroup]="editProjectForm"
       (ngSubmit)="onSubmit()"
       #editForm="ngForm"
-    >
+      >
       <div class="row mb-2">
         <label for="name" class="col-3 col-form-label">Code</label>
         <div class="col-9">
@@ -21,7 +21,7 @@
             id="code"
             formControlName="code"
             readonly="readonly"
-          />
+            />
         </div>
       </div>
 
@@ -34,13 +34,14 @@
             id="description"
             formControlName="description"
             [class.is-invalid]="isInvalid(editProjectForm.controls.description)"
-          />
-          <div
-            *ngIf="isInvalid(editProjectForm.controls.description)"
-            class="text-danger"
-          >
-            Project description is required.
-          </div>
+            />
+          @if (isInvalid(editProjectForm.controls.description)) {
+            <div
+              class="text-danger"
+              >
+              Project description is required.
+            </div>
+          }
         </div>
       </div>
 
@@ -50,7 +51,7 @@
             type="submit"
             class="btn btn-primary"
             [disabled]="editProjectForm.pristine || !editProjectForm.valid"
-          >
+            >
             Save
           </button>
         </div>
@@ -65,13 +66,15 @@
       <h5 class="card-header">Components</h5>
       <div class="card-body">
         <div class="row">
-          <div class="col-md-12" *ngFor="let component of project.components">
-            <app-assignment-settings
-              [assignment]="component"
-              assignmentKind="component"
-              (assignmentChanged)="onAssignmentChanged($event)"
-            ></app-assignment-settings>
-          </div>
+          @for (component of project.components; track component) {
+            <div class="col-md-12">
+              <app-assignment-settings
+                [assignment]="component"
+                assignmentKind="component"
+                (assignmentChanged)="onAssignmentChanged($event)"
+              ></app-assignment-settings>
+            </div>
+          }
         </div>
       </div>
     </div>

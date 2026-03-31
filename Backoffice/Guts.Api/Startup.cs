@@ -109,7 +109,7 @@ namespace Guts.Api
 
             services.AddMemoryCache();
 
-            services.AddScoped<IMapper, Mapper>();
+            services.AddSingleton<IMapper, Mapper>();
 
             services.AddApplicationServices(Configuration);
         }

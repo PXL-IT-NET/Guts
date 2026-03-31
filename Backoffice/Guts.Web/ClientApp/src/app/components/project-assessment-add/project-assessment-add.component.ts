@@ -1,15 +1,34 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
-import { BsModalRef } from 'ngx-bootstrap/modal';
-import { ToastrService } from 'ngx-toastr';
-import { ProjectAssessmentCreateModel, IProjectAssessmentModel } from '../../viewmodels/projectassessment.model';
-import { ProjectAssessmentService } from '../../services/project.assessment.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output,
+} from "@angular/core";
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  Validators,
+} from "@angular/forms";
+import { BsModalRef } from "ngx-bootstrap/modal";
+import { ToastrService } from "ngx-toastr";
+import {
+  ProjectAssessmentCreateModel,
+  IProjectAssessmentModel,
+} from "../../viewmodels/projectassessment.model";
+import { ProjectAssessmentService } from "../../services/project.assessment.service";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
-  selector: 'app-project-assessment-add',
-  templateUrl: './project-assessment-add.component.html'
+  standalone: false,
+  selector: "app-project-assessment-add",
+  templateUrl: "./project-assessment-add.component.html",
 })
-export class ProjectAssessmentAddComponent {
+export class ProjectAssessmentAddComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   public loading: boolean;
   public addAssessmentForm: FormGroup;
 
@@ -20,17 +39,18 @@ export class ProjectAssessmentAddComponent {
   constructor(
     public modalRef: BsModalRef,
     private projectAssessmentService: ProjectAssessmentService,
-    private toastr: ToastrService) {
-
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.loading = false;
     this.assessmentAdded = new EventEmitter<IProjectAssessmentModel>();
   }
 
   ngOnInit() {
     this.addAssessmentForm = new FormGroup({
-      'description': new FormControl('', Validators.required),
-      'openOn': new FormControl('', Validators.required),
-      'deadline': new FormControl('', Validators.required)
+      description: new FormControl("", Validators.required),
+      openOn: new FormControl("", Validators.required),
+      deadline: new FormControl("", Validators.required),
     });
   }
 
@@ -42,18 +62,32 @@ export class ProjectAssessmentAddComponent {
     Object.assign(model, this.addAssessmentForm.getRawValue());
 
     this.loading = true;
-    this.projectAssessmentService.addProjectAssessment(model).subscribe(result => {
-      this.loading = false;
-      if (result.success) {
-        this.assessmentAdded.emit(result.value);
-        this.modalRef.hide();
-      } else {
-        this.toastr.error("Could not add project peer assessment. Message: " + (result.message || "unknown error"), "System error");
-      }
-    });
+    this.projectAssessmentService
+      .addProjectAssessment(model)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        this.loading = false;
+        if (result.success) {
+          this.assessmentAdded.emit(result.value);
+          this.modalRef.hide();
+        } else {
+          this.toastr.error(
+            "Could not add project peer assessment. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
+        }
+
+        this.cdr.detectChanges();
+      });
   }
 
   public isInvalid(formControl: AbstractControl): boolean {
     return formControl.invalid && (formControl.dirty || formControl.touched);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

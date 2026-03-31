@@ -1,29 +1,41 @@
 //angular
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
+import { BrowserModule } from "@angular/platform-browser";
+import { NgModule } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from "@angular/common/http";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import {
+  BaseChartDirective,
+  provideCharts,
+  withDefaultRegisterables,
+} from "ng2-charts";
 
 //own
-import { AppRoutingModule } from './app-routing.module';
-import * as c from './components';
-import * as s from './services';
-import { AuthGuard } from './guards/auth.guard';
-import { TokenInterceptor } from './interceptors/tokeninterceptor';
-import { RelativeInterceptor } from './interceptors/relative.interceptor';
-import { PositiveNumberValidatorDirective } from './util/positive-number.directive';
-import { NgDatetimeComponent } from './components/ng-datetime/ng-datetime.component';
+import { AppRoutingModule } from "./app-routing.module";
+import * as c from "./components";
+import * as s from "./services";
+import { AuthGuard } from "./guards/auth.guard";
+import { TokenInterceptor } from "./interceptors/tokeninterceptor";
+import { RelativeInterceptor } from "./interceptors/relative.interceptor";
+import { PositiveNumberValidatorDirective } from "./util/positive-number.directive";
+import { NgDatetimeComponent } from "./components/ng-datetime/ng-datetime.component";
+import { RecaptchaDirective } from "./directives/recaptcha.directive";
 
 // 3th party
-import { NgChartsModule } from 'ng2-charts';
-import { NgbModule, NgbAccordionConfig, NgbTypeahead, NgbTypeaheadConfig } from '@ng-bootstrap/ng-bootstrap';
-import { RecaptchaModule } from 'ng-recaptcha';
-import { NgxLoadingModule, ngxLoadingAnimationTypes } from 'ngx-loading';
-import { ToastrModule } from 'ngx-toastr';
-import { ModalModule } from 'ngx-bootstrap/modal';
-import { TooltipModule } from 'ngx-bootstrap/tooltip';
+import {
+  NgbModule,
+  NgbAccordionConfig,
+  NgbTypeahead,
+  NgbTypeaheadConfig,
+} from "@ng-bootstrap/ng-bootstrap";
+import { ToastrModule } from "ngx-toastr";
+import { ModalModule } from "ngx-bootstrap/modal";
+import { TooltipModule } from "ngx-bootstrap/tooltip";
 
 @NgModule({
   declarations: [
@@ -59,36 +71,26 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
-    c.ProjectAssessmentOverviewComponent,
     c.ProjectTeamAssessmentEvaluationFormComponent,
     c.ProjectTeamAssessmentDetailedResultsComponent,
     c.ProjectTeamAssessmentMyResultComponent,
     c.AssessmentScoreDropdownComponent,
-    c.ExamComponent,
-    c.AssignmentSettingsComponent
+    c.AssignmentSettingsComponent,
+    c.LoadingOverlayComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     CommonModule,
     BrowserAnimationsModule,
-    NgChartsModule,
-    HttpClientModule,
+    BaseChartDirective,
+    RecaptchaDirective,
     FormsModule,
     ReactiveFormsModule,
     NgbModule,
-    RecaptchaModule,
-    NgxLoadingModule.forRoot({
-      animationType: ngxLoadingAnimationTypes.threeBounce,
-      backdropBackgroundColour: 'rgba(255,255,255,0.3)',
-      backdropBorderRadius: '4px',
-      primaryColour: '#f5f5f0',
-      secondaryColour: '#e0e0d1',
-      tertiaryColour: '#ccccb3'
-    }),
     ToastrModule.forRoot(),
     ModalModule.forRoot(),
-    TooltipModule.forRoot()
+    TooltipModule.forRoot(),
   ],
   providers: [
     AuthGuard,
@@ -107,9 +109,11 @@ import { TooltipModule } from 'ngx-bootstrap/tooltip';
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,
-    {provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true},
-    {provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true}
+    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true },
+    provideHttpClient(withInterceptorsFromDi()),
+    provideCharts(withDefaultRegisterables()),
   ],
-  bootstrap: [c.AppComponent]
+  bootstrap: [c.AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

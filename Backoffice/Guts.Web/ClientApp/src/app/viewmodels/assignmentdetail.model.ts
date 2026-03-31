@@ -1,7 +1,7 @@
-import { ITestResultModel } from './testresult.model';
+import { ITestResultModel } from "./testresult.model";
 import { IAssignmentModel, ITestModel } from "./assignment.model";
-import * as moment from 'moment';
-import { ISolutionFileModel, SolutionFileModel } from './solutionfile.model';
+import moment from "moment";
+import { ISolutionFileModel, SolutionFileModel } from "./solutionfile.model";
 
 export interface IAssignmentDetailModel extends IAssignmentModel {
   topicCode: string;
@@ -30,15 +30,15 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
 
   constructor(source?: IAssignmentDetailModel) {
     this.assignmentId = 0;
-    this.code = '';
-    this.description = '';
-    this.topicCode = '';
-    this.courseName = '';
+    this.code = "";
+    this.description = "";
+    this.topicCode = "";
+    this.courseName = "";
     this.courseId = 0;
     this.tests = [];
     this.testResults = [];
-    this.firstRun = '';
-    this.lastRun = '';
+    this.firstRun = "";
+    this.lastRun = "";
     this.numberOfRuns = 0;
     this.solutionFiles = [];
 
@@ -52,13 +52,21 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
       this.tests = source.tests;
       this.testResults = source.testResults;
       this.numberOfRuns = source.numberOfRuns;
-      this.solutionFiles = source.solutionFiles.map(file => new SolutionFileModel(file));
+      this.solutionFiles = source.solutionFiles.map(
+        (file) => new SolutionFileModel(file),
+      );
 
       if (source.firstRun) {
-        this.firstRun = moment.utc(source.firstRun).local().format('DD/MM/YYYY HH:mm');
+        this.firstRun = moment
+          .utc(source.firstRun)
+          .local()
+          .format("DD/MM/YYYY HH:mm");
       }
       if (source.lastRun) {
-        this.lastRun = moment.utc(source.lastRun).local().format('DD/MM/YYYY HH:mm');
+        this.lastRun = moment
+          .utc(source.lastRun)
+          .local()
+          .format("DD/MM/YYYY HH:mm");
       }
     }
   }

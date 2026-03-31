@@ -2,7 +2,7 @@
   <a
     [routerLink]="['/home']"
     class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6"
-  >
+    >
     <small>
       <span>Guts</span>
     </small>
@@ -15,7 +15,7 @@
     aria-controls="sidebarMenu"
     aria-expanded="false"
     aria-label="Toggle navigation"
-  >
+    >
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="w-100">
@@ -27,7 +27,7 @@
           [routerLink]="['/home']"
           [routerLinkActive]="['active']"
           class="nav-link"
-        >
+          >
           <span class="oi oi-home"></span> Home
         </a>
       </li>
@@ -35,54 +35,67 @@
   </div>
   <ul class="navbar-nav pe-3 ps-3">
     <!-- show period dropdown -->
-    <li class="nav-item dropdown" *ngIf="allPeriods.length > 0">
-      <a
-        class="nav-link dropdown-toggle show"
-        role="button"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        <span class="fa fa-calendar"></span>
-        <span> {{selectedPeriod.description}}</span>
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li *ngFor="let period of allPeriods">
-          <a
-            class="dropdown-item"
-            (click)="selectPeriod(period)"
+    @if (allPeriods.length > 0) {
+      <li class="nav-item dropdown">
+        <a
+          class="nav-link dropdown-toggle show"
+          role="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
           >
-            <span [ngClass]="{'bi-lock': !period.isActive, 'bi-unlock': period.isActive}"></span>
-            <!-- <span class="fa fa-calendar"></span> -->
-            <span> {{ period.description }}</span>
-            <span> ({{ period.from | date: 'dd/MM/yyyy' }} - {{ period.until | date: 'dd/MM/yyyy' }})</span>
-          </a>
+          <span class="fa fa-calendar"></span>
+          <span> {{ selectedPeriod.description }}</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          @for (period of allPeriods; track period) {
+            <li>
+              <a class="dropdown-item" (click)="selectPeriod(period)">
+                <span
+              [ngClass]="{
+                'bi-lock': !period.isActive,
+                'bi-unlock': period.isActive,
+              }"
+                ></span>
+                <!-- <span class="fa fa-calendar"></span> -->
+                <span> {{ period.description }}</span>
+                <span>
+                  ({{ period.from?.toDate() | date: "dd/MM/yyyy" }} -
+                  {{ period.until?.toDate() | date: "dd/MM/yyyy" }})</span
+                  >
+                </a>
+              </li>
+            }
+          </ul>
         </li>
-      </ul>
-    </li>
-    <li class="nav-item dropdown">
-      <a
-        class="nav-link dropdown-toggle show"
-        role="button"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        <span class="fa fa-user"></span>
-        <span> {{ userProfile.email }}</span>
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li *ngIf="userProfile.isAuthenticated">
-          <a class="dropdown-item" (click)="logout()">
-            <span class="fa fa-power-off"></span>
-            <span> Afmelden</span>
-          </a>
-        </li>
-        <li *ngIf="!userProfile.isAuthenticated">
-          <a class="dropdown-item" [routerLink]="['/login']">
-            <span class="fa fa-sign-in"></span>
-            <span> Aanmelden</span>
-          </a>
-        </li>
-      </ul>
-    </li>
-  </ul>
-</header>
+      }
+      <li class="nav-item dropdown">
+        <a
+          class="nav-link dropdown-toggle show"
+          role="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          >
+          <span class="fa fa-user"></span>
+          <span> {{ userProfile.email }}</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          @if (userProfile.isAuthenticated) {
+            <li>
+              <a class="dropdown-item" (click)="logout()">
+                <span class="fa fa-power-off"></span>
+                <span> Afmelden</span>
+              </a>
+            </li>
+          }
+          @if (!userProfile.isAuthenticated) {
+            <li>
+              <a class="dropdown-item" [routerLink]="['/login']">
+                <span class="fa fa-sign-in"></span>
+                <span> Aanmelden</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </li>
+    </ul>
+  </header>

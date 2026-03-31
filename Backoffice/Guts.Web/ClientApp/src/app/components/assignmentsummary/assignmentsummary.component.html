@@ -1,9 +1,18 @@
 <h5>
-  <a href="javascript:void(0)" (click)="navigateToDetail()">{{model.description}}</a>
+  <a href="javascript:void(0)" (click)="navigateToDetail()">{{
+    model.description
+  }}</a>
 </h5>
 <div>
-  <canvas baseChart [datasets]="model.chartData.datasets" [labels]="model.chartData.labels" [type]="'doughnut'"
-    [options]="chartOptions">
+  <canvas
+    baseChart
+    [datasets]="model.chartData.datasets"
+    [labels]="model.chartData.labels"
+    [type]="'doughnut'"
+    [options]="chartOptions"
+  >
   </canvas>
-  <p class="text-center m-1">{{model.numberOfPassedTests}} / {{model.numberOfTests}} tests</p>
+  <p class="text-center m-1">
+    {{ model.numberOfPassedTests }} / {{ model.numberOfTests }} tests
+  </p>
 </div>

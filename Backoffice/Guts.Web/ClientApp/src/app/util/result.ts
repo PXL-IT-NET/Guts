@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from "@angular/common/http";
 
 export class Result {
   public success: boolean;
@@ -11,46 +11,50 @@ export class Result {
   }
 
   public static fromHttpErrorResponse(response: HttpErrorResponse): Result {
-
     var result: Result = {
       success: false,
-      isAuthenticated: true
+      isAuthenticated: true,
     };
 
-    let message = '';
+    let message = "";
 
     if (response.status == 401) {
       result.isAuthenticated = false;
-    } else if (response.status >= 500 || response.error instanceof ProgressEvent) {
-      message = "There is a technical problem with the Guts server. (status: " + response.status + " " + response.statusText + ")";
+    } else if (
+      response.status >= 500 ||
+      response.error instanceof ProgressEvent
+    ) {
+      message =
+        "There is a technical problem with the Guts server. (status: " +
+        response.status +
+        " " +
+        response.statusText +
+        ")";
       console.log("API server error:");
       console.log(response);
     } else if (response.error instanceof Object) {
       var messageContainer = response.error as Object;
       for (var propertyName in messageContainer) {
         if (messageContainer.hasOwnProperty(propertyName)) {
-          if (propertyName === '0') {
+          if (propertyName === "0") {
             message = <string>messageContainer;
-          }
-          else if (typeof (messageContainer[propertyName]) == 'string') {
+          } else if (typeof messageContainer[propertyName] == "string") {
             message = <string>messageContainer[propertyName];
-          }
-          else if (messageContainer[propertyName] instanceof Array) {
+          } else if (messageContainer[propertyName] instanceof Array) {
             var lines: string[] = messageContainer[propertyName];
             for (var line of lines) {
-              message += line + '\n';
+              message += line + "\n";
             }
           }
         }
       }
 
-      if (message == '') {
-        message = JSON.stringify(response.error) || 'Unknown error';
+      if (message == "") {
+        message = JSON.stringify(response.error) || "Unknown error";
       }
 
       console.log("API client error:");
       console.log(response);
-
     } else if (response.error instanceof String) {
       message = response.error as string;
 
@@ -93,7 +97,9 @@ export class CreateResult<T> extends Result {
     return result;
   }
 
-  public static fromHttpErrorResponse<T>(response: HttpErrorResponse): CreateResult<T> {
+  public static fromHttpErrorResponse<T>(
+    response: HttpErrorResponse,
+  ): CreateResult<T> {
     var result = Result.fromHttpErrorResponse(response);
     var createResult = new CreateResult<T>();
     createResult.success = result.success;
@@ -112,7 +118,9 @@ export class GetResult<T> extends Result {
     return result;
   }
 
-  public static fromHttpErrorResponse<T>(response: HttpErrorResponse): GetResult<T> {
+  public static fromHttpErrorResponse<T>(
+    response: HttpErrorResponse,
+  ): GetResult<T> {
     var result = Result.fromHttpErrorResponse(response);
     var getResult = new GetResult<T>();
     getResult.success = result.success;

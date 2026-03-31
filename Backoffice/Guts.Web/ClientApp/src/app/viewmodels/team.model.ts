@@ -3,7 +3,7 @@ export interface ITeamModel {
   name: string;
 }
 
-export interface ITeamDetailsModel extends  ITeamModel {
+export interface ITeamDetailsModel extends ITeamModel {
   members: ITeamMemberModel[];
 }
 

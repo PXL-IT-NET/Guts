@@ -1,0 +1,16 @@
+<Solution>
+  <Project Path="../Guts.Common.Tests/Guts.Common.Tests.csproj" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="Guts.Api.Tests/Guts.Api.Tests.csproj" />
+  <Project Path="Guts.Api/Guts.Api.csproj" />
+  <Project Path="Guts.Bootstrapper/Guts.Bootstrapper.csproj" />
+  <Project Path="Guts.Business.Tests/Guts.Business.Tests.csproj" />
+  <Project Path="Guts.Business/Guts.Business.csproj" />
+  <Project Path="Guts.Common/Guts.Common.csproj" />
+  <Project Path="Guts.Domain.Tests/Guts.Domain.Tests.csproj" />
+  <Project Path="Guts.Domain/Guts.Domain.csproj" />
+  <Project Path="Guts.Infrastructure/Guts.Infrastructure.csproj" />
+  <Project Path="Guts.Web/Guts.Web.csproj" />
+</Solution>

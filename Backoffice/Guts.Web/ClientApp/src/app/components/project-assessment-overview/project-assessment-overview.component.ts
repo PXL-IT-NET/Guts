@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -8,7 +8,7 @@ import {
 import { ActivatedRoute } from "@angular/router";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
-import { Subscription } from "rxjs";
+import { Subscription, Subject } from "rxjs";
 import {
   AuthService,
   PeriodProvider,
@@ -26,12 +26,15 @@ import { UserProfile } from "src/app/viewmodels/user.model";
 import { ProjectAssessmentAddComponent } from "../project-assessment-add/project-assessment-add.component";
 import { ProjectAssessmentEditComponent } from "../project-assessment-edit/project-assessment-edit.component";
 import { PostResult } from "../../util/result";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
+  standalone: false,
   selector: "app-project-assessment-overview",
   templateUrl: "./project-assessment-overview.component.html",
 })
-export class ProjectAssessmentOverviewComponent implements OnInit {
+export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   private userProfileSubscription: Subscription;
 
   public loading: boolean;
@@ -66,7 +69,8 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private authService: AuthService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private periodProvider: PeriodProvider
+    private periodProvider: PeriodProvider,
+    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.project = {
@@ -87,8 +91,11 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
       .getUserProfile()
+      .pipe(takeUntil(this.destroy$))
       .subscribe((profile) => {
         this.userProfile = profile;
+
+        this.cdr.detectChanges();
       });
 
     //#Form
@@ -99,11 +106,12 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     });
     //#End Form
 
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       let courseId = +this.route.parent.snapshot.params["courseId"];
       let projectCode = this.route.snapshot.params["code"];
       this.projectService
         .getProjectDetails(courseId, projectCode)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
           if (result.success) {
             this.project = result.value;
@@ -115,21 +123,27 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
             this.toastr.error(
               "Could not load project from API. Message: " +
                 (result.message || "unknown error"),
-              "System error"
+              "System error",
             );
           }
+          this.cdr.detectChanges();
         });
     });
 
-    this.periodProvider.period$.subscribe((period) => {
-      if(period) {
-        this.activePeriod = period.isActive;
-      }
-    });
+    this.periodProvider.period$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((period) => {
+        if (period) {
+          this.activePeriod = period.isActive;
+        }
 
+        this.cdr.detectChanges();
+      });
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.userProfileSubscription.unsubscribe();
   }
 
@@ -141,12 +155,16 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     };
     this.modalRef = this.modalService.show(
       ProjectAssessmentAddComponent,
-      modalState
+      modalState,
     );
     this.modalRef.setClass("modal-lg");
-    this.modalRef.content.assessmentAdded.subscribe((addedAssessment) => {
-      this.loadProjectAssessments();
-    });
+    this.modalRef.content.assessmentAdded
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((addedAssessment) => {
+        this.loadProjectAssessments();
+
+        this.cdr.detectChanges();
+      });
   }
 
   public openAssessmentEditModal(assessment: ProjectAssessmentModel) {
@@ -158,18 +176,23 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     };
     this.modalRef = this.modalService.show(
       ProjectAssessmentEditComponent,
-      modalState
+      modalState,
     );
     this.modalRef.setClass("modal-lg");
-    this.modalRef.content.assessmentEdited.subscribe(() => {
-      this.loadProjectAssessments();
-    });
+    this.modalRef.content.assessmentEdited
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadProjectAssessments();
+
+        this.cdr.detectChanges();
+      });
   }
 
   public loadProjectAssessments() {
     this.loading = true;
     this.projectAssessmentService
       .getAssessmentsOfProject(this.project.id)
+      .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -180,8 +203,9 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
                 this.projectTeamAssessmentService
                   .getStatusOfProjectTeamAssessment(
                     assessment.id,
-                    this.selectedTeamId
+                    this.selectedTeamId,
                   )
+                  .pipe(takeUntil(this.destroy$))
                   .subscribe((result) => {
                     if (result.success) {
                       assessment.teamStatus = result.value;
@@ -189,25 +213,29 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
                       this.toastr.warning(
                         "Could not retrieve project team assment status. Message: " +
                           (result.message || "unknown error"),
-                        "Warning"
+                        "Warning",
                       );
                     }
+
+                    this.cdr.detectChanges();
                   });
               }
             });
           } else {
             this.toastr.warning(
               "You are not a member of a team. Please join a team first.",
-              "No team found"
+              "No team found",
             );
           }
         } else {
           this.toastr.error(
             "Could not load project assessments from API. Message: " +
               (result.message || "unknown error"),
-            "System error"
+            "System error",
           );
         }
+
+        this.cdr.detectChanges();
       });
   }
 
@@ -220,6 +248,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
       this.loading = true;
       this.projectAssessmentService
         .deleteProjectAssessment(assessment.id)
+        .pipe(takeUntil(this.destroy$))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
@@ -228,9 +257,11 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
           } else {
             this.toastr.error(
               result.message || "unknown error",
-              "Could not delete peer assessment"
+              "Could not delete peer assessment",
             );
           }
+
+          this.cdr.detectChanges();
         });
     }
   }

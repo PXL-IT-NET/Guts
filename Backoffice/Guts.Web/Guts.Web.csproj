@@ -46,7 +46,11 @@
 
 		<!-- Include the newly-built files in the publish output -->
 		<ItemGroup>
-			<DistFiles Include="$(SpaRoot)dist\**; $(SpaRoot)dist-server\**" />
+			<!-- Angular application builder emits browser assets under dist\browser -->
+			<DistFiles Include="$(SpaRoot)dist\browser\**" Condition="Exists('$(SpaRoot)dist\browser')" />
+			<!-- Backward compatibility for older Angular builders that emit directly to dist -->
+			<DistFiles Include="$(SpaRoot)dist\**" Condition="!Exists('$(SpaRoot)dist\browser')" />
+			<DistFiles Include="$(SpaRoot)dist-server\**" />
 			<ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
 				<RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
 				<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

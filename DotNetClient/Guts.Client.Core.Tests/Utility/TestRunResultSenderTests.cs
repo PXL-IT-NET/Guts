@@ -238,6 +238,45 @@ public class TestRunResultSenderTests
         Assert.That(result.Message, Does.Contain(expectedSupportId));
     }
 
+    [Test]
+    public async Task SendAsync_ParallelSends_ShouldRetrieveRemoteAccessTokenOnlyOnce()
+    {
+        // Arrange
+        HttpResponseMessage successResponse = CreateSuccessHttpResponse();
+        string cachedToken = string.Empty;
+        string remoteToken = "RemoteToken";
+
+        _authorizationHandlerMock.Setup(x => x.RetrieveLocalAccessToken()).Returns(() => cachedToken);
+        _authorizationHandlerMock
+            .Setup(x => x.RetrieveRemoteAccessTokenAsync())
+            .Returns(async () =>
+            {
+                await Task.Delay(150);
+                cachedToken = remoteToken;
+                return remoteToken;
+            });
+
+        _httpHandlerMock
+            .Setup(x => x.PostAsJsonAsync(It.IsAny<string>(), _testRun))
+            .ReturnsAsync(successResponse);
+
+        var sender1 = new TestRunResultSender(_httpHandlerMock.Object, _authorizationHandlerMock.Object, _outputWriterMock.Object);
+        var sender2 = new TestRunResultSender(_httpHandlerMock.Object, _authorizationHandlerMock.Object, _outputWriterMock.Object);
+        var sender3 = new TestRunResultSender(_httpHandlerMock.Object, _authorizationHandlerMock.Object, _outputWriterMock.Object);
+
+        // Act
+
+        Task<Result> sendTask1 = sender1.SendAsync(_testRun, TestRunType.ForExercise);
+        Task<Result> sendTask2 = sender2.SendAsync(_testRun, TestRunType.ForExercise);
+        Task<Result> sendTask3 = sender3.SendAsync(_testRun, TestRunType.ForExercise);
+        var results = await Task.WhenAll(sendTask1, sendTask2, sendTask3);
+
+        // Assert
+        Assert.That(results.All(r => r.Success), Is.True);
+        _authorizationHandlerMock.Verify(x => x.RetrieveLocalAccessToken(), Times.Exactly(3));
+        _authorizationHandlerMock.Verify(x => x.RetrieveRemoteAccessTokenAsync(), Times.Exactly(1));
+    }
+
     private static HttpResponseMessage CreateSuccessHttpResponse()
     {
         return new HttpResponseMessage(HttpStatusCode.Created)

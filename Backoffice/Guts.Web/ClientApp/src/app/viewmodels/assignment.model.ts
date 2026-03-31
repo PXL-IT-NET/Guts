@@ -5,13 +5,13 @@ export interface IAssignmentModel {
   tests: ITestModel[];
 }
 
-export interface ITopicAssignmentModel extends IAssignmentModel{
+export interface ITopicAssignmentModel extends IAssignmentModel {
   topicCode: string;
   topicDescription: string;
   numberOfTests: number;
 }
 
-export interface ITestModel{
+export interface ITestModel {
   id: number;
   testName: string;
 }

@@ -4,82 +4,147 @@
   </div>
 </div>
 
-<div class="row mb-2" *ngIf="myTeam">
-  <div class="col-md-6">
-    <ngb-accordion activeIds="myTeamPanel">
-      <ngb-panel [title]="myTeam.name" id="myTeamPanel">
-        <ng-template ngbPanelContent>
-          <ul class="list-group mb-3">
-            <li class="list-group-item" *ngFor="let member of myTeam.members">{{member.name}}</li>
-          </ul>
-          <p *ngIf="activePeriod">
-            <button type="button" class="btn btn-outline-warning" (click)="leaveMyTeam()">Leave {{myTeam.name}}</button>
-            <button type="button" class="btn btn-outline-primary ms-2"
-                    *ngIf="userProfile.isLector()" (click)="openTeamEditModal(myTeam)">
-              <span class="fa fa-pencil pe-2"></span>
-              <span>Edit team</span>
-            </button>
-          </p>
-        </ng-template>
-      </ngb-panel>
-    </ngb-accordion>
-  </div>
-</div>
-
-<div class="row" *ngIf="(!myTeam || userProfile.isLector()) && teams.length > 0">
-  <div class="col-md-6">
-    <div class="alert alert-primary" *ngIf="!myTeam">
-      Please join a team...
-    </div>
-    <ngb-accordion [closeOthers]="true">
-      <ngb-panel *ngFor="let team of teams">
-        <ng-template ngbPanelTitle>
-          <div>
-            <span class="fa fa-users pe-2"></span>
-            <span>{{team.name}}</span>
-            <span class="badge text-bg-secondary ms-2">{{team.members.length}}</span>
+@if (myTeam) {
+  <div class="row mb-2">
+    <div class="col-md-6">
+      <div ngbAccordion>
+        <div ngbAccordionItem [collapsed]="false">
+          <h2 ngbAccordionHeader>
+            <button ngbAccordionButton>{{ myTeam.name }}</button>
+          </h2>
+          <div ngbAccordionCollapse>
+            <div ngbAccordionBody>
+              <ng-template>
+                <ul class="list-group mb-3">
+                  @for (member of myTeam.members; track member) {
+                    <li
+                      class="list-group-item"
+                      >
+                      {{ member.name }}
+                    </li>
+                  }
+                </ul>
+                @if (activePeriod) {
+                  <p>
+                    <button
+                      type="button"
+                      class="btn btn-outline-warning"
+                      (click)="leaveMyTeam()"
+                      >
+                      Leave {{ myTeam.name }}
+                    </button>
+                    @if (userProfile.isLector()) {
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary ms-2"
+                        (click)="openTeamEditModal(myTeam)"
+                        >
+                        <span class="fa fa-pencil pe-2"></span>
+                        <span>Edit team</span>
+                      </button>
+                    }
+                  </p>
+                }
+              </ng-template>
+            </div>
           </div>
-        </ng-template>
-        <ng-template ngbPanelContent>
-          <ul class="list-group mb-3">
-            <li class="list-group-item text-warning" *ngIf="!team.members || team.members.length <=  0">
-              This team has no
-              members yet. Be the first to join...
-            </li>
-            <li class="list-group-item" *ngFor="let member of team.members">
-              <span>{{member.name}}</span>
-            </li>
-          </ul>
-          <p *ngIf="activePeriod">
-            <button type="button" class="btn btn-outline-primary" (click)="joinTeam(team.id)">
-              <span class="fa fa-user-plus pe-2"></span>
-              <span>Join {{team.name}}</span>
-            </button>
-          </p>
-          <p *ngIf="userProfile.isLector() && activePeriod">
-            <button type="button" class="btn btn-outline-secondary"
-                    (click)="openTeamEditModal(team)">
-              <span class="fa fa-pencil pe-2"></span>
-              <span>Edit team</span>
-            </button>
-            <button type="button" class="btn btn-outline-danger ms-2"
-                    (click)="deleteTeam(team)">
-              <span class="fa fa-trash pe-2"></span>
-              <span>Delete team</span>
-            </button>
-          </p>
-        </ng-template>
-      </ngb-panel>
-    </ngb-accordion>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+}
 
-<div class="row mt-2" *ngIf="userProfile.isLector() && activePeriod">
-  <div class="col-12">
-    <button type="submit" class="btn btn-outline-success" (click)="openTeamAddModal()">
-      <span class="fa fa-plus pe-2"></span>
-      <span>Add team(s)</span>
-    </button>
+@if ((!myTeam || userProfile.isLector()) && teams.length > 0) {
+  <div
+    class="row"
+    >
+    <div class="col-md-6">
+      @if (!myTeam) {
+        <div class="alert alert-primary">Please join a team...</div>
+      }
+      <div ngbAccordion [closeOthers]="true">
+        @for (team of teams; track team) {
+          <div ngbAccordionItem>
+            <h2 ngbAccordionHeader>
+              <button ngbAccordionButton>
+                <span class="fa fa-users pe-2"></span>
+                <span>{{ team.name }}</span>
+                <span class="badge text-bg-secondary ms-2">{{
+                  team.members.length
+                }}</span>
+              </button>
+            </h2>
+            <div ngbAccordionCollapse>
+              <div ngbAccordionBody>
+                <ng-template>
+                  <ul class="list-group mb-3">
+                    @if (!team.members || team.members.length <= 0) {
+                      <li
+                        class="list-group-item text-warning"
+                        >
+                        This team has no members yet. Be the first to join...
+                      </li>
+                    }
+                    @for (member of team.members; track member) {
+                      <li class="list-group-item">
+                        <span>{{ member.name }}</span>
+                      </li>
+                    }
+                  </ul>
+                  @if (activePeriod) {
+                    <p>
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        (click)="joinTeam(team.id)"
+                        >
+                        <span class="fa fa-user-plus pe-2"></span>
+                        <span>Join {{ team.name }}</span>
+                      </button>
+                    </p>
+                  }
+                  @if (userProfile.isLector() && activePeriod) {
+                    <p>
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        (click)="openTeamEditModal(team)"
+                        >
+                        <span class="fa fa-pencil pe-2"></span>
+                        <span>Edit team</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger ms-2"
+                        (click)="deleteTeam(team)"
+                        >
+                        <span class="fa fa-trash pe-2"></span>
+                        <span>Delete team</span>
+                      </button>
+                    </p>
+                  }
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
   </div>
-</div>
-<ngx-loading [show]="loading"></ngx-loading>
+}
+
+@if (userProfile.isLector() && activePeriod) {
+  <div class="row mt-2">
+    <div class="col-12">
+      <button
+        type="submit"
+        class="btn btn-outline-success"
+        (click)="openTeamAddModal()"
+        >
+        <span class="fa fa-plus pe-2"></span>
+        <span>Add team(s)</span>
+      </button>
+    </div>
+  </div>
+}
+<app-loading-overlay [show]="loading"></app-loading-overlay>

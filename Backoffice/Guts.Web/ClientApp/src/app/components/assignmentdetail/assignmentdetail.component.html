@@ -1,83 +1,139 @@
-<div class="col-md-10 col-md-offset-1" *ngIf="model.assignmentId > 0">
-  <div class="mb-2 row">
-    <label for="firstrun" class="col-lg-2 col-md-3 col-form-label">First test run</label>
-    <div class="col-lg-10 col-md-9">
-      <input type="text" class="form-control" readonly id="firstrun" value="{{model.firstRun}}">
-    </div>
-  </div>
-  <div class="mb-2 row">
-    <label for="lastrun" class="col-lg-2 col-md-3 col-form-label">Last test run</label>
-    <div class="col-lg-10 col-md-9">
-      <input type="text" class="form-control" readonly id="lastrun" value="{{model.lastRun}}">
-    </div>
-  </div>
-  <div class="mb-2 row">
-    <label for="numberofruns" class="col-lg-2 col-md-3 col-form-label">Number of test runs</label>
-    <div class="col-lg-10 col-md-9">
-      <input type="number" class="form-control" readonly id="numberofruns" value="{{model.numberOfRuns}}">
-    </div>
-  </div>
-  <div class="mb-2 row" *ngIf="model.solutionFiles.length > 0">
-    <div class="col-12">
-      <div class="card">
-        <h5 class="card-header">Source code</h5>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item" *ngFor="let solutionFile of model.solutionFiles">
-            <div class="mb-2">
-              <span>{{solutionFile.filePath}}</span>
-              <button class="btn btn-sm ms-2 btn-outline-primary" type="button"
-                (click)="solutionFile.isCollapsed = !solutionFile.isCollapsed">
-                <span class="fa fa-plus" *ngIf="solutionFile.isCollapsed"></span>
-                <span class="fa fa-minus" *ngIf="!solutionFile.isCollapsed"></span>
-              </button>
-            </div>
-            <div [ngbCollapse]="solutionFile.isCollapsed">
-              <div class="card card-body">
-                <textarea class="form-control" readonly rows="10">{{solutionFile.content}}</textarea>
-              </div>
-            </div>
-          </li>
-        </ul>
+@if (model.assignmentId > 0) {
+  <div class="col-md-10 col-md-offset-1">
+    <div class="mb-2 row">
+      <label for="firstrun" class="col-lg-2 col-md-3 col-form-label"
+        >First test run</label
+      >
+      <div class="col-lg-10 col-md-9">
+        <input
+          type="text"
+          class="form-control"
+          readonly
+          id="firstrun"
+          value="{{ model.firstRun }}"
+        />
       </div>
     </div>
-  </div>
-
-  <div class="row">
-    <div class="col-sm-12">
-      <div class="card">
-        <h5 class="card-header">Test results</h5>
-        <div class="card card-body">
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm" aria-label="test results">
-              <thead>
-                <tr>
-                  <th class="col-greedy">Test</th>
-                  <th>Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let testResult of model.testResults">
-                  <td>
-                    <span *ngIf="!testResult.runned" class="fa fa-circle text-warning"></span>
-                    <span *ngIf="testResult.runned && testResult.passed" class="fa fa-check-circle text-success"></span>
-                    <span *ngIf="testResult.runned &&!testResult.passed" class="fa fa-times-circle text-danger"></span>
-                    <span class="ms-2">{{testResult.testName}}</span>
-                  </td>
-                  <td>
-                    <pre class="text-danger pre-wrap">{{testResult.message}}</pre>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+    <div class="mb-2 row">
+      <label for="lastrun" class="col-lg-2 col-md-3 col-form-label"
+        >Last test run</label
+      >
+      <div class="col-lg-10 col-md-9">
+        <input
+          type="text"
+          class="form-control"
+          readonly
+          id="lastrun"
+          value="{{ model.lastRun }}"
+        />
+      </div>
+    </div>
+    <div class="mb-2 row">
+      <label for="numberofruns" class="col-lg-2 col-md-3 col-form-label"
+        >Number of test runs</label
+      >
+      <div class="col-lg-10 col-md-9">
+        <input
+          type="number"
+          class="form-control"
+          readonly
+          id="numberofruns"
+          value="{{ model.numberOfRuns }}"
+        />
+      </div>
+    </div>
+    @if (model.solutionFiles.length > 0) {
+      <div class="mb-2 row">
+        <div class="col-12">
+          <div class="card">
+            <h5 class="card-header">Source code</h5>
+            <ul class="list-group list-group-flush">
+              @for (solutionFile of model.solutionFiles; track solutionFile) {
+                <li class="list-group-item">
+                  <div class="mb-2">
+                    <span>{{ solutionFile.filePath }}</span>
+                    <button
+                      class="btn btn-sm ms-2 btn-outline-primary"
+                      type="button"
+                      (click)="
+                        solutionFile.isCollapsed = !solutionFile.isCollapsed
+                      "
+                    >
+                      @if (solutionFile.isCollapsed) {
+                        <span class="fa fa-plus"></span>
+                      }
+                      @if (!solutionFile.isCollapsed) {
+                        <span class="fa fa-minus"></span>
+                      }
+                    </button>
+                  </div>
+                  <div [ngbCollapse]="solutionFile.isCollapsed">
+                    <div class="card card-body">
+                      <textarea class="form-control" readonly rows="10">{{
+                        solutionFile.content
+                      }}</textarea>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    }
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <h5 class="card-header">Test results</h5>
+          <div class="card card-body">
+            <div class="table-responsive">
+              <table
+                class="table table-bordered table-sm"
+                aria-label="test results"
+              >
+                <thead>
+                  <tr>
+                    <th class="col-greedy">Test</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (testResult of model.testResults; track testResult) {
+                    <tr>
+                      <td>
+                        @if (!testResult.runned) {
+                          <span class="fa fa-circle text-warning"></span>
+                        }
+                        @if (testResult.runned && testResult.passed) {
+                          <span class="fa fa-check-circle text-success"></span>
+                        }
+                        @if (testResult.runned && !testResult.passed) {
+                          <span class="fa fa-times-circle text-danger"></span>
+                        }
+                        <span class="ms-2">{{ testResult.testName }}</span>
+                      </td>
+                      <td>
+                        <pre class="text-danger pre-wrap">{{
+                          testResult.message
+                        }}</pre>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
-  <ngx-loading [show]="loading"></ngx-loading>
-</div>
-<div class="col-md-10 col-md-offset-1" *ngIf="model.assignmentId <= 0">
-  <div class="alert alert-warning" role="alert">
-    Results could not be loaded. Make sure a status date is provided and a user or a team is selected.
+}
+@if (inputsReady && !loading && model.assignmentId <= 0) {
+  <div class="col-md-10 col-md-offset-1">
+    <div class="alert alert-warning" role="alert">
+      Results could not be loaded. Make sure a status date is provided and a
+      user or a team is selected.
+    </div>
   </div>
-</div>
+}

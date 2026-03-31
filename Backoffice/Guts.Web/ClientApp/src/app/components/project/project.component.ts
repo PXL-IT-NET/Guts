@@ -1,16 +1,19 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { IProjectDetailsModel } from '../../viewmodels/project.model';
-import { ProjectService } from '../../services/project.service';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { IProjectDetailsModel } from "../../viewmodels/project.model";
+import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
-import { ToastrService } from 'ngx-toastr';
-import * as moment from 'moment';
+import { ToastrService } from "ngx-toastr";
+import moment from "moment";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 
 @Component({
-  templateUrl: './project.component.html'
+  standalone: false,
+  templateUrl: "./project.component.html",
 })
-export class ProjectComponent implements OnInit {
-
+export class ProjectComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   public model: IProjectDetailsModel;
   public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
@@ -21,20 +24,23 @@ export class ProjectComponent implements OnInit {
   public courseId: number;
   public projectCode: string;
 
-  constructor(private projectService: ProjectService, 
+  constructor(
+    private projectService: ProjectService,
     private router: Router,
     private route: ActivatedRoute,
-    private toastr: ToastrService) {
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.courseId = 0;
-    this.projectCode = '';
+    this.projectCode = "";
 
     this.model = {
       id: 0,
-      code: '',
-      description: '',
+      code: "",
+      description: "",
       components: [],
       teams: [],
-      assignments: []
+      assignments: [],
     };
 
     this.selectedAssignmentId = 0;
@@ -43,42 +49,56 @@ export class ProjectComponent implements OnInit {
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,
-      format: 'dd-MM-yyyy HH:mm'
+      format: "dd-MM-yyyy HH:mm",
     };
   }
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
-
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       var parentParams = this.route.parent.snapshot.params;
-      this.courseId = +parentParams['courseId']; // (+) converts 'courseId' to a number
-      this.projectCode = params['code'];
+      this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
+      this.projectCode = params["code"];
 
       this.loading = true;
-      this.projectService.getProjectDetails(this.courseId, this.projectCode).subscribe((result: GetResult<IProjectDetailsModel>) => {
-        this.loading = false;
-        if (result.success) {
-          this.model = result.value;
+      this.projectService
+        .getProjectDetails(this.courseId, this.projectCode)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((result: GetResult<IProjectDetailsModel>) => {
+          this.loading = false;
+          if (result.success) {
+            this.model = result.value;
 
-          if (this.model.teams.length > 0) {
-            this.selectedTeamId = this.model.teams[0].id;
+            if (this.model.teams.length > 0) {
+              this.selectedTeamId = this.model.teams[0].id;
+            }
+          } else {
+            this.toastr.error(
+              "Could not load project details from API. Message: " +
+                (result.message || "unknown error"),
+              "System error",
+            );
           }
 
+          this.cdr.detectChanges();
+        });
+    });
+
+    // Subscribe to queryParams to detect changes in query string parameters
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((queryParams) => {
+        if (queryParams["assignmentId"]) {
+          this.selectedAssignmentId = +queryParams["assignmentId"];
         } else {
-          this.toastr.error("Could not load project details from API. Message: " + (result.message || "unknown error"), "System error");
+          this.selectedAssignmentId = 0;
         }
+
+        this.cdr.detectChanges();
       });
+  }
 
-    });
-
-     // Subscribe to queryParams to detect changes in query string parameters
-     this.route.queryParams.subscribe((queryParams) => {
-      if (queryParams["assignmentId"]) {
-        this.selectedAssignmentId = +queryParams["assignmentId"];
-      } else{
-        this.selectedAssignmentId = 0;
-      }
-      
-    });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
