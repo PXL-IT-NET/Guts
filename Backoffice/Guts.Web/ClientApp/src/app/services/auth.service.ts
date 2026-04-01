@@ -1,4 +1,4 @@
-import { ApplicationRef, Injectable, NgZone } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { BehaviorSubject, Observable, Subject, of } from "rxjs";
 import { map, catchError } from "rxjs/operators";
@@ -18,11 +18,7 @@ export class AuthService {
   private loggedInStateSubject: BehaviorSubject<boolean>;
   private currentUserProfile: UserProfile;
 
-  constructor(
-    private http: HttpClient,
-    private zone: NgZone,
-    private appRef: ApplicationRef,
-  ) {
+  constructor(private http: HttpClient) {
     this.currentUserProfile = null;
 
     // set token if saved in local storage
@@ -52,7 +48,7 @@ export class AuthService {
   }
 
   public login(model: LoginModel): Observable<PostResult> {
-    const source$ = this.http.post("api/auth/token", model).pipe(
+    return this.http.post("api/auth/token", model).pipe(
       map((object: Object) => {
         var tokenModel = object as TokenModel;
         if (tokenModel && tokenModel.token) {
@@ -82,28 +78,6 @@ export class AuthService {
         return of(PostResult.fromHttpErrorResponse(errorResponse));
       }),
     );
-
-    return new Observable<PostResult>((observer) => {
-      const subscription = source$.subscribe({
-        next: (value) =>
-          this.zone.run(() => {
-            observer.next(value);
-            this.appRef.tick();
-          }),
-        error: (error) =>
-          this.zone.run(() => {
-            observer.error(error);
-            this.appRef.tick();
-          }),
-        complete: () =>
-          this.zone.run(() => {
-            observer.complete();
-            this.appRef.tick();
-          }),
-      });
-
-      return () => subscription.unsubscribe();
-    });
   }
 
   public cancelLoginSession(
