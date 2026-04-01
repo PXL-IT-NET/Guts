@@ -20,6 +20,7 @@ using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Hosting;
+using ModelContextProtocol.Server;
 using NSwag.Generation.Processors.Security;
 
 namespace Guts.Api
@@ -109,6 +110,14 @@ namespace Guts.Api
 
             services.AddMemoryCache();
 
+            services.AddMcpServer()
+                .WithHttpTransport(options =>
+                {
+                    options.Stateless = true;
+                })
+                .WithResourcesFromAssembly()
+                .WithPromptsFromAssembly();
+
             services.AddSingleton<IMapper, Mapper>();
 
             services.AddApplicationServices(Configuration);
@@ -162,6 +171,7 @@ namespace Guts.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapMcp("/mcp");
             });
         }
     }

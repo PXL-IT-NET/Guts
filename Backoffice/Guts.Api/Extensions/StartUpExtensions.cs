@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using Guts.Api.Mcp.Services;
 using Guts.Api.Models.Converters;
 using Guts.Bootstrapper;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ namespace Guts.Api.Extensions
             services.AddDomainLayerServices();
             services.AddBusinessLayerServices(configuration);
             services.AddInfrastructureLayerServices(configuration);
+            services.AddSingleton<IAttributeGuideService, AttributeGuideService>();
         }
 
         public static void UseDeveloperExceptionJsonResponse(this IApplicationBuilder app)
