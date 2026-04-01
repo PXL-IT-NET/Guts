@@ -12,6 +12,7 @@ using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Guts.Api.Controllers
 {
@@ -23,25 +24,25 @@ namespace Guts.Api.Controllers
     public class AuthController : Controller
     {
         private readonly UserManager<User> _userManager;
-        private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ICaptchaValidator _captchaValidator;
         private readonly IMailSender _mailSender;
         private readonly ITokenAccessPassFactory _tokenAccessPassFactory;
         private readonly ILoginSessionService _loginSessionService;
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(UserManager<User> userManager,
-            IPasswordHasher<User> passwordHasher,
             ICaptchaValidator captchaValidator,
             IMailSender mailSender,
             ITokenAccessPassFactory tokenAccessPassFactory,
-            ILoginSessionService loginSessionService)
+            ILoginSessionService loginSessionService, 
+            ILogger<AuthController> logger)
         {
             _userManager = userManager;
-            _passwordHasher = passwordHasher;
             _captchaValidator = captchaValidator;
             _mailSender = mailSender;
             _tokenAccessPassFactory = tokenAccessPassFactory;
             _loginSessionService = loginSessionService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -212,16 +213,20 @@ namespace Guts.Api.Controllers
             var user = await _userManager.FindByNameAsync(model.Email);
             if (user == null)
             {
+                _logger.LogWarning($"Cannot find user by name '{model.Email}'");
                 return Unauthorized();
             }
 
-            if (_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) != PasswordVerificationResult.Success)
+            var isPasswordValid = await _userManager.CheckPasswordAsync(user, model.Password);
+            if (!isPasswordValid)
             {
+                _logger.LogWarning($"Invalid password for user '{user.UserName}'");
                 return Unauthorized();
             }
 
             if (!user.EmailConfirmed)
             {
+                _logger.LogWarning($"Email adress of user is not confirmed: '{user.Email}'");
                 await SendConfirmUserEmailMessage(user);
 
                 ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");

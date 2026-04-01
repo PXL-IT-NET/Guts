@@ -38,7 +38,7 @@ namespace Guts.Api.Tests.Controllers
             _passwordHasherMock = new Mock<IPasswordHasher<User>>();
             var lookupNormalizerMock = new Mock<ILookupNormalizer>();
             var errorsMock = new Mock<IdentityErrorDescriber>();
-            var loggerMock = new Mock<ILogger<UserManager<User>>>();
+            var userManagerLoggerMock = new Mock<ILogger<UserManager<User>>>();
 
             _userManagerMock = new Mock<UserManager<User>>(
                 userStoreMock.Object,
@@ -49,7 +49,7 @@ namespace Guts.Api.Tests.Controllers
                 lookupNormalizerMock.Object,
                 errorsMock.Object,
                 null,
-                loggerMock.Object);
+                userManagerLoggerMock.Object);
 
             _userManagerMock.Setup(manager => manager.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
                 .ReturnsAsync(new IdentityResult());
@@ -65,12 +65,14 @@ namespace Guts.Api.Tests.Controllers
 
             _loginSessionServiceMock = new Mock<ILoginSessionService>();
 
+            var controllerLoggerMock = new Mock<ILogger<AuthController>>();
+
             _controller = new AuthController(_userManagerMock.Object,
-                _passwordHasherMock.Object,
                 _captchaValidatorMock.Object,
                 _mailSenderMock.Object,
                _accessPassFactoryMock.Object,
-                _loginSessionServiceMock.Object);
+                _loginSessionServiceMock.Object,
+                controllerLoggerMock.Object);
 
             var context = new ControllerContextBuilder().WithClientIp().Build();
             _controller.ControllerContext = context;
@@ -302,9 +304,9 @@ namespace Guts.Api.Tests.Controllers
             };
             _userManagerMock.Setup(manager => manager.FindByNameAsync(It.IsAny<string>())).ReturnsAsync(existingUser);
 
-            _passwordHasherMock
-                .Setup(hasher => hasher.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(PasswordVerificationResult.Failed);
+            _userManagerMock
+                .Setup(manager => manager.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
 
             //Act
             var result = _controller.CreateToken(model).Result as UnauthorizedResult;
@@ -313,7 +315,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(result, Is.Not.Null);
 
             _userManagerMock.Verify(manager => manager.FindByNameAsync(model.Email), Times.Once);
-            _passwordHasherMock.Verify(hasher => hasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, model.Password), Times.Once);
+            _userManagerMock.Verify(manager => manager.CheckPasswordAsync(existingUser, model.Password), Times.Once);
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
 
         }
@@ -334,9 +336,9 @@ namespace Guts.Api.Tests.Controllers
             _userManagerMock.Setup(manager => manager.GenerateEmailConfirmationTokenAsync(It.IsAny<User>()))
                 .ReturnsAsync(confirmationToken);
 
-            _passwordHasherMock
-                .Setup(hasher => hasher.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(PasswordVerificationResult.Success);
+            _userManagerMock
+                .Setup(manager => manager.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
 
             //Act
             var result = _controller.CreateToken(model).Result as BadRequestObjectResult;
@@ -348,7 +350,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(serializableError.Keys, Has.One.EqualTo("EmailNotConfirmed"));
 
             _userManagerMock.Verify(manager => manager.FindByNameAsync(model.Email), Times.Once);
-            _passwordHasherMock.Verify(hasher => hasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, model.Password), Times.Once);
+            _userManagerMock.Verify(manager => manager.CheckPasswordAsync(existingUser, model.Password), Times.Once);
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(existingUser, confirmationToken), Times.Once);
         }
 
@@ -368,9 +370,9 @@ namespace Guts.Api.Tests.Controllers
             _userManagerMock.Setup(manager => manager.GenerateEmailConfirmationTokenAsync(It.IsAny<User>()))
                 .ReturnsAsync(confirmationToken);
 
-            _passwordHasherMock
-                .Setup(hasher => hasher.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(PasswordVerificationResult.Success);
+            _userManagerMock
+                .Setup(manager => manager.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
 
             var createdAccesPass = new TokenAccessPass
             {
@@ -393,7 +395,7 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(result, Is.Not.Null);
 
             _userManagerMock.Verify(manager => manager.FindByNameAsync(model.Email), Times.Once);
-            _passwordHasherMock.Verify(hasher => hasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, model.Password), Times.Once);
+            _userManagerMock.Verify(manager => manager.CheckPasswordAsync(existingUser, model.Password), Times.Once);
             _mailSenderMock.Verify(sender => sender.SendConfirmUserEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
             _userManagerMock.Verify(manager => manager.GetClaimsAsync(existingUser), Times.Once);
             _accessPassFactoryMock.Verify(factory => factory.Create(existingUser, existingClaims, existingRoles), Times.Once);
@@ -416,9 +418,9 @@ namespace Guts.Api.Tests.Controllers
             };
             _userManagerMock.Setup(manager => manager.FindByNameAsync(It.IsAny<string>())).ReturnsAsync(existingUser);
 
-            _passwordHasherMock
-                .Setup(hasher => hasher.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(PasswordVerificationResult.Success);
+            _userManagerMock
+                .Setup(manager => manager.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
 
             var createdAccesPass = new TokenAccessPass
             {
