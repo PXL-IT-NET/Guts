@@ -11,8 +11,8 @@ Class-level attributes
   Use this for tests of project components in team-based project work.
 
 Exercise vs project-component tests in GUTS
-- Exercises belong to chapters and are made and evaluated individually.
-- Project components belong to projects and are made and evaluated in teams.
+- Exercises belong to chapters and are made individually.
+- Project components belong to projects and are made in teams.
 - Use [ExerciseTestClass(...)] for chapter/exercise scenarios.
 - Use [ProjectComponentTestClass(...)] for project/component scenarios.
 
@@ -22,11 +22,15 @@ Parameters of [ExerciseTestClass]
 - exerciseCode: the code of the exercise. You can choose this code. If a lector runs the tests and results are sent to https://guts-api.pxl.be/, an exercise with this code is created in the chapter if it does not exist yet.
 - optionalSourcePaths: optional semicolon-separated paths to the source files relevant for the test. These paths are relative to the solution directory. The contents of these files are sent to the GUTS backoffice.
 
+Note: all code parameters should be lowercase and contain no spaces. Use dashes or underscores if you want to separate words. The maximum length of a code is 20 characters.
+
 Parameters of [ProjectComponentTestClass]
 - courseCode: the code of the course in the GUTS system (provided by the GUTS administrator).
 - projectCode: the code of the project. You can choose this code. If a lector runs the tests and results are sent to https://guts-api.pxl.be/, a project with this code is created if it does not exist yet.
 - componentCode: the code of the component. You can choose this code. If a lector runs the tests and results are sent to https://guts-api.pxl.be/, a component with this code is created if it does not exist yet.
 - optionalSourcePaths: optional semicolon-separated paths to the source files relevant for the test. These paths are relative to the solution directory. The contents of these files are sent to the GUTS backoffice.
+
+Note: all code parameters should be lowercase and contain no spaces. Use dashes or underscores if you want to separate words. The maximum length of a code is 20 characters.
 
 Method-level attributes
 - [MonitoredFact] replaces [Fact] for monitored single-case tests. The name of the test method will be used as the test name in the GUTS backoffice. The camelcased method name will be split into separate words. For example, "ShouldBeAtLeast300PixelsWide" will be reported as "Should be at least 300 pixels wide".
