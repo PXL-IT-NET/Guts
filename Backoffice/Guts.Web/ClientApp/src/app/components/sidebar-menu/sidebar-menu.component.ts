@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, OnDestroy } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
 import { ICourseModel } from "../../viewmodels/course.model";
 import { Subject } from "rxjs";
 import { takeUntil } from "rxjs/operators";
+import { UserProfile } from "src/app/viewmodels/user.model";
 
 @Component({
   standalone: false,
@@ -12,9 +13,10 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./sidebar-menu.component.html",
   styleUrls: ["./sidebar-menu.component.scss"],
 })
-export class SidebarMenuComponent implements OnDestroy {
+export class SidebarMenuComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   public courses: ICourseModel[];
+  public userProfile: UserProfile;
 
   constructor(
     private authService: AuthService,
@@ -23,13 +25,26 @@ export class SidebarMenuComponent implements OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {
     this.courses = [];
+    this.userProfile = new UserProfile();
+  }
 
+  ngOnInit(): void {
     this.authService
       .getLoggedInState()
       .pipe(takeUntil(this.destroy$))
       .subscribe((isLoggedIn) => {
         if (isLoggedIn) {
           this.loadCourses();
+
+          // retrieve the user profile when logged in
+          this.authService
+            .getUserProfile()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((profile) => {
+              this.userProfile = profile;
+
+              this.cdr.detectChanges();
+            });
         } else {
           this.courses = [];
         }

@@ -77,6 +77,9 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.AssessmentScoreDropdownComponent,
     c.AssignmentSettingsComponent,
     c.LoadingOverlayComponent,
+    c.TeacherDocsConceptsComponent,
+    c.TeacherDocsXunitComponent,
+    c.TeacherDocsNunitComponent,
   ],
   imports: [
     BrowserModule,

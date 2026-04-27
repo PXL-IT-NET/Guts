@@ -36,3 +36,6 @@ export * from "./project-team-assessment-detailed-results/project-team-assessmen
 export * from "./project-team-assessment-my-result/project-team-assessment-my-result.component";
 export * from "./assessment-score-dropdown/assessment-score-dropdown.component";
 export * from "./assignment-settings/assignment-settings.component";
+export * from "./teacher-docs-concepts/teacher-docs-concepts.component";
+export * from "./teacher-docs-xunit/teacher-docs-xunit.component";
+export * from "./teacher-docs-nunit/teacher-docs-nunit.component";

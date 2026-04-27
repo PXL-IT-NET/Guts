@@ -2,7 +2,7 @@ Use the xUnit attributes from Guts.Client.XUnit when you want your automated tes
 
 Required setup
 - Add the Guts.Client.XUnit package to your test project.
-- Ensure gutssettings.json is available and contains GUTS apiBaseUrl and webAppBaseUrl.
+- If your system under test is a WPF window, add [Apartment(ApartmentState.STA)] on the test class.
 
 Class-level attributes
 - [ExerciseTestClass(courseCode, chapterCode, exerciseCode, optionalSourcePaths)]
@@ -49,6 +49,7 @@ How collection and submission works
 Minimal example
 ```csharp
 [ExerciseTestClass("dotNet1", "chapter1", "exercise3", @"Exercise1.Desktop\Views\MainView.xaml;Exercise1.Desktop\Views\MainView.xaml.cs")]
+[Apartment(ApartmentState.STA)]
 public class MainWindowTests
 {
     [MonitoredFact]

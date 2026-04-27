@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy } from "@angular/core";
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -14,7 +14,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./nav-menu.component.html",
   styleUrls: ["./nav-menu.component.scss"],
 })
-export class NavMenuComponent implements OnDestroy {
+export class NavMenuComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   public userProfile: UserProfile;
   public allPeriods: IPeriodModel[];
@@ -30,7 +30,9 @@ export class NavMenuComponent implements OnDestroy {
     this.userProfile = new UserProfile();
     this.allPeriods = [];
     this.selectedPeriod = new PeriodModel();
+  }
 
+  ngOnInit(): void {
     this.authService
       .getLoggedInState()
       .pipe(takeUntil(this.destroy$))

@@ -1,0 +1,88 @@
+<h1>Concepts</h1>
+<h2>1. Automated feedback</h2>
+<p>
+  One of the key concepts in GUTS is automated feedback, which allows students
+  to receive immediate responses to their code of exercises or projects.
+</p>
+<p>
+  As a teacher, you can create
+  <strong
+    >coding exercises and projects that are accompanied by automated
+    tests</strong
+  >. When students run these tests, they receive
+  <strong>instant feedback</strong> on whether their code is correct or if there
+  are any issues that need to be addressed. This gives students insights into
+  how to improve their code and better understand the concepts being taught.
+</p>
+<p>
+  The automated tests are <strong>written by the teacher</strong>, using GUTS
+  extensions of popular testing frameworks such as
+  <a [routerLink]="['/teacher-docs/xunit']">xUnit</a> or
+  <a [routerLink]="['/teacher-docs/nunit']">NUnit</a>.
+  <br />
+  GUTS currently supports C# and Java, but more languages could be added in the
+  future.
+</p>
+<p>
+  Although a teacher can always create automated tests in an exercise or project
+  without the GUTS tools, using the GUTS system offers several advantages:
+</p>
+<ul>
+  <li>
+    <strong>Centralization of test results:</strong> on each test run, the
+    results are sent to the GUTS server. Students can see their test results in
+    the GUTS dashboard, and teachers can monitor the progress of their students
+    and identify common issues or areas where students may be struggling.
+  </li>
+  <li>
+    <strong>Gamifications:</strong> compare your test results with the average
+    results of other students.
+  </li>
+  <li>
+    <strong>Protection against cheating:</strong> the GUTS system ensures that
+    the tests are not altered by students.
+  </li>
+</ul>
+
+<h3>1.1 Coding exercises</h3>
+<p>
+  In GUTS there are 2 kinds of coding exercises:
+  <strong>individual exercises</strong> and <strong>projects</strong>:
+</p>
+<h4>1.1.1 Individual exercises</h4>
+<p>
+  A course can contain multiple <strong>chapters</strong> which contain
+  <strong>exercises</strong>
+</p>
+<p>
+  As a teacher, you can
+  <strong
+    >add chapters and exercises to a course by running the automated tests of a
+    coding exercise you created</strong
+  >. When the test results are sent to the GUTS server, the system will
+  automatically create a chapter and exercise (if they don't exist yet) based on
+  the metadata you provided in the test code.
+</p>
+<p>The test results are then accumulated per student per exercise.</p>
+
+<h4>1.1.2 Projects</h4>
+<p>
+  Next to chapters, a course can also contain multiple
+  <strong>projects</strong>. A project is made out of multiple
+  <strong>components</strong>. Each component represents a part of the project
+  (typically a certain class).
+</p>
+<p>
+  As a teacher, you can
+  <strong
+    >add projects and its components to a course by running the automated tests
+    of the coding project you created</strong
+  >. When the test results are sent to the GUTS server, the system will
+  automatically create a project and component (if they don't exist yet) based
+  on the metadata you provided in the test code.
+</p>
+<p>
+  Students work in teams (registered in GUTS) on the projects, and they run the
+  tests of the project to get feedback on their code. The test results are then
+  accumulated per team per component.
+</p>

@@ -7,7 +7,7 @@
           data-bs-toggle="collapse"
           data-bs-target="#courses-collapse"
           aria-expanded="true"
-          >
+        >
           <span class="fa fa-book px-1"></span>
           <span>Courses</span>
         </a>
@@ -15,7 +15,7 @@
           id="courses-collapse"
           class="collapse"
           [ngClass]="{ show: isCourseRouteActive }"
-          >
+        >
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
             @for (course of courses; track course) {
               <li class="nav-item">
@@ -23,11 +23,58 @@
                   [routerLink]="['/courses', course.id]"
                   [ngClass]="{ active: isCourseRouteActive(course.id) }"
                   class="nav-link"
-                  >
+                >
                   <span>{{ course.name }}</span>
                 </a>
               </li>
             }
+          </ul>
+        </div>
+      </li>
+    }
+    @if (userProfile.isLector) {
+      <li class="mb-1">
+        <a
+          class="btn btn-toggle d-inline-flex align-items-center rounded border-0"
+          data-bs-toggle="collapse"
+          data-bs-target="#manual-collapse"
+          aria-expanded="false"
+        >
+          <span class="fa fa-info-circle px-1"></span>
+          <span>Teacher docs</span>
+        </a>
+        <div id="manual-collapse" class="collapse">
+          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/teacher-docs/concepts']"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+              >
+                <span>Concepts</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/teacher-docs/xunit']"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+              >
+                <span>Write tests using xUnit</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/teacher-docs/nunit']"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+              >
+                <span>Write tests using nUnit</span>
+              </a>
+            </li>
           </ul>
         </div>
       </li>

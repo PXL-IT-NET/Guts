@@ -2,7 +2,6 @@ Use the NUnit attributes from Guts.Client.NUnit when you want your automated tes
 
 Required setup
 - Add the Guts.Client.NUnit package to your test project.
-- Ensure gutssettings.json is available and contains GUTS apiBaseUrl and webAppBaseUrl.
 - If your system under test is a WPF window, add [Apartment(ApartmentState.STA)] on the fixture.
 
 Class-level attributes
