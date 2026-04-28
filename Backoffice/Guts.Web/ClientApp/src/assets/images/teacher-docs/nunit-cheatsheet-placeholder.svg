@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">NUnit Cheat Sheet Placeholder</title>
+  <desc id="desc">Placeholder image for NUnit setup and key attributes.</desc>
+  <rect width="1200" height="630" fill="#f6f3e8" />
+  <g font-family="Roboto, Arial, sans-serif" fill="#30291d">
+    <text x="600" y="86" text-anchor="middle" font-size="34" font-weight="700">NUnit + GUTS Quick Reference</text>
+    <rect x="90" y="140" width="1020" height="400" rx="18" fill="#fff" stroke="#c0ae77" stroke-width="3" />
+    <text x="140" y="210" font-size="24" font-weight="700">Core Attributes</text>
+    <text x="140" y="255" font-size="20">[ExerciseTestFixture(...)]  - chapter exercises</text>
+    <text x="140" y="290" font-size="20">[ProjectComponentTestFixture(...)]  - project components</text>
+    <text x="140" y="325" font-size="20">[MonitoredTest] + optional [TestCase(...)]</text>
+    <text x="140" y="360" font-size="20">[Apartment(ApartmentState.STA)] for WPF scenarios</text>
+    <text x="140" y="430" font-size="19">Replace with a real screenshot of your NUnit fixture setup.</text>
+  </g>
+</svg>

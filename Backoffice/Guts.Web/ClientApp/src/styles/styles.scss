@@ -28,3 +28,55 @@ input[readonly] {
 
 /* Importing Datepicker SCSS file. */
 @import "ngx-bootstrap/datepicker/bs-datepicker";
+
+/* Teacher docs */
+.teacher-docs-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 0.25rem 2rem;
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  .docs-hero {
+    border: 1px solid $gray-300;
+    background: linear-gradient(135deg, #f7f4ea, #efe5cc);
+  }
+
+  .docs-code {
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid $gray-300;
+    border-radius: 0.375rem;
+    background-color: $gray-100;
+    color: $gray-800;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    overflow-x: auto;
+  }
+
+  .docs-placeholder {
+    border: 1px solid $gray-300;
+    border-radius: 0.375rem;
+    background-color: $white;
+  }
+
+  .docs-step {
+    border: 1px dashed $gray-400;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    height: 100%;
+    background-color: $white;
+  }
+
+  .list-group-item code,
+  p code {
+    color: $gray-800;
+    background-color: $gray-100;
+    padding: 0.05rem 0.3rem;
+    border-radius: 0.2rem;
+  }
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">GUTS Feedback Flow Placeholder</title>
+  <desc id="desc">Placeholder image showing teacher tests, backoffice processing, and student feedback flow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f3f1e8" />
+      <stop offset="100%" stop-color="#e7ddc2" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g font-family="Roboto, Arial, sans-serif" fill="#3e3a2f">
+    <text x="600" y="80" text-anchor="middle" font-size="34" font-weight="700">Automated Feedback Flow</text>
+    <rect x="120" y="180" width="260" height="180" rx="16" fill="#ffffff" stroke="#c8b78a" stroke-width="3" />
+    <text x="250" y="240" text-anchor="middle" font-size="24" font-weight="700">Teacher</text>
+    <text x="250" y="275" text-anchor="middle" font-size="18">Writes tests</text>
+    <text x="250" y="305" text-anchor="middle" font-size="18">with GUTS attrs</text>
+
+    <rect x="470" y="180" width="260" height="180" rx="16" fill="#ffffff" stroke="#c8b78a" stroke-width="3" />
+    <text x="600" y="240" text-anchor="middle" font-size="24" font-weight="700">Backoffice</text>
+    <text x="600" y="275" text-anchor="middle" font-size="18">Receives results</text>
+    <text x="600" y="305" text-anchor="middle" font-size="18">Stores progress</text>
+
+    <rect x="820" y="180" width="260" height="180" rx="16" fill="#ffffff" stroke="#c8b78a" stroke-width="3" />
+    <text x="950" y="240" text-anchor="middle" font-size="24" font-weight="700">Student/Team</text>
+    <text x="950" y="275" text-anchor="middle" font-size="18">Runs tests</text>
+    <text x="950" y="305" text-anchor="middle" font-size="18">Sees feedback</text>
+
+    <path d="M390 270 L450 270" stroke="#8a6d3b" stroke-width="6" marker-end="url(#arrow)" />
+    <path d="M740 270 L800 270" stroke="#8a6d3b" stroke-width="6" marker-end="url(#arrow)" />
+    <text x="600" y="540" text-anchor="middle" font-size="20">Replace with a course-specific workflow diagram or screenshot</text>
+  </g>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8a6d3b" />
+    </marker>
+  </defs>
+</svg>

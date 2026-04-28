@@ -1,142 +1,159 @@
-<h1>Write tests with NUnit</h1>
+<section class="teacher-docs-page container-fluid">
+  <div class="docs-hero rounded-3 p-4 p-md-5 mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <span class="badge bg-primary">Teacher docs</span>
+      <span class="badge bg-success">NUnit</span>
+    </div>
+    <h1 class="display-6 mb-3">Write monitored tests with NUnit</h1>
+    <p class="lead mb-0">
+      Use attributes from Guts.Client.NUnit so fixture and test runs are
+      captured and submitted to the GUTS backoffice.
+    </p>
+  </div>
 
-<p>
-  Use the NUnit attributes from Guts.Client.NUnit when you want your automated
-  tests to report results to the GUTS backoffice.
-</p>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-12">
+      <div class="card h-100">
+        <div class="card-header">Required setup</div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              Add the <code>Guts.Client.NUnit</code> package to your test
+              project.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<h2>Required setup</h2>
-<ul>
-  <li>Add the Guts.Client.NUnit package to your test project.</li>
-  <li>
-    If your system under test is a WPF window, add
-    [Apartment(ApartmentState.STA)] on the fixture.
-  </li>
-</ul>
+  <h2 class="h3 mb-3">Class-level attributes</h2>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="docs-step">
+        <h3 class="h6">[ExerciseTestClass]</h3>
+        <p class="mb-0">
+          Use this attribute on a test class for tests of individual exercises
+          within a chapter:<br />
+          <br />
+          <code
+            >[ExerciseTestClass(courseCode, chapterCode, exerciseCode,
+            optionalSourcePaths)]</code
+          >
+        </p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="docs-step">
+        <h3 class="h6">[ProjectComponentTestClass]</h3>
+        <p class="mb-0">
+          Use this attribute on a test class for tests of project components in
+          team-based project work.:<br />
+          <br />
+          <code
+            >[ProjectComponentTestClass(courseCode, projectCode, componentCode,
+            optionalSourcePaths)]</code
+          >
+        </p>
+      </div>
+    </div>
+  </div>
 
-<h2>Class-level attributes</h2>
-<ul>
-  <li>
-    [ExerciseTestFixture(courseCode, chapterCode, exerciseCode,
-    optionalSourcePaths)] Use this for tests of individual exercises within a
-    chapter.
-  </li>
-  <li>
-    [ProjectComponentTestFixture(courseCode, projectCode, componentCode,
-    optionalSourcePaths)] Use this for tests of project components in team-based
-    project work.
-  </li>
-</ul>
+  <h3 class="h3 mb-3">Parameters of the class-level attributes</h3>
+  <ul class="list-group mb-3">
+    <li class="list-group-item">
+      <code>courseCode</code>: the code of the course in the GUTS system (can be
+      found next to the course title).
+    </li>
+    <li class="list-group-item">
+      <code>chapterCode</code>: the code of the chapter. You can choose this
+      code. If a lector runs the tests and results are sent to
+      <code>https://guts-api.pxl.be/</code>, a chapter with this code is created
+      if it does not exist yet.
+    </li>
+    <li class="list-group-item">
+      <code>exerciseCode</code>: the code of the exercise. You can choose this
+      code. If a lector runs the tests and results are sent to
+      <code>https://guts-api.pxl.be/</code>, an exercise with this code is
+      created in the chapter if it does not exist yet.
+    </li>
+    <li class="list-group-item">
+      <code>componentCode</code>: the code of the component. You can choose this
+      code. If a lector runs the tests and results are sent to
+      <code>https://guts-api.pxl.be/</code>, a component with this code is
+      created if it does not exist yet.
+    </li>
+    <li class="list-group-item">
+      <code>optionalSourcePaths</code>: optional semicolon-separated paths to
+      source files relevant for the test. Paths are relative to the solution
+      directory. File contents are sent to the GUTS backoffice.
+    </li>
+  </ul>
 
-<h2>Exercise vs project-component tests in GUTS</h2>
-<ul>
-  <li>Exercises belong to chapters and are made individually.</li>
-  <li>Project components belong to projects and are made in teams.</li>
-  <li>Use [ExerciseTestFixture(...)] for chapter/exercise scenarios.</li>
-  <li>
-    Use [ProjectComponentTestFixture(...)] for project/component scenarios.
-  </li>
-</ul>
+  <div class="alert alert-light mb-4">
+    <strong>Code format rule:</strong> keep code parameters lowercase,
+    whitespace-free, and at most 20 characters. Use dashes or underscores for
+    readability.
+  </div>
 
-<h2>Parameters of [ExerciseTestFixture]</h2>
-<ul>
-  <li>
-    courseCode: the code of the course in the GUTS system (provided by the GUTS
-    administrator).
-  </li>
-  <li>
-    chapterCode: the code of the chapter. You can choose this code. If a lector
-    runs the tests and results are sent to https://guts-api.pxl.be/, a chapter
-    with this code is created if it does not exist yet.
-  </li>
-  <li>
-    exerciseCode: the code of the exercise. You can choose this code. If a
-    lector runs the tests and results are sent to https://guts-api.pxl.be/, an
-    exercise with this code is created in the chapter if it does not exist yet.
-  </li>
-  <li>
-    optionalSourcePaths: optional semicolon-separated paths to the source files
-    relevant for the test. These paths are relative to the solution directory.
-    The contents of these files are sent to the GUTS backoffice.
-  </li>
-</ul>
-<p>
-  Note: all code parameters should be lowercase and contain no spaces. Use
-  dashes or underscores if you want to separate words. The maximum length of a
-  code is 20 characters.
-</p>
+  <h2 class="h3 mb-3">Method-level attribute</h2>
+  <ul class="list-group mb-4">
+    <li class="list-group-item">
+      <code>[MonitoredTest]</code> replaces <code>[Test]</code> for monitored
+      runs. <br />
+      <br />
+      The method name is used as test name in GUTS, and camelcase is split into
+      words. For example,
+      <code>ShouldBeAtLeast300PixelsWide</code> becomes
+      <code>Should be at least 300 pixels wide</code>.
+    </li>
+    <li class="list-group-item">
+      <code>[MonitoredTest("Custom test name")]</code> sets a custom report name
+      (deprecated overload).
+    </li>
+    <li class="list-group-item">
+      Use <code>[MonitoredTest]</code> together with <code>[TestCase]</code> for
+      data-driven test methods.
+    </li>
+  </ul>
 
-<h2>Parameters of [ProjectComponentTestFixture]</h2>
-<ul>
-  <li>
-    courseCode: the code of the course in the GUTS system (provided by the GUTS
-    administrator).
-  </li>
-  <li>
-    projectCode: the code of the project. You can choose this code. If a lector
-    runs the tests and results are sent to https://guts-api.pxl.be/, a project
-    with this code is created if it does not exist yet.
-  </li>
-  <li>
-    componentCode: the code of the component. You can choose this code. If a
-    lector runs the tests and results are sent to https://guts-api.pxl.be/, a
-    component with this code is created if it does not exist yet.
-  </li>
-  <li>
-    optionalSourcePaths: optional semicolon-separated paths to the source files
-    relevant for the test. These paths are relative to the solution directory.
-    The contents of these files are sent to the GUTS backoffice.
-  </li>
-</ul>
-<p>
-  Note: all code parameters should be lowercase and contain no spaces. Use
-  dashes or underscores if you want to separate words. The maximum length of a
-  code is 20 characters.
-</p>
+  <h2 class="h3 mb-3">Collection and submission flow</h2>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="docs-step">1. Class attribute initializes sender setup.</div>
+    </div>
+    <div class="col-md-3">
+      <div class="docs-step">2. Each monitored factresult is captured.</div>
+    </div>
+    <div class="col-md-3">
+      <div class="docs-step">3. Results accumulate per test class.</div>
+    </div>
+    <div class="col-md-3">
+      <div class="docs-step">
+        4. When all tests in a test class have completed, the results are sent
+        to GUTS.
+      </div>
+    </div>
+  </div>
 
-<h2>Method-level attribute</h2>
-<ul>
-  <li>
-    [MonitoredTest] replaces [Test] for monitored runs. The name of the test
-    method will be used as the test name in the GUTS backoffice. The camelcased
-    method name will be split into separate words. For example,
-    "ShouldBeAtLeast300PixelsWide" will be reported as "Should be at least 300
-    pixels wide".
-  </li>
-  <li>
-    [MonitoredTest("Custom test name")] sets a custom report name. Most of the
-    time, the default name (based on the method name) will be sufficient. This
-    is actually a deprecated overload.
-  </li>
-  <li>
-    [MonitoredTest] can be used with [TestCase] for data-driven test methods.
-  </li>
-</ul>
+  <div class="alert alert-warning mb-4">
+    Results are only submitted when all tests in the class run. If only a subset
+    runs, nothing is sent.
+  </div>
 
-<h2>How collection and submission works</h2>
-<ul>
-  <li>
-    The fixture attribute initializes configuration and result sender
-    dependencies.
-  </li>
-  <li>Each monitored test result is captured.</li>
-  <li>Results are accumulated per test class.</li>
-  <li>
-    At class completion, the test results, hash of the test-code and contents of
-    source files are sent to the GUTS backoffice.
-  </li>
-  <li>
-    Results are only sent if all the tests of a fixture are run. If you run only
-    a subset of the tests, no results will be sent to the GUTS backoffice.
-  </li>
-  <li>
-    Results will only be accepted by the GUTS backoffice if the test-code hash
-    matches one of the hashed registerd when the test class was run by a lector.
-    This means that if a student changes the test code, the results will be
-    rejected by the GUTS backoffice. This is to prevent tampering with the tests
-    after a run has been made.
-  </li>
-</ul>
+  <div class="alert alert-warning mb-4">
+    Results are accepted only when test-code hash matches a hash registered by a
+    lector. <br />
+    Hahes are automatically registered when a lector runs the test class.<br />
+    <br />
+    <strong
+      >If students modify test code, the backoffice rejects the
+      submission.</strong
+    >
+  </div>
 
-<h2>Minimal example</h2>
-<pre><code language="csharp" [textContent]="minimalExampleCode"></code></pre>
+  <h2 class="h3">Minimal example</h2>
+  <pre
+    class="docs-code"
+  ><code language="csharp" [textContent]="minimalExampleCode"></code></pre>
+</section>

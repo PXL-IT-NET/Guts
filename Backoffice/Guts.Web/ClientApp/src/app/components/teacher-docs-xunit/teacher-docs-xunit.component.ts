@@ -7,8 +7,7 @@ import { Component } from "@angular/core";
 })
 export class TeacherDocsXunitComponent {
   public readonly minimalExampleCode = `[ExerciseTestClass("dotNet1", "chapter1", "exercise3", @"Exercise1.Desktop\\Views\\MainView.xaml;Exercise1.Desktop\\Views\\MainView.xaml.cs")]
-[Apartment(ApartmentState.STA)]
-  public class MainWindowTests
+public class MainWindowTests
 {
     [MonitoredFact]
     public void ShouldBeAtLeast300PixelsWide()

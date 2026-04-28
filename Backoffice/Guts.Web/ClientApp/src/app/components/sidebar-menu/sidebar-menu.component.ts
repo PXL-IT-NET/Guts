@@ -53,6 +53,10 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
       });
   }
 
+  public get isTeacherDocsRouteActive(): boolean {
+    return this.router.url.includes("/teacher-docs");
+  }
+
   public isCourseRouteActive(courseId: number) {
     return (
       this.router.url.includes("/courses/" + courseId + "/") ||

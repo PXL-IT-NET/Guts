@@ -43,7 +43,11 @@
           <span class="fa fa-info-circle px-1"></span>
           <span>Teacher docs</span>
         </a>
-        <div id="manual-collapse" class="collapse">
+        <div
+          id="manual-collapse"
+          class="collapse"
+          [ngClass]="{ show: isTeacherDocsRouteActive }"
+        >
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
             <li class="nav-item">
               <a
@@ -62,7 +66,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
               >
-                <span>Write tests using xUnit</span>
+                <span>xUnit guide</span>
               </a>
             </li>
             <li class="nav-item">
@@ -72,7 +76,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
               >
-                <span>Write tests using nUnit</span>
+                <span>nUnit guides</span>
               </a>
             </li>
           </ul>

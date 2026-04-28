@@ -1,88 +1,114 @@
-<h1>Concepts</h1>
-<h2>1. Automated feedback</h2>
-<p>
-  One of the key concepts in GUTS is automated feedback, which allows students
-  to receive immediate responses to their code of exercises or projects.
-</p>
-<p>
-  As a teacher, you can create
-  <strong
-    >coding exercises and projects that are accompanied by automated
-    tests</strong
-  >. When students run these tests, they receive
-  <strong>instant feedback</strong> on whether their code is correct or if there
-  are any issues that need to be addressed. This gives students insights into
-  how to improve their code and better understand the concepts being taught.
-</p>
-<p>
-  The automated tests are <strong>written by the teacher</strong>, using GUTS
-  extensions of popular testing frameworks such as
-  <a [routerLink]="['/teacher-docs/xunit']">xUnit</a> or
-  <a [routerLink]="['/teacher-docs/nunit']">NUnit</a>.
-  <br />
-  GUTS currently supports C# and Java, but more languages could be added in the
-  future.
-</p>
-<p>
-  Although a teacher can always create automated tests in an exercise or project
-  without the GUTS tools, using the GUTS system offers several advantages:
-</p>
-<ul>
-  <li>
-    <strong>Centralization of test results:</strong> on each test run, the
-    results are sent to the GUTS server. Students can see their test results in
-    the GUTS dashboard, and teachers can monitor the progress of their students
-    and identify common issues or areas where students may be struggling.
-  </li>
-  <li>
-    <strong>Gamifications:</strong> compare your test results with the average
-    results of other students.
-  </li>
-  <li>
-    <strong>Protection against cheating:</strong> the GUTS system ensures that
-    the tests are not altered by students.
-  </li>
-</ul>
+<section class="teacher-docs-page container-fluid">
+  <div class="docs-hero rounded-3 p-4 p-md-5 mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <span class="badge bg-primary">Teacher docs</span>
+      <span class="badge bg-secondary">Concepts</span>
+    </div>
+    <h1 class="display-6 mb-3">Monitor Your Students' progress with GUTS</h1>
+    <p class="lead mb-0">
+      GUTS helps teachers turn <strong>automated tests</strong> into actionable
+      feedback for students and teams, while keeping result collection
+      centralized and secure.<br />
+      Also, GUTS offers a <strong>peer assessment tool</strong> to evaluate each
+      other when working in teams.
+    </p>
+  </div>
 
-<h3>1.1 Coding exercises</h3>
-<p>
-  In GUTS there are 2 kinds of coding exercises:
-  <strong>individual exercises</strong> and <strong>projects</strong>:
-</p>
-<h4>1.1.1 Individual exercises</h4>
-<p>
-  A course can contain multiple <strong>chapters</strong> which contain
-  <strong>exercises</strong>
-</p>
-<p>
-  As a teacher, you can
-  <strong
-    >add chapters and exercises to a course by running the automated tests of a
-    coding exercise you created</strong
-  >. When the test results are sent to the GUTS server, the system will
-  automatically create a chapter and exercise (if they don't exist yet) based on
-  the metadata you provided in the test code.
-</p>
-<p>The test results are then accumulated per student per exercise.</p>
+  <h2 class="h3 mb-3">What you gain by using GUTS monitoring</h2>
+  <p>
+    You can create automated tests without GUTS, but the platform adds clear
+    value for teaching and coaching. GUTS currently supports C# and Java, and
+    additional languages can be added over time.
+  </p>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="docs-step">
+        <h3 class="h6 mb-2">Centralized progress tracking</h3>
+        <p class="mb-0">
+          Every monitored testrun sends results to the backoffice so both
+          students and teachers can track progress over time.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="docs-step">
+        <h3 class="h6 mb-2">Motivation through comparison</h3>
+        <p class="mb-0">
+          Students can compare results with average results of other students to
+          identify what to improve next.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="docs-step">
+        <h3 class="h6 mb-2">Anti-tampering protection</h3>
+        <p class="mb-0">
+          Hash validation helps ensure students cannot modify teacher tests and
+          still submit accepted results.
+        </p>
+      </div>
+    </div>
+  </div>
 
-<h4>1.1.2 Projects</h4>
-<p>
-  Next to chapters, a course can also contain multiple
-  <strong>projects</strong>. A project is made out of multiple
-  <strong>components</strong>. Each component represents a part of the project
-  (typically a certain class).
-</p>
-<p>
-  As a teacher, you can
-  <strong
-    >add projects and its components to a course by running the automated tests
-    of the coding project you created</strong
-  >. When the test results are sent to the GUTS server, the system will
-  automatically create a project and component (if they don't exist yet) based
-  on the metadata you provided in the test code.
-</p>
-<p>
-  Students work in teams (registered in GUTS) on the projects, and they run the
-  tests of the project to get feedback on their code. The test results are then
-  accumulated per team per component.
-</p>
+  <h2 class="h3 mb-3">Exercise work vs project work</h2>
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Individual exercises</div>
+        <div class="card-body">
+          <p>
+            In GUTS courses contain <strong>chapters</strong>, and each chapter
+            contains one or more <strong>exercises</strong>.
+          </p>
+          <p class="mb-0">
+            When a teacher runs the tests, missing chapters and exercises are
+            automatically created in the backoffice based on metadata in your
+            test attributes. <br />
+            Test results are accumulated per student per exercise.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Team projects</div>
+        <div class="card-body">
+          <p>
+            Courses can also contain <strong>projects</strong> that are split
+            into <strong>components</strong>.
+          </p>
+          <p class="mb-0">
+            When a teacher runs the tests, missing projects and components are
+            automatically created in the backoffice based on metadata in your
+            test attributes. <br />
+            Test results are accumulated per team per component.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-12">
+      <div class="card h-100 border-secondary">
+        <div class="card-header bg-secondary text-white">Pick a framework</div>
+        <div class="card-body">
+          <p class="card-text">
+            GUTS extends popular frameworks. Choose the guide that matches your
+            test stack.
+          </p>
+          <div class="d-grid gap-2">
+            <a class="btn btn-primary" [routerLink]="['/teacher-docs/xunit']"
+              >Open xUnit guide</a
+            >
+            <a
+              class="btn btn-outline-primary"
+              [routerLink]="['/teacher-docs/nunit']"
+              >Open NUnit guide</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
