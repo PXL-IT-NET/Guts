@@ -1,0 +1,138 @@
+<section class="teacher-docs-page container-fluid">
+  <div class="docs-hero rounded-3 p-4 p-md-5 mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <span class="badge bg-primary">Teacher docs</span>
+      <span class="badge bg-info">Java</span>
+      <span class="badge bg-danger">JUnit</span>
+    </div>
+    <h1 class="display-6 mb-3">Write monitored tests with JUnit 5</h1>
+    <p class="lead mb-0">
+      The JUnit 5 client uses a TestExecutionListener to capture test execution
+      and submit results to the GUTS REST API.
+    </p>
+  </div>
+
+  <h2 class="h3 mb-3">Installation</h2>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">Maven</div>
+        <div class="card-body">
+          <p class="mb-2">Add this test dependency to pom.xml:</p>
+          <pre class="docs-code mb-0"><code language="xml">&lt;dependency&gt;
+    &lt;groupId&gt;be.pxl.guts&lt;/groupId&gt;
+    &lt;artifactId&gt;client-junit-5&lt;/artifactId&gt;
+    &lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">Gradle</div>
+        <div class="card-body">
+          <p class="mb-2">Add this dependency to build.gradle:</p>
+          <pre
+            class="docs-code mb-0"
+          ><code language="gradle">dependencies &#123;
+    testImplementation 'be.pxl.guts:client-junit-5:1.0-SNAPSHOT'
+      &#125;</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h3 mb-3">Configuration (guts.json)</h2>
+  <div class="card mb-4">
+    <div class="card-body">
+      <p>
+        On first test run, a <code>guts.json</code> file is created in the
+        project root folder.
+      </p>
+      <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item">
+          <code>baseUrl</code>: URL of the GUTS REST API (e.g.
+          http://guts-api.pxl.be/).
+        </li>
+        <li class="list-group-item">
+          <code>webUrl</code>: URL of the GUTS web application (e.g.
+          http://guts-web.pxl.be/).
+        </li>
+        <li class="list-group-item">
+          <code>sourceDirectory</code>: source path from the root folder.
+        </li>
+        <li class="list-group-item">
+          <code>testDirectory</code>: test path from the root folder.
+        </li>
+      </ul>
+      <p class="mb-2">Default file content:</p>
+      <pre class="docs-code mb-0"><code language="json">&#123;
+  "baseUrl": "http://localhost:5000/",
+  "webUrl": "localhost:4200/",
+  "sourceDirectory": "src/main/java/",
+  "testDirectory": "src/test/java/"
+&#125;</code></pre>
+    </div>
+  </div>
+
+  <h2 class="h3 mb-3">Build To Local Maven</h2>
+  <div class="alert alert-light mb-4">
+    Run <code>gradle publishToMavenLocal</code> in the
+    <code>guts-client-junit-5</code> folder to publish the client locally.
+  </div>
+
+  <h2 class="h3 mb-3">Class-level annotation</h2>
+  <div class="docs-step mb-4">
+    <h3 class="h6">@GutsFixture(options)</h3>
+    <p class="mb-2">
+      Put this annotation on the test class to identify where the test results
+      belong in GUTS.
+    </p>
+    <code
+      >@GutsFixture(courseCode, chapterCode, exerciseCode,
+      sourceCodeRelativeFilePaths)</code
+    >
+  </div>
+
+  <h3 class="h3 mb-3">@GutsFixture options</h3>
+  <ul class="list-group mb-4">
+    <li class="list-group-item">
+      <code>courseCode</code>: unique identifier of the course.
+    </li>
+    <li class="list-group-item">
+      <code>chapterCode</code>: identifier of the chapter.
+    </li>
+    <li class="list-group-item">
+      <code>exerciseCode</code>: identifier of the exercise.
+    </li>
+    <li class="list-group-item">
+      <code>sourceCodeRelativeFilePaths</code>: relative Java source file path
+      (or semicolon-separated paths) to send source code along with test
+      results.
+    </li>
+  </ul>
+
+  <h2 class="h3 mb-3">Test-level conventions</h2>
+  <ul class="list-group mb-4">
+    <li class="list-group-item">
+      Supported test annotations include <code>@Test</code>,
+      <code>@RepeatedTest</code>, and <code>@ParameterizedTest</code>.
+    </li>
+    <li class="list-group-item">
+      Supported parameterized sources include <code>@EnumSource</code>,
+      <code>@ArgumentsSource</code>, <code>@MethodSource</code>,
+      <code>@ValueSource</code>, <code>@CsvSource</code>, and
+      <code>@CsvFileSource</code>.
+    </li>
+    <li class="list-group-item">
+      Use <code>@DisplayName</code> and assertion messages to provide clear,
+      student-friendly feedback in GUTS.
+    </li>
+  </ul>
+
+  <h2 class="h3">Minimal example</h2>
+  <pre
+    class="docs-code"
+  ><code language="java" [textContent]="minimalExampleCode"></code></pre>
+</section>

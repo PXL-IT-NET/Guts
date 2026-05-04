@@ -80,6 +80,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.TeacherDocsConceptsComponent,
     c.TeacherDocsXunitComponent,
     c.TeacherDocsNunitComponent,
+    c.TeacherDocsJunitComponent,
   ],
   imports: [
     BrowserModule,

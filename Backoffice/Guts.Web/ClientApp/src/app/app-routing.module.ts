@@ -13,6 +13,7 @@ const routes: Routes = [
   { path: "teacher-docs/concepts", component: c.TeacherDocsConceptsComponent },
   { path: "teacher-docs/xunit", component: c.TeacherDocsXunitComponent },
   { path: "teacher-docs/nunit", component: c.TeacherDocsNunitComponent },
+  { path: "teacher-docs/junit", component: c.TeacherDocsJunitComponent },
   { path: "home", component: c.HomeComponent },
   {
     path: "courses/:courseId",
