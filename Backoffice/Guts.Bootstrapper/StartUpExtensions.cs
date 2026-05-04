@@ -63,8 +63,11 @@ namespace Guts.Bootstrapper
                     options.Lockout.MaxFailedAccessAttempts = 8;
                     options.Lockout.AllowedForNewUsers = true;
 
-                    options.Password.RequireNonAlphanumeric = false;
-                    options.Password.RequiredLength = 6;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequiredLength = 8;
 
                     options.SignIn.RequireConfirmedEmail = true;
                     options.SignIn.RequireConfirmedPhoneNumber = false;

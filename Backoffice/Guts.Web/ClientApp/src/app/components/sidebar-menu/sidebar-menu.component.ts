@@ -47,6 +47,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
             });
         } else {
           this.courses = [];
+          this.userProfile = new UserProfile();
         }
 
         this.cdr.detectChanges();

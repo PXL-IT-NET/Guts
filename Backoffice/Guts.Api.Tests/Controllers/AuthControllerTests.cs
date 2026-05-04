@@ -731,6 +731,81 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
+        public void ChangePasswordShouldReturnBadRequestIfModelIsInvalid()
+        {
+            //Arrange
+            var model = new ChangePasswordModelBuilder().Build();
+
+            var errorKey = "someValidationError";
+            _controller.ModelState.AddModelError(errorKey, Guid.NewGuid().ToString());
+
+            //Act
+            var result = _controller.ChangePassword(model).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            var serializableError = result.Value as SerializableError;
+            Assert.That(serializableError, Is.Not.Null);
+            Assert.That(serializableError.Keys, Has.One.EqualTo(errorKey));
+            _userManagerMock.Verify(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>()), Times.Never);
+            _userManagerMock.Verify(manager => manager.ChangePasswordAsync(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void ChangePasswordShouldReturnOkIfPasswordCouldBeChanged()
+        {
+            //Arrange
+            var model = new ChangePasswordModelBuilder().Build();
+
+            var existingUser = new User();
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(existingUser);
+            _userManagerMock
+                .Setup(manager => manager.ChangePasswordAsync(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            //Act
+            var result = _controller.ChangePassword(model).Result as OkResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
+            _userManagerMock.Verify(manager => manager.ChangePasswordAsync(existingUser, model.CurrentPassword, model.NewPassword), Times.Once);
+        }
+
+        [Test]
+        public void ChangePasswordShouldReturnBadRequestIfChangingPasswordFails()
+        {
+            //Arrange
+            var model = new ChangePasswordModelBuilder().Build();
+
+            var existingUser = new User();
+            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(existingUser);
+
+            var errorCode = Guid.NewGuid().ToString();
+            var identityResult = IdentityResult.Failed(new IdentityError
+            {
+                Code = errorCode,
+                Description = Guid.NewGuid().ToString()
+            });
+
+            _userManagerMock
+                .Setup(manager => manager.ChangePasswordAsync(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(identityResult);
+
+            //Act
+            var result = _controller.ChangePassword(model).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(result, Is.Not.Null);
+            var serializableError = result.Value as SerializableError;
+            Assert.That(serializableError, Is.Not.Null);
+            Assert.That(serializableError.Keys, Has.One.EqualTo(errorCode));
+
+            _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
+            _userManagerMock.Verify(manager => manager.ChangePasswordAsync(existingUser, model.CurrentPassword, model.NewPassword), Times.Once);
+        }
+
+        [Test]
         public void CreateLoginSession_ShouldCreateASessionUsingRemoteIpOfClient()
         {
             //Arrange

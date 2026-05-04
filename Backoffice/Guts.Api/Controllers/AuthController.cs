@@ -199,6 +199,35 @@ namespace Guts.Api.Controllers
         }
 
         /// <summary>
+        /// Changes the password of the authenticated user.
+        /// </summary>
+        [HttpPost("changepassword")]
+        [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            User user = await _userManager.GetUserAsync(User);
+
+            var result = await _userManager.ChangePasswordAsync(user!, model.CurrentPassword, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(error.Code, error.Description);
+            }
+
+            return BadRequest(ModelState);
+        }
+
+        /// <summary>
         /// Request a (bearer) token that can be used to authenticate yourself in future requests.
         /// </summary>
         [HttpPost("token")]

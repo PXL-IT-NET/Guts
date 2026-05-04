@@ -8,6 +8,7 @@ export * from "./chapter/chapter.component";
 export * from "./chapter-settings/chapter-settings.component";
 export * from "./chaptersummary/chaptersummary.component";
 export * from "./confirmemail/confirmemail.component";
+export * from "./changepassword/changepassword.component";
 export * from "./course/course.component";
 export * from "./courseconfig/courseconfig.component";
 export * from "./empty.component";

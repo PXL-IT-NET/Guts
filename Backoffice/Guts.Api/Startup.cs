@@ -20,7 +20,6 @@ using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Hosting;
-using ModelContextProtocol.Server;
 using NSwag.Generation.Processors.Security;
 
 namespace Guts.Api

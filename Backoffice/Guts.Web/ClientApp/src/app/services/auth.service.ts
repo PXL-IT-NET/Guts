@@ -10,6 +10,7 @@ import { PostResult } from "../util/result";
 import { ConfirmEmailModel } from "../viewmodels/confirmemail.model";
 import { ForgotPasswordModel } from "../viewmodels/forgotpassword.model";
 import { ResetPasswordModel } from "../viewmodels/resetpassword.model";
+import { ChangePasswordModel } from "../viewmodels/changepassword.model";
 import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 
 @Injectable()
@@ -160,5 +161,21 @@ export class AuthService {
         return of(PostResult.fromHttpErrorResponse(errorResponse));
       }),
     );
+  }
+
+  public changePassword(model: ChangePasswordModel): Observable<PostResult> {
+    return this.http
+      .post("api/auth/changepassword", {
+        currentPassword: model.currentPassword,
+        newPassword: model.newPassword,
+      })
+      .pipe(
+        map(() => {
+          return PostResult.success();
+        }),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(PostResult.fromHttpErrorResponse(errorResponse));
+        }),
+      );
   }
 }

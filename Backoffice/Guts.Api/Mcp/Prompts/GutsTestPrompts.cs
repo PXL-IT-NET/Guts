@@ -6,12 +6,27 @@ namespace Guts.Api.Mcp.Prompts;
 [McpServerPromptType]
 public class GutsTestPrompts
 {
-    [McpServerPrompt(Name = "create_guts_tests")]
+    [McpServerPrompt(Name = "create_guts_tests_for_exercise")]
     [Description("""
                  Pre-built instructions to generate GUTS tests for a SUT (system under test) class. 
-                 Provide the name of the SUT class and whether it's part of an individual exercise or a project for teams.
+                 Provide the name of the SUT class that is (part of) the exercise.
                  """)]
-    public string CreateGutsTests(string sutClassName, bool isIndividualExercise = true)
+    public string CreateGutsTestsForChapterExercise(string sutClassName)
+    {
+        return CreateGutsTests(sutClassName, true);
+    }
+
+    [McpServerPrompt(Name = "create_guts_tests_for_project")]
+    [Description("""
+                 Pre-built instructions to generate GUTS tests for a SUT (system under test) class. 
+                 Provide the name of the SUT class that is (part of) a project componetn.
+                 """)]
+    public string CreateGutsTestsForProjectComponent(string sutClassName)
+    {
+        return CreateGutsTests(sutClassName, false);
+    }
+
+    private string CreateGutsTests(string sutClassName, bool isIndividualExercise = true)
     {
         string testFixtureAttribute = isIndividualExercise ? "ExerciseTestFixture" : "ProjectComponentTestFixture";
         string testClassAttribute = isIndividualExercise ? "ExerciseTestClass" : "ProjectComponentTestClass";
@@ -23,9 +38,9 @@ public class GutsTestPrompts
                 Follow these instructions:
                 1. Start by identifying the public behavior of `{sutClassName}` and list test scenarios for success, edge, and failure cases.
                 2. Identify the test project and test class where the tests for `{sutClassName}` should be implemented, based on the project structure and naming conventions.
-                3. Check if NUnit or xUnit is used in the test project to determine which attributes to use for the test class and methods.
-                    - NUnit: read guts://guides/nunit-attributes.
-                    - xUnit: read guts://guides/xunit-attributes.
+                3. In case of a C# project, check if the NUnit or xUnit test framework is used in the test project to determine which attributes to use for the test class and methods (favor xUnit if no framework can be detected).
+                    - NUnit: read guts://guides/nunit-attributes (or read instructions on http://guts-web.pxl.be/teacher-docs/xunit).
+                    - xUnit: read guts://guides/xunit-attributes (or read instructions on http://guts-web.pxl.be/teacher-docs/nunit).
                 4. Check if there are existing tests in the test project that can be used as a reference for structure and style.
                 5. Use GUTS monitored attributes:
                    - NUnit: [{testFixtureAttribute}(...)], plus [MonitoredTest].
@@ -43,7 +58,7 @@ public class GutsTestPrompts
                 Output format:
                 - First: a short test plan for `{sutClassName}`.
                 - Then: complete compilable test class code using monitored GUTS attributes.
-                - Finally: give the suggestion to uncomment the GUTS attribute on the test class when you are ready to send results to the GUTS server (and thus create the tests if you are a lector).
+                - Finally: give the suggestion to uncomment the GUTS attribute on the test class when you are ready to send results to the GUTS server (and thus create the tests if you are a teacher).
                 """;
     }
 }

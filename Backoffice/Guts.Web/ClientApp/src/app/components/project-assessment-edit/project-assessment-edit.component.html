@@ -8,7 +8,7 @@
     [formGroup]="editAssessmentForm"
     (ngSubmit)="onSubmit()"
     #editForm="ngForm"
-    >
+  >
     <div class="row mb-2">
       <label for="description" class="col-3 col-form-label">Description</label>
       <div class="col-9">
@@ -19,10 +19,10 @@
           [class.is-invalid]="
             isInvalid(editAssessmentForm.controls.description)
           "
-          />
+        />
         @if (isInvalid(editAssessmentForm.controls.description)) {
           <div>
-            <span class="text-danger">Verplicht veld</span>
+            <span class="text-danger">Required field</span>
           </div>
         }
       </div>
@@ -37,7 +37,7 @@
         ></app-ng-datetime>
         @if (isInvalid(editAssessmentForm.controls.openOn)) {
           <div>
-            <span class="text-danger">Verplicht veld</span>
+            <span class="text-danger">Required field</span>
           </div>
         }
       </div>
@@ -52,7 +52,7 @@
         ></app-ng-datetime>
         @if (isInvalid(editAssessmentForm.controls.deadline)) {
           <div>
-            <span class="text-danger">Verplicht veld</span>
+            <span class="text-danger">Required field</span>
           </div>
         }
       </div>
@@ -65,7 +65,7 @@
     class="btn btn-primary"
     [disabled]="editAssessmentForm.pristine || !editAssessmentForm.valid"
     (click)="editForm.ngSubmit.emit()"
-    >
+  >
     Save changes
   </button>
 </div>

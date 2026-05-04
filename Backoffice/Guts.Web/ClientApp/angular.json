@@ -30,7 +30,6 @@
               "node_modules/font-awesome/css/font-awesome.min.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "allowedCommonJsDependencies": ["moment", "file-saver"],
             "scripts": [
               "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
             ]
@@ -92,8 +91,7 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/styles/styles.scss"],
-            "allowedCommonJsDependencies": ["moment", "file-saver"],
+            "styles": [],
             "scripts": []
           }
         }

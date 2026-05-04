@@ -47,6 +47,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.LoginComponent,
     c.RegisterComponent,
     c.ConfirmEmailComponent,
+    c.ChangePasswordComponent,
     c.ForgotPasswordComponent,
     c.ResetPasswordComponent,
     c.CourseComponent,

@@ -10,6 +10,11 @@ const routes: Routes = [
   { path: "confirmemail", component: c.ConfirmEmailComponent },
   { path: "forgotpassword", component: c.ForgotPasswordComponent },
   { path: "resetpassword", component: c.ResetPasswordComponent },
+  {
+    path: "changepassword",
+    component: c.ChangePasswordComponent,
+    canActivate: [AuthGuard],
+  },
   { path: "teacher-docs/concepts", component: c.TeacherDocsConceptsComponent },
   { path: "teacher-docs/xunit", component: c.TeacherDocsXunitComponent },
   { path: "teacher-docs/nunit", component: c.TeacherDocsNunitComponent },
