@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-
-namespace Guts.Client.Core.Utility;
+﻿namespace Guts.Client.Core.Utility;
 
 public interface ITestClassInfo
 {

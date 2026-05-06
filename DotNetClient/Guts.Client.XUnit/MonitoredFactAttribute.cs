@@ -1,9 +1,9 @@
 using Xunit;
-using Xunit.Sdk;
+using Xunit.v3;
 
 namespace Guts.Client.XUnit;
 
-[XunitTestCaseDiscoverer("Guts.Client.XUnit.Utility.MonitoredFactDiscoverer", "Guts.Client.XUnit")]
+[XunitTestCaseDiscoverer(typeof(Utility.MonitoredFactDiscoverer))]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public class MonitoredFactAttribute : FactAttribute
 {

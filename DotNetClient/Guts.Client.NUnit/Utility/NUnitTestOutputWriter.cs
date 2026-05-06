@@ -1,7 +1,5 @@
-﻿using Guts.Client.Core.TestTools;
-using Guts.Client.Core.Utility;
+﻿using Guts.Client.Core.Utility;
 using NUnit.Framework;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Guts.Client.NUnit.Utility;
 

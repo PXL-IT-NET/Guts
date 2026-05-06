@@ -1,8 +1,7 @@
-using Guts.Client.Core.TestTools;
 using Guts.Client.Core.Utility;
 using System.Reflection;
 using Xunit;
-using Xunit.Abstractions;
+using Xunit.v3;
 
 namespace Guts.Client.XUnit.Utility;
 
@@ -21,9 +20,9 @@ internal class XUnitTestClassInfo : ITestClassInfo
         NumberOfTests = numberOfTests;
     }
 
-    public static XUnitTestClassInfo CreateFromTestMethod(ITestMethod testMethod)
+    public static XUnitTestClassInfo CreateFromTestMethod(IXunitTestMethod testMethod)
     {
-        var testClassRuntimeType = testMethod.TestClass.Class.ToRuntimeType();
+        var testClassRuntimeType = testMethod.TestClass.Class;
 
         DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassRuntimeType.Assembly.Location).Parent!;
         bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();

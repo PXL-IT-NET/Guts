@@ -1,5 +1,5 @@
-using Xunit.Abstractions;
 using Xunit.Sdk;
+using Xunit.v3;
 
 namespace Guts.Client.XUnit.Utility;
 

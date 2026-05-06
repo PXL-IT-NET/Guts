@@ -1,5 +1,4 @@
 ﻿using Guts.Client.Core.Models;
-using Guts.Client.Core.Utility;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 

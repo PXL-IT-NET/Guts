@@ -1,28 +1,42 @@
 using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
+using Xunit.v3;
 namespace Guts.Client.XUnit.Utility;
 
 public class MonitoredTheoryDiscoverer : TheoryDiscoverer
 {
-    private readonly IMessageSink _diagnosticMessageSink;
-
-    public MonitoredTheoryDiscoverer(IMessageSink diagnosticMessageSink) : base(diagnosticMessageSink)
+    protected override ValueTask<IReadOnlyCollection<IXunitTestCase>> CreateTestCasesForDataRow(
+        ITestFrameworkDiscoveryOptions discoveryOptions,
+        IXunitTestMethod testMethod,
+        ITheoryAttribute theoryAttribute,
+        ITheoryDataRow dataRow,
+        object?[] testMethodArguments)
     {
-        _diagnosticMessageSink = diagnosticMessageSink;
-    }
-
-    protected override IEnumerable<IXunitTestCase> CreateTestCasesForDataRow(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod,
-        IAttributeInfo theoryAttribute, object[] dataRow)
-    {
-        string? displayName = theoryAttribute.GetNamedArgument<string>(nameof(TheoryAttribute.DisplayName));
-
-        yield return new MonitoredXunitTestCase(
-            _diagnosticMessageSink,
-            discoveryOptions.MethodDisplayOrDefault(),
-            discoveryOptions.MethodDisplayOptionsOrDefault(),
+        var details = TestIntrospectionHelper.GetTestCaseDetailsForTheoryDataRow(
+            discoveryOptions,
             testMethod,
-            displayName,
-            dataRow);
+            theoryAttribute,
+            dataRow,
+            testMethodArguments);
+
+        var traits = TestIntrospectionHelper.GetTraits(testMethod, dataRow);
+
+        return new([
+            new MonitoredXunitTestCase(
+                details.ResolvedTestMethod,
+                details.TestCaseDisplayName,
+                details.UniqueID,
+                details.Explicit,
+                details.SkipExceptions,
+                details.SkipReason,
+                details.SkipType,
+                details.SkipUnless,
+                details.SkipWhen,
+                traits,
+                testMethodArguments,
+                details.SourceFilePath,
+                details.SourceLineNumber,
+                details.Timeout)
+        ]);
     }
 }

@@ -1,21 +1,39 @@
-using Xunit;
-using Xunit.Abstractions;
 using Xunit.Sdk;
+using Xunit.v3;
 
 namespace Guts.Client.XUnit.Utility;
 
-public class MonitoredFactDiscoverer(IMessageSink diagnosticMessageSink) : IXunitTestCaseDiscoverer
+public class MonitoredFactDiscoverer : FactDiscoverer
 {
-    public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute)
+    protected override IXunitTestCase CreateTestCase(
+        ITestFrameworkDiscoveryOptions discoveryOptions,
+        IXunitTestMethod testMethod,
+        IFactAttribute factAttribute)
     {
-        var displayName = factAttribute.GetNamedArgument<string>(nameof(FactAttribute.DisplayName));
-
-        yield return new MonitoredXunitTestCase(
-            diagnosticMessageSink,
-            discoveryOptions.MethodDisplayOrDefault(),
-            discoveryOptions.MethodDisplayOptionsOrDefault(),
+        var details = TestIntrospectionHelper.GetTestCaseDetails(
+            discoveryOptions,
             testMethod,
-            displayName, 
-            []);
+            factAttribute,
+            [],
+            null,
+            factAttribute.DisplayName);
+
+        return new MonitoredXunitTestCase(
+            details.ResolvedTestMethod,
+            details.TestCaseDisplayName,
+            details.UniqueID,
+            details.Explicit,
+            details.SkipExceptions,
+            details.SkipReason,
+            details.SkipType,
+            details.SkipUnless,
+            details.SkipWhen,
+            testMethod.Traits.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToHashSet(StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase),
+            sourceFilePath: details.SourceFilePath,
+            sourceLineNumber: details.SourceLineNumber,
+            timeout: details.Timeout);
     }
 }

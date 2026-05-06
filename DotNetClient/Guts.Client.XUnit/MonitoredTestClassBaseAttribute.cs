@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Reflection;
 using Guts.Client.Core.Models;
 using Guts.Client.Core.TestTools;

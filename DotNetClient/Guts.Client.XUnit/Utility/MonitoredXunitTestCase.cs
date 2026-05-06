@@ -1,66 +1,56 @@
 using Guts.Client.Core.Models;
 using Guts.Client.Core.Utility;
-using System.Data;
-using Xunit.Abstractions;
 using Xunit.Sdk;
-using static System.Net.Mime.MediaTypeNames;
+using Xunit.v3;
 
 namespace Guts.Client.XUnit.Utility;
 
-public class MonitoredXunitTestCase : XunitTestCase
+public class MonitoredXunitTestCase : XunitTestCase, ISelfExecutingXunitTestCase
 {
-    private string? _displayNameOverride;
-
-    [Obsolete("Called by the de-serializer", true)]
+    [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
     public MonitoredXunitTestCase()
     {
     }
 
     public MonitoredXunitTestCase(
-        IMessageSink diagnosticMessageSink,
-        TestMethodDisplay defaultMethodDisplay,
-        TestMethodDisplayOptions defaultMethodDisplayOptions,
-        ITestMethod testMethod,
-        string? displayNameOverride,
-        object[] arguments)
-        : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod, arguments)
+        IXunitTestMethod testMethod,
+        string testCaseDisplayName,
+        string uniqueId,
+        bool @explicit,
+        Type[]? skipExceptions,
+        string? skipReason,
+        Type? skipType,
+        string? skipUnless,
+        string? skipWhen,
+        Dictionary<string, HashSet<string>>? traits,
+        object?[]? testMethodArguments = null,
+        string? sourceFilePath = null,
+        int? sourceLineNumber = null,
+        int? timeout = null)
+        : base(testMethod, testCaseDisplayName, uniqueId, @explicit, skipExceptions, skipReason, skipType, skipUnless, skipWhen, traits, testMethodArguments, sourceFilePath, sourceLineNumber, timeout)
     {
-        _displayNameOverride = displayNameOverride;
     }
 
-    public override void Serialize(IXunitSerializationInfo data)
-    {
-        base.Serialize(data);
-        data.AddValue(nameof(_displayNameOverride), _displayNameOverride);
-    }
-
-    public override void Deserialize(IXunitSerializationInfo data)
-    {
-        base.Deserialize(data);
-        _displayNameOverride = data.GetValue<string>(nameof(_displayNameOverride));
-    }
-
-    public override async Task<RunSummary> RunAsync(
-        IMessageSink diagnosticMessageSink,
+    public async ValueTask<RunSummary> Run(
+        ExplicitOption explicitOption,
         IMessageBus messageBus,
-        object[] constructorArguments,
+        object?[] constructorArguments,
         ExceptionAggregator aggregator,
         CancellationTokenSource cancellationTokenSource)
     {
         var capturingMessageBus = new CapturingMessageBus(messageBus);
-        RunSummary? summary = await base.RunAsync(
-            diagnosticMessageSink,
+        RunSummary summary = await XunitRunnerHelper.RunXunitTestCase(
+            this,
             capturingMessageBus,
-            constructorArguments,
+            cancellationTokenSource,
             aggregator,
-            cancellationTokenSource);
+            explicitOption,
+            constructorArguments);
 
         bool passed = summary.Failed == 0;
         string message = passed ? string.Empty : capturingMessageBus.FailureMessage;
 
-        string testName = string.IsNullOrEmpty(_displayNameOverride)
-            ? new CamelCaseConverter().ToNormalSentence(TestMethod.Method.Name)
-            : _displayNameOverride;
+        string testName = new CamelCaseConverter().ToNormalSentence(TestMethod.Method.Name);
 
         string className = TestMethod.TestClass.Class.Name;
 
@@ -81,11 +71,7 @@ public class MonitoredXunitTestCase : XunitTestCase
 
         XUnitTestClassInfo classInfo = XUnitTestClassInfo.CreateFromTestMethod(TestMethod);
 
-
         await TestRunResultAccumulator.AddTestResultAsync(result, classInfo, XUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync);
-
-
-        //XUnitTestResultReporter.Report(TestMethod, displayName, passed, message);
 
         return summary;
     }
