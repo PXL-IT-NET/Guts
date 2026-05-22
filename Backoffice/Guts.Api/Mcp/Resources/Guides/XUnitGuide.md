@@ -1,7 +1,7 @@
 Use the xUnit attributes from Guts.Client.XUnit when you want your automated tests to report results to the GUTS backoffice.
 
 Required setup
-- Add the Guts.Client.XUnit package to your test project.
+- Add the Guts.Client.XUnit package to your (xUnit v3) test project.
 - If your system under test is a WPF window, add [Apartment(ApartmentState.STA)] on the test class.
 
 Class-level attributes
@@ -22,7 +22,7 @@ Parameters of [ExerciseTestClass]
 - exerciseCode: the code of the exercise. You can choose this code. If a lector runs the tests and results are sent to https://guts-api.pxl.be/, an exercise with this code is created in the chapter if it does not exist yet.
 - optionalSourcePaths: optional semicolon-separated paths to the source files relevant for the test. These paths are relative to the solution directory. The contents of these files are sent to the GUTS backoffice.
 
-Note: all code parameters should be lowercase and contain no spaces. Use dashes or underscores if you want to separate words. The maximum length of a code is 20 characters.
+Note: all code parameters contain no spaces. Use dashes or underscores if you want to separate words. The maximum length of a code is 20 characters.
 
 Parameters of [ProjectComponentTestClass]
 - courseCode: the code of the course in the GUTS system (provided by the GUTS administrator).
