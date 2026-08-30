@@ -36,16 +36,23 @@ public class MonitoredXunitTestCase : XunitTestCase, ISelfExecutingXunitTestCase
         IMessageBus messageBus,
         object?[] constructorArguments,
         ExceptionAggregator aggregator,
-        CancellationTokenSource cancellationTokenSource)
+        CancellationTokenSource cancellationTokenSource,
+        ParallelMode parallelMode,
+        ExecutionScheduler scheduler,
+        FixtureMappingManager methodFixtureMappings)
     {
         var capturingMessageBus = new CapturingMessageBus(messageBus);
+
         RunSummary summary = await XunitRunnerHelper.RunXunitTestCase(
             this,
             capturingMessageBus,
             cancellationTokenSource,
+            parallelMode,
+            scheduler,
             aggregator,
             explicitOption,
-            constructorArguments);
+            constructorArguments,
+            methodFixtureMappings);
 
         bool passed = summary.Failed == 0;
         string message = passed ? string.Empty : capturingMessageBus.FailureMessage;
@@ -74,6 +81,7 @@ public class MonitoredXunitTestCase : XunitTestCase, ISelfExecutingXunitTestCase
         await TestRunResultAccumulator.AddTestResultAsync(result, classInfo, XUnitTestOutputWriter.Instance, OnAllTestOfClassCompletedAsync);
 
         return summary;
+
     }
 
     private async Task OnAllTestOfClassCompletedAsync(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)

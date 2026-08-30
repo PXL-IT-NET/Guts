@@ -13,10 +13,9 @@ public class MonitoredFactDiscoverer : FactDiscoverer
         var details = TestIntrospectionHelper.GetTestCaseDetails(
             discoveryOptions,
             testMethod,
-            factAttribute,
-            [],
-            null,
-            factAttribute.DisplayName);
+            factAttribute);
+
+        var traits = TestIntrospectionHelper.GetTraits(testMethod, dataRow: null);
 
         return new MonitoredXunitTestCase(
             details.ResolvedTestMethod,
@@ -28,10 +27,7 @@ public class MonitoredFactDiscoverer : FactDiscoverer
             details.SkipType,
             details.SkipUnless,
             details.SkipWhen,
-            testMethod.Traits.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToHashSet(StringComparer.OrdinalIgnoreCase),
-                StringComparer.OrdinalIgnoreCase),
+            traits,
             sourceFilePath: details.SourceFilePath,
             sourceLineNumber: details.SourceLineNumber,
             timeout: details.Timeout);

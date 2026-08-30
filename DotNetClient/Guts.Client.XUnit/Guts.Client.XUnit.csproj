@@ -6,14 +6,15 @@
     <Description>Utilities to write unit tests with xUnit and send the results to the Guts API</Description>
     <Copyright>Copyright © 2019</Copyright>
     <PackageTags>Guts;Unit Test;Client;xUnit</PackageTags>
-    <Version>10.0.3</Version>
+    <Version>10.0.4</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>10.0.3</AssemblyVersion>
-    <FileVersion>10.0.3</FileVersion>
+    <AssemblyVersion>10.0.4</AssemblyVersion>
+    <FileVersion>10.0.4</FileVersion>
     <RepositoryUrl>https://github.com/PXL-IT-NET/Guts</RepositoryUrl>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageReleaseNotes>Uses xUnit v3 for test discovery and execution.</PackageReleaseNotes>
+    <PackageReleaseNotes>Upgrade to version 4.0.0 of xUnit v3.
+Improved logging</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,10 +23,15 @@
       <PackageCopyToOutput>true</PackageCopyToOutput>
       <Pack>true</Pack>
     </Content>
+    <Content Include="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <PackageCopyToOutput>true</PackageCopyToOutput>
+	    <Pack>true</Pack>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.v3.extensibility.core" Version="3.2.2" />
+    <PackageReference Include="xunit.v3.extensibility.core" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
