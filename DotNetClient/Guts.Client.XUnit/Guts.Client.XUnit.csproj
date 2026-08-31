@@ -27,6 +27,8 @@ Improved logging</PackageReleaseNotes>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	    <PackageCopyToOutput>true</PackageCopyToOutput>
 	    <Pack>true</Pack>
+		<PackagePath>contentFiles/any/any/</PackagePath>
+		<BuildAction>Content</BuildAction>
     </Content>
   </ItemGroup>
 
