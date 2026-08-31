@@ -5,12 +5,13 @@ namespace Guts.Client.XUnit.Utility;
 
 public class MonitoredTheoryDiscoverer : TheoryDiscoverer
 {
-    protected IXunitTestCase CreateTestCaseForTheoryDataRow(
-        ITestFrameworkDiscoveryOptions discoveryOptions,
+    protected override ValueTask<IReadOnlyCollection<IXunitTestCase>> CreateTestCasesForDataRow(
+        ITestFrameworkDiscoveryOptions discoveryOptions, 
         IXunitTestMethod testMethod,
-        ITheoryAttribute theoryAttribute,
-        ITheoryDataRow dataRow,
-        object?[] testMethodArguments)
+        ITheoryAttribute theoryAttribute, 
+        ITheoryDataRow dataRow, 
+        object?[] testMethodArguments, 
+        string? index)
     {
         var details = TestIntrospectionHelper.GetTestCaseDetailsForTheoryDataRow(
             discoveryOptions,
@@ -21,7 +22,7 @@ public class MonitoredTheoryDiscoverer : TheoryDiscoverer
 
         var traits = TestIntrospectionHelper.GetTraits(testMethod, dataRow);
 
-        return new MonitoredXunitTestCase(
+        var testCase = new MonitoredXunitTestCase(
             details.ResolvedTestMethod,
             details.TestCaseDisplayName,
             details.UniqueID,
@@ -36,5 +37,7 @@ public class MonitoredTheoryDiscoverer : TheoryDiscoverer
             details.SourceFilePath,
             details.SourceLineNumber,
             details.Timeout);
+
+        return new ValueTask<IReadOnlyCollection<IXunitTestCase>>([testCase]);
     }
 }

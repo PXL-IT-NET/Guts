@@ -32,9 +32,7 @@ internal class XUnitTestOutputWriter : ITestOutputWriter
         {
             TestContext.Current.TestOutputHelper?.WriteLine(message);
             TestContext.Current.SendDiagnosticMessage("{0}", message);
-
             Debug.WriteLine(message);
-            Console.Error.WriteLine(message);
         }
         catch
         {
