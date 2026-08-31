@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="../Guts.Common.Tests/Guts.Common.Tests.csproj" />
+  <Project Path="Guts.Common.Tests/Guts.Common.Tests.csproj" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
