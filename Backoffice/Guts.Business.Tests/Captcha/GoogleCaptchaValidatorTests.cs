@@ -5,6 +5,7 @@ using System.Net;
 using Guts.Business.Captcha;
 using Guts.Business.Communication;
 using Guts.Common.Extensions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 
@@ -33,7 +34,10 @@ namespace Guts.Business.Tests.Captcha
                 .Setup(client =>
                     client.PostAsFormUrlEncodedContentAsync<CaptchaVerificationResult>(It.IsAny<string>(),
                         It.IsAny<KeyValuePair<string, string>[]>())).ReturnsAsync(() => verificationResult);
-            var validator = new GoogleCaptchaValidator(validationUrl, secret, httpClientMock.Object);
+
+            var loggerMock = new Mock<ILogger<GoogleCaptchaValidator>>();
+
+            var validator = new GoogleCaptchaValidator(validationUrl, secret, httpClientMock.Object, loggerMock.Object);
 
 
             //Act

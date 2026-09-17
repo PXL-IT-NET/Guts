@@ -100,7 +100,11 @@ namespace Guts.Bootstrapper
                 var captchaSection = configuration.GetSection("Captcha");
                 var secret = captchaSection.GetValue<string>("secret");
                 var validationUrl = captchaSection.GetValue<string>("validationUrl");
-                return new GoogleCaptchaValidator(validationUrl, secret, provider.GetService<IHttpClient>());
+                return new GoogleCaptchaValidator(
+                    validationUrl,
+                    secret,
+                    provider.GetService<IHttpClient>(),
+                    provider.GetService<ILogger<GoogleCaptchaValidator>>());
             });
 
             services.AddScoped<ISmtpClient>(provider =>
@@ -138,8 +142,8 @@ namespace Guts.Bootstrapper
             ServiceLifetime lifetime)
         {
             var registrations = from type in targetAssembly.GetTypes()
-                                where type.Name.EndsWith(classAndInterfaceNameEndsWith) 
-                                      && type.GetInterfaces().Any() 
+                                where type.Name.EndsWith(classAndInterfaceNameEndsWith)
+                                      && type.GetInterfaces().Any()
                                       && !type.IsInterface
                                 select new { ServiceType = type.GetInterfaces().First(i => i.Name.EndsWith(classAndInterfaceNameEndsWith)), ImplementationType = type };
 
