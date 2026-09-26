@@ -20,11 +20,13 @@ internal class XUnitTestClassInfo : ITestClassInfo
         NumberOfTests = numberOfTests;
     }
 
-    public static XUnitTestClassInfo CreateFromTestMethod(IXunitTestMethod testMethod)
+    public static XUnitTestClassInfo CreateFromType(Type testClassRuntimeType)
     {
-        var testClassRuntimeType = testMethod.TestClass.Class;
+        string baseDir = string.IsNullOrEmpty(testClassRuntimeType.Assembly.Location)
+            ? AppContext.BaseDirectory
+            : Path.GetDirectoryName(testClassRuntimeType.Assembly.Location) ?? AppContext.BaseDirectory;
 
-        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(testClassRuntimeType.Assembly.Location).Parent!;
+        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(baseDir);
         bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
         while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
         {
@@ -37,5 +39,10 @@ internal class XUnitTestClassInfo : ITestClassInfo
             .Sum(m => m.GetCustomAttributes(inherit: true).Count(a => a is FactAttribute and not TheoryAttribute || a is InlineDataAttribute));
 
         return new XUnitTestClassInfo(testClassRuntimeType.Name, testClassRuntimeType, testProjectDirectoryInfo, numberOfTestsInCurrentClass);
+    }
+
+    public static XUnitTestClassInfo CreateFromTestMethod(IXunitTestMethod testMethod)
+    {
+        return CreateFromType(testMethod.TestClass.Class);
     }
 }

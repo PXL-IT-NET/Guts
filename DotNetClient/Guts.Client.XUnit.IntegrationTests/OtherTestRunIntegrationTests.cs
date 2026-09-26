@@ -1,4 +1,6 @@
-﻿namespace Guts.Client.XUnit.IntegrationTests;
+﻿using System.Diagnostics;
+
+namespace Guts.Client.XUnit.IntegrationTests;
 
 [ExerciseTestClass("dummyCourse", "dummyChapter", "dummyExercise", "Guts.Client.XUnit/MonitoredFactAttribute.cs")]
 public class OtherTestRunIntegrationTests : IClassFixture<BackendFixture>
@@ -10,6 +12,12 @@ public class OtherTestRunIntegrationTests : IClassFixture<BackendFixture>
     [MonitoredFact]
     public void SomeMethod_WithACertainCondition_ShouldResultInSomething()
     {
+        SomePrivateMethod();
         Assert.True(true);
+    }
+
+    private static void SomePrivateMethod()
+    {
+        Debug.WriteLine("Executing private method 'SomePrivateMethod'.");
     }
 }

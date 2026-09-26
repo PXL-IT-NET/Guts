@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 
@@ -70,7 +71,7 @@ internal sealed class MockGutsApiServer : IDisposable
             context.Request.Headers["Authorization"] ?? string.Empty,
             requestBody);
 
-        Console.WriteLine($"Backend received {request.Method} request: '{request.Path}'");
+        LogMessage($"Backend received {request.Method} request: '{request.Path}'");
 
         _capturedRequests.Enqueue(request);
 
@@ -104,7 +105,7 @@ internal sealed class MockGutsApiServer : IDisposable
         context.Response.ContentType = "application/json";
         context.Response.ContentLength64 = buffer.Length;
 
-        Console.WriteLine($"Backend responds with {context.Response.StatusCode} status code");
+        LogMessage($"Backend responds with {context.Response.StatusCode} status code");
 
         await context.Response.OutputStream.WriteAsync(buffer);
         context.Response.OutputStream.Close();
@@ -116,6 +117,12 @@ internal sealed class MockGutsApiServer : IDisposable
         _listener.Stop();
         _listener.Close();
         _cancellationTokenSource.Dispose();
+    }
+
+    private static void LogMessage(string message)
+    {
+        Console.WriteLine(message);
+        Debug.WriteLine(message);
     }
 }
 

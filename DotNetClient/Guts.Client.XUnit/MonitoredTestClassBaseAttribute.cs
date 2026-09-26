@@ -5,10 +5,14 @@ using Guts.Client.Core.Utility;
 using Guts.Client.XUnit.Utility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
+using Xunit;
+using Xunit.v3;
+using TestResult = Guts.Client.Core.Models.TestResult;
 
 namespace Guts.Client.XUnit;
 
-public abstract class MonitoredTestClassBaseAttribute : Attribute
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
 {
     protected readonly string CourseCode;
     protected string? SourceCodeRelativeFilePaths;
@@ -62,6 +66,84 @@ public abstract class MonitoredTestClassBaseAttribute : Attribute
         {
             _initializationException = e;
         }
+    }
+
+    public override void Before(MethodInfo methodUnderTest, IXunitTest test)
+    {
+        if (_initializationException is not null)
+        {
+            XUnitTestOutputWriter.Instance.WriteError(_initializationException);
+        }
+    }
+
+    public override void After(MethodInfo methodUnderTest, IXunitTest test)
+    {
+        try
+        {
+            Type testClassType = methodUnderTest.DeclaringType ?? test.TestMethod.TestClass.Class;
+
+            bool passed = TestContext.Current.TestState?.Result == Xunit.TestResult.Passed;
+            string message = string.Empty;
+            if (!passed)
+            {
+                var failureMessages = TestContext.Current.TestState?.ExceptionMessages;
+                if (failureMessages != null && failureMessages.Length > 0)
+                {
+                    message = string.Join(Environment.NewLine, failureMessages);
+                }
+            }
+
+            string testName = GetTestDisplayName(methodUnderTest, test);
+
+            var result = new TestResult(testName, passed, message);
+
+            XUnitTestClassInfo classInfo = XUnitTestClassInfo.CreateFromType(testClassType);
+
+            TestRunResultAccumulator.AddTestResultAsync(
+                result,
+                classInfo,
+                XUnitTestOutputWriter.Instance,
+                OnAllTestOfClassCompletedAsync).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            XUnitTestOutputWriter.Instance.WriteError($"Error in After test hook: {ex}");
+        }
+    }
+
+    private Task OnAllTestOfClassCompletedAsync(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)
+    {
+        return SendTestResults(testClassInfo, results);
+    }
+
+    private static string GetTestDisplayName(MethodInfo methodUnderTest, IXunitTest test)
+    {
+        var factAttr = methodUnderTest.GetCustomAttribute<FactAttribute>(inherit: true);
+        string? customDisplayName = factAttr?.DisplayName;
+
+        string testName = !string.IsNullOrEmpty(customDisplayName)
+            ? customDisplayName
+            : new CamelCaseConverter().ToNormalSentence(methodUnderTest.Name);
+
+        string className = methodUnderTest.DeclaringType?.Name ?? string.Empty;
+        int dotIndex = className.LastIndexOf('.');
+        if (dotIndex >= 0)
+        {
+            className = className.Substring(dotIndex + 1);
+        }
+        testName = $"({className}) {testName}";
+
+        if (test.TestMethodArguments != null && test.TestMethodArguments.Length > 0)
+        {
+            testName = $"{testName} ({string.Join(", ", test.TestMethodArguments.Select(FormatArgument))})";
+        }
+
+        return testName;
+    }
+
+    private static string FormatArgument(object? argument)
+    {
+        return argument?.ToString() ?? "null";
     }
 
     public async Task SendTestResults(ITestClassInfo testClassInfo, IReadOnlyList<TestResult> results)

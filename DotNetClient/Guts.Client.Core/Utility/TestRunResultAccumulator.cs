@@ -23,7 +23,12 @@ public class TestRunResultAccumulator
 
             runState.Results.Add(result);
 
-            if (runState.Results.Count < runState.TestClass.NumberOfTests) return;
+            if (runState.Results.Count < runState.TestClass.NumberOfTests)
+            {
+                outputWriter.WriteProgress(
+                    $"{runState.Results.Count} of {runState.TestClass.NumberOfTests} test of class '{testClassInfo.Name}' completed.");
+                return;
+            }
 
             runState.Completed = true;
             resultsSnapshot = runState.Results.ToList();

@@ -1,9 +1,7 @@
 using Xunit;
-using Xunit.v3;
 
 namespace Guts.Client.XUnit;
 
-[XunitTestCaseDiscoverer(typeof(Utility.MonitoredTheoryDiscoverer))]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public class MonitoredTheoryAttribute : TheoryAttribute
 {

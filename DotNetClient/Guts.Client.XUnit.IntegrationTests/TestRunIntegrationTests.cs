@@ -26,4 +26,18 @@ public class TestRunIntegrationTests : IClassFixture<BackendFixture>
     {
         Assert.True(a < b);
     }
+
+    //[MonitoredTheory]
+    //[InlineData(true)]
+    //[InlineData(false)]
+    //public void TheoryTestThatFails(bool isTrue)
+    //{
+    //    TriggerFailure();
+    //    Assert.Fail($"Failed on '{isTrue}'");
+    //}
+
+    //private static void TriggerFailure()
+    //{
+    //    Assert.Fail("Failure triggered");
+    //}
 }
