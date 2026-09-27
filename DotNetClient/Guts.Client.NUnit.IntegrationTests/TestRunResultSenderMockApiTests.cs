@@ -25,6 +25,7 @@ public class TestRunResultSenderMockApiTests
         };
 
         var testRun = new AssignmentTestRun(
+            "DummyClassName",
             assignment,
             [new TestResult("A test", true, string.Empty)],
             [],

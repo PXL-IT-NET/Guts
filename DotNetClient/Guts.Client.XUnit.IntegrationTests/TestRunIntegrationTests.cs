@@ -1,11 +1,9 @@
 ﻿namespace Guts.Client.XUnit.IntegrationTests;
 
 [ExerciseTestClass("dummyCourse", "dummyChapter", "dummyExercise", "Guts.Client.XUnit/MonitoredFactAttribute.cs")]
-public class TestRunIntegrationTests : IClassFixture<BackendFixture>
+public class TestRunIntegrationTests(BackendFixture fixture) : IClassFixture<BackendFixture>
 {
-    public TestRunIntegrationTests(BackendFixture fixture)
-    {
-    }
+    private readonly BackendFixture _fixture = fixture;
 
     [MonitoredFact]
     public void SomeMethod_WithACertainCondition_ShouldResultInSomething()

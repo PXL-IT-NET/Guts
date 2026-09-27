@@ -26,14 +26,14 @@ internal class XUnitTestOutputWriter : ITestOutputWriter
         WriteToTestOutput(message);
     }
 
-    private void WriteToTestOutput(string message)
+    private static void WriteToTestOutput(string message)
     {
         try
         {
-            Console.WriteLine(message);
-            TestContext.Current.TestOutputHelper?.WriteLine(message);
-            TestContext.Current.SendDiagnosticMessage("{0}", message);
+#if DEBUG
             Debug.WriteLine(message);
+#endif
+            TestContext.Current.SendDiagnosticMessage(message);
         }
         catch
         {

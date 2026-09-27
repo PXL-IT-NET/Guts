@@ -29,8 +29,7 @@ public class TestRunResultSender(IHttpHandler httpHandler, IAuthorizationHandler
                     break;
             }
 
-
-            outputWriter.WriteProgress("Sending data...");
+            outputWriter.WriteProgress($"Sending data... (class='{testRun.TestClassName}')");
             HttpResponseMessage? response = null;
             bool sendFailed = false;
             try

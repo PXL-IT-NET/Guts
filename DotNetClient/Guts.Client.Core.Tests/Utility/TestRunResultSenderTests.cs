@@ -33,16 +33,16 @@ public class TestRunResultSenderTests
 
         var testResults = new List<TestResult>
         {
-            new TestResult("Test1", true, "Success"),
-            new TestResult("Test2", false, "Failure")
+            new("Test1", true, "Success"),
+            new("Test2", false, "Failure")
         };
 
         var solutionFiles = new List<SolutionFile>
         {
-            new SolutionFile("Test.cs", "public class Test { }")
+            new("Test.cs", "public class Test { }")
         };
 
-        _testRun = new AssignmentTestRun(assignment, testResults, solutionFiles, "testhash");
+        _testRun = new AssignmentTestRun("TestClassName", assignment, testResults, solutionFiles, "testhash");
     }
 
     [TestCase(TestRunType.ForExercise, "api/testruns/forexercise")]
@@ -222,7 +222,7 @@ public class TestRunResultSenderTests
     {
         // Arrange
         string expectedSupportId = "17679479214706385589";
-        HttpResponseMessage fakeSuccessResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        HttpResponseMessage fakeSuccessResponse = new(HttpStatusCode.OK)
         {
             Content = new StringContent($"<html><head><title>Request Rejected</title></head><body>The requested URL was rejected. Please consult with your administrator.<br><br>Your support ID is: {expectedSupportId}<br><br><a href='javascript:history.back();'>[Go Back]</a></body></html>")
         };

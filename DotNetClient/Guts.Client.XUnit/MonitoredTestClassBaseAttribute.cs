@@ -129,11 +129,11 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
         int dotIndex = className.LastIndexOf('.');
         if (dotIndex >= 0)
         {
-            className = className.Substring(dotIndex + 1);
+            className = className[(dotIndex + 1)..];
         }
         testName = $"({className}) {testName}";
 
-        if (test.TestMethodArguments != null && test.TestMethodArguments.Length > 0)
+        if (test.TestMethodArguments is { Length: > 0 })
         {
             testName = $"{testName} ({string.Join(", ", test.TestMethodArguments.Select(FormatArgument))})";
         }
@@ -160,6 +160,7 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
                 $"{results.Count} of {testClassInfo.NumberOfTests} tests of class '{testClassInfo.Name}' completed. Trying to send results...");
 
             var testRun = new AssignmentTestRun(
+                testClassInfo.Name,
                 CreateAssignment(),
                 results,
                 GetSourceCodeFiles(),
@@ -169,17 +170,17 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
 
             if (result.Success)
             {
-                XUnitTestOutputWriter.Instance.WriteProgress("Results successfully sent.");
+                XUnitTestOutputWriter.Instance.WriteProgress($"Results of class '{testClassInfo.Name}' successfully sent.");
             }
             else
             {
-                XUnitTestOutputWriter.Instance.WriteProgress("Sending results failed.");
+                XUnitTestOutputWriter.Instance.WriteProgress($"Sending results of class '{testClassInfo.Name}' failed.");
                 XUnitTestOutputWriter.Instance.WriteProgress(result.Message);
             }
         }
         catch (AggregateException ex)
         {
-            XUnitTestOutputWriter.Instance.WriteError("Something went wrong while sending the test results.");
+            XUnitTestOutputWriter.Instance.WriteError($"Something went wrong while sending the test results of class '{testClassInfo.Name}'.");
             foreach (var innerException in ex.InnerExceptions)
             {
                 XUnitTestOutputWriter.Instance.WriteError(innerException);
@@ -187,7 +188,7 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
         }
         catch (Exception ex)
         {
-            XUnitTestOutputWriter.Instance.WriteError("Something went wrong while sending the test results.");
+            XUnitTestOutputWriter.Instance.WriteError($"Something went wrong while sending the test results of class '{testClassInfo.Name}'.");
             XUnitTestOutputWriter.Instance.WriteError(ex);
         }
     }
@@ -198,17 +199,17 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
 
     private IEnumerable<SolutionFile> GetSourceCodeFiles()
     {
-        if (string.IsNullOrEmpty(SourceCodeRelativeFilePaths)) return new List<SolutionFile>();
+        if (string.IsNullOrEmpty(SourceCodeRelativeFilePaths)) return [];
 
         XUnitTestOutputWriter.Instance.WriteProgress($"Reading source code files: {SourceCodeRelativeFilePaths}");
         return SourceCodeRetriever.ReadSourceCodeFiles(SourceCodeRelativeFilePaths);
     }
 
-    private string GetSettingsFileDirectory(string baseDirectory)
+    private static string GetSettingsFileDirectory(string baseDirectory)
     {
         const string relativeFilePath = "gutssettings.json";
-        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
-        FileInfo fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+        DirectoryInfo testProjectDirectoryInfo = new(baseDirectory);
+        FileInfo fileInfo = new(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
         while (!fileInfo.Exists && testProjectDirectoryInfo.Parent != null)
         {
             testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
@@ -231,7 +232,7 @@ public abstract class MonitoredTestClassBaseAttribute : BeforeAfterTestAttribute
         return fileInfo.Exists ? testProjectDirectoryInfo.FullName : string.Empty;
     }
 
-    private string GetTestClassHash(ITestClassInfo testClassInfo)
+    private static string GetTestClassHash(ITestClassInfo testClassInfo)
     {
         var testCodeHash = string.Empty;
 

@@ -98,6 +98,7 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
                 $"{results.Count} of {testClassInfo.NumberOfTests} tests of class '{testClassInfo.Name}' completed. Trying to send results...");
 
             var testRun = new AssignmentTestRun(
+                testClassInfo.Name,
                 CreateAssignment(),
                 results,
                 GetSourceCodeFiles(),
@@ -132,24 +133,24 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
 
     protected IEnumerable<SolutionFile> GetSourceCodeFiles()
     {
-        if (string.IsNullOrEmpty(SourceCodeRelativeFilePaths)) return new List<SolutionFile>();
+        if (string.IsNullOrEmpty(SourceCodeRelativeFilePaths)) return [];
 
         TestContext.Progress.WriteLine($"Reading source code files: {SourceCodeRelativeFilePaths}");
         return SourceCodeRetriever.ReadSourceCodeFiles(SourceCodeRelativeFilePaths);
     }
 
-    private string GetSettingsFileDirectory(string baseDirectory)
+    private static string GetSettingsFileDirectory(string baseDirectory)
     {
         var relativeFilePath = "gutssettings.json";
-        DirectoryInfo? testProjectDirectoryInfo = new DirectoryInfo(baseDirectory);
-        FileInfo? fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
+        DirectoryInfo? testProjectDirectoryInfo = new(baseDirectory);
+        FileInfo? fileInfo = new(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
         while (!fileInfo!.Exists && testProjectDirectoryInfo!.Parent != null)
         {
             testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
             fileInfo = new FileInfo(Path.Combine(testProjectDirectoryInfo.FullName, relativeFilePath));
 
             //Hack: get json file in global nuget directory
-            if (testProjectDirectoryInfo.Name.ToLower() == "packages")
+            if (testProjectDirectoryInfo.Name.Equals("packages", StringComparison.CurrentCultureIgnoreCase))
             {
                 var nugetDirectory = testProjectDirectoryInfo
                     .EnumerateDirectories("guts.client.core", SearchOption.TopDirectoryOnly).FirstOrDefault();
@@ -168,7 +169,7 @@ public abstract class MonitoredTestFixtureBaseAttribute : TestFixtureAttribute, 
         return fileInfo.Exists ? testProjectDirectoryInfo!.FullName : string.Empty;
     }
 
-    private string GetTestClassHash(ITestClassInfo testClassInfo)
+    private static string GetTestClassHash(ITestClassInfo testClassInfo)
     {
         var testCodeHash = string.Empty;
 

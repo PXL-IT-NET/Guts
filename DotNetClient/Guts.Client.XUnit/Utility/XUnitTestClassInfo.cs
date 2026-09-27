@@ -1,7 +1,6 @@
 using Guts.Client.Core.Utility;
 using System.Reflection;
 using Xunit;
-using Xunit.v3;
 
 namespace Guts.Client.XUnit.Utility;
 
@@ -26,12 +25,12 @@ internal class XUnitTestClassInfo : ITestClassInfo
             ? AppContext.BaseDirectory
             : Path.GetDirectoryName(testClassRuntimeType.Assembly.Location) ?? AppContext.BaseDirectory;
 
-        DirectoryInfo testProjectDirectoryInfo = new DirectoryInfo(baseDir);
-        bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
+        DirectoryInfo testProjectDirectoryInfo = new(baseDir);
+        bool hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Length != 0;
         while (!hasProjectFile && testProjectDirectoryInfo.Parent != null)
         {
             testProjectDirectoryInfo = testProjectDirectoryInfo.Parent;
-            hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Any();
+            hasProjectFile = testProjectDirectoryInfo.GetFiles("*.csproj").Length != 0;
         }
 
         int numberOfTestsInCurrentClass = testClassRuntimeType
@@ -39,10 +38,5 @@ internal class XUnitTestClassInfo : ITestClassInfo
             .Sum(m => m.GetCustomAttributes(inherit: true).Count(a => a is FactAttribute and not TheoryAttribute || a is InlineDataAttribute));
 
         return new XUnitTestClassInfo(testClassRuntimeType.Name, testClassRuntimeType, testProjectDirectoryInfo, numberOfTestsInCurrentClass);
-    }
-
-    public static XUnitTestClassInfo CreateFromTestMethod(IXunitTestMethod testMethod)
-    {
-        return CreateFromType(testMethod.TestClass.Class);
     }
 }
