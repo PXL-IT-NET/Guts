@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-
 import { AssessmentScoreDropdownComponent } from "./assessment-score-dropdown.component";
 
-describe("AssessmentScoreDropDownComponent", () => {
+describe("AssessmentScoreDropdownComponent", () => {
   let component: AssessmentScoreDropdownComponent;
   let fixture: ComponentFixture<AssessmentScoreDropdownComponent>;
 
@@ -18,7 +17,15 @@ describe("AssessmentScoreDropDownComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
-    expect(component).toBeTruthy();
+  it("should initialize disabled=false and emit valueChange when onValueChange is called", () => {
+    expect(component.disabled).toBeFalse();
+
+    let emittedValue: number;
+    component.valueChange.subscribe((v) => (emittedValue = v));
+
+    component.onValueChange(4);
+
+    expect(component.value).toBe(4);
+    expect(emittedValue).toBe(4);
   });
 });

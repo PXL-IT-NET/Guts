@@ -159,7 +159,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   private isChapterRouteActive() {
-    return this.selectChapter != null;
+    return this.selectedChapter != null;
   }
 
   private selectChapter(chapter: ITopicModel) {
