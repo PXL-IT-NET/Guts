@@ -5,7 +5,6 @@ import { GetResult } from "../../util/result";
 import { UserProfile } from "../../viewmodels/user.model";
 import { BehaviorSubject, of } from "rxjs";
 import {
-  createChangeDetectorRefSpy,
   createRouterSpy,
 } from "../../testing/test-helpers";
 
@@ -14,7 +13,6 @@ describe("SidebarMenuComponent", () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let routerSpy: ReturnType<typeof createRouterSpy>;
   let courseServiceSpy: jasmine.SpyObj<CourseService>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
   let loggedInSubject: BehaviorSubject<boolean>;
 
   beforeEach(() => {
@@ -31,13 +29,11 @@ describe("SidebarMenuComponent", () => {
     courseServiceSpy = jasmine.createSpyObj<CourseService>("CourseService", [
       "getCourses",
     ]);
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new SidebarMenuComponent(
       authServiceSpy,
       routerSpy,
       courseServiceSpy,
-      cdrSpy,
     );
   });
 

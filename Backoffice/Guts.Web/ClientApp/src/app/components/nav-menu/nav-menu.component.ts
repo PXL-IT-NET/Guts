@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -25,7 +25,6 @@ export class NavMenuComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private periodService: PeriodService,
     private periodProvider: PeriodProvider,
-    private cdr: ChangeDetectorRef,
   ) {
     this.userProfile = new UserProfile();
     this.allPeriods = [];
@@ -44,8 +43,6 @@ export class NavMenuComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe((profile) => {
               this.userProfile = profile;
-
-              this.cdr.detectChanges();
             });
 
           this.periodService
@@ -73,15 +70,11 @@ export class NavMenuComponent implements OnInit, OnDestroy {
                     this.allPeriods[this.allPeriods.length - 1];
                 }
               }
-
-              this.cdr.detectChanges();
             });
         } else {
           // clear the user profile when logged out
           this.userProfile = new UserProfile();
         }
-
-        this.cdr.detectChanges();
       });
 
     this.periodProvider.period$
@@ -90,8 +83,6 @@ export class NavMenuComponent implements OnInit, OnDestroy {
         if (period) {
           this.selectedPeriod = period;
         }
-
-        this.cdr.detectChanges();
       });
   }
 

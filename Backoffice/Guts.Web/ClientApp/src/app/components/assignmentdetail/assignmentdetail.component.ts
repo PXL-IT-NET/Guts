@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   Input,
   OnChanges,
@@ -36,7 +35,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private assignmentService: AssignmentService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new AssignmentDetailModel();
     this.assignmentId = 0;
@@ -65,7 +63,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
       .subscribe((assignmentDetail: IAssignmentDetailModel) => {
         this.loading = false;
         this.model = new AssignmentDetailModel(assignmentDetail);
-        this.cdr.detectChanges();
       });
   }
 

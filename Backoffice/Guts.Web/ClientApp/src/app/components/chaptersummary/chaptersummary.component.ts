@@ -3,7 +3,6 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { ChapterService } from "../../services/chapter.service";
 import {
@@ -34,7 +33,6 @@ export class ChapterSummaryComponent implements OnChanges {
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new TopicSummaryModel();
     this.statistics = {
@@ -86,7 +84,6 @@ export class ChapterSummaryComponent implements OnChanges {
           );
         }
         this.loadingStatistics = false;
-        this.cdr.detectChanges();
       });
   }
 
@@ -110,7 +107,6 @@ export class ChapterSummaryComponent implements OnChanges {
           );
         }
         this.loadingSummary = false;
-        this.cdr.detectChanges();
       });
   }
 }

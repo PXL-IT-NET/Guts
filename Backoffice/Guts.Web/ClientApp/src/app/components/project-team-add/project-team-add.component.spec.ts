@@ -4,7 +4,6 @@ import { CreateResult, PostResult } from "../../util/result";
 import { TeamGenerationModel } from "../../viewmodels/team.model";
 import { of } from "rxjs";
 import {
-  createChangeDetectorRefSpy,
   createModalRefSpy,
   createToastrSpy,
 } from "../../testing/test-helpers";
@@ -14,7 +13,6 @@ describe("ProjectTeamAddComponent", () => {
   let modalRefSpy: ReturnType<typeof createModalRefSpy>;
   let projectServiceSpy: jasmine.SpyObj<ProjectService>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     modalRefSpy = createModalRefSpy();
@@ -23,13 +21,11 @@ describe("ProjectTeamAddComponent", () => {
       "addTeam",
     ]);
     toastrSpy = createToastrSpy();
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new ProjectTeamAddComponent(
       modalRefSpy as any,
       projectServiceSpy,
       toastrSpy,
-      cdrSpy,
     );
     component.courseId = 1;
     component.projectCode = "PROJ1";
@@ -76,7 +72,6 @@ describe("ProjectTeamAddComponent", () => {
       expect(modalRefSpy.hide).toHaveBeenCalled();
       expect(component.teamsAdded.emit).toHaveBeenCalled();
       expect(component.loading).toBeFalse();
-      expect(cdrSpy.detectChanges).toHaveBeenCalled();
     });
 
     it("should show toastr error when adding single team fails", () => {

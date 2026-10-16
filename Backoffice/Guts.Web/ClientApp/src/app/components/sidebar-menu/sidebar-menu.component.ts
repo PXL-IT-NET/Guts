@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
@@ -22,7 +22,6 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private courseService: CourseService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.courses = [];
     this.userProfile = new UserProfile();
@@ -42,15 +41,11 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe((profile) => {
               this.userProfile = profile;
-
-              this.cdr.detectChanges();
             });
         } else {
           this.courses = [];
           this.userProfile = new UserProfile();
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -73,8 +68,6 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
         if (result.success) {
           this.courses = result.value;
         }
-
-        this.cdr.detectChanges();
       });
   }
 

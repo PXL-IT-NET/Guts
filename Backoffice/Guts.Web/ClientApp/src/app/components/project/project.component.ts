@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
@@ -29,7 +29,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.courseId = 0;
     this.projectCode = "";
@@ -78,8 +77,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
               "System error",
             );
           }
-
-          this.cdr.detectChanges();
         });
     });
 
@@ -92,8 +89,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
         } else {
           this.selectedAssignmentId = 0;
         }
-
-        this.cdr.detectChanges();
       });
   }
 

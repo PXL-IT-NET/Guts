@@ -3,7 +3,6 @@ import {
   EventEmitter,
   Input,
   Output,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -38,7 +37,6 @@ export class ProjectAssessmentEditComponent {
     public modalRef: BsModalRef,
     private projectAssessmentService: ProjectAssessmentService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.assessmentEdited = new EventEmitter<void>();
@@ -82,8 +80,6 @@ export class ProjectAssessmentEditComponent {
             "Could not update project assessment",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 

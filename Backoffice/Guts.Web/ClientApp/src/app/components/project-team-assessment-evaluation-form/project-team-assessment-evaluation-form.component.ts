@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
@@ -25,7 +25,6 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.peerAssessments = [];
     this.projectAssessmentId = 0;
@@ -48,8 +47,6 @@ export class ProjectTeamAssessmentEvaluationFormComponent
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -90,8 +87,6 @@ export class ProjectTeamAssessmentEvaluationFormComponent
               "Cannot save assessments",
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }

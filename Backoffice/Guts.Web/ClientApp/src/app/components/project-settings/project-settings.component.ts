@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from "@angular/core";
+import { Component } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -29,7 +29,6 @@ export class ProjectSettingsComponent {
     private projectService: ProjectService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.courseId = 0;
@@ -69,7 +68,6 @@ export class ProjectSettingsComponent {
               "System error",
             );
           }
-          this.cdr.detectChanges();
         },
       });
   }
@@ -93,7 +91,6 @@ export class ProjectSettingsComponent {
               "Could not update project",
             );
           }
-          this.cdr.detectChanges();
         },
       });
   }

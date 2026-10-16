@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
@@ -45,7 +44,6 @@ export class ChapterComponent implements OnInit, OnDestroy {
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.userClick$ = new Subject<string>();
 
@@ -90,7 +88,6 @@ export class ChapterComponent implements OnInit, OnDestroy {
               "System error",
             );
           }
-          this.cdr.detectChanges();
         });
     });
 

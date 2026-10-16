@@ -1,4 +1,4 @@
-import { Component, ViewChild, ChangeDetectorRef } from "@angular/core";
+import { Component, ViewChild } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { ForgotPasswordModel } from "../../viewmodels/forgotpassword.model";
 import { RecaptchaDirective } from "../../directives/recaptcha.directive";
@@ -16,10 +16,7 @@ export class ForgotPasswordComponent {
   @ViewChild(RecaptchaDirective, { static: false })
   public captcha?: RecaptchaDirective;
 
-  constructor(
-    private authenticationService: AuthService,
-    private cdr: ChangeDetectorRef,
-  ) {
+  constructor(private authenticationService: AuthService) {
     this.model = {
       email: "",
       captchaToken: "",
@@ -45,8 +42,6 @@ export class ForgotPasswordComponent {
           if (this.captcha) this.captcha.reset();
         }
         this.loading = false;
-
-        this.cdr.detectChanges();
       });
   }
 

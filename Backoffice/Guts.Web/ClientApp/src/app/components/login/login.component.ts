@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
@@ -20,7 +20,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private authenticationService: AuthService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new LoginModel();
 
@@ -42,7 +41,6 @@ export class LoginComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((result) => {
         this.handleLoginResult(result);
-        this.cdr.detectChanges();
       });
   }
 
@@ -56,8 +54,6 @@ export class LoginComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
           this.router.navigate(["/"]);
-
-          this.cdr.detectChanges();
         });
     }
   }

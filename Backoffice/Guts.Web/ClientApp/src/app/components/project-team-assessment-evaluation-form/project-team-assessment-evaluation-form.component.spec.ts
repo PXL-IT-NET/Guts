@@ -5,7 +5,6 @@ import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model"
 import { of } from "rxjs";
 import {
   ActivatedRouteStub,
-  createChangeDetectorRefSpy,
   createRouterSpy,
   createToastrSpy,
 } from "../../testing/test-helpers";
@@ -16,7 +15,6 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
   let routeStub: ActivatedRouteStub;
   let routerSpy: ReturnType<typeof createRouterSpy>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     serviceSpy = jasmine.createSpyObj<ProjectTeamAssessmentService>(
@@ -26,14 +24,12 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
     routeStub = new ActivatedRouteStub({ assessmentId: 5, teamId: 10 });
     routerSpy = createRouterSpy();
     toastrSpy = createToastrSpy();
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new ProjectTeamAssessmentEvaluationFormComponent(
       serviceSpy,
       routeStub as any,
       routerSpy,
       toastrSpy,
-      cdrSpy,
     );
   });
 
@@ -65,7 +61,6 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
 
     expect(serviceSpy.getPeerAssessmentsOfUser).toHaveBeenCalledWith(5, 10);
     expect(component.peerAssessments).toEqual(assessments);
-    expect(cdrSpy.detectChanges).toHaveBeenCalled();
   });
 
   it("should show toastr error when loading peer assessments fails", () => {

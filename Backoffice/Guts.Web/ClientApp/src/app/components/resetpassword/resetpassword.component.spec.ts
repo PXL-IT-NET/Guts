@@ -4,14 +4,12 @@ import { PostResult } from "../../util/result";
 import { of } from "rxjs";
 import {
   ActivatedRouteStub,
-  createChangeDetectorRefSpy,
 } from "../../testing/test-helpers";
 
 describe("ResetPasswordComponent", () => {
   let component: ResetPasswordComponent;
   let routeStub: ActivatedRouteStub;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     routeStub = new ActivatedRouteStub(
@@ -21,12 +19,10 @@ describe("ResetPasswordComponent", () => {
     authServiceSpy = jasmine.createSpyObj<AuthService>("AuthService", [
       "resetPassword",
     ]);
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new ResetPasswordComponent(
       routeStub as any,
       authServiceSpy,
-      cdrSpy,
     );
   });
 
@@ -59,7 +55,6 @@ describe("ResetPasswordComponent", () => {
     expect(authServiceSpy.resetPassword).toHaveBeenCalledWith(component.model);
     expect(component.success).toBeTrue();
     expect(component.loading).toBeFalse();
-    expect(cdrSpy.detectChanges).toHaveBeenCalled();
   });
 
   it("should set error message when resetPassword fails", () => {

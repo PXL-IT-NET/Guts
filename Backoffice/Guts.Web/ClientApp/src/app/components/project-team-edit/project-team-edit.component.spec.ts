@@ -3,7 +3,6 @@ import { ProjectService } from "../../services";
 import { PostResult } from "../../util/result";
 import { of } from "rxjs";
 import {
-  createChangeDetectorRefSpy,
   createModalRefSpy,
   createToastrSpy,
 } from "../../testing/test-helpers";
@@ -13,7 +12,6 @@ describe("ProjectTeamEditComponent", () => {
   let modalRefSpy: ReturnType<typeof createModalRefSpy>;
   let projectServiceSpy: jasmine.SpyObj<ProjectService>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     modalRefSpy = createModalRefSpy();
@@ -22,13 +20,11 @@ describe("ProjectTeamEditComponent", () => {
       "removeFromTeam",
     ]);
     toastrSpy = createToastrSpy();
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new ProjectTeamEditComponent(
       modalRefSpy as any,
       projectServiceSpy,
       toastrSpy,
-      cdrSpy,
     );
     component.courseId = 1;
     component.projectCode = "PROJ1";
@@ -71,7 +67,6 @@ describe("ProjectTeamEditComponent", () => {
     );
     expect(modalRefSpy.hide).toHaveBeenCalled();
     expect(component.loading).toBeFalse();
-    expect(cdrSpy.detectChanges).toHaveBeenCalled();
   });
 
   it("should show toastr error when updateTeam fails", () => {
@@ -104,7 +99,6 @@ describe("ProjectTeamEditComponent", () => {
       );
       expect(component.team.members.length).toBe(1);
       expect(component.team.members[0].userId).toBe(101);
-      expect(cdrSpy.detectChanges).toHaveBeenCalled();
     });
 
     it("should not call removeFromTeam when confirmation is cancelled", () => {

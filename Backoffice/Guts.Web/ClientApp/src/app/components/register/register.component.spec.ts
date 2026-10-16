@@ -3,7 +3,6 @@ import { AuthService } from "../../services/auth.service";
 import { PostResult } from "../../util/result";
 import { of } from "rxjs";
 import {
-  createChangeDetectorRefSpy,
   createRouterSpy,
 } from "../../testing/test-helpers";
 
@@ -11,16 +10,14 @@ describe("RegisterComponent", () => {
   let component: RegisterComponent;
   let routerSpy: ReturnType<typeof createRouterSpy>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     routerSpy = createRouterSpy();
     authServiceSpy = jasmine.createSpyObj<AuthService>("AuthService", [
       "register",
     ]);
-    cdrSpy = createChangeDetectorRefSpy();
 
-    component = new RegisterComponent(routerSpy, authServiceSpy, cdrSpy);
+    component = new RegisterComponent(routerSpy, authServiceSpy);
   });
 
   it("should set captchaToken when resolved is called", () => {
@@ -60,7 +57,6 @@ describe("RegisterComponent", () => {
     expect(authServiceSpy.register).toHaveBeenCalledWith(component.model);
     expect(component.registered).toBeTrue();
     expect(component.loading).toBeFalse();
-    expect(cdrSpy.detectChanges).toHaveBeenCalled();
   });
 
   it("should set error and reset captcha when registration fails", () => {

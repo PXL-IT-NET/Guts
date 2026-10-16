@@ -1,4 +1,3 @@
-import { ChangeDetectorRef } from "@angular/core";
 import { ActivatedRoute, Params, Router } from "@angular/router";
 import { BsModalRef, BsModalService } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
@@ -100,12 +99,5 @@ export function createModalServiceSpy(
   ]);
   service.show.and.returnValue(modalRef);
   return service;
-}
-
-export function createChangeDetectorRefSpy(): jasmine.SpyObj<ChangeDetectorRef> {
-  return jasmine.createSpyObj<ChangeDetectorRef>("ChangeDetectorRef", [
-    "detectChanges",
-    "markForCheck",
-  ]);
 }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from "@angular/core";
+import { Component } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -33,7 +33,6 @@ export class ChapterSettingsComponent {
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.courseId = 0;
@@ -80,7 +79,6 @@ export class ChapterSettingsComponent {
               "System error",
             );
           }
-          this.cdr.detectChanges();
         },
       });
   }
@@ -104,7 +102,6 @@ export class ChapterSettingsComponent {
               "Could not update chapter",
             );
           }
-          this.cdr.detectChanges();
         },
       });
   }

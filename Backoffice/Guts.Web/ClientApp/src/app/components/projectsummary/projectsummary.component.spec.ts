@@ -9,7 +9,6 @@ import { SimpleChange } from "@angular/core";
 import moment from "moment";
 import { of } from "rxjs";
 import {
-  createChangeDetectorRefSpy,
   createToastrSpy,
 } from "../../testing/test-helpers";
 
@@ -17,7 +16,6 @@ describe("ProjectSummaryComponent", () => {
   let component: ProjectSummaryComponent;
   let projectServiceSpy: jasmine.SpyObj<ProjectService>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   beforeEach(() => {
     projectServiceSpy = jasmine.createSpyObj<ProjectService>("ProjectService", [
@@ -25,12 +23,10 @@ describe("ProjectSummaryComponent", () => {
       "getProjectStatistics",
     ]);
     toastrSpy = createToastrSpy();
-    cdrSpy = createChangeDetectorRefSpy();
 
     component = new ProjectSummaryComponent(
       projectServiceSpy,
       toastrSpy,
-      cdrSpy,
     );
   });
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { takeUntil } from "rxjs/internal/operators/takeUntil";
 import { Subject } from "rxjs/internal/Subject";
 import { AuthService } from "src/app/services/auth.service";
@@ -14,10 +14,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   public userProfile: UserProfile;
 
-  constructor(
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef,
-  ) {
+  constructor(private authService: AuthService) {
     this.userProfile = new UserProfile();
   }
 
@@ -33,15 +30,11 @@ export class HomeComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe((profile) => {
               this.userProfile = profile;
-
-              this.cdr.detectChanges();
             });
         } else {
           // clear the user profile when logged out
           this.userProfile = new UserProfile();
         }
-
-        this.cdr.detectChanges();
       });
   }
 

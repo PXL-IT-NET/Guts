@@ -1,3 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Guts.Bootstrapper")]
 [assembly: InternalsVisibleTo("Guts.Business.Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+

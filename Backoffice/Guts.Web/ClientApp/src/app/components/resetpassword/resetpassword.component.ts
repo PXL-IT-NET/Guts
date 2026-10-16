@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { ResetPasswordModel } from "../../viewmodels/resetpassword.model";
@@ -16,7 +16,6 @@ export class ResetPasswordComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private authenticationService: AuthService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.error = "";
     this.success = false;
@@ -50,8 +49,6 @@ export class ResetPasswordComponent implements OnInit {
         this.error = result.message || "Resetting password failed";
       }
       this.loading = false;
-
-      this.cdr.detectChanges();
     });
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { Subject } from "rxjs";
@@ -17,7 +17,6 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
   constructor(
     private activatedRoute: ActivatedRoute,
     private authenticationService: AuthService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.message = "Confirming email...";
     this.confirmed = false;
@@ -47,8 +46,6 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
                 "Something went wrong while validating your email address.";
             }
             this.loading = false;
-
-            this.cdr.detectChanges();
           });
       });
   }

@@ -5,7 +5,6 @@ import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.mod
 import { of } from "rxjs";
 import {
   ActivatedRouteStub,
-  createChangeDetectorRefSpy,
   createToastrSpy,
 } from "../../testing/test-helpers";
 
@@ -15,7 +14,6 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
   let projectServiceSpy: jasmine.SpyObj<ProjectService>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
   let routeStub: ActivatedRouteStub;
-  let cdrSpy: ReturnType<typeof createChangeDetectorRefSpy>;
 
   const sampleResult: IAssessmentResultModel = {
     subject: { id: 1, fullName: "Alice A" },
@@ -78,7 +76,6 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
       "getProjectDetails",
     ]);
     toastrSpy = createToastrSpy();
-    cdrSpy = createChangeDetectorRefSpy();
 
     const parentRoute = new ActivatedRouteStub({ courseId: "1" });
     routeStub = new ActivatedRouteStub(
@@ -92,7 +89,6 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
       projectServiceSpy,
       toastrSpy,
       routeStub as any,
-      cdrSpy,
     );
   });
 

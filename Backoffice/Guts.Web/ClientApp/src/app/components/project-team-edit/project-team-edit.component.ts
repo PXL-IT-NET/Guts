@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy } from "@angular/core";
+import { Component, Input, OnDestroy } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -34,7 +34,6 @@ export class ProjectTeamEditComponent implements OnDestroy {
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
   }
@@ -67,8 +66,6 @@ export class ProjectTeamEditComponent implements OnDestroy {
             "Could not update team",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -102,8 +99,6 @@ export class ProjectTeamEditComponent implements OnDestroy {
               "Could not remove user from team",
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }

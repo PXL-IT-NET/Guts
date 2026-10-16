@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from "@angular/core";
+import { Component } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { ChangePasswordModel } from "../../viewmodels/changepassword.model";
 
@@ -12,10 +12,7 @@ export class ChangePasswordComponent {
   public loading: boolean;
   public model: ChangePasswordModel;
 
-  constructor(
-    private authenticationService: AuthService,
-    private cdr: ChangeDetectorRef,
-  ) {
+  constructor(private authenticationService: AuthService) {
     this.error = "";
     this.success = false;
     this.loading = false;
@@ -43,7 +40,6 @@ export class ChangePasswordComponent {
         }
 
         this.loading = false;
-        this.cdr.detectChanges();
       });
   }
 }
