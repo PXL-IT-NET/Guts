@@ -100,5 +100,17 @@ describe("ChapterSummaryComponent", () => {
 
     expect(toastrSpy.error).toHaveBeenCalledTimes(2);
   });
+
+  it("ngOnChanges should not call getChapterSummary when userId is undefined (e.g. selectedUser is null)", () => {
+    component.courseId = 2;
+    component.chapterCode = "Ch1";
+    component.userId = undefined;
+
+    component.ngOnChanges({
+      userId: new SimpleChange(5, undefined, false),
+    });
+
+    expect(chapterServiceSpy.getChapterSummary).not.toHaveBeenCalled();
+  });
 });
 

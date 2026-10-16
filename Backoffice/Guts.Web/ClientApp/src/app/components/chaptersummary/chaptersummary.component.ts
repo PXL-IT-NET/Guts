@@ -51,7 +51,7 @@ export class ChapterSummaryComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.courseId <= 0) return;
+    if (!this.courseId || this.courseId <= 0) return;
     let chapterHasValue: boolean =
       this.chapterCode && this.chapterCode.length > 0;
     if (!chapterHasValue) return;
@@ -66,7 +66,7 @@ export class ChapterSummaryComponent implements OnChanges {
       this.loadChapterStatistics();
     }
 
-    if (this.userId <= 0) return;
+    if (!this.userId || this.userId <= 0) return;
     this.loadChapterSummary();
   }
 
