@@ -145,5 +145,28 @@ namespace Guts.Business.Tests.Services
             _testRunRepositoryMock.Verify(repo => repo.GetByIdAsync(storedTestRun.Id), Times.Once);
             Assert.That(result, Is.EqualTo(storedTestRun));
         }
+
+        [Test]
+        public void RegisterRunAsync_NullSolutionFiles_ShouldSaveRunWithoutCallingSolutionFileRepository()
+        {
+            //Arrange
+            var toBeSavedTestRun = new TestRun();
+            var savedTestRun = new TestRun
+            {
+                Id = _random.NextPositive()
+            };
+            _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun)).ReturnsAsync(savedTestRun);
+
+            //Act
+            var result = _service.RegisterRunAsync(toBeSavedTestRun, null).Result;
+
+            //Assert
+            Assert.That(result, Is.SameAs(savedTestRun));
+            _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
+            _solutionFileRepositoryMock.Verify(
+                repo => repo.GetLatestForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilePath>()),
+                Times.Never);
+            _solutionFileRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<SolutionFile>()), Times.Never);
+        }
     }
 }

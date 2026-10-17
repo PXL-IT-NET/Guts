@@ -37,5 +37,77 @@ namespace Guts.Common.Tests.Extensions
             // Assert
             Assert.AreEqual(string.Empty, result);
         }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void ToValidFilePath_NullOrEmpty_ReturnsTripleUnderscore(string? input)
+        {
+            // Act
+            string result = input!.ToValidFilePath();
+
+            // Assert
+            Assert.AreEqual("___", result);
+        }
+
+        [TestCase("  my file name.cs  ", "my_file_name.cs")]
+        [TestCase("folder/sub folder/file.txt", "folder/sub_folder/file.txt")]
+        public void ToValidFilePath_TrimsAndReplacesSpacesWithUnderscores(string input, string expected)
+        {
+            // Act
+            string result = input.ToValidFilePath();
+
+            // Assert
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void ToValidFilePath_ContainsInvalidPathChars_ReplacesInvalidCharsWithUnderscores()
+        {
+            // Arrange
+            char invalidChar = Path.GetInvalidPathChars().First();
+            string input = $"folder{invalidChar}file.cs";
+
+            // Act
+            string result = input.ToValidFilePath();
+
+            // Assert
+            Assert.AreEqual("folder_file.cs", result);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void IsValidFilePath_NullOrEmpty_ReturnsFalse(string? input)
+        {
+            // Act
+            bool result = input!.IsValidFilePath();
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void IsValidFilePath_ContainsInvalidPathChar_ReturnsFalse()
+        {
+            // Arrange
+            char invalidChar = Path.GetInvalidPathChars().First();
+            string input = $"folder{invalidChar}file.cs";
+
+            // Act
+            bool result = input.IsValidFilePath();
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        [TestCase("folder/file.cs")]
+        [TestCase("MyClass.cs")]
+        public void IsValidFilePath_ValidPath_ReturnsTrue(string input)
+        {
+            // Act
+            bool result = input.IsValidFilePath();
+
+            // Assert
+            Assert.IsTrue(result);
+        }
     }
 }

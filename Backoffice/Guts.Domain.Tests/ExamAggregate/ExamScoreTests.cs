@@ -61,6 +61,50 @@ namespace Guts.Domain.Tests.ExamAggregate
         }
 
         [Test]
+        public void Constructor_NullFirstAndLastName_ShouldCoalesceToEmptyString()
+        {
+            //Arrange
+            var user = new UserBuilder()
+                .WithFirstName(null)
+                .WithLastName(null)
+                .Build();
+            var exam = new ExamBuilder().Build();
+
+            //Act
+            var examScore = new ExamScore(user, exam);
+
+            //Assert
+            Assert.That(examScore.FirstName, Is.EqualTo(string.Empty));
+            Assert.That(examScore.LastName, Is.EqualTo(string.Empty));
+        }
+
+        [Test]
+        public void AddExamPartScore_ShouldAccumulateScoreAndCalculateRoundedNormalizedScore()
+        {
+            //Arrange
+            var user = new UserBuilder().Build();
+            var examPartMock = new Mock<IExamPart>();
+            examPartMock.SetupGet(p => p.MaximumScore).Returns(40);
+            var exam = new ExamBuilder().WithExamPart(examPartMock.Object).Build();
+            var examScore = new ExamScore(user, exam);
+
+            var partScore1 = new Mock<IExamPartScore>();
+            partScore1.SetupGet(s => s.Score).Returns(15);
+            var partScore2 = new Mock<IExamPartScore>();
+            partScore2.SetupGet(s => s.Score).Returns(10);
+
+            //Act
+            examScore.AddExamPartScore(partScore1.Object);
+            examScore.AddExamPartScore(partScore2.Object);
+
+            //Assert
+            Assert.That(examScore.ExamPartScores, Has.Count.EqualTo(2));
+            Assert.That(examScore.Score, Is.EqualTo(25));
+            // 25 * (20 / 40) = 12.5 -> rounds away from zero to 13
+            Assert.That(examScore.NormalizedScore, Is.EqualTo(13));
+        }
+
+        [Test]
         public void ToCsvRecord_ShouldContainTheUserDataAndScoreTotals()
         {
             //Arrange

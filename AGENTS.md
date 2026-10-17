@@ -46,13 +46,15 @@ This repository is split into three top-level areas:
    - Produce modular, testable, and expandable code that respects the **SOLID** principles.
    - Favor dependency injection (via constructor injection and narrow interfaces) over static state or tight coupling.
    - Keep classes focused on a single responsibility and design abstractions so new test runners, domain rules, or UI features can be added without modifying unrelated components.
-2. **Domain-Driven Design (DDD) in the Backoffice**:
+2. **Keep code DRY**:
+   - Avoid duplicating logic. If a new feature requires changes in multiple areas, consider encapsulating the common behavior.
+3. **Domain-Driven Design (DDD) in the Backoffice**:
    - Strive to apply DDD principles in the Backoffice API and domain model. Encapsulate business rules and invariants inside Aggregates, Entities, Value Objects, and Domain Factories in `Guts.Domain` rather than leaking domain logic into controllers or data repositories.
    - Read [`Backoffice/Agents.md`](Backoffice/Agents.md) before making any changes to `Backoffice/`.
-3. **Verify Changes by Running Tests**:
+4. **Verify Changes by Running Tests**:
    - Always run the relevant automated test suite(s) after making changes and ensure all tests pass before considering a task complete.
    - Add or update unit tests whenever introducing new features, fixing bugs, or changing domain/business behavior.
-4. **Test Frontend Functionality**:
+5. **Test Frontend Functionality**:
    - Every new or modified Angular component, service, guard, or pipe in `Backoffice/Guts.Web/ClientApp` must include corresponding unit tests (`*.spec.ts`) verified via Karma/Jasmine.
 
 ---

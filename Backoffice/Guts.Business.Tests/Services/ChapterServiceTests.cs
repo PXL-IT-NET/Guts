@@ -21,6 +21,7 @@ namespace Guts.Business.Tests.Services
         private ChapterService _service;
 
         private Mock<IChapterRepository> _chapterRepositoryMock;
+        private Mock<ITopicRepository> _topicRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<ICourseRepository> _courseRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
@@ -29,12 +30,13 @@ namespace Guts.Business.Tests.Services
         public void Setup()
         {
             _chapterRepositoryMock = new Mock<IChapterRepository>();
+            _topicRepositoryMock = new Mock<ITopicRepository>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _courseRepositoryMock = new Mock<ICourseRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
 
             _service = new ChapterService(_chapterRepositoryMock.Object,
-                null,
+                _topicRepositoryMock.Object,
                 _courseRepositoryMock.Object, 
                 _periodRepositoryMock.Object,
                 _assignmentServiceMock.Object);
@@ -269,6 +271,41 @@ namespace Guts.Business.Tests.Services
                 service => service.GetAssignmentUserStatisticsAsync(
                     It.Is<int>(assignmentId => chapter.Assignments.Any(e => e.Id == assignmentId)), nowUtc),
                 Times.Exactly(numberOfAssignments));
+        }
+
+        [Test]
+        public void UpdateChapterAsync_ShouldUpdateChapterForCurrentPeriod()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            int courseId = Random.Shared.NextPositive();
+            string chapterCode = Random.Shared.NextString();
+            string description = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+
+            //Act
+            _service.UpdateChapterAsync(courseId, chapterCode, description).Wait();
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetPeriodAsync(null), Times.Once);
+            _topicRepositoryMock.Verify(repo => repo.UpdateAsync(courseId, chapterCode, existingPeriod.Id, description), Times.Once);
+        }
+
+        [Test]
+        public void UpdateChapterAsync_ShouldThrowDataNotFoundExceptionWhenNoCurrentPeriodIsFound()
+        {
+            //Arrange
+            int courseId = Random.Shared.NextPositive();
+            string chapterCode = Random.Shared.NextString();
+            string description = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ThrowsAsync(new DataNotFoundException());
+
+            //Act + Assert
+            Assert.That(() => _service.UpdateChapterAsync(courseId, chapterCode, description),
+                Throws.InstanceOf<DataNotFoundException>());
+            _topicRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         }
     }
 }

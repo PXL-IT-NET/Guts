@@ -425,5 +425,107 @@ namespace Guts.Business.Tests.Services
            
             Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.WriterName)));
         }
+
+        [Test]
+        public void GetOrCreateAssignmentAsync_ShouldReturnExistingAssignmentIfItExists()
+        {
+            //Arrange
+            int topicId = _random.NextPositive();
+            var existingAssignment = new AssignmentBuilder().WithId().Build();
+
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, existingAssignment.Code))
+                .ReturnsAsync(existingAssignment);
+
+            //Act
+            var result = _service.GetOrCreateAssignmentAsync(topicId, existingAssignment.Code).Result;
+
+            //Assert
+            Assert.That(result, Is.SameAs(existingAssignment));
+            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, existingAssignment.Code), Times.Once);
+            _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Never);
+        }
+
+        [Test]
+        public void GetOrCreateAssignmentAsync_ShouldCreateAndReturnNewAssignmentIfItDoesNotExist()
+        {
+            //Arrange
+            int topicId = _random.NextPositive();
+            var addedAssignment = new AssignmentBuilder().WithId().Build();
+
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, addedAssignment.Code))
+                .ThrowsAsync(new DataNotFoundException());
+            _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>()))
+                .ReturnsAsync(addedAssignment);
+
+            //Act
+            var result = _service.GetOrCreateAssignmentAsync(topicId, addedAssignment.Code).Result;
+
+            //Assert
+            Assert.That(result, Is.SameAs(addedAssignment));
+            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, addedAssignment.Code), Times.Once);
+            _assignmentRepositoryMock.Verify(
+                repo => repo.AddAsync(It.Is<Assignment>(a => a.TopicId == topicId && a.Code == addedAssignment.Code)),
+                Times.Once);
+        }
+
+        [Test]
+        public void GetUserTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
+        {
+            //Arrange
+            int assignmentId = _random.NextPositive();
+            int userId = _random.NextPositive();
+            DateTime now = DateTime.UtcNow;
+
+            _testRunRepositoryMock
+                .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now))
+                .ReturnsAsync(new List<TestRun>());
+
+            //Act
+            var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
+
+            //Assert
+            Assert.That(testRunInfo, Is.Not.Null);
+            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
+            Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
+            Assert.That(testRunInfo.LastRunDateTime, Is.Null);
+        }
+
+        [Test]
+        public void GetTeamTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
+        {
+            //Arrange
+            int assignmentId = _random.NextPositive();
+            int teamId = _random.NextPositive();
+            DateTime now = DateTime.UtcNow;
+
+            _testRunRepositoryMock
+                .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now))
+                .ReturnsAsync(new List<TestRun>());
+
+            //Act
+            var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
+
+            //Assert
+            Assert.That(testRunInfo, Is.Not.Null);
+            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
+            Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
+            Assert.That(testRunInfo.LastRunDateTime, Is.Null);
+        }
+
+        [Test]
+        public void ValidateTestCodeHashAsyncShouldReturnFalseForLectorWhenHashIsEmptyAndAssignmentHasHashes()
+        {
+            //Arrange
+            var existingHash = Guid.NewGuid().ToString();
+            var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(existingHash).Build();
+
+            //Act
+            var isValid = _service.ValidateTestCodeHashAsync(string.Empty, assignment, true).Result;
+
+            //Assert
+            Assert.That(isValid, Is.False);
+            Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
+            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+        }
     }
 }

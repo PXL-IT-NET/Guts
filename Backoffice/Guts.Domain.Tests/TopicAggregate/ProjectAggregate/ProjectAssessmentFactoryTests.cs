@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -111,6 +111,74 @@ namespace Guts.Domain.Tests.TopicAggregate.ProjectAggregate
 
             //Act + Assert
             Assert.That(() => _factory.CreateNew(projectId, description, openOnUtc, deadlineUtc), Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void Update_ValidInput_ShouldUpdatePropertiesCorrectly()
+        {
+            //Arrange
+            IProjectAssessment assessment = _factory.CreateNew(Random.Shared.NextPositive(), Random.Shared.NextString(), DateTime.UtcNow, DateTime.UtcNow.AddDays(10));
+            string newDescription = Random.Shared.NextString();
+            DateTime newOpenOnUtc = DateTime.UtcNow.AddDays(2);
+            DateTime newDeadlineUtc = newOpenOnUtc.AddDays(14);
+
+            //Act
+            assessment.Update(newDescription, newOpenOnUtc, newDeadlineUtc);
+
+            //Assert
+            Assert.That(assessment.Description, Is.EqualTo(newDescription));
+            Assert.That(assessment.OpenOnUtc, Is.EqualTo(newOpenOnUtc));
+            Assert.That(assessment.DeadlineUtc, Is.EqualTo(newDeadlineUtc));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void Update_EmptyDescription_ShouldThrowContractException(string invalidDescription)
+        {
+            //Arrange
+            IProjectAssessment assessment = _factory.CreateNew(Random.Shared.NextPositive(), Random.Shared.NextString(), DateTime.UtcNow, DateTime.UtcNow.AddDays(10));
+            DateTime newOpenOnUtc = DateTime.UtcNow.AddDays(1);
+            DateTime newDeadlineUtc = newOpenOnUtc.AddDays(5);
+
+            //Act + Assert
+            Assert.That(() => assessment.Update(invalidDescription, newOpenOnUtc, newDeadlineUtc), Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void Update_OpenOnUtcIsNotUtc_ShouldThrowContractException()
+        {
+            //Arrange
+            IProjectAssessment assessment = _factory.CreateNew(Random.Shared.NextPositive(), Random.Shared.NextString(), DateTime.UtcNow, DateTime.UtcNow.AddDays(10));
+            DateTime localOpenOn = DateTime.Now.AddDays(1);
+            DateTime newDeadlineUtc = DateTime.UtcNow.AddDays(5);
+
+            //Act + Assert
+            Assert.That(() => assessment.Update(Random.Shared.NextString(), localOpenOn, newDeadlineUtc), Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void Update_DeadlineUtcIsNotUtc_ShouldThrowContractException()
+        {
+            //Arrange
+            IProjectAssessment assessment = _factory.CreateNew(Random.Shared.NextPositive(), Random.Shared.NextString(), DateTime.UtcNow, DateTime.UtcNow.AddDays(10));
+            DateTime newOpenOnUtc = DateTime.UtcNow.AddDays(1);
+            DateTime localDeadline = DateTime.Now.AddDays(5);
+
+            //Act + Assert
+            Assert.That(() => assessment.Update(Random.Shared.NextString(), newOpenOnUtc, localDeadline), Throws.InstanceOf<ContractException>());
+        }
+
+        [TestCase(0)]
+        [TestCase(-5)]
+        public void Update_OpenOnUtcGreaterOrEqualToDeadlineUtc_ShouldThrowContractException(int minutesOffset)
+        {
+            //Arrange
+            IProjectAssessment assessment = _factory.CreateNew(Random.Shared.NextPositive(), Random.Shared.NextString(), DateTime.UtcNow, DateTime.UtcNow.AddDays(10));
+            DateTime newOpenOnUtc = DateTime.UtcNow.AddDays(1);
+            DateTime newDeadlineUtc = newOpenOnUtc.AddMinutes(minutesOffset);
+
+            //Act + Assert
+            Assert.That(() => assessment.Update(Random.Shared.NextString(), newOpenOnUtc, newDeadlineUtc), Throws.InstanceOf<ContractException>());
         }
     }
 }

@@ -25,6 +25,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IProjectRepository> _projectRepositoryMock;
         private Mock<ICourseRepository> _courseRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
+        private Mock<ITopicRepository> _topicRepositoryMock;
         private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<IAssignmentService> _assignmentServiceMock;
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
@@ -38,6 +39,7 @@ namespace Guts.Business.Tests.Services
             _projectRepositoryMock = new Mock<IProjectRepository>();
             _courseRepositoryMock = new Mock<ICourseRepository>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
+            _topicRepositoryMock = new Mock<ITopicRepository>();
             _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _assignmentServiceMock = new Mock<IAssignmentService>();
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
@@ -48,7 +50,7 @@ namespace Guts.Business.Tests.Services
             _service = new ProjectService(_projectRepositoryMock.Object,
                 _courseRepositoryMock.Object,
                 _periodRepositoryMock.Object,
-                null,
+                _topicRepositoryMock.Object,
                 _projectTeamRepositoryMock.Object,
                 _solutionFileRepositoryMock.Object,
                 _assignmentServiceMock.Object,
@@ -516,6 +518,295 @@ namespace Guts.Business.Tests.Services
             Assert.That(
                 () => _service.RemoveUserFromProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamId,
                     userId), Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void CreateProjectAsync_ProjectDoesNotExist_ShouldCreateAndAddProject()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            int courseId = Random.Shared.NextPositive();
+            Code projectCode = Random.Shared.NextString();
+            string description = Random.Shared.NextString();
+            Project addedProject = new ProjectBuilder().WithId().WithDescription(description).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(courseId, projectCode, existingPeriod.Id))
+                .ThrowsAsync(new DataNotFoundException());
+            _projectRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Project>())).ReturnsAsync(addedProject);
+
+            //Act
+            IProject result = _service.CreateProjectAsync(courseId, projectCode, description).Result;
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetPeriodAsync(null), Times.Once);
+            _projectRepositoryMock.Verify(repo => repo.GetSingleAsync(courseId, projectCode, existingPeriod.Id), Times.Once);
+            _projectRepositoryMock.Verify(
+                repo => repo.AddAsync(It.Is<Project>(p =>
+                    p.CourseId == courseId &&
+                    p.PeriodId == existingPeriod.Id &&
+                    p.Code == projectCode &&
+                    p.Description == description)),
+                Times.Once);
+            Assert.That(result, Is.SameAs(addedProject));
+        }
+
+        [Test]
+        public void CreateProjectAsync_ProjectAlreadyExists_ShouldThrowContractException()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            string description = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+
+            //Act + Assert
+            Assert.That(() => _service.CreateProjectAsync(existingProject.CourseId, existingProject.Code, description),
+                Throws.InstanceOf<ContractException>());
+            _projectRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Project>()), Times.Never);
+        }
+
+        [Test]
+        public void UpdateProjectAsync_ShouldUpdateProjectForCurrentPeriod()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            int courseId = Random.Shared.NextPositive();
+            string projectCode = Random.Shared.NextString();
+            string description = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+
+            //Act
+            _service.UpdateProjectAsync(courseId, projectCode, description).Wait();
+
+            //Assert
+            _periodRepositoryMock.Verify(repo => repo.GetPeriodAsync(null), Times.Once);
+            _topicRepositoryMock.Verify(repo => repo.UpdateAsync(courseId, projectCode, existingPeriod.Id, description), Times.Once);
+        }
+
+        [Test]
+        public void UpdateProjectAsync_NoActivePeriod_ShouldThrowDataNotFoundException()
+        {
+            //Arrange
+            int courseId = Random.Shared.NextPositive();
+            string projectCode = Random.Shared.NextString();
+            string description = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ThrowsAsync(new DataNotFoundException());
+
+            //Act + Assert
+            Assert.That(() => _service.UpdateProjectAsync(courseId, projectCode, description),
+                Throws.InstanceOf<DataNotFoundException>());
+            _topicRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [TestCase(0, "PROJ1", 1)]
+        [TestCase(-1, "PROJ1", 1)]
+        [TestCase(1, "", 1)]
+        [TestCase(1, null, 1)]
+        [TestCase(1, "PROJ1", 0)]
+        [TestCase(1, "PROJ1", -5)]
+        public void LoadProjectForUserAsync_InvalidArguments_ShouldThrowContractException(int courseId, string projectCode, int userId)
+        {
+            //Act + Assert
+            Assert.That(() => _service.LoadProjectForUserAsync(courseId, projectCode, userId),
+                Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void AddProjectTeamAsync_ValidTeam_ShouldAddAndReturnTeam()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().WithTeams(1).Build();
+            string teamName = Random.Shared.NextString();
+            ProjectTeam addedTeam = new ProjectTeamBuilder().WithId().WithName(teamName).WithProject(existingProject).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<IProjectTeam>()))
+                .ReturnsAsync(addedTeam);
+
+            //Act
+            IProjectTeam result = _service.AddProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamName).Result;
+
+            //Assert
+            _projectTeamRepositoryMock.Verify(
+                repo => repo.AddAsync(It.Is<ProjectTeam>(t => t.Name == teamName && t.ProjectId == existingProject.Id)),
+                Times.Once);
+            Assert.That(result, Is.SameAs(addedTeam));
+        }
+
+        [Test]
+        public void AddProjectTeamAsync_TeamWithSameNameAlreadyExists_ShouldThrowContractException()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            string existingTeamName = "Team Alpha";
+            ProjectTeam existingTeam = new ProjectTeamBuilder().WithId().WithName(existingTeamName).Build();
+            Project existingProject = new ProjectBuilder().WithId().WithTeam(existingTeam).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.LoadWithAssignmentsAndTeamsAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+
+            //Act + Assert
+            Assert.That(() => _service.AddProjectTeamAsync(existingProject.CourseId, existingProject.Code, existingTeamName.ToUpperInvariant()),
+                Throws.InstanceOf<ContractException>());
+            _projectTeamRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<IProjectTeam>()), Times.Never);
+        }
+
+        [Test]
+        public void UpdateProjectTeamAsync_ValidTeam_ShouldUpdateTeamNameInRepository()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam teamToUpdate = new ProjectTeamBuilder().WithId().WithProject(existingProject).Build();
+            string newTeamName = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(teamToUpdate.Id))
+                .ReturnsAsync(teamToUpdate);
+
+            //Act
+            _service.UpdateProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamToUpdate.Id, newTeamName).Wait();
+
+            //Assert
+            Assert.That(teamToUpdate.Name, Is.EqualTo(newTeamName));
+            _projectTeamRepositoryMock.Verify(repo => repo.UpdateAsync(teamToUpdate), Times.Once);
+        }
+
+        [Test]
+        public void UpdateProjectTeamAsync_TeamDoesNotBelongToProject_ShouldThrowContractException()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            Project otherProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam teamToUpdate = new ProjectTeamBuilder().WithId().WithProject(otherProject).Build();
+            string newTeamName = Random.Shared.NextString();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(teamToUpdate.Id))
+                .ReturnsAsync(teamToUpdate);
+
+            //Act + Assert
+            Assert.That(() => _service.UpdateProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamToUpdate.Id, newTeamName),
+                Throws.InstanceOf<ContractException>());
+            _projectTeamRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<IProjectTeam>()), Times.Never);
+        }
+
+        [Test]
+        public void DeleteProjectTeamAsync_ValidTeam_ShouldDeleteTeamInRepository()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam teamToDelete = new ProjectTeamBuilder().WithId().WithProject(existingProject).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(teamToDelete.Id))
+                .ReturnsAsync(teamToDelete);
+
+            //Act
+            _service.DeleteProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamToDelete.Id).Wait();
+
+            //Assert
+            _projectTeamRepositoryMock.Verify(repo => repo.DeleteAsync(teamToDelete), Times.Once);
+        }
+
+        [Test]
+        public void DeleteProjectTeamAsync_TeamDoesNotBelongToProject_ShouldThrowContractException()
+        {
+            //Arrange
+            Period existingPeriod = new PeriodBuilder().WithId().Build();
+            Project existingProject = new ProjectBuilder().WithId().Build();
+            Project otherProject = new ProjectBuilder().WithId().Build();
+            ProjectTeam teamToDelete = new ProjectTeamBuilder().WithId().WithProject(otherProject).Build();
+
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
+            _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(existingProject.CourseId, existingProject.Code, existingPeriod.Id))
+                .ReturnsAsync(existingProject);
+            _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(teamToDelete.Id))
+                .ReturnsAsync(teamToDelete);
+
+            //Act + Assert
+            Assert.That(() => _service.DeleteProjectTeamAsync(existingProject.CourseId, existingProject.Code, teamToDelete.Id),
+                Throws.InstanceOf<ContractException>());
+            _projectTeamRepositoryMock.Verify(repo => repo.DeleteAsync(It.IsAny<IProjectTeam>()), Times.Never);
+        }
+
+        [Test]
+        public void GetAllSolutions_ShouldAggregateSolutionFilesAcrossAssignmentsForEachTeam()
+        {
+            //Arrange
+            Project project = new ProjectBuilder()
+                .WithId()
+                .WithTeams(2)
+                .WithAssignments(2)
+                .Build();
+            DateTime dateUtc = DateTime.UtcNow;
+
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), dateUtc))
+                .ReturnsAsync((int assignmentId, int teamId, DateTime? _) => new List<SolutionFile>
+                {
+                    new SolutionFileBuilder().WithAssignmentId(assignmentId).Build()
+                });
+
+            //Act
+            IReadOnlyList<SolutionDto> results = _service.GetAllSolutions(project, dateUtc).Result;
+
+            //Assert
+            Assert.That(results, Has.Count.EqualTo(project.Teams.Count));
+            foreach (IProjectTeam team in project.Teams)
+            {
+                SolutionDto teamSolution = results.FirstOrDefault(r => r.WriterId == team.Id);
+                Assert.That(teamSolution, Is.Not.Null);
+                Assert.That(teamSolution.WriterName, Is.EqualTo(team.Name));
+                Assert.That(teamSolution.SolutionFiles.Count(), Is.EqualTo(project.Assignments.Count));
+
+                foreach (var assignment in project.Assignments)
+                {
+                    _solutionFileRepositoryMock.Verify(
+                        repo => repo.GetAllLatestOfAssignmentForTeamAsync(assignment.Id, team.Id, dateUtc),
+                        Times.Once);
+                }
+            }
+        }
+
+        [Test]
+        public void UpdateProjectAssessmentAsync_ShouldLoadUpdateAndSaveAssessment()
+        {
+            //Arrange
+            Mock<IProjectAssessment> existingAssessmentMock = new ProjectAssessmentMockBuilder().WithId().Build();
+            IProjectAssessment existingAssessment = existingAssessmentMock.Object;
+            string description = Random.Shared.NextString();
+            DateTime openOnUtc = Random.Shared.NextDateTimeInFuture().ToUniversalTime();
+            DateTime deadlineUtc = openOnUtc.AddDays(7);
+
+            _projectAssessmentRepositoryMock.Setup(repo => repo.GetByIdAsync(existingAssessment.Id))
+                .ReturnsAsync(existingAssessment);
+
+            //Act
+            _service.UpdateProjectAssessmentAsync(existingAssessment.Id, description, openOnUtc, deadlineUtc).Wait();
+
+            //Assert
+            _projectAssessmentRepositoryMock.Verify(repo => repo.GetByIdAsync(existingAssessment.Id), Times.Once);
+            existingAssessmentMock.Verify(a => a.Update(description, openOnUtc, deadlineUtc), Times.Once);
+            _projectAssessmentRepositoryMock.Verify(repo => repo.UpdateAsync(existingAssessment), Times.Once);
         }
     }
 }

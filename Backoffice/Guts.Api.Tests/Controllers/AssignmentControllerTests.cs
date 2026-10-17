@@ -291,5 +291,194 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             _assignmentRepositoryMock.Verify(r => r.GetByIdAsync(assignmentId), Times.Once);
         }
+
+        [Test]
+        public async Task GetAssignmentResults_ShouldDelegateToGetAssignmentResultsForUserWithCallerUserId()
+        {
+            // Arrange
+            var existingAssignment = new AssignmentBuilder().WithId().Build();
+            var userId = _random.NextPositive();
+            var date = DateTime.UtcNow.AddDays(-1);
+
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id))
+                .ReturnsAsync(existingAssignment);
+
+            var assignmentResultDto = new AssignmentResultDto();
+            _assignmentServiceMock.Setup(service => service.GetResultsForUserAsync(existingAssignment.Id, userId, date.ToUniversalTime()))
+                .ReturnsAsync(assignmentResultDto);
+
+            var returnedTestRunInfo = new AssignmentTestRunInfoDto();
+            _assignmentServiceMock
+                .Setup(service => service.GetUserTestRunInfoForAssignment(existingAssignment.Id, userId, date.ToUniversalTime()))
+                .ReturnsAsync(returnedTestRunInfo);
+
+            var returnedSolutionFiles = new List<SolutionFile>();
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForUserAsync(existingAssignment.Id, userId, date.ToUniversalTime()))
+                .ReturnsAsync(returnedSolutionFiles);
+
+            var returnedModel = new AssignmentDetailModel();
+            _assignmentConverterMock
+                .Setup(converter => converter.ToAssignmentDetailModel(
+                    existingAssignment, returnedTestRunInfo, assignmentResultDto.TestResults, returnedSolutionFiles))
+                .Returns(returnedModel);
+
+            _controller.ControllerContext = new ControllerContextBuilder()
+                .WithUser(userId.ToString())
+                .WithRole(Role.Constants.Student)
+                .Build();
+
+            // Act
+            var actionResult = await _controller.GetAssignmentResults(existingAssignment.Id, date) as OkObjectResult;
+
+            // Assert
+            Assert.That(actionResult, Is.Not.Null);
+            Assert.That(actionResult.Value, Is.SameAs(returnedModel));
+            _assignmentServiceMock.Verify(service => service.GetResultsForUserAsync(existingAssignment.Id, userId, date.ToUniversalTime()), Times.Once);
+        }
+
+        [Test]
+        public async Task GetAssignmentResultsForUser_WhenCallerIsLector_ShouldAllowViewingOtherUserResults()
+        {
+            // Arrange
+            var existingAssignment = new AssignmentBuilder().WithId().Build();
+            var lectorId = _random.NextPositive();
+            var studentId = lectorId + 1;
+
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id))
+                .ReturnsAsync(existingAssignment);
+
+            var assignmentResultDto = new AssignmentResultDto();
+            _assignmentServiceMock.Setup(service => service.GetResultsForUserAsync(existingAssignment.Id, studentId, null))
+                .ReturnsAsync(assignmentResultDto);
+
+            var returnedTestRunInfo = new AssignmentTestRunInfoDto();
+            _assignmentServiceMock
+                .Setup(service => service.GetUserTestRunInfoForAssignment(existingAssignment.Id, studentId, null))
+                .ReturnsAsync(returnedTestRunInfo);
+
+            var returnedSolutionFiles = new List<SolutionFile>();
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForUserAsync(existingAssignment.Id, studentId, null))
+                .ReturnsAsync(returnedSolutionFiles);
+
+            var returnedModel = new AssignmentDetailModel();
+            _assignmentConverterMock
+                .Setup(converter => converter.ToAssignmentDetailModel(
+                    existingAssignment, returnedTestRunInfo, assignmentResultDto.TestResults, returnedSolutionFiles))
+                .Returns(returnedModel);
+
+            _controller.ControllerContext = new ControllerContextBuilder()
+                .WithUser(lectorId.ToString())
+                .WithRole(Role.Constants.Lector)
+                .Build();
+
+            // Act
+            var actionResult = await _controller.GetAssignmentResultsForUser(existingAssignment.Id, studentId, null) as OkObjectResult;
+
+            // Assert
+            Assert.That(actionResult, Is.Not.Null);
+            Assert.That(actionResult.Value, Is.SameAs(returnedModel));
+        }
+
+        [Test]
+        public async Task GetAssignmentResultsForTeam_WhenCallerIsLector_ShouldReturnTeamAssignmentDetails()
+        {
+            // Arrange
+            var lectorId = _random.NextPositive();
+            var studentId = lectorId + 1;
+            var existingTeam = new ProjectTeamBuilder().WithId().WithUser(studentId).Build();
+            _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(existingTeam.Id)).ReturnsAsync(existingTeam);
+
+            var existingAssignment = new AssignmentBuilder().WithId().Build();
+            _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id))
+                .ReturnsAsync(existingAssignment);
+
+            var assignmentResultDto = new AssignmentResultDto();
+            _assignmentServiceMock.Setup(service => service.GetResultsForTeamAsync(existingTeam.ProjectId, existingAssignment.Id, existingTeam.Id, null))
+                .ReturnsAsync(assignmentResultDto);
+
+            var returnedTestRunInfo = new AssignmentTestRunInfoDto();
+            _assignmentServiceMock
+                .Setup(service => service.GetTeamTestRunInfoForAssignment(existingAssignment.Id, existingTeam.Id, null))
+                .ReturnsAsync(returnedTestRunInfo);
+
+            var returnedSolutionFiles = new List<SolutionFile>();
+            _solutionFileRepositoryMock
+                .Setup(repo => repo.GetAllLatestOfAssignmentForTeamAsync(existingAssignment.Id, existingTeam.Id, null))
+                .ReturnsAsync(returnedSolutionFiles);
+
+            var returnedModel = new AssignmentDetailModel();
+            _assignmentConverterMock
+                .Setup(converter => converter.ToAssignmentDetailModel(
+                    existingAssignment, returnedTestRunInfo, assignmentResultDto.TestResults, returnedSolutionFiles))
+                .Returns(returnedModel);
+
+            _controller.ControllerContext = new ControllerContextBuilder()
+                .WithUser(lectorId.ToString())
+                .WithRole(Role.Constants.Lector)
+                .Build();
+
+            // Act
+            var actionResult = await _controller.GetAssignmentResultsForTeam(existingAssignment.Id, existingTeam.Id, null) as OkObjectResult;
+
+            // Assert
+            Assert.That(actionResult, Is.Not.Null);
+            Assert.That(actionResult.Value, Is.SameAs(returnedModel));
+        }
+
+        [Test]
+        public async Task GetAssignmentsOfCourse_ShouldReturnMappedAssignmentsFromAllCourseTopics()
+        {
+            // Arrange
+            int courseId = _random.NextPositive();
+            var chapter = new ChapterBuilder().WithId().WithAssignments(2, 1).Build();
+            var project = new ProjectBuilder().WithId().WithAssignments(1).Build();
+            var topics = new List<Guts.Domain.TopicAggregate.ITopic> { chapter, project };
+
+            _topicServiceMock.Setup(service => service.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId))
+                .ReturnsAsync(topics);
+
+            var mappedModel = new TopicAssignmentModel();
+            _mapperMock.Setup(mapper => mapper.MapToTopicAssignmentModel(It.IsAny<Assignment>()))
+                .Returns(mappedModel);
+
+            // Act
+            var actionResult = await _controller.GetAssignmentsOfCourse(courseId) as OkObjectResult;
+
+            // Assert
+            Assert.That(actionResult, Is.Not.Null);
+            var models = actionResult.Value as IEnumerable<TopicAssignmentModel>;
+            Assert.That(models, Is.Not.Null);
+            var modelList = new List<TopicAssignmentModel>(models);
+            Assert.That(modelList, Has.Count.EqualTo(3));
+            _topicServiceMock.Verify(service => service.GetTopicsByCourseWithAssignmentsAndTestsAsync(courseId), Times.Once);
+            _mapperMock.Verify(mapper => mapper.MapToTopicAssignmentModel(It.IsAny<Assignment>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public async Task DownloadSourceCodesAsZip_ShouldReturnZipFileContentResult()
+        {
+            // Arrange
+            int assignmentId = _random.NextPositive();
+            var solutions = new List<SolutionDto> { new SolutionDto() };
+            var zipBytes = new byte[] { 1, 2, 3, 4 };
+
+            _assignmentServiceMock.Setup(service => service.GetAllSolutions(assignmentId))
+                .ReturnsAsync(solutions);
+            _solutionFileServiceMock.Setup(service => service.CreateZipFromFiles(solutions))
+                .ReturnsAsync(zipBytes);
+
+            // Act
+            var result = await _controller.DownloadSourceCodesAsZip(assignmentId) as FileContentResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ContentType, Is.EqualTo("application/zip"));
+            Assert.That(result.FileContents, Is.EqualTo(zipBytes));
+            Assert.That(result.FileDownloadName, Is.EqualTo($"Assignment_{assignmentId}_sources.zip"));
+            _assignmentServiceMock.Verify(service => service.GetAllSolutions(assignmentId), Times.Once);
+            _solutionFileServiceMock.Verify(service => service.CreateZipFromFiles(solutions), Times.Once);
+        }
     }
 }

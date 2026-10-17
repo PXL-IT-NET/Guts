@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models;
 using Guts.Api.Models.AssignmentModels;
@@ -60,6 +61,21 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
+        public void ToTopicModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToTopicModel(null), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
+        public void ToTopicModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+        {
+            Chapter chapter = new ChapterBuilder().WithId().Build();
+            chapter.Assignments = null;
+
+            Assert.That(() => _converter.ToTopicModel(chapter), Throws.ArgumentNullException);
+        }
+
+        [Test]
         public void ToChapterDetailModel_ShouldCorrectlyCovertValidChapter()
         {
             //Arrange
@@ -98,6 +114,29 @@ namespace Guts.Api.Tests.Models.Converters
             {
                 _userConverterMock.Verify(uc => uc.FromUser(user), Times.Once);
             }
+        }
+
+        [Test]
+        public void ToChapterDetailModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToChapterDetailModel(null, new List<User>()), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
+        public void ToChapterDetailModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+        {
+            Chapter chapter = new ChapterBuilder().WithId().Build();
+            chapter.Assignments = null;
+
+            Assert.That(() => _converter.ToChapterDetailModel(chapter, new List<User>()), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void ToChapterDetailModel_WhenChapterUsersAreNull_ShouldThrowArgumentNullException()
+        {
+            Chapter chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
+
+            Assert.That(() => _converter.ToChapterDetailModel(chapter, null), Throws.ArgumentNullException);
         }
     }
 }

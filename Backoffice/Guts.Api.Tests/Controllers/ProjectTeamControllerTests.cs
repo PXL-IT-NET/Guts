@@ -1,13 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Guts.Api.Controllers;
+using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
+using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
+using Guts.Common;
 using Guts.Common.Extensions;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -93,6 +97,38 @@ public class ProjectTeamControllerTests
         _projectTeamRepositoryMock.Verify(repo => repo.LoadByIdAsync(team.Id), Times.Once);
         _teamConverterMock.Verify(converter => converter.ToTeamDetailsModel(team), Times.Once);
         Assert.That(okResult.Value, Is.SameAs(convertedModel));
+    }
+
+    [Test]
+    public void GetProjectTeam_WhenCourseIdDoesNotMatch_ShouldThrowContractException()
+    {
+        //Arrange
+        Project project = new ProjectBuilder().Build();
+        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
+
+        _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(team.Id))
+            .ReturnsAsync(team);
+
+        //Act + Assert
+        Assert.That(
+            async () => await _controller.GetProjectTeam(project.CourseId + 1, project.Code, team.Id),
+            Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void GetProjectTeam_WhenProjectCodeDoesNotMatch_ShouldThrowContractException()
+    {
+        //Arrange
+        Project project = new ProjectBuilder().Build();
+        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
+
+        _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(team.Id))
+            .ReturnsAsync(team);
+
+        //Act + Assert
+        Assert.That(
+            async () => await _controller.GetProjectTeam(project.CourseId, Guid.NewGuid().ToString(), team.Id),
+            Throws.InstanceOf<ContractException>());
     }
 
     [Test]
@@ -273,6 +309,110 @@ public class ProjectTeamControllerTests
         Assert.That(result, Is.Not.Null);
         _projectServiceMock.Verify(
             service => service.DeleteProjectTeamAsync(project.CourseId, project.Code, team.Id), Times.Once);
+    }
+
+    [Test]
+    public void GetProjectSummary_WhenStudentIsInTeam_ShouldReturnSummary()
+    {
+        //Arrange
+        ProjectTeam team = new ProjectTeamBuilder().WithId().WithUser(_userId).Build();
+        Project project = new ProjectBuilder().WithId().WithTeam(team).Build();
+        int periodId = Random.Shared.NextPositive();
+        DateTime date = DateTime.UtcNow.AddDays(-1);
+        var assignments = new List<Assignment>();
+        var results = new List<AssignmentResultDto>();
+        var summaryModel = new TopicSummaryModel();
+
+        _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(project.CourseId, project.Code, _userId, periodId))
+            .ReturnsAsync(project);
+        _assignmentRepositoryMock.Setup(repo => repo.GetByTopicWithTests(project.Id))
+            .ReturnsAsync(assignments);
+        _projectServiceMock.Setup(service => service.GetResultsForTeamAsync(project, team.Id, date.ToUniversalTime()))
+            .ReturnsAsync(results);
+        _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(project, results))
+            .Returns(summaryModel);
+
+        //Act
+        OkObjectResult result = _controller.GetProjectSummary(project.CourseId, project.Code, team.Id, date, periodId).Result as OkObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(summaryModel));
+        _assignmentRepositoryMock.Verify(repo => repo.GetByTopicWithTests(project.Id), Times.Once);
+        _projectServiceMock.Verify(service => service.GetResultsForTeamAsync(project, team.Id, date.ToUniversalTime()), Times.Once);
+    }
+
+    [Test]
+    public void GetProjectSummary_WhenStudentIsNotInTeam_ShouldReturnForbid()
+    {
+        //Arrange
+        Project project = new ProjectBuilder().WithId().Build();
+        int otherTeamId = Random.Shared.NextPositive();
+
+        _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(project.CourseId, project.Code, _userId, null))
+            .ReturnsAsync(project);
+
+        //Act
+        ForbidResult result = _controller.GetProjectSummary(project.CourseId, project.Code, otherTeamId, null, null).Result as ForbidResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _assignmentRepositoryMock.Verify(repo => repo.GetByTopicWithTests(It.IsAny<int>()), Times.Never);
+    }
+
+    [Test]
+    public void GetProjectSummary_WhenCallerIsLector_ShouldReturnSummary()
+    {
+        //Arrange
+        _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
+        Project project = new ProjectBuilder().WithId().Build();
+        int teamId = Random.Shared.NextPositive();
+        var assignments = new List<Assignment>();
+        var results = new List<AssignmentResultDto>();
+        var summaryModel = new TopicSummaryModel();
+
+        _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(project.CourseId, project.Code, _userId, null))
+            .ReturnsAsync(project);
+        _assignmentRepositoryMock.Setup(repo => repo.GetByTopicWithTests(project.Id))
+            .ReturnsAsync(assignments);
+        _projectServiceMock.Setup(service => service.GetResultsForTeamAsync(project, teamId, null))
+            .ReturnsAsync(results);
+        _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(project, results))
+            .Returns(summaryModel);
+
+        //Act
+        OkObjectResult result = _controller.GetProjectSummary(project.CourseId, project.Code, teamId, null, null).Result as OkObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(summaryModel));
+    }
+
+    [Test]
+    public void GetProjectSummary_WhenCallerHasNeitherRole_ShouldReturnForbid()
+    {
+        //Arrange
+        _controller = new ProjectTeamController(_projectServiceMock.Object,
+            _projectTeamRepositoryMock.Object,
+            _assignmentRepositoryMock.Object,
+            _topicConverterMock.Object,
+            _teamConverterMock.Object)
+        {
+            ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).Build()
+        };
+
+        Project project = new ProjectBuilder().WithId().Build();
+        int teamId = Random.Shared.NextPositive();
+
+        _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(project.CourseId, project.Code, _userId, null))
+            .ReturnsAsync(project);
+
+        //Act
+        ForbidResult result = _controller.GetProjectSummary(project.CourseId, project.Code, teamId, null, null).Result as ForbidResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _assignmentRepositoryMock.Verify(repo => repo.GetByTopicWithTests(It.IsAny<int>()), Times.Never);
     }
 
     private ProjectTeamController CreateControllerWithUserInContext(string role)

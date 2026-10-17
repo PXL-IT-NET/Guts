@@ -23,7 +23,7 @@ namespace Guts.Domain.ValueObjects
 
         public static implicit operator string(Code code)
         {
-            return code.Value;
+            return code?.Value;
         }
 
         public static implicit operator Code(string value)

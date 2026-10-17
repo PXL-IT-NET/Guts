@@ -138,8 +138,47 @@ namespace Guts.Domain.Tests.PeriodAggregate
             // Act & Assert
             Assert.Throws<ContractException>(() => period.Update(newDescription, newFrom, newUntil, _existingPeriods));
         }
-        
 
-        
+        [Test]
+        public void Update_NewDatesOverlapWithSelfInExistingPeriods_ShouldUpdateWithoutThrowing()
+        {
+            // Arrange
+            Period period = _existingPeriods.First();
+            string newDescription = Random.Shared.NextString();
+            DateTime newFrom = period.From.AddDays(1);
+            DateTime newUntil = period.Until.AddDays(-1);
+
+            // Act
+            period.Update(newDescription, newFrom, newUntil, _existingPeriods);
+
+            // Assert
+            Assert.That(period.Description, Is.EqualTo(newDescription));
+            Assert.That(period.From, Is.EqualTo(newFrom));
+            Assert.That(period.Until, Is.EqualTo(newUntil));
+        }
+
+        [Test]
+        public void IsActive_TodayIsWithinRange_ShouldReturnTrue()
+        {
+            // Arrange
+            Period activePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1)).Build();
+            Period boundaryPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today, DateTime.Today.AddDays(1)).Build();
+
+            // Act & Assert
+            Assert.That(activePeriod.IsActive, Is.True);
+            Assert.That(boundaryPeriod.IsActive, Is.True);
+        }
+
+        [Test]
+        public void IsActive_TodayIsOutsideRange_ShouldReturnFalse()
+        {
+            // Arrange
+            Period pastPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-1)).Build();
+            Period futurePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(1), DateTime.Today.AddDays(10)).Build();
+
+            // Act & Assert
+            Assert.That(pastPeriod.IsActive, Is.False);
+            Assert.That(futurePeriod.IsActive, Is.False);
+        }
     }
 }

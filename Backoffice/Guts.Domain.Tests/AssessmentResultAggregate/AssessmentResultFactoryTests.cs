@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -116,6 +116,35 @@ namespace Guts.Domain.Tests.AssessmentResultAggregate
             Assert.That(result.PeerAssessments, Has.Count.Zero);
             Assert.That(result.Subject, Is.SameAs(subject));
             Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
+        }
+
+        [Test]
+        public void Create_SubjectHasNoSelfAssessment_ShouldThrowContractException()
+        {
+            //Arrange
+            var builder = new ProjectTeamAssessmentBuilder();
+            ProjectTeamAssessment projectTeamAssessment = builder.Build();
+            User subject = projectTeamAssessment.Team.TeamUsers.First().User;
+            User otherPeer = projectTeamAssessment.Team.TeamUsers.Last().User;
+            builder.WithPeerAssessment(otherPeer, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
+
+            //Act + Assert
+            Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
+                Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void Create_IncludePeerAssessmentsTrueAndNoPeerEvaluatedSubject_ShouldThrowContractException()
+        {
+            //Arrange
+            var builder = new ProjectTeamAssessmentBuilder();
+            ProjectTeamAssessment projectTeamAssessment = builder.Build();
+            User subject = projectTeamAssessment.Team.TeamUsers.First().User;
+            builder.WithPeerAssessment(subject, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
+
+            //Act + Assert
+            Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
+                Throws.InstanceOf<ContractException>());
         }
     }
 }

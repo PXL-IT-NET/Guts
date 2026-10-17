@@ -1,4 +1,5 @@
-﻿using Guts.Api.Models.Converters;
+using System;
+using Guts.Api.Models.Converters;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
@@ -50,6 +51,12 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Assert
             Assert.That(model.FullName, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void FromUser_WhenUserIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.FromUser(null), Throws.InstanceOf<NullReferenceException>());
         }
     }
 }
