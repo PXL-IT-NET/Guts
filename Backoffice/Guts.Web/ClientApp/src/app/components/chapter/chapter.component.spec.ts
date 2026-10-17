@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
-import { ComponentFixture, fakeAsync, TestBed, tick } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ToastrService } from "ngx-toastr";
-import { of, Subject } from "rxjs";
+import { of } from "rxjs";
 import { ChapterService } from "../../services/chapter.service";
 import {
   ActivatedRouteStub,
@@ -101,28 +101,11 @@ describe("ChapterComponent", () => {
     );
   });
 
-  it("searchUsers, onUserClick, and formatUser should filter and format users", fakeAsync(() => {
-    component.model.users = [
-      { id: 1, fullName: "Alice Smith" },
-      { id: 2, fullName: "Bob Jones" },
-    ];
-    component.userTypeAheadInstance = { isPopupOpen: () => false } as any;
-
-    const text$ = new Subject<string>();
-    let filtered: any[] = [];
-    component.searchUsers(text$).subscribe((res) => (filtered = res));
-
-    component.onUserClick();
-    expect(component.selectedUser).toBeNull();
-    expect(filtered.length).toBe(2);
-
-    text$.next("bob");
-    tick(200);
-    expect(filtered).toEqual([{ id: 2, fullName: "Bob Jones" }]);
-
+  it("formatUser should format user fullName or return empty string", () => {
     expect(component.formatUser({ id: 1, fullName: "Alice Smith" })).toBe(
       "Alice Smith",
     );
-  }));
+    expect(component.formatUser(null as any)).toBe("");
+  });
 });
 

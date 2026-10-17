@@ -41,3 +41,4 @@ export * from "./teacher-docs-concepts/teacher-docs-concepts.component";
 export * from "./teacher-docs-xunit/teacher-docs-xunit.component";
 export * from "./teacher-docs-nunit/teacher-docs-nunit.component";
 export * from "./teacher-docs-junit/teacher-docs-junit.component";
+export * from "./typeahead/typeahead.component";

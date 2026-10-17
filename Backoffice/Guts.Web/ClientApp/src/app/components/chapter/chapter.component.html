@@ -9,19 +9,14 @@
         }
         @if (model.users.length > 1) {
           <div class="col-lg-4 col-md-3">
-            <input
+            <app-typeahead
               id="users"
               name="users"
-              type="text"
-              class="form-control"
+              [data]="model.users"
               [(ngModel)]="selectedUser"
-              [ngbTypeahead]="searchUsers"
-              (click)="onUserClick()"
-              [inputFormatter]="formatUser"
-              [resultFormatter]="formatUser"
-              #instance="ngbTypeahead"
+              [formatItem]="formatUser"
               [readonly]="model.users.length <= 1"
-            />
+            ></app-typeahead>
           </div>
         }
 
