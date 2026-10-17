@@ -58,7 +58,6 @@ describe("AssignmentDetailComponent", () => {
       assignmentId: new SimpleChange(0, 4, true),
     });
 
-    expect(component.inputsReady).toBeTrue();
     expect(assignmentServiceSpy.getAssignmentDetail).toHaveBeenCalledWith(
       4,
       10,
@@ -75,8 +74,6 @@ describe("AssignmentDetailComponent", () => {
 
     component.ngOnChanges({});
 
-    expect(component.inputsReady).toBeTrue();
     expect(assignmentServiceSpy.getAssignmentDetail).not.toHaveBeenCalled();
   });
 });
-

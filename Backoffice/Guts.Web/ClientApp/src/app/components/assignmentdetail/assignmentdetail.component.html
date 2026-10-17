@@ -129,7 +129,7 @@
     <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
 }
-@if (inputsReady && !loading && model.assignmentId <= 0) {
+@if (!loading && model.assignmentId <= 0) {
   <div class="col-md-10 col-md-offset-1">
     <div class="alert alert-warning" role="alert">
       Results could not be loaded. Make sure a status date is provided and a
