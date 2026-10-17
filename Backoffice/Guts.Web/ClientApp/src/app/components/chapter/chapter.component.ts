@@ -1,26 +1,12 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "../../services/chapter.service";
 import { GetResult } from "../../util/result";
 import { IChapterDetailsModel } from "../../viewmodels/chapter.model";
 import { IUserModel } from "../../viewmodels/user.model";
-import { Observable, Subject } from "rxjs";
-import {
-  debounceTime,
-  map,
-  distinctUntilChanged,
-  filter,
-  merge,
-  takeUntil,
-} from "rxjs/operators";
-import { NgbTypeahead } from "@ng-bootstrap/ng-bootstrap";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
 import moment from "moment";
 
 @Component({
@@ -38,17 +24,11 @@ export class ChapterComponent implements OnInit, OnDestroy {
   public courseId: number;
   public chapterCode: string;
 
-  private userClick$: Subject<string>;
-  @ViewChild("instance", { static: false }) userTypeAheadInstance: NgbTypeahead;
-
   constructor(
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
-    this.userClick$ = new Subject<string>();
-
     this.model = {
       id: 0,
       code: "",
@@ -90,7 +70,6 @@ export class ChapterComponent implements OnInit, OnDestroy {
               "System error",
             );
           }
-          this.cdr.detectChanges();
         });
     });
 
@@ -111,36 +90,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  public onUserClick() {
-    this.selectedUser = null;
-    this.userClick$.next("");
-  }
-
-  public searchUsers = (text$: Observable<string>) => {
-    const debouncedText$: Observable<string> = text$.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-    );
-    const clicksWithClosedPopup$: Observable<string> = this.userClick$.pipe(
-      filter(() => !this.userTypeAheadInstance.isPopupOpen()),
-    );
-
-    return clicksWithClosedPopup$.pipe(
-      merge(debouncedText$),
-      map((term: string) => {
-        if (!term || term.length === 0) {
-          return this.model.users;
-        } else {
-          term = term.toLowerCase();
-          return this.model.users.filter(
-            (u) => u.fullName.toLowerCase().indexOf(term) > -1,
-          );
-        }
-      }),
-    );
-  };
-
-  public formatUser = (user: IUserModel) => {
-    return user.fullName;
+  public formatUser = (user: IUserModel): string => {
+    return user ? user.fullName : "";
   };
 }

@@ -1,0 +1,19 @@
+<input
+  [id]="id"
+  [name]="name"
+  type="text"
+  [class]="inputClass"
+  [placeholder]="placeholder"
+  [readonly]="readonly"
+  [disabled]="disabled"
+  [(ngModel)]="innerValue"
+  [ngbTypeahead]="search"
+  [inputFormatter]="formatter"
+  [resultFormatter]="formatter"
+  (click)="onClick()"
+  (blur)="onBlur()"
+  (selectItem)="onSelectItem($event)"
+  (ngModelChange)="onModelChange($event)"
+  #instance="ngbTypeahead"
+/>
+

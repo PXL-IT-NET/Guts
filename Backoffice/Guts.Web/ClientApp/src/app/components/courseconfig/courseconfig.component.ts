@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { Subject } from "rxjs";
 import { takeUntil } from "rxjs/operators";
@@ -11,10 +11,7 @@ export class CourseConfigComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   public courseId: number;
 
-  constructor(
-    private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef,
-  ) {
+  constructor(private route: ActivatedRoute) {
     this.courseId = 0;
   }
 

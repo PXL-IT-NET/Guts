@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   Input,
   OnChanges,
@@ -25,8 +24,7 @@ import { takeUntil } from "rxjs/operators";
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   public model: AssignmentDetailModel;
-  public inputsReady = false;
-  public loading: boolean = false;
+  public loading: boolean = true;
 
   @Input() public assignmentId: number;
   @Input() public teamId: number;
@@ -36,7 +34,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private assignmentService: AssignmentService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new AssignmentDetailModel();
     this.assignmentId = 0;
@@ -49,7 +46,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
     if (this.assignmentId > 0 && (this.userId > 0 || this.teamId > 0)) {
       this.loadAssignment();
     }
-    this.inputsReady = true;
   }
 
   private loadAssignment() {
@@ -65,7 +61,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
       .subscribe((assignmentDetail: IAssignmentDetailModel) => {
         this.loading = false;
         this.model = new AssignmentDetailModel(assignmentDetail);
-        this.cdr.detectChanges();
       });
   }
 

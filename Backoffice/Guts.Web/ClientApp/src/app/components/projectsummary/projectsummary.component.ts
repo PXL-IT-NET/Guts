@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   Input,
   OnDestroy,
@@ -36,7 +35,6 @@ export class ProjectSummaryComponent implements OnDestroy {
   constructor(
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new TopicSummaryModel();
     this.statistics = {
@@ -94,8 +92,6 @@ export class ProjectSummaryComponent implements OnDestroy {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -115,8 +111,6 @@ export class ProjectSummaryComponent implements OnDestroy {
           );
         }
         this.loadingStatistics = false;
-
-        this.cdr.detectChanges();
       });
   }
 

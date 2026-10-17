@@ -3,7 +3,6 @@ import {
   EventEmitter,
   Input,
   Output,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { ToastrService } from "ngx-toastr";
 import { AssignmentService, TestService } from "src/app/services";
@@ -29,7 +28,6 @@ export class AssignmentSettingsComponent {
     private testService: TestService,
     private assignmentService: AssignmentService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.assignment = {} as IAssignmentModel;
@@ -64,8 +62,6 @@ export class AssignmentSettingsComponent {
               "Could not delete " + this.assignmentKind,
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }
@@ -95,8 +91,6 @@ export class AssignmentSettingsComponent {
             "Could not delete test",
           );
         }
-
-        this.cdr.detectChanges();
       });
     }
   }

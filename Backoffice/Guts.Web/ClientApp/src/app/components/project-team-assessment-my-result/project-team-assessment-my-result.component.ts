@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -38,7 +38,6 @@ export class ProjectTeamAssessmentMyResultComponent
     private projectService: ProjectService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef,
   ) {
     this.result = null;
 
@@ -94,11 +93,7 @@ export class ProjectTeamAssessmentMyResultComponent
               "Warning",
             );
           }
-
-          this.cdr.detectChanges();
         });
-
-      this.cdr.detectChanges();
     });
   }
 

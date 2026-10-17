@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -44,7 +44,6 @@ export class CourseComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private toastr: ToastrService,
     private modalService: BsModalService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.course = {
       id: 0,
@@ -65,8 +64,6 @@ export class CourseComponent implements OnInit, OnDestroy {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.handleNavigationEvent();
-
-        this.cdr.detectChanges();
       });
 
     this.periodProvider.period$.subscribe((period) => {
@@ -74,8 +71,6 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.activePeriod = period.isActive;
         this.handleNavigationEvent(true);
       }
-
-      this.cdr.detectChanges();
     });
 
     // Manually trigger the event handler on initial load
@@ -86,8 +81,6 @@ export class CourseComponent implements OnInit, OnDestroy {
       .getUserProfile()
       .subscribe((profile) => {
         this.userProfile = profile;
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -159,7 +152,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   private isChapterRouteActive() {
-    return this.selectChapter != null;
+    return this.selectedChapter != null;
   }
 
   private selectChapter(chapter: ITopicModel) {
@@ -299,7 +292,6 @@ export class CourseComponent implements OnInit, OnDestroy {
           "System error",
         );
       }
-      this.cdr.detectChanges();
     });
   }
 
@@ -315,8 +307,6 @@ export class CourseComponent implements OnInit, OnDestroy {
       (addedProject: IProjectDetailsModel) => {
         this.navigateToProject(addedProject);
         this.course.id = 0; //force reload of course contents
-
-        this.cdr.detectChanges();
       },
     );
   }

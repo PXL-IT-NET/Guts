@@ -32,6 +32,14 @@ export class Result {
         ")";
       console.log("API server error:");
       console.log(response);
+    } else if (
+      typeof response.error === "string" ||
+      response.error instanceof String
+    ) {
+      message = response.error.toString();
+
+      console.log("API client error:");
+      console.log(response);
     } else if (response.error instanceof Object) {
       var messageContainer = response.error as Object;
       for (var propertyName in messageContainer) {
@@ -52,11 +60,6 @@ export class Result {
       if (message == "") {
         message = JSON.stringify(response.error) || "Unknown error";
       }
-
-      console.log("API client error:");
-      console.log(response);
-    } else if (response.error instanceof String) {
-      message = response.error as string;
 
       console.log("API client error:");
       console.log(response);
@@ -103,6 +106,7 @@ export class CreateResult<T> extends Result {
     var result = Result.fromHttpErrorResponse(response);
     var createResult = new CreateResult<T>();
     createResult.success = result.success;
+    createResult.isAuthenticated = result.isAuthenticated;
     createResult.message = result.message;
     return createResult;
   }
@@ -124,6 +128,7 @@ export class GetResult<T> extends Result {
     var result = Result.fromHttpErrorResponse(response);
     var getResult = new GetResult<T>();
     getResult.success = result.success;
+    getResult.isAuthenticated = result.isAuthenticated;
     getResult.message = result.message;
     return getResult;
   }

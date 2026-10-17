@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -43,7 +42,6 @@ export class ProjectTeamAddComponent implements OnDestroy {
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.teamsAdded = new EventEmitter<void>();
@@ -97,8 +95,6 @@ export class ProjectTeamAddComponent implements OnDestroy {
             "Could not generate teams",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -118,8 +114,6 @@ export class ProjectTeamAddComponent implements OnDestroy {
             "Could not generate teams",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 

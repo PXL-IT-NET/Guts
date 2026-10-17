@@ -1,0 +1,64 @@
+import { HttpHandler, HttpRequest, HttpResponse } from "@angular/common/http";
+import { Injector } from "@angular/core";
+import { of } from "rxjs";
+import { ClientSettings } from "../services/client.settings";
+import { ClientSettingsService } from "../services/client.settings.service";
+import { RelativeInterceptor } from "./relative.interceptor";
+
+describe("RelativeInterceptor", () => {
+  let interceptor: RelativeInterceptor;
+  let settingsServiceSpy: jasmine.SpyObj<ClientSettingsService>;
+  let nextHandlerSpy: jasmine.SpyObj<HttpHandler>;
+
+  beforeEach(() => {
+    settingsServiceSpy = jasmine.createSpyObj<ClientSettingsService>(
+      "ClientSettingsService",
+      ["get"],
+    );
+    const settings = new ClientSettings();
+    settings.apiBaseUrl = "https://api.guts.pxl.be/";
+    settingsServiceSpy.get.and.returnValue(of(settings));
+
+    nextHandlerSpy = jasmine.createSpyObj<HttpHandler>("HttpHandler", [
+      "handle",
+    ]);
+    nextHandlerSpy.handle.and.returnValue(of(new HttpResponse({ status: 200 })));
+
+    const injector = Injector.create({
+      providers: [
+        { provide: ClientSettingsService, useValue: settingsServiceSpy },
+      ],
+    });
+    interceptor = new RelativeInterceptor(injector);
+  });
+
+  it("should prepend apiBaseUrl to relative API requests", () => {
+    const request = new HttpRequest("GET", "api/courses");
+
+    interceptor.intercept(request, nextHandlerSpy).subscribe();
+
+    const forwardedRequest = nextHandlerSpy.handle.calls.mostRecent().args[0];
+    expect(forwardedRequest.url).toBe("https://api.guts.pxl.be/api/courses");
+  });
+
+  it("should not modify absolute HTTP/HTTPS URLs", () => {
+    const request = new HttpRequest("GET", "https://external.org/data");
+
+    interceptor.intercept(request, nextHandlerSpy).subscribe();
+
+    expect(settingsServiceSpy.get).not.toHaveBeenCalled();
+    const forwardedRequest = nextHandlerSpy.handle.calls.mostRecent().args[0];
+    expect(forwardedRequest.url).toBe("https://external.org/data");
+  });
+
+  it("should not modify requests to api/clientsettings", () => {
+    const request = new HttpRequest("GET", "api/clientsettings");
+
+    interceptor.intercept(request, nextHandlerSpy).subscribe();
+
+    expect(settingsServiceSpy.get).not.toHaveBeenCalled();
+    const forwardedRequest = nextHandlerSpy.handle.calls.mostRecent().args[0];
+    expect(forwardedRequest.url).toBe("api/clientsettings");
+  });
+});
+

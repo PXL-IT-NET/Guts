@@ -1,6 +1,6 @@
 //angular
 import { BrowserModule } from "@angular/platform-browser";
-import { NgModule } from "@angular/core";
+import { NgModule, provideZoneChangeDetection } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
@@ -82,6 +82,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.TeacherDocsXunitComponent,
     c.TeacherDocsNunitComponent,
     c.TeacherDocsJunitComponent,
+    c.TypeaheadComponent,
   ],
   imports: [
     BrowserModule,
@@ -98,6 +99,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     TooltipModule.forRoot(),
   ],
   providers: [
+    provideZoneChangeDetection(),
     AuthGuard,
     s.AuthService,
     s.CourseService,

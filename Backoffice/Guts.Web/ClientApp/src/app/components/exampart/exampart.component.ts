@@ -4,7 +4,6 @@ import {
   Input,
   Output,
   EventEmitter,
-  ChangeDetectorRef,
 } from "@angular/core";
 import {
   ExamPartModel,
@@ -55,7 +54,6 @@ export class ExampartComponent implements OnInit {
     private assignmentService: AssignmentService,
     private examService: ExamService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.isCollapsed = true;
     this.courseId = 0;
@@ -87,8 +85,6 @@ export class ExampartComponent implements OnInit {
               "System error",
             );
           }
-
-          this.cdr.detectChanges();
         });
     });
 
@@ -141,8 +137,6 @@ export class ExampartComponent implements OnInit {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -159,8 +153,6 @@ export class ExampartComponent implements OnInit {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
@@ -44,7 +44,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toastr: ToastrService,
     private modalService: BsModalService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.teams = [];
     this.myTeam = null;
@@ -67,8 +66,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
         if (period) {
           this.activePeriod = period.isActive;
         }
-
-        this.cdr.detectChanges();
       });
 
     this.loadData(false);
@@ -99,8 +96,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
               "Could not leave team",
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }
@@ -124,8 +119,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
               "Could not delete team",
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }
@@ -145,8 +138,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
             "Could not join team",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -178,8 +169,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         this.loadData(false);
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -196,8 +185,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
         this.userProfile = profile;
         this.loading = false;
         this.loadTeams();
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -225,8 +212,6 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 }

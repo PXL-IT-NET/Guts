@@ -3,7 +3,6 @@ import {
   EventEmitter,
   Input,
   Output,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -36,7 +35,6 @@ export class ProjectAddComponent {
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.projectAdded = new EventEmitter<IProjectDetailsModel>();
@@ -80,8 +78,6 @@ export class ProjectAddComponent {
             "Could not add project",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 }

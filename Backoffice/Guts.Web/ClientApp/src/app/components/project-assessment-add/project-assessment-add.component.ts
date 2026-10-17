@@ -1,5 +1,4 @@
 import {
-  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -40,7 +39,6 @@ export class ProjectAssessmentAddComponent implements OnDestroy {
     public modalRef: BsModalRef,
     private projectAssessmentService: ProjectAssessmentService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.assessmentAdded = new EventEmitter<IProjectAssessmentModel>();
@@ -77,8 +75,6 @@ export class ProjectAssessmentAddComponent implements OnDestroy {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 

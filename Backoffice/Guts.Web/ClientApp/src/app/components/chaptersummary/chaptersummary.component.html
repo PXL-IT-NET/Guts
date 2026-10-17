@@ -32,7 +32,7 @@
                 }
               </div>
             }
-            @if (userId <= 0) {
+            @if (!userId || userId <= 0) {
               <div>You must select a user to see test outcomes.</div>
             }
             <app-loading-overlay [show]="loadingSummary"></app-loading-overlay>

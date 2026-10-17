@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -77,7 +77,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     private projectService: ProjectService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef,
   ) {
     this.allTeams = [];
     this.currentTeam = {
@@ -113,8 +112,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent
                 "System error",
               );
             }
-
-            this.cdr.detectChanges();
           });
       } else {
         this.setTeams(teamId);
@@ -176,8 +173,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent
             );
             this.resetResults();
           }
-
-          this.cdr.detectChanges();
         });
     });
   }

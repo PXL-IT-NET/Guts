@@ -5,7 +5,6 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
@@ -37,7 +36,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     private examService: ExamService,
     private authService: AuthService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.exams = [];
     this.newExam = new ExamModel();
@@ -51,8 +49,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe((profile) => {
         this.userProfile = profile;
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -86,8 +82,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -109,8 +103,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -136,8 +128,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 }

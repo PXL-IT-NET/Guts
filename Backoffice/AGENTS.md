@@ -22,6 +22,8 @@ For a high-level overview of the entire GUTS repository and client libraries, se
 4. **Write Tests for Frontend Functionality**:
    - Changes to the Angular SPA (`Guts.Web/ClientApp`) must include unit tests (`*.spec.ts`) covering component behavior, user interactions, and service logic.
    - Verify frontend changes by running `npm test -- --watch=false` inside `Guts.Web/ClientApp`.
+5. ** Fix bugs by writing a failing test first**:
+   - When fixing a bug, first write a unit test that reproduces the bug, then implement the fix and verify that the test passes.
 
 ---
 

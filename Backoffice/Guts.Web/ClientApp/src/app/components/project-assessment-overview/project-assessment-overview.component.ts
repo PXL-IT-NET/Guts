@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -70,7 +70,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private route: ActivatedRoute,
     private periodProvider: PeriodProvider,
-    private cdr: ChangeDetectorRef,
   ) {
     this.loading = false;
     this.project = {
@@ -94,8 +93,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((profile) => {
         this.userProfile = profile;
-
-        this.cdr.detectChanges();
       });
 
     //#Form
@@ -126,7 +123,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
               "System error",
             );
           }
-          this.cdr.detectChanges();
         });
     });
 
@@ -136,8 +132,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
         if (period) {
           this.activePeriod = period.isActive;
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -162,8 +156,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((addedAssessment) => {
         this.loadProjectAssessments();
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -183,8 +175,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         this.loadProjectAssessments();
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -216,8 +206,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
                         "Warning",
                       );
                     }
-
-                    this.cdr.detectChanges();
                   });
               }
             });
@@ -234,8 +222,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
             "System error",
           );
         }
-
-        this.cdr.detectChanges();
       });
   }
 
@@ -260,8 +246,6 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
               "Could not delete peer assessment",
             );
           }
-
-          this.cdr.detectChanges();
         });
     }
   }

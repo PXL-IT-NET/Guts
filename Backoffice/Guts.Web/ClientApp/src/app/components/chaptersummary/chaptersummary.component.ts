@@ -3,7 +3,6 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
-  ChangeDetectorRef,
 } from "@angular/core";
 import { ChapterService } from "../../services/chapter.service";
 import {
@@ -34,7 +33,6 @@ export class ChapterSummaryComponent implements OnChanges {
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef,
   ) {
     this.model = new TopicSummaryModel();
     this.statistics = {
@@ -51,7 +49,7 @@ export class ChapterSummaryComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.courseId <= 0) return;
+    if (!this.courseId || this.courseId <= 0) return;
     let chapterHasValue: boolean =
       this.chapterCode && this.chapterCode.length > 0;
     if (!chapterHasValue) return;
@@ -66,7 +64,7 @@ export class ChapterSummaryComponent implements OnChanges {
       this.loadChapterStatistics();
     }
 
-    if (this.userId <= 0) return;
+    if (!this.userId || this.userId <= 0) return;
     this.loadChapterSummary();
   }
 
@@ -86,7 +84,6 @@ export class ChapterSummaryComponent implements OnChanges {
           );
         }
         this.loadingStatistics = false;
-        this.cdr.detectChanges();
       });
   }
 
@@ -110,7 +107,6 @@ export class ChapterSummaryComponent implements OnChanges {
           );
         }
         this.loadingSummary = false;
-        this.cdr.detectChanges();
       });
   }
 }

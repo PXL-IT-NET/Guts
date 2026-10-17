@@ -7,6 +7,7 @@ services:
       - "1433:1433" #make db server accessible for host system on port 1433(Server name: localhost)
     volumes:
       - guts-sqldata:/var/opt/mssql
+      - ./DB_Backup:/var/opt/mssql/backup
 
   guts.api:
     environment:
