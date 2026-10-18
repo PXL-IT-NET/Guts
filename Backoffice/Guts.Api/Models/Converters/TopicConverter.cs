@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
@@ -56,7 +56,7 @@ namespace Guts.Api.Models.Converters
             return model;
         }
 
-        private AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
+        private static AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
             IReadOnlyList<AssignmentResultDto> assignmentResults)
         {
             var assignmentSummaryModel = new AssignmentSummaryModel
@@ -79,7 +79,7 @@ namespace Guts.Api.Models.Converters
             return assignmentSummaryModel;
         }
 
-        private AssignmentStatisticsModel CreateAssignmentStatisticsModel(
+        private static AssignmentStatisticsModel CreateAssignmentStatisticsModel(
             Assignment assignment,
             IReadOnlyList<AssignmentStatisticsDto> assignmentStatisticsList, 
             string unit)
@@ -117,7 +117,7 @@ namespace Guts.Api.Models.Converters
 
         private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
         {
-            int.TryParse(assignment.Code, out int assignmentNumber);
+            _ = int.TryParse(assignment.Code, out int assignmentNumber);
             if (assignmentModel.Description == assignmentNumber.ToString())
             {
                 if (assignmentNumber > 0)

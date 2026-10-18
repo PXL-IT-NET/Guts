@@ -27,4 +27,4 @@ app.MapControllerRoute(
 
 app.MapFallbackToFile("index.html");
 
-app.Run();
+await app.RunAsync();

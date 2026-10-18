@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
@@ -281,6 +281,18 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
 
             //Act
             _projectTeamAssessment.ValidateAssessmentsOf(user.Id);
+        }
+
+        [Test]
+        public void ValidateAssessmentsOf_AllPeersAssessedWithValidBalancedScores_ShouldNotThrow()
+        {
+            //Arrange
+            var builder = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded();
+            _projectTeamAssessment = builder.Build();
+            User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
+
+            //Act + Assert
+            Assert.That(() => _projectTeamAssessment.ValidateAssessmentsOf(user.Id), Throws.Nothing);
         }
 
         [Test]

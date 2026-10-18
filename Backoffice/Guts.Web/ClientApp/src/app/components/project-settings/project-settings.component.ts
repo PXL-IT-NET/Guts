@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -17,7 +17,7 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
   selector: "app-project-settings",
   templateUrl: "./project-settings.component.html",
 })
-export class ProjectSettingsComponent {
+export class ProjectSettingsComponent implements OnInit {
   private courseId: number;
   private projectCode: string;
 

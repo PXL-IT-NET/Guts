@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Guts.Api.Models;
 using Guts.Api.Controllers;
@@ -126,6 +126,95 @@ public class ProjectAssessmentControllerTests
         _projectServiceMock.Verify(
             service => service.CreateProjectAssessmentAsync(inputModel.ProjectId, inputModel.Description,
                 inputModel.OpenOn.ToUniversalTime(), inputModel.Deadline.ToUniversalTime()), Times.Once);
+    }
+
+    [Test]
+    public void AddProjectAssessment_WhenModelStateIsInvalid_ShouldReturnBadRequest()
+    {
+        //Arrange
+        _controller.ModelState.AddModelError("Description", "Required");
+        var inputModel = new CreateProjectAssessmentModel();
+
+        //Act
+        BadRequestObjectResult result = _controller.AddProjectAssessment(inputModel).Result as BadRequestObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectServiceMock.Verify(
+            service => service.CreateProjectAssessmentAsync(It.IsAny<int>(), It.IsAny<string>(),
+                It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Test]
+    public void UpdateProjectAssessment_ShouldUseServiceAndReturnOk()
+    {
+        //Arrange
+        int id = _random.NextPositive();
+        var inputModel = new UpdateProjectAssessmentModel
+        {
+            Id = id,
+            Description = _random.NextString(),
+            OpenOn = _random.NextDateTimeInFuture()
+        };
+        inputModel.Deadline = inputModel.OpenOn.AddDays(1);
+
+        //Act
+        OkResult result = _controller.UpdateProjectAssessment(id, inputModel).Result as OkResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectServiceMock.Verify(
+            service => service.UpdateProjectAssessmentAsync(id, inputModel.Description,
+                inputModel.OpenOn.ToUniversalTime(), inputModel.Deadline.ToUniversalTime()), Times.Once);
+    }
+
+    [Test]
+    public void UpdateProjectAssessment_WhenModelStateIsInvalid_ShouldReturnBadRequest()
+    {
+        //Arrange
+        _controller.ModelState.AddModelError("Description", "Required");
+        int id = _random.NextPositive();
+        var inputModel = new UpdateProjectAssessmentModel { Id = id };
+
+        //Act
+        BadRequestObjectResult result = _controller.UpdateProjectAssessment(id, inputModel).Result as BadRequestObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectServiceMock.Verify(
+            service => service.UpdateProjectAssessmentAsync(It.IsAny<int>(), It.IsAny<string>(),
+                It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Test]
+    [TestCase(0)]
+    [TestCase(-1)]
+    public void DeleteProjectAssessment_WhenIdIsInvalid_ShouldReturnBadRequest(int invalidId)
+    {
+        //Act
+        BadRequestResult result = _controller.DeleteProjectAssessment(invalidId).Result as BadRequestResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectAssessmentRepositoryMock.Verify(repo => repo.GetByIdAsync(It.IsAny<int>()), Times.Never);
+        _projectAssessmentRepositoryMock.Verify(repo => repo.DeleteAsync(It.IsAny<IProjectAssessment>()), Times.Never);
+    }
+
+    [Test]
+    public void DeleteProjectAssessment_WhenIdIsValid_ShouldDeleteFromRepositoryAndReturnOk()
+    {
+        //Arrange
+        IProjectAssessment existingAssessment = new ProjectAssessmentMockBuilder().WithId().Build().Object;
+        _projectAssessmentRepositoryMock.Setup(repo => repo.GetByIdAsync(existingAssessment.Id))
+            .ReturnsAsync(existingAssessment);
+
+        //Act
+        OkResult result = _controller.DeleteProjectAssessment(existingAssessment.Id).Result as OkResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectAssessmentRepositoryMock.Verify(repo => repo.GetByIdAsync(existingAssessment.Id), Times.Once);
+        _projectAssessmentRepositoryMock.Verify(repo => repo.DeleteAsync(existingAssessment), Times.Once);
     }
 
     private ProjectAssessmentController CreateControllerWithUserInContext(string role)

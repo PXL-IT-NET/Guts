@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+using System;
+using Microsoft.AspNetCore.Identity;
 
 namespace Guts.Domain.RoleAggregate
 {
-    public class Role : IdentityRole<int>, IEntity
+    public class Role : IdentityRole<int>, IEntity, IEquatable<Role>
     {
         public class Constants
         {
@@ -12,8 +13,11 @@ namespace Guts.Domain.RoleAggregate
 
         public override bool Equals(object obj)
         {
-            var other = obj as Role;
+            return Equals(obj as Role);
+        }
 
+        public bool Equals(Role other)
+        {
             if (ReferenceEquals(other, null))
                 return false;
 

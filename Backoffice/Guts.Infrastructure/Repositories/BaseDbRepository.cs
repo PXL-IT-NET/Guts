@@ -66,7 +66,7 @@ namespace Guts.Infrastructure.Repositories
 
         public virtual async Task DeleteByIdAsync(int id)
         {
-            var entityToDelete = await _context.Set<TConcrete>().FindAsync();
+            var entityToDelete = await _context.Set<TConcrete>().FindAsync(id);
             await DeleteAsync(entityToDelete);
         }
 

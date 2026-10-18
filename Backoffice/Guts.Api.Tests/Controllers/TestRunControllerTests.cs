@@ -250,6 +250,84 @@ namespace Guts.Api.Tests.Controllers
         }
 
         [Test]
+        public void PostExerciseTestRun_WhenStudentAndAssignmentNotFound_ShouldReturnBadRequest()
+        {
+            //Arrange
+            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
+            var assignmentDto = new AssignmentDtoBuilder().Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
+                .Build();
+
+            _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(assignmentDto))
+                .ThrowsAsync(new Guts.Business.DataNotFoundException());
+
+            //Act
+            var badRequestResult = _controller.PostExerciseTestRun(postedModel).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(badRequestResult, Is.Not.Null);
+            Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == "InvalidAssignment"));
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
+        }
+
+        [Test]
+        public void PostProjectTestRun_WhenStudentAndComponentNotFound_ShouldReturnBadRequest()
+        {
+            //Arrange
+            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
+            var assignmentDto = new AssignmentDtoBuilder().Build();
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
+                .Build();
+
+            _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(assignmentDto))
+                .ThrowsAsync(new Guts.Business.DataNotFoundException());
+
+            //Act
+            var badRequestResult = _controller.PostProjectTestRun(postedModel).Result as BadRequestObjectResult;
+
+            //Assert
+            Assert.That(badRequestResult, Is.Not.Null);
+            Assert.That(badRequestResult.Value, Has.One.Matches((KeyValuePair<string, object> kv) => kv.Key == "InvalidAssignment"));
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), It.IsAny<IEnumerable<SolutionFile>>()), Times.Never);
+        }
+
+        [Test]
+        public void PostProjectTestRun_WhenStudentAndSolutionFilesIsNull_ShouldStillSucceed()
+        {
+            //Arrange
+            _controller = CreateControllerWithUserInContext(Role.Constants.Student);
+            var assignment = new AssignmentBuilder().WithId().Build();
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+
+            _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(assignmentDto))
+                .ReturnsAsync(assignment);
+
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
+                .Build();
+            postedModel.SolutionFiles = null;
+
+            var savedTestRun = new TestRun();
+            _testRunServiceMock.Setup(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), null))
+                .ReturnsAsync(savedTestRun);
+
+            var savedTestRunModel = new SavedTestRunModel { Id = _random.NextPositive() };
+            _testResultConverterMock.Setup(converter => converter.ToTestRunModel(savedTestRun))
+                .Returns(savedTestRunModel);
+
+            //Act
+            var createdResult = _controller.PostProjectTestRun(postedModel).Result as CreatedAtActionResult;
+
+            //Assert
+            Assert.That(createdResult, Is.Not.Null);
+            Assert.That(createdResult.Value, Is.SameAs(savedTestRunModel));
+            _assignmentServiceMock.Verify(service => service.LoadTestsForAssignmentAsync(assignment), Times.Once);
+            _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(It.IsAny<TestRun>(), null), Times.Once);
+        }
+
+        [Test]
         public void GetTestRun_ShouldRetrieveItFromTheServiceAndReturnAModel()
         {
             //Arrange

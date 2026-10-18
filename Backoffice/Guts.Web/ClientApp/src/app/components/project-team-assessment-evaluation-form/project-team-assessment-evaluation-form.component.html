@@ -61,7 +61,11 @@
               />
             </td>
             <td>
+              <label for="peerAssessmentExplanation" class="visually-hidden"
+                >Additional explanation</label
+              >
               <textarea
+                id="peerAssessmentExplanation"
                 class="form-control"
                 [class.is-invalid]="isInvalid(peerAssessment)"
                 [(ngModel)]="peerAssessment.explanation"

@@ -19,7 +19,9 @@
             <th scope="col">
               <span>Team </span>
               @if (project.teams.length > 0) {
+                <label for="teams" class="visually-hidden">Team</label>
                 <select
+                  id="teams"
                   name="teams"
                   [(ngModel)]="selectedTeamId"
                   (change)="loadProjectAssessments()"

@@ -80,7 +80,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
               );
             }
 
-            this.router.navigate(["../../../../"], { relativeTo: this.route });
+            void this.router.navigate(["../../../../"], { relativeTo: this.route });
           } else {
             this.toastr.error(
               result.message || "unknown error",

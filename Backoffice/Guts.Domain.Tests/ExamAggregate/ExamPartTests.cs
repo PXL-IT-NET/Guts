@@ -64,6 +64,31 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(addedEvaluation.ExamPartId, Is.EqualTo(existingExamPart.Id));
             Assert.That(addedEvaluation.MaximumScore, Is.EqualTo(maximumScore));
             Assert.That(addedEvaluation.NumberOfTestsAlreadyGreenAtStart, Is.EqualTo(numberOfTestsAlreadyGreenAtStart));
+            Assert.That(existingExamPart.MaximumScore, Is.EqualTo(maximumScore));
+        }
+
+        [Test]
+        public void AddAssignmentEvaluation_AssignmentAlreadyAdded_ShouldThrowContractException()
+        {
+            var existingAssignment = new AssignmentBuilder().WithId().WithRandomTests(5).Build();
+            var existingExamPart = new ExamPartBuilder().WithId().Build();
+            existingExamPart.AddAssignmentEvaluation(existingAssignment, 10, 0);
+
+            Assert.That(() => existingExamPart.AddAssignmentEvaluation(existingAssignment, 15, 1),
+                Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void MaximumScore_MultipleAssignmentEvaluations_ShouldReturnSumOfMaximumScores()
+        {
+            var assignment1 = new AssignmentBuilder().WithId().WithRandomTests(3).Build();
+            var assignment2 = new AssignmentBuilder().WithId().WithRandomTests(4).Build();
+            var examPart = new ExamPartBuilder().WithId().Build();
+
+            examPart.AddAssignmentEvaluation(assignment1, 10, 0);
+            examPart.AddAssignmentEvaluation(assignment2, 25, 1);
+
+            Assert.That(examPart.MaximumScore, Is.EqualTo(35));
         }
 
         [Test]

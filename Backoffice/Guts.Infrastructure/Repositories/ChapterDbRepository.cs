@@ -51,7 +51,7 @@ namespace Guts.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        private async Task<Chapter> ExecuteChapterQuery(IQueryable<Chapter> query)
+        private static async Task<Chapter> ExecuteChapterQuery(IQueryable<Chapter> query)
         {
             var chapter = await query.FirstOrDefaultAsync();
             if (chapter == null)

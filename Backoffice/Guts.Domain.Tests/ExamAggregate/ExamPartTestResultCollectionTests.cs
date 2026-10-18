@@ -58,5 +58,55 @@ namespace Guts.Domain.Tests.ExamAggregate
             Assert.That(assignment1ResultForUser1.AssignmentId, Is.EqualTo(expectedAssignmentId));
             Assert.That(assignment1ResultForUser1.NumberOfPassingTests, Is.EqualTo(expectedNumberOfPassingTests));
         }
+
+        [Test]
+        public void GetAssignmentResultFor_NonExistentAssignmentOrUser_ShouldReturnEmptyAssignmentResult()
+        {
+            //Arrange
+            var userId = Random.Shared.NextPositive();
+            var otherUserId = userId + 1;
+            var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+            var otherAssignmentId = assignment.Id + 1;
+
+            var lastTestResults = new List<TestResult>
+            {
+                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+            };
+
+            var collection = ExamPartTestResultCollection.FromLastTestResults(lastTestResults);
+
+            //Act
+            var missingAssignmentResult = collection.GetAssignmentResultFor(userId, otherAssignmentId);
+            var missingUserResult = collection.GetAssignmentResultFor(otherUserId, assignment.Id);
+
+            //Assert
+            AssertAssignmentResult(missingAssignmentResult, userId, otherAssignmentId, 0);
+            AssertAssignmentResult(missingUserResult, otherUserId, assignment.Id, 0);
+        }
+
+        [Test]
+        public void Equality_SameResults_ShouldBeEqual()
+        {
+            var userId = Random.Shared.NextPositive();
+            var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+            var testResultsA = new List<TestResult>
+            {
+                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+            };
+            var testResultsB = new List<TestResult>
+            {
+                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+            };
+
+            var collectionA = ExamPartTestResultCollection.FromLastTestResults(testResultsA);
+            var collectionB = ExamPartTestResultCollection.FromLastTestResults(testResultsB);
+            var differentCollection = ExamPartTestResultCollection.FromLastTestResults(new List<TestResult>());
+
+            Assert.That(collectionA.Equals(collectionB), Is.True);
+            Assert.That(collectionA == collectionB, Is.True);
+            Assert.That(collectionA.GetHashCode(), Is.EqualTo(collectionB.GetHashCode()));
+            Assert.That(collectionA.Equals(differentCollection), Is.False);
+            Assert.That(collectionA != differentCollection, Is.True);
+        }
     }
 }

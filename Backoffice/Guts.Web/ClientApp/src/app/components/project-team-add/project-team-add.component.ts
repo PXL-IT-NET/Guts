@@ -3,6 +3,7 @@ import {
   EventEmitter,
   Input,
   OnDestroy,
+  OnInit,
   Output,
 } from "@angular/core";
 import {
@@ -28,7 +29,7 @@ import { takeUntil } from "rxjs/operators";
   selector: "app-project-team-add",
   templateUrl: "./project-team-add.component.html",
 })
-export class ProjectTeamAddComponent implements OnDestroy {
+export class ProjectTeamAddComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   @Input() public courseId: number;
   @Input() public projectCode: string;

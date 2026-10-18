@@ -34,7 +34,6 @@ export class AssignmentSettingsComponent {
     this.assignmentKind = "assignment";
   }
 
-  ngOnInit() {}
   public deleteAssignment(assignment: IAssignmentModel) {
     let confirmMessage =
       "Are you sure you want to remove '" +

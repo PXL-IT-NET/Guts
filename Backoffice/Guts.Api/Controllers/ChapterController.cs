@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -72,7 +72,7 @@ namespace Guts.Api.Controllers
                     chapterUsers.AddRange(await _userRepository.GetUsersOfTopicAsync(chapter.Id));
                 }
 
-                if (!chapterUsers.Any()) //add the own user
+                if (chapterUsers.Count == 0) //add the own user
                 {
                     chapterUsers.Add(await _userManager.GetUserAsync(User));
                 }

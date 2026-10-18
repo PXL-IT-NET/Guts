@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Guts.Api.Models;
@@ -29,25 +29,25 @@ namespace Guts.Api.Filters
             {
                 case ContractException _:
                 case InvalidOperationException _:
-                    _logger.LogWarning(context.Exception, $"Bad request detected: {GetRequestUrl(context)}");
+                    _logger.LogWarning(context.Exception, "Bad request detected: {RequestUrl}", GetRequestUrl(context));
                     context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                     context.Result = new JsonResult(ErrorModel.FromException(context.Exception));
                     break;
                 case DataNotFoundException _:
-                    _logger.LogWarning(context.Exception, $"Resources not found: {GetRequestUrl(context)}");
+                    _logger.LogWarning(context.Exception, "Resources not found: {RequestUrl}", GetRequestUrl(context));
                     context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
                     context.Result = new JsonResult(ErrorModel.FromException(context.Exception));
                     break;
                 default:
                     _logger.LogError(context.Exception,
-                        $"An unhandled exception occurred in the application. Request: {GetRequestUrl(context)}");
+                        "An unhandled exception occurred in the application. Request: {RequestUrl}", GetRequestUrl(context));
                     context.HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                     context.Result = new JsonResult(ErrorModel.FromString("An unexpected error has occurred."));
                     break;
             }
         }
 
-        private string GetRequestUrl(ExceptionContext context)
+        private static string GetRequestUrl(ExceptionContext context)
         {
             if (context.HttpContext?.Request == null) return string.Empty;
             return $"{context.HttpContext.Request.Method} - {context.HttpContext.Request.GetDisplayUrl()}";

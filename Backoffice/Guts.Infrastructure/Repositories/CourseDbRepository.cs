@@ -14,6 +14,7 @@ namespace Guts.Infrastructure.Repositories
         {
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
         public async Task<Course> GetSingleAsync(string courseCode)
         {
             var course = await _context.Courses.FirstOrDefaultAsync(c => c.Code.ToLower() == courseCode.ToLower());

@@ -74,9 +74,6 @@ namespace Guts.Infrastructure.Repositories
                     CreatDateTime = g.Max(tr => tr.CreateDateTime)
                 };
 
-
-            var test = lastResultKeys.ToList();
-
             var lastResultsQuery = from testresult in _context.TestResults
                                    join projectTeamUser in _context.ProjectTeamUsers on testresult.UserId equals projectTeamUser.UserId
                                    from key in lastResultKeys

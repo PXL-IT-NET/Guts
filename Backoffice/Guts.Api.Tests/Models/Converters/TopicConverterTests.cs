@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
@@ -105,6 +105,76 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
+        public void ToTopicSummaryModel_WhenTopicIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToTopicSummaryModel(null, new List<AssignmentResultDto>()), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
+        public void ToTopicStatisticsModel_ShouldCorrectlyConvertValidTopic()
+        {
+            //Arrange
+            var chapter = new ChapterBuilder().WithId().WithAssignments(2, 3).Build();
+            var firstAssignment = chapter.Assignments.First();
+            var statisticsList = new List<AssignmentStatisticsDto>
+            {
+                new AssignmentStatisticsDto
+                {
+                    AssignmentId = firstAssignment.Id,
+                    TestPassageStatistics = new List<TestPassageStatisticDto>
+                    {
+                        new TestPassageStatisticDto { AmountOfPassedTests = 2, AmountOfUsers = 4 },
+                        new TestPassageStatisticDto { AmountOfPassedTests = 3, AmountOfUsers = 6 }
+                    }
+                }
+            };
+            string unit = "Students";
+
+            //Act
+            var model = _converter.ToTopicStatisticsModel(chapter, statisticsList, unit);
+
+            //Assert
+            Assert.That(model, Is.Not.Null);
+            Assert.That(model.Id, Is.EqualTo(chapter.Id));
+            Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
+            Assert.That(model.AssignmentStatistics, Has.Count.EqualTo(2));
+
+            var firstAssignmentStats = model.AssignmentStatistics.First(a => a.AssignmentId == firstAssignment.Id);
+            Assert.That(firstAssignmentStats.Unit, Is.EqualTo(unit));
+            Assert.That(firstAssignmentStats.TotalNumberOfUnits, Is.EqualTo(10));
+            Assert.That(firstAssignmentStats.Tests, Has.Count.EqualTo(3));
+            Assert.That(firstAssignmentStats.TestPassageStatistics, Has.Count.EqualTo(2));
+            Assert.That(firstAssignmentStats.TestPassageStatistics[0].AmountOfPassedTestsRange, Is.EqualTo("2 tests"));
+            Assert.That(firstAssignmentStats.TestPassageStatistics[0].NumberOfUsers, Is.EqualTo(4));
+            Assert.That(firstAssignmentStats.TestPassageStatistics[1].AmountOfPassedTestsRange, Is.EqualTo("3 tests"));
+            Assert.That(firstAssignmentStats.TestPassageStatistics[1].NumberOfUsers, Is.EqualTo(6));
+        }
+
+        [Test]
+        public void ToTopicStatisticsModel_WhenTopicIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToTopicStatisticsModel(null, new List<AssignmentStatisticsDto>(), "Students"), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
+        public void ToTopicStatisticsModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+        {
+            var chapter = new ChapterBuilder().WithId().Build();
+            chapter.Assignments = null;
+
+            Assert.That(() => _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students"), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void ToTopicStatisticsModel_WhenAssignmentTestsAreNull_ShouldThrowArgumentNullException()
+        {
+            var chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
+            chapter.Assignments.First().Tests = null;
+
+            Assert.That(() => _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students"), Throws.ArgumentNullException);
         }
 
         private static IReadOnlyList<AssignmentResultDto> GenerateAssignmentResults(Chapter chapter,

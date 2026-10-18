@@ -3,6 +3,7 @@ import {
   EventEmitter,
   Input,
   OnDestroy,
+  OnInit,
   Output,
 } from "@angular/core";
 import {
@@ -26,7 +27,7 @@ import { takeUntil } from "rxjs/operators";
   selector: "app-project-assessment-add",
   templateUrl: "./project-assessment-add.component.html",
 })
-export class ProjectAssessmentAddComponent implements OnDestroy {
+export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   public loading: boolean;
   public addAssessmentForm: FormGroup;

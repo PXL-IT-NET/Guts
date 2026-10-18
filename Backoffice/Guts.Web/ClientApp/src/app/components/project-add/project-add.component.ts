@@ -2,6 +2,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
@@ -22,7 +23,7 @@ import { ITopicAddModel } from "src/app/viewmodels/topic.model";
   selector: "app-project-add",
   templateUrl: "./project-add.component.html",
 })
-export class ProjectAddComponent {
+export class ProjectAddComponent implements OnInit {
   @Input() public courseId: number;
   @Input() public projectCode: string;
 

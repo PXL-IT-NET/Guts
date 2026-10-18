@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Guts.Infrastructure.Logging
 {
@@ -56,7 +56,7 @@ namespace Guts.Infrastructure.Logging
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    throw new ArgumentException(nameof(value));
+                    throw new ArgumentException($"{nameof(FileName)} cannot be null or empty.", nameof(value));
                 }
                 _fileName = value;
             }

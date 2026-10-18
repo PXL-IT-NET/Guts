@@ -52,7 +52,7 @@ public class ProjectTeamAssessmentServiceTests
     public void GetOrCreateTeamAssessmentAsync_ExistingTeamAssessment_ShouldRetrieveTheTeamAssessment()
     {
         //Arrange
-        IProjectTeamAssessment existingTeamAssessment = new ProjectTeamAssessmentBuilder().WithId().Build();
+        var existingTeamAssessment = new ProjectTeamAssessmentBuilder().WithId().Build();
         _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(existingTeamAssessment);
 
@@ -132,7 +132,7 @@ public class ProjectTeamAssessmentServiceTests
     public void GetStatusAsync_RetrievesTeamAssessmentAndMapsToStatusDto()
     {
         //Arrange
-        IProjectTeamAssessment existingTeamAssessment = new ProjectTeamAssessmentBuilder().WithId().Build();
+        var existingTeamAssessment = new ProjectTeamAssessmentBuilder().WithId().Build();
         _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(existingTeamAssessment);
 
@@ -150,7 +150,7 @@ public class ProjectTeamAssessmentServiceTests
     public void GetResultsForLectorAsync_RetrievesTeamAssessmentAndCreatesAResultForEachTeamUser()
     {
         //Arrange
-        IProjectTeamAssessment existingTeamAssessment = new ProjectTeamAssessmentBuilder()
+        var existingTeamAssessment = new ProjectTeamAssessmentBuilder()
             .WithId()
             .WithAllPeerAssessmentsAdded()
             .Build();
@@ -171,7 +171,7 @@ public class ProjectTeamAssessmentServiceTests
     public void GetResultForStudent_RetrievesTeamAssessmentAndCreatesAResultWithoutPeerAssessments()
     {
         //Arrange
-        IProjectTeamAssessment existingTeamAssessment = new ProjectTeamAssessmentBuilder()
+        var existingTeamAssessment = new ProjectTeamAssessmentBuilder()
             .WithId()
             .WithAllPeerAssessmentsAdded()
             .Build();

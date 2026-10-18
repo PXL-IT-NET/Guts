@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -151,7 +151,7 @@ namespace Guts.Business.Services
             };
 
             ICollection<IProjectTeam> allTeams = project.Teams;
-            bool alreadyExists = allTeams.Any(team => team.Name.ToLower() == newTeam.Name.ToLower());
+            bool alreadyExists = allTeams.Any(team => string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase));
             Contracts.Require(!alreadyExists, "A team with the same name already exists");
 
             return await _projectTeamRepository.AddAsync(newTeam);
@@ -196,7 +196,7 @@ namespace Guts.Business.Services
                     ProjectId = project.Id
                 };
 
-                if (allTeams.All(team => team.Name.ToLower() != newTeam.Name.ToLower()))
+                if (allTeams.All(team => !string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     await _projectTeamRepository.AddAsync(newTeam);
                 }

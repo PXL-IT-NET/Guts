@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -57,6 +57,8 @@ public class ProjectAssessmentController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> AddProjectAssessment([FromBody] CreateProjectAssessmentModel model)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         IProjectAssessment assessment = await _projectService.CreateProjectAssessmentAsync(model.ProjectId, model.Description,
             model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
 
@@ -72,6 +74,8 @@ public class ProjectAssessmentController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> UpdateProjectAssessment(int id, [FromBody] UpdateProjectAssessmentModel model)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
         await _projectService.UpdateProjectAssessmentAsync(id, model.Description,
             model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
 

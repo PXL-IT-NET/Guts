@@ -89,7 +89,7 @@ export class NavMenuComponent implements OnInit, OnDestroy {
   public logout() {
     console.log("logging out");
     this.authService.logout();
-    this.router.navigate(["/"]);
+    void this.router.navigate(["/"]);
   }
 
   public selectPeriod(period: IPeriodModel) {

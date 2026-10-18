@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
@@ -69,6 +69,12 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(() => _converter.ToTeamDetailsModel(team), Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
+        public void ToTeamDetailsModel_WhenTeamIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToTeamDetailsModel(null), Throws.InstanceOf<NullReferenceException>());
         }
     }
 }

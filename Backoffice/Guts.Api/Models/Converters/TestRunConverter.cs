@@ -10,7 +10,7 @@ namespace Guts.Api.Models.Converters
     {
         public TestRun From(IEnumerable<TestResultModel> testResultModels, int userId, Assignment assignment)
         {
-            if(assignment == null) throw new ArgumentNullException(nameof(assignment));
+            ArgumentNullException.ThrowIfNull(assignment);
 
             var testRun = new TestRun
             {
@@ -24,7 +24,7 @@ namespace Guts.Api.Models.Converters
 
             foreach (var testResultModel in testResultModels)
             {
-                var test = assignment.Tests.FirstOrDefault(t => t.TestName.ToLower() == testResultModel.TestName.ToLower());
+                var test = assignment.Tests.FirstOrDefault(t => string.Equals(t.TestName, testResultModel.TestName, StringComparison.OrdinalIgnoreCase));
                 if (test == null) continue;
 
                 var testResult = new TestResult

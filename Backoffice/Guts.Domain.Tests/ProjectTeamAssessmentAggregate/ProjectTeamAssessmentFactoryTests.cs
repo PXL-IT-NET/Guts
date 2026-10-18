@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
@@ -108,6 +108,21 @@ namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
             _projectAssessmentMockBuilder.WithOpenOn(openOnUtc);
 
             _projectTeamMockBuilder.WithMembers(4);
+
+            //Act + Assert
+            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
+                Throws.InstanceOf<ContractException>());
+        }
+
+        [Test]
+        public void CreateNew_TeamUsersNotLoadedWithUserData_ShouldThrowContractException()
+        {
+            //Arrange
+            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+
+            var teamUserWithoutUserLoaded = new ProjectTeamUser { UserId = 1, User = null };
+            _projectTeamMock.SetupGet(pt => pt.TeamUsers).Returns(new[] { teamUserWithoutUserLoaded });
 
             //Act + Assert
             Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),

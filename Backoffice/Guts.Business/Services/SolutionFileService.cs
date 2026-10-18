@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
@@ -19,7 +19,8 @@ namespace Guts.Business.Services
                     foreach (var solutionFile in solution.SolutionFiles)
                     {
                         var entry = zipArchive.CreateEntry($@"{solution.WriterName}\{solutionFile.FilePath}");
-                        await using StreamWriter writer = new StreamWriter(entry.Open());
+                        await using Stream entryStream = await entry.OpenAsync();
+                        await using StreamWriter writer = new StreamWriter(entryStream);
                         await writer.WriteAsync(solutionFile.Content);
                     }
                 }

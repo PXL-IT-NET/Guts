@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.CourseAggregate;
@@ -30,7 +30,7 @@ namespace Guts.Infrastructure
         public void DoAutomaticMigrations()
         {
             var pendingMigrations = _context.Database.GetPendingMigrations().ToList();
-            if (!pendingMigrations.Any())
+            if (pendingMigrations.Count == 0)
             {
                 _logger.LogInformation("No pending migrations found.");
                 return;
@@ -81,20 +81,20 @@ namespace Guts.Infrastructure
 
         private async Task AddRolesIfNotExists()
         {
-            if (_roleManager.RoleExistsAsync(Role.Constants.Student).Result) return;
+            if (await _roleManager.RoleExistsAsync(Role.Constants.Student)) return;
 
             await _roleManager.CreateAsync(new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpper() });
             await _roleManager.CreateAsync(new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpper() });
 
             //link exsting students to the "student" role
-            var students = _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToList();
+            var students = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToListAsync();
             foreach (var student in students)
             {
                 await _userManager.AddToRoleAsync(student, Role.Constants.Student);
             }
 
             //link exsting lectors to the "lector" role
-            var lectors = _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToList();
+            var lectors = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToListAsync();
             foreach (var lector in lectors)
             {
                 await _userManager.AddToRoleAsync(lector, Role.Constants.Lector);

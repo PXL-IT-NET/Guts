@@ -1,4 +1,5 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Business.Tests.Builders;
@@ -37,6 +38,20 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
+        public void ToTopicModel_WhenProjectIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToTopicModel(null), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
+        public void ToTopicModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+        {
+            var project = new ProjectBuilder().WithId().WithoutAssignments().Build();
+
+            Assert.That(() => _converter.ToTopicModel(project), Throws.ArgumentNullException);
+        }
+
+        [Test]
         public void ToProjectDetailModel_ShouldCorrectlyCovertValidProject()
         {
             //Arrange
@@ -69,10 +84,27 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
+        public void ToProjectDetailModel_WhenProjectIsNull_ShouldThrowNullReferenceException()
+        {
+            Assert.That(() => _converter.ToProjectDetailModel(null), Throws.InstanceOf<NullReferenceException>());
+        }
+
+        [Test]
         public void ToProjectDetailModel_ShouldThrowArgumentExceptionWhenAssignmentsAreNotLoaded()
         {
             //Arrange
             var project = new ProjectBuilder().WithId().WithoutAssignments().Build();
+
+            //Act + Assert
+            Assert.That(() => _converter.ToProjectDetailModel(project), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void ToProjectDetailModel_WhenTeamsAreNull_ShouldThrowArgumentNullException()
+        {
+            //Arrange
+            var project = new ProjectBuilder().WithId().WithAssignments(1).Build();
+            project.Teams = null;
 
             //Act + Assert
             Assert.That(() => _converter.ToProjectDetailModel(project), Throws.ArgumentNullException);

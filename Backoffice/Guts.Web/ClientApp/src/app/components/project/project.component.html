@@ -10,7 +10,7 @@
         <div class="mb-2 row">
           <label for="teams" class="col-lg-1 col-md-2 col-form-label">Team</label>
           <div class="col-lg-3 col-md-4">
-            <select name="teams" class="form-select" [(ngModel)]="selectedTeamId">
+            <select id="teams" name="teams" class="form-select" [(ngModel)]="selectedTeamId">
               @for (team of model.teams; track team) {
                 <option [ngValue]="team.id">
                   {{ team.name }}

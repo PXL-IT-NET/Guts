@@ -69,9 +69,16 @@
                   </div>
                   <div [ngbCollapse]="solutionFile.isCollapsed">
                     <div class="card card-body">
-                      <textarea class="form-control" readonly rows="10">{{
-                        solutionFile.content
-                      }}</textarea>
+                      <label for="solutionFileContent" class="visually-hidden"
+                        >Solution file content</label
+                      >
+                      <textarea
+                        id="solutionFileContent"
+                        class="form-control"
+                        readonly
+                        rows="10"
+                        >{{ solutionFile.content }}</textarea
+                      >
                     </div>
                   </div>
                 </li>
