@@ -1,10 +1,10 @@
-import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
+import { Component, input, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
   standalone: false,
   selector: "app-loading-overlay",
   template: `
-    @if (show) {
+    @if (show()) {
       <div class="app-loading-overlay">
         <div
           class="spinner-border text-light"
@@ -30,5 +30,5 @@ import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
   ],
 })
 export class LoadingOverlayComponent {
-  @Input() public show = false;
+  public show = input<boolean>(false);
 }

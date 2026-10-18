@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable, signal } from "@angular/core";
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { BehaviorSubject, Observable, Subject, of } from "rxjs";
 import { map, catchError } from "rxjs/operators";
@@ -19,6 +19,8 @@ import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 export class AuthService {
   private tokenModel: TokenModel | null;
   private loggedInStateSubject: BehaviorSubject<boolean>;
+  private readonly _isLoggedIn = signal<boolean>(false);
+  public readonly isLoggedIn = this._isLoggedIn.asReadonly();
   private currentUserProfile: UserProfile;
 
   constructor(private http: HttpClient) {
@@ -29,7 +31,13 @@ export class AuthService {
       String(localStorage.getItem(LocalStorageKeys.currentToken)),
     );
     let isLoggedIn: boolean = Boolean(this.tokenModel && this.tokenModel.token);
+    this._isLoggedIn.set(isLoggedIn);
     this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
+  }
+
+  private setLoggedInState(loggedIn: boolean): void {
+    this._isLoggedIn.set(loggedIn);
+    this.loggedInStateSubject.next(loggedIn);
   }
 
   public getToken(): string | null {
@@ -43,7 +51,7 @@ export class AuthService {
     this.tokenModel = null;
     localStorage.removeItem(LocalStorageKeys.currentToken);
     this.currentUserProfile = null;
-    this.loggedInStateSubject.next(false);
+    this.setLoggedInState(false);
   }
 
   public invalidateUserProfileCache(): void {
@@ -65,11 +73,11 @@ export class AuthService {
           );
 
           // return true to indicate successful login
-          this.loggedInStateSubject.next(true);
+          this.setLoggedInState(true);
           return PostResult.success();
         } else {
           // return false to indicate failed login
-          this.loggedInStateSubject.next(false);
+          this.setLoggedInState(false);
           var result = new PostResult();
           result.isAuthenticated = false;
           result.message = "No token present in returned token model";
@@ -77,7 +85,7 @@ export class AuthService {
         }
       }),
       catchError((errorResponse: HttpErrorResponse) => {
-        this.loggedInStateSubject.next(false);
+        this.setLoggedInState(false);
         return of(PostResult.fromHttpErrorResponse(errorResponse));
       }),
     );
@@ -115,7 +123,7 @@ export class AuthService {
     // clear token remove user from local storage to log user out
     this.tokenModel = null;
     localStorage.removeItem(LocalStorageKeys.currentToken);
-    this.loggedInStateSubject.next(false);
+    this.setLoggedInState(false);
     this.currentUserProfile = null;
   }
 

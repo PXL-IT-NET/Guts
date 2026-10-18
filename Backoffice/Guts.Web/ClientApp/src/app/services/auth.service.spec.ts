@@ -233,4 +233,20 @@ describe("AuthService", () => {
 
     expect(actualSuccess).toBeFalse();
   });
+
+  it("isLoggedIn signal should reflect logged in state across login and logout", () => {
+    expect(service.isLoggedIn()).toBeFalse();
+
+    const model = new LoginModel();
+    model.email = "student@pxl.be";
+    model.password = "Secret123!";
+
+    service.login(model).subscribe();
+    httpMock.expectOne("api/auth/token").flush({ token: "new-jwt" });
+
+    expect(service.isLoggedIn()).toBeTrue();
+
+    service.logout();
+    expect(service.isLoggedIn()).toBeFalse();
+  });
 });

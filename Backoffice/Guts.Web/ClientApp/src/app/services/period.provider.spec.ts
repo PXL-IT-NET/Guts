@@ -20,6 +20,7 @@ describe("PeriodProvider", () => {
     provider.period = period;
 
     expect(provider.period).toBe(period);
+    expect(provider.selectedPeriod()).toBe(period);
     expect(emitted).toBe(period);
   });
 });

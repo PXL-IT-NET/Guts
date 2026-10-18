@@ -1,11 +1,10 @@
 import {
   Component,
-  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
   OnDestroy,
-  Output,
+  output,
   SimpleChanges,
   ViewChild,
   ChangeDetectionStrategy
@@ -51,7 +50,7 @@ export class TypeaheadComponent<T = any>
   }
 
   @Input() public selectedItem: T | null = null;
-  @Output() public selectedItemChange = new EventEmitter<T | null>();
+  public readonly selectedItemChange = output<T | null>();
 
   @Input() public displayProperty: string = "";
   @Input() public formatItem?: (item: T) => string;
@@ -67,7 +66,7 @@ export class TypeaheadComponent<T = any>
   @Input() public debounceTime: number = 200;
   @Input() public allowCustomValue: boolean = false;
 
-  @Output() public itemSelected = new EventEmitter<T>();
+  public readonly itemSelected = output<T>();
 
   @ViewChild("instance", { static: false })
   public typeaheadInstance!: NgbTypeahead;
