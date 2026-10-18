@@ -42,7 +42,7 @@ export class AssignmentSummaryModel implements IAssignmentSummaryModel {
   private _chartData: any | null = null;
   get chartData(): any {
     if (!this._chartData) {
-      var numberOfNotRunnedTests =
+      const numberOfNotRunnedTests =
         this.numberOfTests -
         this.numberOfPassedTests -
         this.numberOfFailedTests;

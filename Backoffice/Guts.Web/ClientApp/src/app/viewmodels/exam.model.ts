@@ -53,7 +53,7 @@ export class ExamPartModel implements IExamPartModel {
   public deadlineDate: NgbDateStruct;
   public deadlineTime: NgbTimeStruct;
   public get deadline(): Date {
-    var d = moment({
+    const d = moment({
       year: this.deadlineDate.year,
       month: this.deadlineDate.month - 1,
       day: this.deadlineDate.day,
@@ -63,7 +63,7 @@ export class ExamPartModel implements IExamPartModel {
     return d.toDate();
   }
   public set deadline(value: Date) {
-    var d = moment(value).local();
+    const d = moment(value).local();
     this.deadlineDate = { year: d.year(), month: d.month() + 1, day: d.date() };
     this.deadlineTime = { hour: d.hour(), minute: d.minute(), second: 0 };
   }

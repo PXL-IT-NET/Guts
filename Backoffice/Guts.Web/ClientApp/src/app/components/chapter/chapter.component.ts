@@ -84,7 +84,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      var parentParams = this.route.parent.snapshot.params;
+      const parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.chapterCode = params["chapterCode"];
       this.loading = true;

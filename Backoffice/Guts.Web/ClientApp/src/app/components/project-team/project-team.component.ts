@@ -230,7 +230,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
           this.myTeam =
             this.teams.find((team) =>
               team.members.some(
-                (member) => member.userId == this.userProfile.id,
+                (member) => member.userId === this.userProfile.id,
               ),
             ) || null;
         } else {

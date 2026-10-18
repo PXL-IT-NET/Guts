@@ -35,15 +35,14 @@ export class AssignmentSummaryComponent {
   }
 
   public navigateToDetail(): void {
-    if (this.topicType == "chapter") {
+    if (this.topicType === "chapter") {
       void this.router.navigate(
         ["courses", this.courseId, "chapters", this.topicCode, "testresults"],
         {
           queryParams: { assignmentId: this.model.assignmentId },
         },
       );
-    }
-    if (this.topicType == "project") {
+    } else if (this.topicType === "project") {
       void this.router.navigate(
         ["courses", this.courseId, "projects", this.topicCode, "testresults"],
         {

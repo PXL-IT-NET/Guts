@@ -100,12 +100,12 @@ export class ExampartComponent implements OnInit {
           if (result.success) {
             this.allAssignments = result.value.sort(
               (a: ITopicAssignmentModel, b: ITopicAssignmentModel) => {
-                var topicCompare = a.topicDescription.localeCompare(
+                const topicCompare = a.topicDescription.localeCompare(
                   b.topicDescription,
                 );
                 if (topicCompare !== 0) return topicCompare;
-                var descriptionA = a.description || a.code;
-                var descriptionB = b.description || b.code;
+                const descriptionA = a.description || a.code;
+                const descriptionB = b.description || b.code;
                 return descriptionA.localeCompare(descriptionB);
               },
             );
@@ -194,8 +194,8 @@ export class ExampartComponent implements OnInit {
 
   public getAssignmentName(assignmentId: number) {
     if (!this.allAssignments) return "???";
-    var assignment = this.allAssignments.find(
-      (a) => a.assignmentId == assignmentId,
+    const assignment = this.allAssignments.find(
+      (a) => a.assignmentId === assignmentId,
     );
     if (!assignment) return "???";
     return (

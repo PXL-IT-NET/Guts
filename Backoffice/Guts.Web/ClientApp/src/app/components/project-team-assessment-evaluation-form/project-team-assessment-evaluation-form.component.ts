@@ -62,7 +62,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
         pa.cooperationScore >= 0 &&
         pa.effortScore >= 0,
     );
-    if (validPeerAssessments.length == 0) {
+    if (validPeerAssessments.length === 0) {
       this.toastr.error(
         "Fill in the scores for at least one team member",
         "Cannot save assessments",
@@ -77,7 +77,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
-            if (validPeerAssessments.length == this.peerAssessments.length) {
+            if (validPeerAssessments.length === this.peerAssessments.length) {
               this.toastr.success("Peer assessment saved");
             } else {
               this.toastr.warning(
@@ -98,13 +98,13 @@ export class ProjectTeamAssessmentEvaluationFormComponent
 
   public isInvalid(peerAssessment: PeerAssessmentModel): boolean {
     const isNotAverage =
-      peerAssessment.contributionScore != 3 ||
-      peerAssessment.cooperationScore != 3 ||
-      peerAssessment.effortScore != 3;
+      peerAssessment.contributionScore !== 3 ||
+      peerAssessment.cooperationScore !== 3 ||
+      peerAssessment.effortScore !== 3;
     const explanationIsMisssing =
       isNotAverage &&
       (!peerAssessment.explanation ||
-        peerAssessment.explanation.trim().length == 0);
+        peerAssessment.explanation.trim().length === 0);
     return explanationIsMisssing;
   }
 

@@ -51,19 +51,11 @@ export class NgDatetimeComponent implements ControlValueAccessor {
   }
 
   private parseDateToStringWithFormat(date: moment.Moment): string {
-    let dd = date.date().toString();
-    let mm = (date.month() + 1).toString();
-    let hh = date.hour().toString();
-    let min = date.minute().toString();
-    dd = dd.length === 2 ? dd : "0" + dd;
-    mm = mm.length === 2 ? mm : "0" + mm;
-    hh = hh.length === 2 ? hh : "0" + hh;
-    min = min.length === 2 ? min : "0" + min;
-    return [date.year(), "-", mm, "-", dd, "T", hh, ":", min].join("");
+    return date.format("YYYY-MM-DDTHH:mm");
   }
 
   onDateChange(value: string): void {
-    if (value != this._dateString) {
+    if (value !== this._dateString) {
       let parsedDate = value ? new Date(value) : new Date();
       // check if date is valid first
       if (!Number.isNaN(parsedDate.getTime())) {

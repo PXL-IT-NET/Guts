@@ -11,14 +11,14 @@ export class Result {
   }
 
   public static fromHttpErrorResponse(response: HttpErrorResponse): Result {
-    var result: Result = {
+    const result: Result = {
       success: false,
       isAuthenticated: true,
     };
 
     let message = "";
 
-    if (response.status == 401) {
+    if (response.status === 401) {
       result.isAuthenticated = false;
     } else if (
       response.status >= 500 ||
@@ -41,23 +41,23 @@ export class Result {
       console.log("API client error:");
       console.log(response);
     } else if (response.error instanceof Object) {
-      var messageContainer = response.error as Object;
-      for (var propertyName in messageContainer) {
-        if (messageContainer.hasOwnProperty(propertyName)) {
+      const messageContainer = response.error as Record<string, any>;
+      for (const propertyName in messageContainer) {
+        if (Object.prototype.hasOwnProperty.call(messageContainer, propertyName)) {
           if (propertyName === "0") {
-            message = <string>messageContainer;
-          } else if (typeof messageContainer[propertyName] == "string") {
+            message = <string>(messageContainer as unknown);
+          } else if (typeof messageContainer[propertyName] === "string") {
             message = <string>messageContainer[propertyName];
-          } else if (messageContainer[propertyName] instanceof Array) {
-            var lines: string[] = messageContainer[propertyName];
-            for (var line of lines) {
+          } else if (Array.isArray(messageContainer[propertyName])) {
+            const lines: string[] = messageContainer[propertyName];
+            for (const line of lines) {
               message += line + "\n";
             }
           }
         }
       }
 
-      if (message == "") {
+      if (message === "") {
         message = JSON.stringify(response.error) || "Unknown error";
       }
 
@@ -76,7 +76,7 @@ export class PostResult extends Result {
   }
 
   public static success(): PostResult {
-    var result = new PostResult();
+    const result = new PostResult();
     result.success = true;
     return result;
   }
@@ -94,7 +94,7 @@ export class CreateResult<T> extends Result {
   }
 
   public static success<T>(value: T): CreateResult<T> {
-    var result = new CreateResult<T>();
+    const result = new CreateResult<T>();
     result.success = true;
     result.value = value;
     return result;
@@ -103,8 +103,8 @@ export class CreateResult<T> extends Result {
   public static fromHttpErrorResponse<T>(
     response: HttpErrorResponse,
   ): CreateResult<T> {
-    var result = Result.fromHttpErrorResponse(response);
-    var createResult = new CreateResult<T>();
+    const result = Result.fromHttpErrorResponse(response);
+    const createResult = new CreateResult<T>();
     createResult.success = result.success;
     createResult.isAuthenticated = result.isAuthenticated;
     createResult.message = result.message;
@@ -116,7 +116,7 @@ export class GetResult<T> extends Result {
   public value: T;
 
   public static success<T>(value: T): GetResult<T> {
-    var result = new GetResult<T>();
+    const result = new GetResult<T>();
     result.success = true;
     result.value = value;
     return result;
@@ -125,8 +125,8 @@ export class GetResult<T> extends Result {
   public static fromHttpErrorResponse<T>(
     response: HttpErrorResponse,
   ): GetResult<T> {
-    var result = Result.fromHttpErrorResponse(response);
-    var getResult = new GetResult<T>();
+    const result = Result.fromHttpErrorResponse(response);
+    const getResult = new GetResult<T>();
     getResult.success = result.success;
     getResult.isAuthenticated = result.isAuthenticated;
     getResult.message = result.message;

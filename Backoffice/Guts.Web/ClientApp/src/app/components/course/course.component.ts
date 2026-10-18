@@ -230,7 +230,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c)),
     );
-    if (this.course.id != courseId || forceReload) {
+    if (this.course.id !== courseId || forceReload) {
       courseContents$ = this.courseService.getCourseContentsById(
         courseId,
         this.periodProvider.period.id,
@@ -245,7 +245,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         if (this.course.chapters.length > 0) {
           //Set selected chapter
           let selectedChapter = this.course.chapters.find(
-            (c) => c.code == selectedTopicCode,
+            (c) => c.code === selectedTopicCode,
           );
           if (selectedChapter) {
             this.selectChapter(selectedChapter);
@@ -257,7 +257,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedChapter.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId,
+              (a) => a.assignmentId === selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedExercise = selectedAssignment;
@@ -267,7 +267,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         } else if (this.course.projects.length > 0) {
           //Set selected project
           let selectedProject = this.course.projects.find(
-            (p) => p.code == selectedTopicCode,
+            (p) => p.code === selectedTopicCode,
           );
           if (selectedProject) {
             this.selectProject(selectedProject);
@@ -278,7 +278,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedProject.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId,
+              (a) => a.assignmentId === selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedComponent = selectedAssignment;

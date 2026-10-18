@@ -93,7 +93,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     TooltipModule,
   ],
   providers: [
-    provideZoneChangeDetection(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,

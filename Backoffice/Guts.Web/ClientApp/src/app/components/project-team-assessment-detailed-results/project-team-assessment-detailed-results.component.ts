@@ -40,12 +40,12 @@ export class ProjectTeamAssessmentDetailedResultsComponent
         max: 5,
         ticks: {
           callback: function (value, index, ticks) {
-            if (value == 0) return "No contribution (0)";
-            if (value == 1) return "Way below average (1)";
-            if (value == 2) return "Below average (2)";
-            if (value == 3) return "Average (3)";
-            if (value == 4) return "Above average (4)";
-            if (value == 5) return "Way above average (5)";
+            if (value === 0) return "No contribution (0)";
+            if (value === 1) return "Way below average (1)";
+            if (value === 2) return "Below average (2)";
+            if (value === 3) return "Average (3)";
+            if (value === 4) return "Above average (4)";
+            if (value === 5) return "Way above average (5)";
             return "";
           },
         },
@@ -207,7 +207,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
   }
 
   private setTeams(currentTeamId: number) {
-    this.currentTeam = this.allTeams.find((team) => team.id == currentTeamId);
+    this.currentTeam = this.allTeams.find((team) => team.id === currentTeamId);
     let currentIndex = this.allTeams.indexOf(this.currentTeam);
 
     if (currentIndex > 0) {

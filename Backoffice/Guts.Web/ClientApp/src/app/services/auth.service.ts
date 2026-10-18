@@ -61,7 +61,7 @@ export class AuthService {
   public login(model: LoginModel): Observable<PostResult> {
     return this.http.post("api/auth/token", model).pipe(
       map((object: Object) => {
-        var tokenModel = object as TokenModel;
+        const tokenModel = object as TokenModel;
         if (tokenModel && tokenModel.token) {
           // set token property
           this.tokenModel = tokenModel;
@@ -78,7 +78,7 @@ export class AuthService {
         } else {
           // return false to indicate failed login
           this.setLoggedInState(false);
-          var result = new PostResult();
+          const result = new PostResult();
           result.isAuthenticated = false;
           result.message = "No token present in returned token model";
           return result;
