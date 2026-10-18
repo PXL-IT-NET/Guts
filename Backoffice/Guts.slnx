@@ -11,6 +11,7 @@
   <Project Path="Guts.Common/Guts.Common.csproj" />
   <Project Path="Guts.Domain.Tests/Guts.Domain.Tests.csproj" />
   <Project Path="Guts.Domain/Guts.Domain.csproj" />
+  <Project Path="Guts.Infrastructure.Tests/Guts.Infrastructure.Tests.csproj" />
   <Project Path="Guts.Infrastructure/Guts.Infrastructure.csproj" />
   <Project Path="Guts.Web/Guts.Web.csproj" />
 </Solution>
