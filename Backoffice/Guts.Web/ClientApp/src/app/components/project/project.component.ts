@@ -1,25 +1,67 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
-import moment from "moment";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project.component.html",
 })
 export class ProjectComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public model: IProjectDetailsModel;
-  public selectedDate: moment.Moment;
-  public selectedAssignmentId: number;
-  public selectedTeamId: number;
+  private destroyRef = inject(DestroyRef);
+
+  private _model = signal<IProjectDetailsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    components: [],
+    teams: [],
+    assignments: [],
+  });
+  public get model(): IProjectDetailsModel {
+    return this._model();
+  }
+  public set model(v: IProjectDetailsModel) {
+    this._model.set(v);
+  }
+
+  private _selectedDate = signal<Date>(new Date());
+  public get selectedDate(): Date {
+    return this._selectedDate();
+  }
+  public set selectedDate(v: Date) {
+    this._selectedDate.set(v);
+  }
+
+  private _selectedAssignmentId = signal<number>(0);
+  public get selectedAssignmentId(): number {
+    return this._selectedAssignmentId();
+  }
+  public set selectedAssignmentId(v: number) {
+    this._selectedAssignmentId.set(v);
+  }
+
+  private _selectedTeamId = signal<number>(0);
+  public get selectedTeamId(): number {
+    return this._selectedTeamId();
+  }
+  public set selectedTeamId(v: number) {
+    this._selectedTeamId.set(v);
+  }
+
   public datePickerSettings: any;
-  public loading: boolean = false;
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   public courseId: number;
   public projectCode: string;
@@ -32,19 +74,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
   ) {
     this.courseId = 0;
     this.projectCode = "";
-
-    this.model = {
-      id: 0,
-      code: "",
-      description: "",
-      components: [],
-      teams: [],
-      assignments: [],
-    };
-
-    this.selectedAssignmentId = 0;
-    this.selectedDate = moment();
-    this.selectedTeamId = 0;
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,
@@ -53,15 +82,15 @@ export class ProjectComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      var parentParams = this.route.parent.snapshot.params;
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.projectCode = params["code"];
 
       this.loading = true;
       this.projectService
         .getProjectDetails(this.courseId, this.projectCode)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: GetResult<IProjectDetailsModel>) => {
           this.loading = false;
           if (result.success) {
@@ -82,7 +111,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
     // Subscribe to queryParams to detect changes in query string parameters
     this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((queryParams) => {
         if (queryParams["assignmentId"]) {
           this.selectedAssignmentId = +queryParams["assignmentId"];
@@ -92,8 +121,5 @@ export class ProjectComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

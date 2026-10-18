@@ -39,7 +39,7 @@
                         class="btn btn-outline-primary ms-2"
                         (click)="openTeamEditModal(myTeam)"
                         >
-                        <span class="fa fa-pencil pe-2"></span>
+                        <span class="bi bi-pencil pe-2"></span>
                         <span>Edit team</span>
                       </button>
                     }
@@ -67,7 +67,7 @@
           <div ngbAccordionItem>
             <h2 ngbAccordionHeader>
               <button ngbAccordionButton>
-                <span class="fa fa-users pe-2"></span>
+                <span class="bi bi-people pe-2"></span>
                 <span>{{ team.name }}</span>
                 <span class="badge text-bg-secondary ms-2">{{
                   team.members.length
@@ -98,7 +98,7 @@
                         class="btn btn-outline-primary"
                         (click)="joinTeam(team.id)"
                         >
-                        <span class="fa fa-user-plus pe-2"></span>
+                        <span class="bi bi-person-plus pe-2"></span>
                         <span>Join {{ team.name }}</span>
                       </button>
                     </p>
@@ -110,7 +110,7 @@
                         class="btn btn-outline-secondary"
                         (click)="openTeamEditModal(team)"
                         >
-                        <span class="fa fa-pencil pe-2"></span>
+                        <span class="bi bi-pencil pe-2"></span>
                         <span>Edit team</span>
                       </button>
                       <button
@@ -118,7 +118,7 @@
                         class="btn btn-outline-danger ms-2"
                         (click)="deleteTeam(team)"
                         >
-                        <span class="fa fa-trash pe-2"></span>
+                        <span class="bi bi-trash pe-2"></span>
                         <span>Delete team</span>
                       </button>
                     </p>
@@ -141,7 +141,7 @@
         class="btn btn-outline-success"
         (click)="openTeamAddModal()"
         >
-        <span class="fa fa-plus pe-2"></span>
+        <span class="bi bi-plus-lg pe-2"></span>
         <span>Add team(s)</span>
       </button>
     </div>

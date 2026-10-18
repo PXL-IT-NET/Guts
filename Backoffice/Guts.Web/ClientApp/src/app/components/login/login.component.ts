@@ -1,20 +1,34 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
 import { PostResult } from "../../util/result";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./login.component.html",
 })
 export class LoginComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public model: LoginModel;
-  public loading = false;
-  public error = "";
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _error = signal<string>("");
+  public get error(): string {
+    return this._error();
+  }
+  public set error(v: string) {
+    this._error.set(v);
+  }
 
   constructor(
     private router: Router,
@@ -23,7 +37,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {
     this.model = new LoginModel();
 
-    route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+    route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.model.loginSessionPublicIdentifier = params["s"];
     });
   }
@@ -38,7 +52,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
     this.authenticationService
       .login(this.model)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.handleLoginResult(result);
       });
@@ -51,7 +65,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     ) {
       this.authenticationService
         .cancelLoginSession(this.model.loginSessionPublicIdentifier)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           void this.router.navigate(["/"]);
         });
@@ -69,8 +83,5 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loading = false;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

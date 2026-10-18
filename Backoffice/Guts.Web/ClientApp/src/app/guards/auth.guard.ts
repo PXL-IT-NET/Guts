@@ -1,8 +1,20 @@
-import { Injectable } from "@angular/core";
-import { Router } from "@angular/router";
+import { inject, Injectable } from "@angular/core";
+import { CanActivateFn, Router } from "@angular/router";
 import { LocalStorageKeys } from "../util/localstorage.keys";
 
-@Injectable()
+export const authGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  if (localStorage.getItem(LocalStorageKeys.currentToken)) {
+    return true;
+  }
+
+  void router.navigate(["/login"]);
+  return false;
+};
+
+@Injectable({
+  providedIn: "root",
+})
 export class AuthGuard {
   constructor(private router: Router) {}
 
@@ -17,3 +29,4 @@ export class AuthGuard {
     return false;
   }
 }
+

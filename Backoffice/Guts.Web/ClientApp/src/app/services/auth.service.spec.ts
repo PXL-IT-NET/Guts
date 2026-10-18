@@ -1,6 +1,7 @@
+import { provideHttpClient } from "@angular/common/http";
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
 import { LocalStorageKeys } from "../util/localstorage.keys";
@@ -20,8 +21,11 @@ describe("AuthService", () => {
     localStorage.removeItem(LocalStorageKeys.currentToken);
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [AuthService],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        AuthService,
+      ],
     });
 
     service = TestBed.inject(AuthService);
@@ -232,5 +236,21 @@ describe("AuthService", () => {
     );
 
     expect(actualSuccess).toBeFalse();
+  });
+
+  it("isLoggedIn signal should reflect logged in state across login and logout", () => {
+    expect(service.isLoggedIn()).toBeFalse();
+
+    const model = new LoginModel();
+    model.email = "student@pxl.be";
+    model.password = "Secret123!";
+
+    service.login(model).subscribe();
+    httpMock.expectOne("api/auth/token").flush({ token: "new-jwt" });
+
+    expect(service.isLoggedIn()).toBeTrue();
+
+    service.logout();
+    expect(service.isLoggedIn()).toBeFalse();
   });
 });

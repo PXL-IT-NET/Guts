@@ -37,14 +37,14 @@
       <app-chapter-summary
         [courseId]="courseId"
         [chapterCode]="chapterCode"
-        [userId]="selectedUser?.id"
+        [userId]="$safeNavigationMigration(selectedUser?.id)"
         [statusDate]="selectedDate"
       >
       </app-chapter-summary>
     } @else {
       <app-assignment-detail
         [assignmentId]="selectedAssignmentId"
-        [userId]="selectedUser?.id"
+        [userId]="$safeNavigationMigration(selectedUser?.id)"
         [statusDate]="selectedDate"
       >
       </app-assignment-detail>

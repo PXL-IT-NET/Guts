@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, signal } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -15,25 +15,41 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-project-settings",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-settings.component.html",
 })
 export class ProjectSettingsComponent implements OnInit {
   private courseId: number;
   private projectCode: string;
 
-  public loading: boolean;
-  public editProjectForm: FormGroup;
-  public project: IProjectDetailsModel;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public editProjectForm: FormGroup<{
+    code: FormControl<string | null>;
+    description: FormControl<string | null>;
+  }>;
+
+  private _project = signal<IProjectDetailsModel>({} as IProjectDetailsModel);
+  public get project(): IProjectDetailsModel {
+    return this._project();
+  }
+  public set project(v: IProjectDetailsModel) {
+    this._project.set(v);
+  }
 
   constructor(
     private projectService: ProjectService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.courseId = 0;
     this.projectCode = "";
-    this.project = {} as IProjectDetailsModel;
   }
 
   ngOnInit() {
@@ -76,7 +92,7 @@ export class ProjectSettingsComponent implements OnInit {
     if (this.editProjectForm.invalid) return;
 
     const model: ITopicUpdateModel = {
-      description: this.editProjectForm.controls.description.value,
+      description: this.editProjectForm.controls.description.value || "",
     };
 
     this.projectService

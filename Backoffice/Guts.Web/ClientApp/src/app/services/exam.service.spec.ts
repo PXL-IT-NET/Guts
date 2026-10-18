@@ -1,6 +1,7 @@
+import { provideHttpClient } from "@angular/common/http";
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
 import { ExamModel, ExamPartModel } from "../viewmodels/exam.model";
@@ -12,8 +13,11 @@ describe("ExamService", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [ExamService],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ExamService,
+      ],
     });
     service = TestBed.inject(ExamService);
     httpMock = TestBed.inject(HttpTestingController);

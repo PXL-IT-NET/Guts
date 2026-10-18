@@ -1,4 +1,5 @@
-import { Component, Input, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -13,34 +14,48 @@ import {
 import { ProjectService } from "../../services";
 import { PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-edit",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-edit.component.html",
 })
 export class ProjectTeamEditComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
-  @Input() public team: ITeamDetailsModel;
 
-  public loading: boolean;
-  public editTeamForm: FormGroup;
+  private _team = signal<ITeamDetailsModel>({} as ITeamDetailsModel);
+  @Input()
+  public get team(): ITeamDetailsModel {
+    return this._team();
+  }
+  public set team(v: ITeamDetailsModel) {
+    this._team.set(v);
+  }
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public editTeamForm: FormGroup<{
+    name: FormControl<string | null>;
+  }>;
 
   constructor(
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
-  ) {
-    this.loading = false;
-  }
+  ) {}
 
   ngOnInit() {
     this.editTeamForm = new FormGroup({
-      name: new FormControl(null, Validators.required),
+      name: new FormControl<string | null>(null, Validators.required),
     });
 
     this.editTeamForm.patchValue(this.team);
@@ -55,7 +70,7 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .updateTeam(this.courseId, this.projectCode, this.team)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -85,14 +100,17 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
           this.team.id,
           member.userId,
         )
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
             //remove member from team
-            this.team.members = this.team.members.filter(
-              (m) => m.userId !== member.userId,
-            );
+            this.team = {
+              ...this.team,
+              members: this.team.members.filter(
+                (m) => m.userId !== member.userId,
+              ),
+            };
           } else {
             this.toastr.error(
               result.message || "unknown error",
@@ -107,8 +125,5 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

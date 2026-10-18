@@ -4,9 +4,9 @@ import { NgModule, provideZoneChangeDetection } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
-  HTTP_INTERCEPTORS,
   provideHttpClient,
-  withInterceptorsFromDi,
+  withInterceptors,
+  withXhr
 } from "@angular/common/http";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import {
@@ -18,10 +18,8 @@ import {
 //own
 import { AppRoutingModule } from "./app-routing.module";
 import * as c from "./components";
-import * as s from "./services";
-import { AuthGuard } from "./guards/auth.guard";
-import { TokenInterceptor } from "./interceptors/tokeninterceptor";
-import { RelativeInterceptor } from "./interceptors/relative.interceptor";
+import { tokenInterceptor } from "./interceptors/tokeninterceptor";
+import { relativeInterceptor } from "./interceptors/relative.interceptor";
 import { PositiveNumberValidatorDirective } from "./util/positive-number.directive";
 import { NgDatetimeComponent } from "./components/ng-datetime/ng-datetime.component";
 import { RecaptchaDirective } from "./directives/recaptcha.directive";
@@ -40,7 +38,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
 @NgModule({
   declarations: [
     c.AppComponent,
-    c.EmptyComponent,
     c.NavMenuComponent,
     c.SidebarMenuComponent,
     c.HomeComponent,
@@ -77,12 +74,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.ProjectTeamAssessmentMyResultComponent,
     c.AssessmentScoreDropdownComponent,
     c.AssignmentSettingsComponent,
-    c.LoadingOverlayComponent,
-    c.TeacherDocsConceptsComponent,
-    c.TeacherDocsDotnetComponent,
-    c.TeacherDocsXunitComponent,
-    c.TeacherDocsNunitComponent,
-    c.TeacherDocsJunitComponent,
     c.TypeaheadComponent,
   ],
   imports: [
@@ -92,34 +83,24 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     BrowserAnimationsModule,
     BaseChartDirective,
     RecaptchaDirective,
+    c.EmptyComponent,
+    c.LoadingOverlayComponent,
     FormsModule,
     ReactiveFormsModule,
     NgbModule,
     ToastrModule.forRoot(),
-    ModalModule.forRoot(),
-    TooltipModule.forRoot(),
+    ModalModule,
+    TooltipModule,
   ],
   providers: [
-    provideZoneChangeDetection(),
-    AuthGuard,
-    s.AuthService,
-    s.CourseService,
-    s.ChapterService,
-    s.ProjectService,
-    s.ProjectAssessmentService,
-    s.ProjectTeamAssessmentService,
-    s.AssignmentService,
-    s.ExamService,
-    s.ClientSettingsService,
-    s.TestService,
-    s.PeriodService,
-    s.PeriodProvider,
+    provideZoneChangeDetection({ eventCoalescing: true }),
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,
-    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true },
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(
+      withXhr(),
+      withInterceptors([relativeInterceptor, tokenInterceptor]),
+    ),
     provideCharts(withDefaultRegisterables()),
   ],
   bootstrap: [c.AppComponent],

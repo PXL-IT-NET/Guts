@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { Component, ViewChild, ChangeDetectionStrategy, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { RegisterModel } from "../../viewmodels/register.model";
@@ -6,13 +6,35 @@ import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./register.component.html",
 })
 export class RegisterComponent {
   public model: RegisterModel;
-  public loading = false;
-  public error = "";
-  public registered = false;
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _error = signal<string>("");
+  public get error(): string {
+    return this._error();
+  }
+  public set error(v: string) {
+    this._error.set(v);
+  }
+
+  private _registered = signal<boolean>(false);
+  public get registered(): boolean {
+    return this._registered();
+  }
+  public set registered(v: boolean) {
+    this._registered.set(v);
+  }
 
   @ViewChild(RecaptchaDirective, { static: false })
   public captcha?: RecaptchaDirective;

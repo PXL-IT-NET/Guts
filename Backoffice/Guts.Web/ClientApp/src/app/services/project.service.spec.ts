@@ -1,9 +1,9 @@
+import { provideHttpClient } from "@angular/common/http";
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { TeamGenerationModel } from "../viewmodels/team.model";
 import { PeriodProvider } from "./period.provider";
 import { ProjectService } from "./project.service";
@@ -15,8 +15,12 @@ describe("ProjectService", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [ProjectService, PeriodProvider],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ProjectService,
+        PeriodProvider,
+      ],
     });
     service = TestBed.inject(ProjectService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -104,7 +108,7 @@ describe("ProjectService", () => {
   });
 
   it("getProjectSummary and getProjectStatistics should append periodId and date", () => {
-    const date = moment("2026-06-01T12:00:00Z");
+    const date = new Date("2026-06-01T12:00:00Z");
     periodProvider.period = {
       id: 9,
       description: "P",

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -17,20 +17,87 @@ import { PeriodProvider } from "src/app/services";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./course.component.html",
 })
 export class CourseComponent implements OnInit, OnDestroy {
-  public course: ICourseContentsModel;
-  public selectedChapter: ITopicModel;
-  public selectedExercise: IAssignmentModel;
+  private _course = signal<ICourseContentsModel>({
+    id: 0,
+    code: "",
+    name: "",
+    chapters: [],
+    projects: [],
+  });
+  public get course(): ICourseContentsModel {
+    return this._course();
+  }
+  public set course(v: ICourseContentsModel) {
+    this._course.set(v);
+  }
 
-  public selectedProject: ITopicModel;
-  public selectedComponent: IAssignmentModel;
+  private _selectedChapter = signal<ITopicModel | null>(null);
+  public get selectedChapter(): ITopicModel | null {
+    return this._selectedChapter();
+  }
+  public set selectedChapter(v: ITopicModel | null) {
+    this._selectedChapter.set(v);
+  }
 
-  public loading: boolean = false;
-  public userProfile: UserProfile;
-  public hasContent: boolean;
-  public activePeriod: boolean = true;
+  private _selectedExercise = signal<IAssignmentModel | null>(null);
+  public get selectedExercise(): IAssignmentModel | null {
+    return this._selectedExercise();
+  }
+  public set selectedExercise(v: IAssignmentModel | null) {
+    this._selectedExercise.set(v);
+  }
+
+  private _selectedProject = signal<ITopicModel | null>(null);
+  public get selectedProject(): ITopicModel | null {
+    return this._selectedProject();
+  }
+  public set selectedProject(v: ITopicModel | null) {
+    this._selectedProject.set(v);
+  }
+
+  private _selectedComponent = signal<IAssignmentModel | null>(null);
+  public get selectedComponent(): IAssignmentModel | null {
+    return this._selectedComponent();
+  }
+  public set selectedComponent(v: IAssignmentModel | null) {
+    this._selectedComponent.set(v);
+  }
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
+  }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  private _hasContent = signal<boolean>(true);
+  public get hasContent(): boolean {
+    return this._hasContent();
+  }
+  public set hasContent(v: boolean) {
+    this._hasContent.set(v);
+  }
+
+  private _activePeriod = signal<boolean>(true);
+  public get activePeriod(): boolean {
+    return this._activePeriod();
+  }
+  public set activePeriod(v: boolean) {
+    this._activePeriod.set(v);
+  }
 
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
@@ -227,7 +294,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c)),
     );
-    if (this.course.id != courseId || forceReload) {
+    if (this.course.id !== courseId || forceReload) {
       courseContents$ = this.courseService.getCourseContentsById(
         courseId,
         this.periodProvider.period.id,
@@ -241,7 +308,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         if (this.course.chapters.length > 0) {
           //Set selected chapter
           let selectedChapter = this.course.chapters.find(
-            (c) => c.code == selectedTopicCode,
+            (c) => c.code === selectedTopicCode,
           );
           if (selectedChapter) {
             this.selectChapter(selectedChapter);
@@ -253,7 +320,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedChapter.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId,
+              (a) => a.assignmentId === selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedExercise = selectedAssignment;
@@ -263,7 +330,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         } else if (this.course.projects.length > 0) {
           //Set selected project
           let selectedProject = this.course.projects.find(
-            (p) => p.code == selectedTopicCode,
+            (p) => p.code === selectedTopicCode,
           );
           if (selectedProject) {
             this.selectProject(selectedProject);
@@ -274,7 +341,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           //Set selected assignment
           if (selectedAssignmentId > 0) {
             let selectedAssignment = selectedProject.assignments.find(
-              (a) => a.assignmentId == selectedAssignmentId,
+              (a) => a.assignmentId === selectedAssignmentId,
             );
             if (selectedAssignment) {
               this.selectedComponent = selectedAssignment;

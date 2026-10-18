@@ -45,7 +45,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
     if (!this._chartData) {
       let data = [];
       let labels = [];
-      for (var statistic of this.testPassageStatistics) {
+      for (const statistic of this.testPassageStatistics) {
         labels.push(statistic.amountOfPassedTestsRange);
         data.push(statistic.numberOfUsers);
       }

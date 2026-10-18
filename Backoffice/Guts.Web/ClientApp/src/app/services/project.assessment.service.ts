@@ -10,7 +10,9 @@ import {
   ProjectAssessmentUpdateModel,
 } from "../viewmodels/projectassessment.model";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ProjectAssessmentService {
   constructor(private http: HttpClient) {}
 

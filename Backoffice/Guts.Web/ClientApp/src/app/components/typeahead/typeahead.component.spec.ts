@@ -78,7 +78,7 @@ describe("TypeaheadComponent", () => {
     });
 
     it("should format string items directly", () => {
-      const stringComponent = new TypeaheadComponent<string>();
+      const stringComponent = TestBed.runInInjectionContext(() => new TypeaheadComponent<string>());
       expect(stringComponent.formatter("Hello World")).toBe("Hello World");
     });
 
@@ -87,7 +87,7 @@ describe("TypeaheadComponent", () => {
         name: "Custom",
         toString: () => "Custom ToString",
       };
-      const anyComponent = new TypeaheadComponent<any>();
+      const anyComponent = TestBed.runInInjectionContext(() => new TypeaheadComponent<any>());
       expect(anyComponent.formatter(customObj)).toBe("Custom ToString");
 
       const plainObj = { name: "Plain" };
@@ -256,7 +256,7 @@ describe("TypeaheadComponent", () => {
     });
 
     it("onModelChange should allow matching string items when items are strings", () => {
-      const stringComponent = new TypeaheadComponent<string>();
+      const stringComponent = TestBed.runInInjectionContext(() => new TypeaheadComponent<string>());
       stringComponent.items = ["Apple", "Banana"];
       spyOn(stringComponent.selectedItemChange, "emit");
 
@@ -267,7 +267,7 @@ describe("TypeaheadComponent", () => {
     });
 
     it("onModelChange should accept custom string when allowCustomValue is true", () => {
-      const anyComponent = new TypeaheadComponent<any>();
+      const anyComponent = TestBed.runInInjectionContext(() => new TypeaheadComponent<any>());
       anyComponent.allowCustomValue = true;
       spyOn(anyComponent.selectedItemChange, "emit");
 

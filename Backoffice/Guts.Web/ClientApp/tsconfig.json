@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
@@ -12,7 +13,11 @@
     "target": "ES2022",
     "typeRoots": ["node_modules/@types"],
     "lib": ["ES2022", "dom"],
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "strict": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,

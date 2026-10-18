@@ -60,10 +60,10 @@
                       "
                     >
                       @if (solutionFile.isCollapsed) {
-                        <span class="fa fa-plus"></span>
+                        <span class="bi bi-plus-lg"></span>
                       }
                       @if (!solutionFile.isCollapsed) {
-                        <span class="fa fa-minus"></span>
+                        <span class="bi bi-dash-lg"></span>
                       }
                     </button>
                   </div>
@@ -109,13 +109,13 @@
                     <tr>
                       <td>
                         @if (!testResult.runned) {
-                          <span class="fa fa-circle text-warning"></span>
+                          <span class="bi bi-circle-fill text-warning"></span>
                         }
                         @if (testResult.runned && testResult.passed) {
-                          <span class="fa fa-check-circle text-success"></span>
+                          <span class="bi bi-check-circle-fill text-success"></span>
                         }
                         @if (testResult.runned && !testResult.passed) {
-                          <span class="fa fa-times-circle text-danger"></span>
+                          <span class="bi bi-x-circle-fill text-danger"></span>
                         }
                         <span class="ms-2">{{ testResult.testName }}</span>
                       </td>

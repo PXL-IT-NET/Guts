@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { NgDatetimeComponent } from "./ng-datetime.component";
 
 describe("NgDatetimeComponent", () => {
@@ -14,9 +13,9 @@ describe("NgDatetimeComponent", () => {
     component = fixture.componentInstance;
   });
 
-  it("writeValue and date setter should format moment into datetime-local string", () => {
-    const m = moment({ year: 2026, month: 4, date: 7, hour: 9, minute: 5 });
-    component.writeValue(m);
+  it("writeValue and date setter should format date into datetime-local string", () => {
+    const d = new Date(2026, 4, 7, 9, 5);
+    component.writeValue(d);
 
     expect(component._dateString).toBe("2026-05-07T09:05");
   });
@@ -27,13 +26,13 @@ describe("NgDatetimeComponent", () => {
     component.registerOnTouched(() => {});
     component.setDisabledState(false);
 
-    let emittedMoment: moment.Moment = null;
-    component.dateChange.subscribe((m) => (emittedMoment = m));
+    let emittedDate: Date = null;
+    component.dateChange.subscribe((d) => (emittedDate = d));
 
     component.onDateChange("2026-06-15T14:30");
 
     expect(component._dateString).toBe("2026-06-15T14:30");
-    expect(moment.isMoment(emittedMoment)).toBeTrue();
+    expect(emittedDate instanceof Date).toBeTrue();
     expect(changeSpy).toHaveBeenCalled();
 
     // Invalid date string should be ignored
@@ -42,4 +41,3 @@ describe("NgDatetimeComponent", () => {
     expect(changeSpy).not.toHaveBeenCalled();
   });
 });
-

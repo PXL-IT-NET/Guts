@@ -1,31 +1,48 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./confirmemail.component.html",
 })
 export class ConfirmEmailComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public message: string;
-  public confirmed: boolean;
-  public loading: boolean;
+  private destroyRef = inject(DestroyRef);
+
+  private _message = signal<string>("Confirming email...");
+  public get message(): string {
+    return this._message();
+  }
+  public set message(v: string) {
+    this._message.set(v);
+  }
+
+  private _confirmed = signal<boolean>(false);
+  public get confirmed(): boolean {
+    return this._confirmed();
+  }
+  public set confirmed(v: boolean) {
+    this._confirmed.set(v);
+  }
+
+  private _loading = signal<boolean>(true);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private authenticationService: AuthService,
-  ) {
-    this.message = "Confirming email...";
-    this.confirmed = false;
-    this.loading = true;
-  }
+  ) {}
 
   ngOnInit() {
     this.activatedRoute.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params: Params) => {
         let model = {
           userId: params["userId"],
@@ -34,7 +51,7 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
 
         this.authenticationService
           .confirmEmail(model)
-          .pipe(takeUntil(this.destroy$))
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((result) => {
             this.confirmed = result.success;
             if (this.confirmed) {
@@ -50,8 +67,5 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

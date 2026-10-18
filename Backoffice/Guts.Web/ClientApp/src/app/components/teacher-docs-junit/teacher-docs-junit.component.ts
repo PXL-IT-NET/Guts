@@ -1,8 +1,11 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
+import { CommonModule } from "@angular/common";
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: "app-teacher-docs-junit",
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./teacher-docs-junit.component.html",
 })
 export class TeacherDocsJunitComponent {

@@ -15,7 +15,9 @@ import {
 } from "../viewmodels/exam.model";
 import { saveAs } from "file-saver";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ExamService {
   constructor(private http: HttpClient) {}
 
@@ -83,21 +85,19 @@ export class ExamService {
 
   public getExamResultsDownloadUrl(examId: number): Observable<Result> {
     return this.http
-      .get<any>("api/exams/" + examId + "/downloadscores", {
+      .get<any>(`api/exams/${examId}/downloadscores`, {
         headers: { Accept: "application/octet-stream" },
         responseType: "blob" as "json",
         observe: "response",
-      }) //
+      })
       .pipe(
-        map((resonse: HttpResponse<any>) => {
-          var contentDisposition = resonse.headers.get("content-disposition");
-          var filename = contentDisposition
-            .split(";")[1]
-            .split("filename")[1]
-            .split("=")[1]
-            .trim();
-          saveAs(resonse.body, filename);
-          var result = new Result();
+        map((response: HttpResponse<any>) => {
+          const contentDisposition = response.headers.get("content-disposition") || "";
+          const filename = contentDisposition.includes("filename=")
+            ? contentDisposition.split("filename=")[1].replace(/["']/g, "").trim()
+            : "exam-results.csv";
+          saveAs(response.body, filename);
+          const result = new Result();
           result.success = true;
           return result;
         }),

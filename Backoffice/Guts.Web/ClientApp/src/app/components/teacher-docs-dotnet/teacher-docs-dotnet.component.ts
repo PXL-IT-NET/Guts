@@ -1,8 +1,11 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
+import { CommonModule } from "@angular/common";
 
 @Component({
-  standalone: false,
+  standalone: true,
   selector: "app-teacher-docs-dotnet",
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./teacher-docs-dotnet.component.html",
 })
 export class TeacherDocsDotnetComponent {
@@ -13,4 +16,3 @@ export class TeacherDocsDotnetComponent {
   @Input() public projectDescription = "";
   @Input() public minimalExampleCode = "";
 }
-

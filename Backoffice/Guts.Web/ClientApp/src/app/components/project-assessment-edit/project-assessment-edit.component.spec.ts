@@ -1,7 +1,6 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import moment from "moment";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
 import { of } from "rxjs";
@@ -48,8 +47,8 @@ describe("ProjectAssessmentEditComponent", () => {
     component.projectAssessment = new ProjectAssessmentModel({
       id: 7,
       description: "Sprint 1",
-      openOnUtc: moment.utc(),
-      deadlineUtc: moment.utc().add(1, "day"),
+      openOnUtc: new Date(),
+      deadlineUtc: new Date(Date.now() + 86400000),
       teamStatus: null,
     });
     component.ngOnInit();

@@ -1,6 +1,7 @@
+import { TestBed } from "@angular/core/testing";
 import { Router } from "@angular/router";
 import { LocalStorageKeys } from "../util/localstorage.keys";
-import { AuthGuard } from "./auth.guard";
+import { AuthGuard, authGuard } from "./auth.guard";
 import { createRouterSpy } from "../testing/test-helpers";
 
 describe("AuthGuard", () => {
@@ -9,7 +10,13 @@ describe("AuthGuard", () => {
 
   beforeEach(() => {
     routerSpy = createRouterSpy();
-    guard = new AuthGuard(routerSpy);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Router, useValue: routerSpy },
+        AuthGuard,
+      ],
+    });
+    guard = TestBed.inject(AuthGuard);
     localStorage.removeItem(LocalStorageKeys.currentToken);
   });
 
@@ -28,5 +35,20 @@ describe("AuthGuard", () => {
     expect(guard.canActivate()).toBeFalse();
     expect(routerSpy.navigate).toHaveBeenCalledWith(["/login"]);
   });
+
+  it("functional authGuard should return true when currentToken is present in localStorage", () => {
+    localStorage.setItem(LocalStorageKeys.currentToken, '{"token":"jwt"}');
+
+    const result = TestBed.runInInjectionContext(() => authGuard({} as any, {} as any));
+    expect(result).toBeTrue();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  });
+
+  it("functional authGuard should navigate to /login and return false when currentToken is missing", () => {
+    const result = TestBed.runInInjectionContext(() => authGuard({} as any, {} as any));
+    expect(result).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(["/login"]);
+  });
 });
+
 

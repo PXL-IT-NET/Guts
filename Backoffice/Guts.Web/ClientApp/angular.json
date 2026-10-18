@@ -24,10 +24,17 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js", "@angular/localize/init"],
             "tsConfig": "tsconfig.app.json",
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
+            },
+            "allowedCommonJsDependencies": [
+              "file-saver"
+            ],
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles/styles.scss",
-              "node_modules/font-awesome/css/font-awesome.min.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
             "scripts": [
@@ -84,7 +91,7 @@
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:karma",
           "options": {
             "main": "src/test.ts",
             "polyfills": ["zone.js", "zone.js/testing"],

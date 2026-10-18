@@ -1,55 +1,72 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ProjectService } from "../../services/project.service";
 import {
   TopicStatisticsModel,
   TopicSummaryModel,
 } from "../../viewmodels/topic.model";
-import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
-import moment from "moment";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-summary",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./projectsummary.component.html",
 })
 export class ProjectSummaryComponent implements OnChanges, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public model: TopicSummaryModel;
-  public statistics: TopicStatisticsModel;
-  public loadingSummary: boolean = false;
-  public loadingStatistics: boolean = false;
+  private destroyRef = inject(DestroyRef);
+
+  private _model = signal<TopicSummaryModel>(new TopicSummaryModel());
+  public get model(): TopicSummaryModel {
+    return this._model();
+  }
+  public set model(v: TopicSummaryModel) {
+    this._model.set(v);
+  }
+
+  private _statistics = signal<TopicStatisticsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    assignmentStatistics: [],
+    assignments: [],
+  });
+  public get statistics(): TopicStatisticsModel {
+    return this._statistics();
+  }
+  public set statistics(v: TopicStatisticsModel) {
+    this._statistics.set(v);
+  }
+
+  private _loadingSummary = signal<boolean>(false);
+  public get loadingSummary(): boolean {
+    return this._loadingSummary();
+  }
+  public set loadingSummary(v: boolean) {
+    this._loadingSummary.set(v);
+  }
+
+  private _loadingStatistics = signal<boolean>(false);
+  public get loadingStatistics(): boolean {
+    return this._loadingStatistics();
+  }
+  public set loadingStatistics(v: boolean) {
+    this._loadingStatistics.set(v);
+  }
 
   @Input() public courseId: number;
   @Input() public teamId: number;
   @Input() public projectCode: string;
-  @Input() public statusDate: moment.Moment;
+  @Input() public statusDate: Date;
 
   constructor(
     private projectService: ProjectService,
     private toastr: ToastrService,
   ) {
-    this.model = new TopicSummaryModel();
-    this.statistics = {
-      id: 0,
-      code: "",
-      description: "",
-      assignmentStatistics: [],
-      assignments: [],
-    };
-
     this.courseId = 0;
     this.teamId = 0;
     this.projectCode = "";
-    this.statusDate = moment();
+    this.statusDate = new Date();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -81,7 +98,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
         this.teamId,
         this.statusDate,
       )
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loadingSummary = false;
         if (result.success) {
@@ -100,7 +117,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
     this.loadingStatistics = true;
     this.projectService
       .getProjectStatistics(this.courseId, this.projectCode, this.statusDate)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.statistics = result.value;
@@ -115,8 +132,5 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

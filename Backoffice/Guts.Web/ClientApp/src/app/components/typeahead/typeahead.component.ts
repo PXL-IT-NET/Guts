@@ -1,13 +1,14 @@
 import {
   Component,
-  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
   OnDestroy,
-  Output,
+  output,
   SimpleChanges,
   ViewChild,
+  ChangeDetectionStrategy,
+  signal,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import {
@@ -27,6 +28,7 @@ import {
   standalone: false,
   selector: "app-typeahead",
   templateUrl: "./typeahead.component.html",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -48,8 +50,14 @@ export class TypeaheadComponent<T = any>
     return this.items;
   }
 
-  @Input() public selectedItem: T | null = null;
-  @Output() public selectedItemChange = new EventEmitter<T | null>();
+  private _selectedItem = signal<T | null>(null);
+  @Input() public get selectedItem(): T | null {
+    return this._selectedItem();
+  }
+  public set selectedItem(v: T | null) {
+    this._selectedItem.set(v);
+  }
+  public readonly selectedItemChange = output<T | null>();
 
   @Input() public displayProperty: string = "";
   @Input() public formatItem?: (item: T) => string;
@@ -59,18 +67,32 @@ export class TypeaheadComponent<T = any>
   @Input() public name: string = "";
   @Input() public placeholder: string = "";
   @Input() public readonly: boolean = false;
-  @Input() public disabled: boolean = false;
+
+  private _disabled = signal<boolean>(false);
+  @Input() public get disabled(): boolean {
+    return this._disabled();
+  }
+  public set disabled(v: boolean) {
+    this._disabled.set(v);
+  }
+
   @Input() public inputClass: string = "form-control";
   @Input() public clearOnClick: boolean = true;
   @Input() public debounceTime: number = 200;
   @Input() public allowCustomValue: boolean = false;
 
-  @Output() public itemSelected = new EventEmitter<T>();
+  public readonly itemSelected = output<T>();
 
   @ViewChild("instance", { static: false })
-  public typeaheadInstance: NgbTypeahead;
+  public typeaheadInstance!: NgbTypeahead;
 
-  public innerValue: any = null;
+  private _innerValue = signal<any>(null);
+  public get innerValue(): any {
+    return this._innerValue();
+  }
+  public set innerValue(v: any) {
+    this._innerValue.set(v);
+  }
   public click$ = new Subject<string>();
 
   public onChange: (value: T | null) => void = () => {};

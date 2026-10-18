@@ -1,45 +1,51 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
 import { ActivatedRoute } from "@angular/router";
 import {
   IAssignmentDetailModel,
   AssignmentDetailModel,
 } from "../../viewmodels/assignmentdetail.model";
-import moment from "moment";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-assignment-detail",
   templateUrl: "./assignmentdetail.component.html",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public model: AssignmentDetailModel;
-  public loading: boolean = true;
+  private destroyRef = inject(DestroyRef);
+
+  private _model = signal<AssignmentDetailModel>(new AssignmentDetailModel());
+  public get model(): AssignmentDetailModel {
+    return this._model();
+  }
+  public set model(v: AssignmentDetailModel) {
+    this._model.set(v);
+  }
+
+  private _loading = signal<boolean>(true);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   @Input() public assignmentId: number;
   @Input() public teamId: number;
   @Input() public userId: number;
-  @Input() public statusDate: moment.Moment;
+  @Input() public statusDate: Date;
 
   constructor(
     private route: ActivatedRoute,
     private assignmentService: AssignmentService,
   ) {
-    this.model = new AssignmentDetailModel();
     this.assignmentId = 0;
     this.userId = 0;
     this.teamId = 0;
-    this.statusDate = moment();
+    this.statusDate = new Date();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -57,15 +63,12 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
         this.teamId,
         this.statusDate,
       )
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((assignmentDetail: IAssignmentDetailModel) => {
         this.loading = false;
         this.model = new AssignmentDetailModel(assignmentDetail);
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

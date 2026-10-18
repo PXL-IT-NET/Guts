@@ -1,19 +1,27 @@
+import { Injectable, signal } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { IPeriodModel } from "../viewmodels/period.model";
-import { Injectable } from "@angular/core";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class PeriodProvider {
-  public period$: BehaviorSubject<IPeriodModel> =
-    new BehaviorSubject<IPeriodModel>(null);
+  private readonly _period = signal<IPeriodModel | null>(null);
+  public readonly period$: BehaviorSubject<IPeriodModel | null> =
+    new BehaviorSubject<IPeriodModel | null>(null);
 
-  //transform into getter
+  /**
+   * Reactive signal for the current period
+   */
+  public readonly selectedPeriod = this._period.asReadonly();
 
-  get period(): IPeriodModel {
-    return this.period$.getValue();
+  get period(): IPeriodModel | null {
+    return this._period();
   }
 
-  set period(p: IPeriodModel) {
+  set period(p: IPeriodModel | null) {
+    this._period.set(p);
     this.period$.next(p);
   }
 }
+

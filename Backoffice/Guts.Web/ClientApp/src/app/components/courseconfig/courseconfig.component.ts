@@ -1,28 +1,25 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, Input } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./courseconfig.component.html",
 })
 export class CourseConfigComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public courseId: number;
+  private destroyRef = inject(DestroyRef);
+  @Input() public courseId: number = 0;
 
-  constructor(private route: ActivatedRoute) {
-    this.courseId = 0;
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      this.courseId = +params["courseId"]; // (+) converts 'courseId' to a number
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      if (params && params["courseId"]) {
+        this.courseId = +params["courseId"];
+      }
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

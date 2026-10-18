@@ -1,18 +1,16 @@
-import moment from "moment";
-
 export interface IPeriodModel {
   id: number;
   description: string;
-  from: moment.Moment;
-  until: moment.Moment;
+  from: Date | string | null;
+  until: Date | string | null;
   isActive: boolean;
 }
 
 export class PeriodModel implements IPeriodModel {
   public id: number;
   public description: string;
-  public from: moment.Moment;
-  public until: moment.Moment;
+  public from: Date | null;
+  public until: Date | null;
   public isActive: boolean;
 
   constructor(source?: IPeriodModel) {
@@ -25,8 +23,8 @@ export class PeriodModel implements IPeriodModel {
     if (source) {
       this.id = source.id;
       this.description = source.description;
-      this.from = moment(source.from);
-      this.until = moment(source.until);
+      this.from = source.from ? new Date(source.from) : null;
+      this.until = source.until ? new Date(source.until) : null;
       this.isActive = source.isActive;
     }
   }

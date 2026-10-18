@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import { SidebarMenuComponent } from "./sidebar-menu.component";
 import { AuthService } from "../../services/auth.service";
 import { CourseService } from "../../services/course.service";
@@ -30,11 +31,11 @@ describe("SidebarMenuComponent", () => {
       "getCourses",
     ]);
 
-    component = new SidebarMenuComponent(
+    component = TestBed.runInInjectionContext(() => new SidebarMenuComponent(
       authServiceSpy,
       routerSpy,
       courseServiceSpy,
-    );
+    ));
   });
 
   afterEach(() => {

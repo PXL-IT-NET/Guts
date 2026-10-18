@@ -1,10 +1,10 @@
-import moment from "moment";
+import { formatDateTime } from "../util/date.util";
 
 export class ProjectAssessmentCreateModel {
   projectId: number;
   description: string;
-  openOn: moment.Moment;
-  deadline: moment.Moment;
+  openOn: Date | string | null;
+  deadline: Date | string | null;
 
   constructor(projectId: number) {
     this.projectId = projectId;
@@ -17,8 +17,8 @@ export class ProjectAssessmentCreateModel {
 export class ProjectAssessmentUpdateModel {
   id: number;
   description: string;
-  openOn: moment.Moment;
-  deadline: moment.Moment;
+  openOn: Date | string | null;
+  deadline: Date | string | null;
 
   constructor() {
     this.id = 0;
@@ -31,35 +31,39 @@ export class ProjectAssessmentUpdateModel {
 export interface IProjectAssessmentModel {
   id: number;
   description: string;
-  openOnUtc: moment.Moment;
-  deadlineUtc: moment.Moment;
+  openOnUtc: Date | string | null;
+  deadlineUtc: Date | string | null;
   teamStatus: IProjectTeamAssessmentStatusModel;
 }
 
 export class ProjectAssessmentModel implements IProjectAssessmentModel {
   public id: number;
   public description: string;
-  public openOnUtc: moment.Moment;
+  public openOnUtc: Date | null;
   public get openOnDisplay(): string {
-    return this.openOnUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
+    return formatDateTime(this.openOnUtc);
   }
   public get isOpen(): boolean {
-    let now = moment();
-    return now.isAfter(this.openOnUtc) && this.deadlineUtc.isAfter(now);
+    if (!this.openOnUtc || !this.deadlineUtc) return false;
+    const now = Date.now();
+    return (
+      now > new Date(this.openOnUtc).getTime() &&
+      new Date(this.deadlineUtc).getTime() > now
+    );
   }
 
   public get isAfterOpenOn(): boolean {
-    let now = moment();
-    return now.isAfter(this.openOnUtc);
+    if (!this.openOnUtc) return false;
+    return Date.now() > new Date(this.openOnUtc).getTime();
   }
 
-  public deadlineUtc: moment.Moment;
+  public deadlineUtc: Date | null;
   public get deadlineDisplay(): string {
-    return this.deadlineUtc.local().format("dddd, DD/MM/YYYY, HH:mm");
+    return formatDateTime(this.deadlineUtc);
   }
   public get isOver(): boolean {
-    let now = moment();
-    return now.isAfter(this.deadlineUtc);
+    if (!this.deadlineUtc) return false;
+    return Date.now() > new Date(this.deadlineUtc).getTime();
   }
 
   public teamStatus: IProjectTeamAssessmentStatusModel;
@@ -74,8 +78,10 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
     if (source) {
       this.id = source.id;
       this.description = source.description;
-      this.openOnUtc = moment.utc(source.openOnUtc);
-      this.deadlineUtc = moment.utc(source.deadlineUtc);
+      this.openOnUtc = source.openOnUtc ? new Date(source.openOnUtc) : null;
+      this.deadlineUtc = source.deadlineUtc
+        ? new Date(source.deadlineUtc)
+        : null;
     }
   }
 }

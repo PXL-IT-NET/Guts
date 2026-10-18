@@ -1,4 +1,4 @@
-FROM node:22-slim AS client
+FROM node:24-slim AS client
 EXPOSE 4200
 USER node
 
@@ -8,7 +8,7 @@ ENV PATH=/home/node/.npm-global/bin:$PATH
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 
 RUN echo "Installing angular..."
-RUN npm install -g @angular/cli@21
+RUN npm install -g @angular/cli@22
 
 RUN echo "Serving app..."
 WORKDIR /app

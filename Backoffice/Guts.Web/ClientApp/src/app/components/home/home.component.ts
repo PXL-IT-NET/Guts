@@ -1,33 +1,37 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
-import { takeUntil } from "rxjs/internal/operators/takeUntil";
-import { Subject } from "rxjs/internal/Subject";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AuthService } from "src/app/services/auth.service";
 import { UserProfile } from "src/app/viewmodels/user.model";
 
 @Component({
   standalone: false,
   selector: "app-home",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./home.component.html",
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  public userProfile: UserProfile;
-
-  constructor(private authService: AuthService) {
-    this.userProfile = new UserProfile();
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
   }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
     this.authService
       .getLoggedInState()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isLoggedIn) => {
         if (isLoggedIn) {
           // retrieve the user profile when logged in
           this.authService
             .getUserProfile()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((profile) => {
               this.userProfile = profile;
             });
@@ -38,8 +42,5 @@ export class HomeComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

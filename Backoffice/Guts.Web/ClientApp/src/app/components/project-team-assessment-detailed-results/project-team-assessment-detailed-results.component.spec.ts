@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import {
   GradeCorrectionType,
   ProjectTeamAssessmentDetailedResultsComponent,
@@ -89,12 +90,12 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
       parentRoute,
     );
 
-    component = new ProjectTeamAssessmentDetailedResultsComponent(
+    component = TestBed.runInInjectionContext(() => new ProjectTeamAssessmentDetailedResultsComponent(
       teamAssessmentServiceSpy,
       projectServiceSpy,
       toastrSpy,
       routeStub as any,
-    );
+    ));
   });
 
   afterEach(() => {

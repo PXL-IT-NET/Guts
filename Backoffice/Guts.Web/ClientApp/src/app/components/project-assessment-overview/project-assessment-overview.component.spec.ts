@@ -1,7 +1,5 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { UntypedFormBuilder } from "@angular/forms";
-import moment from "moment";
 import { BsModalService } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
 import { of, Subject } from "rxjs";
@@ -77,7 +75,6 @@ describe("ProjectAssessmentOverviewComponent", () => {
       declarations: [ProjectAssessmentOverviewComponent],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
-        UntypedFormBuilder,
         createActivatedRouteProvider({ code: "P1" }, { courseId: "2" }),
         { provide: ProjectService, useValue: projectServiceSpy },
         { provide: ProjectAssessmentService, useValue: assessmentServiceSpy },
@@ -104,8 +101,8 @@ describe("ProjectAssessmentOverviewComponent", () => {
     const assessment = new ProjectAssessmentModel({
       id: 5,
       description: "PA1",
-      openOnUtc: moment.utc().subtract(1, "day"),
-      deadlineUtc: moment.utc().add(1, "day"),
+      openOnUtc: new Date(Date.now() - 86400000),
+      deadlineUtc: new Date(Date.now() + 86400000),
       teamStatus: null,
     });
     const status = new ProjectTeamAssessmentStatusModel({
@@ -139,9 +136,6 @@ describe("ProjectAssessmentOverviewComponent", () => {
     expect(component.selectedTeamId).toBe(3);
     expect(component.assessments).toEqual([assessment]);
     expect(assessment.teamStatus).toBe(status);
-    expect(component.descriptionControl).toBeTruthy();
-    expect(component.openOnControl).toBeTruthy();
-    expect(component.deadlineControl).toBeTruthy();
   });
 
   it("openAssessmentAddModal, openAssessmentEditModal, and deleteAssessment should trigger modals and service calls", () => {

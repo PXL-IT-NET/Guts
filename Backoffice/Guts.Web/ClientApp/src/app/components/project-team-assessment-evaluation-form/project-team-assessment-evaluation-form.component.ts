@@ -1,24 +1,30 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
 import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-evaluation-form",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-assessment-evaluation-form.component.html",
 })
 export class ProjectTeamAssessmentEvaluationFormComponent
   implements OnInit, OnDestroy
 {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   private projectAssessmentId: number;
   private teamId: number;
 
-  public peerAssessments: PeerAssessmentModel[];
+  private _peerAssessments = signal<PeerAssessmentModel[]>([]);
+  public get peerAssessments(): PeerAssessmentModel[] {
+    return this._peerAssessments();
+  }
+  public set peerAssessments(v: PeerAssessmentModel[]) {
+    this._peerAssessments.set(v);
+  }
 
   constructor(
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
@@ -26,7 +32,6 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     private router: Router,
     private toastr: ToastrService,
   ) {
-    this.peerAssessments = [];
     this.projectAssessmentId = 0;
     this.teamId = 0;
   }
@@ -36,7 +41,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     this.teamId = this.route.snapshot.params["teamId"];
     this.projectTeamAssessmentService
       .getPeerAssessmentsOfUser(this.projectAssessmentId, this.teamId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.peerAssessments = result.value;
@@ -57,7 +62,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
         pa.cooperationScore >= 0 &&
         pa.effortScore >= 0,
     );
-    if (validPeerAssessments.length == 0) {
+    if (validPeerAssessments.length === 0) {
       this.toastr.error(
         "Fill in the scores for at least one team member",
         "Cannot save assessments",
@@ -69,10 +74,10 @@ export class ProjectTeamAssessmentEvaluationFormComponent
           this.teamId,
           validPeerAssessments,
         )
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
-            if (validPeerAssessments.length == this.peerAssessments.length) {
+            if (validPeerAssessments.length === this.peerAssessments.length) {
               this.toastr.success("Peer assessment saved");
             } else {
               this.toastr.warning(
@@ -93,18 +98,15 @@ export class ProjectTeamAssessmentEvaluationFormComponent
 
   public isInvalid(peerAssessment: PeerAssessmentModel): boolean {
     const isNotAverage =
-      peerAssessment.contributionScore != 3 ||
-      peerAssessment.cooperationScore != 3 ||
-      peerAssessment.effortScore != 3;
+      peerAssessment.contributionScore !== 3 ||
+      peerAssessment.cooperationScore !== 3 ||
+      peerAssessment.effortScore !== 3;
     const explanationIsMisssing =
       isNotAverage &&
       (!peerAssessment.explanation ||
-        peerAssessment.explanation.trim().length == 0);
+        peerAssessment.explanation.trim().length === 0);
     return explanationIsMisssing;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

@@ -1,9 +1,14 @@
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   Component,
   OnInit,
   Input,
   Output,
   EventEmitter,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+  signal,
 } from "@angular/core";
 import {
   ExamPartModel,
@@ -14,37 +19,69 @@ import { ITopicAssignmentModel } from "src/app/viewmodels/assignment.model";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import {
-  UntypedFormGroup,
-  UntypedFormControl,
+  FormGroup,
+  FormControl,
   Validators,
 } from "@angular/forms";
 
 @Component({
   standalone: false,
   selector: "app-exampart",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./exampart.component.html",
 })
 export class ExampartComponent implements OnInit {
-  @Input() public model: ExamPartModel;
+  private destroyRef = inject(DestroyRef);
+
+  private _model = signal<ExamPartModel>(new ExamPartModel());
+  @Input() public get model(): ExamPartModel {
+    return this._model();
+  }
+  public set model(v: ExamPartModel) {
+    this._model.set(v || new ExamPartModel());
+  }
+
   @Input() public examId: number;
   @Output() public examPartDeleted = new EventEmitter<ExamPartModel>();
   @Output() public examPartAdded = new EventEmitter<ExamPartModel>();
 
-  public allAssignments: ITopicAssignmentModel[];
-  public newAssigmnentEvaluation: AssignmentEvaluation;
-  public isCollapsed: boolean;
+  private _allAssignments = signal<ITopicAssignmentModel[]>([]);
+  public get allAssignments(): ITopicAssignmentModel[] {
+    return this._allAssignments();
+  }
+  public set allAssignments(v: ITopicAssignmentModel[]) {
+    this._allAssignments.set(v);
+  }
 
-  public newAssignmentEvaluationForm: UntypedFormGroup;
+  private _newAssigmnentEvaluation = signal<AssignmentEvaluation>(new AssignmentEvaluation());
+  public get newAssigmnentEvaluation(): AssignmentEvaluation {
+    return this._newAssigmnentEvaluation();
+  }
+  public set newAssigmnentEvaluation(v: AssignmentEvaluation) {
+    this._newAssigmnentEvaluation.set(v);
+  }
+
+  private _isCollapsed = signal<boolean>(true);
+  public get isCollapsed(): boolean {
+    return this._isCollapsed();
+  }
+  public set isCollapsed(v: boolean) {
+    this._isCollapsed.set(v);
+  }
+
+  public newAssignmentEvaluationForm!: FormGroup<{
+    assignmentId: FormControl<number | null>;
+    maximumScore: FormControl<number | null>;
+    numberOfTestsAlreadyGreenAtStart: FormControl<number | null>;
+  }>;
   public get assignmentId() {
-    return this.newAssignmentEvaluationForm.get("assignmentId");
+    return this.newAssignmentEvaluationForm.controls.assignmentId;
   }
   public get maximumScore() {
-    return this.newAssignmentEvaluationForm.get("maximumScore");
+    return this.newAssignmentEvaluationForm.controls.maximumScore;
   }
   public get numberOfTestsAlreadyGreenAtStart() {
-    return this.newAssignmentEvaluationForm.get(
-      "numberOfTestsAlreadyGreenAtStart",
-    );
+    return this.newAssignmentEvaluationForm.controls.numberOfTestsAlreadyGreenAtStart;
   }
 
   private courseId: number;
@@ -60,21 +97,22 @@ export class ExampartComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.courseId = +params["courseId"]; // (+) converts 'courseId' to a number
 
       this.assignmentService
         .getAssignmentsOfCourse(this.courseId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
             this.allAssignments = result.value.sort(
               (a: ITopicAssignmentModel, b: ITopicAssignmentModel) => {
-                var topicCompare = a.topicDescription.localeCompare(
+                const topicCompare = a.topicDescription.localeCompare(
                   b.topicDescription,
                 );
                 if (topicCompare !== 0) return topicCompare;
-                var descriptionA = a.description || a.code;
-                var descriptionB = b.description || b.code;
+                const descriptionA = a.description || a.code;
+                const descriptionB = b.description || b.code;
                 return descriptionA.localeCompare(descriptionB);
               },
             );
@@ -94,16 +132,16 @@ export class ExampartComponent implements OnInit {
 
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
 
-    this.newAssignmentEvaluationForm = new UntypedFormGroup({
-      assignmentId: new UntypedFormControl(
+    this.newAssignmentEvaluationForm = new FormGroup({
+      assignmentId: new FormControl(
         this.newAssigmnentEvaluation.assignmentId,
         [Validators.min(1)],
       ),
-      maximumScore: new UntypedFormControl(
+      maximumScore: new FormControl(
         this.newAssigmnentEvaluation.maximumScore,
         [Validators.required, Validators.min(1)],
       ),
-      numberOfTestsAlreadyGreenAtStart: new UntypedFormControl(
+      numberOfTestsAlreadyGreenAtStart: new FormControl(
         this.newAssigmnentEvaluation.numberOfTestsAlreadyGreenAtStart,
         [Validators.required, Validators.min(0)],
       ),
@@ -112,6 +150,7 @@ export class ExampartComponent implements OnInit {
 
   public addAssignment() {
     this.model.assignmentEvaluations.push(this.newAssigmnentEvaluation);
+    this._model.update((m) => m);
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
   }
 
@@ -125,6 +164,7 @@ export class ExampartComponent implements OnInit {
 
     this.examService
       .saveExamPart(this.examId, this.model)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.examPartAdded.emit(result.value);
@@ -143,6 +183,7 @@ export class ExampartComponent implements OnInit {
   public deleteExampart() {
     this.examService
       .deleteExamPart(this.examId, this.model.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.examPartDeleted.emit(this.model);
@@ -158,8 +199,8 @@ export class ExampartComponent implements OnInit {
 
   public getAssignmentName(assignmentId: number) {
     if (!this.allAssignments) return "???";
-    var assignment = this.allAssignments.find(
-      (a) => a.assignmentId == assignmentId,
+    const assignment = this.allAssignments.find(
+      (a) => a.assignmentId === assignmentId,
     );
     if (!assignment) return "???";
     return (

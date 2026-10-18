@@ -1,53 +1,70 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
 import { PeriodService } from "src/app/services/period.service";
 import { PeriodProvider } from "src/app/services/period.provider";
 import { IPeriodModel, PeriodModel } from "src/app/viewmodels/period.model";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-nav-menu",
   templateUrl: "./nav-menu.component.html",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./nav-menu.component.scss"],
 })
 export class NavMenuComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public userProfile: UserProfile;
-  public allPeriods: IPeriodModel[];
-  public selectedPeriod: IPeriodModel;
+  private destroyRef = inject(DestroyRef);
+
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
+  }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  private _allPeriods = signal<IPeriodModel[]>([]);
+  public get allPeriods(): IPeriodModel[] {
+    return this._allPeriods();
+  }
+  public set allPeriods(v: IPeriodModel[]) {
+    this._allPeriods.set(v);
+  }
+
+  private _selectedPeriod = signal<IPeriodModel>(new PeriodModel());
+  public get selectedPeriod(): IPeriodModel {
+    return this._selectedPeriod();
+  }
+  public set selectedPeriod(v: IPeriodModel) {
+    this._selectedPeriod.set(v);
+  }
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private periodService: PeriodService,
     private periodProvider: PeriodProvider,
-  ) {
-    this.userProfile = new UserProfile();
-    this.allPeriods = [];
-    this.selectedPeriod = new PeriodModel();
-  }
+  ) {}
 
   ngOnInit(): void {
     this.authService
       .getLoggedInState()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isLoggedIn) => {
         if (isLoggedIn) {
           // retrieve the user profile when logged in
           this.authService
             .getUserProfile()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((profile) => {
               this.userProfile = profile;
             });
 
           this.periodService
             .getAll()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((result) => {
               if (result.success) {
                 if (result.value.length > 0) {
@@ -78,7 +95,7 @@ export class NavMenuComponent implements OnInit, OnDestroy {
       });
 
     this.periodProvider.period$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((period) => {
         if (period) {
           this.selectedPeriod = period;
@@ -96,8 +113,5 @@ export class NavMenuComponent implements OnInit, OnDestroy {
     this.periodProvider.period = period;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

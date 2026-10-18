@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   Component,
   OnInit,
@@ -5,6 +6,10 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+  signal,
 } from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
@@ -13,19 +18,47 @@ import { UserProfile } from "../../viewmodels/user.model";
 import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
 import { Subscription, Subject } from "rxjs";
 import { ToastrService } from "ngx-toastr";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-exam",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {
-  private destroy$ = new Subject<void>();
-  public loading: boolean = false;
-  public userProfile: UserProfile;
-  public exams: ExamModel[];
-  public newExam: ExamModel;
+  private destroyRef = inject(DestroyRef);
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
+  }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  private _exams = signal<ExamModel[]>([]);
+  public get exams(): ExamModel[] {
+    return this._exams();
+  }
+  public set exams(v: ExamModel[]) {
+    this._exams.set(v);
+  }
+
+  private _newExam = signal<ExamModel>(new ExamModel());
+  public get newExam(): ExamModel {
+    return this._newExam();
+  }
+  public set newExam(v: ExamModel) {
+    this._newExam.set(v);
+  }
 
   @Input() public courseId: number;
 
@@ -46,7 +79,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
       .getUserProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((profile) => {
         this.userProfile = profile;
       });
@@ -60,17 +93,13 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.userProfileSubscription?.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 
   public loadExams() {
     this.loading = true;
     this.examService
       .getExamsOfCourse(this.courseId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -90,11 +119,11 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.newExam.courseId = this.courseId;
     this.examService
       .saveExam(this.newExam)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
-          this.exams.push(result.value);
+          this.exams = [...this.exams, result.value];
           this.newExam = new ExamModel();
         } else {
           this.toastr.error(
@@ -108,17 +137,19 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
 
   public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.splice(exam.parts.indexOf(examPart), 1);
+    this._exams.update((exams) => [...exams]);
   }
 
   public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.push(examPart);
+    this._exams.update((exams) => [...exams]);
   }
 
   public downloadResults(exam: ExamModel) {
     this.loading = true;
     this.examService
       .getExamResultsDownloadUrl(exam.id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (!result.success) {

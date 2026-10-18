@@ -1,4 +1,3 @@
-import moment from "moment";
 import { AssignmentDetailModel } from "./assignmentdetail.model";
 import { AssignmentStatisticsModel } from "./assignmentstatistics.model";
 import { AssignmentSummaryModel } from "./assignmentsummary.model";
@@ -214,8 +213,8 @@ describe("ViewModels", () => {
 
   describe("ProjectAssessment models", () => {
     it("ProjectAssessmentModel should compute isOpen, isAfterOpenOn, isOver, and display strings", () => {
-      const past = moment.utc().subtract(2, "days");
-      const future = moment.utc().add(2, "days");
+      const past = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      const future = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
 
       const openAssessment = new ProjectAssessmentModel({
         id: 1,
@@ -262,18 +261,18 @@ describe("ViewModels", () => {
   });
 
   describe("PeriodModel & TeamGenerationModel", () => {
-    it("PeriodModel should parse moment dates from source", () => {
+    it("PeriodModel should parse dates from source", () => {
       const period = new PeriodModel({
         id: 3,
         description: "2025-2026",
-        from: moment("2025-09-01"),
-        until: moment("2026-08-31"),
+        from: new Date("2025-09-01"),
+        until: new Date("2026-08-31"),
         isActive: true,
       });
 
       expect(period.id).toBe(3);
       expect(period.isActive).toBeTrue();
-      expect(moment.isMoment(period.from)).toBeTrue();
+      expect(period.from instanceof Date).toBeTrue();
     });
 
     it("TeamGenerationModel should assign constructor arguments", () => {

@@ -1,9 +1,10 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
 import { AssignmentStatisticsModel } from "../../viewmodels/assignmentstatistics.model";
 
 @Component({
   standalone: false,
   selector: "assignment-statistics",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assignmentstatistics.component.html",
 })
 export class AssignmentStatisticsComponent {

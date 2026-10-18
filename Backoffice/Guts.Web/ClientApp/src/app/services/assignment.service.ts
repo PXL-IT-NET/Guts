@@ -2,12 +2,13 @@ import { Injectable } from "@angular/core";
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, of } from "rxjs";
 import { IAssignmentDetailModel } from "../viewmodels/assignmentdetail.model";
-import moment from "moment";
 import { ITopicAssignmentModel } from "../viewmodels/assignment.model";
 import { GetResult, PostResult } from "../util/result";
 import { map, catchError } from "rxjs/operators";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class AssignmentService {
   constructor(private http: HttpClient) {}
 
@@ -15,7 +16,7 @@ export class AssignmentService {
     assignmentId: number,
     userId: number,
     teamId: number,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<IAssignmentDetailModel> {
     let url = "api/assignments/" + assignmentId;
     if (userId && userId > 0) {
@@ -24,7 +25,8 @@ export class AssignmentService {
       url += "/forteam/" + teamId;
     }
     if (date) {
-      url += "?date=" + date.toISOString();
+      const dateIso = date instanceof Date ? date.toISOString() : date;
+      url += "?date=" + dateIso;
     }
     return this.http.get<IAssignmentDetailModel>(url);
   }

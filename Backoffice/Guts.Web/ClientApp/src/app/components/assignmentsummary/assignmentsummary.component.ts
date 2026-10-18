@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
 import { ChartOptions } from "chart.js";
 import { AssignmentSummaryModel } from "../../viewmodels/assignmentsummary.model";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 @Component({
   standalone: false,
   selector: "assignment-summary",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assignmentsummary.component.html",
 })
 export class AssignmentSummaryComponent {
@@ -34,15 +35,14 @@ export class AssignmentSummaryComponent {
   }
 
   public navigateToDetail(): void {
-    if (this.topicType == "chapter") {
+    if (this.topicType === "chapter") {
       void this.router.navigate(
         ["courses", this.courseId, "chapters", this.topicCode, "testresults"],
         {
           queryParams: { assignmentId: this.model.assignmentId },
         },
       );
-    }
-    if (this.topicType == "project") {
+    } else if (this.topicType === "project") {
       void this.router.navigate(
         ["courses", this.courseId, "projects", this.topicCode, "testresults"],
         {

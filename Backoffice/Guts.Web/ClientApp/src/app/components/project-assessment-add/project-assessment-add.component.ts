@@ -1,11 +1,5 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -19,18 +13,29 @@ import {
   IProjectAssessmentModel,
 } from "../../viewmodels/projectassessment.model";
 import { ProjectAssessmentService } from "../../services/project.assessment.service";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
   selector: "app-project-assessment-add",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-assessment-add.component.html",
 })
 export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  public loading: boolean;
-  public addAssessmentForm: FormGroup;
+  private destroyRef = inject(DestroyRef);
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public addAssessmentForm: FormGroup<{
+    description: FormControl<string | null>;
+    openOn: FormControl<any>;
+    deadline: FormControl<any>;
+  }>;
 
   @Input() public projectId: number;
 
@@ -41,15 +46,14 @@ export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
     private projectAssessmentService: ProjectAssessmentService,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.assessmentAdded = new EventEmitter<IProjectAssessmentModel>();
   }
 
   ngOnInit() {
     this.addAssessmentForm = new FormGroup({
       description: new FormControl("", Validators.required),
-      openOn: new FormControl("", Validators.required),
-      deadline: new FormControl("", Validators.required),
+      openOn: new FormControl<any>(null, Validators.required),
+      deadline: new FormControl<any>(null, Validators.required),
     });
   }
 
@@ -63,7 +67,7 @@ export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectAssessmentService
       .addProjectAssessment(model)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -83,8 +87,5 @@ export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

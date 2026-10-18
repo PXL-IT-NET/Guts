@@ -1,5 +1,4 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
-import moment from "moment";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { CreateResult, GetResult, PostResult } from "../util/result";
@@ -33,7 +32,7 @@ export abstract class TopicServiceBase {
 
   protected appendPeriodAndDateQuery(
     baseUrl: string,
-    date?: moment.Moment,
+    date?: Date | string,
   ): string {
     let apiUrl = baseUrl;
     const hasPeriod = Boolean(this.periodProvider.period);
@@ -41,7 +40,8 @@ export abstract class TopicServiceBase {
       apiUrl += `?periodId=${this.periodProvider.period.id}`;
     }
     if (date) {
-      apiUrl += `${hasPeriod ? "&" : "?"}date=${date.toISOString()}`;
+      const dateIso = date instanceof Date ? date.toISOString() : date;
+      apiUrl += `${hasPeriod ? "&" : "?"}date=${dateIso}`;
     }
     return apiUrl;
   }
@@ -109,7 +109,7 @@ export abstract class TopicServiceBase {
     topicCode: string,
     targetSegment: "users" | "teams",
     targetId: number,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicSummaryModel>> {
     const apiUrl = this.appendPeriodAndDateQuery(
       this.getTopicUrl(
@@ -128,7 +128,7 @@ export abstract class TopicServiceBase {
   protected getTopicStatistics(
     courseId: number,
     topicCode: string,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicStatisticsModel>> {
     const apiUrl = this.appendPeriodAndDateQuery(
       this.getTopicUrl(courseId, topicCode, "/statistics"),

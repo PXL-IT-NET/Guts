@@ -1,9 +1,9 @@
+import { provideHttpClient } from "@angular/common/http";
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { AssignmentService } from "./assignment.service";
 
 describe("AssignmentService", () => {
@@ -12,8 +12,11 @@ describe("AssignmentService", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [AssignmentService],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        AssignmentService,
+      ],
     });
     service = TestBed.inject(AssignmentService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -24,7 +27,7 @@ describe("AssignmentService", () => {
   });
 
   it("getAssignmentDetail should build URL for user, team, and optional date", () => {
-    const date = moment("2026-05-01T10:00:00Z");
+    const date = new Date("2026-05-01T10:00:00Z");
 
     service.getAssignmentDetail(5, 12, 0, date).subscribe();
     const userReq = httpMock.expectOne(

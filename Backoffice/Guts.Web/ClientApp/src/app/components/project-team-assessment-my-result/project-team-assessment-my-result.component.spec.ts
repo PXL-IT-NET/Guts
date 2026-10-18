@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import { ProjectTeamAssessmentMyResultComponent } from "./project-team-assessment-my-result.component";
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { GetResult } from "src/app/util/result";
@@ -84,12 +85,11 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
       parentRoute,
     );
 
-    component = new ProjectTeamAssessmentMyResultComponent(
+    component = TestBed.runInInjectionContext(() => new ProjectTeamAssessmentMyResultComponent(
       teamAssessmentServiceSpy,
-      projectServiceSpy,
       toastrSpy,
       routeStub as any,
-    );
+    ));
   });
 
   afterEach(() => {

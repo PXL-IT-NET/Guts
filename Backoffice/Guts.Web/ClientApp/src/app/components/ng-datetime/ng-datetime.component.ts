@@ -4,15 +4,18 @@ import {
   forwardRef,
   Input,
   Output,
+  ChangeDetectionStrategy,
+  signal,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
-import moment from "moment";
+import { formatDateTimeLocal } from "../../util/date.util";
 
 @Component({
   standalone: false,
   selector: "app-ng-datetime",
   template:
     '<input type="datetime-local" class="form-control" [value]="_dateString" (change)="onDateChange($event.target.value)" />',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -22,66 +25,51 @@ import moment from "moment";
   ],
 })
 export class NgDatetimeComponent implements ControlValueAccessor {
-  _dateString: string;
-  onChange: (value: moment.Moment) => void;
+  private _dateStringSignal = signal<string>("");
+
+  public get _dateString(): string {
+    return this._dateStringSignal();
+  }
+  public set _dateString(value: string) {
+    this._dateStringSignal.set(value);
+  }
+
+  onChange: (value: Date) => void;
 
   @Input()
-  public set date(d: moment.Moment) {
-    if (moment.isMoment(d)) {
-      this._dateString = this.parseDateToStringWithFormat(d);
+  public set date(d: Date | string | null) {
+    if (d) {
+      const dt = typeof d === "string" ? new Date(d) : d;
+      if (!Number.isNaN(dt.getTime())) {
+        this._dateString = formatDateTimeLocal(dt);
+      }
+    } else {
+      this._dateString = "";
     }
   }
 
-  @Output() dateChange: EventEmitter<moment.Moment>;
+  @Output() dateChange: EventEmitter<Date>;
 
   constructor() {
-    this._dateString = "";
     this.dateChange = new EventEmitter();
-    this.onChange = (value) => {};
-  }
-
-  private parseDateToStringWithFormat(date: moment.Moment): string {
-    let result: string;
-    result = [
-      date.year(),
-      "-",
-      date.month(),
-      "-",
-      date.day(),
-      "T",
-      date.hour(),
-      ":",
-      date.minute(),
-    ].join("");
-    let dd = date.date().toString();
-    let mm = (date.month() + 1).toString();
-    let hh = date.hour().toString();
-    let min = date.minute().toString();
-    dd = dd.length === 2 ? dd : "0" + dd;
-    mm = mm.length === 2 ? mm : "0" + mm;
-    hh = hh.length === 2 ? hh : "0" + hh;
-    min = min.length === 2 ? min : "0" + min;
-    result = [date.year(), "-", mm, "-", dd, "T", hh, ":", min].join("");
-    return result;
+    this.onChange = () => {};
   }
 
   onDateChange(value: string): void {
-    if (value != this._dateString) {
-      let parsedDate = value ? new Date(value) : new Date();
-      // check if date is valid first
+    if (value !== this._dateString) {
+      const parsedDate = value ? new Date(value) : new Date();
       if (!Number.isNaN(parsedDate.getTime())) {
         this._dateString = value;
-        let m = moment(parsedDate);
-        this.dateChange.emit(m);
-        this.onChange(m);
+        this.dateChange.emit(parsedDate);
+        this.onChange(parsedDate);
       }
     }
   }
 
-  writeValue(obj: moment.Moment): void {
+  writeValue(obj: Date | string | null): void {
     this.date = obj;
   }
-  registerOnChange(fn: (value: moment.Moment) => void): void {
+  registerOnChange(fn: (value: Date) => void): void {
     this.onChange = fn;
   }
   registerOnTouched(fn: any): void {}

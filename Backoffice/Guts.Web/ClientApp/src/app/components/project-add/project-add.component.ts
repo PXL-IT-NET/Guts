@@ -4,6 +4,8 @@ import {
   Input,
   OnInit,
   Output,
+  ChangeDetectionStrategy,
+  signal
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -13,7 +15,7 @@ import {
   AbstractControl,
 } from "@angular/forms";
 import { ProjectService } from "../../services";
-import { CreateResult, PostResult } from "../../util/result";
+import { CreateResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import { ITopicAddModel } from "src/app/viewmodels/topic.model";
@@ -21,6 +23,7 @@ import { ITopicAddModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-project-add",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-add.component.html",
 })
 export class ProjectAddComponent implements OnInit {
@@ -29,15 +32,24 @@ export class ProjectAddComponent implements OnInit {
 
   @Output() public projectAdded: EventEmitter<IProjectDetailsModel>;
 
-  public loading: boolean;
-  public addProjectForm: FormGroup;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public addProjectForm: FormGroup<{
+    code: FormControl<string | null>;
+    description: FormControl<string | null>;
+  }>;
 
   constructor(
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.projectAdded = new EventEmitter<IProjectDetailsModel>();
   }
 
@@ -51,8 +63,8 @@ export class ProjectAddComponent implements OnInit {
   onSubmit() {
     if (this.addProjectForm.invalid) return;
 
-    const code: string = this.addProjectForm.controls.code.value;
-    const description: string = this.addProjectForm.controls.description.value;
+    const code: string = this.addProjectForm.controls.code.value || "";
+    const description: string = this.addProjectForm.controls.description.value || "";
     this.addProject(code, description);
   }
 
