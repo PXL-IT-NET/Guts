@@ -1,6 +1,6 @@
 import { ITestResultModel } from "./testresult.model";
 import { IAssignmentModel, ITestModel } from "./assignment.model";
-import moment from "moment";
+import { formatDateTime } from "../util/date.util";
 import { ISolutionFileModel, SolutionFileModel } from "./solutionfile.model";
 
 export interface IAssignmentDetailModel extends IAssignmentModel {
@@ -57,16 +57,10 @@ export class AssignmentDetailModel implements IAssignmentDetailModel {
       );
 
       if (source.firstRun) {
-        this.firstRun = moment
-          .utc(source.firstRun)
-          .local()
-          .format("DD/MM/YYYY HH:mm");
+        this.firstRun = formatDateTime(source.firstRun);
       }
       if (source.lastRun) {
-        this.lastRun = moment
-          .utc(source.lastRun)
-          .local()
-          .format("DD/MM/YYYY HH:mm");
+        this.lastRun = formatDateTime(source.lastRun);
       }
     }
   }

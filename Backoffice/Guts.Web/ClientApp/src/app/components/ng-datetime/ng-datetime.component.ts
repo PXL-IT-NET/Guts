@@ -5,10 +5,10 @@ import {
   Input,
   Output,
   ChangeDetectionStrategy,
-  signal
+  signal,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
-import moment from "moment";
+import { formatDateTimeLocal } from "../../util/date.util";
 
 @Component({
   standalone: false,
@@ -34,43 +34,42 @@ export class NgDatetimeComponent implements ControlValueAccessor {
     this._dateStringSignal.set(value);
   }
 
-  onChange: (value: moment.Moment) => void;
+  onChange: (value: Date) => void;
 
   @Input()
-  public set date(d: moment.Moment) {
-    if (moment.isMoment(d)) {
-      this._dateString = this.parseDateToStringWithFormat(d);
+  public set date(d: Date | string | null) {
+    if (d) {
+      const dt = typeof d === "string" ? new Date(d) : d;
+      if (!Number.isNaN(dt.getTime())) {
+        this._dateString = formatDateTimeLocal(dt);
+      }
+    } else {
+      this._dateString = "";
     }
   }
 
-  @Output() dateChange: EventEmitter<moment.Moment>;
+  @Output() dateChange: EventEmitter<Date>;
 
   constructor() {
     this.dateChange = new EventEmitter();
-    this.onChange = (value) => {};
-  }
-
-  private parseDateToStringWithFormat(date: moment.Moment): string {
-    return date.format("YYYY-MM-DDTHH:mm");
+    this.onChange = () => {};
   }
 
   onDateChange(value: string): void {
     if (value !== this._dateString) {
-      let parsedDate = value ? new Date(value) : new Date();
-      // check if date is valid first
+      const parsedDate = value ? new Date(value) : new Date();
       if (!Number.isNaN(parsedDate.getTime())) {
         this._dateString = value;
-        let m = moment(parsedDate);
-        this.dateChange.emit(m);
-        this.onChange(m);
+        this.dateChange.emit(parsedDate);
+        this.onChange(parsedDate);
       }
     }
   }
 
-  writeValue(obj: moment.Moment): void {
+  writeValue(obj: Date | string | null): void {
     this.date = obj;
   }
-  registerOnChange(fn: (value: moment.Moment) => void): void {
+  registerOnChange(fn: (value: Date) => void): void {
     this.onChange = fn;
   }
   registerOnTouched(fn: any): void {}

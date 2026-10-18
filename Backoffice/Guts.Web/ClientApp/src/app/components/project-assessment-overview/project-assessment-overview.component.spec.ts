@@ -1,6 +1,5 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { BsModalService } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
 import { of, Subject } from "rxjs";
@@ -102,8 +101,8 @@ describe("ProjectAssessmentOverviewComponent", () => {
     const assessment = new ProjectAssessmentModel({
       id: 5,
       description: "PA1",
-      openOnUtc: moment.utc().subtract(1, "day"),
-      deadlineUtc: moment.utc().add(1, "day"),
+      openOnUtc: new Date(Date.now() - 86400000),
+      deadlineUtc: new Date(Date.now() + 86400000),
       teamStatus: null,
     });
     const status = new ProjectTeamAssessmentStatusModel({

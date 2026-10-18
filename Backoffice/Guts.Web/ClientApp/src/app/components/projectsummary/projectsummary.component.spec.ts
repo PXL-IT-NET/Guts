@@ -7,7 +7,6 @@ import {
   TopicSummaryModel,
 } from "../../viewmodels/topic.model";
 import { SimpleChange } from "@angular/core";
-import moment from "moment";
 import { of } from "rxjs";
 import {
   createToastrSpy,
@@ -69,7 +68,7 @@ describe("ProjectSummaryComponent", () => {
       of(GetResult.success(summary)),
     );
 
-    const date = moment("2025-05-01T12:00:00Z");
+    const date = new Date("2025-05-01T12:00:00Z");
     component.courseId = 1;
     component.projectCode = "PROJ1";
     component.teamId = 10;
@@ -108,8 +107,8 @@ describe("ProjectSummaryComponent", () => {
       of(GetResult.success(stats)),
     );
 
-    const oldDate = moment("2025-05-01T10:00:00Z");
-    const newDate = moment("2025-05-02T10:00:00Z");
+    const oldDate = new Date("2025-05-01T10:00:00Z");
+    const newDate = new Date("2025-05-02T10:00:00Z");
     component.courseId = 1;
     component.projectCode = "PROJ1";
     component.teamId = 0;

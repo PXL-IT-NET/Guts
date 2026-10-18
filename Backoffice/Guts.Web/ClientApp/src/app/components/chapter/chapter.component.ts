@@ -6,7 +6,6 @@ import { ChapterService } from "../../services/chapter.service";
 import { GetResult } from "../../util/result";
 import { IChapterDetailsModel } from "../../viewmodels/chapter.model";
 import { IUserModel } from "../../viewmodels/user.model";
-import moment from "moment";
 
 @Component({
   standalone: false,
@@ -47,11 +46,11 @@ export class ChapterComponent implements OnInit, OnDestroy {
     this._selectedUser.set(v);
   }
 
-  private _selectedDate = signal<moment.Moment>(moment());
-  public get selectedDate(): moment.Moment {
+  private _selectedDate = signal<Date>(new Date());
+  public get selectedDate(): Date {
     return this._selectedDate();
   }
-  public set selectedDate(v: moment.Moment) {
+  public set selectedDate(v: Date) {
     this._selectedDate.set(v);
   }
 

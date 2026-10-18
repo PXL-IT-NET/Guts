@@ -6,7 +6,6 @@ import {
   IAssignmentDetailModel,
   AssignmentDetailModel,
 } from "../../viewmodels/assignmentdetail.model";
-import moment from "moment";
 
 @Component({
   standalone: false,
@@ -37,7 +36,7 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   @Input() public assignmentId: number;
   @Input() public teamId: number;
   @Input() public userId: number;
-  @Input() public statusDate: moment.Moment;
+  @Input() public statusDate: Date;
 
   constructor(
     private route: ActivatedRoute,
@@ -46,7 +45,7 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
     this.assignmentId = 0;
     this.userId = 0;
     this.teamId = 0;
-    this.statusDate = moment();
+    this.statusDate = new Date();
   }
 
   ngOnChanges(changes: SimpleChanges) {

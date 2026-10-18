@@ -1,4 +1,3 @@
-import moment from "moment";
 import { NgbTimeStruct, NgbDateStruct } from "@ng-bootstrap/ng-bootstrap";
 
 export interface IExamModel {
@@ -53,25 +52,35 @@ export class ExamPartModel implements IExamPartModel {
   public deadlineDate: NgbDateStruct;
   public deadlineTime: NgbTimeStruct;
   public get deadline(): Date {
-    const d = moment({
-      year: this.deadlineDate.year,
-      month: this.deadlineDate.month - 1,
-      day: this.deadlineDate.day,
-      hour: this.deadlineTime.hour,
-      minute: this.deadlineTime.minute,
-    });
-    return d.toDate();
+    return new Date(
+      this.deadlineDate.year,
+      this.deadlineDate.month - 1,
+      this.deadlineDate.day,
+      this.deadlineTime.hour,
+      this.deadlineTime.minute,
+      this.deadlineTime.second ?? 0,
+    );
   }
   public set deadline(value: Date) {
-    const d = moment(value).local();
-    this.deadlineDate = { year: d.year(), month: d.month() + 1, day: d.date() };
-    this.deadlineTime = { hour: d.hour(), minute: d.minute(), second: 0 };
+    const d = new Date(value);
+    this.deadlineDate = {
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      day: d.getDate(),
+    };
+    this.deadlineTime = {
+      hour: d.getHours(),
+      minute: d.getMinutes(),
+      second: 0,
+    };
   }
 
   constructor(source?: IExamPartModel) {
     this.id = 0;
     this.name = "";
-    this.deadline = moment().startOf("day").toDate();
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    this.deadline = startOfDay;
     this.assignmentEvaluations = [];
 
     if (source) {

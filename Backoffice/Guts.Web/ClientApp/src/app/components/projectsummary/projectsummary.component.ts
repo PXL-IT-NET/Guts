@@ -6,7 +6,6 @@ import {
   TopicSummaryModel,
 } from "../../viewmodels/topic.model";
 import { ToastrService } from "ngx-toastr";
-import moment from "moment";
 
 @Component({
   standalone: false,
@@ -58,7 +57,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
   @Input() public courseId: number;
   @Input() public teamId: number;
   @Input() public projectCode: string;
-  @Input() public statusDate: moment.Moment;
+  @Input() public statusDate: Date;
 
   constructor(
     private projectService: ProjectService,
@@ -67,7 +66,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
     this.courseId = 0;
     this.teamId = 0;
     this.projectCode = "";
-    this.statusDate = moment();
+    this.statusDate = new Date();
   }
 
   ngOnChanges(changes: SimpleChanges) {

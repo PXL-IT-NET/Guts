@@ -1,7 +1,6 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import moment from "moment";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
 import { of } from "rxjs";
@@ -68,8 +67,8 @@ describe("ProjectAssessmentAddComponent", () => {
 
     component.addAssessmentForm.setValue({
       description: "Sprint 1",
-      openOn: moment(),
-      deadline: moment().add(1, "day"),
+      openOn: new Date(),
+      deadline: new Date(Date.now() + 86400000),
     });
     component.onSubmit();
 
@@ -84,8 +83,8 @@ describe("ProjectAssessmentAddComponent", () => {
     );
     component.addAssessmentForm.setValue({
       description: "Sprint 1",
-      openOn: moment(),
-      deadline: moment().add(1, "day"),
+      openOn: new Date(),
+      deadline: new Date(Date.now() + 86400000),
     });
 
     component.onSubmit();

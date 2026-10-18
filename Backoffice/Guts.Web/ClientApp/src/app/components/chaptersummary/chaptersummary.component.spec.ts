@@ -1,6 +1,5 @@
 import { NO_ERRORS_SCHEMA, SimpleChange } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { ToastrService } from "ngx-toastr";
 import { of } from "rxjs";
 import { ChapterService } from "../../services/chapter.service";
@@ -70,7 +69,7 @@ describe("ChapterSummaryComponent", () => {
     component.courseId = 2;
     component.chapterCode = "Ch1";
     component.userId = 5;
-    component.statusDate = moment();
+    component.statusDate = new Date();
 
     component.ngOnChanges({
       chapterCode: new SimpleChange("", "Ch1", true),

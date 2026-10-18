@@ -8,7 +8,6 @@ import {
   ITopicUpdateModel,
 } from "../viewmodels/topic.model";
 import { GetResult, PostResult } from "../util/result";
-import moment from "moment";
 import { PeriodProvider } from "./period.provider";
 import { TopicServiceBase } from "./topic.service.base";
 
@@ -39,7 +38,7 @@ export class ChapterService extends TopicServiceBase {
     courseId: number,
     chapterCode: string,
     userId: number,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicSummaryModel>> {
     return this.getTopicSummaryByTarget(
       courseId,
@@ -53,7 +52,7 @@ export class ChapterService extends TopicServiceBase {
   public getChapterStatistics(
     courseId: number,
     chapterCode: string,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicStatisticsModel>> {
     return this.getTopicStatistics(courseId, chapterCode, date);
   }

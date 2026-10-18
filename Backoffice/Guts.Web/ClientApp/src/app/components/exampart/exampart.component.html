@@ -8,10 +8,10 @@
     (click)="isCollapsed = !isCollapsed"
     >
     @if (model.id > 0 && isCollapsed) {
-      <span class="fa fa-plus"></span>
+      <span class="bi bi-plus-lg"></span>
     }
     @if (model.id > 0 && !isCollapsed) {
-      <span class="fa fa-minus"></span>
+      <span class="bi bi-dash-lg"></span>
     }
     @if (model.id <= 0) {
       <span>Add new part</span>
@@ -61,7 +61,7 @@
                 (click)="d.toggle()"
                 type="button"
                 >
-                <span class="fa fa-calendar"></span>
+                <span class="bi bi-calendar"></span>
               </button>
             </div>
           </div>

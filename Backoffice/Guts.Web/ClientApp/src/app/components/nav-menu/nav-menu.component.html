@@ -43,7 +43,7 @@
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          <span class="fa fa-calendar"></span>
+          <span class="bi bi-calendar"></span>
           <span> {{ selectedPeriod.description }}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -56,11 +56,10 @@
                     'bi-unlock': period.isActive,
                   }"
                 ></span>
-                <!-- <span class="fa fa-calendar"></span> -->
                 <span> {{ period.description }}</span>
                 <span>
-                  ({{ $safeNavigationMigration(period.from?.toDate()) | date: "dd/MM/yyyy" }} -
-                  {{ $safeNavigationMigration(period.until?.toDate()) | date: "dd/MM/yyyy" }})</span
+                  ({{ period.from | date: "dd/MM/yyyy" }} -
+                  {{ period.until | date: "dd/MM/yyyy" }})</span
                 >
               </a>
             </li>
@@ -75,20 +74,20 @@
         data-bs-toggle="dropdown"
         aria-expanded="false"
       >
-        <span class="fa fa-user"></span>
+        <span class="bi bi-person"></span>
         <span> {{ userProfile.email }}</span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end">
         @if (userProfile.isAuthenticated) {
           <li>
             <a class="dropdown-item" [routerLink]="['/changepassword']">
-              <span class="fa fa-key"></span>
+              <span class="bi bi-key"></span>
               <span> Change password</span>
             </a>
           </li>
           <li>
             <a class="dropdown-item" (click)="logout()">
-              <span class="fa fa-power-off"></span>
+              <span class="bi bi-power"></span>
               <span> Afmelden</span>
             </a>
           </li>
@@ -96,7 +95,7 @@
         @if (!userProfile.isAuthenticated) {
           <li>
             <a class="dropdown-item" [routerLink]="['/login']">
-              <span class="fa fa-sign-in"></span>
+              <span class="bi bi-box-arrow-in-right"></span>
               <span> Aanmelden</span>
             </a>
           </li>

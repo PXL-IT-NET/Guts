@@ -5,7 +5,6 @@ import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
-import moment from "moment";
 
 @Component({
   standalone: false,
@@ -30,11 +29,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
     this._model.set(v);
   }
 
-  private _selectedDate = signal<moment.Moment>(moment());
-  public get selectedDate(): moment.Moment {
+  private _selectedDate = signal<Date>(new Date());
+  public get selectedDate(): Date {
     return this._selectedDate();
   }
-  public set selectedDate(v: moment.Moment) {
+  public set selectedDate(v: Date) {
     this._selectedDate.set(v);
   }
 

@@ -4,7 +4,6 @@ import { Observable } from "rxjs";
 import { IProjectDetailsModel } from "../viewmodels/project.model";
 import { ITeamDetailsModel, TeamGenerationModel } from "../viewmodels/team.model";
 import { CreateResult, GetResult, PostResult } from "../util/result";
-import moment from "moment";
 import {
   TopicStatisticsModel,
   TopicSummaryModel,
@@ -145,7 +144,7 @@ export class ProjectService extends TopicServiceBase {
     courseId: number,
     projectCode: string,
     teamId: number,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicSummaryModel>> {
     return this.getTopicSummaryByTarget(
       courseId,
@@ -159,7 +158,7 @@ export class ProjectService extends TopicServiceBase {
   public getProjectStatistics(
     courseId: number,
     projectCode: string,
-    date?: moment.Moment,
+    date?: Date | string,
   ): Observable<GetResult<TopicStatisticsModel>> {
     return this.getTopicStatistics(courseId, projectCode, date);
   }

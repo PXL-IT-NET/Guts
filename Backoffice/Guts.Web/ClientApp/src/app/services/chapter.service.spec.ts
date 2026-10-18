@@ -4,7 +4,6 @@ import {
   provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import moment from "moment";
 import { ChapterService } from "./chapter.service";
 import { PeriodProvider } from "./period.provider";
 
@@ -77,7 +76,7 @@ describe("ChapterService", () => {
   });
 
   it("getChapterSummary and getChapterStatistics should construct query params with periodId and date", () => {
-    const date = moment("2026-06-01T12:00:00Z");
+    const date = new Date("2026-06-01T12:00:00Z");
     periodProvider.period = {
       id: 2,
       description: "Period",

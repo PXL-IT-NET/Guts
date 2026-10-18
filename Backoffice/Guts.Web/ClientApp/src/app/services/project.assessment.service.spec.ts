@@ -4,7 +4,6 @@ import {
   provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import moment from "moment";
 import {
   ProjectAssessmentCreateModel,
   ProjectAssessmentModel,
@@ -39,8 +38,8 @@ describe("ProjectAssessmentService", () => {
       {
         id: 1,
         description: "PA1",
-        openOnUtc: moment.utc(),
-        deadlineUtc: moment.utc(),
+        openOnUtc: new Date().toISOString(),
+        deadlineUtc: new Date().toISOString(),
         teamStatus: null,
       },
     ]);
@@ -64,8 +63,8 @@ describe("ProjectAssessmentService", () => {
     postReq.flush({
       id: 2,
       description: "PA2",
-      openOnUtc: moment.utc(),
-      deadlineUtc: moment.utc(),
+      openOnUtc: new Date().toISOString(),
+      deadlineUtc: new Date().toISOString(),
     });
     expect(createRes.success).toBeTrue();
 

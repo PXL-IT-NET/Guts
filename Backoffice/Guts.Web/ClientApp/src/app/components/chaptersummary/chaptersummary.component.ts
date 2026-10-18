@@ -13,7 +13,6 @@ import {
 } from "../../viewmodels/topic.model";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
-import moment from "moment";
 
 @Component({
   standalone: false,
@@ -63,7 +62,7 @@ export class ChapterSummaryComponent implements OnChanges {
   @Input() public courseId: number;
   @Input() public userId: number;
   @Input() public chapterCode: string;
-  @Input() public statusDate: moment.Moment;
+  @Input() public statusDate: Date;
 
   constructor(
     private chapterService: ChapterService,
@@ -73,7 +72,7 @@ export class ChapterSummaryComponent implements OnChanges {
     this.courseId = 0;
     this.userId = 0;
     this.chapterCode = "";
-    this.statusDate = moment();
+    this.statusDate = new Date();
   }
 
   ngOnChanges(changes: SimpleChanges) {
