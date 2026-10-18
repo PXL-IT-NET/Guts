@@ -1,11 +1,6 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
-import {
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators,
-} from "@angular/forms";
+
 import { ActivatedRoute } from "@angular/router";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
@@ -95,22 +90,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
 
   public modalRef: BsModalRef;
 
-  //#Form
-  public assessmentForm: UntypedFormGroup;
-
-  public get descriptionControl() {
-    return <UntypedFormControl>this.assessmentForm.get("description");
-  }
-  public get openOnControl() {
-    return <UntypedFormControl>this.assessmentForm.get("openOn");
-  }
-  public get deadlineControl() {
-    return <UntypedFormControl>this.assessmentForm.get("deadline");
-  }
-  //#End Form
-
   constructor(
-    private formBuilder: UntypedFormBuilder,
     private projectService: ProjectService,
     private projectAssessmentService: ProjectAssessmentService,
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
@@ -144,13 +124,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
         this.userProfile = profile;
       });
 
-    //#Form
-    this.assessmentForm = this.formBuilder.group({
-      description: [null, [Validators.required]],
-      openOn: [null, [Validators.required]],
-      deadline: [null, [Validators.required]],
-    });
-    //#End Form
+
 
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       let courseId = +this.route.parent.snapshot.params["courseId"];

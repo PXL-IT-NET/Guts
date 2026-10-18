@@ -1,6 +1,7 @@
+import { provideHttpClient } from "@angular/common/http";
 import {
-  HttpClientTestingModule,
   HttpTestingController,
+  provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
 import { LocalStorageKeys } from "../util/localstorage.keys";
@@ -20,8 +21,11 @@ describe("AuthService", () => {
     localStorage.removeItem(LocalStorageKeys.currentToken);
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [AuthService],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        AuthService,
+      ],
     });
 
     service = TestBed.inject(AuthService);

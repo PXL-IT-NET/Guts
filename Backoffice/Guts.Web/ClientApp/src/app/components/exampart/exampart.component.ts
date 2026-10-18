@@ -19,8 +19,8 @@ import { ITopicAssignmentModel } from "src/app/viewmodels/assignment.model";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import {
-  UntypedFormGroup,
-  UntypedFormControl,
+  FormGroup,
+  FormControl,
   Validators,
 } from "@angular/forms";
 
@@ -69,17 +69,19 @@ export class ExampartComponent implements OnInit {
     this._isCollapsed.set(v);
   }
 
-  public newAssignmentEvaluationForm: UntypedFormGroup;
+  public newAssignmentEvaluationForm!: FormGroup<{
+    assignmentId: FormControl<number | null>;
+    maximumScore: FormControl<number | null>;
+    numberOfTestsAlreadyGreenAtStart: FormControl<number | null>;
+  }>;
   public get assignmentId() {
-    return this.newAssignmentEvaluationForm.get("assignmentId");
+    return this.newAssignmentEvaluationForm.controls.assignmentId;
   }
   public get maximumScore() {
-    return this.newAssignmentEvaluationForm.get("maximumScore");
+    return this.newAssignmentEvaluationForm.controls.maximumScore;
   }
   public get numberOfTestsAlreadyGreenAtStart() {
-    return this.newAssignmentEvaluationForm.get(
-      "numberOfTestsAlreadyGreenAtStart",
-    );
+    return this.newAssignmentEvaluationForm.controls.numberOfTestsAlreadyGreenAtStart;
   }
 
   private courseId: number;
@@ -130,16 +132,16 @@ export class ExampartComponent implements OnInit {
 
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
 
-    this.newAssignmentEvaluationForm = new UntypedFormGroup({
-      assignmentId: new UntypedFormControl(
+    this.newAssignmentEvaluationForm = new FormGroup({
+      assignmentId: new FormControl(
         this.newAssigmnentEvaluation.assignmentId,
         [Validators.min(1)],
       ),
-      maximumScore: new UntypedFormControl(
+      maximumScore: new FormControl(
         this.newAssigmnentEvaluation.maximumScore,
         [Validators.required, Validators.min(1)],
       ),
-      numberOfTestsAlreadyGreenAtStart: new UntypedFormControl(
+      numberOfTestsAlreadyGreenAtStart: new FormControl(
         this.newAssigmnentEvaluation.numberOfTestsAlreadyGreenAtStart,
         [Validators.required, Validators.min(0)],
       ),
