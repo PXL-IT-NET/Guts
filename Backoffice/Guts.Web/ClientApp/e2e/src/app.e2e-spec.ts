@@ -9,7 +9,7 @@ describe("workspace-project App", () => {
   });
 
   it("should display welcome message", () => {
-    page.navigateTo();
+    void page.navigateTo();
     expect(page.getTitleText()).toEqual("ClientApp app is running!");
   });
 

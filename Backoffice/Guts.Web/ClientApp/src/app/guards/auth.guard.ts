@@ -1,4 +1,4 @@
-﻿import { Injectable } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
 import { LocalStorageKeys } from "../util/localstorage.keys";
 
@@ -13,7 +13,7 @@ export class AuthGuard {
     }
 
     // not logged in so redirect to login page
-    this.router.navigate(["/login"]);
+    void this.router.navigate(["/login"]);
     return false;
   }
 }

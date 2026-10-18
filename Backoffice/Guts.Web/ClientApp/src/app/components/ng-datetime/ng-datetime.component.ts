@@ -3,7 +3,6 @@ import {
   EventEmitter,
   forwardRef,
   Input,
-  OnInit,
   Output,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
@@ -22,7 +21,7 @@ import moment from "moment";
     },
   ],
 })
-export class NgDatetimeComponent implements OnInit, ControlValueAccessor {
+export class NgDatetimeComponent implements ControlValueAccessor {
   _dateString: string;
   onChange: (value: moment.Moment) => void;
 
@@ -40,8 +39,6 @@ export class NgDatetimeComponent implements OnInit, ControlValueAccessor {
     this.dateChange = new EventEmitter();
     this.onChange = (value) => {};
   }
-
-  ngOnInit(): void {}
 
   private parseDateToStringWithFormat(date: moment.Moment): string {
     let result: string;

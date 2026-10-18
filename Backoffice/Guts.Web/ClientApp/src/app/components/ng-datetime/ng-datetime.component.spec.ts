@@ -12,7 +12,6 @@ describe("NgDatetimeComponent", () => {
     });
     fixture = TestBed.createComponent(NgDatetimeComponent);
     component = fixture.componentInstance;
-    component.ngOnInit();
   });
 
   it("writeValue and date setter should format moment into datetime-local string", () => {

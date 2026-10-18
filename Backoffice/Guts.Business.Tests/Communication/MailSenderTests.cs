@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net.Mail;
 using Guts.Business.Communication;
@@ -56,12 +56,12 @@ namespace Guts.Business.Tests.Communication
                 VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), forgotPasswordToken))), Times.Once);
         }
 
-        private bool VerifyMailMessage(MailMessage message, string fromEmail, params string[] bodyParts)
+        private static bool VerifyMailMessage(MailMessage message, string fromEmail, params string[] bodyParts)
         {
-            if (message.From.Address.ToLower() != fromEmail.ToLower()) return false;
-            var body = message.Body.ToLower();
+            if (!string.Equals(message.From.Address, fromEmail, StringComparison.OrdinalIgnoreCase)) return false;
+            var body = message.Body;
 
-            return bodyParts.All(bodyPart => body.Contains(bodyPart.ToLower()));
+            return bodyParts.All(bodyPart => body.Contains(bodyPart, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

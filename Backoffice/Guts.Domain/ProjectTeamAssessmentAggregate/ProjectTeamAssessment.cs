@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
@@ -29,7 +29,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
         {
             Contracts.Require(team != null, "A team must be provided.");
-            Contracts.Require(team!.TeamUsers.Any(), "The team has no members.");
+            Contracts.Require(team!.TeamUsers.Count > 0, "The team has no members.");
             Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
             Team = team;
 

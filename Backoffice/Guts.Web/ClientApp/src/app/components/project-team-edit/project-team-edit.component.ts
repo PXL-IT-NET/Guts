@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -21,7 +21,7 @@ import { takeUntil } from "rxjs/operators";
   selector: "app-project-team-edit",
   templateUrl: "./project-team-edit.component.html",
 })
-export class ProjectTeamEditComponent implements OnDestroy {
+export class ProjectTeamEditComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   @Input() public courseId: number;
   @Input() public projectCode: string;

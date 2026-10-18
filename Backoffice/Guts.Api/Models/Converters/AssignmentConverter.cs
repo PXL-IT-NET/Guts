@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
@@ -28,10 +28,7 @@ namespace Guts.Api.Models.Converters
                 throw new ArgumentException("Assignment should have tests loaded", nameof(assignment));
             }
 
-            if (testRunInfo == null)
-            {
-                throw new ArgumentNullException(nameof(testRunInfo));
-            }
+            ArgumentNullException.ThrowIfNull(testRunInfo);
 
             results ??= new List<TestResult>();
             solutionFiles ??= new List<SolutionFile>();
@@ -58,7 +55,7 @@ namespace Guts.Api.Models.Converters
             return model;
         }
 
-        private void AddTestResults(AssignmentDetailModel model, Assignment assignment,
+        private static void AddTestResults(AssignmentDetailModel model, Assignment assignment,
             IList<TestResult> results)
         {
             foreach (Test test in assignment.Tests)
@@ -83,7 +80,7 @@ namespace Guts.Api.Models.Converters
             }
         }
 
-        private void AddSolutionFiles(AssignmentDetailModel model, IList<SolutionFile> solutionFiles)
+        private static void AddSolutionFiles(AssignmentDetailModel model, IList<SolutionFile> solutionFiles)
         {
             foreach (var solutionFile in solutionFiles)
             {

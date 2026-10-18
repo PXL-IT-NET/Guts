@@ -47,7 +47,7 @@ public class GutsTestPrompts
         return CreateGutsTests(sutClassName, "nUnit", false);
     }
 
-    private string CreateGutsTests(string sutClassName, string testFramework, bool isIndividualExercise)
+    private static string CreateGutsTests(string sutClassName, string testFramework, bool isIndividualExercise)
     {
         string testFixtureAttribute = isIndividualExercise ? "ExerciseTestFixture" : "ProjectComponentTestFixture";
         string topicParameter = isIndividualExercise ? "chapterCode" : "projectCode";

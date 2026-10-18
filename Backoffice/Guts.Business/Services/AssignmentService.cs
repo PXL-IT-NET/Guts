@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -153,7 +153,7 @@ namespace Guts.Business.Services
 
         public async Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector)
         {
-            if (!assignment.TestCodeHashes.Any() && string.IsNullOrEmpty(testCodeHash)) return true; //Ok to send an empty hash when no hashes are associated with the assignment
+            if (assignment.TestCodeHashes.Count == 0 && string.IsNullOrEmpty(testCodeHash)) return true; //Ok to send an empty hash when no hashes are associated with the assignment
 
             if (assignment.TestCodeHashes.Any(ah => ah.Hash == testCodeHash)) return true;
 
@@ -183,10 +183,10 @@ namespace Guts.Business.Services
             return _assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
         }
 
-        private AssignmentTestRunInfoDto ConstructTestRunInfoFromTestRuns(IList<TestRun> testRuns)
+        private static AssignmentTestRunInfoDto ConstructTestRunInfoFromTestRuns(IList<TestRun> testRuns)
         {
             var testRunInfo = new AssignmentTestRunInfoDto();
-            if (testRuns.Any())
+            if (testRuns.Count > 0)
             {
                 var firstTestRun = testRuns.First();
                 var lastTestRun = testRuns.Last();

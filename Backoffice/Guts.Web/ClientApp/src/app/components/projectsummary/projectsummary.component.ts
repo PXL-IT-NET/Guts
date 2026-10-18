@@ -1,6 +1,7 @@
 import {
   Component,
   Input,
+  OnChanges,
   OnDestroy,
   SimpleChanges,
 } from "@angular/core";
@@ -20,7 +21,7 @@ import { takeUntil } from "rxjs/operators";
   selector: "app-project-summary",
   templateUrl: "./projectsummary.component.html",
 })
-export class ProjectSummaryComponent implements OnDestroy {
+export class ProjectSummaryComponent implements OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   public model: TopicSummaryModel;
   public statistics: TopicStatisticsModel;

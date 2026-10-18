@@ -104,6 +104,9 @@
                     newAssignmentEvaluationForm.valid && addAssignment()
                   "
                     >
+                    <label for="assignmentId" class="visually-hidden"
+                      >Assignment</label
+                    >
                     <select
                       class="form-select mb-2 mr-sm-2"
                       id="assignmentId"
@@ -123,6 +126,9 @@
                           </option>
                         }
                       </select>
+                      <label for="maximumScore" class="visually-hidden"
+                        >Maximum score</label
+                      >
                       <input
                         type="number"
                         id="maximumScore"
@@ -130,10 +136,14 @@
                         formControlName="maximumScore"
                         [(ngModel)]="newAssigmnentEvaluation.maximumScore"
                         [class.is-invalid]="maximumScore.invalid"
-                        id="maximumScore"
                         name="maximumScore"
                         placeholder="Maximum score"
                         />
+                      <label
+                        for="numberOfTestsAlreadyGreenAtStart"
+                        class="visually-hidden"
+                        >Number of tests already green at start</label
+                      >
                       <input
                         type="number"
                         id="numberOfTestsAlreadyGreenAtStart"

@@ -53,14 +53,14 @@ export class LoginComponent implements OnInit, OnDestroy {
         .cancelLoginSession(this.model.loginSessionPublicIdentifier)
         .pipe(takeUntil(this.destroy$))
         .subscribe((result) => {
-          this.router.navigate(["/"]);
+          void this.router.navigate(["/"]);
         });
     }
   }
 
   private handleLoginResult(result: PostResult) {
     if (result.success) {
-      this.router.navigate(["/"]);
+      void this.router.navigate(["/"]);
     } else if (!result.isAuthenticated) {
       this.error = "Wrong email-password combination";
     } else {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
@@ -58,7 +58,7 @@ namespace Guts.Api.Extensions
             ServiceLifetime lifetime)
         {
             var registrations = from type in targetAssembly.GetExportedTypes()
-                where type.Name.EndsWith(classAndInterfaceNameEndsWith) && type.GetInterfaces().Any() && !type.IsInterface
+                where type.Name.EndsWith(classAndInterfaceNameEndsWith) && type.GetInterfaces().Length > 0 && !type.IsInterface
                 select new { ServiceType = type.GetInterfaces().First(i => i.Name.EndsWith(classAndInterfaceNameEndsWith)), ImplementationType = type };
 
             foreach (var registration in registrations)

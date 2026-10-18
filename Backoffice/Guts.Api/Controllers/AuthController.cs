@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Business;
@@ -242,20 +242,20 @@ namespace Guts.Api.Controllers
             var user = await _userManager.FindByNameAsync(model.Email);
             if (user == null)
             {
-                _logger.LogWarning($"Cannot find user by name '{model.Email}'");
+                _logger.LogWarning("Cannot find user by name '{Email}'", model.Email);
                 return Unauthorized();
             }
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, model.Password);
             if (!isPasswordValid)
             {
-                _logger.LogWarning($"Invalid password for user '{user.UserName}'");
+                _logger.LogWarning("Invalid password for user '{UserName}'", user.UserName);
                 return Unauthorized();
             }
 
             if (!user.EmailConfirmed)
             {
-                _logger.LogWarning($"Email adress of user is not confirmed: '{user.Email}'");
+                _logger.LogWarning("Email adress of user is not confirmed: '{Email}'", user.Email);
                 await SendConfirmUserEmailMessage(user);
 
                 ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 using Guts.Business.Captcha;
@@ -143,7 +143,7 @@ namespace Guts.Bootstrapper
         {
             var registrations = from type in targetAssembly.GetTypes()
                                 where type.Name.EndsWith(classAndInterfaceNameEndsWith)
-                                      && type.GetInterfaces().Any()
+                                      && type.GetInterfaces().Length > 0
                                       && !type.IsInterface
                                 select new { ServiceType = type.GetInterfaces().First(i => i.Name.EndsWith(classAndInterfaceNameEndsWith)), ImplementationType = type };
 

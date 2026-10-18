@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
@@ -37,7 +37,7 @@ namespace Guts.Domain.AssessmentResultAggregate
                 Contracts.Require(selfAssessment != null, "Cannot create an assessment result when the subject has not evaluated itself.");
 
                 List<IPeerAssessment> peerAssessmentsForSubject = allPeerAssessments.Where(pa => pa.Subject.Id == subjectId && pa.User.Id != subjectId).ToList();
-                Contracts.Require(peerAssessmentsForSubject.Any(), "Cannot create an assessment result when there is no other peer that evaluated the subject.");
+                Contracts.Require(peerAssessmentsForSubject.Count > 0, "Cannot create an assessment result when there is no other peer that evaluated the subject.");
 
                 result.SelfValue = calculateScore(selfAssessment);
 

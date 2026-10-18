@@ -2,6 +2,7 @@
 @import "bootstrap/scss/bootstrap";
 @import "sandstone/bootswatch";
 @import "bootstrap-icons/font/bootstrap-icons.css";
+@import "ngx-bootstrap/datepicker/bs-datepicker";
 
 /*Tabs*/
 
@@ -25,9 +26,6 @@
 input[readonly] {
   background-color: $light;
 }
-
-/* Importing Datepicker SCSS file. */
-@import "ngx-bootstrap/datepicker/bs-datepicker";
 
 /* Teacher docs */
 .teacher-docs-page {

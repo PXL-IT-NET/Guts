@@ -24,7 +24,7 @@ namespace Guts.Domain.ExamAggregate
             Contracts.Require(assignment.Id > 0, "The assignment id must be greater than zero.");
             Contracts.Require(maximumScore > 0, "The maximum score must be greater than zero.");
             Contracts.Require(numberOfTestsAlreadyGreenAtStart >= 0, "The number of tests that are already green cannot be negative.");
-            Contracts.Require(assignment.Tests.Any(), "The assignment must have at least one test");
+            Contracts.Require(assignment.Tests.Count > 0, "The assignment must have at least one test");
             Contracts.Require(numberOfTestsAlreadyGreenAtStart < assignment.Tests.Count,
                 $"The number of tests that are green at start ({numberOfTestsAlreadyGreenAtStart}) " +
                 $"must be smaller than the total number of tests ({assignment.Tests.Count}).");

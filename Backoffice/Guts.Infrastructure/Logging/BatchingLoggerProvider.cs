@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -36,11 +36,11 @@ namespace Guts.Infrastructure.Logging
             var loggerOptions = options.CurrentValue;
             if (loggerOptions.BatchSize <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(loggerOptions.BatchSize), $"{nameof(loggerOptions.BatchSize)} must be a positive number.");
+                throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.BatchSize)} must be a positive number.");
             }
             if (loggerOptions.FlushPeriod <= TimeSpan.Zero)
             {
-                throw new ArgumentOutOfRangeException(nameof(loggerOptions.FlushPeriod), $"{nameof(loggerOptions.FlushPeriod)} must be longer than zero.");
+                throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.FlushPeriod)} must be longer than zero.");
             }
 
             _interval = loggerOptions.FlushPeriod;
@@ -132,7 +132,7 @@ namespace Guts.Infrastructure.Logging
                 new BlockingCollection<LogMessage>(new ConcurrentQueue<LogMessage>(), _queueSize.Value);
 
             _cancellationTokenSource = new CancellationTokenSource();
-            _outputTask = Task.Run(ProcessLogQueue);
+            _outputTask = Task.Run(ProcessLogQueue, _cancellationTokenSource.Token);
         }
 
         private void Stop()
@@ -142,13 +142,17 @@ namespace Guts.Infrastructure.Logging
 
             try
             {
-                _outputTask.Wait(_interval);
+                _outputTask.Wait(_interval, CancellationToken.None);
             }
             catch (TaskCanceledException)
             {
             }
             catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
             {
+            }
+            finally
+            {
+                _cancellationTokenSource.Dispose();
             }
         }
 
@@ -159,6 +163,7 @@ namespace Guts.Infrastructure.Logging
             {
                 Stop();
             }
+            GC.SuppressFinalize(this);
         }
 
         public ILogger CreateLogger(string categoryName)

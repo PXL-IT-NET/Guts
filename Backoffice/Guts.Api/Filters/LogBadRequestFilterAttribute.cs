@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -34,7 +34,7 @@ namespace Guts.Api.Filters
                     messageBuilder.AppendLine($"Response object: {badRequestValue}");
                 }
 
-                _logger.LogWarning(messageBuilder.ToString());
+                _logger.LogWarning("{Message}", messageBuilder.ToString());
             }
             base.OnResultExecuted(context);
         }

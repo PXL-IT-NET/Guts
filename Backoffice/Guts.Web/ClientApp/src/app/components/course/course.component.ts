@@ -102,7 +102,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   public navigateToChapter(chapter: ITopicModel) {
-    this.router.navigate([
+    void this.router.navigate([
       "courses",
       this.course.id,
       "chapters",
@@ -112,7 +112,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   public navigateToExercise(exercise: IAssignmentModel) {
-    this.router.navigate(
+    void this.router.navigate(
       [
         "courses",
         this.course.id,
@@ -166,7 +166,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     project: ITopicModel,
     showTestResults: boolean = false,
   ) {
-    this.router.navigate([
+    void this.router.navigate([
       "courses",
       this.course.id,
       "projects",
@@ -188,7 +188,7 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   public navigateToComponent(component: IAssignmentModel) {
-    this.router.navigate(
+    void this.router.navigate(
       [
         "courses",
         this.course.id,
@@ -283,7 +283,7 @@ export class CourseComponent implements OnInit, OnDestroy {
           }
         } else {
           this.hasContent = false;
-          this.router.navigate(["courses", this.course.id]);
+          void this.router.navigate(["courses", this.course.id]);
         }
       } else {
         this.toastr.error(

@@ -1,3 +1,4 @@
+#pragma warning disable RMG089 // Implicit user-defined conversion on AssessmentScore value object is intentional
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.ExamModels;

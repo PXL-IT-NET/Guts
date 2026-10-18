@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -183,8 +183,8 @@ namespace Guts.Api.Controllers
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);
             var csv = new CsvWriter(streamWriter, new CultureInfo("nl-BE"));
-            csv.WriteRecords(examScoreCsvRecords);
-            streamWriter.Flush();
+            await csv.WriteRecordsAsync(examScoreCsvRecords);
+            await streamWriter.FlushAsync();
             memoryStream.Position = 0;
             return File(memoryStream, "text/csv", fileDownloadName);
         }

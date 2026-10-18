@@ -112,6 +112,7 @@
               >
               <div class="col-6">
                 <input
+                  id="teamGrade"
                   name="teamGrade"
                   type="number"
                   min="0"
@@ -128,6 +129,7 @@
               >
               <div class="col-6">
                 <select
+                  id="correctionType"
                   name="correctionType"
                   class="form-select"
                   [(ngModel)]="gradeCorrectionType"
@@ -242,7 +244,13 @@
                                 />
                               </td>
                               <td>
+                                <label
+                                  for="selfAssessmentExplanation"
+                                  class="visually-hidden"
+                                  >Self assessment explanation</label
+                                >
                                 <textarea
+                                  id="selfAssessmentExplanation"
                                   [(ngModel)]="
                                     result.selfAssessment.explanation
                                   "
@@ -279,7 +287,13 @@
                                   />
                                 </td>
                                 <td>
+                                  <label
+                                    for="peerAssessmentExplanation"
+                                    class="visually-hidden"
+                                    >Peer assessment explanation</label
+                                  >
                                   <textarea
+                                    id="peerAssessmentExplanation"
                                     [(ngModel)]="peerAssessment.explanation"
                                     rows="4"
                                     cols="40"

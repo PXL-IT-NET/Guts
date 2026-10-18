@@ -6,13 +6,13 @@ namespace Guts.Domain.ValueObjects
 {
     public class AssessmentScore : ValueObject<AssessmentScore>
     {
-        public static AssessmentScore NullScore = new AssessmentScore(-1);
-        public static AssessmentScore NoAddedValue = new AssessmentScore(0);
-        public static AssessmentScore WayBelowAverage = new AssessmentScore(1);
-        public static AssessmentScore BelowAverage = new AssessmentScore(2);
-        public static AssessmentScore Average = new AssessmentScore(3);
-        public static AssessmentScore AboveAverage = new AssessmentScore(4);
-        public static AssessmentScore WayAboveAverage = new AssessmentScore(5);
+        public static readonly AssessmentScore NullScore = new AssessmentScore(-1);
+        public static readonly AssessmentScore NoAddedValue = new AssessmentScore(0);
+        public static readonly AssessmentScore WayBelowAverage = new AssessmentScore(1);
+        public static readonly AssessmentScore BelowAverage = new AssessmentScore(2);
+        public static readonly AssessmentScore Average = new AssessmentScore(3);
+        public static readonly AssessmentScore AboveAverage = new AssessmentScore(4);
+        public static readonly AssessmentScore WayAboveAverage = new AssessmentScore(5);
 
         public int Value { get; private set; }
 

@@ -2,6 +2,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
@@ -24,7 +25,7 @@ import {
   selector: "app-project-assessment-edit",
   templateUrl: "./project-assessment-edit.component.html",
 })
-export class ProjectAssessmentEditComponent {
+export class ProjectAssessmentEditComponent implements OnInit {
   @Input() public projectId: number;
   @Input() public projectAssessment: ProjectAssessmentModel;
 

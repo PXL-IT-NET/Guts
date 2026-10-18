@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -20,7 +20,7 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
   selector: "app-chapter-settings",
   templateUrl: "./chapter-settings.component.html",
 })
-export class ChapterSettingsComponent {
+export class ChapterSettingsComponent implements OnInit {
   private courseId: number;
   private chapterCode: string;
 

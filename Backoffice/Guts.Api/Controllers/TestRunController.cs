@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -128,8 +128,12 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _logger.LogInformation(
-                $"Received testrun for project (assignmentCode: {model.Assignment.AssignmentCode}, projectCode: {model.Assignment.TopicCode}) from user {GetUserId()}");
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "Received testrun for project (assignmentCode: {AssignmentCode}, projectCode: {ProjectCode}) from user {UserId}",
+                    model.Assignment.AssignmentCode, model.Assignment.TopicCode, GetUserId());
+            }
 
             Assignment component;
             if (IsLector())
@@ -190,6 +194,8 @@ namespace Guts.Api.Controllers
 
         private void LogTestRunReceived(CreateAssignmentTestRunModel model)
         {
+            if (!_logger.IsEnabled(LogLevel.Information)) return;
+
             string sourcePaths = string.Empty;
             if (model.SolutionFiles.Any())
             {
@@ -197,11 +203,14 @@ namespace Guts.Api.Controllers
             }
 
             _logger.LogInformation(
-                $"Received testrun for exercise (assignmentCode: {model.Assignment.AssignmentCode}, chapterCode: {model.Assignment.TopicCode}, Source files: {sourcePaths}) from user {GetUserId()}");
+                "Received testrun for exercise (assignmentCode: {AssignmentCode}, chapterCode: {ChapterCode}, Source files: {SourcePaths}) from user {UserId}",
+                model.Assignment.AssignmentCode, model.Assignment.TopicCode, sourcePaths, GetUserId());
         }
         
         private void LogTestRunRegistered(TestRun testRun, IList<SolutionFile> solutionFiles)
         {
+            if (!_logger.IsEnabled(LogLevel.Information)) return;
+
             if (testRun == null)
             {
                 _logger.LogInformation("Test run is null");
@@ -209,7 +218,7 @@ namespace Guts.Api.Controllers
             else
             {
                 string sourcePaths = string.Empty;
-                if (solutionFiles.Any())
+                if (solutionFiles != null && solutionFiles.Count > 0)
                 {
                     sourcePaths = string.Join(";", solutionFiles.Select(sf => sf.FilePath));
                 }
@@ -221,7 +230,7 @@ namespace Guts.Api.Controllers
                 logMessageBuilder.AppendLine($"#Failing tests: {testRun.TestResults.Count(r => !r.Passed)}");
                 logMessageBuilder.AppendLine($"Sources: {sourcePaths}");
                 logMessageBuilder.AppendLine("-------------------------------------");
-                _logger.LogInformation(logMessageBuilder.ToString());
+                _logger.LogInformation("{LogMessage}", logMessageBuilder.ToString());
             }
         }
     }

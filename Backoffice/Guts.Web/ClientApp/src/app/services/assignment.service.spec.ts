@@ -27,12 +27,16 @@ describe("AssignmentService", () => {
     const date = moment("2026-05-01T10:00:00Z");
 
     service.getAssignmentDetail(5, 12, 0, date).subscribe();
-    httpMock.expectOne(
+    const userReq = httpMock.expectOne(
       `api/assignments/5/foruser/12?date=${date.toISOString()}`,
-    ).flush({});
+    );
+    expect(userReq.request.method).toBe("GET");
+    userReq.flush({});
 
     service.getAssignmentDetail(5, 0, 8).subscribe();
-    httpMock.expectOne("api/assignments/5/forteam/8").flush({});
+    const teamReq = httpMock.expectOne("api/assignments/5/forteam/8");
+    expect(teamReq.request.method).toBe("GET");
+    teamReq.flush({});
   });
 
   it("getAssignmentsOfCourse should handle success and error", () => {

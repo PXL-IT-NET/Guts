@@ -151,7 +151,7 @@ namespace Guts.Domain.Tests.ExamAggregate
             }
         }
 
-        private void AddSomeExamPartScores(ExamScore examScore)
+        private static void AddSomeExamPartScores(ExamScore examScore)
         {
             for (int i = 0; i < Random.Shared.Next(1, 5); i++)
             {
