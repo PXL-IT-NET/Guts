@@ -129,6 +129,23 @@ public class ProjectAssessmentControllerTests
     }
 
     [Test]
+    public void AddProjectAssessment_WhenModelStateIsInvalid_ShouldReturnBadRequest()
+    {
+        //Arrange
+        _controller.ModelState.AddModelError("Description", "Required");
+        var inputModel = new CreateProjectAssessmentModel();
+
+        //Act
+        BadRequestObjectResult result = _controller.AddProjectAssessment(inputModel).Result as BadRequestObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectServiceMock.Verify(
+            service => service.CreateProjectAssessmentAsync(It.IsAny<int>(), It.IsAny<string>(),
+                It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Test]
     public void UpdateProjectAssessment_ShouldUseServiceAndReturnOk()
     {
         //Arrange
@@ -149,6 +166,24 @@ public class ProjectAssessmentControllerTests
         _projectServiceMock.Verify(
             service => service.UpdateProjectAssessmentAsync(id, inputModel.Description,
                 inputModel.OpenOn.ToUniversalTime(), inputModel.Deadline.ToUniversalTime()), Times.Once);
+    }
+
+    [Test]
+    public void UpdateProjectAssessment_WhenModelStateIsInvalid_ShouldReturnBadRequest()
+    {
+        //Arrange
+        _controller.ModelState.AddModelError("Description", "Required");
+        int id = _random.NextPositive();
+        var inputModel = new UpdateProjectAssessmentModel { Id = id };
+
+        //Act
+        BadRequestObjectResult result = _controller.UpdateProjectAssessment(id, inputModel).Result as BadRequestObjectResult;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _projectServiceMock.Verify(
+            service => service.UpdateProjectAssessmentAsync(It.IsAny<int>(), It.IsAny<string>(),
+                It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
     }
 
     [Test]

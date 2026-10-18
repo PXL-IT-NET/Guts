@@ -49,7 +49,7 @@ $ErrorActionPreference = "Continue"
 $BackofficeDir = $PSScriptRoot
 $ClientAppDir = Join-Path $BackofficeDir "Guts.Web\ClientApp"
 $TestResultsDir = Join-Path $BackofficeDir "TestResults"
-$TokenCacheFile = Join-Path $BackofficeDir ".sonarqube\sonar-token.txt"
+$TokenCacheFile = Join-Path $BackofficeDir ".sonar-token"
 
 Push-Location $BackofficeDir
 try {
@@ -89,7 +89,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($SonarToken) -and (Test-Path $TokenCacheFile)) {
         $SonarToken = (Get-Content $TokenCacheFile -Raw).Trim()
         if (-not [string]::IsNullOrWhiteSpace($SonarToken)) {
-            Write-Host "==> Using cached SonarQube token from .sonarqube\sonar-token.txt" -ForegroundColor DarkGray
+            Write-Host "==> Using cached SonarQube token from .sonar-token" -ForegroundColor DarkGray
         }
     }
 

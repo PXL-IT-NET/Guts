@@ -23,5 +23,6 @@ RUN dotnet publish "Guts.Api.csproj" -c Release -o /app/publish /p:UseAppHost=fa
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --chown=$APP_UID:$APP_UID --from=publish /app/publish .
+USER $APP_UID
 ENTRYPOINT ["dotnet", "Guts.Api.dll"]

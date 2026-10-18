@@ -1,8 +1,9 @@
+using System;
 using Guts.Common;
 
 namespace Guts.Domain
 {
-    public abstract class Entity : IEntity
+    public abstract class Entity : IEntity, IEquatable<Entity>
     {
         private int _id;
 
@@ -29,8 +30,11 @@ namespace Guts.Domain
 
         public override bool Equals(object obj)
         {
-            var other = obj as Entity;
+            return Equals(obj as Entity);
+        }
 
+        public virtual bool Equals(Entity other)
+        {
             if (ReferenceEquals(other, null))
                 return false;
 

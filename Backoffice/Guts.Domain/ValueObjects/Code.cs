@@ -4,7 +4,7 @@ using Guts.Common;
 
 namespace Guts.Domain.ValueObjects
 {
-    public class Code : ValueObject<Code>
+    public partial class Code : ValueObject<Code>
     {
         public const int MaxLength = 64;
 
@@ -15,11 +15,13 @@ namespace Guts.Domain.ValueObjects
             Contracts.Require(!string.IsNullOrEmpty(value), "A code cannot be empty");
             Contracts.Require(value!.Length <= MaxLength, $"A code can not contain more than {MaxLength} characters");
 
-            var regex = new Regex(@"^[\w-\.]+$");
-            Contracts.Require(regex.IsMatch(value), "A code may only consist of letters, numbers, underscores, hyphens or periods");
+            Contracts.Require(ValidCodeRegex().IsMatch(value), "A code may only consist of letters, numbers, underscores, hyphens or periods");
 
             Value = value;
         }
+
+        [GeneratedRegex(@"^[\w-\.]+$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+        private static partial Regex ValidCodeRegex();
 
         public static implicit operator string(Code code)
         {

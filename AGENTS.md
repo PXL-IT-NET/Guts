@@ -54,7 +54,9 @@ This repository is split into three top-level areas:
 4. **Verify Changes by Running Tests**:
    - Always run the relevant automated test suite(s) after making changes and ensure all tests pass before considering a task complete.
    - Add or update unit tests whenever introducing new features, fixing bugs, or changing domain/business behavior.
-5. **Test Frontend Functionality**:
+5. **Run SonarQube Analysis**:
+   - Run SonarQube analysis on the Backoffice and client libraries to ensure code quality, maintainability, and security standards are met. Use the provided SonarQube configuration files in the respective directories.
+6. **Test Frontend Functionality**:
    - Every new or modified Angular component, service, guard, or pipe in `Backoffice/Guts.Web/ClientApp` must include corresponding unit tests (`*.spec.ts`) verified via Karma/Jasmine.
 
 ---

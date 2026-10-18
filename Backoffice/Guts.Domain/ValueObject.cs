@@ -1,24 +1,28 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Guts.Domain
 {
-    public abstract class ValueObject<T>
+    public abstract class ValueObject<T> : IEquatable<ValueObject<T>>
         where T : ValueObject<T>
     {
         protected abstract IEnumerable<object> GetEqualityComponents();
 
         public override bool Equals(object obj)
         {
-            var valueObject = obj as ValueObject<T>;
+            return Equals(obj as ValueObject<T>);
+        }
 
-            if (ReferenceEquals(valueObject, null))
+        public virtual bool Equals(ValueObject<T> other)
+        {
+            if (ReferenceEquals(other, null))
                 return false;
 
-            if (GetType() != obj.GetType())
+            if (GetType() != other.GetType())
                 return false;
 
-            return GetEqualityComponents().SequenceEqual(valueObject.GetEqualityComponents());
+            return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
         }
 
         public override int GetHashCode()

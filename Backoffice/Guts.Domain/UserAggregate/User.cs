@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Guts.Domain.ProjectTeamAggregate;
 using Microsoft.AspNetCore.Identity;
 
 namespace Guts.Domain.UserAggregate
 {
-    public class User : IdentityUser<int>, IEntity
+    public class User : IdentityUser<int>, IEntity, IEquatable<User>
     {
         [Required]
         public string FirstName { get; set; }
@@ -17,8 +18,11 @@ namespace Guts.Domain.UserAggregate
 
         public override bool Equals(object obj)
         {
-            var other = obj as User;
+            return Equals(obj as User);
+        }
 
+        public bool Equals(User other)
+        {
             if (ReferenceEquals(other, null))
                 return false;
 

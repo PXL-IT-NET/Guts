@@ -10,6 +10,7 @@ services:
       - ./DB_Backup:/var/opt/mssql/backup
 
   guts.api:
+    user: "0:0"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
