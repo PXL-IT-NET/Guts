@@ -18,7 +18,7 @@ namespace Guts.Common.Tests.Extensions
             int value = Random.Shared.NextPositive();
 
             // Assert
-            Assert.Greater(value, 0);
+            Assert.That(value, Is.GreaterThan(0));
         }
 
         [Test]
@@ -28,8 +28,8 @@ namespace Guts.Common.Tests.Extensions
             int value = Random.Shared.NextZeroOrNegative(-10);
 
             // Assert
-            Assert.LessOrEqual(value, 0);
-            Assert.GreaterOrEqual(value, -10);
+            Assert.That(value, Is.LessThanOrEqualTo(0));
+            Assert.That(value, Is.GreaterThanOrEqualTo(-10));
         }
 
         [Test]
@@ -49,8 +49,8 @@ namespace Guts.Common.Tests.Extensions
             string value = Random.Shared.NextString();
 
             // Assert
-            Assert.IsFalse(string.IsNullOrWhiteSpace(value));
-            Assert.IsTrue(Guid.TryParse(value, out _));
+            Assert.That(string.IsNullOrWhiteSpace(value), Is.False);
+            Assert.That(Guid.TryParse(value, out _), Is.True);
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Guts.Common.Tests.Extensions
             DateTime value = Random.Shared.NextDateTimeInFuture();
 
             // Assert
-            Assert.Greater(value, DateTime.Now);
+            Assert.That(value, Is.GreaterThan(DateTime.Now));
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace Guts.Common.Tests.Extensions
             DateTime value = Random.Shared.NextDateTimeInPast();
 
             // Assert
-            Assert.Less(value, DateTime.Now);
+            Assert.That(value, Is.LessThan(DateTime.Now));
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace Guts.Common.Tests.Extensions
             SampleEnum value = Random.Shared.NextEnum<SampleEnum>();
 
             // Assert
-            Assert.IsTrue(Enum.IsDefined(typeof(SampleEnum), value));
+            Assert.That(Enum.IsDefined(typeof(SampleEnum), value), Is.True);
         }
 
         [Test]
@@ -91,4 +91,3 @@ namespace Guts.Common.Tests.Extensions
         }
     }
 }
-

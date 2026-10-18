@@ -5,7 +5,24 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "guts.api": "StartDebugging",
-        "guts.web": "StartDebugging"
+        "guts.web.angular": "StartDebugging",
+        "sqldata": "StartWithoutDebugging",
+        "sonarqube": "DoNotStart",
+        "sonarqube-db": "DoNotStart"
+      }
+    },
+    "SonarQube": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "sonarqube",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}",
+      "serviceActions": {
+        "guts.api": "DoNotStart",
+        "guts.web.angular": "DoNotStart",
+        "sqldata": "DoNotStart",
+        "sonarqube": "StartWithoutDebugging",
+        "sonarqube-db": "StartWithoutDebugging"
       }
     }
   }

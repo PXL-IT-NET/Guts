@@ -11,7 +11,7 @@ namespace Guts.Common.Tests.Extensions
             string result = base64String.TryConvertFromBase64();
 
             // Assert
-            Assert.AreEqual(expected, result);
+            Assert.That(result, Is.EqualTo(expected));
         }
 
         [TestCase("Non Base64String")]
@@ -22,7 +22,7 @@ namespace Guts.Common.Tests.Extensions
             string result = nonBase64String.TryConvertFromBase64();
 
             // Assert
-            Assert.AreEqual(nonBase64String, result);
+            Assert.That(result, Is.EqualTo(nonBase64String));
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace Guts.Common.Tests.Extensions
             string result = nullString.TryConvertFromBase64();
 
             // Assert
-            Assert.AreEqual(string.Empty, result);
+            Assert.That(result, Is.EqualTo(string.Empty));
         }
 
         [TestCase(null)]
@@ -46,7 +46,7 @@ namespace Guts.Common.Tests.Extensions
             string result = input!.ToValidFilePath();
 
             // Assert
-            Assert.AreEqual("___", result);
+            Assert.That(result, Is.EqualTo("___"));
         }
 
         [TestCase("  my file name.cs  ", "my_file_name.cs")]
@@ -57,7 +57,7 @@ namespace Guts.Common.Tests.Extensions
             string result = input.ToValidFilePath();
 
             // Assert
-            Assert.AreEqual(expected, result);
+            Assert.That(result, Is.EqualTo(expected));
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace Guts.Common.Tests.Extensions
             string result = input.ToValidFilePath();
 
             // Assert
-            Assert.AreEqual("folder_file.cs", result);
+            Assert.That(result, Is.EqualTo("folder_file.cs"));
         }
 
         [TestCase(null)]
@@ -82,7 +82,7 @@ namespace Guts.Common.Tests.Extensions
             bool result = input!.IsValidFilePath();
 
             // Assert
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace Guts.Common.Tests.Extensions
             bool result = input.IsValidFilePath();
 
             // Assert
-            Assert.IsFalse(result);
+            Assert.That(result, Is.False);
         }
 
         [TestCase("folder/file.cs")]
@@ -107,7 +107,7 @@ namespace Guts.Common.Tests.Extensions
             bool result = input.IsValidFilePath();
 
             // Assert
-            Assert.IsTrue(result);
+            Assert.That(result, Is.True);
         }
     }
 }

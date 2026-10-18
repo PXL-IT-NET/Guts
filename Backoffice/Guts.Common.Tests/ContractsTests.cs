@@ -17,7 +17,7 @@ namespace Guts.Common.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ContractException>(() => Contracts.Require(false, expectedMessage));
-            Assert.AreEqual(expectedMessage, exception!.Message);
+            Assert.That(exception!.Message, Is.EqualTo(expectedMessage));
         }
 
         [Test]
@@ -32,7 +32,7 @@ namespace Guts.Common.Tests
                 factoryInvoked = true;
                 return "Should not fail";
             }));
-            Assert.IsFalse(factoryInvoked);
+            Assert.That(factoryInvoked, Is.False);
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Guts.Common.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ContractException>(() => Contracts.Require(false, () => expectedMessage));
-            Assert.AreEqual(expectedMessage, exception!.Message);
+            Assert.That(exception!.Message, Is.EqualTo(expectedMessage));
         }
 
         [Test]
@@ -51,18 +51,17 @@ namespace Guts.Common.Tests
         {
             // Default constructor
             var defaultEx = new ContractException();
-            Assert.IsNotNull(defaultEx.Message);
+            Assert.That(defaultEx.Message, Is.Not.Null);
 
             // Message constructor
             var msgEx = new ContractException("Custom error");
-            Assert.AreEqual("Custom error", msgEx.Message);
+            Assert.That(msgEx.Message, Is.EqualTo("Custom error"));
 
             // Message + inner exception constructor
             var inner = new InvalidOperationException("Inner");
             var wrappedEx = new ContractException("Outer", inner);
-            Assert.AreEqual("Outer", wrappedEx.Message);
-            Assert.AreSame(inner, wrappedEx.InnerException);
+            Assert.That(wrappedEx.Message, Is.EqualTo("Outer"));
+            Assert.That(wrappedEx.InnerException, Is.SameAs(inner));
         }
     }
 }
-

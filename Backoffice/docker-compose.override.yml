@@ -18,6 +18,7 @@ services:
       #- Captcha__secret=insecrets.json
       - Mail__webappbaseurl=http://localhost:4200/
       #- Mail__password=insecrets.json
+      - AllowedOrigins__0=http://localhost:4200
     ports:
       - "5000:80"
       - "5001:443"

@@ -7,12 +7,16 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/{Scheme}://{ServiceHost}:{ServicePort}</DockerServiceUrl>
     <DockerServiceName>guts.web.angular</DockerServiceName>
+    <AdditionalComposeFilePaths>docker-compose.sonarqube.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
+    <None Include="docker-compose.sonarqube.yml" />
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="run-sonarqube.ps1" />
+    <None Include="coverlet.runsettings" />
   </ItemGroup>
 </Project>

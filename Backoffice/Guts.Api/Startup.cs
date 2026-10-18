@@ -154,14 +154,10 @@ namespace Guts.Api
                 builder.WithExposedHeaders("Content-Disposition");
                 builder.AllowAnyMethod();
                 builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
-                if (env.IsDevelopment())
-                {
-                    builder.AllowAnyOrigin();
-                }
-                else
-                {
-                    builder.WithOrigins("https://guts-web.pxl.be", "http://guts-web.pxl.be");
-                }
+
+                string[] allowedOrigins = Configuration.GetSection("AllowedOrigins").Get<string[]>();
+                builder.WithOrigins(allowedOrigins);
+
             });
 
             app.UseAuthentication();
