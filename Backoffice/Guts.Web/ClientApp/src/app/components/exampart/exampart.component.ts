@@ -6,7 +6,6 @@ import {
   Output,
   EventEmitter,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   DestroyRef,
   inject,
   signal,
@@ -33,9 +32,15 @@ import {
 })
 export class ExampartComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
-  private cdr = inject(ChangeDetectorRef, { optional: true });
 
-  @Input() public model: ExamPartModel;
+  private _model = signal<ExamPartModel>(new ExamPartModel());
+  @Input() public get model(): ExamPartModel {
+    return this._model();
+  }
+  public set model(v: ExamPartModel) {
+    this._model.set(v || new ExamPartModel());
+  }
+
   @Input() public examId: number;
   @Output() public examPartDeleted = new EventEmitter<ExamPartModel>();
   @Output() public examPartAdded = new EventEmitter<ExamPartModel>();
@@ -143,8 +148,8 @@ export class ExampartComponent implements OnInit {
 
   public addAssignment() {
     this.model.assignmentEvaluations.push(this.newAssigmnentEvaluation);
+    this._model.update((m) => m);
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
-    this.cdr?.markForCheck();
   }
 
   public saveExampart() {
@@ -163,7 +168,6 @@ export class ExampartComponent implements OnInit {
           this.examPartAdded.emit(result.value);
           this.model = new ExamPartModel();
           this.isCollapsed = true;
-          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not save exam part. Message: " +
@@ -181,7 +185,6 @@ export class ExampartComponent implements OnInit {
       .subscribe((result) => {
         if (result.success) {
           this.examPartDeleted.emit(this.model);
-          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not delete exam part. Message: " +

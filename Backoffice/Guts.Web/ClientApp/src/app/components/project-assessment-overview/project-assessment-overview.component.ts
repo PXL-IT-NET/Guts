@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -36,7 +36,6 @@ import { PostResult } from "../../util/result";
 })
 export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
-  private cdr = inject(ChangeDetectorRef, { optional: true });
   private userProfileSubscription: Subscription;
 
   private _loading = signal<boolean>(false);
@@ -245,7 +244,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
                   .subscribe((result) => {
                     if (result.success) {
                       assessment.teamStatus = result.value;
-                      this.cdr?.markForCheck();
+                      this._assessments.update((list) => [...list]);
                     } else {
                       this.toastr.warning(
                         "Could not retrieve project team assment status. Message: " +

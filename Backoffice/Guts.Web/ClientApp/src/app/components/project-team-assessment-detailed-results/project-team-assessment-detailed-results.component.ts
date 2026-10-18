@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -18,20 +18,94 @@ export class ProjectTeamAssessmentDetailedResultsComponent
   implements OnInit, OnDestroy
 {
   private destroyRef = inject(DestroyRef);
-  private cdr = inject(ChangeDetectorRef, { optional: true });
-  public allTeams: ITeamModel[];
-  public currentTeam: ITeamModel;
-  public previousTeam: ITeamModel;
-  public nextTeam: ITeamModel;
 
-  public results: IAssessmentResultModel[];
-  public teamGrade: number;
-  public gradeCorrectionType: GradeCorrectionType;
+  private _allTeams = signal<ITeamModel[]>([]);
+  public get allTeams(): ITeamModel[] {
+    return this._allTeams();
+  }
+  public set allTeams(v: ITeamModel[]) {
+    this._allTeams.set(v);
+  }
 
-  public selfChartData: ChartData<"bar", number[]>;
-  public peerChartData: ChartData<"bar", number[]>;
-  public peerAndSelfChartData: ChartData<"bar", number[]>;
-  public peersVersusSelfChartData: ChartData<"radar", number[]>;
+  private _currentTeam = signal<ITeamModel>({ id: 0, name: "" });
+  public get currentTeam(): ITeamModel {
+    return this._currentTeam();
+  }
+  public set currentTeam(v: ITeamModel) {
+    this._currentTeam.set(v);
+  }
+
+  private _previousTeam = signal<ITeamModel | null>(null);
+  public get previousTeam(): ITeamModel | null {
+    return this._previousTeam();
+  }
+  public set previousTeam(v: ITeamModel | null) {
+    this._previousTeam.set(v);
+  }
+
+  private _nextTeam = signal<ITeamModel | null>(null);
+  public get nextTeam(): ITeamModel | null {
+    return this._nextTeam();
+  }
+  public set nextTeam(v: ITeamModel | null) {
+    this._nextTeam.set(v);
+  }
+
+  private _results = signal<IAssessmentResultModel[]>([]);
+  public get results(): IAssessmentResultModel[] {
+    return this._results();
+  }
+  public set results(v: IAssessmentResultModel[]) {
+    this._results.set(v);
+  }
+
+  private _teamGrade = signal<number>(0);
+  public get teamGrade(): number {
+    return this._teamGrade();
+  }
+  public set teamGrade(v: number) {
+    this._teamGrade.set(v);
+  }
+
+  private _gradeCorrectionType = signal<GradeCorrectionType>(GradeCorrectionType.Peers);
+  public get gradeCorrectionType(): GradeCorrectionType {
+    return this._gradeCorrectionType();
+  }
+  public set gradeCorrectionType(v: GradeCorrectionType) {
+    this._gradeCorrectionType.set(v);
+  }
+
+  private _selfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  public get selfChartData(): ChartData<"bar", number[]> {
+    return this._selfChartData();
+  }
+  public set selfChartData(v: ChartData<"bar", number[]>) {
+    this._selfChartData.set(v);
+  }
+
+  private _peerChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  public get peerChartData(): ChartData<"bar", number[]> {
+    return this._peerChartData();
+  }
+  public set peerChartData(v: ChartData<"bar", number[]>) {
+    this._peerChartData.set(v);
+  }
+
+  private _peerAndSelfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  public get peerAndSelfChartData(): ChartData<"bar", number[]> {
+    return this._peerAndSelfChartData();
+  }
+  public set peerAndSelfChartData(v: ChartData<"bar", number[]>) {
+    this._peerAndSelfChartData.set(v);
+  }
+
+  private _peersVersusSelfChartData = signal<ChartData<"radar", number[]>>({ datasets: [], labels: [] });
+  public get peersVersusSelfChartData(): ChartData<"radar", number[]> {
+    return this._peersVersusSelfChartData();
+  }
+  public set peersVersusSelfChartData(v: ChartData<"radar", number[]>) {
+    this._peersVersusSelfChartData.set(v);
+  }
 
   public barChartOptions: ChartOptions<"bar"> = {
     scales: {
@@ -107,7 +181,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent
             if (result.success) {
               this.allTeams = result.value.teams;
               this.setTeams(teamId);
-              this.cdr?.markForCheck();
             } else {
               this.toastr.error(
                 "Could not load project from API. Message: " +
@@ -165,10 +238,10 @@ export class ProjectTeamAssessmentDetailedResultsComponent
                 (result) => result.averageResult.selfValue,
               ),
             });
-            this.cdr?.markForCheck();
             this.peersVersusSelfChartData.labels = this.results.map(
               (result) => result.subject.fullName,
             );
+            this.peersVersusSelfChartData = { ...this.peersVersusSelfChartData };
           } else {
             this.toastr.warning(
               "Could not retrieve project team assment results. Message: " +
@@ -282,7 +355,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
       indivdualGrade = Math.min(indivdualGrade, 20);
       result.individualGrade = +indivdualGrade.toFixed(2);
     });
-    this.cdr?.markForCheck();
+    this._results.update((list) => [...list]);
   }
 
   ngOnDestroy(): void {}

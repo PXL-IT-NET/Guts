@@ -8,8 +8,7 @@ import {
   SimpleChanges,
   ViewChild,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  inject
+  signal,
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import {
@@ -41,8 +40,6 @@ import {
 export class TypeaheadComponent<T = any>
   implements ControlValueAccessor, OnChanges, OnDestroy
 {
-  private cdr = inject(ChangeDetectorRef, { optional: true });
-
   @Input() public items: T[] = [];
 
   @Input()
@@ -53,7 +50,13 @@ export class TypeaheadComponent<T = any>
     return this.items;
   }
 
-  @Input() public selectedItem: T | null = null;
+  private _selectedItem = signal<T | null>(null);
+  @Input() public get selectedItem(): T | null {
+    return this._selectedItem();
+  }
+  public set selectedItem(v: T | null) {
+    this._selectedItem.set(v);
+  }
   public readonly selectedItemChange = output<T | null>();
 
   @Input() public displayProperty: string = "";
@@ -64,7 +67,15 @@ export class TypeaheadComponent<T = any>
   @Input() public name: string = "";
   @Input() public placeholder: string = "";
   @Input() public readonly: boolean = false;
-  @Input() public disabled: boolean = false;
+
+  private _disabled = signal<boolean>(false);
+  @Input() public get disabled(): boolean {
+    return this._disabled();
+  }
+  public set disabled(v: boolean) {
+    this._disabled.set(v);
+  }
+
   @Input() public inputClass: string = "form-control";
   @Input() public clearOnClick: boolean = true;
   @Input() public debounceTime: number = 200;
@@ -75,7 +86,13 @@ export class TypeaheadComponent<T = any>
   @ViewChild("instance", { static: false })
   public typeaheadInstance!: NgbTypeahead;
 
-  public innerValue: any = null;
+  private _innerValue = signal<any>(null);
+  public get innerValue(): any {
+    return this._innerValue();
+  }
+  public set innerValue(v: any) {
+    this._innerValue.set(v);
+  }
   public click$ = new Subject<string>();
 
   public onChange: (value: T | null) => void = () => {};
@@ -200,7 +217,6 @@ export class TypeaheadComponent<T = any>
   public writeValue(value: any): void {
     this.innerValue = value;
     this.selectedItem = value;
-    this.cdr?.markForCheck();
   }
 
   public registerOnChange(fn: (value: T | null) => void): void {
@@ -213,7 +229,6 @@ export class TypeaheadComponent<T = any>
 
   public setDisabledState?(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    this.cdr?.markForCheck();
   }
 }
 

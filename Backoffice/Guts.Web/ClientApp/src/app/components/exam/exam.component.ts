@@ -7,7 +7,6 @@ import {
   OnChanges,
   SimpleChanges,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   DestroyRef,
   inject,
   signal,
@@ -28,7 +27,6 @@ import { ToastrService } from "ngx-toastr";
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {
   private destroyRef = inject(DestroyRef);
-  private cdr = inject(ChangeDetectorRef, { optional: true });
 
   private _loading = signal<boolean>(false);
   public get loading(): boolean {
@@ -127,7 +125,6 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
         if (result.success) {
           this.exams = [...this.exams, result.value];
           this.newExam = new ExamModel();
-          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not save exam. Message: " +
@@ -140,12 +137,12 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
 
   public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.splice(exam.parts.indexOf(examPart), 1);
-    this.cdr?.markForCheck();
+    this._exams.update((exams) => [...exams]);
   }
 
   public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.push(examPart);
-    this.cdr?.markForCheck();
+    this._exams.update((exams) => [...exams]);
   }
 
   public downloadResults(exam: ExamModel) {
