@@ -1,11 +1,5 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-  ChangeDetectionStrategy
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
 import { ActivatedRoute } from "@angular/router";
 import {
@@ -14,7 +8,6 @@ import {
 } from "../../viewmodels/assignmentdetail.model";
 import moment from "moment";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -24,7 +17,7 @@ import { takeUntil } from "rxjs/operators";
   styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public model: AssignmentDetailModel;
   public loading: boolean = true;
 
@@ -59,15 +52,12 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
         this.teamId,
         this.statusDate,
       )
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((assignmentDetail: IAssignmentDetailModel) => {
         this.loading = false;
         this.model = new AssignmentDetailModel(assignmentDetail);
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

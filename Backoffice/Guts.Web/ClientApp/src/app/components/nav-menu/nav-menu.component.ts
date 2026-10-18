@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -6,7 +7,6 @@ import { PeriodService } from "src/app/services/period.service";
 import { PeriodProvider } from "src/app/services/period.provider";
 import { IPeriodModel, PeriodModel } from "src/app/viewmodels/period.model";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -16,7 +16,7 @@ import { takeUntil } from "rxjs/operators";
   styleUrls: ["./nav-menu.component.scss"],
 })
 export class NavMenuComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public userProfile: UserProfile;
   public allPeriods: IPeriodModel[];
   public selectedPeriod: IPeriodModel;
@@ -35,20 +35,20 @@ export class NavMenuComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authService
       .getLoggedInState()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isLoggedIn) => {
         if (isLoggedIn) {
           // retrieve the user profile when logged in
           this.authService
             .getUserProfile()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((profile) => {
               this.userProfile = profile;
             });
 
           this.periodService
             .getAll()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((result) => {
               if (result.success) {
                 if (result.value.length > 0) {
@@ -79,7 +79,7 @@ export class NavMenuComponent implements OnInit, OnDestroy {
       });
 
     this.periodProvider.period$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((period) => {
         if (period) {
           this.selectedPeriod = period;
@@ -97,8 +97,5 @@ export class NavMenuComponent implements OnInit, OnDestroy {
     this.periodProvider.period = period;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

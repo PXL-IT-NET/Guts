@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
 import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -15,7 +15,7 @@ import { takeUntil } from "rxjs/operators";
 export class ProjectTeamAssessmentEvaluationFormComponent
   implements OnInit, OnDestroy
 {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   private projectAssessmentId: number;
   private teamId: number;
 
@@ -37,7 +37,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     this.teamId = this.route.snapshot.params["teamId"];
     this.projectTeamAssessmentService
       .getPeerAssessmentsOfUser(this.projectAssessmentId, this.teamId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.peerAssessments = result.value;
@@ -70,7 +70,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
           this.teamId,
           validPeerAssessments,
         )
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
             if (validPeerAssessments.length == this.peerAssessments.length) {
@@ -104,8 +104,5 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     return explanationIsMisssing;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

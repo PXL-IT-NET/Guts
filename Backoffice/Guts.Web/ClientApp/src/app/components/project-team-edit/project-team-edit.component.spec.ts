@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import { ProjectTeamEditComponent } from "./project-team-edit.component";
 import { ProjectService } from "../../services";
 import { PostResult } from "../../util/result";
@@ -21,11 +22,11 @@ describe("ProjectTeamEditComponent", () => {
     ]);
     toastrSpy = createToastrSpy();
 
-    component = new ProjectTeamEditComponent(
+    component = TestBed.runInInjectionContext(() => new ProjectTeamEditComponent(
       modalRefSpy as any,
       projectServiceSpy,
       toastrSpy,
-    );
+    ));
     component.courseId = 1;
     component.projectCode = "PROJ1";
     component.team = {

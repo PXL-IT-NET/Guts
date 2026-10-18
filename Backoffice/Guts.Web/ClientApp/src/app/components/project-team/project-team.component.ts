@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
@@ -12,7 +13,6 @@ import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ProjectTeamEditComponent } from "../project-team-edit/project-team-edit.component";
 import { ProjectTeamAddComponent } from "../project-team-add/project-team-add.component";
 import { PeriodProvider } from "src/app/services/period.provider";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -20,7 +20,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./project-team.component.html",
 })
 export class ProjectTeamComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public loading: boolean = false;
   public teams: ITeamDetailsModel[];
   public myTeam: ITeamDetailsModel;
@@ -62,7 +62,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.userProfile = new UserProfile();
 
     this.periodProvider.period$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((period) => {
         if (period) {
           this.activePeriod = period.isActive;
@@ -72,11 +72,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.loadData(false);
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.userProfileSubscription?.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 
   public leaveMyTeam() {
     let confirmMessage =
@@ -86,7 +82,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     if (confirm(confirmMessage)) {
       this.projectService
         .leaveTeam(this.courseId, this.projectCode, this.myTeam.id)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
@@ -109,7 +105,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     if (confirm(confirmMessage)) {
       this.projectService
         .deleteTeam(this.courseId, this.projectCode, team.id)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
@@ -128,7 +124,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .joinTeam(this.courseId, this.projectCode, teamId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -167,7 +163,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.modalRef = this.modalService.show(ProjectTeamAddComponent, modalState);
     this.modalRef.setClass("modal-lg");
     this.modalRef.content.teamsAdded
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.loadData(false);
       });
@@ -181,7 +177,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     }
     this.userProfileSubscription = this.authService
       .getUserProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((profile) => {
         this.userProfile = profile;
         this.loading = false;
@@ -193,7 +189,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .getTeams(this.courseId, this.projectCode)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: GetResult<ITeamDetailsModel[]>) => {
         this.loading = false;
         if (result.success) {

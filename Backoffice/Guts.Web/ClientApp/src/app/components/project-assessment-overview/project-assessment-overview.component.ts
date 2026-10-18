@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -26,7 +27,6 @@ import { UserProfile } from "src/app/viewmodels/user.model";
 import { ProjectAssessmentAddComponent } from "../project-assessment-add/project-assessment-add.component";
 import { ProjectAssessmentEditComponent } from "../project-assessment-edit/project-assessment-edit.component";
 import { PostResult } from "../../util/result";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -35,7 +35,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./project-assessment-overview.component.html",
 })
 export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   private userProfileSubscription: Subscription;
 
   public loading: boolean;
@@ -91,7 +91,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
       .getUserProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((profile) => {
         this.userProfile = profile;
       });
@@ -104,12 +104,12 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     });
     //#End Form
 
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       let courseId = +this.route.parent.snapshot.params["courseId"];
       let projectCode = this.route.snapshot.params["code"];
       this.projectService
         .getProjectDetails(courseId, projectCode)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
             this.project = result.value;
@@ -128,7 +128,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     });
 
     this.periodProvider.period$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((period) => {
         if (period) {
           this.activePeriod = period.isActive;
@@ -136,11 +136,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.userProfileSubscription.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 
   public openAssessmentAddModal() {
     let modalState: ModalOptions = {
@@ -154,7 +150,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     );
     this.modalRef.setClass("modal-lg");
     this.modalRef.content.assessmentAdded
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((addedAssessment) => {
         this.loadProjectAssessments();
       });
@@ -173,7 +169,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     );
     this.modalRef.setClass("modal-lg");
     this.modalRef.content.assessmentEdited
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.loadProjectAssessments();
       });
@@ -183,7 +179,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectAssessmentService
       .getAssessmentsOfProject(this.project.id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -196,7 +192,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
                     assessment.id,
                     this.selectedTeamId,
                   )
-                  .pipe(takeUntil(this.destroy$))
+                  .pipe(takeUntilDestroyed(this.destroyRef))
                   .subscribe((result) => {
                     if (result.success) {
                       assessment.teamStatus = result.value;
@@ -235,7 +231,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       this.loading = true;
       this.projectAssessmentService
         .deleteProjectAssessment(assessment.id)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {

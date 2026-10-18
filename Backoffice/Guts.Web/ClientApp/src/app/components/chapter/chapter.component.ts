@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "../../services/chapter.service";
@@ -6,7 +7,6 @@ import { GetResult } from "../../util/result";
 import { IChapterDetailsModel } from "../../viewmodels/chapter.model";
 import { IUserModel } from "../../viewmodels/user.model";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 import moment from "moment";
 
 @Component({
@@ -15,7 +15,7 @@ import moment from "moment";
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public model: IChapterDetailsModel;
   public selectedAssignmentId: number;
   public selectedUser: IUserModel;
@@ -51,14 +51,14 @@ export class ChapterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       var parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.chapterCode = params["chapterCode"];
       this.loading = true;
       this.chapterService
         .getChapterDetails(this.courseId, this.chapterCode)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: GetResult<IChapterDetailsModel>) => {
           this.loading = false;
           if (result.success) {
@@ -76,7 +76,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
 
     // Subscribe to queryParams to detect changes in query string parameters
     this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((queryParams) => {
         if (queryParams["assignmentId"]) {
           this.selectedAssignmentId = +queryParams["assignmentId"];
@@ -86,10 +86,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 
   public formatUser = (user: IUserModel): string => {
     return user ? user.fullName : "";

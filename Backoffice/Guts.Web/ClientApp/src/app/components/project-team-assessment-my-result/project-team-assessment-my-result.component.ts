@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -16,7 +16,7 @@ import { takeUntil } from "rxjs/operators";
 export class ProjectTeamAssessmentMyResultComponent
   implements OnInit, OnDestroy
 {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public result: IAssessmentResultModel;
 
   public chartData: ChartData<"radar", number[]>;
@@ -53,12 +53,12 @@ export class ProjectTeamAssessmentMyResultComponent
     let projectCode = this.route.snapshot.params["code"];
     let assessmentId = this.route.snapshot.params["assessmentId"];
 
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       let teamId = params["teamId"];
 
       this.projectTeamAssessmentService
         .getMyResultOfProjectTeamAssessment(assessmentId, teamId)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
             this.result = result.value;
@@ -98,8 +98,5 @@ export class ProjectTeamAssessmentMyResultComponent
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

@@ -7,7 +7,9 @@ import { ITopicAssignmentModel } from "../viewmodels/assignment.model";
 import { GetResult, PostResult } from "../util/result";
 import { map, catchError } from "rxjs/operators";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class AssignmentService {
   constructor(private http: HttpClient) {}
 

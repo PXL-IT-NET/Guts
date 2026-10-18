@@ -2,7 +2,9 @@ import { BehaviorSubject } from "rxjs";
 import { IPeriodModel } from "../viewmodels/period.model";
 import { Injectable } from "@angular/core";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class PeriodProvider {
   public period$: BehaviorSubject<IPeriodModel> =
     new BehaviorSubject<IPeriodModel>(null);

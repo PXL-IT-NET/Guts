@@ -12,7 +12,9 @@ import moment from "moment";
 import { PeriodProvider } from "./period.provider";
 import { TopicServiceBase } from "./topic.service.base";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ChapterService extends TopicServiceBase {
   constructor(http: HttpClient, periodProvider: PeriodProvider) {
     super(http, periodProvider, "chapters");

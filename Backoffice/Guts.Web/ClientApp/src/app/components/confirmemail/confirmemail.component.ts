@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -10,7 +10,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./confirmemail.component.html",
 })
 export class ConfirmEmailComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public message: string;
   public confirmed: boolean;
   public loading: boolean;
@@ -26,7 +26,7 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.activatedRoute.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params: Params) => {
         let model = {
           userId: params["userId"],
@@ -35,7 +35,7 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
 
         this.authenticationService
           .confirmEmail(model)
-          .pipe(takeUntil(this.destroy$))
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((result) => {
             this.confirmed = result.success;
             if (this.confirmed) {
@@ -51,8 +51,5 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

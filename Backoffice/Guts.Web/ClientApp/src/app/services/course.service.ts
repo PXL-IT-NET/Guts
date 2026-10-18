@@ -5,7 +5,9 @@ import { map, catchError } from "rxjs/operators";
 import { ICourseModel, ICourseContentsModel } from "../viewmodels/course.model";
 import { GetResult } from "../util/result";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class CourseService {
   constructor(private http: HttpClient) {}
 

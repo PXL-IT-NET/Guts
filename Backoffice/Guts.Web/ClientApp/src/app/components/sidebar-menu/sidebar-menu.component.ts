@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
 import { ICourseModel } from "../../viewmodels/course.model";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 import { UserProfile } from "src/app/viewmodels/user.model";
 
 @Component({
@@ -15,7 +15,7 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   styleUrls: ["./sidebar-menu.component.scss"],
 })
 export class SidebarMenuComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public courses: ICourseModel[];
   public userProfile: UserProfile;
 
@@ -31,7 +31,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authService
       .getLoggedInState()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isLoggedIn) => {
         if (isLoggedIn) {
           this.loadCourses();
@@ -39,7 +39,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
           // retrieve the user profile when logged in
           this.authService
             .getUserProfile()
-            .pipe(takeUntil(this.destroy$))
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((profile) => {
               this.userProfile = profile;
             });
@@ -64,7 +64,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
   private loadCourses() {
     this.courseService
       .getCourses()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.courses = result.value;
@@ -72,8 +72,5 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

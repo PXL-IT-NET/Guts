@@ -3,7 +3,9 @@ import { Observable, of } from "rxjs";
 import { ClientSettings } from "./client.settings";
 import { environment } from "../../environments/environment";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ClientSettingsService {
   constructor(@Inject("BASE_URL") private baseUrl: string) {}
 

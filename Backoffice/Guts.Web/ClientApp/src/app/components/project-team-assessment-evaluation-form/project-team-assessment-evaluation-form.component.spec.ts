@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import { ProjectTeamAssessmentEvaluationFormComponent } from "./project-team-assessment-evaluation-form.component";
 import { ProjectTeamAssessmentService } from "src/app/services";
 import { GetResult, PostResult } from "src/app/util/result";
@@ -25,12 +26,12 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
     routerSpy = createRouterSpy();
     toastrSpy = createToastrSpy();
 
-    component = new ProjectTeamAssessmentEvaluationFormComponent(
+    component = TestBed.runInInjectionContext(() => new ProjectTeamAssessmentEvaluationFormComponent(
       serviceSpy,
       routeStub as any,
       routerSpy,
       toastrSpy,
-    );
+    ));
   });
 
   afterEach(() => {

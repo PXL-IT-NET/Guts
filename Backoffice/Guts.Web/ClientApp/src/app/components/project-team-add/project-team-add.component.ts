@@ -1,12 +1,5 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  ChangeDetectionStrategy
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -23,7 +16,6 @@ import { ProjectService } from "../../services";
 import { CreateResult, PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -32,7 +24,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./project-team-add.component.html",
 })
 export class ProjectTeamAddComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
 
@@ -86,7 +78,7 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .generateTeams(this.courseId, this.projectCode, model)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -105,7 +97,7 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .addTeam(this.courseId, this.projectCode, name)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: CreateResult<ITeamDetailsModel>) => {
         this.loading = false;
         if (result.success) {
@@ -120,8 +112,5 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

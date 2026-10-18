@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 import * as c from "./components";
-import { AuthGuard } from "./guards/auth.guard";
+import { authGuard } from "./guards/auth.guard";
 
 const routes: Routes = [
   { path: "", redirectTo: "home", pathMatch: "full" },
@@ -13,7 +13,7 @@ const routes: Routes = [
   {
     path: "changepassword",
     component: c.ChangePasswordComponent,
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   { path: "teacher-docs/concepts", component: c.TeacherDocsConceptsComponent },
   { path: "teacher-docs/xunit", component: c.TeacherDocsXunitComponent },
@@ -23,7 +23,7 @@ const routes: Routes = [
   {
     path: "courses/:courseId",
     component: c.CourseComponent,
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: "chapters/:chapterCode",
@@ -33,12 +33,12 @@ const routes: Routes = [
       {
         path: "chapters/:chapterCode/testresults",
         component: c.ChapterComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "chapters/:chapterCode/settings",
         component: c.ChapterSettingsComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code",
@@ -48,44 +48,44 @@ const routes: Routes = [
       {
         path: "projects/:code/testresults",
         component: c.ProjectComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/teams",
         component: c.ProjectTeamComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/assessments",
         component: c.ProjectAssessmentOverviewComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/assessments/:assessmentId/teams/:teamId/evaluate",
         component: c.ProjectTeamAssessmentEvaluationFormComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/assessments/:assessmentId/teams/:teamId/detailed-results",
         component: c.ProjectTeamAssessmentDetailedResultsComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/assessments/:assessmentId/teams/:teamId/my-result",
         component: c.ProjectTeamAssessmentMyResultComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
       {
         path: "projects/:code/settings",
         component: c.ProjectSettingsComponent,
-        canActivate: [AuthGuard],
+        canActivate: [authGuard],
       },
     ],
   },
   {
     path: "courses/:courseId/config",
     component: c.CourseConfigComponent,
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
   },
   { path: "**", redirectTo: "home" },
 ];

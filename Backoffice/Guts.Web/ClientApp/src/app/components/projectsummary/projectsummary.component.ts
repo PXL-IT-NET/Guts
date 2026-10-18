@@ -1,11 +1,5 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-  ChangeDetectionStrategy
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ProjectService } from "../../services/project.service";
 import {
   TopicStatisticsModel,
@@ -15,7 +9,6 @@ import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import moment from "moment";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -24,7 +17,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./projectsummary.component.html",
 })
 export class ProjectSummaryComponent implements OnChanges, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public model: TopicSummaryModel;
   public statistics: TopicStatisticsModel;
   public loadingSummary: boolean = false;
@@ -83,7 +76,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
         this.teamId,
         this.statusDate,
       )
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loadingSummary = false;
         if (result.success) {
@@ -102,7 +95,7 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
     this.loadingStatistics = true;
     this.projectService
       .getProjectStatistics(this.courseId, this.projectCode, this.statusDate)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.statistics = result.value;
@@ -117,8 +110,5 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

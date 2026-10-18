@@ -5,7 +5,9 @@ import { map, catchError } from "rxjs/operators";
 import { GetResult } from "../util/result";
 import { IPeriodModel, PeriodModel } from "../viewmodels/period.model";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class PeriodService {
   constructor(private http: HttpClient) {}
 

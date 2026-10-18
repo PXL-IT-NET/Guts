@@ -4,7 +4,9 @@ import { Observable, of } from "rxjs";
 import { map, catchError } from "rxjs/operators";
 import { PostResult } from "../util/result";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class TestService {
   constructor(private http: HttpClient) {}
 

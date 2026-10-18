@@ -11,7 +11,9 @@ import {
   ProjectTeamAssessmentStatusModel,
 } from "../viewmodels/projectassessment.model";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ProjectTeamAssessmentService {
   constructor(private http: HttpClient) {}
 

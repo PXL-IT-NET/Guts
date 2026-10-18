@@ -1,12 +1,5 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  Input,
-  OnChanges,
-  SimpleChanges,
-  ChangeDetectionStrategy
-} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from "@angular/router";
@@ -14,7 +7,6 @@ import { UserProfile } from "../../viewmodels/user.model";
 import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
 import { Subscription, Subject } from "rxjs";
 import { ToastrService } from "ngx-toastr";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -23,7 +15,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public loading: boolean = false;
   public userProfile: UserProfile;
   public exams: ExamModel[];
@@ -48,7 +40,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.userProfile = new UserProfile();
     this.userProfileSubscription = this.authService
       .getUserProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((profile) => {
         this.userProfile = profile;
       });
@@ -62,17 +54,13 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.userProfileSubscription?.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 
   public loadExams() {
     this.loading = true;
     this.examService
       .getExamsOfCourse(this.courseId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -92,7 +80,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.newExam.courseId = this.courseId;
     this.examService
       .saveExam(this.newExam)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
@@ -120,7 +108,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     this.loading = true;
     this.examService
       .getExamResultsDownloadUrl(exam.id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         this.loading = false;
         if (!result.success) {

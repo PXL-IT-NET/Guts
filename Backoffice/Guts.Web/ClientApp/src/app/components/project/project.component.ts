@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
@@ -6,7 +7,6 @@ import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import moment from "moment";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -14,7 +14,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./project.component.html",
 })
 export class ProjectComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   public model: IProjectDetailsModel;
   public selectedDate: moment.Moment;
   public selectedAssignmentId: number;
@@ -54,7 +54,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       var parentParams = this.route.parent.snapshot.params;
       this.courseId = +parentParams["courseId"]; // (+) converts 'courseId' to a number
       this.projectCode = params["code"];
@@ -62,7 +62,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
       this.loading = true;
       this.projectService
         .getProjectDetails(this.courseId, this.projectCode)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: GetResult<IProjectDetailsModel>) => {
           this.loading = false;
           if (result.success) {
@@ -83,7 +83,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
     // Subscribe to queryParams to detect changes in query string parameters
     this.route.queryParams
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((queryParams) => {
         if (queryParams["assignmentId"]) {
           this.selectedAssignmentId = +queryParams["assignmentId"];
@@ -93,8 +93,5 @@ export class ProjectComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

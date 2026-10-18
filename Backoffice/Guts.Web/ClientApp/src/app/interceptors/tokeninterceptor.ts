@@ -1,4 +1,4 @@
-import { Injectable, Injector } from "@angular/core";
+import { inject, Injectable, Injector } from "@angular/core";
 import {
   HttpRequest,
   HttpHandler,
@@ -6,12 +6,37 @@ import {
   HttpInterceptor,
   HttpResponse,
   HttpErrorResponse,
+  HttpInterceptorFn,
 } from "@angular/common/http";
 import { AuthService } from "../services/auth.service";
 import { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 
-@Injectable()
+export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const token: string | null = authService.getToken();
+  const authReq = token
+    ? req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    : req;
+
+  return next(authReq).pipe(
+    tap({
+      error: (err: any) => {
+        if (err instanceof HttpErrorResponse && err.status === 401) {
+          authService.clearToken();
+        }
+      },
+    }),
+  );
+};
+
+@Injectable({
+  providedIn: "root",
+})
 export class TokenInterceptor implements HttpInterceptor {
   private authService: AuthService;
 

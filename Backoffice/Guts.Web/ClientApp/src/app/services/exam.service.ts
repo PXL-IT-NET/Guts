@@ -15,7 +15,9 @@ import {
 } from "../viewmodels/exam.model";
 import { saveAs } from "file-saver";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class ExamService {
   constructor(private http: HttpClient) {}
 

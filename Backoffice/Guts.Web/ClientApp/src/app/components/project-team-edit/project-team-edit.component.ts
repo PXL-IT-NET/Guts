@@ -1,4 +1,5 @@
-import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -14,7 +15,6 @@ import { ProjectService } from "../../services";
 import { PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 
 @Component({
   standalone: false,
@@ -23,7 +23,7 @@ import { takeUntil } from "rxjs/operators";
   templateUrl: "./project-team-edit.component.html",
 })
 export class ProjectTeamEditComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
   @Input() public team: ITeamDetailsModel;
@@ -56,7 +56,7 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.projectService
       .updateTeam(this.courseId, this.projectCode, this.team)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PostResult) => {
         this.loading = false;
         if (result.success) {
@@ -86,7 +86,7 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
           this.team.id,
           member.userId,
         )
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result: PostResult) => {
           this.loading = false;
           if (result.success) {
@@ -108,8 +108,5 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void {}
 }

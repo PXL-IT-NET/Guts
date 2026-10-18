@@ -1,3 +1,4 @@
+import { TestBed } from "@angular/core/testing";
 import { ProjectSummaryComponent } from "./projectsummary.component";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
@@ -24,10 +25,10 @@ describe("ProjectSummaryComponent", () => {
     ]);
     toastrSpy = createToastrSpy();
 
-    component = new ProjectSummaryComponent(
+    component = TestBed.runInInjectionContext(() => new ProjectSummaryComponent(
       projectServiceSpy,
       toastrSpy,
-    );
+    ));
   });
 
   afterEach(() => {

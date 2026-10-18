@@ -13,7 +13,9 @@ import { ResetPasswordModel } from "../viewmodels/resetpassword.model";
 import { ChangePasswordModel } from "../viewmodels/changepassword.model";
 import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 
-@Injectable()
+@Injectable({
+  providedIn: "root",
+})
 export class AuthService {
   private tokenModel: TokenModel | null;
   private loggedInStateSubject: BehaviorSubject<boolean>;
