@@ -1,10 +1,11 @@
-import { Component, ViewChild } from "@angular/core";
+import { Component, ViewChild, ChangeDetectionStrategy } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { ForgotPasswordModel } from "../../viewmodels/forgotpassword.model";
 import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./forgotpassword.component.html",
 })
 export class ForgotPasswordComponent {

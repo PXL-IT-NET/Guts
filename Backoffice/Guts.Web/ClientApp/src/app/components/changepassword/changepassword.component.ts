@@ -1,9 +1,10 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { ChangePasswordModel } from "../../viewmodels/changepassword.model";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./changepassword.component.html",
 })
 export class ChangePasswordComponent {

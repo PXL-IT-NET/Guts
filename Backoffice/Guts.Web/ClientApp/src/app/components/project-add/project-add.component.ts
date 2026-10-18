@@ -4,6 +4,7 @@ import {
   Input,
   OnInit,
   Output,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -21,6 +22,7 @@ import { ITopicAddModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-project-add",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-add.component.html",
 })
 export class ProjectAddComponent implements OnInit {

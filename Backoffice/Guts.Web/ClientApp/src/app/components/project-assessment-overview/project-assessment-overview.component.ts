@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -31,6 +31,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-assessment-overview",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-assessment-overview.component.html",
 })
 export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {

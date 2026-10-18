@@ -7,6 +7,7 @@ import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr
 } from "@angular/common/http";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import {
@@ -96,8 +97,8 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     ReactiveFormsModule,
     NgbModule,
     ToastrModule.forRoot(),
-    ModalModule.forRoot(),
-    TooltipModule.forRoot(),
+    ModalModule,
+    TooltipModule,
   ],
   providers: [
     provideZoneChangeDetection(),
@@ -119,7 +120,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     NgbTypeaheadConfig,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: RelativeInterceptor, multi: true },
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
     provideCharts(withDefaultRegisterables()),
   ],
   bootstrap: [c.AppComponent],

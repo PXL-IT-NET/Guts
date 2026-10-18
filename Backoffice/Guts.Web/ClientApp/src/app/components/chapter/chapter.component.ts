@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "../../services/chapter.service";
@@ -11,6 +11,7 @@ import moment from "moment";
 
 @Component({
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit, OnDestroy {

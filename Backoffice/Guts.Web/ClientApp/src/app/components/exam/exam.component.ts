@@ -5,6 +5,7 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
@@ -18,6 +19,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-exam",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {

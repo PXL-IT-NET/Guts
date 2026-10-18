@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -19,6 +19,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-team-edit",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-team-edit.component.html",
 })
 export class ProjectTeamEditComponent implements OnInit, OnDestroy {

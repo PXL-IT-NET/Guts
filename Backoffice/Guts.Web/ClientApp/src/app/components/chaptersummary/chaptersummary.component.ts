@@ -3,6 +3,7 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ChapterService } from "../../services/chapter.service";
 import {
@@ -16,6 +17,7 @@ import moment from "moment";
 @Component({
   standalone: false,
   selector: "app-chapter-summary",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./chaptersummary.component.html",
 })
 export class ChapterSummaryComponent implements OnChanges {

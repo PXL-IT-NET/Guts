@@ -5,6 +5,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import {
   AbstractControl,
@@ -25,6 +26,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-assessment-add",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-assessment-add.component.html",
 })
 export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {

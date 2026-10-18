@@ -59,8 +59,8 @@
                 <!-- <span class="fa fa-calendar"></span> -->
                 <span> {{ period.description }}</span>
                 <span>
-                  ({{ period.from?.toDate() | date: "dd/MM/yyyy" }} -
-                  {{ period.until?.toDate() | date: "dd/MM/yyyy" }})</span
+                  ({{ $safeNavigationMigration(period.from?.toDate()) | date: "dd/MM/yyyy" }} -
+                  {{ $safeNavigationMigration(period.until?.toDate()) | date: "dd/MM/yyyy" }})</span
                 >
               </a>
             </li>

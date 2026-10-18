@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -10,6 +10,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-my-result",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-team-assessment-my-result.component.html",
 })
 export class ProjectTeamAssessmentMyResultComponent

@@ -4,6 +4,7 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ProjectService } from "../../services/project.service";
 import {
@@ -19,6 +20,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-summary",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./projectsummary.component.html",
 })
 export class ProjectSummaryComponent implements OnChanges, OnDestroy {

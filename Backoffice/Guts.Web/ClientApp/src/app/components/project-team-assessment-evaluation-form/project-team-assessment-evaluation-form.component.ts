@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
@@ -9,6 +9,7 @@ import { takeUntil } from "rxjs/operators";
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-evaluation-form",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-team-assessment-evaluation-form.component.html",
 })
 export class ProjectTeamAssessmentEvaluationFormComponent

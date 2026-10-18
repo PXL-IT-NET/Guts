@@ -4,6 +4,7 @@ import {
   forwardRef,
   Input,
   Output,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import moment from "moment";
@@ -13,6 +14,7 @@ import moment from "moment";
   selector: "app-ng-datetime",
   template:
     '<input type="datetime-local" class="form-control" [value]="_dateString" (change)="onDateChange($event.target.value)" />',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

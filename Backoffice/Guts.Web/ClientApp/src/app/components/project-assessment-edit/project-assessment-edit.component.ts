@@ -4,6 +4,7 @@ import {
   Input,
   OnInit,
   Output,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -23,6 +24,7 @@ import {
 @Component({
   standalone: false,
   selector: "app-project-assessment-edit",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-assessment-edit.component.html",
 })
 export class ProjectAssessmentEditComponent implements OnInit {

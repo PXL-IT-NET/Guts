@@ -4,6 +4,7 @@ import {
   Input,
   Output,
   EventEmitter,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import {
   ExamPartModel,
@@ -22,6 +23,7 @@ import {
 @Component({
   standalone: false,
   selector: "app-exampart",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./exampart.component.html",
 })
 export class ExampartComponent implements OnInit {

@@ -1,8 +1,9 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
   standalone: false,
   selector: "app-teacher-docs-xunit",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./teacher-docs-xunit.component.html",
 })
 export class TeacherDocsXunitComponent {

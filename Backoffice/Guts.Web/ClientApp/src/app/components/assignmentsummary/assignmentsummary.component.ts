@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
 import { ChartOptions } from "chart.js";
 import { AssignmentSummaryModel } from "../../viewmodels/assignmentsummary.model";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 @Component({
   standalone: false,
   selector: "assignment-summary",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./assignmentsummary.component.html",
 })
 export class AssignmentSummaryComponent {

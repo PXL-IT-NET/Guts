@@ -1,8 +1,9 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
   standalone: false,
   selector: "app-teacher-docs-dotnet",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./teacher-docs-dotnet.component.html",
 })
 export class TeacherDocsDotnetComponent {

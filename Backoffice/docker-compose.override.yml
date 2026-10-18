@@ -35,6 +35,8 @@ services:
       - "4200:4200"
     volumes:
       - ./Guts.Web/ClientApp:/app
+      - /app/.angular
+      - /app/node_modules
 
 volumes:
   guts-sqldata:

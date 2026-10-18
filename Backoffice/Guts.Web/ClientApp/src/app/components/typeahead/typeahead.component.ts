@@ -8,6 +8,7 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import {
@@ -27,6 +28,7 @@ import {
   standalone: false,
   selector: "app-typeahead",
   templateUrl: "./typeahead.component.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -68,7 +70,7 @@ export class TypeaheadComponent<T = any>
   @Output() public itemSelected = new EventEmitter<T>();
 
   @ViewChild("instance", { static: false })
-  public typeaheadInstance: NgbTypeahead;
+  public typeaheadInstance!: NgbTypeahead;
 
   public innerValue: any = null;
   public click$ = new Subject<string>();

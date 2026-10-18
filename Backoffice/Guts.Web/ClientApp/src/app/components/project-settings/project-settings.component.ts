@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -15,6 +15,7 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-project-settings",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./project-settings.component.html",
 })
 export class ProjectSettingsComponent implements OnInit {

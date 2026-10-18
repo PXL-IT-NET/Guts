@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { takeUntil } from "rxjs/internal/operators/takeUntil";
 import { Subject } from "rxjs/internal/Subject";
 import { AuthService } from "src/app/services/auth.service";
@@ -7,6 +7,7 @@ import { UserProfile } from "src/app/viewmodels/user.model";
 @Component({
   standalone: false,
   selector: "app-home",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./home.component.html",
 })
 export class HomeComponent implements OnInit, OnDestroy {

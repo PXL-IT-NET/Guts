@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -18,6 +18,7 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-chapter-settings",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./chapter-settings.component.html",
 })
 export class ChapterSettingsComponent implements OnInit {

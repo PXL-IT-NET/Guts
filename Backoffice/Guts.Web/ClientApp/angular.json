@@ -24,6 +24,15 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js", "@angular/localize/init"],
             "tsConfig": "tsconfig.app.json",
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
+            },
+            "allowedCommonJsDependencies": [
+              "moment",
+              "file-saver"
+            ],
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles/styles.scss",

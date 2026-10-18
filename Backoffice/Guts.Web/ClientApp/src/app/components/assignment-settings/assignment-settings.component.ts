@@ -3,6 +3,7 @@ import {
   EventEmitter,
   Input,
   Output,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { ToastrService } from "ngx-toastr";
 import { AssignmentService, TestService } from "src/app/services";
@@ -15,6 +16,7 @@ import {
 @Component({
   standalone: false,
   selector: "app-assignment-settings",
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: "./assignment-settings.component.html",
 })
 export class AssignmentSettingsComponent {

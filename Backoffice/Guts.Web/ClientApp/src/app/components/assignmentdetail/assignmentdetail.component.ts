@@ -4,6 +4,7 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
+  ChangeDetectionStrategy
 } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
 import { ActivatedRoute } from "@angular/router";
@@ -19,6 +20,7 @@ import { takeUntil } from "rxjs/operators";
   standalone: false,
   selector: "app-assignment-detail",
   templateUrl: "./assignmentdetail.component.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {

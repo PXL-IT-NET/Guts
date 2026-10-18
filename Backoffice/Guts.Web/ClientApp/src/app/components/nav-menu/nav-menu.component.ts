@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -12,6 +12,7 @@ import { takeUntil } from "rxjs/operators";
   standalone: false,
   selector: "app-nav-menu",
   templateUrl: "./nav-menu.component.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ["./nav-menu.component.scss"],
 })
 export class NavMenuComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
@@ -11,6 +11,7 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   standalone: false,
   selector: "app-sidebar-menu",
   templateUrl: "./sidebar-menu.component.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ["./sidebar-menu.component.scss"],
 })
 export class SidebarMenuComponent implements OnInit, OnDestroy {
