@@ -147,7 +147,25 @@ try {
         }
     }
 
-    $lcovPath = "Guts.Web/ClientApp/coverage/ClientApp/lcov.info"
+    $lcovPath = Join-Path $ClientAppDir "coverage\ClientApp\lcov.info"
+    if (Test-Path $lcovPath) {
+        Write-Host "==> Normalizing LCOV source paths for SonarScanner..." -ForegroundColor Cyan
+        $lcovLines = Get-Content -Path $lcovPath
+        $normalizedLines = foreach ($line in $lcovLines) {
+            if ($line.StartsWith("SF:")) {
+                $sfPath = $line.Substring(3)
+                if (-not [System.IO.Path]::IsPathRooted($sfPath)) {
+                    $sfPath = Join-Path $ClientAppDir $sfPath
+                }
+                "SF:$sfPath"
+            }
+            else {
+                $line
+            }
+        }
+        Set-Content -Path $lcovPath -Value $normalizedLines -Encoding UTF8
+    }
+
     $openCoverPaths = "$TestResultsDir/**/coverage.opencover.xml"
     $trxPaths = "$TestResultsDir/*.trx"
 
@@ -164,6 +182,10 @@ try {
         "**/Guts.Web/ClientApp/aspnetcore-https.js"
     ) -join ","
 
+    $coverageExclusions = @(
+        "**/Guts.Bootstrapper/**"
+    ) -join ","
+
     Write-Host "==> Starting SonarScanner analysis for '$ProjectKey'..." -ForegroundColor Cyan
     dotnet tool run dotnet-sonarscanner begin `
         /k:"$ProjectKey" `
@@ -174,6 +196,7 @@ try {
         /d:sonar.cs.vstest.reportsPaths="$trxPaths" `
         /d:sonar.javascript.lcov.reportPaths="$lcovPath" `
         /d:sonar.exclusions="$exclusions" `
+        /d:sonar.coverage.exclusions="$coverageExclusions" `
         /d:sonar.test.inclusions="**/*.spec.ts"
 
     if ($LASTEXITCODE -ne 0) {
