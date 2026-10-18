@@ -7,7 +7,7 @@ describe("LoadingOverlayComponent", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [LoadingOverlayComponent],
+      imports: [LoadingOverlayComponent],
     });
 
     fixture = TestBed.createComponent(LoadingOverlayComponent);
@@ -32,4 +32,3 @@ describe("LoadingOverlayComponent", () => {
     expect(spinner).not.toBeNull();
   });
 });
-

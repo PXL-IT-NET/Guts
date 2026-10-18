@@ -1,10 +1,15 @@
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   Component,
   OnInit,
   Input,
   Output,
   EventEmitter,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  DestroyRef,
+  inject,
+  signal,
 } from "@angular/core";
 import {
   ExamPartModel,
@@ -23,18 +28,41 @@ import {
 @Component({
   standalone: false,
   selector: "app-exampart",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./exampart.component.html",
 })
 export class ExampartComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef, { optional: true });
+
   @Input() public model: ExamPartModel;
   @Input() public examId: number;
   @Output() public examPartDeleted = new EventEmitter<ExamPartModel>();
   @Output() public examPartAdded = new EventEmitter<ExamPartModel>();
 
-  public allAssignments: ITopicAssignmentModel[];
-  public newAssigmnentEvaluation: AssignmentEvaluation;
-  public isCollapsed: boolean;
+  private _allAssignments = signal<ITopicAssignmentModel[]>([]);
+  public get allAssignments(): ITopicAssignmentModel[] {
+    return this._allAssignments();
+  }
+  public set allAssignments(v: ITopicAssignmentModel[]) {
+    this._allAssignments.set(v);
+  }
+
+  private _newAssigmnentEvaluation = signal<AssignmentEvaluation>(new AssignmentEvaluation());
+  public get newAssigmnentEvaluation(): AssignmentEvaluation {
+    return this._newAssigmnentEvaluation();
+  }
+  public set newAssigmnentEvaluation(v: AssignmentEvaluation) {
+    this._newAssigmnentEvaluation.set(v);
+  }
+
+  private _isCollapsed = signal<boolean>(true);
+  public get isCollapsed(): boolean {
+    return this._isCollapsed();
+  }
+  public set isCollapsed(v: boolean) {
+    this._isCollapsed.set(v);
+  }
 
   public newAssignmentEvaluationForm: UntypedFormGroup;
   public get assignmentId() {
@@ -62,11 +90,12 @@ export class ExampartComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.courseId = +params["courseId"]; // (+) converts 'courseId' to a number
 
       this.assignmentService
         .getAssignmentsOfCourse(this.courseId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
             this.allAssignments = result.value.sort(
@@ -115,6 +144,7 @@ export class ExampartComponent implements OnInit {
   public addAssignment() {
     this.model.assignmentEvaluations.push(this.newAssigmnentEvaluation);
     this.newAssigmnentEvaluation = new AssignmentEvaluation();
+    this.cdr?.markForCheck();
   }
 
   public saveExampart() {
@@ -127,11 +157,13 @@ export class ExampartComponent implements OnInit {
 
     this.examService
       .saveExamPart(this.examId, this.model)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.examPartAdded.emit(result.value);
           this.model = new ExamPartModel();
           this.isCollapsed = true;
+          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not save exam part. Message: " +
@@ -145,9 +177,11 @@ export class ExampartComponent implements OnInit {
   public deleteExampart() {
     this.examService
       .deleteExamPart(this.examId, this.model.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result.success) {
           this.examPartDeleted.emit(this.model);
+          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not delete exam part. Message: " +

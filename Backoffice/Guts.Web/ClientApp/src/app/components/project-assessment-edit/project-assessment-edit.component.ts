@@ -4,7 +4,8 @@ import {
   Input,
   OnInit,
   Output,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  signal
 } from "@angular/core";
 import { BsModalRef } from "ngx-bootstrap/modal";
 import {
@@ -24,7 +25,7 @@ import {
 @Component({
   standalone: false,
   selector: "app-project-assessment-edit",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-assessment-edit.component.html",
 })
 export class ProjectAssessmentEditComponent implements OnInit {
@@ -33,34 +34,34 @@ export class ProjectAssessmentEditComponent implements OnInit {
 
   @Output() public assessmentEdited: EventEmitter<void>;
 
-  public loading: boolean;
-  public editAssessmentForm: FormGroup;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public editAssessmentForm: FormGroup<{
+    description: FormControl<string | null>;
+    openOn: FormControl<any>;
+    deadline: FormControl<any>;
+  }>;
 
   constructor(
     public modalRef: BsModalRef,
     private projectAssessmentService: ProjectAssessmentService,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.assessmentEdited = new EventEmitter<void>();
   }
 
   ngOnInit() {
     this.editAssessmentForm = new FormGroup({
-      description: new FormControl("", Validators.required),
-      openOn: new FormControl("", Validators.required),
-      deadline: new FormControl("", Validators.required),
+      description: new FormControl(this.projectAssessment?.description || "", Validators.required),
+      openOn: new FormControl(this.projectAssessment?.openOnUtc || "", Validators.required),
+      deadline: new FormControl(this.projectAssessment?.deadlineUtc || "", Validators.required),
     });
-
-    this.editAssessmentForm
-      .get("description")
-      .setValue(this.projectAssessment.description);
-    this.editAssessmentForm
-      .get("openOn")
-      .setValue(this.projectAssessment.openOnUtc);
-    this.editAssessmentForm
-      .get("deadline")
-      .setValue(this.projectAssessment.deadlineUtc);
   }
 
   onSubmit() {

@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
 import { ActivatedRoute } from "@angular/router";
 import {
@@ -7,19 +7,32 @@ import {
   AssignmentDetailModel,
 } from "../../viewmodels/assignmentdetail.model";
 import moment from "moment";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
   selector: "app-assignment-detail",
   templateUrl: "./assignmentdetail.component.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges, OnDestroy {
   private destroyRef = inject(DestroyRef);
-  public model: AssignmentDetailModel;
-  public loading: boolean = true;
+
+  private _model = signal<AssignmentDetailModel>(new AssignmentDetailModel());
+  public get model(): AssignmentDetailModel {
+    return this._model();
+  }
+  public set model(v: AssignmentDetailModel) {
+    this._model.set(v);
+  }
+
+  private _loading = signal<boolean>(true);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   @Input() public assignmentId: number;
   @Input() public teamId: number;
@@ -30,7 +43,6 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
     private route: ActivatedRoute,
     private assignmentService: AssignmentService,
   ) {
-    this.model = new AssignmentDetailModel();
     this.assignmentId = 0;
     this.userId = 0;
     this.teamId = 0;

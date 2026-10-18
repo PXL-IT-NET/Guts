@@ -15,10 +15,34 @@ const routes: Routes = [
     component: c.ChangePasswordComponent,
     canActivate: [authGuard],
   },
-  { path: "teacher-docs/concepts", component: c.TeacherDocsConceptsComponent },
-  { path: "teacher-docs/xunit", component: c.TeacherDocsXunitComponent },
-  { path: "teacher-docs/nunit", component: c.TeacherDocsNunitComponent },
-  { path: "teacher-docs/junit", component: c.TeacherDocsJunitComponent },
+  {
+    path: "teacher-docs/concepts",
+    loadComponent: () =>
+      import(
+        "./components/teacher-docs-concepts/teacher-docs-concepts.component"
+      ).then((m) => m.TeacherDocsConceptsComponent),
+  },
+  {
+    path: "teacher-docs/xunit",
+    loadComponent: () =>
+      import(
+        "./components/teacher-docs-xunit/teacher-docs-xunit.component"
+      ).then((m) => m.TeacherDocsXunitComponent),
+  },
+  {
+    path: "teacher-docs/nunit",
+    loadComponent: () =>
+      import(
+        "./components/teacher-docs-nunit/teacher-docs-nunit.component"
+      ).then((m) => m.TeacherDocsNunitComponent),
+  },
+  {
+    path: "teacher-docs/junit",
+    loadComponent: () =>
+      import(
+        "./components/teacher-docs-junit/teacher-docs-junit.component"
+      ).then((m) => m.TeacherDocsJunitComponent),
+  },
   { path: "home", component: c.HomeComponent },
   {
     path: "courses/:courseId",
@@ -95,6 +119,7 @@ const routes: Routes = [
     RouterModule.forRoot(routes, {
       enableTracing: false,
       paramsInheritanceStrategy: "emptyOnly",
+      bindToComponentInputs: true,
     }),
   ],
   exports: [RouterModule],

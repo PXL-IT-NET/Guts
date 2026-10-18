@@ -87,7 +87,6 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
 
     component = TestBed.runInInjectionContext(() => new ProjectTeamAssessmentMyResultComponent(
       teamAssessmentServiceSpy,
-      projectServiceSpy,
       toastrSpy,
       routeStub as any,
     ));

@@ -4,7 +4,7 @@ import { AssignmentStatisticsModel } from "../../viewmodels/assignmentstatistics
 @Component({
   standalone: false,
   selector: "assignment-statistics",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assignmentstatistics.component.html",
 })
 export class AssignmentStatisticsComponent {

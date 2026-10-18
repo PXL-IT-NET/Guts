@@ -5,7 +5,7 @@ import { Chart } from "chart.js";
   standalone: false,
   selector: "app-root",
   templateUrl: "./app.component.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./app.component.css"],
 })
 export class AppComponent {

@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject, signal } from "@angular/core";
 import {
   UntypedFormBuilder,
   UntypedFormControl,
@@ -31,19 +31,68 @@ import { PostResult } from "../../util/result";
 @Component({
   standalone: false,
   selector: "app-project-assessment-overview",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-assessment-overview.component.html",
 })
 export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef, { optional: true });
   private userProfileSubscription: Subscription;
 
-  public loading: boolean;
-  public project: IProjectDetailsModel;
-  public assessments: ProjectAssessmentModel[];
-  public selectedTeamId: number;
-  public userProfile: UserProfile;
-  public activePeriod: boolean = true;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _project = signal<IProjectDetailsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    components: [],
+    teams: [],
+    assignments: [],
+  });
+  public get project(): IProjectDetailsModel {
+    return this._project();
+  }
+  public set project(v: IProjectDetailsModel) {
+    this._project.set(v);
+  }
+
+  private _assessments = signal<ProjectAssessmentModel[]>([]);
+  public get assessments(): ProjectAssessmentModel[] {
+    return this._assessments();
+  }
+  public set assessments(v: ProjectAssessmentModel[]) {
+    this._assessments.set(v);
+  }
+
+  private _selectedTeamId = signal<number>(0);
+  public get selectedTeamId(): number {
+    return this._selectedTeamId();
+  }
+  public set selectedTeamId(v: number) {
+    this._selectedTeamId.set(v);
+  }
+
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
+  }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  private _activePeriod = signal<boolean>(true);
+  public get activePeriod(): boolean {
+    return this._activePeriod();
+  }
+  public set activePeriod(v: boolean) {
+    this._activePeriod.set(v);
+  }
 
   public modalRef: BsModalRef;
 
@@ -196,6 +245,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
                   .subscribe((result) => {
                     if (result.success) {
                       assessment.teamStatus = result.value;
+                      this.cdr?.markForCheck();
                     } else {
                       this.toastr.warning(
                         "Could not retrieve project team assment status. Message: " +

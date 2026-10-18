@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy } from "@angular/core";
 
 @Component({
-  standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: "",
 })
 export class EmptyComponent {}

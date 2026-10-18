@@ -3,7 +3,8 @@ import {
   Input,
   SimpleChanges,
   OnChanges,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  signal
 } from "@angular/core";
 import { ChapterService } from "../../services/chapter.service";
 import {
@@ -17,14 +18,47 @@ import moment from "moment";
 @Component({
   standalone: false,
   selector: "app-chapter-summary",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./chaptersummary.component.html",
 })
 export class ChapterSummaryComponent implements OnChanges {
-  public model: TopicSummaryModel;
-  public statistics: TopicStatisticsModel;
-  public loadingSummary: boolean = false;
-  public loadingStatistics: boolean = false;
+  private _model = signal<TopicSummaryModel>(new TopicSummaryModel());
+  public get model(): TopicSummaryModel {
+    return this._model();
+  }
+  public set model(v: TopicSummaryModel) {
+    this._model.set(v);
+  }
+
+  private _statistics = signal<TopicStatisticsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    assignments: [],
+    assignmentStatistics: [],
+  });
+  public get statistics(): TopicStatisticsModel {
+    return this._statistics();
+  }
+  public set statistics(v: TopicStatisticsModel) {
+    this._statistics.set(v);
+  }
+
+  private _loadingSummary = signal<boolean>(false);
+  public get loadingSummary(): boolean {
+    return this._loadingSummary();
+  }
+  public set loadingSummary(v: boolean) {
+    this._loadingSummary.set(v);
+  }
+
+  private _loadingStatistics = signal<boolean>(false);
+  public get loadingStatistics(): boolean {
+    return this._loadingStatistics();
+  }
+  public set loadingStatistics(v: boolean) {
+    this._loadingStatistics.set(v);
+  }
 
   @Input() public courseId: number;
   @Input() public userId: number;
@@ -36,14 +70,6 @@ export class ChapterSummaryComponent implements OnChanges {
     private route: ActivatedRoute,
     private toastr: ToastrService,
   ) {
-    this.model = new TopicSummaryModel();
-    this.statistics = {
-      id: 0,
-      code: "",
-      description: "",
-      assignments: [],
-      assignmentStatistics: [],
-    };
     this.courseId = 0;
     this.userId = 0;
     this.chapterCode = "";

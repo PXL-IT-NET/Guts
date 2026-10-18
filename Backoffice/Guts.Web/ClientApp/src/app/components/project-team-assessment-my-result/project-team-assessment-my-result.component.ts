@@ -1,23 +1,29 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
-import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
+import { ProjectTeamAssessmentService } from "src/app/services";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-my-result",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-assessment-my-result.component.html",
 })
 export class ProjectTeamAssessmentMyResultComponent
   implements OnInit, OnDestroy
 {
   private destroyRef = inject(DestroyRef);
-  public result: IAssessmentResultModel;
+
+  private _result = signal<IAssessmentResultModel | null>(null);
+  public get result(): IAssessmentResultModel {
+    return this._result();
+  }
+  public set result(v: IAssessmentResultModel) {
+    this._result.set(v);
+  }
 
   public chartData: ChartData<"radar", number[]>;
 
@@ -36,12 +42,9 @@ export class ProjectTeamAssessmentMyResultComponent
 
   constructor(
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
-    private projectService: ProjectService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
   ) {
-    this.result = null;
-
     this.chartData = {
       datasets: [],
       labels: [],
@@ -49,8 +52,6 @@ export class ProjectTeamAssessmentMyResultComponent
   }
 
   ngOnInit(): void {
-    let courseId = +this.route.parent.snapshot.params["courseId"];
-    let projectCode = this.route.snapshot.params["code"];
     let assessmentId = this.route.snapshot.params["assessmentId"];
 
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {

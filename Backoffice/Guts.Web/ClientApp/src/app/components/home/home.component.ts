@@ -1,24 +1,26 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
-import { takeUntil } from "rxjs/internal/operators/takeUntil";
-import { Subject } from "rxjs/internal/Subject";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AuthService } from "src/app/services/auth.service";
 import { UserProfile } from "src/app/viewmodels/user.model";
 
 @Component({
   standalone: false,
   selector: "app-home",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./home.component.html",
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
 
-  public userProfile: UserProfile;
-
-  constructor(private authService: AuthService) {
-    this.userProfile = new UserProfile();
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
   }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
     this.authService

@@ -3,7 +3,8 @@ import {
   EventEmitter,
   Input,
   Output,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  signal
 } from "@angular/core";
 import { ToastrService } from "ngx-toastr";
 import { AssignmentService, TestService } from "src/app/services";
@@ -16,11 +17,17 @@ import {
 @Component({
   standalone: false,
   selector: "app-assignment-settings",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assignment-settings.component.html",
 })
 export class AssignmentSettingsComponent {
-  public loading: boolean;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   @Input() public assignment: IAssignmentModel;
   @Input() public assignmentKind: string;
@@ -31,7 +38,6 @@ export class AssignmentSettingsComponent {
     private assignmentService: AssignmentService,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.assignment = {} as IAssignmentModel;
     this.assignmentKind = "assignment";
   }

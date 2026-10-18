@@ -1,18 +1,39 @@
-import { Component, ViewChild, ChangeDetectionStrategy } from "@angular/core";
+import { Component, ViewChild, ChangeDetectionStrategy, signal } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { ForgotPasswordModel } from "../../viewmodels/forgotpassword.model";
 import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./forgotpassword.component.html",
 })
 export class ForgotPasswordComponent {
   public model: ForgotPasswordModel;
-  public loading = false;
-  public error = "";
-  public success = false;
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _error = signal<string>("");
+  public get error(): string {
+    return this._error();
+  }
+  public set error(v: string) {
+    this._error.set(v);
+  }
+
+  private _success = signal<boolean>(false);
+  public get success(): boolean {
+    return this._success();
+  }
+  public set success(v: boolean) {
+    this._success.set(v);
+  }
 
   @ViewChild(RecaptchaDirective, { static: false })
   public captcha?: RecaptchaDirective;

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -17,10 +17,11 @@ import { PeriodProvider } from "src/app/services";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./course.component.html",
 })
 export class CourseComponent implements OnInit, OnDestroy {
+  private cdr = inject(ChangeDetectorRef, { optional: true });
   public course: ICourseContentsModel;
   public selectedChapter: ITopicModel;
   public selectedExercise: IAssignmentModel;
@@ -82,6 +83,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       .getUserProfile()
       .subscribe((profile) => {
         this.userProfile = profile;
+        this.cdr?.markForCheck();
       });
   }
 
@@ -239,6 +241,7 @@ export class CourseComponent implements OnInit, OnDestroy {
       this.loading = false;
       if (result.success) {
         this.course = result.value;
+        this.cdr?.markForCheck();
         if (this.course.chapters.length > 0) {
           //Set selected chapter
           let selectedChapter = this.course.chapters.find(

@@ -1,8 +1,7 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   ITeamDetailsModel,
-  ITeamMemberModel,
   TeamGenerationModel,
 } from "../../viewmodels/team.model";
 import { BsModalRef } from "ngx-bootstrap/modal";
@@ -15,12 +14,11 @@ import {
 import { ProjectService } from "../../services";
 import { CreateResult, PostResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
   selector: "app-project-team-add",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-add.component.html",
 })
 export class ProjectTeamAddComponent implements OnInit, OnDestroy {
@@ -30,15 +28,26 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
 
   @Output() public teamsAdded: EventEmitter<void>;
 
-  public loading: boolean;
-  public addTeamForm: FormGroup;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  public addTeamForm: FormGroup<{
+    name: FormControl<string | null>;
+    createMultipleTeams: FormControl<boolean | null>;
+    teamNumberFrom: FormControl<number | null>;
+    teamNumberTo: FormControl<number | null>;
+  }>;
 
   constructor(
     public modalRef: BsModalRef,
     private projectService: ProjectService,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.teamsAdded = new EventEmitter<void>();
   }
 
@@ -54,12 +63,12 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
   onSubmit() {
     if (this.addTeamForm.invalid) return;
 
-    const name: string = this.addTeamForm.controls.name.value;
+    const name: string = this.addTeamForm.controls.name.value || "";
     const createMultipleTeams: boolean =
-      this.addTeamForm.controls.createMultipleTeams.value;
+      this.addTeamForm.controls.createMultipleTeams.value || false;
     const teamNumberFrom: number =
-      this.addTeamForm.controls.teamNumberFrom.value;
-    const teamNumberTo: number = this.addTeamForm.controls.teamNumberTo.value;
+      this.addTeamForm.controls.teamNumberFrom.value || 1;
+    const teamNumberTo: number = this.addTeamForm.controls.teamNumberTo.value || 1;
 
     if (createMultipleTeams) {
       this.addMultipleTeams(name, teamNumberFrom, teamNumberTo);

@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from 
 @Component({
   standalone: false,
   selector: "app-assessment-score-dropdown",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assessment-score-dropdown.component.html",
 })
 export class AssessmentScoreDropdownComponent {

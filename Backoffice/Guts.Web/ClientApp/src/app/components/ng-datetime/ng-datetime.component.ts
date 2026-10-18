@@ -4,7 +4,8 @@ import {
   forwardRef,
   Input,
   Output,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  signal
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import moment from "moment";
@@ -14,7 +15,7 @@ import moment from "moment";
   selector: "app-ng-datetime",
   template:
     '<input type="datetime-local" class="form-control" [value]="_dateString" (change)="onDateChange($event.target.value)" />',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -24,7 +25,15 @@ import moment from "moment";
   ],
 })
 export class NgDatetimeComponent implements ControlValueAccessor {
-  _dateString: string;
+  private _dateStringSignal = signal<string>("");
+
+  public get _dateString(): string {
+    return this._dateStringSignal();
+  }
+  public set _dateString(value: string) {
+    this._dateStringSignal.set(value);
+  }
+
   onChange: (value: moment.Moment) => void;
 
   @Input()
@@ -37,24 +46,11 @@ export class NgDatetimeComponent implements ControlValueAccessor {
   @Output() dateChange: EventEmitter<moment.Moment>;
 
   constructor() {
-    this._dateString = "";
     this.dateChange = new EventEmitter();
     this.onChange = (value) => {};
   }
 
   private parseDateToStringWithFormat(date: moment.Moment): string {
-    let result: string;
-    result = [
-      date.year(),
-      "-",
-      date.month(),
-      "-",
-      date.day(),
-      "T",
-      date.hour(),
-      ":",
-      date.minute(),
-    ].join("");
     let dd = date.date().toString();
     let mm = (date.month() + 1).toString();
     let hh = date.hour().toString();
@@ -63,8 +59,7 @@ export class NgDatetimeComponent implements ControlValueAccessor {
     mm = mm.length === 2 ? mm : "0" + mm;
     hh = hh.length === 2 ? hh : "0" + hh;
     min = min.length === 2 ? min : "0" + min;
-    result = [date.year(), "-", mm, "-", dd, "T", hh, ":", min].join("");
-    return result;
+    return [date.year(), "-", mm, "-", dd, "T", hh, ":", min].join("");
   }
 
   onDateChange(value: string): void {

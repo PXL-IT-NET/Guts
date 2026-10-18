@@ -1,26 +1,44 @@
-import { Component, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, signal } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { ResetPasswordModel } from "../../viewmodels/resetpassword.model";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./resetpassword.component.html",
 })
 export class ResetPasswordComponent implements OnInit {
-  public error: string;
-  public success: boolean;
-  public loading: boolean;
+  private _error = signal<string>("");
+  public get error(): string {
+    return this._error();
+  }
+  public set error(v: string) {
+    this._error.set(v);
+  }
+
+  private _success = signal<boolean>(false);
+  public get success(): boolean {
+    return this._success();
+  }
+  public set success(v: boolean) {
+    this._success.set(v);
+  }
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
   public model: ResetPasswordModel;
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private authenticationService: AuthService,
   ) {
-    this.error = "";
-    this.success = false;
-    this.loading = false;
     this.model = {
       userId: "",
       token: "",

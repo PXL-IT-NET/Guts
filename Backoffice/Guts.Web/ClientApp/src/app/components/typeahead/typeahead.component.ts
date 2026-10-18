@@ -7,7 +7,9 @@ import {
   output,
   SimpleChanges,
   ViewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  inject
 } from "@angular/core";
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from "@angular/forms";
 import {
@@ -27,7 +29,7 @@ import {
   standalone: false,
   selector: "app-typeahead",
   templateUrl: "./typeahead.component.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -39,6 +41,8 @@ import {
 export class TypeaheadComponent<T = any>
   implements ControlValueAccessor, OnChanges, OnDestroy
 {
+  private cdr = inject(ChangeDetectorRef, { optional: true });
+
   @Input() public items: T[] = [];
 
   @Input()
@@ -196,6 +200,7 @@ export class TypeaheadComponent<T = any>
   public writeValue(value: any): void {
     this.innerValue = value;
     this.selectedItem = value;
+    this.cdr?.markForCheck();
   }
 
   public registerOnChange(fn: (value: T | null) => void): void {
@@ -208,6 +213,7 @@ export class TypeaheadComponent<T = any>
 
   public setDisabledState?(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    this.cdr?.markForCheck();
   }
 }
 

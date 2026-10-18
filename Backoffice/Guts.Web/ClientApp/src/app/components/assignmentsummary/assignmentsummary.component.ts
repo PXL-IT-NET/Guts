@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 @Component({
   standalone: false,
   selector: "assignment-summary",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./assignmentsummary.component.html",
 })
 export class AssignmentSummaryComponent {

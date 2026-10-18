@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, ChangeDetectorRef } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -11,13 +11,14 @@ import { Subject } from "rxjs";
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-detailed-results",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-assessment-detailed-results.component.html",
 })
 export class ProjectTeamAssessmentDetailedResultsComponent
   implements OnInit, OnDestroy
 {
   private destroyRef = inject(DestroyRef);
+  private cdr = inject(ChangeDetectorRef, { optional: true });
   public allTeams: ITeamModel[];
   public currentTeam: ITeamModel;
   public previousTeam: ITeamModel;
@@ -106,6 +107,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
             if (result.success) {
               this.allTeams = result.value.teams;
               this.setTeams(teamId);
+              this.cdr?.markForCheck();
             } else {
               this.toastr.error(
                 "Could not load project from API. Message: " +
@@ -163,6 +165,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
                 (result) => result.averageResult.selfValue,
               ),
             });
+            this.cdr?.markForCheck();
             this.peersVersusSelfChartData.labels = this.results.map(
               (result) => result.subject.fullName,
             );
@@ -279,6 +282,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
       indivdualGrade = Math.min(indivdualGrade, 20);
       result.individualGrade = +indivdualGrade.toFixed(2);
     });
+    this.cdr?.markForCheck();
   }
 
   ngOnDestroy(): void {}

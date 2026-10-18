@@ -1,27 +1,70 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "../../services/chapter.service";
 import { GetResult } from "../../util/result";
 import { IChapterDetailsModel } from "../../viewmodels/chapter.model";
 import { IUserModel } from "../../viewmodels/user.model";
-import { Subject } from "rxjs";
 import moment from "moment";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
-  public model: IChapterDetailsModel;
-  public selectedAssignmentId: number;
-  public selectedUser: IUserModel;
-  public selectedDate: moment.Moment;
+
+  private _model = signal<IChapterDetailsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    exercises: [],
+    users: [],
+    assignments: [],
+  });
+  public get model(): IChapterDetailsModel {
+    return this._model();
+  }
+  public set model(v: IChapterDetailsModel) {
+    this._model.set(v);
+  }
+
+  private _selectedAssignmentId = signal<number>(0);
+  public get selectedAssignmentId(): number {
+    return this._selectedAssignmentId();
+  }
+  public set selectedAssignmentId(v: number) {
+    this._selectedAssignmentId.set(v);
+  }
+
+  private _selectedUser = signal<IUserModel | null>(null);
+  public get selectedUser(): IUserModel | null {
+    return this._selectedUser();
+  }
+  public set selectedUser(v: IUserModel | null) {
+    this._selectedUser.set(v);
+  }
+
+  private _selectedDate = signal<moment.Moment>(moment());
+  public get selectedDate(): moment.Moment {
+    return this._selectedDate();
+  }
+  public set selectedDate(v: moment.Moment) {
+    this._selectedDate.set(v);
+  }
+
   public datePickerSettings: any;
-  public loading: boolean = false;
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
   public courseId: number;
   public chapterCode: string;
 
@@ -30,17 +73,6 @@ export class ChapterComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toastr: ToastrService,
   ) {
-    this.model = {
-      id: 0,
-      code: "",
-      description: "",
-      exercises: [],
-      users: [],
-      assignments: [],
-    };
-    this.selectedAssignmentId = 0;
-    this.selectedUser = null;
-    this.selectedDate = moment();
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,

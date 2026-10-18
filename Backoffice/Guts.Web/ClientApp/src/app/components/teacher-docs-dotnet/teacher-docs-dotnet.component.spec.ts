@@ -10,8 +10,8 @@ describe("TeacherDocsDotnetComponent & .NET Teacher Docs", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [CommonModule],
-      declarations: [
+      imports: [
+        CommonModule,
         TeacherDocsDotnetComponent,
         TeacherDocsNunitComponent,
         TeacherDocsXunitComponent,
@@ -46,4 +46,3 @@ describe("TeacherDocsDotnetComponent & .NET Teacher Docs", () => {
     expect(xunitFixture.nativeElement.textContent).toContain("[MonitoredFact]");
   });
 });
-

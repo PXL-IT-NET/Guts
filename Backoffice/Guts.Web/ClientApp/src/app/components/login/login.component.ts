@@ -1,21 +1,34 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
 import { PostResult } from "../../util/result";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./login.component.html",
 })
 export class LoginComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   public model: LoginModel;
-  public loading = false;
-  public error = "";
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _error = signal<string>("");
+  public get error(): string {
+    return this._error();
+  }
+  public set error(v: string) {
+    this._error.set(v);
+  }
 
   constructor(
     private router: Router,

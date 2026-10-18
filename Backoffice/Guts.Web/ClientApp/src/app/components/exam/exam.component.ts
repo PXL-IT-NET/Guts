@@ -1,5 +1,17 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  DestroyRef,
+  inject,
+  signal,
+} from "@angular/core";
 import { ExamService } from "../../services/exam.service";
 import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from "@angular/router";
@@ -11,15 +23,44 @@ import { ToastrService } from "ngx-toastr";
 @Component({
   standalone: false,
   selector: "app-exam",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnDestroy, OnChanges {
   private destroyRef = inject(DestroyRef);
-  public loading: boolean = false;
-  public userProfile: UserProfile;
-  public exams: ExamModel[];
-  public newExam: ExamModel;
+  private cdr = inject(ChangeDetectorRef, { optional: true });
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
+
+  private _userProfile = signal<UserProfile>(new UserProfile());
+  public get userProfile(): UserProfile {
+    return this._userProfile();
+  }
+  public set userProfile(v: UserProfile) {
+    this._userProfile.set(v);
+  }
+
+  private _exams = signal<ExamModel[]>([]);
+  public get exams(): ExamModel[] {
+    return this._exams();
+  }
+  public set exams(v: ExamModel[]) {
+    this._exams.set(v);
+  }
+
+  private _newExam = signal<ExamModel>(new ExamModel());
+  public get newExam(): ExamModel {
+    return this._newExam();
+  }
+  public set newExam(v: ExamModel) {
+    this._newExam.set(v);
+  }
 
   @Input() public courseId: number;
 
@@ -84,8 +125,9 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe((result) => {
         this.loading = false;
         if (result.success) {
-          this.exams.push(result.value);
+          this.exams = [...this.exams, result.value];
           this.newExam = new ExamModel();
+          this.cdr?.markForCheck();
         } else {
           this.toastr.error(
             "Could not save exam. Message: " +
@@ -98,10 +140,12 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
 
   public onExamPartDeleted(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.splice(exam.parts.indexOf(examPart), 1);
+    this.cdr?.markForCheck();
   }
 
   public onExamPartAdded(examPart: ExamPartModel, exam: ExamModel) {
     exam.parts.push(examPart);
+    this.cdr?.markForCheck();
   }
 
   public downloadResults(exam: ExamModel) {

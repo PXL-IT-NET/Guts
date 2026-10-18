@@ -1,15 +1,14 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
 import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
   selector: "app-project-team-assessment-evaluation-form",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-assessment-evaluation-form.component.html",
 })
 export class ProjectTeamAssessmentEvaluationFormComponent
@@ -19,7 +18,13 @@ export class ProjectTeamAssessmentEvaluationFormComponent
   private projectAssessmentId: number;
   private teamId: number;
 
-  public peerAssessments: PeerAssessmentModel[];
+  private _peerAssessments = signal<PeerAssessmentModel[]>([]);
+  public get peerAssessments(): PeerAssessmentModel[] {
+    return this._peerAssessments();
+  }
+  public set peerAssessments(v: PeerAssessmentModel[]) {
+    this._peerAssessments.set(v);
+  }
 
   constructor(
     private projectTeamAssessmentService: ProjectTeamAssessmentService,
@@ -27,7 +32,6 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     private router: Router,
     private toastr: ToastrService,
   ) {
-    this.peerAssessments = [];
     this.projectAssessmentId = 0;
     this.teamId = 0;
   }

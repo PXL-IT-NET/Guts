@@ -1,26 +1,68 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import moment from "moment";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project.component.html",
 })
 export class ProjectComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
-  public model: IProjectDetailsModel;
-  public selectedDate: moment.Moment;
-  public selectedAssignmentId: number;
-  public selectedTeamId: number;
+
+  private _model = signal<IProjectDetailsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    components: [],
+    teams: [],
+    assignments: [],
+  });
+  public get model(): IProjectDetailsModel {
+    return this._model();
+  }
+  public set model(v: IProjectDetailsModel) {
+    this._model.set(v);
+  }
+
+  private _selectedDate = signal<moment.Moment>(moment());
+  public get selectedDate(): moment.Moment {
+    return this._selectedDate();
+  }
+  public set selectedDate(v: moment.Moment) {
+    this._selectedDate.set(v);
+  }
+
+  private _selectedAssignmentId = signal<number>(0);
+  public get selectedAssignmentId(): number {
+    return this._selectedAssignmentId();
+  }
+  public set selectedAssignmentId(v: number) {
+    this._selectedAssignmentId.set(v);
+  }
+
+  private _selectedTeamId = signal<number>(0);
+  public get selectedTeamId(): number {
+    return this._selectedTeamId();
+  }
+  public set selectedTeamId(v: number) {
+    this._selectedTeamId.set(v);
+  }
+
   public datePickerSettings: any;
-  public loading: boolean = false;
+
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
   public courseId: number;
   public projectCode: string;
@@ -33,19 +75,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
   ) {
     this.courseId = 0;
     this.projectCode = "";
-
-    this.model = {
-      id: 0,
-      code: "",
-      description: "",
-      components: [],
-      teams: [],
-      assignments: [],
-    };
-
-    this.selectedAssignmentId = 0;
-    this.selectedDate = moment();
-    this.selectedTeamId = 0;
     this.datePickerSettings = {
       bigBanner: true,
       timePicker: true,

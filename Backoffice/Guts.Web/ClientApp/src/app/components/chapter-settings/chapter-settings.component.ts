@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, signal } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -10,7 +10,6 @@ import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "src/app/services";
 import {
   IAssignmentModel,
-  ITestModel,
 } from "src/app/viewmodels/assignment.model";
 import { IChapterDetailsModel } from "src/app/viewmodels/chapter.model";
 import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
@@ -18,34 +17,48 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
 @Component({
   standalone: false,
   selector: "app-chapter-settings",
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./chapter-settings.component.html",
 })
 export class ChapterSettingsComponent implements OnInit {
   private courseId: number;
   private chapterCode: string;
 
-  public loading: boolean;
-  public editChapterForm: FormGroup;
+  private _loading = signal<boolean>(false);
+  public get loading(): boolean {
+    return this._loading();
+  }
+  public set loading(v: boolean) {
+    this._loading.set(v);
+  }
 
-  public chapter: IChapterDetailsModel;
+  public editChapterForm: FormGroup<{
+    code: FormControl<string | null>;
+    description: FormControl<string | null>;
+  }>;
+
+  private _chapter = signal<IChapterDetailsModel>({
+    id: 0,
+    code: "",
+    description: "",
+    exercises: [],
+    assignments: [],
+    users: [],
+  });
+  public get chapter(): IChapterDetailsModel {
+    return this._chapter();
+  }
+  public set chapter(v: IChapterDetailsModel) {
+    this._chapter.set(v);
+  }
 
   constructor(
     private chapterService: ChapterService,
     private route: ActivatedRoute,
     private toastr: ToastrService,
   ) {
-    this.loading = false;
     this.courseId = 0;
     this.chapterCode = "";
-    this.chapter = {
-      id: 0,
-      code: "",
-      description: "",
-      exercises: [],
-      assignments: [],
-      users: [],
-    };
   }
 
   ngOnInit() {
@@ -88,7 +101,7 @@ export class ChapterSettingsComponent implements OnInit {
     if (this.editChapterForm.invalid) return;
 
     const model: ITopicUpdateModel = {
-      description: this.editChapterForm.controls.description.value,
+      description: this.editChapterForm.controls.description.value || "",
     };
 
     this.chapterService

@@ -38,7 +38,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
 @NgModule({
   declarations: [
     c.AppComponent,
-    c.EmptyComponent,
     c.NavMenuComponent,
     c.SidebarMenuComponent,
     c.HomeComponent,
@@ -75,12 +74,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.ProjectTeamAssessmentMyResultComponent,
     c.AssessmentScoreDropdownComponent,
     c.AssignmentSettingsComponent,
-    c.LoadingOverlayComponent,
-    c.TeacherDocsConceptsComponent,
-    c.TeacherDocsDotnetComponent,
-    c.TeacherDocsXunitComponent,
-    c.TeacherDocsNunitComponent,
-    c.TeacherDocsJunitComponent,
     c.TypeaheadComponent,
   ],
   imports: [
@@ -90,6 +83,8 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     BrowserAnimationsModule,
     BaseChartDirective,
     RecaptchaDirective,
+    c.EmptyComponent,
+    c.LoadingOverlayComponent,
     FormsModule,
     ReactiveFormsModule,
     NgbModule,
