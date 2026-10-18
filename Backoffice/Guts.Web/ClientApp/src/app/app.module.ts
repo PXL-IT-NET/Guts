@@ -79,6 +79,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.AssignmentSettingsComponent,
     c.LoadingOverlayComponent,
     c.TeacherDocsConceptsComponent,
+    c.TeacherDocsDotnetComponent,
     c.TeacherDocsXunitComponent,
     c.TeacherDocsNunitComponent,
     c.TeacherDocsJunitComponent,

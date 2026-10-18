@@ -38,6 +38,7 @@ export * from "./project-team-assessment-my-result/project-team-assessment-my-re
 export * from "./assessment-score-dropdown/assessment-score-dropdown.component";
 export * from "./assignment-settings/assignment-settings.component";
 export * from "./teacher-docs-concepts/teacher-docs-concepts.component";
+export * from "./teacher-docs-dotnet/teacher-docs-dotnet.component";
 export * from "./teacher-docs-xunit/teacher-docs-xunit.component";
 export * from "./teacher-docs-nunit/teacher-docs-nunit.component";
 export * from "./teacher-docs-junit/teacher-docs-junit.component";

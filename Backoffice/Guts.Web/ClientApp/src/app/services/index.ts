@@ -9,5 +9,6 @@ export * from "./project.service";
 export * from "./project.assessment.service";
 export * from "./project.teamassessment.service";
 export * from "./test.service";
+export * from "./topic.service.base";
 export * from "./period.provider";
 export * from "./period.service";
