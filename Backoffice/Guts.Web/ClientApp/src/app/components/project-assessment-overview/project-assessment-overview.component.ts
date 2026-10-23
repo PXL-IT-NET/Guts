@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 
 import { ActivatedRoute } from "@angular/router";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
@@ -29,7 +29,7 @@ import { PostResult } from "../../util/result";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-assessment-overview.component.html",
 })
-export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
+export class ProjectAssessmentOverviewComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private userProfileSubscription: Subscription;
 
@@ -158,7 +158,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 
   public openAssessmentAddModal() {
     let modalState: ModalOptions = {

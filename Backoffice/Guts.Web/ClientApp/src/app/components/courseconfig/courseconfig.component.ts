@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, Input } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, Input } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 
 @Component({
@@ -7,7 +7,7 @@ import { ActivatedRoute } from "@angular/router";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./courseconfig.component.html",
 })
-export class CourseConfigComponent implements OnInit, OnDestroy {
+export class CourseConfigComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   @Input() public courseId: number = 0;
 
@@ -21,5 +21,5 @@ export class CourseConfigComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {}
+
 }

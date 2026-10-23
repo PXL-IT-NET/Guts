@@ -32,7 +32,7 @@ describe("HomeComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load userProfile when logged in and clear it when logged out", () => {

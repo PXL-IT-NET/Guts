@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ProjectService } from "../../services/project.service";
 import {
   TopicStatisticsModel,
@@ -13,7 +13,7 @@ import { ToastrService } from "ngx-toastr";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./projectsummary.component.html",
 })
-export class ProjectSummaryComponent implements OnChanges, OnDestroy {
+export class ProjectSummaryComponent implements OnChanges {
   private destroyRef = inject(DestroyRef);
 
   private _model = signal<TopicSummaryModel>(new TopicSummaryModel());
@@ -132,5 +132,5 @@ export class ProjectSummaryComponent implements OnChanges, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

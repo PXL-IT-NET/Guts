@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, Input, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -21,7 +21,7 @@ import { ToastrService } from "ngx-toastr";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-edit.component.html",
 })
-export class ProjectTeamEditComponent implements OnInit, OnDestroy {
+export class ProjectTeamEditComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
@@ -125,5 +125,5 @@ export class ProjectTeamEditComponent implements OnInit, OnDestroy {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  ngOnDestroy(): void {}
+
 }

@@ -10,7 +10,7 @@ export function formatDateTime(
     typeof value === "string" && !value.endsWith("Z") && !value.includes("+")
       ? new Date(value + "Z")
       : new Date(value);
-  if (isNaN(d.getTime())) return "";
+  if (Number.isNaN(d.getTime())) return "";
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
@@ -24,7 +24,7 @@ export function formatDateTimeLocal(
 ): string {
   if (!value) return "";
   const d = typeof value === "string" ? new Date(value) : value;
-  if (isNaN(d.getTime())) return "";
+  if (Number.isNaN(d.getTime())) return "";
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");

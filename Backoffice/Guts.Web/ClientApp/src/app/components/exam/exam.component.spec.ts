@@ -46,7 +46,7 @@ describe("ExamComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit and ngOnChanges should load user profile and exams", () => {

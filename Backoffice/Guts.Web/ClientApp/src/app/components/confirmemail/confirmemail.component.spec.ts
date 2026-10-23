@@ -42,7 +42,7 @@ describe("ConfirmEmailComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should confirm email from queryParams and set success message", () => {

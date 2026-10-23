@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ProjectService } from "../../services/project.service";
 import { GetResult } from "../../util/result";
@@ -19,7 +19,7 @@ import { PeriodProvider } from "src/app/services/period.provider";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team.component.html",
 })
-export class ProjectTeamComponent implements OnInit, OnDestroy {
+export class ProjectTeamComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _loading = signal<boolean>(false);
@@ -103,7 +103,7 @@ export class ProjectTeamComponent implements OnInit, OnDestroy {
     this.loadData(false);
   }
 
-  ngOnDestroy(): void {}
+
 
   public leaveMyTeam() {
     let confirmMessage =

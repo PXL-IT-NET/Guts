@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { IProjectDetailsModel } from "../../viewmodels/project.model";
 import { ProjectService } from "../../services/project.service";
@@ -11,7 +11,7 @@ import { ToastrService } from "ngx-toastr";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project.component.html",
 })
-export class ProjectComponent implements OnInit, OnDestroy {
+export class ProjectComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _model = signal<IProjectDetailsModel>({
@@ -121,5 +121,5 @@ export class ProjectComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

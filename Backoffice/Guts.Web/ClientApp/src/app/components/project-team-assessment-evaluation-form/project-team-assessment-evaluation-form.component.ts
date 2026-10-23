@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ProjectTeamAssessmentService } from "src/app/services";
@@ -12,7 +12,7 @@ import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model"
   templateUrl: "./project-team-assessment-evaluation-form.component.html",
 })
 export class ProjectTeamAssessmentEvaluationFormComponent
-  implements OnInit, OnDestroy
+  implements OnInit
 {
   private destroyRef = inject(DestroyRef);
   private projectAssessmentId: number;
@@ -108,5 +108,5 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     return explanationIsMisssing;
   }
 
-  ngOnDestroy(): void {}
+
 }

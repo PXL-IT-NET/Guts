@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AuthService } from "src/app/services/auth.service";
 import { UserProfile } from "src/app/viewmodels/user.model";
 
@@ -9,7 +9,7 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./home.component.html",
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _userProfile = signal<UserProfile>(new UserProfile());
@@ -42,5 +42,5 @@ export class HomeComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

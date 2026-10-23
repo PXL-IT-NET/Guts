@@ -98,10 +98,6 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     ));
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should load project details, set teams, and populate chart data on ngOnInit", () => {
     projectServiceSpy.getProjectDetails.and.returnValue(
       of(
@@ -225,3 +221,4 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     expect(yScale.grid.lineWidth({ tick: { value: 2 } }, {})).toBe(1);
   });
 });
+

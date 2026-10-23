@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   AbstractControl,
   FormControl,
@@ -20,7 +20,7 @@ import { ProjectAssessmentService } from "../../services/project.assessment.serv
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-assessment-add.component.html",
 })
-export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
+export class ProjectAssessmentAddComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _loading = signal<boolean>(false);
@@ -87,5 +87,5 @@ export class ProjectAssessmentAddComponent implements OnInit, OnDestroy {
     return formControl.invalid && (formControl.dirty || formControl.touched);
   }
 
-  ngOnDestroy(): void {}
+
 }

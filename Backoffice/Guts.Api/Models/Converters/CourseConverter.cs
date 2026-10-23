@@ -42,10 +42,7 @@ namespace Guts.Api.Models.Converters
 
         public CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto dto)
         {
-            if (dto == null)
-            {
-                throw new ArgumentNullException(nameof(dto));
-            }
+            ArgumentNullException.ThrowIfNull(dto);
 
             var model = new CourseStatisticsModel
             {

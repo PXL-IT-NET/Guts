@@ -33,10 +33,6 @@ describe("ProjectTeamAddComponent", () => {
     component.ngOnInit();
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should initialize form on ngOnInit", () => {
     expect(component.addTeamForm).toBeDefined();
     expect(component.addTeamForm.controls.name.value).toBe("");
@@ -147,4 +143,5 @@ describe("ProjectTeamAddComponent", () => {
     expect(component.isInvalid(nameCtrl)).toBeFalse();
   });
 });
+
 

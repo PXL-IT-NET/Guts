@@ -34,10 +34,6 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
     ));
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   function createPeerAssessment(
     contribution: number,
     cooperation: number,
@@ -170,3 +166,4 @@ describe("ProjectTeamAssessmentEvaluationFormComponent", () => {
     });
   });
 });
+

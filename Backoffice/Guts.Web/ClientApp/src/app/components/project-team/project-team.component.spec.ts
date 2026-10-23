@@ -67,7 +67,7 @@ describe("ProjectTeamComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load user profile, sort teams, and determine myTeam", () => {
