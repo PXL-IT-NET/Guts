@@ -1,6 +1,8 @@
-﻿using Guts.Api.Models;
+using Guts.Api.Models;
 using Guts.Api.Models.Converters;
+using Guts.Business;
 using Guts.Business.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Net;
@@ -65,6 +67,36 @@ namespace Guts.Api.Controllers
             var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);
+        }
+
+        /// <summary>
+        /// Retrieves statistics about student results for a course (for the given or current period).
+        /// </summary>
+        /// <param name="courseId">Identifier of the course in the database.</param>
+        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
+        [HttpGet("{courseId}/statistics")]
+        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+        [ProducesResponseType(typeof(CourseStatisticsModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetCourseStatistics(int courseId, [FromQuery] int? periodId = null)
+        {
+            if (courseId < 1)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                var statsDto = await _courseService.GetCourseStatisticsAsync(courseId, periodId);
+                var model = _courseConverter.ToCourseStatisticsModel(statsDto);
+                return Ok(model);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
         }
     }
 }

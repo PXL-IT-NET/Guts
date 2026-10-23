@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Guts.Business.Dtos;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -34,6 +35,49 @@ namespace Guts.Api.Models.Converters
                 Name = course.Name,
                 Chapters = chapters.Select(chapter => _chapterConverter.ToTopicModel(chapter)).ToList(),
                 Projects = projects.Select(project => _projectConverter.ToTopicModel(project)).ToList()
+            };
+
+            return model;
+        }
+
+        public CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto dto)
+        {
+            if (dto == null)
+            {
+                throw new ArgumentNullException(nameof(dto));
+            }
+
+            var model = new CourseStatisticsModel
+            {
+                CourseId = dto.CourseId,
+                CourseCode = dto.CourseCode,
+                CourseName = dto.CourseName,
+                TotalAssignments = dto.TotalAssignments,
+                TotalTests = dto.TotalTests,
+                Students = dto.Students.Select(s => new CourseStudentStatisticsModel
+                {
+                    StudentId = s.StudentId,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    AssignmentsWorkedOn = s.AssignmentsWorkedOn,
+                    TotalPassedTests = s.TotalPassedTests,
+                    TotalTests = s.TotalTests,
+                    CompletionPercentage = s.CompletionPercentage,
+                    Chapters = s.Chapters.Select(c => new CourseStudentChapterStatisticsModel
+                    {
+                        ChapterId = c.ChapterId,
+                        Code = c.Code,
+                        Description = c.Description,
+                        Assignments = c.Assignments.Select(a => new CourseStudentAssignmentStatisticsModel
+                        {
+                            AssignmentId = a.AssignmentId,
+                            Code = a.Code,
+                            Description = a.Description,
+                            NumberOfPassedTests = a.NumberOfPassedTests,
+                            NumberOfTests = a.NumberOfTests
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
             };
 
             return model;

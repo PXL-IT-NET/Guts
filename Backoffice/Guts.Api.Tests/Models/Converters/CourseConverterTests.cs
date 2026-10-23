@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Guts.Api.Models.Converters;
+using Guts.Business.Dtos;
 using Guts.Business.Tests.Builders;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -66,7 +67,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenCourseIsMissing()
+        public void ToCourseContentsModel_ShouldThrowArgumentExceptionWhenCourseIsMissing()
         {
             //Arrange
             var chapters = new List<Chapter>();
@@ -77,7 +78,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenChaptersAreMissing()
+        public void ToCourseContentsModel_ShouldThrowArgumentExceptionWhenChaptersAreMissing()
         {
             //Arrange
             var course = new CourseBuilder().WithId().Build();
@@ -88,7 +89,7 @@ namespace Guts.Api.Tests.Models.Converters
         }
 
         [Test]
-        public void ToChapterSummaryModel_ShouldThrowArgumentExceptionWhenProjectsAreMissing()
+        public void ToCourseContentsModel_ShouldThrowArgumentExceptionWhenProjectsAreMissing()
         {
             //Arrange
             var course = new CourseBuilder().WithId().Build();
@@ -96,6 +97,92 @@ namespace Guts.Api.Tests.Models.Converters
 
             //Act + Assert
             Assert.That(() => _converter.ToCourseContentsModel(course, chapters, null), Throws.InstanceOf<ArgumentException>());
+        }
+
+        [Test]
+        public void ToCourseStatisticsModel_ShouldThrowArgumentNullExceptionWhenDtoIsNull()
+        {
+            Assert.That(() => _converter.ToCourseStatisticsModel(null), Throws.InstanceOf<ArgumentNullException>());
+        }
+
+        [Test]
+        public void ToCourseStatisticsModel_ShouldCorrectlyConvertDto()
+        {
+            // Arrange
+            var dto = new CourseStatisticsDto
+            {
+                CourseId = 1,
+                CourseCode = "CS101",
+                CourseName = "Computer Science",
+                TotalAssignments = 5,
+                TotalTests = 20,
+                Students = new List<CourseStudentStatisticsDto>
+                {
+                    new CourseStudentStatisticsDto
+                    {
+                        StudentId = 42,
+                        FirstName = "John",
+                        LastName = "Doe",
+                        AssignmentsWorkedOn = 4,
+                        TotalPassedTests = 18,
+                        TotalTests = 20,
+                        CompletionPercentage = 90.0,
+                        Chapters = new List<CourseStudentChapterStatisticsDto>
+                        {
+                            new CourseStudentChapterStatisticsDto
+                            {
+                                ChapterId = 10,
+                                Code = "ch01",
+                                Description = "Intro",
+                                Assignments = new List<CourseStudentAssignmentStatisticsDto>
+                                {
+                                    new CourseStudentAssignmentStatisticsDto
+                                    {
+                                        AssignmentId = 101,
+                                        Code = "ex01",
+                                        Description = "Hello World",
+                                        NumberOfPassedTests = 5,
+                                        NumberOfTests = 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Act
+            var model = _converter.ToCourseStatisticsModel(dto);
+
+            // Assert
+            Assert.That(model.CourseId, Is.EqualTo(dto.CourseId));
+            Assert.That(model.CourseCode, Is.EqualTo(dto.CourseCode));
+            Assert.That(model.CourseName, Is.EqualTo(dto.CourseName));
+            Assert.That(model.TotalAssignments, Is.EqualTo(dto.TotalAssignments));
+            Assert.That(model.TotalTests, Is.EqualTo(dto.TotalTests));
+            Assert.That(model.Students, Has.Count.EqualTo(1));
+
+            var student = model.Students[0];
+            Assert.That(student.StudentId, Is.EqualTo(42));
+            Assert.That(student.FirstName, Is.EqualTo("John"));
+            Assert.That(student.LastName, Is.EqualTo("Doe"));
+            Assert.That(student.FullName, Is.EqualTo("John Doe"));
+            Assert.That(student.AssignmentsWorkedOn, Is.EqualTo(4));
+            Assert.That(student.TotalPassedTests, Is.EqualTo(18));
+            Assert.That(student.TotalTests, Is.EqualTo(20));
+            Assert.That(student.CompletionPercentage, Is.EqualTo(90.0));
+            Assert.That(student.Chapters, Has.Count.EqualTo(1));
+
+            var chapter = student.Chapters[0];
+            Assert.That(chapter.ChapterId, Is.EqualTo(10));
+            Assert.That(chapter.Code, Is.EqualTo("ch01"));
+            Assert.That(chapter.Assignments, Has.Count.EqualTo(1));
+
+            var assignment = chapter.Assignments[0];
+            Assert.That(assignment.AssignmentId, Is.EqualTo(101));
+            Assert.That(assignment.Code, Is.EqualTo("ex01"));
+            Assert.That(assignment.NumberOfPassedTests, Is.EqualTo(5));
+            Assert.That(assignment.NumberOfTests, Is.EqualTo(5));
         }
     }
 }

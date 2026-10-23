@@ -83,6 +83,6 @@ internal class TestResultDbRepositoryTests : RepositoryTestsBase
         var ofAssignments = await repo.GetLastTestResultsOfAssignmentsAsync(new[] { _assignmentId }, null);
         Assert.That(ofAssignments, Has.Count.EqualTo(3));
         Assert.That(ofAssignments.All(r => r.Test != null), Is.True);
+        Assert.That(ofAssignments.All(r => r.User != null), Is.True);
     }
 }
-

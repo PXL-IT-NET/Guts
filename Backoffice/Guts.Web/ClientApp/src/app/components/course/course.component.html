@@ -1,10 +1,21 @@
-<div class="row">
-  <div class="col-12">
-    <h4>
+<div class="row align-items-center mb-2">
+  <div class="col">
+    <h4 class="mb-0">
       <span>{{ course.name }}</span>
       <small class="text-body-secondary"> ({{ course.code }})</small>
     </h4>
   </div>
+  @if (userProfile.isLector()) {
+    <div class="col-auto">
+      <a
+        [routerLink]="['/courses', course.id, 'statistics']"
+        class="btn btn-outline-primary"
+      >
+        <span class="bi bi-bar-chart me-1"></span>
+        <span>Course statistics</span>
+      </a>
+    </div>
+  }
 </div>
 
 <div class="row">

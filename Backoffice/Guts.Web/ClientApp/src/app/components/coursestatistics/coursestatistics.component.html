@@ -1,0 +1,222 @@
+<div class="row align-items-center mb-3">
+  <div class="col">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a
+        [routerLink]="['/courses', courseId]"
+        class="btn btn-outline-secondary btn-sm"
+        title="Back to course"
+      >
+        <span class="bi bi-arrow-left me-1"></span>
+        <span>Back to course</span>
+      </a>
+      <h3 class="mb-0">
+        <span>Course Statistics</span>
+        @if (model) {
+          <span>: {{ model.courseName }}</span>
+          <small class="text-body-secondary"> ({{ model.courseCode }})</small>
+        }
+      </h3>
+    </div>
+    @if (selectedPeriod) {
+      <div class="text-muted small ms-1">
+        <span class="bi bi-calendar me-1"></span>
+        <span>Period: <strong>{{ selectedPeriod.description }}</strong></span>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="position-relative">
+  <app-loading-overlay [show]="loading"></app-loading-overlay>
+
+  @if (model) {
+    <!-- Overview stats chips -->
+    <div class="row g-2 mb-3">
+      <div class="col-sm-6 col-md-3">
+        <div class="card bg-light border-0">
+          <div class="card-body p-2 text-center">
+            <small class="text-muted d-block">Assignments</small>
+            <strong class="fs-5">{{ model.totalAssignments }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <div class="card bg-light border-0">
+          <div class="card-body p-2 text-center">
+            <small class="text-muted d-block">Total tests</small>
+            <strong class="fs-5">{{ model.totalTests }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <div class="card bg-light border-0">
+          <div class="card-body p-2 text-center">
+            <small class="text-muted d-block">Students with results</small>
+            <strong class="fs-5">{{ model.students.length }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (model.students.length === 0) {
+      <div class="alert alert-info">
+        <span class="bi bi-info-circle me-1"></span>
+        <span>No student test results have been submitted for this course in this period yet.</span>
+      </div>
+    }
+
+    @if (model.students.length > 0) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle border">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 40px;" class="text-center"></th>
+              <th>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span>Student (Full Name)</span>
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Sort options">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      [class.active]="sortField === 'lastName'"
+                      (click)="setSort('lastName')"
+                      title="Sort by last name"
+                    >
+                      <span>Last Name</span>
+                      <span class="bi ms-1" [ngClass]="getSortIcon('lastName')"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      [class.active]="sortField === 'firstName'"
+                      (click)="setSort('firstName')"
+                      title="Sort by first name"
+                    >
+                      <span>First Name</span>
+                      <span class="bi ms-1" [ngClass]="getSortIcon('firstName')"></span>
+                    </button>
+                  </div>
+                </div>
+              </th>
+              <th style="width: 220px;">Assignments worked on</th>
+              <th style="width: 280px;">Course completion</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of sortedStudents; track student.studentId) {
+              <tr
+                (click)="toggleStudent(student.studentId)"
+                class="student-row"
+                style="cursor: pointer;"
+                [class.table-active]="isExpanded(student.studentId)"
+              >
+                <td class="text-center text-muted">
+                  <span
+                    class="bi"
+                    [ngClass]="isExpanded(student.studentId) ? 'bi-chevron-down' : 'bi-chevron-right'"
+                  ></span>
+                </td>
+                <td>
+                  <span class="fw-semibold">{{ student.fullName }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    {{ student.assignmentsWorkedOn }} / {{ model.totalAssignments }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="progress flex-grow-1 me-2" style="height: 18px;">
+                      <div
+                        class="progress-bar"
+                        [ngClass]="getProgressBarClass(student.completionPercentage)"
+                        role="progressbar"
+                        [style.width.%]="student.completionPercentage"
+                        [attr.aria-valuenow]="student.completionPercentage"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        {{ student.completionPercentage }}%
+                      </div>
+                    </div>
+                    <small class="text-body-secondary text-nowrap">
+                      ({{ student.totalPassedTests }}/{{ model.totalTests }})
+                    </small>
+                  </div>
+                </td>
+              </tr>
+              @if (isExpanded(student.studentId)) {
+                <tr class="bg-light">
+                  <td colspan="4" class="p-3">
+                    <div class="card card-body bg-white shadow-sm border-0">
+                      <h6 class="mb-3 text-secondary">
+                        <span class="bi bi-person-badge me-1"></span>
+                        <span>Assignment breakdown for <strong>{{ student.fullName }}</strong></span>
+                      </h6>
+                      @for (chapter of student.chapters; track chapter.chapterId) {
+                        <div class="mb-3">
+                          <div class="fw-bold mb-2 pb-1 border-bottom text-primary d-flex align-items-center">
+                            <span class="badge bg-primary me-2">{{ chapter.code }}</span>
+                            <span>{{ chapter.description }}</span>
+                          </div>
+                          @if (chapter.assignments.length === 0) {
+                            <p class="text-muted small ms-3">No assignments in this chapter.</p>
+                          }
+                          @if (chapter.assignments.length > 0) {
+                            <div class="table-responsive ms-2">
+                              <table class="table table-sm table-bordered align-middle mb-2">
+                                <thead class="table-light">
+                                  <tr>
+                                    <th>Assignment</th>
+                                    <th style="width: 150px;">Green tests</th>
+                                    <th style="width: 150px;">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (assignment of chapter.assignments; track assignment.assignmentId) {
+                                    <tr>
+                                      <td>
+                                        <strong>{{ assignment.code }}</strong>
+                                        @if (assignment.description && assignment.description !== assignment.code) {
+                                          <span class="text-muted"> - {{ assignment.description }}</span>
+                                        }
+                                      </td>
+                                      <td>
+                                        <span class="fw-semibold">{{ assignment.numberOfPassedTests }}</span>
+                                        <span> / {{ assignment.numberOfTests }}</span>
+                                      </td>
+                                      <td>
+                                        @if (assignment.numberOfTests === 0) {
+                                          <span class="badge bg-secondary">No tests</span>
+                                        } @else if (assignment.numberOfPassedTests === assignment.numberOfTests) {
+                                          <span class="badge bg-success">
+                                            <span class="bi bi-check-circle me-1"></span>All passed
+                                          </span>
+                                        } @else if (assignment.numberOfPassedTests > 0) {
+                                          <span class="badge bg-warning text-dark">
+                                            Partially passed
+                                          </span>
+                                        } @else {
+                                          <span class="badge bg-danger">0 passed</span>
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>
+

@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
+using Guts.Business;
+using Guts.Business.Dtos;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
@@ -24,7 +29,6 @@ namespace Guts.Api.Tests.Controllers
         private Mock<IChapterService> _chapterServiceMock;
         private Mock<ICourseConverter> _courseConverterMock;
         private Mock<IProjectService> _projectServiceMock;
-
 
         [SetUp]
         public void Setup()
@@ -136,5 +140,48 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult.Value, Is.EqualTo(convertedCourse));
         }
 
+        [Test]
+        public async Task GetCourseStatistics_InvalidCourseId_ShouldReturnBadRequest()
+        {
+            var result = await _controller.GetCourseStatistics(0) as BadRequestResult;
+            Assert.That(result, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task GetCourseStatistics_WhenCourseNotFound_ShouldReturnNotFound()
+        {
+            _courseServiceMock.Setup(s => s.GetCourseStatisticsAsync(It.IsAny<int>(), It.IsAny<int?>()))
+                .ThrowsAsync(new DataNotFoundException());
+
+            var result = await _controller.GetCourseStatistics(10, 5) as NotFoundResult;
+            Assert.That(result, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task GetCourseStatistics_ValidRequest_ShouldReturnOkWithConvertedModel()
+        {
+            int courseId = 12;
+            int periodId = 3;
+            var dto = new CourseStatisticsDto { CourseId = courseId };
+            var model = new CourseStatisticsModel { CourseId = courseId };
+
+            _courseServiceMock.Setup(s => s.GetCourseStatisticsAsync(courseId, periodId))
+                .ReturnsAsync(dto);
+            _courseConverterMock.Setup(c => c.ToCourseStatisticsModel(dto))
+                .Returns(model);
+
+            var actionResult = await _controller.GetCourseStatistics(courseId, periodId) as OkObjectResult;
+            Assert.That(actionResult, Is.Not.Null);
+            Assert.That(actionResult.Value, Is.SameAs(model));
+        }
+
+        [Test]
+        public void GetCourseStatistics_ShouldHaveLectorsOnlyPolicy()
+        {
+            var method = typeof(CourseController).GetMethod(nameof(CourseController.GetCourseStatistics));
+            var authAttribute = method?.GetCustomAttribute<AuthorizeAttribute>();
+            Assert.That(authAttribute, Is.Not.Null);
+            Assert.That(authAttribute.Policy, Is.EqualTo(ApiConstants.LectorsOnlyPolicy));
+        }
     }
 }
