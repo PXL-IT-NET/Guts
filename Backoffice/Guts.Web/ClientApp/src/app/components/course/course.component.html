@@ -5,7 +5,7 @@
       <small class="text-body-secondary"> ({{ course.code }})</small>
     </h4>
   </div>
-  @if (userProfile.isLector()) {
+  @if (canShowCourseStatistics) {
     <div class="col-auto">
       <a
         [routerLink]="['/courses', course.id, 'statistics']"

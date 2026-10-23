@@ -242,6 +242,10 @@ export class CourseComponent implements OnInit, OnDestroy {
     ]);
   }
 
+  public get canShowCourseStatistics(): boolean {
+    return this.userProfile.isLector() && (this.course.chapters?.length ?? 0) > 0;
+  }
+
   public get projectTestResultsOverviewActive(): boolean {
     if (!this.selectedProject) return false;
     if (this.selectedComponent) return false;

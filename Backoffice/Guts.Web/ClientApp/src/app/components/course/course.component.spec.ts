@@ -210,5 +210,52 @@ describe("CourseComponent", () => {
 
     expect(component.isChapterTestResultOverviewRouteActive()).toBeFalse();
   });
+
+  describe("canShowCourseStatistics", () => {
+    it("should return true when user is lector and course has chapters", () => {
+      const profile = new UserProfile();
+      profile.roles = ["lector"];
+      component.userProfile = profile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [] }],
+        projects: [],
+      };
+
+      expect(component.canShowCourseStatistics).toBeTrue();
+    });
+
+    it("should return false when user is lector but course has no chapters", () => {
+      const profile = new UserProfile();
+      profile.roles = ["lector"];
+      component.userProfile = profile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [],
+        projects: [{ id: 20, code: "P1", description: "Project 1", assignments: [] }],
+      };
+
+      expect(component.canShowCourseStatistics).toBeFalse();
+    });
+
+    it("should return false when user is not a lector even if course has chapters", () => {
+      const profile = new UserProfile();
+      profile.roles = ["student"];
+      component.userProfile = profile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [] }],
+        projects: [],
+      };
+
+      expect(component.canShowCourseStatistics).toBeFalse();
+    });
+  });
 });
 
