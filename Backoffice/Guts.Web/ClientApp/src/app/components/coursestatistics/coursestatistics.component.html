@@ -7,12 +7,6 @@
       </h4>
     }
     <h5 class="text-secondary mt-1 mb-0">Statistics</h5>
-    @if (selectedPeriod) {
-      <div class="text-muted small mt-1">
-        <span class="bi bi-calendar me-1"></span>
-        <span>Period: <strong>{{ selectedPeriod.description }}</strong></span>
-      </div>
-    }
   </div>
   <div class="col-auto">
     <a
@@ -102,7 +96,7 @@
               <th
                 role="button"
                 class="user-select-none"
-                style="width: 280px;"
+                style="width: 300px;"
                 (click)="setSort('completionPercentage')"
                 title="Sort by course completion"
               >
@@ -137,8 +131,8 @@
                   </span>
                 </td>
                 <td>
-                  <div class="d-flex align-items-center">
-                    <div class="progress flex-grow-1 me-2" style="height: 18px;">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-shrink-0" style="width: 140px; height: 10px;">
                       <div
                         class="progress-bar"
                         [ngClass]="getProgressBarClass(student.completionPercentage)"
@@ -147,13 +141,12 @@
                         [attr.aria-valuenow]="student.completionPercentage"
                         aria-valuemin="0"
                         aria-valuemax="100"
-                      >
-                        {{ student.completionPercentage }}%
-                      </div>
+                      ></div>
                     </div>
-                    <small class="text-body-secondary text-nowrap">
-                      ({{ student.totalPassedTests }}/{{ model.totalTests }})
-                    </small>
+                    <span class="text-nowrap small">
+                      <strong>{{ student.completionPercentage }}%</strong>
+                      <span class="text-body-secondary ms-1">({{ student.totalPassedTests }}/{{ model.totalTests }})</span>
+                    </span>
                   </div>
                 </td>
               </tr>
