@@ -1,28 +1,28 @@
 <div class="row align-items-center mb-3">
   <div class="col">
-    <div class="d-flex align-items-center gap-2 mb-1">
-      <a
-        [routerLink]="['/courses', courseId]"
-        class="btn btn-outline-secondary btn-sm"
-        title="Back to course"
-      >
-        <span class="bi bi-arrow-left me-1"></span>
-        <span>Back to course</span>
-      </a>
-      <h3 class="mb-0">
-        <span>Course Statistics</span>
-        @if (model) {
-          <span>: {{ model.courseName }}</span>
-          <small class="text-body-secondary"> ({{ model.courseCode }})</small>
-        }
-      </h3>
-    </div>
+    @if (model) {
+      <h4 class="mb-0">
+        <span>{{ model.courseName }}</span>
+        <small class="text-body-secondary"> ({{ model.courseCode }})</small>
+      </h4>
+    }
+    <h5 class="text-secondary mt-1 mb-0">Statistics</h5>
     @if (selectedPeriod) {
-      <div class="text-muted small ms-1">
+      <div class="text-muted small mt-1">
         <span class="bi bi-calendar me-1"></span>
         <span>Period: <strong>{{ selectedPeriod.description }}</strong></span>
       </div>
     }
+  </div>
+  <div class="col-auto">
+    <a
+      [routerLink]="['/courses', courseId]"
+      class="btn btn-outline-secondary"
+      title="Back to course"
+    >
+      <span class="bi bi-arrow-left me-1"></span>
+      <span>Back to course</span>
+    </a>
   </div>
 </div>
 
@@ -71,35 +71,44 @@
           <thead class="table-light">
             <tr>
               <th style="width: 40px;" class="text-center"></th>
-              <th>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <span>Student (Full Name)</span>
-                  <div class="btn-group btn-group-sm" role="group" aria-label="Sort options">
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      [class.active]="sortField === 'lastName'"
-                      (click)="setSort('lastName')"
-                      title="Sort by last name"
-                    >
-                      <span>Last Name</span>
-                      <span class="bi ms-1" [ngClass]="getSortIcon('lastName')"></span>
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      [class.active]="sortField === 'firstName'"
-                      (click)="setSort('firstName')"
-                      title="Sort by first name"
-                    >
-                      <span>First Name</span>
-                      <span class="bi ms-1" [ngClass]="getSortIcon('firstName')"></span>
-                    </button>
-                  </div>
-                </div>
+              <th
+                role="button"
+                class="user-select-none"
+                (click)="setSort('lastName')"
+                title="Sort by last name"
+              >
+                <span>Last name</span>
+                <span class="bi ms-1" [ngClass]="getSortIcon('lastName')"></span>
               </th>
-              <th style="width: 220px;">Assignments worked on</th>
-              <th style="width: 280px;">Course completion</th>
+              <th
+                role="button"
+                class="user-select-none"
+                (click)="setSort('firstName')"
+                title="Sort by first name"
+              >
+                <span>First name</span>
+                <span class="bi ms-1" [ngClass]="getSortIcon('firstName')"></span>
+              </th>
+              <th
+                role="button"
+                class="user-select-none"
+                style="width: 220px;"
+                (click)="setSort('assignmentsWorkedOn')"
+                title="Sort by assignments worked on"
+              >
+                <span>Assignments worked on</span>
+                <span class="bi ms-1" [ngClass]="getSortIcon('assignmentsWorkedOn')"></span>
+              </th>
+              <th
+                role="button"
+                class="user-select-none"
+                style="width: 280px;"
+                (click)="setSort('completionPercentage')"
+                title="Sort by course completion"
+              >
+                <span>Course completion</span>
+                <span class="bi ms-1" [ngClass]="getSortIcon('completionPercentage')"></span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -117,7 +126,10 @@
                   ></span>
                 </td>
                 <td>
-                  <span class="fw-semibold">{{ student.fullName }}</span>
+                  <span class="fw-semibold">{{ student.lastName }}</span>
+                </td>
+                <td>
+                  <span>{{ student.firstName }}</span>
                 </td>
                 <td>
                   <span class="badge bg-light text-dark border">
@@ -147,16 +159,15 @@
               </tr>
               @if (isExpanded(student.studentId)) {
                 <tr class="bg-light">
-                  <td colspan="4" class="p-3">
+                  <td colspan="5" class="p-3">
                     <div class="card card-body bg-white shadow-sm border-0">
                       <h6 class="mb-3 text-secondary">
                         <span class="bi bi-person-badge me-1"></span>
-                        <span>Assignment breakdown for <strong>{{ student.fullName }}</strong></span>
+                        <span>Assignment breakdown for <strong>{{ student.lastName }} {{ student.firstName }}</strong></span>
                       </h6>
                       @for (chapter of student.chapters; track chapter.chapterId) {
                         <div class="mb-3">
-                          <div class="fw-bold mb-2 pb-1 border-bottom text-primary d-flex align-items-center">
-                            <span class="badge bg-primary me-2">{{ chapter.code }}</span>
+                          <div class="fw-bold mb-2 pb-1 border-bottom text-primary">
                             <span>{{ chapter.description }}</span>
                           </div>
                           @if (chapter.assignments.length === 0) {
@@ -219,4 +230,3 @@
     }
   }
 </div>
-

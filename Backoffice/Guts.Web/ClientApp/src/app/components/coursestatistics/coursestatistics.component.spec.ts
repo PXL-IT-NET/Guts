@@ -195,6 +195,40 @@ describe("CourseStatisticsComponent", () => {
     expect(sorted[1].firstName).toBe("Alice");
   });
 
+  it("should sort by assignmentsWorkedOn ascending and descending", () => {
+    fixture.detectChanges();
+    component.setSort("assignmentsWorkedOn");
+    expect(component.sortField).toBe("assignmentsWorkedOn");
+    expect(component.sortDirection).toBe("asc");
+
+    let sorted = component.sortedStudents;
+    expect(sorted[0].assignmentsWorkedOn).toBe(2);
+    expect(sorted[1].assignmentsWorkedOn).toBe(4);
+
+    component.setSort("assignmentsWorkedOn");
+    expect(component.sortDirection).toBe("desc");
+    sorted = component.sortedStudents;
+    expect(sorted[0].assignmentsWorkedOn).toBe(4);
+    expect(sorted[1].assignmentsWorkedOn).toBe(2);
+  });
+
+  it("should sort by completionPercentage ascending and descending", () => {
+    fixture.detectChanges();
+    component.setSort("completionPercentage");
+    expect(component.sortField).toBe("completionPercentage");
+    expect(component.sortDirection).toBe("asc");
+
+    let sorted = component.sortedStudents;
+    expect(sorted[0].completionPercentage).toBe(40.0);
+    expect(sorted[1].completionPercentage).toBe(100.0);
+
+    component.setSort("completionPercentage");
+    expect(component.sortDirection).toBe("desc");
+    sorted = component.sortedStudents;
+    expect(sorted[0].completionPercentage).toBe(100.0);
+    expect(sorted[1].completionPercentage).toBe(40.0);
+  });
+
   it("should toggle student accordion expansion", () => {
     fixture.detectChanges();
     expect(component.isExpanded(1)).toBeFalse();

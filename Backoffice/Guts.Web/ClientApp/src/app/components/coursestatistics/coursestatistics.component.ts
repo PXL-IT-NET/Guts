@@ -19,6 +19,12 @@ import {
 import { IPeriodModel } from "../../viewmodels/period.model";
 import { UserProfile } from "../../viewmodels/user.model";
 
+export type CourseStatisticsSortField =
+  | "lastName"
+  | "firstName"
+  | "assignmentsWorkedOn"
+  | "completionPercentage";
+
 @Component({
   standalone: false,
   selector: "app-course-statistics",
@@ -52,11 +58,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._selectedPeriod.set(v);
   }
 
-  private _sortField = signal<"firstName" | "lastName">("lastName");
-  public get sortField(): "firstName" | "lastName" {
+  private _sortField = signal<CourseStatisticsSortField>("lastName");
+  public get sortField(): CourseStatisticsSortField {
     return this._sortField();
   }
-  public set sortField(v: "firstName" | "lastName") {
+  public set sortField(v: CourseStatisticsSortField) {
     this._sortField.set(v);
   }
 
@@ -156,41 +162,62 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     const direction = this.sortDirection === "asc" ? 1 : -1;
 
     return [...students].sort((a, b) => {
-      let primaryComparison: number;
-      let secondaryComparison: number;
-
-      if (field === "firstName") {
-        primaryComparison = (a.firstName || "").localeCompare(
-          b.firstName || "",
-          undefined,
-          { sensitivity: "base" },
-        );
-        secondaryComparison = (a.lastName || "").localeCompare(
-          b.lastName || "",
-          undefined,
-          { sensitivity: "base" },
-        );
-      } else {
-        primaryComparison = (a.lastName || "").localeCompare(
-          b.lastName || "",
-          undefined,
-          { sensitivity: "base" },
-        );
-        secondaryComparison = (a.firstName || "").localeCompare(
-          b.firstName || "",
-          undefined,
-          { sensitivity: "base" },
-        );
+      let comparison = 0;
+      switch (field) {
+        case "lastName":
+          comparison = (a.lastName || "").localeCompare(
+            b.lastName || "",
+            undefined,
+            { sensitivity: "base" },
+          );
+          if (comparison === 0) {
+            comparison = (a.firstName || "").localeCompare(
+              b.firstName || "",
+              undefined,
+              { sensitivity: "base" },
+            );
+          }
+          break;
+        case "firstName":
+          comparison = (a.firstName || "").localeCompare(
+            b.firstName || "",
+            undefined,
+            { sensitivity: "base" },
+          );
+          if (comparison === 0) {
+            comparison = (a.lastName || "").localeCompare(
+              b.lastName || "",
+              undefined,
+              { sensitivity: "base" },
+            );
+          }
+          break;
+        case "assignmentsWorkedOn":
+          comparison = a.assignmentsWorkedOn - b.assignmentsWorkedOn;
+          if (comparison === 0) {
+            comparison = (a.lastName || "").localeCompare(
+              b.lastName || "",
+              undefined,
+              { sensitivity: "base" },
+            );
+          }
+          break;
+        case "completionPercentage":
+          comparison = a.completionPercentage - b.completionPercentage;
+          if (comparison === 0) {
+            comparison = (a.lastName || "").localeCompare(
+              b.lastName || "",
+              undefined,
+              { sensitivity: "base" },
+            );
+          }
+          break;
       }
-
-      if (primaryComparison !== 0) {
-        return primaryComparison * direction;
-      }
-      return secondaryComparison * direction;
+      return comparison * direction;
     });
   }
 
-  public setSort(field: "firstName" | "lastName"): void {
+  public setSort(field: CourseStatisticsSortField): void {
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
     } else {
@@ -199,13 +226,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  public getSortIcon(field: "firstName" | "lastName"): string {
+  public getSortIcon(field: CourseStatisticsSortField): string {
     if (this.sortField !== field) {
       return "bi-arrow-down-up text-muted";
     }
     return this.sortDirection === "asc"
-      ? "bi-sort-alpha-down text-primary"
-      : "bi-sort-alpha-up-alt text-primary";
+      ? "bi-sort-down text-primary"
+      : "bi-sort-up-alt text-primary";
   }
 
   public toggleStudent(studentId: number): void {
@@ -229,4 +256,3 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     return "bg-secondary";
   }
 }
-
