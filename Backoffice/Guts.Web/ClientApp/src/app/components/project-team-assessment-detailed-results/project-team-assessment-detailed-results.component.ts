@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -15,7 +15,7 @@ import { Subject } from "rxjs";
   templateUrl: "./project-team-assessment-detailed-results.component.html",
 })
 export class ProjectTeamAssessmentDetailedResultsComponent
-  implements OnInit, OnDestroy
+  implements OnInit
 {
   private destroyRef = inject(DestroyRef);
 
@@ -358,7 +358,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._results.update((list) => [...list]);
   }
 
-  ngOnDestroy(): void {}
+
 }
 
 export enum GradeCorrectionType {

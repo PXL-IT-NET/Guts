@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AssignmentService } from "../../services/assignment.service";
 import { ActivatedRoute } from "@angular/router";
 import {
@@ -14,7 +14,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./assignmentdetail.component.css"],
 })
-export class AssignmentDetailComponent implements OnChanges, OnDestroy {
+export class AssignmentDetailComponent implements OnChanges {
   private destroyRef = inject(DestroyRef);
 
   private _model = signal<AssignmentDetailModel>(new AssignmentDetailModel());
@@ -70,5 +70,5 @@ export class AssignmentDetailComponent implements OnChanges, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

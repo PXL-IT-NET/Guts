@@ -111,6 +111,11 @@ const routes: Routes = [
     component: c.CourseConfigComponent,
     canActivate: [authGuard],
   },
+  {
+    path: "courses/:courseId/statistics",
+    component: c.CourseStatisticsComponent,
+    canActivate: [authGuard],
+  },
   { path: "**", redirectTo: "home" },
 ];
 

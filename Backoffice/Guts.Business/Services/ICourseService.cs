@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Business.Dtos;
 using Guts.Domain.CourseAggregate;
 
 namespace Guts.Business.Services
@@ -8,5 +9,6 @@ namespace Guts.Business.Services
     {
         Task<IReadOnlyList<Course>> GetAllCoursesAsync();
         Task<Course> GetCourseByIdAsync(int courseId);
+        Task<CourseStatisticsDto> GetCourseStatisticsAsync(int courseId, int? periodId = null);
     }
 }

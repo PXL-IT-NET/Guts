@@ -94,7 +94,7 @@ describe("ProjectAssessmentOverviewComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load project details, assessments, and team assessment status", () => {

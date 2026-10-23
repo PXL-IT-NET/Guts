@@ -38,10 +38,6 @@ describe("SidebarMenuComponent", () => {
     ));
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should load courses and userProfile when logged in and clear them when logged out", () => {
     const courses = [{ id: 1, code: "C1", name: "Course 1" }];
     const profile = new UserProfile({
@@ -83,4 +79,5 @@ describe("SidebarMenuComponent", () => {
     expect(component.isCourseRouteActive(2)).toBeFalse();
   });
 });
+
 

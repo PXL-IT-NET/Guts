@@ -40,10 +40,6 @@ describe("ProjectTeamEditComponent", () => {
     component.ngOnInit();
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should patch team values onto form on ngOnInit", () => {
     expect(component.editTeamForm.controls.name.value).toBe("Initial Team");
   });
@@ -136,4 +132,5 @@ describe("ProjectTeamEditComponent", () => {
     expect(component.isInvalid(nameCtrl)).toBeTrue();
   });
 });
+
 

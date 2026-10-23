@@ -51,6 +51,16 @@ namespace Guts.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task<IList<Chapter>> GetByCourseIdWithAssignmentsAndTestsAsync(int courseId, int periodId)
+        {
+            var query = _context.Chapters
+                .Where(ch => ch.CourseId == courseId && ch.PeriodId == periodId)
+                .OrderBy(ch => ch.Code)
+                .Include(ch => ch.Assignments)
+                .ThenInclude(ex => ex.Tests);
+            return await query.ToListAsync();
+        }
+
         private static async Task<Chapter> ExecuteChapterQuery(IQueryable<Chapter> query)
         {
             var chapter = await query.FirstOrDefaultAsync();

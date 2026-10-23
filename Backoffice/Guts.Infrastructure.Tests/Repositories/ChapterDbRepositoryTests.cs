@@ -62,5 +62,9 @@ internal class ChapterDbRepositoryTests : RepositoryTestsBase
 
         var byCourse = await repo.GetByCourseIdAsync(_courseId, _periodId);
         Assert.That(byCourse.Select(c => c.Code.ToString()), Is.EqualTo(new[] { "Ch01", "Ch02" }));
+
+        var byCourseWithTests = await repo.GetByCourseIdWithAssignmentsAndTestsAsync(_courseId, _periodId);
+        Assert.That(byCourseWithTests.Select(c => c.Code.ToString()), Is.EqualTo(new[] { "Ch01", "Ch02" }));
+        Assert.That(byCourseWithTests.First(c => c.Code.ToString() == "Ch02").Assignments.First().Tests, Has.Count.EqualTo(1));
     }
 }

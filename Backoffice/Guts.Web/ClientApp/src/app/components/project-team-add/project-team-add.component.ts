@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import {
   ITeamDetailsModel,
   TeamGenerationModel,
@@ -21,7 +21,7 @@ import { ToastrService } from "ngx-toastr";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./project-team-add.component.html",
 })
-export class ProjectTeamAddComponent implements OnInit, OnDestroy {
+export class ProjectTeamAddComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
@@ -121,5 +121,5 @@ export class ProjectTeamAddComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

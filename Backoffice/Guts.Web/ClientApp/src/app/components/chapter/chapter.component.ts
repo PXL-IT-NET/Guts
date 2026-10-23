@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { ChapterService } from "../../services/chapter.service";
@@ -12,7 +12,7 @@ import { IUserModel } from "../../viewmodels/user.model";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./chapter.component.html",
 })
-export class ChapterComponent implements OnInit, OnDestroy {
+export class ChapterComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _model = signal<IChapterDetailsModel>({
@@ -117,7 +117,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 
   public formatUser = (user: IUserModel): string => {
     return user ? user.fullName : "";

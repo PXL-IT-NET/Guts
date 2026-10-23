@@ -41,7 +41,7 @@ describe("LoginComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("should capture loginSessionPublicIdentifier from queryParams and logout on init", () => {

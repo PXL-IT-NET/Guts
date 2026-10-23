@@ -54,7 +54,11 @@ namespace Guts.Infrastructure.Repositories
                                          && testresult.CreateDateTime == key.CreatDateTime
                                    select testresult;
 
-            return await lastResultsQuery.Include(testresult => testresult.Test).AsNoTracking().ToListAsync();
+            return await lastResultsQuery
+                .Include(testresult => testresult.Test)
+                .Include(testresult => testresult.User)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         private async Task<IList<TestResult>> GetLastTestResultsPerTeam(int projectId, int assignmentId, int? teamId, DateTime? dateUtc)

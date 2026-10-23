@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
@@ -13,7 +13,7 @@ import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.mod
   templateUrl: "./project-team-assessment-my-result.component.html",
 })
 export class ProjectTeamAssessmentMyResultComponent
-  implements OnInit, OnDestroy
+  implements OnInit
 {
   private destroyRef = inject(DestroyRef);
 
@@ -99,5 +99,5 @@ export class ProjectTeamAssessmentMyResultComponent
     });
   }
 
-  ngOnDestroy(): void {}
+
 }

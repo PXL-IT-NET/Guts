@@ -52,7 +52,7 @@ describe("NavMenuComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load user profile and slice periods up to active period when logged in", () => {

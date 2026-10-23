@@ -48,7 +48,7 @@ describe("ProjectComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load project details, select first team, and read assignmentId from queryParams", () => {

@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
@@ -10,7 +10,7 @@ import { PostResult } from "../../util/result";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./login.component.html",
 })
-export class LoginComponent implements OnInit, OnDestroy {
+export class LoginComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   public model: LoginModel;
 
@@ -83,5 +83,5 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loading = false;
   }
 
-  ngOnDestroy(): void {}
+
 }

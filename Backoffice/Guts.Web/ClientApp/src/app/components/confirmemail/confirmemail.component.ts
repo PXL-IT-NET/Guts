@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Params, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 
@@ -8,7 +8,7 @@ import { AuthService } from "../../services/auth.service";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./confirmemail.component.html",
 })
-export class ConfirmEmailComponent implements OnInit, OnDestroy {
+export class ConfirmEmailComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _message = signal<string>("Confirming email...");
@@ -67,5 +67,5 @@ export class ConfirmEmailComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

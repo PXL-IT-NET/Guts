@@ -57,7 +57,7 @@ describe("ChapterComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should load chapter details and set selectedUser and selectedAssignmentId", () => {

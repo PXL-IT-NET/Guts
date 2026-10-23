@@ -19,7 +19,7 @@ describe("CourseConfigComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnInit should read courseId from route params", () => {

@@ -31,7 +31,7 @@ describe("AssignmentDetailComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("ngOnChanges should load assignment detail when assignmentId > 0 and userId or teamId > 0", () => {

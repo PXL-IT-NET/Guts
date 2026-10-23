@@ -48,7 +48,7 @@ describe("ProjectAssessmentAddComponent", () => {
   });
 
   afterEach(() => {
-    component.ngOnDestroy();
+    fixture.destroy();
   });
 
   it("onSubmit should validate form and emit assessmentAdded on success", () => {

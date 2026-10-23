@@ -92,10 +92,6 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
     ));
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should load my result and populate radar chart data on ngOnInit", () => {
     teamAssessmentServiceSpy.getMyResultOfProjectTeamAssessment.and.returnValue(
       of(GetResult.success(sampleResult)),
@@ -137,3 +133,4 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
     expect(component.result).toBeNull();
   });
 });
+

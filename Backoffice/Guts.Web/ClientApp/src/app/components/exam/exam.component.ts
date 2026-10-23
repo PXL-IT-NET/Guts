@@ -2,7 +2,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   Component,
   OnInit,
-  OnDestroy,
+
   Input,
   OnChanges,
   SimpleChanges,
@@ -25,7 +25,7 @@ import { ToastrService } from "ngx-toastr";
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: "./exam.component.html",
 })
-export class ExamComponent implements OnInit, OnDestroy, OnChanges {
+export class ExamComponent implements OnInit, OnChanges {
   private destroyRef = inject(DestroyRef);
 
   private _loading = signal<boolean>(false);
@@ -93,7 +93,7 @@ export class ExamComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  ngOnDestroy(): void {}
+
 
   public loadExams() {
     this.loading = true;

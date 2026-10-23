@@ -10,5 +10,6 @@ namespace Guts.Business.Repositories
         Task<Chapter> LoadWithAssignmentsAsync(int courseId, string code, int periodId);
         Task<Chapter> LoadWithAssignmentsAndTestsAsync(int courseId, string code, int periodId);
         Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId);
+        Task<IList<Chapter>> GetByCourseIdWithAssignmentsAndTestsAsync(int courseId, int periodId);
     }
 }

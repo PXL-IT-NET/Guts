@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
@@ -14,7 +14,7 @@ import { IPeriodModel, PeriodModel } from "src/app/viewmodels/period.model";
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./nav-menu.component.scss"],
 })
-export class NavMenuComponent implements OnInit, OnDestroy {
+export class NavMenuComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _userProfile = signal<UserProfile>(new UserProfile());
@@ -113,5 +113,5 @@ export class NavMenuComponent implements OnInit, OnDestroy {
     this.periodProvider.period = period;
   }
 
-  ngOnDestroy(): void {}
+
 }

@@ -1,5 +1,5 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
@@ -13,7 +13,7 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ["./sidebar-menu.component.scss"],
 })
-export class SidebarMenuComponent implements OnInit, OnDestroy {
+export class SidebarMenuComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private _courses = signal<ICourseModel[]>([]);
@@ -82,5 +82,5 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+
 }

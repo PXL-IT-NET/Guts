@@ -30,10 +30,6 @@ describe("ProjectSummaryComponent", () => {
     ));
   });
 
-  afterEach(() => {
-    component.ngOnDestroy();
-  });
-
   it("should do nothing in ngOnChanges when courseId <= 0 or projectCode is empty", () => {
     component.courseId = 0;
     component.projectCode = "PROJ1";
@@ -155,4 +151,5 @@ describe("ProjectSummaryComponent", () => {
     );
   });
 });
+
 
