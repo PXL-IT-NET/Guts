@@ -1,0 +1,178 @@
+name: Backoffice CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'Backoffice/**'
+      - '.github/workflows/backoffice-ci-cd.yml'
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'Backoffice/**'
+      - '.github/workflows/backoffice-ci-cd.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_to_staging:
+        description: 'Deploy to Staging after CI build and tests succeed'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  # =========================================================================
+  # 1. CI: Build, Test & Package (Runs on GitHub-hosted Windows runner)
+  # =========================================================================
+  build-and-test:
+    name: Build & Test (CI)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+          cache-dependency-path: 'Backoffice/Guts.Web/ClientApp/package-lock.json'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Backoffice/Guts.slnx') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # ---------------------------------------------------------------------
+      # Frontend CI: Install dependencies & run tests
+      # ---------------------------------------------------------------------
+      - name: Install Frontend Dependencies
+        working-directory: Backoffice/Guts.Web/ClientApp
+        run: npm ci
+
+      - name: Run Frontend Tests (Headless Chrome)
+        working-directory: Backoffice/Guts.Web/ClientApp
+        run: npm run test:ci
+
+      # ---------------------------------------------------------------------
+      # Backend CI: Restore, Build & Run Unit/Integration Tests
+      # ---------------------------------------------------------------------
+      - name: Restore Backend Solution
+        run: dotnet restore Backoffice/Guts.slnx
+
+      - name: Build Backend Solution
+        run: dotnet build Backoffice/Guts.slnx --no-restore -c Release
+
+      - name: Run Backend Tests
+        run: dotnet test Backoffice/Guts.slnx --no-build -c Release --verbosity normal
+
+      # ---------------------------------------------------------------------
+      # Package Artifacts (Staging configuration)
+      # ---------------------------------------------------------------------
+      - name: Publish Guts.Api
+        run: >
+          dotnet publish Backoffice/Guts.Api/Guts.Api.csproj
+          -c Release
+          -o publish/api
+
+      - name: Publish Guts.Web (Staging configuration)
+        run: >
+          dotnet publish Backoffice/Guts.Web/Guts.Web.csproj
+          -c Release
+          -p:AngularConfiguration=staging
+          -o publish/web
+
+      - name: Upload Guts.Api Staging Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: guts-api-staging
+          path: publish/api/
+          retention-days: 7
+
+      - name: Upload Guts.Web Staging Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: guts-web-staging
+          path: publish/web/
+          retention-days: 7
+
+  # =========================================================================
+  # 2. CD: Deploy to Staging IIS (Runs on Self-Hosted Runner behind Firewall)
+  # =========================================================================
+  deploy-staging:
+    name: Deploy to Staging (IIS)
+    needs: build-and-test
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true)
+    runs-on: [self-hosted, Windows]
+
+    steps:
+      - name: Checkout Deployment Scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            Backoffice/deploy
+          sparse-checkout-cone-mode: false
+
+      - name: Download Guts.Api Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: guts-api-staging
+          path: artifacts/api
+
+      - name: Download Guts.Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: guts-web-staging
+          path: artifacts/web
+
+      - name: Deploy Guts.Api to IIS Staging
+        shell: powershell
+        run: |
+          & Backoffice/deploy/deploy-to-iis.ps1 `
+            -AppType "Api" `
+            -SourcePath "$PWD\artifacts\api" `
+            -DestinationPath "C:\Guts_Staging\Guts-Api" `
+            -AppPoolName "StagingPool" `
+            -EnvironmentName "Staging"
+
+      - name: Deploy Guts.Web to IIS Staging
+        shell: powershell
+        run: |
+          & Backoffice/deploy/deploy-to-iis.ps1 `
+            -AppType "Web" `
+            -SourcePath "$PWD\artifacts\web" `
+            -DestinationPath "C:\Guts_Staging\Guts-Web" `
+            -AppPoolName "StagingPool" `
+            -EnvironmentName "Staging"
+
+      - name: Verify Staging Health (Smoke Test)
+        shell: powershell
+        run: |
+          Write-Host "Verifying Staging endpoints..."
+          $endpoints = @(
+            @{ Name = "Web Staging"; Url = "https://guts-web.pxl.be/staging/" },
+            @{ Name = "API Staging Swagger"; Url = "https://guts-api.pxl.be/staging/swagger/index.html" }
+          )
+
+          foreach ($ep in $endpoints) {
+            try {
+              Write-Host "Probing $($ep.Name) at $($ep.Url)..."
+              $resp = Invoke-WebRequest -Uri $ep.Url -UseBasicParsing -TimeoutSec 15
+              Write-Host "  -> $($ep.Name) responded with HTTP $($resp.StatusCode)"
+            } catch {
+              Write-Warning "  -> $($ep.Name) probe warning: $_"
+            }
+          }
+

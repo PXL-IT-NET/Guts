@@ -8,8 +8,10 @@
     "start:windows": "ng serve --port 44400 --ssl --ssl-cert %APPDATA%\\ASP.NET\\https\\%npm_package_name%.pem --ssl-key %APPDATA%\\ASP.NET\\https\\%npm_package_name%.key",
     "start:default": "ng serve --port 44400 --ssl --ssl-cert $HOME/.aspnet/https/${npm_package_name}.pem --ssl-key $HOME/.aspnet/https/${npm_package_name}.key",
     "build": "ng build",
+    "build:staging": "ng build --configuration staging",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",
     "test:coverage": "ng test --watch=false --code-coverage --browsers=ChromeHeadless",
     "sonar": "npx --yes @sonar/scan"
   },
