@@ -1,29 +1,18 @@
-name: Backoffice CI/CD Pipeline
+name: Backoffice Production Release
 
 on:
   push:
     branches:
-      - develop
+      - main
+      - master
     paths:
       - 'Backoffice/**'
-      - '.github/workflows/backoffice-ci-cd.yml'
-  pull_request:
-    branches:
-      - develop
-    paths:
-      - 'Backoffice/**'
-      - '.github/workflows/backoffice-ci-cd.yml'
+      - '.github/workflows/backoffice-production.yml'
   workflow_dispatch:
-    inputs:
-      deploy_to_staging:
-        description: 'Deploy to Staging after CI build and tests succeed'
-        required: true
-        type: boolean
-        default: true
 
 jobs:
   # =========================================================================
-  # 1. CI: Build, Test & Package (Runs on GitHub-hosted Windows runner)
+  # 1. CI: Build, Test & Package (Production configuration)
   # =========================================================================
   build-and-test:
     name: Build and Test (CI)
@@ -77,7 +66,7 @@ jobs:
         run: dotnet test Backoffice/Guts.slnx --no-build -c Release --logger "console;verbosity=normal"
 
       # ---------------------------------------------------------------------
-      # Package Artifacts (Staging configuration)
+      # Package Artifacts (Production configuration)
       # ---------------------------------------------------------------------
       - name: Publish Guts.Api
         run: >
@@ -85,44 +74,44 @@ jobs:
           -c Release
           -o publish/api
 
-      - name: Publish Guts.Web (Staging configuration)
+      - name: Publish Guts.Web (Production configuration)
         run: >
           dotnet publish Backoffice/Guts.Web/Guts.Web.csproj
           -c Release
-          -p:AngularConfiguration=staging
+          -p:AngularConfiguration=production
           -o publish/web
 
-      - name: Upload Guts.Api Staging Artifact
+      - name: Upload Guts.Api Production Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: guts-api-staging
+          name: guts-api-production
           path: publish/api/
-          retention-days: 7
+          retention-days: 14
 
-      - name: Upload Guts.Web Staging Artifact
+      - name: Upload Guts.Web Production Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: guts-web-staging
+          name: guts-web-production
           path: publish/web/
-          retention-days: 7
+          retention-days: 14
 
       - name: Upload Deployment Scripts
         uses: actions/upload-artifact@v4
         with:
           name: deploy-scripts
           path: Backoffice/deploy/
-          retention-days: 7
+          retention-days: 14
 
   # =========================================================================
-  # 2. CD: Deploy to Staging IIS (Runs on Self-Hosted Runner behind Firewall)
+  # 2. CD: Deploy to Production IIS (Requires Manual Approval via Environment)
   # =========================================================================
-  deploy-staging:
-    name: Deploy to Staging (IIS)
+  deploy-production:
+    name: Deploy to Production (IIS)
     needs: build-and-test
-    if: >
-      (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true)
     runs-on: [self-hosted, Windows]
+    environment:
+      name: production
+      url: https://guts-web.pxl.be/
 
     steps:
       - name: Download Deployment Scripts
@@ -134,42 +123,42 @@ jobs:
       - name: Download Guts.Api Artifact
         uses: actions/download-artifact@v4
         with:
-          name: guts-api-staging
+          name: guts-api-production
           path: artifacts/api
 
       - name: Download Guts.Web Artifact
         uses: actions/download-artifact@v4
         with:
-          name: guts-web-staging
+          name: guts-web-production
           path: artifacts/web
 
-      - name: Deploy Guts.Api to IIS Staging
+      - name: Deploy Guts.Api to IIS Production
         shell: powershell
         run: |
           & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
             -AppType "Api" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\api" `
-            -DestinationPath "C:\Guts_Staging\Guts-Api" `
-            -AppPoolName "StagingPool" `
-            -EnvironmentName "Staging"
+            -DestinationPath "C:\Guts\Guts-Api" `
+            -AppPoolName "ApiCorePool" `
+            -EnvironmentName "Production"
 
-      - name: Deploy Guts.Web to IIS Staging
+      - name: Deploy Guts.Web to IIS Production
         shell: powershell
         run: |
           & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
             -AppType "Web" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\web" `
-            -DestinationPath "C:\Guts_Staging\Guts-Web" `
-            -AppPoolName "StagingPool" `
-            -EnvironmentName "Staging"
+            -DestinationPath "C:\Guts\Guts-Web" `
+            -AppPoolName "WebCorePool" `
+            -EnvironmentName "Production"
 
-      - name: Verify Staging Health (Smoke Test)
+      - name: Verify Production Health (Smoke Test)
         shell: powershell
         run: |
-          Write-Host "Verifying Staging endpoints..."
+          Write-Host "Verifying Production endpoints..."
           $endpoints = @(
-            @{ Name = "Web Staging"; Url = "https://guts-web.pxl.be/staging/" },
-            @{ Name = "API Staging Swagger"; Url = "https://guts-api.pxl.be/staging/swagger/index.html" }
+            @{ Name = "Web Production"; Url = "https://guts-web.pxl.be/" },
+            @{ Name = "API Production Swagger"; Url = "https://guts-api.pxl.be/swagger/index.html" }
           )
 
           foreach ($ep in $endpoints) {
@@ -181,3 +170,4 @@ jobs:
               Write-Warning "  -> $($ep.Name) probe warning: $_"
             }
           }
+

@@ -11,7 +11,7 @@ param(
     [string]$DestinationPath,
 
     [Parameter(Mandatory = $false)]
-    [string]$AppPoolName = "StagingPool",
+    [string]$AppPoolName,
 
     [Parameter(Mandatory = $false)]
     [string]$EnvironmentName = "Staging"
@@ -19,11 +19,19 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if (-not $DestinationPath) {
-    if ($AppType -eq "Api") {
-        $DestinationPath = "C:\Guts_Staging\Guts-Api"
+if (-not $AppPoolName) {
+    if ($EnvironmentName -eq "Production") {
+        $AppPoolName = if ($AppType -eq "Api") { "ApiCorePool" } else { "WebCorePool" }
     } else {
-        $DestinationPath = "C:\Guts_Staging\Guts-Web"
+        $AppPoolName = if ($AppType -eq "Api") { "StagingApiPool" } else { "StagingWebPool" }
+    }
+}
+
+if (-not $DestinationPath) {
+    if ($EnvironmentName -eq "Production") {
+        $DestinationPath = if ($AppType -eq "Api") { "C:\Guts\Guts-Api" } else { "C:\Guts\Guts-Web" }
+    } else {
+        $DestinationPath = if ($AppType -eq "Api") { "C:\Guts_Staging\Guts-Api" } else { "C:\Guts_Staging\Guts-Web" }
     }
 }
 
@@ -129,8 +137,8 @@ try {
         }
     }
 
-    # Step 4: Copy new files using Robocopy
-    Write-Host "Copying files from $SourcePath to $DestinationPath..."
+    # Step 4: Copy new files using Robocopy (preserving Log/logs directories)
+    Write-Host "Copying files from $SourcePath to $DestinationPath (excluding 'Log' and 'logs')..."
     # Robocopy exit codes: 0-7 = Success (0 = No change, 1 = Files copied, etc.), >=8 = Failure
     $robocopyArgs = @(
         $SourcePath,
