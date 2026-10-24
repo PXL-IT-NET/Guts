@@ -62,7 +62,7 @@ jobs:
 
       - name: Run Frontend Tests (Headless Chrome)
         working-directory: Backoffice/Guts.Web/ClientApp
-        run: npm run test:ci
+        run: npm run test:ci -- --reporters dots
 
       # ---------------------------------------------------------------------
       # Backend CI: Restore, Build & Run Unit/Integration Tests
@@ -74,7 +74,7 @@ jobs:
         run: dotnet build Backoffice/Guts.slnx --no-restore -c Release
 
       - name: Run Backend Tests
-        run: dotnet test Backoffice/Guts.slnx --no-build -c Release --verbosity normal
+        run: dotnet test Backoffice/Guts.slnx --no-build -c Release --logger "console;verbosity=normal"
 
       # ---------------------------------------------------------------------
       # Package Artifacts (Staging configuration)
@@ -106,6 +106,13 @@ jobs:
           path: publish/web/
           retention-days: 7
 
+      - name: Upload Deployment Scripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-scripts
+          path: Backoffice/deploy/
+          retention-days: 7
+
   # =========================================================================
   # 2. CD: Deploy to Staging IIS (Runs on Self-Hosted Runner behind Firewall)
   # =========================================================================
@@ -118,12 +125,11 @@ jobs:
     runs-on: [self-hosted, Windows]
 
     steps:
-      - name: Checkout Deployment Scripts
-        uses: actions/checkout@v4
+      - name: Download Deployment Scripts
+        uses: actions/download-artifact@v4
         with:
-          sparse-checkout: |
-            Backoffice/deploy
-          sparse-checkout-cone-mode: false
+          name: deploy-scripts
+          path: deploy
 
       - name: Download Guts.Api Artifact
         uses: actions/download-artifact@v4
@@ -140,9 +146,9 @@ jobs:
       - name: Deploy Guts.Api to IIS Staging
         shell: powershell
         run: |
-          & Backoffice/deploy/deploy-to-iis.ps1 `
+          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
             -AppType "Api" `
-            -SourcePath "$PWD\artifacts\api" `
+            -SourcePath "$env:GITHUB_WORKSPACE\artifacts\api" `
             -DestinationPath "C:\Guts_Staging\Guts-Api" `
             -AppPoolName "StagingPool" `
             -EnvironmentName "Staging"
@@ -150,9 +156,9 @@ jobs:
       - name: Deploy Guts.Web to IIS Staging
         shell: powershell
         run: |
-          & Backoffice/deploy/deploy-to-iis.ps1 `
+          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
             -AppType "Web" `
-            -SourcePath "$PWD\artifacts\web" `
+            -SourcePath "$env:GITHUB_WORKSPACE\artifacts\web" `
             -DestinationPath "C:\Guts_Staging\Guts-Web" `
             -AppPoolName "StagingPool" `
             -EnvironmentName "Staging"
@@ -175,4 +181,3 @@ jobs:
               Write-Warning "  -> $($ep.Name) probe warning: $_"
             }
           }
-

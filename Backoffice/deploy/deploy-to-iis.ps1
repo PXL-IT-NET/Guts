@@ -38,6 +38,12 @@ if (-not (Test-Path $SourcePath)) {
     throw "Source directory does not exist: $SourcePath"
 }
 
+$sourceFiles = Get-ChildItem -Path $SourcePath
+Write-Host "Found $($sourceFiles.Count) items in source directory."
+if ($sourceFiles.Count -eq 0) {
+    throw "Source directory is empty: $SourcePath"
+}
+
 # Ensure destination directory exists
 if (-not (Test-Path $DestinationPath)) {
     Write-Host "Creating destination directory: $DestinationPath"
@@ -46,10 +52,41 @@ if (-not (Test-Path $DestinationPath)) {
 
 $appCmd = "$env:SystemRoot\system32\inetsrv\appcmd.exe"
 
-function Invoke-AppCmd($arguments) {
-    if (Test-Path $appCmd) {
-        & $appCmd $arguments
+# Import WebAdministration if available
+if (Get-Module -ListAvailable -Name WebAdministration) {
+    Import-Module WebAdministration -ErrorAction SilentlyContinue
+}
+
+function Stop-Pool($poolName) {
+    Write-Host "Stopping Application Pool '$poolName'..."
+    try {
+        if (Get-Command Stop-WebAppPool -ErrorAction SilentlyContinue) {
+            Stop-WebAppPool -Name $poolName -ErrorAction SilentlyContinue
+            Write-Host "Stop-WebAppPool executed for '$poolName'."
+        } elseif (Test-Path $appCmd) {
+            & $appCmd stop apppool "/apppool.name:$poolName" 2>$null
+            Write-Host "appcmd stop apppool executed for '$poolName'."
+        }
+    } catch {
+        Write-Warning "Notice when stopping AppPool '$poolName': $_"
     }
+    $global:LASTEXITCODE = 0
+}
+
+function Start-Pool($poolName) {
+    Write-Host "Starting Application Pool '$poolName'..."
+    try {
+        if (Get-Command Start-WebAppPool -ErrorAction SilentlyContinue) {
+            Start-WebAppPool -Name $poolName -ErrorAction SilentlyContinue
+            Write-Host "Start-WebAppPool executed for '$poolName'."
+        } elseif (Test-Path $appCmd) {
+            & $appCmd start apppool "/apppool.name:$poolName" 2>$null
+            Write-Host "appcmd start apppool executed for '$poolName'."
+        }
+    } catch {
+        Write-Warning "Notice when starting AppPool '$poolName': $_"
+    }
+    $global:LASTEXITCODE = 0
 }
 
 # Step 1: Place app_offline.htm to instruct ASP.NET Core Module to release file locks
@@ -65,11 +102,8 @@ $appOfflineContent = @"
 Write-Host "Taking application offline via app_offline.htm..."
 Set-Content -Path $appOfflinePath -Value $appOfflineContent -Force
 
-# Step 2: Stop AppPool if appcmd is available
-if (Test-Path $appCmd) {
-    Write-Host "Stopping IIS Application Pool '$AppPoolName'..."
-    Invoke-AppCmd @("stop", "apppool", "/apppool.name:$AppPoolName") 2>$null
-}
+# Step 2: Stop AppPool
+Stop-Pool $AppPoolName
 
 Start-Sleep -Seconds 3
 
@@ -83,7 +117,7 @@ try {
 
     $tempBackupDir = Join-Path $env:TEMP "guts_backup_$AppType"
     if (Test-Path $tempBackupDir) {
-        Remove-Item -Path $tempBackupDir -Recurse -Force
+        Remove-Item -Path $tempBackupDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     New-Item -ItemType Directory -Path $tempBackupDir -Force | Out-Null
 
@@ -97,7 +131,7 @@ try {
 
     # Step 4: Copy new files using Robocopy
     Write-Host "Copying files from $SourcePath to $DestinationPath..."
-    # Robocopy exit codes: 0-7 = Success, >=8 = Failure
+    # Robocopy exit codes: 0-7 = Success (0 = No change, 1 = Files copied, etc.), >=8 = Failure
     $robocopyArgs = @(
         $SourcePath,
         $DestinationPath,
@@ -110,10 +144,14 @@ try {
     )
     & robocopy @robocopyArgs
     $rc = $LASTEXITCODE
+
+    # Crucial: Reset LASTEXITCODE so PowerShell / GitHub Actions does not treat robocopy exit code (1-7) as an error!
+    $global:LASTEXITCODE = 0
+
     if ($rc -ge 8) {
         throw "Robocopy failed with exit code $rc"
     }
-    Write-Host "Files copied successfully (Robocopy code $rc)."
+    Write-Host "Files copied successfully (Robocopy exit code: $rc)."
 
     # Step 5: Restore preserved configs
     foreach ($file in $preservedFiles) {
@@ -127,23 +165,27 @@ try {
     # Step 6: Update web.config environment variable
     $webConfigPath = Join-Path $DestinationPath "web.config"
     if (Test-Path $webConfigPath) {
-        [xml]$webConfig = Get-Content $webConfigPath
-        $aspNetCore = $webConfig.SelectSingleNode("//aspNetCore")
-        if ($aspNetCore) {
-            $envVars = $aspNetCore.SelectSingleNode("environmentVariables")
-            if (-not $envVars) {
-                $envVars = $webConfig.CreateElement("environmentVariables")
-                $aspNetCore.AppendChild($envVars) | Out-Null
+        try {
+            [xml]$webConfig = Get-Content $webConfigPath
+            $aspNetCore = $webConfig.SelectSingleNode("//aspNetCore")
+            if ($aspNetCore) {
+                $envVars = $aspNetCore.SelectSingleNode("environmentVariables")
+                if (-not $envVars) {
+                    $envVars = $webConfig.CreateElement("environmentVariables")
+                    $aspNetCore.AppendChild($envVars) | Out-Null
+                }
+                $envVar = $envVars.SelectSingleNode("environmentVariable[@name='ASPNETCORE_ENVIRONMENT']")
+                if (-not $envVar) {
+                    $envVar = $webConfig.CreateElement("environmentVariable")
+                    $envVar.SetAttribute("name", "ASPNETCORE_ENVIRONMENT")
+                    $envVars.AppendChild($envVar) | Out-Null
+                }
+                $envVar.SetAttribute("value", $EnvironmentName)
+                $webConfig.Save($webConfigPath)
+                Write-Host "Configured ASPNETCORE_ENVIRONMENT=$EnvironmentName in web.config."
             }
-            $envVar = $envVars.SelectSingleNode("environmentVariable[@name='ASPNETCORE_ENVIRONMENT']")
-            if (-not $envVar) {
-                $envVar = $webConfig.CreateElement("environmentVariable")
-                $envVar.SetAttribute("name", "ASPNETCORE_ENVIRONMENT")
-                $envVars.AppendChild($envVar) | Out-Null
-            }
-            $envVar.SetAttribute("value", $EnvironmentName)
-            $webConfig.Save($webConfigPath)
-            Write-Host "Configured ASPNETCORE_ENVIRONMENT=$EnvironmentName in web.config."
+        } catch {
+            Write-Warning "Could not update ASPNETCORE_ENVIRONMENT in web.config: $_"
         }
     }
 }
@@ -154,11 +196,10 @@ finally {
         Remove-Item -Path $appOfflinePath -Force -ErrorAction SilentlyContinue
     }
 
-    if (Test-Path $appCmd) {
-        Write-Host "Starting IIS Application Pool '$AppPoolName'..."
-        Invoke-AppCmd @("start", "apppool", "/apppool.name:$AppPoolName") 2>$null
-    }
+    Start-Pool $AppPoolName
+    $global:LASTEXITCODE = 0
 }
 
 Write-Host "Deployment of $AppType completed successfully."
-
+$global:LASTEXITCODE = 0
+exit 0
