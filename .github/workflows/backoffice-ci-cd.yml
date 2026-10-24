@@ -26,7 +26,7 @@ jobs:
   # 1. CI: Build, Test & Package (Runs on GitHub-hosted Windows runner)
   # =========================================================================
   build-and-test:
-    name: Build & Test (CI)
+    name: Build and Test (CI)
     runs-on: windows-latest
 
     steps:
