@@ -1,22 +1,22 @@
-name: Backoffice Staging CI/CD
+name: Backoffice Staging Release
 
 on:
   push:
     branches:
       - develop
     paths:
-      - 'Backoffice/**'
-      - '.github/workflows/backoffice-staging.yml'
+      - "Backoffice/**"
+      - ".github/workflows/backoffice-staging.yml"
   pull_request:
     branches:
       - develop
     paths:
-      - 'Backoffice/**'
-      - '.github/workflows/backoffice-staging.yml'
+      - "Backoffice/**"
+      - ".github/workflows/backoffice-staging.yml"
   workflow_dispatch:
     inputs:
       deploy_to_staging:
-        description: 'Deploy to Staging after CI build and tests succeed'
+        description: "Deploy to Staging after CI build and tests succeed"
         required: true
         type: boolean
         default: true
@@ -36,14 +36,14 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: "10.0.x"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
-          cache-dependency-path: 'Backoffice/Guts.Web/ClientApp/package-lock.json'
+          cache: "npm"
+          cache-dependency-path: "Backoffice/Guts.Web/ClientApp/package-lock.json"
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -181,4 +181,3 @@ jobs:
               Write-Warning "  -> $($ep.Name) probe warning: $_"
             }
           }
-
