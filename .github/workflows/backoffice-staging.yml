@@ -133,9 +133,6 @@ jobs:
             "**/Guts.Web/ClientApp/aspnetcore-https.js"
           ) -join ","
 
-          # Note: sonar.qualitygate.wait is intentionally omitted because SonarCloud's API
-          # blocks Quality Gate polling for non-main branches (develop) on this organization plan.
-          # SonarCloud still receives the full analysis, issues, and code coverage.
           dotnet tool run dotnet-sonarscanner begin `
             /k:"PXL-IT-NET_Guts" `
             /o:"pxl-it-net" `
