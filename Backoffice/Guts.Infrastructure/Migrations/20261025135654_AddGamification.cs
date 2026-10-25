@@ -258,7 +258,7 @@ namespace Guts.Infrastructure.Migrations
                     dp.[CourseId],
                     dp.[PeriodId],
                     1,
-                    1,
+                    0,
                     CONCAT('Student_', dp.[UserId]),
                     'CodeCat',
                     0,
