@@ -14,6 +14,7 @@ namespace Guts.Infrastructure.Repositories
         public async Task<StudentCourseProfile> GetByUserCourseAndPeriodAsync(int userId, int courseId, int periodId)
         {
             return await _context.StudentCourseProfiles
+                .AsSplitQuery()
                 .Include(sp => sp.Badges)
                 .Include(sp => sp.Events)
                 .Include(sp => sp.ClassGroup)
@@ -24,6 +25,7 @@ namespace Guts.Infrastructure.Repositories
         public async Task<IReadOnlyList<StudentCourseProfile>> GetForLeaderboardByCourseAndPeriodAsync(int courseId, int periodId)
         {
             return await _context.StudentCourseProfiles
+                .AsSplitQuery()
                 .Include(sp => sp.Badges)
                 .Include(sp => sp.Events)
                 .Include(sp => sp.ClassGroup)

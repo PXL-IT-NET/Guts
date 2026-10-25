@@ -183,7 +183,9 @@ try {
     ) -join ","
 
     $coverageExclusions = @(
-        "**/Guts.Bootstrapper/**"
+        "**/Guts.Bootstrapper/**",
+        "**/*.ps1",
+        "**/deploy/**"
     ) -join ","
 
     Write-Host "==> Starting SonarScanner analysis for '$ProjectKey'..." -ForegroundColor Cyan

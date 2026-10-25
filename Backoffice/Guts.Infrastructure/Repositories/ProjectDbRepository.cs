@@ -46,6 +46,7 @@ namespace Guts.Infrastructure.Repositories
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.PeriodId == periodId && p.Code == projectCode);
             query = query
+                .AsSplitQuery()
                 .Include(p => p.Assignments).ThenInclude(a => a.Tests)
                 .Include(p => p.Teams);
 
@@ -61,7 +62,7 @@ namespace Guts.Infrastructure.Repositories
             int userId)
         {
             var query = _context.Projects.Where(p => p.CourseId == courseId && p.Code == projectCode && p.PeriodId == periodId);
-            query = query.Include(p => p.Assignments).Include(p => p.Teams);
+            query = query.AsSplitQuery().Include(p => p.Assignments).Include(p => p.Teams);
 
             var project = await query.AsNoTracking().FirstOrDefaultAsync();
             if (project == null)

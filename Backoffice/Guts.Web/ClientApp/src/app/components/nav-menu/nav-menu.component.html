@@ -40,6 +40,8 @@
         <a
           class="nav-link dropdown-toggle show"
           role="button"
+          tabindex="0"
+          (keydown.enter)="$event.preventDefault()"
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >

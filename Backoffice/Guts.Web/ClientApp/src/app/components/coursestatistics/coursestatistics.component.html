@@ -67,8 +67,10 @@
               <th style="width: 40px;" class="text-center"></th>
               <th
                 role="button"
+                tabindex="0"
                 class="user-select-none"
                 (click)="setSort('lastName')"
+                (keydown.enter)="setSort('lastName')"
                 title="Sort by last name"
               >
                 <span>Last name</span>
@@ -76,8 +78,10 @@
               </th>
               <th
                 role="button"
+                tabindex="0"
                 class="user-select-none"
                 (click)="setSort('firstName')"
+                (keydown.enter)="setSort('firstName')"
                 title="Sort by first name"
               >
                 <span>First name</span>
@@ -85,9 +89,11 @@
               </th>
               <th
                 role="button"
+                tabindex="0"
                 class="user-select-none"
                 style="width: 220px;"
                 (click)="setSort('assignmentsWorkedOn')"
+                (keydown.enter)="setSort('assignmentsWorkedOn')"
                 title="Sort by assignments worked on"
               >
                 <span>Assignments worked on</span>
@@ -95,9 +101,11 @@
               </th>
               <th
                 role="button"
+                tabindex="0"
                 class="user-select-none"
                 style="width: 300px;"
                 (click)="setSort('completionPercentage')"
+                (keydown.enter)="setSort('completionPercentage')"
                 title="Sort by course completion"
               >
                 <span>Course completion</span>
@@ -108,7 +116,9 @@
           <tbody>
             @for (student of sortedStudents; track student.studentId) {
               <tr
+                tabindex="0"
                 (click)="toggleStudent(student.studentId)"
+                (keydown.enter)="toggleStudent(student.studentId)"
                 class="student-row"
                 style="cursor: pointer;"
                 [class.table-active]="isExpanded(student.studentId)"

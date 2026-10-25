@@ -17,6 +17,7 @@ internal class ProjectTeamAssessmentDbRepository : BaseDbRepository<IProjectTeam
     {
         IProjectTeamAssessment assessement = await _context.Set<ProjectTeamAssessment>()
             .Where(pta => pta.ProjectAssessment.Id == projectAssessmentId && pta.Team.Id == teamId)
+            .AsSplitQuery()
             .Include(pta => pta.Team.TeamUsers)
             .ThenInclude(tu => tu.User)
             .Include(pta => pta.ProjectAssessment)

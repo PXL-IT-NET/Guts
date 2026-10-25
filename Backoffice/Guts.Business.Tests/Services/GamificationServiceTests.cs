@@ -69,7 +69,6 @@ namespace Guts.Business.Tests.Services
                 _projectTeamRepositoryMock.Object,
                 _assignmentRepositoryMock.Object,
                 _periodRepositoryMock.Object,
-                _examRepositoryMock.Object,
                 _studentCourseProfileFactoryMock.Object,
                 _courseClassGroupFactoryMock.Object,
                 _loggerMock.Object);

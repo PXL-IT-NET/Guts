@@ -14,7 +14,7 @@ namespace Guts.Domain.GamificationAggregate
             set
             {
                 Contracts.Require(!string.IsNullOrWhiteSpace(value), "Class name cannot be empty.");
-                _name = value.Trim();
+                _name = value!.Trim();
             }
         }
 
@@ -32,7 +32,7 @@ namespace Guts.Domain.GamificationAggregate
             Contracts.Require(courseId > 0, "CourseId must be positive.");
             Contracts.Require(periodId > 0, "PeriodId must be positive.");
 
-            _name = name.Trim();
+            _name = name!.Trim();
             CourseId = courseId;
             PeriodId = periodId;
         }
@@ -46,4 +46,3 @@ namespace Guts.Domain.GamificationAggregate
         }
     }
 }
-

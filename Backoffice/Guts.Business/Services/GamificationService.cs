@@ -23,7 +23,6 @@ namespace Guts.Business.Services
         private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IPeriodRepository _periodRepository;
-        private readonly IExamRepository _examRepository;
         private readonly IStudentCourseProfileFactory _studentCourseProfileFactory;
         private readonly ICourseClassGroupFactory _courseClassGroupFactory;
         private readonly ILogger<GamificationService> _logger;
@@ -55,7 +54,6 @@ namespace Guts.Business.Services
             IProjectTeamRepository projectTeamRepository,
             IAssignmentRepository assignmentRepository,
             IPeriodRepository periodRepository,
-            IExamRepository examRepository,
             IStudentCourseProfileFactory studentCourseProfileFactory,
             ICourseClassGroupFactory courseClassGroupFactory,
             ILogger<GamificationService> logger)
@@ -67,7 +65,6 @@ namespace Guts.Business.Services
             _projectTeamRepository = projectTeamRepository;
             _assignmentRepository = assignmentRepository;
             _periodRepository = periodRepository;
-            _examRepository = examRepository;
             _studentCourseProfileFactory = studentCourseProfileFactory;
             _courseClassGroupFactory = courseClassGroupFactory;
             _logger = logger;
@@ -263,6 +260,7 @@ namespace Guts.Business.Services
         public async Task<StudentGamificationProfileDto> EnrollStudentAsync(int userId, int courseId, EnrollStudentDto enrollDto, int? periodId = null)
         {
             Contracts.Require(enrollDto != null, "Enrollment data is required.");
+            ArgumentNullException.ThrowIfNull(enrollDto);
 
             var period = await _periodRepository.GetPeriodAsync(periodId);
             var profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
@@ -477,6 +475,7 @@ namespace Guts.Business.Services
         public async Task<CourseGamificationConfigDto> UpdateCourseConfigAsync(int courseId, CourseGamificationConfigDto configDto)
         {
             Contracts.Require(configDto != null, "Config data is required.");
+            ArgumentNullException.ThrowIfNull(configDto);
 
             var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config == null)
