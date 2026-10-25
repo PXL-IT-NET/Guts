@@ -166,7 +166,7 @@ public class AddGamificationMigrationTests
         Assert.That(aliceProfile.PeriodId, Is.EqualTo(period.Id));
         Assert.That(aliceProfile.TotalXp, Is.EqualTo(20), "2 unique passing tests * 10 XP = 20 XP");
         Assert.That(aliceProfile.ShowInLeaderBoard, Is.True);
-        Assert.That(aliceProfile.UsePseudonym, Is.True);
+        Assert.That(aliceProfile.UsePseudonym, Is.False);
         Assert.That(aliceProfile.Pseudonym, Is.EqualTo($"Student_{studentNormal.Id}"));
         Assert.That(aliceProfile.Avatar, Is.EqualTo("CodeCat"));
 
