@@ -206,6 +206,20 @@
           </a>
         </li>
       }
+      <!-- Gamification -->
+      @if (userProfile.isTeacher() || isGamificationEnabled) {
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            (click)="navigateToGamification()"
+            [class.active]="isGamificationRouteActive()"
+            style="cursor: pointer"
+          >
+            <span class="bi bi-trophy me-1"></span>
+            <span>Leaderboard</span>
+          </a>
+        </li>
+      }
     </ul>
     <div class="tab-content">
       <app-loading-overlay [show]="loading"></app-loading-overlay>

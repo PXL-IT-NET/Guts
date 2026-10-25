@@ -1,0 +1,68 @@
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-transparent py-3">
+    <h5 class="mb-0 fw-bold">🏆 Course Hall of Fame</h5>
+    <small class="text-body-secondary">All-time rankings accumulated across the entire academic period.</small>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 70px;">Rank</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th class="text-center">Level</th>
+            <th class="text-center">Total Green Tests</th>
+            <th class="text-end pe-4">Total XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of hallOfFame; track entry.userId) {
+            <tr [class.table-primary]="entry.isCurrentUser">
+              <td class="fw-bold fs-5">
+                @if (entry.rank === 1) { 🥇 }
+                @else if (entry.rank === 2) { 🥈 }
+                @else if (entry.rank === 3) { 🥉 }
+                @else { #{{ entry.rank }} }
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fs-4">{{ getAvatarIcon(entry.avatar) }}</span>
+                  <div>
+                    <span class="fw-semibold">{{ entry.displayName }}</span>
+                    @if (entry.isCurrentUser) {
+                      <span class="badge bg-primary ms-1">You</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+                  {{ entry.classGroupName }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fs-6">
+                  Lvl {{ entry.level }}
+                </span>
+              </td>
+              <td class="text-center fw-semibold text-success">
+                ✅ {{ entry.greenTestsCount }}
+              </td>
+              <td class="text-end pe-4 fw-bold text-success fs-5">
+                {{ entry.score }} XP
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center py-4 text-body-secondary">
+                No students enrolled in the Hall of Fame yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+

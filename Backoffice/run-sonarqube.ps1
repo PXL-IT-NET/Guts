@@ -212,7 +212,6 @@ try {
     if (-not $SkipBackendTests) {
         Write-Host "==> Running Backend unit tests with OpenCover coverage..." -ForegroundColor Cyan
         dotnet test Guts.slnx `
-            --no-build `
             --logger "trx" `
             --results-directory "$TestResultsDir" `
             --collect:"XPlat Code Coverage" `

@@ -23,15 +23,23 @@ on:
 
 jobs:
   # =========================================================================
-  # 1. CI: Build, Test & Package (Runs on GitHub-hosted Windows runner)
+  # 1. CI: Build, Test, SonarCloud Analysis & Package
   # =========================================================================
   build-and-test:
-    name: Build and Test (CI)
+    name: Build, Test and Analyze (CI)
     runs-on: windows-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Disable shallow clone so SonarCloud can compute git blame and new code metrics
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -53,28 +61,111 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
       # ---------------------------------------------------------------------
-      # Frontend CI: Install dependencies & run tests
+      # Frontend CI: Install dependencies & run tests with coverage
       # ---------------------------------------------------------------------
       - name: Install Frontend Dependencies
         working-directory: Backoffice/Guts.Web/ClientApp
         run: npm ci
 
-      - name: Run Frontend Tests (Headless Chrome)
+      - name: Run Frontend Tests (Headless Chrome with Coverage)
         working-directory: Backoffice/Guts.Web/ClientApp
-        run: npm run test:ci -- --reporters dots
+        run: npm run test:ci -- --code-coverage --reporters dots
+
+      - name: Normalize Frontend LCOV Paths for Sonar
+        shell: powershell
+        working-directory: Backoffice/Guts.Web/ClientApp
+        run: |
+          $lcovPath = "coverage/ClientApp/lcov.info"
+          if (Test-Path $lcovPath) {
+            $clientAppDir = (Get-Item .).FullName
+            $lines = Get-Content $lcovPath | ForEach-Object {
+              if ($_ -match '^SF:(.*)') {
+                $sf = $matches[1]
+                if (-not [System.IO.Path]::IsPathRooted($sf)) {
+                  $sf = Join-Path $clientAppDir $sf
+                }
+                "SF:$sf"
+              } else {
+                $_
+              }
+            }
+            Set-Content -Path $lcovPath -Value $lines -Encoding UTF8
+          }
 
       # ---------------------------------------------------------------------
-      # Backend CI: Restore, Build & Run Unit/Integration Tests
+      # Backend CI: Restore, SonarCloud Begin, Build & Run Tests with Coverage
       # ---------------------------------------------------------------------
+      - name: Restore .NET Tools
+        working-directory: Backoffice
+        run: dotnet tool restore
+
       - name: Restore Backend Solution
         run: dotnet restore Backoffice/Guts.slnx
 
-      - name: Build Backend Solution
-        run: dotnet build Backoffice/Guts.slnx --no-restore -c Release
+      - name: SonarCloud Begin Analysis
+        shell: powershell
+        working-directory: Backoffice
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          $openCoverPaths = Join-Path $PWD "TestResults\**\coverage.opencover.xml"
+          $trxPaths = Join-Path $PWD "TestResults\*.trx"
+          $lcovPath = Join-Path $PWD "Guts.Web\ClientApp\coverage\ClientApp\lcov.info"
+          $exclusions = @(
+            "**/Migrations/**",
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/coverage/**",
+            "**/TestResults/**",
+            "**/*.spec.ts",
+            "**/Guts.Web/ClientApp/src/environments/**",
+            "**/Guts.Web/ClientApp/karma.conf.js",
+            "**/Guts.Web/ClientApp/proxy.conf.js",
+            "**/Guts.Web/ClientApp/aspnetcore-https.js"
+          ) -join ","
 
-      - name: Run Backend Tests
-        run: dotnet test Backoffice/Guts.slnx --no-build -c Release --logger "console;verbosity=normal"
+          dotnet tool run dotnet-sonarscanner begin `
+            /k:"PXL-IT-NET_Guts" `
+            /o:"pxl-it-net" `
+            /d:sonar.host.url="https://sonarcloud.io" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
+            /d:sonar.cs.opencover.reportsPaths="$openCoverPaths" `
+            /d:sonar.cs.vstest.reportsPaths="$trxPaths" `
+            /d:sonar.javascript.lcov.reportPaths="$lcovPath" `
+            /d:sonar.exclusions="$exclusions" `
+            /d:sonar.coverage.exclusions="**/Guts.Bootstrapper/**" `
+            /d:sonar.test.inclusions="**/*.spec.ts" `
+            /d:sonar.qualitygate.wait=true
+
+      - name: Build Backend Solution
+        run: dotnet build Backoffice/Guts.slnx --no-restore -c Release --no-incremental
+
+      - name: Run Backend Tests with Coverage
+        run: >
+          dotnet test Backoffice/Guts.slnx
+          --no-build
+          -c Release
+          --logger "console;verbosity=normal"
+          --logger "trx"
+          --results-directory Backoffice/TestResults
+          --collect:"XPlat Code Coverage"
+          --settings Backoffice/coverlet.runsettings
+
+      - name: SonarCloud End Analysis & Quality Gate
+        shell: powershell
+        working-directory: Backoffice
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet tool run dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
       # ---------------------------------------------------------------------
       # Package Artifacts (Staging configuration)

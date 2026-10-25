@@ -1,0 +1,157 @@
+<div class="row g-4">
+  <!-- Class Management -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-transparent py-3">
+        <h5 class="mb-0 fw-bold">🏫 Manage Class Groups</h5>
+        <small class="text-body-secondary"
+          >Add classes (e.g. 1TIN-A) so students can represent their group in
+          the championship.</small
+        >
+      </div>
+      <div class="card-body">
+        <div class="input-group mb-3">
+          <label for="adminNewClassNameInput" class="visually-hidden"
+            >New Class Name</label
+          >
+          <input
+            type="text"
+            id="adminNewClassNameInput"
+            class="form-control"
+            placeholder="New class name (e.g. 1TIN-A)"
+            [(ngModel)]="newClassName"
+            (keyup.enter)="addClass()"
+          />
+          <button class="btn btn-primary" (click)="addClass()">
+            <i class="bi bi-plus-lg me-1"></i> Add Class
+          </button>
+        </div>
+
+        <ul class="list-group list-group-flush">
+          @for (cls of classGroups; track cls.id) {
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center px-0"
+            >
+              <span class="fw-semibold">{{ cls.name }}</span>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                (click)="deleteClass(cls.id)"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </li>
+          } @empty {
+            <li class="list-group-item text-body-secondary text-center py-3">
+              No class groups added yet. Students will not see the Class
+              Championship until classes are created.
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Switches -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-transparent py-3">
+        <h5 class="mb-0 fw-bold">⚙️ Gamification Feature Switches</h5>
+        <small class="text-body-secondary"
+          >Enable or disable specific gamification elements for this
+          course.</small
+        >
+      </div>
+      <div class="card-body">
+        @if (config) {
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgGamification"
+              [(ngModel)]="config.isGamificationEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgGamification"
+              >Enable Gamification Engine</label
+            >
+            <div class="form-text">
+              Master switch for all gamification features.
+            </div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgStreak"
+              [(ngModel)]="config.isWeeklyStreakEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgStreak"
+              >Weekly Coding Streaks</label
+            >
+            <div class="form-text">
+              Students can build a streak by coding at least once a week
+            </div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgLeaderboard"
+              [(ngModel)]="config.isLeaderboardEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgLeaderboard"
+              >Hall of Fame</label
+            >
+            <div class="form-text">Show a course leaderboard</div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgClassComp"
+              [(ngModel)]="config.isClassCompetitionEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgClassComp"
+              >Class Championship</label
+            >
+            <div class="form-text">
+              Let classes compete against each other. Make sure to define the
+              class groups!
+            </div>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgSynergy"
+              [(ngModel)]="config.isTeamSynergyEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgSynergy"
+              >Team Synergy Bonus</label
+            >
+            <div class="form-text">
+              Enable awarding XP when all members of a team made contributions
+              (Projects only).
+            </div>
+          </div>
+          <div class="form-check form-switch mb-4">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="cfgBadges"
+              [(ngModel)]="config.isBadgesEnabled"
+            />
+            <label class="form-check-label fw-semibold" for="cfgBadges"
+              >Achievement Badges</label
+            >
+            <div class="form-text">
+              Students can earn badges when certain goals are met.
+            </div>
+          </div>
+          <button class="btn btn-success" (click)="saveConfig()">
+            <i class="bi bi-check-lg me-1"></i> Save Configuration
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -282,7 +282,7 @@ namespace Guts.Business.Tests.Services
             int from = Random.Shared.Next(5, 101);
             int to = from + 1;
 
-            ProjectTeam existingTeam = new ProjectTeamBuilder().WithId().WithName($"{teamBaseName} {to}").Build();
+            ProjectTeam existingTeam = new ProjectTeamBuilder().WithId().WithName($"{teamBaseName} {to:D2}").Build();
 
             Period existingPeriod = new PeriodBuilder().WithId().Build();
             Project existingProject = new ProjectBuilder()
@@ -300,11 +300,11 @@ namespace Guts.Business.Tests.Services
 
             //Assert
             _projectTeamRepositoryMock.Verify(
-                repo => repo.AddAsync( It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {from}")),
+                repo => repo.AddAsync( It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {from:D2}")),
                 Times.Once);
 
             _projectTeamRepositoryMock.Verify(
-                repo => repo.AddAsync(It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {to}")),
+                repo => repo.AddAsync(It.Is<ProjectTeam>(projectTeam => projectTeam.Name == $"{teamBaseName} {to:D2}")),
                 Times.Never);
         }
 

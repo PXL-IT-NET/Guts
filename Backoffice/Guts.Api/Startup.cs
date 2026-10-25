@@ -1,4 +1,5 @@
-﻿using Guts.Api.Extensions;
+using Guts.Api.BackgroundServices;
+using Guts.Api.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -120,6 +121,7 @@ namespace Guts.Api
             services.AddSingleton<IMapper, Mapper>();
 
             services.AddApplicationServices(Configuration);
+            services.AddHostedService<SprintLeaderboardBackgroundService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

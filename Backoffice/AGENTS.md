@@ -16,14 +16,21 @@ For a high-level overview of the entire GUTS repository and client libraries, se
    - Strive to apply **DDD principles** throughout the Backoffice backend.
    - Encapsulate business rules, calculations, state transitions, and invariant checks inside **Aggregates, Entities, Value Objects, and Domain Factories** in `Guts.Domain`—not in API controllers or application services.
    - Enforce preconditions and domain invariants using `Contracts.Require(...)` from `Guts.Common`.
-3. **Verify Changes by Running Tests**:
+   - It is acceptable to use properties that serve as a Foreign Key (FK) property for EF Core. Avoid using navigation properties in domain classes if they are not used in the domain logic.
+3. **Use Test-Driven Development (TDD)**:
+   - Write unit tests before implementing new functionality or fixing bugs.
+   - Ensure that all new code is covered by unit tests, and that existing tests pass after changes.
+4. **Verify Changes by Running Tests**:
    - Always verify backend changes by running `dotnet test` across `Guts.slnx` and ensuring all tests pass.
    - Add or update unit tests in the corresponding `*.Tests` project whenever introducing or modifying backend functionality.
-4. **Write Tests for Frontend Functionality**:
+5. **Write Tests for Frontend Functionality**:
    - Changes to the Angular SPA (`Guts.Web/ClientApp`) must include unit tests (`*.spec.ts`) covering component behavior, user interactions, and service logic.
    - Verify frontend changes by running `npm test -- --watch=false` inside `Guts.Web/ClientApp`.
-5. ** Fix bugs by writing a failing test first**:
+6. **Fix bugs by writing a failing test first**:
    - When fixing a bug, first write a unit test that reproduces the bug, then implement the fix and verify that the test passes.
+7. **Build, Test, and SonarQube Quality Checks**:
+   - The solution must build cleanly, and all tests must pass.
+   - Start the SonarQube container, run Sonar checks, and fix any reported issues or code smells before completing the task.
 
 ---
 
@@ -86,3 +93,11 @@ Guts.Common         ──► Design-by-Contract utilities & shared extensions
   ```powershell
   npm test -- --watch=false
   ```
+
+### SonarQube Quality Analysis
+
+- Start the SonarQube container (if not already running) and execute code quality & coverage analysis from `Backoffice/`:
+  ```powershell
+  .\run-sonarqube.ps1 -StartServer
+  ```
+- Review the analysis results and resolve any reported bugs, vulnerabilities, security hotspots, or code smells.

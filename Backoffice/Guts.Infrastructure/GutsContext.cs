@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.GamificationAggregate;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
@@ -60,6 +61,12 @@ namespace Guts.Infrastructure
         public DbSet<ProjectTeamAssessment> ProjectTeamAssessments { get; set; }
         public DbSet<PeerAssessment> PeerAssessments { get; set; }
 
+        public DbSet<StudentCourseProfile> StudentCourseProfiles { get; set; }
+        public DbSet<CourseClassGroup> CourseClassGroups { get; set; }
+        public DbSet<CourseGamificationConfig> CourseGamificationConfigs { get; set; }
+        public DbSet<StudentBadge> StudentBadges { get; set; }
+        public DbSet<GamificationEvent> GamificationEvents { get; set; }
+
         public GutsContext(DbContextOptions<GutsContext> options) : base(options)
         {
         }
@@ -90,6 +97,11 @@ namespace Guts.Infrastructure
             builder.ApplyConfiguration(new ProjectAssessmentConfiguration());
             builder.ApplyConfiguration(new ProjectTeamAssessmentConfiguration());
             builder.ApplyConfiguration(new PeerAssessmentConfiguration());
+            builder.ApplyConfiguration(new StudentCourseProfileConfiguration());
+            builder.ApplyConfiguration(new CourseClassGroupConfiguration());
+            builder.ApplyConfiguration(new CourseGamificationConfigConfiguration());
+            builder.ApplyConfiguration(new StudentBadgeConfiguration());
+            builder.ApplyConfiguration(new GamificationEventConfiguration());
 
             ApplyUtcDateTimeConverters(builder);
         }
