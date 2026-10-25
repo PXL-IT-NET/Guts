@@ -108,7 +108,8 @@ jobs:
         run: dotnet tool restore
 
       - name: Restore Backend Solution
-        run: dotnet restore Backoffice/Guts.slnx
+        working-directory: Backoffice
+        run: dotnet restore Guts.slnx
 
       - name: SonarCloud Begin Analysis
         shell: powershell
@@ -146,18 +147,20 @@ jobs:
             /d:sonar.qualitygate.wait=true
 
       - name: Build Backend Solution
-        run: dotnet build Backoffice/Guts.slnx --no-restore -c Release --no-incremental
+        working-directory: Backoffice
+        run: dotnet build Guts.slnx --no-restore -c Release --no-incremental
 
       - name: Run Backend Tests with Coverage
+        working-directory: Backoffice
         run: >
-          dotnet test Backoffice/Guts.slnx
+          dotnet test Guts.slnx
           --no-build
           -c Release
           --logger "console;verbosity=normal"
           --logger "trx"
-          --results-directory Backoffice/TestResults
+          --results-directory TestResults
           --collect:"XPlat Code Coverage"
-          --settings Backoffice/coverlet.runsettings
+          --settings coverlet.runsettings
 
       - name: SonarCloud End Analysis & Quality Gate
         shell: powershell
