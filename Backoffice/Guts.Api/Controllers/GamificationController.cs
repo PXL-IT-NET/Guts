@@ -107,5 +107,14 @@ namespace Guts.Api.Controllers
             await _gamificationService.DeleteCourseClassGroupAsync(courseId, classGroupId);
             return NoContent();
         }
+
+        [HttpGet("badges")]
+        [HttpGet("/api/gamification/badges")]
+        [ProducesResponseType(typeof(IReadOnlyList<BadgeMetadataDto>), (int)HttpStatusCode.OK)]
+        public IActionResult GetBadgeMetadata()
+        {
+            var badges = _gamificationService.GetBadgeMetadata();
+            return Ok(badges);
+        }
     }
 }

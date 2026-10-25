@@ -99,4 +99,20 @@ describe("GamificationService", () => {
     expect(res.success).toBeTrue();
     expect(res.value[0].classGroupName).toBe("1TIN-A");
   });
+
+  it("getBadgeMetadata should fetch all badge metadata", () => {
+    let res: any;
+    service.getBadgeMetadata().subscribe((r) => (res = r));
+
+    httpMock
+      .expectOne("api/gamification/badges")
+      .flush([
+        { badgeType: 1, type: 1, name: "First Spark", icon: "🌱", description: "Passed test" },
+        { badgeType: 11, type: 11, name: "Sprint Gold", icon: "🥇", description: "Sprint #1" },
+      ]);
+
+    expect(res.success).toBeTrue();
+    expect(res.value.length).toBe(2);
+    expect(res.value[0].name).toBe("First Spark");
+  });
 });

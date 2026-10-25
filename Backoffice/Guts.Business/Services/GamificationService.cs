@@ -18,6 +18,7 @@ namespace Guts.Business.Services
         private readonly IStudentCourseProfileRepository _studentCourseProfileRepository;
         private readonly ICourseGamificationConfigRepository _courseGamificationConfigRepository;
         private readonly ICourseClassGroupRepository _courseClassGroupRepository;
+        private readonly ICourseRepository _courseRepository;
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly IExamRepository _examRepository;
@@ -29,7 +30,6 @@ namespace Guts.Business.Services
         {
             { BadgeType.FirstSpark, ("First Spark", "Passed your first test in the course", "🌱") },
             { BadgeType.SpeedDemon, ("Speed Demon", "Completed all tests of an assignment within 24 hours", "⚡") },
-            { BadgeType.FlawlessRun, ("Flawless Run", "Passed all tests of an assignment on your first attempt", "🎯") },
             { BadgeType.CleanSweep, ("Clean Sweep", "Solved 100% of all exercises in a chapter", "🧹") },
             { BadgeType.NightOwl, ("Night Owl", "Submitted a passing test between 00:00 and 05:00", "🦉") },
             { BadgeType.EarlyBird, ("Early Bird", "Submitted a passing test between 05:00 and 08:00", "🌅") },
@@ -37,7 +37,11 @@ namespace Guts.Business.Services
             { BadgeType.CenturyClub, ("Century Club", "Achieved 100 unique passing tests in the course", "💯") },
             { BadgeType.OnFire, ("On Fire", "Maintained a 4-week coding streak", "🔥") },
             { BadgeType.IronWill, ("Iron Will", "Maintained an 8-week coding streak", "🛡️") },
-            { BadgeType.SprintChampion, ("Sprint Champion", "Held the #1 spot on the Weekly Sprint Leaderboard", "👑") },
+            { BadgeType.SprintGold, ("Sprint Gold", "Finished #1 on the Weekly Sprint Leaderboard", "🥇") },
+            { BadgeType.SprintSilver, ("Sprint Silver", "Finished in the top 2 of the Weekly Sprint Leaderboard", "🥈") },
+            { BadgeType.SprintBronze, ("Sprint Bronze", "Finished in the top 3 of the Weekly Sprint Leaderboard", "🥉") },
+            { BadgeType.SprintTop4, ("Sprint Top 4", "Finished in the top 4 of the Weekly Sprint Leaderboard", "🎖️") },
+            { BadgeType.SprintTop5, ("Sprint Top 5", "Finished in the top 5 of the Weekly Sprint Leaderboard", "⭐") },
             { BadgeType.TeamPowerhouse, ("Team Powerhouse", "Project team where all members have green tests", "🤝") }
         };
 
@@ -45,6 +49,7 @@ namespace Guts.Business.Services
             IStudentCourseProfileRepository studentCourseProfileRepository,
             ICourseGamificationConfigRepository courseGamificationConfigRepository,
             ICourseClassGroupRepository courseClassGroupRepository,
+            ICourseRepository courseRepository,
             IAssignmentRepository assignmentRepository,
             IPeriodRepository periodRepository,
             IExamRepository examRepository,
@@ -55,6 +60,7 @@ namespace Guts.Business.Services
             _studentCourseProfileRepository = studentCourseProfileRepository;
             _courseGamificationConfigRepository = courseGamificationConfigRepository;
             _courseClassGroupRepository = courseClassGroupRepository;
+            _courseRepository = courseRepository;
             _assignmentRepository = assignmentRepository;
             _periodRepository = periodRepository;
             _examRepository = examRepository;
@@ -235,15 +241,19 @@ namespace Guts.Business.Services
                 return new List<LeaderboardEntryDto>();
             }
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
+            IReadOnlyList<StudentCourseProfile> optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
 
-            DateTime now = DateTime.UtcNow;
-            DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(now), ISOWeek.GetWeekOfYear(now), DayOfWeek.Monday);
+            return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, DateTime.Now);
+        }
+
+        private IReadOnlyList<LeaderboardEntryDto> GetWeeklySprintLeaderboard(IReadOnlyList<StudentCourseProfile> optedInProfiles, int currentUserId, DateTime timestamp)
+        {
+            DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(timestamp), ISOWeek.GetWeekOfYear(timestamp), DayOfWeek.Monday);
 
             var scored = optedInProfiles.Select(profile =>
             {
-                var weeklyEvents = profile.Events.Where(e => e.CreatedAt >= startOfWeek).ToList();
+                var weeklyEvents = profile.Events.Where(e => e.CreatedAt >= startOfWeek && e.CreatedAt <= timestamp).ToList();
                 int weekXp = weeklyEvents.Sum(e => e.XpEarned);
                 int greenTests = weeklyEvents.Count(e => e.EventType == GamificationEventType.PassedTest);
 
@@ -483,6 +493,100 @@ namespace Guts.Business.Services
             }
 
             await _courseClassGroupRepository.DeleteAsync(group);
+        }
+
+        public async Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)
+        {
+            DateTime friday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Friday);
+            DateTime fridayCutoff = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59, DateTimeKind.Utc);
+
+            var period = await _periodRepository.GetPeriodAsync(periodId);
+            if (period == null) return;
+
+            var courses = await _courseRepository.GetAllAsync();
+
+            foreach (var course in courses)
+            {
+                var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
+                if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled))
+                {
+                    continue;
+                }
+
+                var optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
+                var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
+                var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
+                if (topEntries.Count == 0) continue;
+
+                var topEntry = topEntries[0];
+
+                for (int i = 0; i < topEntries.Count; i++)
+                {
+                    var entry = topEntries[i];
+                    int rank = entry.Rank;
+                    var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
+                    if (profile == null) continue;
+
+                    bool modified = false;
+
+                    // Award SprintGold to rank 1 or tied for 1st place
+                    if (rank == 1 || (entry.Score == topEntry.Score && entry.GreenTestsCount == topEntry.GreenTestsCount))
+                    {
+                        if (profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (rank <= 2)
+                    {
+                        if (profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (rank <= 3)
+                    {
+                        if (profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (rank <= 4)
+                    {
+                        if (profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (rank <= 5)
+                    {
+                        if (profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
+                        {
+                            modified = true;
+                        }
+                    }
+
+                    if (modified)
+                    {
+                        await _studentCourseProfileRepository.UpdateAsync(profile);
+                    }
+                }
+            }
+        }
+
+        public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()
+        {
+            return BadgeMetadata.Select(kvp => new BadgeMetadataDto
+            {
+                BadgeType = kvp.Key,
+                Name = kvp.Value.Name,
+                Description = kvp.Value.Description,
+                Icon = kvp.Value.Icon
+            }).ToList();
         }
 
         private static StudentGamificationProfileDto MapToProfileDto(StudentCourseProfile profile)

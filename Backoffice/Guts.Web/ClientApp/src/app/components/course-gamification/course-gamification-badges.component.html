@@ -10,22 +10,22 @@
   </div>
   <div class="card-body">
     <div class="row g-3">
-      @for (badge of allBadges; track badge.type) {
+      @for (badge of allBadges; track badge.badgeType) {
         <div class="col-sm-6 col-md-4 col-lg-3">
           <div
             class="card h-100 text-center p-3 border"
-            [class.border-success]="isBadgeEarned(badge.type)"
-            [class.bg-success-subtle]="isBadgeEarned(badge.type)"
-            [class.opacity-50]="!isBadgeEarned(badge.type)"
+            [class.border-success]="isBadgeEarned(badge.badgeType)"
+            [class.bg-success-subtle]="isBadgeEarned(badge.badgeType)"
+            [class.opacity-50]="!isBadgeEarned(badge.badgeType)"
           >
             <div class="display-4 mb-2">
               {{ badge.icon }}
             </div>
             <h6 class="fw-bold mb-1">{{ badge.name }}</h6>
             <p class="small text-body-secondary mb-2">{{ badge.description }}</p>
-            @if (isBadgeEarned(badge.type)) {
+            @if (isBadgeEarned(badge.badgeType)) {
               <span class="badge bg-success align-self-center">
-                ✓ Unlocked {{ getBadgeEarnedDate(badge.type) | date:'shortDate' }}
+                ✓ Unlocked {{ getBadgeEarnedDate(badge.badgeType) | date:'shortDate' }}
               </span>
             } @else {
               <span class="badge bg-secondary align-self-center">Locked</span>

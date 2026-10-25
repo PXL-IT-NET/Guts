@@ -238,5 +238,22 @@ namespace Guts.Domain.Tests.GamificationAggregate
             profile.AwardPassedTestXp(3, new DateTime(2026, 10, 24, 14, 0, 0, DateTimeKind.Utc));
             Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WeekendWarrior), Is.True);
         }
+
+        [Test]
+        public void AwardBadge_SprintBadges_ShouldAddBadgeOnce()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var timestamp = DateTime.UtcNow;
+
+            Assert.That(profile.AwardBadge(BadgeType.SprintGold, timestamp), Is.True);
+            Assert.That(profile.AwardBadge(BadgeType.SprintSilver, timestamp), Is.True);
+            Assert.That(profile.AwardBadge(BadgeType.SprintBronze, timestamp), Is.True);
+            Assert.That(profile.AwardBadge(BadgeType.SprintTop4, timestamp), Is.True);
+            Assert.That(profile.AwardBadge(BadgeType.SprintTop5, timestamp), Is.True);
+
+            // Cannot earn duplicate badge
+            Assert.That(profile.AwardBadge(BadgeType.SprintGold, timestamp), Is.False);
+            Assert.That(profile.Badges.Count(b => b.BadgeType == BadgeType.SprintGold), Is.EqualTo(1));
+        }
     }
 }

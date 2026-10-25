@@ -29,6 +29,7 @@ namespace Guts.Business.Tests.Services
         private Mock<IStudentCourseProfileRepository> _studentCourseProfileRepositoryMock;
         private Mock<ICourseGamificationConfigRepository> _courseGamificationConfigRepositoryMock;
         private Mock<ICourseClassGroupRepository> _courseClassGroupRepositoryMock;
+        private Mock<ICourseRepository> _courseRepositoryMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<IExamRepository> _examRepositoryMock;
@@ -44,6 +45,7 @@ namespace Guts.Business.Tests.Services
             _studentCourseProfileRepositoryMock = new Mock<IStudentCourseProfileRepository>();
             _courseGamificationConfigRepositoryMock = new Mock<ICourseGamificationConfigRepository>();
             _courseClassGroupRepositoryMock = new Mock<ICourseClassGroupRepository>();
+            _courseRepositoryMock = new Mock<ICourseRepository>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _examRepositoryMock = new Mock<IExamRepository>();
@@ -59,6 +61,7 @@ namespace Guts.Business.Tests.Services
                 _studentCourseProfileRepositoryMock.Object,
                 _courseGamificationConfigRepositoryMock.Object,
                 _courseClassGroupRepositoryMock.Object,
+                _courseRepositoryMock.Object,
                 _assignmentRepositoryMock.Object,
                 _periodRepositoryMock.Object,
                 _examRepositoryMock.Object,
@@ -419,6 +422,152 @@ namespace Guts.Business.Tests.Services
 
             Assert.That(result, Is.Empty);
             _courseClassGroupRepositoryMock.Verify(r => r.GetByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task AwardWeeklySprintBadgesAsync_ShouldAwardSprintGoldAndRankBadges_OnlyIfXpGreaterThanZero()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int year = 2026;
+            const int weekNumber = 43;
+            // Week 43 of 2026: Monday Oct 19 to Sunday Oct 25. Friday cutoff: Oct 23, 23:59:59
+            var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
+            var weekendEventTime = new DateTime(2026, 10, 24, 10, 0, 0, DateTimeKind.Utc); // Saturday (after Friday cutoff)
+
+            var course = new Course { Id = courseId, Code = "CSharp" };
+            _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsWeeklyStreakEnabled = true,
+                    IsLeaderboardEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            var s1 = new StudentCourseProfile(1, courseId, periodId);
+            s1.AwardPassedTestXp(101, eventTime); // 10 XP
+            s1.AwardAssignmentBonus(201, eventTime); // +50 XP -> 60 XP total
+
+            var s2 = new StudentCourseProfile(2, courseId, periodId);
+            s2.AwardAssignmentBonus(202, eventTime); // 50 XP
+
+            var s3 = new StudentCourseProfile(3, courseId, periodId);
+            s3.AwardPassedTestXp(103, eventTime); // 10 XP
+            s3.AwardPassedTestXp(104, eventTime); // +10 XP
+            s3.AwardPassedTestXp(105, eventTime); // +10 XP
+            s3.AwardPassedTestXp(106, eventTime); // +10 XP -> 40 XP total
+
+            var s4 = new StudentCourseProfile(4, courseId, periodId);
+            s4.AwardPassedTestXp(107, eventTime); // 10 XP
+            s4.AwardPassedTestXp(108, eventTime); // +10 XP
+            s4.AwardPassedTestXp(109, eventTime); // +10 XP -> 30 XP total
+
+            var s5 = new StudentCourseProfile(5, courseId, periodId);
+            s5.AwardPassedTestXp(110, eventTime); // 10 XP total
+
+            var s6ZeroXp = new StudentCourseProfile(6, courseId, periodId); // 0 XP
+
+            var s7WeekendXp = new StudentCourseProfile(7, courseId, periodId);
+            s7WeekendXp.AwardAssignmentBonus(207, weekendEventTime); // 50 XP on Saturday -> AFTER Friday cutoff!
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+                .ReturnsAsync(new List<StudentCourseProfile> { s1, s2, s3, s4, s5, s6ZeroXp, s7WeekendXp });
+            _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+                .ReturnsAsync((StudentCourseProfile p) => p);
+
+            await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+            // Student 1: Rank 1 (Top score + green test)
+            Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.True);
+            Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.True);
+            Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
+            Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
+            Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+            Assert.That(s1.Badges.First(b => b.BadgeType == BadgeType.SprintGold).EarnedAt,
+                Is.EqualTo(new DateTime(2026, 10, 23, 23, 59, 59, DateTimeKind.Utc)));
+
+            // Student 2: Rank 2
+            Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
+            Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.True);
+            Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
+            Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
+            Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+
+            // Student 3: Rank 3 -> 3 badges (Bronze, Top 4, Top 5)
+            Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
+            Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
+            Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
+            Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
+            Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+
+            // Student 4: Rank 4 -> 2 badges (Top 4, Top 5)
+            Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
+            Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
+            Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+
+            // Student 5: Rank 5 -> 1 badge (Top 5)
+            Assert.That(s5.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
+            Assert.That(s5.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+
+            // Student 6: 0 XP -> MUST NOT receive any sprint badges!
+            Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
+            Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
+            Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
+            Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
+            Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.False);
+
+            // Student 7: Event after Friday cutoff -> MUST NOT receive any sprint badges!
+            Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
+            Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
+            Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
+            Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
+            Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.False);
+
+            // Verify opted-in profiles were only retrieved once
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId), Times.Once);
+        }
+
+        [Test]
+        public async Task AwardWeeklySprintBadgesAsync_WhenGamificationDisabled_ShouldNotAwardBadges()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int year = 2026;
+            const int weekNumber = 43;
+
+            var course = new Course { Id = courseId, Code = "CSharp" };
+            _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = false,
+                    IsWeeklyStreakEnabled = true,
+                    IsLeaderboardEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public void GetBadgeMetadata_ShouldReturnAll15BadgeMetadataEntries()
+        {
+            var badges = _service.GetBadgeMetadata();
+
+            Assert.That(badges, Is.Not.Null);
+            Assert.That(badges.Count, Is.EqualTo(15));
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstSpark && b.Icon == "🌱"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintGold && b.Icon == "🥇"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintSilver && b.Icon == "🥈"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintBronze && b.Icon == "🥉"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop4 && b.Icon == "🎖️"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop5 && b.Icon == "⭐"), Is.True);
+            Assert.That(badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse && b.Icon == "🤝"), Is.True);
+            Assert.That(badges.All(b => b.Type == (int)b.BadgeType), Is.True);
         }
     }
 }

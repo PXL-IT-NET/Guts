@@ -9,6 +9,7 @@ import {
   IClassGroupLeaderboardEntryModel,
   ICourseGamificationConfigModel,
   ICourseClassGroupModel,
+  IBadgeMetadataModel,
 } from "../viewmodels/gamification.model";
 import { GetResult, PostResult, CreateResult } from "../util/result";
 import { PeriodProvider } from "./period.provider";
@@ -185,6 +186,17 @@ export class GamificationService {
         map(() => PostResult.success()),
         catchError((err: HttpErrorResponse) =>
           of(PostResult.fromHttpErrorResponse(err)),
+        ),
+      );
+  }
+
+  public getBadgeMetadata(): Observable<GetResult<IBadgeMetadataModel[]>> {
+    return this.http
+      .get<IBadgeMetadataModel[]>("api/gamification/badges")
+      .pipe(
+        map((model) => GetResult.success(model)),
+        catchError((err: HttpErrorResponse) =>
+          of(GetResult.fromHttpErrorResponse<IBadgeMetadataModel[]>(err)),
         ),
       );
   }

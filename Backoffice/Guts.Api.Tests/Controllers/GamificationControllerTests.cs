@@ -149,5 +149,21 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(actionResult, Is.InstanceOf<NoContentResult>());
             _gamificationServiceMock.Verify(s => s.DeleteCourseClassGroupAsync(CourseId, classGroupId), Times.Once);
         }
+
+        [Test]
+        public void GetBadgeMetadata_ShouldCallServiceAndReturnOkWithBadges()
+        {
+            var badgeList = new List<BadgeMetadataDto>
+            {
+                new BadgeMetadataDto { BadgeType = Domain.GamificationAggregate.BadgeType.FirstSpark, Name = "First Spark", Icon = "🌱" }
+            };
+            _gamificationServiceMock.Setup(s => s.GetBadgeMetadata()).Returns(badgeList);
+
+            var actionResult = _controller.GetBadgeMetadata();
+
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult.Value, Is.EqualTo(badgeList));
+        }
     }
 }

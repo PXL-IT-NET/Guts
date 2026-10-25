@@ -13,6 +13,15 @@ namespace Guts.Business.Dtos.Gamification
         public DateTime EarnedAt { get; set; }
     }
 
+    public class BadgeMetadataDto
+    {
+        public BadgeType BadgeType { get; set; }
+        public int Type => (int)BadgeType;
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Icon { get; set; }
+    }
+
     public class RecentXpEventDto
     {
         public string Description { get; set; }

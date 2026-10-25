@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Business.Dtos.Gamification;
@@ -18,5 +19,7 @@ namespace Guts.Business.Services
         Task<IReadOnlyList<CourseClassGroupDto>> GetCourseClassGroupsAsync(int courseId, int? periodId = null);
         Task<CourseClassGroupDto> AddCourseClassGroupAsync(int courseId, string name, int? periodId = null);
         Task DeleteCourseClassGroupAsync(int courseId, int classGroupId);
+        Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null);
+        IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata();
     }
 }

@@ -6,6 +6,14 @@ export interface IStudentBadgeModel {
   earnedAt: string;
 }
 
+export interface IBadgeMetadataModel {
+  badgeType: number;
+  type?: number;
+  name: string;
+  description: string;
+  icon: string;
+}
+
 export interface IRecentXpEventModel {
   description: string;
   xpEarned: number;

@@ -4,7 +4,6 @@ namespace Guts.Domain.GamificationAggregate
     {
         FirstSpark = 1,
         SpeedDemon = 2,
-        FlawlessRun = 3,
         CleanSweep = 4,
         NightOwl = 5,
         EarlyBird = 6,
@@ -12,8 +11,12 @@ namespace Guts.Domain.GamificationAggregate
         CenturyClub = 8,
         OnFire = 9,
         IronWill = 10,
-        SprintChampion = 11,
-        TeamPowerhouse = 12
+        SprintGold = 11,
+        TeamPowerhouse = 12,
+        SprintSilver = 13,
+        SprintBronze = 14,
+        SprintTop4 = 15,
+        SprintTop5 = 16
     }
 }
 
