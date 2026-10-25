@@ -22,8 +22,11 @@ For a high-level overview of the entire GUTS repository and client libraries, se
 4. **Write Tests for Frontend Functionality**:
    - Changes to the Angular SPA (`Guts.Web/ClientApp`) must include unit tests (`*.spec.ts`) covering component behavior, user interactions, and service logic.
    - Verify frontend changes by running `npm test -- --watch=false` inside `Guts.Web/ClientApp`.
-5. ** Fix bugs by writing a failing test first**:
+5. **Fix bugs by writing a failing test first**:
    - When fixing a bug, first write a unit test that reproduces the bug, then implement the fix and verify that the test passes.
+6. **Build, Test, and SonarQube Quality Checks**:
+   - The solution must build cleanly, and all tests must pass.
+   - Start the SonarQube container, run Sonar checks, and fix any reported issues or code smells before completing the task.
 
 ---
 
@@ -86,3 +89,11 @@ Guts.Common         ──► Design-by-Contract utilities & shared extensions
   ```powershell
   npm test -- --watch=false
   ```
+
+### SonarQube Quality Analysis
+
+- Start the SonarQube container (if not already running) and execute code quality & coverage analysis from `Backoffice/`:
+  ```powershell
+  .\run-sonarqube.ps1 -StartServer
+  ```
+- Review the analysis results and resolve any reported bugs, vulnerabilities, security hotspots, or code smells.
