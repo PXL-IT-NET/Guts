@@ -180,8 +180,10 @@ namespace Guts.Business.Services
                 Events = recentEventDtos
             };
 
-            profile.RecordLeaderboardVisit(DateTime.UtcNow);
-            await _studentCourseProfileRepository.UpdateAsync(profile);
+            if (profile.RecordLeaderboardVisit(DateTime.UtcNow))
+            {
+                await _studentCourseProfileRepository.UpdateAsync(profile);
+            }
 
             var dto = MapToProfileDto(profile);
             dto.LastLeaderboardVisitDate = previousVisit;
@@ -206,6 +208,15 @@ namespace Guts.Business.Services
             {
                 profile.Enroll(enrollDto.ShowInLeaderBoard, enrollDto.Pseudonym, enrollDto.Avatar, enrollDto.ClassGroupId, enrollDto.UsePseudonym);
                 profile = await _studentCourseProfileRepository.UpdateAsync(profile);
+            }
+
+            if (profile.ClassGroupId.HasValue && (profile.ClassGroup == null || profile.ClassGroup.Id != profile.ClassGroupId.Value))
+            {
+                profile.ClassGroup = await _courseClassGroupRepository.GetByIdAsync(profile.ClassGroupId.Value);
+            }
+            else if (!profile.ClassGroupId.HasValue)
+            {
+                profile.ClassGroup = null;
             }
 
             if (profile.User == null)

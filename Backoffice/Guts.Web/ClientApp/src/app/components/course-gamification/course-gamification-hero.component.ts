@@ -16,6 +16,8 @@ import {
   IStudentGamificationProfileModel,
   ICourseClassGroupModel,
   IEnrollStudentModel,
+  AVAILABLE_AVATARS,
+  IAvatarModel,
 } from "../../viewmodels/gamification.model";
 import { UserProfile } from "../../viewmodels/user.model";
 
@@ -34,6 +36,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   @Output() public profileUpdated = new EventEmitter<IStudentGamificationProfileModel>();
 
   private _profile = signal<IStudentGamificationProfileModel | null>(null);
+  @Input()
   public get profile(): IStudentGamificationProfileModel | null {
     return this._profile();
   }
@@ -71,16 +74,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     this._editModel.set(v);
   }
 
-  public availableAvatars = [
-    { id: "CodeCat", label: "Code Cat", icon: "🐱" },
-    { id: "DebugOwl", label: "Debug Owl", icon: "🦉" },
-    { id: "BitBot", label: "Bit Bot", icon: "🤖" },
-    { id: "SyntaxFox", label: "Syntax Fox", icon: "🦊" },
-    { id: "LaunchRocket", label: "Launch Rocket", icon: "🚀" },
-    { id: "Wizard", label: "Code Wizard", icon: "🧙" },
-    { id: "JavaBeast", label: "Coffee Beast", icon: "☕" },
-    { id: "SharpCoder", label: "Sharp Coder", icon: "⚡" },
-  ];
+  public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
   constructor(
     private gamificationService: GamificationService,
@@ -92,13 +86,17 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     this.authService.getUserProfile().subscribe((p) => {
       this.userProfile = p;
     });
-    this.loadProfile();
+    if (!this.profile) {
+      this.loadProfile();
+    }
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
     if ((changes["courseId"] && !changes["courseId"].firstChange) ||
         (changes["periodId"] && !changes["periodId"].firstChange)) {
-      this.loadProfile();
+      if (!this.profile) {
+        this.loadProfile();
+      }
     }
   }
 
@@ -128,6 +126,12 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     if (this.courseId <= 0) return;
     this.gamificationService.enroll(this.courseId, this.editModel, this.periodId).subscribe((res) => {
       if (res.success && res.value) {
+        if (!res.value.classGroupName && res.value.classGroupId) {
+          const matchedGroup = this.classGroups.find((cg) => cg.id === res.value.classGroupId);
+          if (matchedGroup) {
+            res.value.classGroupName = matchedGroup.name;
+          }
+        }
         this.profile = res.value;
         this.showSettingsModal = false;
         this.toastr.success("Gamer settings updated successfully!", "Success");
@@ -145,14 +149,14 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
 
   public getDisplayName(): string {
     if (!this.profile) return "";
-    if (this.profile.usePseudonym && this.profile.pseudonym) {
-      return this.profile.pseudonym;
+    if (this.profile.usePseudonym) {
+      return this.profile.pseudonym || "";
     }
     const fullName = `${this.profile.firstName || ""} ${this.profile.lastName || ""}`.trim();
     if (fullName) {
       return fullName;
     }
-    return this.profile.pseudonym || "";
+    return this.userProfile?.email || this.profile.pseudonym || "";
   }
 }
 

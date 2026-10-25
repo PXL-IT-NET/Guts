@@ -204,6 +204,8 @@ namespace Guts.Business.Tests.Services
             };
             _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId)).ReturnsAsync(profile);
             _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>())).ReturnsAsync((StudentCourseProfile p) => p);
+            var classGroup = new CourseClassGroup("1TIN-C", courseId, periodId) { Id = 3 };
+            _courseClassGroupRepositoryMock.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(classGroup);
 
             var enrollDto = new EnrollStudentDto
             {
@@ -221,6 +223,7 @@ namespace Guts.Business.Tests.Services
             Assert.That(result.Pseudonym, Is.EqualTo("ApexDev"));
             Assert.That(result.Avatar, Is.EqualTo("SyntaxFox"));
             Assert.That(result.ClassGroupId, Is.EqualTo(3));
+            Assert.That(result.ClassGroupName, Is.EqualTo("1TIN-C"));
             Assert.That(result.FirstName, Is.EqualTo("Bob"));
             Assert.That(result.LastName, Is.EqualTo("Builder"));
         }
@@ -315,6 +318,30 @@ namespace Guts.Business.Tests.Services
             Assert.That(result.RecentGains.Events.Count, Is.EqualTo(1));
             Assert.That(result.RecentGains.Events[0].XpEarned, Is.EqualTo(50));
             _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.Is<StudentCourseProfile>(p => p.LastLeaderboardVisitDate.HasValue && p.LastLeaderboardVisitDate.Value > previousVisit)), Times.Once);
+        }
+
+        [Test]
+        public async Task GetStudentCourseProfileAsync_WhenLastVisitWithin10Minutes_ShouldNotUpdateLeaderboardVisitDate()
+        {
+            const int userId = 5;
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var profile = new StudentCourseProfile(userId, courseId, periodId)
+            {
+                User = new User { FirstName = "Bob", LastName = "Builder" }
+            };
+            var previousVisit = DateTime.UtcNow.AddMinutes(-5);
+            profile.RecordLeaderboardVisit(previousVisit);
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+                .ReturnsAsync(profile);
+
+            var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.LastLeaderboardVisitDate, Is.EqualTo(previousVisit));
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
         }
 
         [Test]

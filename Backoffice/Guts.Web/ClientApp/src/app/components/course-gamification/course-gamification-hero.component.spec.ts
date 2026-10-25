@@ -83,6 +83,23 @@ describe("CourseGamificationHeroComponent", () => {
     expect(gamificationServiceSpy.getProfile).toHaveBeenCalledWith(10, undefined);
   });
 
+  it("should not call getProfile when profile input is already provided", () => {
+    gamificationServiceSpy.getProfile.calls.reset();
+    const testFixture = TestBed.createComponent(CourseGamificationHeroComponent);
+    const testComponent = testFixture.componentInstance;
+    testComponent.courseId = 10;
+    testComponent.profile = mockProfile;
+    testFixture.detectChanges();
+
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+  });
+
+  it("should provide exactly 20 distinct avatars", () => {
+    expect(component.availableAvatars.length).toBe(20);
+    const ids = new Set(component.availableAvatars.map((a) => a.id));
+    expect(ids.size).toBe(20);
+  });
+
   it("should open settings modal and populate editModel", () => {
     component.openSettings();
     expect(component.showSettingsModal).toBeTrue();
@@ -100,6 +117,25 @@ describe("CourseGamificationHeroComponent", () => {
     expect(toastrSpy.success).toHaveBeenCalled();
     expect(component.showSettingsModal).toBeFalse();
     expect(component.profileUpdated.emit).toHaveBeenCalledWith(mockProfile);
+  });
+
+  it("should update class group badge when saving settings with new class group", () => {
+    component.classGroups = [{ id: 2, name: "1TIN-B", courseId: 10, periodId: 1 }];
+    const updatedProfileWithoutName: IStudentGamificationProfileModel = {
+      ...mockProfile,
+      classGroupId: 2,
+      classGroupName: undefined,
+    };
+    gamificationServiceSpy.enroll.and.returnValue(of(GetResult.success(updatedProfileWithoutName)));
+
+    component.openSettings();
+    component.editModel.classGroupId = 2;
+    component.saveSettings();
+
+    expect(component.profile?.classGroupName).toBe("1TIN-B");
+    fixture.detectChanges();
+    const badgeEl = fixture.nativeElement.querySelector(".badge.bg-secondary");
+    expect(badgeEl.textContent.trim()).toBe("1TIN-B");
   });
 
   it("should have centering classes on the avatar element", () => {
@@ -128,6 +164,7 @@ describe("CourseGamificationHeroComponent", () => {
     const alertEl = fixture.nativeElement.querySelector("#recentGainsAlert");
     expect(alertEl).toBeTruthy();
     expect(alertEl.textContent).toContain("+60 XP earned since your last visit");
+    expect(alertEl.textContent).toMatch(/Last visited on \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/);
     expect(alertEl.textContent).toContain("Completed assignment bonus");
     expect(alertEl.textContent).toContain("Passed test #1");
   });
@@ -146,6 +183,7 @@ describe("CourseGamificationHeroComponent", () => {
     const infoEl = fixture.nativeElement.querySelector("#noRecentGainsInfo");
     expect(infoEl).toBeTruthy();
     expect(infoEl.textContent).toContain("Last leaderboard visit");
+    expect(infoEl.textContent).toMatch(/Last leaderboard visit: \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/);
   });
 
   it("should display pseudonym when usePseudonym is true", () => {

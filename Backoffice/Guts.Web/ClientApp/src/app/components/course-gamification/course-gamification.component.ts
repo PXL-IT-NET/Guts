@@ -129,23 +129,30 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       this.adjustActiveTabForConfig();
     });
 
-    this.periodSub = this.periodProvider.period$.subscribe((period) => {
-      if (period) {
-        this.periodId = period.id;
-        this.loadData();
-      }
-    });
-
     const parentId = this.route.parent?.snapshot.params["courseId"];
     const ownId = this.route.snapshot.params["courseId"];
     this.courseId = +(parentId ?? ownId ?? 0);
 
-    if (this.courseId > 0) {
+    let initialLoadDone = false;
+    this.periodSub = this.periodProvider.period$.subscribe((period) => {
+      if (period) {
+        const periodChanged = this.periodId !== period.id;
+        this.periodId = period.id;
+        if (this.courseId > 0 && (periodChanged || !initialLoadDone)) {
+          initialLoadDone = true;
+          this.loadData();
+        }
+      }
+    });
+
+    if (!initialLoadDone && this.courseId > 0) {
+      initialLoadDone = true;
       this.loadData();
-    } else {
+    } else if (this.courseId <= 0) {
       this.route.params.subscribe((params) => {
         this.courseId = +params["courseId"] || 0;
-        if (this.courseId > 0) {
+        if (this.courseId > 0 && !initialLoadDone) {
+          initialLoadDone = true;
           this.loadData();
         }
       });
@@ -205,6 +212,12 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   }
 
   public onProfileUpdated(profile: IStudentGamificationProfileModel): void {
+    if (!profile.classGroupName && profile.classGroupId) {
+      const group = this.classGroups.find((cg) => cg.id === profile.classGroupId);
+      if (group) {
+        profile.classGroupName = group.name;
+      }
+    }
     this.profile = profile;
     this.checkClassSelectionRequirement();
   }

@@ -136,6 +136,18 @@ describe("CourseGamificationComponent", () => {
     expect(component.config?.isGamificationEnabled).toBeTrue();
   });
 
+  it("should only retrieve profile once on initialization even with active period", () => {
+    component.ngOnDestroy();
+    gamificationServiceSpy.getProfile.calls.reset();
+    periodProvider.period = { id: 1, description: "2026-2027", isActive: true } as any;
+
+    const testFixture = TestBed.createComponent(CourseGamificationComponent);
+    testFixture.detectChanges();
+
+    expect(gamificationServiceSpy.getProfile).toHaveBeenCalledTimes(1);
+    testFixture.componentInstance.ngOnDestroy();
+  });
+
   it("should hide class championship if there are no classes", () => {
     component.classGroups = [];
     expect(component.hasClasses).toBeFalse();

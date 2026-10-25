@@ -89,3 +89,32 @@ export interface IEnrollStudentModel {
   avatar: string;
   classGroupId?: number | null;
 }
+
+export interface IAvatarModel {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+export const AVAILABLE_AVATARS: IAvatarModel[] = [
+  { id: "CodeCat", label: "Code Cat", icon: "🐱" },
+  { id: "DebugOwl", label: "Debug Owl", icon: "🦉" },
+  { id: "BitBot", label: "Bit Bot", icon: "🤖" },
+  { id: "SyntaxFox", label: "Syntax Fox", icon: "🦊" },
+  { id: "LaunchRocket", label: "Launch Rocket", icon: "🚀" },
+  { id: "Wizard", label: "Code Wizard", icon: "🧙" },
+  { id: "JavaBeast", label: "Coffee Beast", icon: "☕" },
+  { id: "SharpCoder", label: "Sharp Coder", icon: "⚡" },
+  { id: "CyberNinja", label: "Cyber Ninja", icon: "🥷" },
+  { id: "BugHunter", label: "Bug Hunter", icon: "🐞" },
+  { id: "DevDragon", label: "Dev Dragon", icon: "🐉" },
+  { id: "PixelPanda", label: "Pixel Panda", icon: "🐼" },
+  { id: "CodeMonkey", label: "Code Monkey", icon: "🐵" },
+  { id: "TerminalAlien", label: "Terminal Alien", icon: "👽" },
+  { id: "StackUnicorn", label: "Stack Unicorn", icon: "🦄" },
+  { id: "BinaryGhost", label: "Binary Ghost", icon: "👻" },
+  { id: "GitOctopus", label: "Git Octopus", icon: "🐙" },
+  { id: "TurboCheetah", label: "Turbo Cheetah", icon: "🐆" },
+  { id: "LogicLion", label: "Logic Lion", icon: "🦁" },
+  { id: "KeyboardKoala", label: "Keyboard Koala", icon: "🐨" },
+];

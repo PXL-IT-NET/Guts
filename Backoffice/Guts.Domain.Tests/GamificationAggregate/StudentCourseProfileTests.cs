@@ -62,9 +62,38 @@ namespace Guts.Domain.Tests.GamificationAggregate
             Assert.That(profile.LastLeaderboardVisitDate, Is.Null);
 
             var visitTime = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
-            profile.RecordLeaderboardVisit(visitTime);
+            bool updated = profile.RecordLeaderboardVisit(visitTime);
 
+            Assert.That(updated, Is.True);
             Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(visitTime));
+        }
+
+        [Test]
+        public void RecordLeaderboardVisit_WhenWithin10Minutes_ShouldNotUpdateDateAndReturnFalse()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var initialVisit = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
+            profile.RecordLeaderboardVisit(initialVisit);
+
+            var secondVisit = initialVisit.AddMinutes(5);
+            bool updated = profile.RecordLeaderboardVisit(secondVisit);
+
+            Assert.That(updated, Is.False);
+            Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(initialVisit));
+        }
+
+        [Test]
+        public void RecordLeaderboardVisit_WhenMoreThan10MinutesLater_ShouldUpdateDateAndReturnTrue()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var initialVisit = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
+            profile.RecordLeaderboardVisit(initialVisit);
+
+            var secondVisit = initialVisit.AddMinutes(11);
+            bool updated = profile.RecordLeaderboardVisit(secondVisit);
+
+            Assert.That(updated, Is.True);
+            Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(secondVisit));
         }
 
         [Test]

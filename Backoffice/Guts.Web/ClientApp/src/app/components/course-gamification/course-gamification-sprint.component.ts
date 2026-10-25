@@ -8,7 +8,11 @@ import {
   signal,
 } from "@angular/core";
 import { GamificationService } from "../../services/gamification.service";
-import { ILeaderboardEntryModel } from "../../viewmodels/gamification.model";
+import {
+  ILeaderboardEntryModel,
+  AVAILABLE_AVATARS,
+  IAvatarModel,
+} from "../../viewmodels/gamification.model";
 
 @Component({
   selector: "app-course-gamification-sprint",
@@ -36,16 +40,7 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
     this._loading.set(v);
   }
 
-  public availableAvatars = [
-    { id: "CodeCat", label: "Code Cat", icon: "🐱" },
-    { id: "DebugOwl", label: "Debug Owl", icon: "🦉" },
-    { id: "BitBot", label: "Bit Bot", icon: "🤖" },
-    { id: "SyntaxFox", label: "Syntax Fox", icon: "🦊" },
-    { id: "LaunchRocket", label: "Launch Rocket", icon: "🚀" },
-    { id: "Wizard", label: "Code Wizard", icon: "🧙" },
-    { id: "JavaBeast", label: "Coffee Beast", icon: "☕" },
-    { id: "SharpCoder", label: "Sharp Coder", icon: "⚡" },
-  ];
+  public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
   constructor(private gamificationService: GamificationService) {}
 

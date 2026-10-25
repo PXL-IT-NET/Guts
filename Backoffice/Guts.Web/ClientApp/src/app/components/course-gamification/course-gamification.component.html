@@ -52,11 +52,12 @@
       </div>
     } @else {
       <!-- Hero Card & Profile Overview (only shown once class is selected, and when gamification is enabled or user is teacher) -->
-      @if (config?.isGamificationEnabled || userProfile.isTeacher()) {
+      @if ((config?.isGamificationEnabled || userProfile.isTeacher()) && profile) {
         <app-course-gamification-hero
           [courseId]="courseId"
           [periodId]="periodId"
           [classGroups]="classGroups"
+          [profile]="profile"
           (profileLoaded)="onProfileLoaded($event)"
           (profileUpdated)="onProfileUpdated($event)"
         ></app-course-gamification-hero>

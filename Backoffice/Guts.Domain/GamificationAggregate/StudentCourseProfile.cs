@@ -91,9 +91,15 @@ namespace Guts.Domain.GamificationAggregate
             ShowInLeaderBoard = true;
         }
 
-        public void RecordLeaderboardVisit(DateTime visitDateTime)
+        public bool RecordLeaderboardVisit(DateTime visitDateTime)
         {
+            if (LastLeaderboardVisitDate.HasValue && (visitDateTime - LastLeaderboardVisitDate.Value) <= TimeSpan.FromMinutes(10))
+            {
+                return false;
+            }
+
             LastLeaderboardVisitDate = visitDateTime;
+            return true;
         }
 
         public bool AwardPassedTestXp(int testId, DateTime timestamp, bool isStreakEnabled = true, bool isBadgesEnabled = true)
