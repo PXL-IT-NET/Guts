@@ -1,0 +1,397 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Guts.Business.Dtos.Gamification;
+using Guts.Business.Repositories;
+using Guts.Business.Services;
+using Guts.Common;
+using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.ExamAggregate;
+using Guts.Domain.GamificationAggregate;
+using Guts.Domain.PeriodAggregate;
+using Guts.Domain.TestAggregate;
+using Guts.Domain.TestRunAggregate;
+using Guts.Domain.TopicAggregate;
+using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.UserAggregate;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NUnit.Framework;
+
+namespace Guts.Business.Tests.Services
+{
+    [TestFixture]
+    public class GamificationServiceTests
+    {
+        private GamificationService _service;
+        private Mock<IStudentCourseProfileRepository> _studentCourseProfileRepositoryMock;
+        private Mock<ICourseGamificationConfigRepository> _courseGamificationConfigRepositoryMock;
+        private Mock<ICourseClassGroupRepository> _courseClassGroupRepositoryMock;
+        private Mock<IAssignmentRepository> _assignmentRepositoryMock;
+        private Mock<IPeriodRepository> _periodRepositoryMock;
+        private Mock<IExamRepository> _examRepositoryMock;
+        private Mock<IStudentCourseProfileFactory> _studentCourseProfileFactoryMock;
+        private Mock<ICourseClassGroupFactory> _courseClassGroupFactoryMock;
+        private Mock<ILogger<GamificationService>> _loggerMock;
+
+        private Mock<IPeriod> _periodMock;
+
+        [SetUp]
+        public void Setup()
+        {
+            _studentCourseProfileRepositoryMock = new Mock<IStudentCourseProfileRepository>();
+            _courseGamificationConfigRepositoryMock = new Mock<ICourseGamificationConfigRepository>();
+            _courseClassGroupRepositoryMock = new Mock<ICourseClassGroupRepository>();
+            _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
+            _periodRepositoryMock = new Mock<IPeriodRepository>();
+            _examRepositoryMock = new Mock<IExamRepository>();
+            _studentCourseProfileFactoryMock = new Mock<IStudentCourseProfileFactory>();
+            _courseClassGroupFactoryMock = new Mock<ICourseClassGroupFactory>();
+            _loggerMock = new Mock<ILogger<GamificationService>>();
+
+            _periodMock = new Mock<IPeriod>();
+            _periodMock.SetupGet(p => p.Id).Returns(1);
+            _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(It.IsAny<int?>())).ReturnsAsync(_periodMock.Object);
+
+            _service = new GamificationService(
+                _studentCourseProfileRepositoryMock.Object,
+                _courseGamificationConfigRepositoryMock.Object,
+                _courseClassGroupRepositoryMock.Object,
+                _assignmentRepositoryMock.Object,
+                _periodRepositoryMock.Object,
+                _examRepositoryMock.Object,
+                _studentCourseProfileFactoryMock.Object,
+                _courseClassGroupFactoryMock.Object,
+                _loggerMock.Object);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_NoPassedTests_ShouldDoNothing()
+        {
+            var testRun = new TestRun
+            {
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { Passed = false }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            _assignmentRepositoryMock.Verify(r => r.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_ExamAssignment_ShouldSkipProcessing()
+        {
+            const int assignmentId = 42;
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var testRun = new TestRun
+            {
+                AssignmentId = assignmentId,
+                UserId = 5,
+                CreateDateTime = DateTime.UtcNow,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 1, Passed = true }
+                }
+            };
+
+            var chapter = new Chapter
+            {
+                CourseId = courseId,
+                PeriodId = periodId
+            };
+
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Topic = chapter
+            };
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+
+            var examMock = new Mock<IExam>();
+            var examPartMock = new Mock<IExamPart>();
+            var assignmentEvaluationMock = new Mock<IAssignmentEvaluation>();
+            assignmentEvaluationMock.SetupGet(ae => ae.AssignmentId).Returns(assignmentId);
+            examPartMock.SetupGet(p => p.AssignmentEvaluations).Returns(new List<IAssignmentEvaluation> { assignmentEvaluationMock.Object });
+            examMock.SetupGet(e => e.Parts).Returns(new List<IExamPart> { examPartMock.Object });
+
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId))
+                .ReturnsAsync(new List<IExam> { examMock.Object });
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetByUserCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_AssignmentCompleted_FirstStudent_ShouldAwardQuickBonusAndSpeedDemonBadge()
+        {
+            const int assignmentId = 42;
+            const int courseId = 10;
+            const int periodId = 1;
+            const int userId = 5;
+
+            var testRun = new TestRun
+            {
+                AssignmentId = assignmentId,
+                UserId = userId,
+                CreateDateTime = DateTime.UtcNow,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 101, Passed = true }
+                }
+            };
+
+            var chapter = new Chapter { Id = 7, CourseId = courseId, PeriodId = periodId };
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                TopicId = 7,
+                Topic = chapter,
+                Tests = new List<Test> { new Test { Id = 101 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsBadgesEnabled = true,
+                    IsWeeklyStreakEnabled = true
+                });
+
+            var profile = new StudentCourseProfile(userId, courseId, periodId)
+            {
+                User = new User { FirstName = "Bob", LastName = "Builder" }
+            };
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+                .ReturnsAsync(profile);
+
+            // 0 students have completed it before => this student is 1st!
+            _studentCourseProfileRepositoryMock.Setup(r => r.CountAssignmentCompletionsAsync(assignmentId, courseId, periodId))
+                .ReturnsAsync(0);
+
+            _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(7))
+                .ReturnsAsync(new List<Assignment> { assignment, new Assignment { Id = 99, Tests = new List<Test> { new Test { Id = 202 } } } });
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            // 10 XP (pass test) + 50 XP (assignment bonus) + 50 XP (quick bonus for 1st) = 110 XP
+            Assert.That(profile.TotalXp, Is.EqualTo(110));
+            Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.SpeedDemon), Is.True);
+            Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly && e.XpEarned == 50), Is.True);
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
+        }
+
+        [Test]
+        public async Task EnrollStudentAsync_ValidDto_ShouldEnrollAndReturnProfileDto()
+        {
+            const int userId = 5;
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var profile = new StudentCourseProfile(userId, courseId, periodId)
+            {
+                User = new User { FirstName = "Bob", LastName = "Builder" }
+            };
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId)).ReturnsAsync(profile);
+            _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>())).ReturnsAsync((StudentCourseProfile p) => p);
+
+            var enrollDto = new EnrollStudentDto
+            {
+                ShowInLeaderBoard = true,
+                UsePseudonym = true,
+                Pseudonym = "ApexDev",
+                Avatar = "SyntaxFox",
+                ClassGroupId = 3
+            };
+
+            var result = await _service.EnrollStudentAsync(userId, courseId, enrollDto, periodId);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ShowInLeaderBoard, Is.True);
+            Assert.That(result.Pseudonym, Is.EqualTo("ApexDev"));
+            Assert.That(result.Avatar, Is.EqualTo("SyntaxFox"));
+            Assert.That(result.ClassGroupId, Is.EqualTo(3));
+            Assert.That(result.FirstName, Is.EqualTo("Bob"));
+            Assert.That(result.LastName, Is.EqualTo("Builder"));
+        }
+
+        [Test]
+        public async Task GetClassGroupLeaderboardAsync_ShouldCalculateAverageXpCorrectly()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var groupA = new CourseClassGroup("1TIN-A", courseId, periodId) { Id = 1 };
+            var groupB = new CourseClassGroup("1TIN-B", courseId, periodId) { Id = 2 };
+
+            _courseClassGroupRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
+                .ReturnsAsync(new List<CourseClassGroup> { groupA, groupB });
+
+            var student1 = new StudentCourseProfile(101, courseId, periodId);
+            student1.Enroll(true, "Student1", "CodeCat", 1, true);
+            student1.AwardAssignmentBonus(1, DateTime.UtcNow); // +50 XP
+
+            var student2 = new StudentCourseProfile(102, courseId, periodId);
+            student2.Enroll(true, "Student2", "CodeCat", 1, true);
+            student2.AwardChapterBonus(1, DateTime.UtcNow); // +100 XP
+            // Group A avg = 150 / 2 = 75
+
+            var student3 = new StudentCourseProfile(103, courseId, periodId);
+            student3.Enroll(true, "Student3", "CodeCat", 2, true);
+            student3.AwardPassedTestXp(1, DateTime.UtcNow); // +10 XP
+            // Group B avg = 10 / 1 = 10
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+                .ReturnsAsync(new List<StudentCourseProfile> { student1, student2, student3 });
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsClassCompetitionEnabled = true });
+
+            var result = await _service.GetClassGroupLeaderboardAsync(courseId, periodId);
+
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result[0].ClassGroupName, Is.EqualTo("1TIN-A"));
+            Assert.That(result[0].Rank, Is.EqualTo(1));
+            Assert.That(result[0].AverageXp, Is.EqualTo(75.0));
+            Assert.That(result[1].ClassGroupName, Is.EqualTo("1TIN-B"));
+            Assert.That(result[1].Rank, Is.EqualTo(2));
+            Assert.That(result[1].AverageXp, Is.EqualTo(10.0));
+        }
+
+        [Test]
+        public void AddCourseClassGroupAsync_DuplicateName_ShouldThrowContractException()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const string className = "1TIN-A";
+
+            _courseClassGroupRepositoryMock.Setup(r => r.GetByNameAsync(courseId, periodId, className))
+                .ReturnsAsync(new CourseClassGroup(className, courseId, periodId));
+
+            Assert.ThrowsAsync<ContractException>(async () =>
+                await _service.AddCourseClassGroupAsync(courseId, className, periodId));
+        }
+
+        [Test]
+        public async Task GetStudentCourseProfileAsync_ShouldCalculateRecentGainsAndRecordVisit()
+        {
+            const int userId = 5;
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var profile = new StudentCourseProfile(userId, courseId, periodId)
+            {
+                User = new User { FirstName = "Bob", LastName = "Builder" }
+            };
+            var previousVisit = DateTime.UtcNow.AddDays(-2);
+            profile.RecordLeaderboardVisit(previousVisit);
+
+            // Add an older event before previous visit
+            profile.AwardPassedTestXp(1, previousVisit.AddDays(-1));
+            // Add a newer event after previous visit
+            profile.AwardAssignmentBonus(10, previousVisit.AddDays(1));
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+                .ReturnsAsync(profile);
+            _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+                .ReturnsAsync((StudentCourseProfile p) => p);
+
+            var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.RecentGains, Is.Not.Null);
+            Assert.That(result.RecentGains.PreviousVisitDate, Is.EqualTo(previousVisit));
+            Assert.That(result.RecentGains.TotalXpGained, Is.EqualTo(50)); // only assignment bonus (50) is after previous visit
+            Assert.That(result.RecentGains.Events.Count, Is.EqualTo(1));
+            Assert.That(result.RecentGains.Events[0].XpEarned, Is.EqualTo(50));
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.Is<StudentCourseProfile>(p => p.LastLeaderboardVisitDate.HasValue && p.LastLeaderboardVisitDate.Value > previousVisit)), Times.Once);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_WhenGamificationDisabled_ShouldSkipProcessing()
+        {
+            const int assignmentId = 42;
+            const int courseId = 10;
+            const int periodId = 1;
+
+            var testRun = new TestRun
+            {
+                AssignmentId = assignmentId,
+                UserId = 5,
+                CreateDateTime = DateTime.UtcNow,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 1, Passed = true }
+                }
+            };
+
+            var chapter = new Chapter { CourseId = courseId, PeriodId = periodId };
+            var assignment = new Assignment { Id = assignmentId, Topic = chapter };
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+
+            // Gamification disabled in config
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = false });
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetByUserCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task GetWeeklySprintLeaderboardAsync_WhenDisabled_ShouldReturnEmptyList()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsWeeklyStreakEnabled = false });
+
+            var result = await _service.GetWeeklySprintLeaderboardAsync(courseId, periodId);
+
+            Assert.That(result, Is.Empty);
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task GetHallOfFameLeaderboardAsync_WhenDisabled_ShouldReturnEmptyList()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsLeaderboardEnabled = false });
+
+            var result = await _service.GetHallOfFameLeaderboardAsync(courseId, periodId);
+
+            Assert.That(result, Is.Empty);
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task GetClassGroupLeaderboardAsync_WhenDisabled_ShouldReturnEmptyList()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsClassCompetitionEnabled = false });
+
+            var result = await _service.GetClassGroupLeaderboardAsync(courseId, periodId);
+
+            Assert.That(result, Is.Empty);
+            _courseClassGroupRepositoryMock.Verify(r => r.GetByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+    }
+}

@@ -1,0 +1,153 @@
+@if (profile) {
+  <div class="card mb-4 border-0 shadow-sm bg-body-tertiary">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-auto text-center">
+          <div class="display-3 rounded-circle bg-primary bg-opacity-10 mb-2 d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+            <span>{{ getAvatarIcon(profile.avatar) }}</span>
+          </div>
+          <span class="badge bg-secondary">{{ profile.classGroupName || 'No Class' }}</span>
+        </div>
+        <div class="col">
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="mb-0 fw-bold">{{ getDisplayName() }}</h3>
+            @if (!profile.showInLeaderBoard) {
+              <span class="badge bg-warning text-dark">Hidden from public leaderboard</span>
+            }
+          </div>
+          <p class="text-primary fw-semibold mb-2">
+            Level {{ profile.level }} — {{ profile.levelTitle }}
+          </p>
+          <div class="d-flex align-items-center gap-3">
+            <div class="badge bg-danger bg-opacity-10 text-danger fs-6 py-2 px-3 border border-danger-subtle">
+              <span class="fs-5 me-1">🔥</span>
+              <span>{{ profile.currentWeeklyStreak }}-Week Streak</span>
+            </div>
+            <div class="badge bg-success bg-opacity-10 text-success fs-6 py-2 px-3 border border-success-subtle">
+              <span class="fs-5 me-1">⚡</span>
+              <span>{{ profile.totalXp }} XP</span>
+            </div>
+            <div class="badge bg-info bg-opacity-10 text-info fs-6 py-2 px-3 border border-info-subtle">
+              <span class="fs-5 me-1">✅</span>
+              <span>{{ profile.totalGreenTests }} Unique Green Tests</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-outline-primary" (click)="openSettings()">
+            <i class="bi bi-gear-fill me-1"></i> Gamer Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent XP Gains Insight -->
+      @if (profile.recentGains && profile.recentGains.totalXpGained > 0) {
+        <div class="alert alert-success mt-3 mb-0 d-flex flex-column gap-2" id="recentGainsAlert">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-4">🎉</span>
+              <div>
+                <strong class="d-block">
+                  +{{ profile.recentGains.totalXpGained }} XP earned since your last visit!
+                </strong>
+                @if (profile.recentGains.previousVisitDate) {
+                  <small class="text-body-secondary">
+                    Last visited on {{ profile.recentGains.previousVisitDate | date:'medium' }}
+                  </small>
+                }
+              </div>
+            </div>
+            <span class="badge bg-success fs-6">+{{ profile.recentGains.totalXpGained }} XP</span>
+          </div>
+          @if (profile.recentGains.events && profile.recentGains.events.length > 0) {
+            <ul class="list-group list-group-flush rounded mt-1 border-top pt-2">
+              @for (evt of profile.recentGains.events; track $index) {
+                <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-1 px-0 border-0">
+                  <span><i class="bi bi-check-circle-fill text-success me-2"></i>{{ evt.description }}</span>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">+{{ evt.xpEarned }} XP</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      } @else if (profile.recentGains && profile.recentGains.previousVisitDate) {
+        <div class="mt-3 text-body-secondary small" id="noRecentGainsInfo">
+          <i class="bi bi-clock-history me-1"></i>
+          <span>Last leaderboard visit: {{ profile.recentGains.previousVisitDate | date:'medium' }}. Keep pushing to earn more XP!</span>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Gamer Settings Modal -->
+@if (showSettingsModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">🎮 Gamer Profile Settings</h5>
+          <button type="button" class="btn-close" (click)="showSettingsModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Show in Leaderboard Toggle -->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="showInLeaderboardCheck" [(ngModel)]="editModel.showInLeaderBoard">
+            <label class="form-check-label fw-semibold" for="showInLeaderboardCheck">Show my score on public leaderboards</label>
+            <div class="form-text">If turned off, you can still track your personal progress, but your rank won't appear to other students.</div>
+          </div>
+
+          <!-- Use Pseudonym Toggle -->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="usePseudonymCheck" [(ngModel)]="editModel.usePseudonym">
+            <label class="form-check-label fw-semibold" for="usePseudonymCheck">Display pseudonym instead of real name</label>
+          </div>
+
+          <!-- Pseudonym Input -->
+          <div class="mb-3">
+            <label for="heroPseudonymInput" class="form-label fw-semibold">Pseudonym</label>
+            <input type="text" id="heroPseudonymInput" class="form-control" [(ngModel)]="editModel.pseudonym" maxlength="50" placeholder="e.g. CodeNinja">
+          </div>
+
+          <!-- Avatar Picker -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold d-block">Choose Your Avatar</label>
+            <div class="d-flex flex-wrap gap-2">
+              @for (av of availableAvatars; track av.id) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary p-2 d-flex flex-column align-items-center"
+                  [class.btn-primary]="editModel.avatar === av.id"
+                  [class.text-white]="editModel.avatar === av.id"
+                  (click)="editModel.avatar = av.id"
+                  style="width: 80px;"
+                >
+                  <span class="fs-3">{{ av.icon }}</span>
+                  <small style="font-size: 0.7rem;">{{ av.label }}</small>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Class Group Picker -->
+          @if (classGroups.length > 0) {
+            <div class="mb-3">
+              <label for="heroClassSelect" class="form-label fw-semibold">Class Group</label>
+              <select id="heroClassSelect" class="form-select" [(ngModel)]="editModel.classGroupId">
+                <option [ngValue]="null">-- Select Class --</option>
+                @for (cg of classGroups; track cg.id) {
+                  <option [ngValue]="cg.id">{{ cg.name }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showSettingsModal = false">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="saveSettings()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

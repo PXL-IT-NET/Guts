@@ -14,6 +14,7 @@ import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ProjectAddComponent } from "../project-add/project-add.component";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import { PeriodProvider } from "src/app/services";
+import { GamificationService } from "../../services/gamification.service";
 
 @Component({
   standalone: false,
@@ -99,6 +100,15 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._activePeriod.set(v);
   }
 
+  private _isGamificationEnabled = signal<boolean>(false);
+  public get isGamificationEnabled(): boolean {
+    return this._isGamificationEnabled();
+  }
+  public set isGamificationEnabled(v: boolean) {
+    this._isGamificationEnabled.set(v);
+  }
+
+
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
 
@@ -111,6 +121,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private toastr: ToastrService,
     private modalService: BsModalService,
+    private gamificationService: GamificationService,
   ) {
     this.course = {
       id: 0,
@@ -159,6 +170,18 @@ export class CourseComponent implements OnInit, OnDestroy {
     return (
       this.isChapterRouteActive() && this.router.url.endsWith("/testresults")
     );
+  }
+
+  public isGamificationRouteActive(): boolean {
+    return this.router.url.includes("/gamification");
+  }
+
+  public navigateToGamification() {
+    this.selectedChapter = null;
+    this.selectedExercise = null;
+    this.selectedProject = null;
+    this.selectedComponent = null;
+    void this.router.navigate(["courses", this.course.id, "gamification"]);
   }
 
   public isChapterTestResultDetailRouteActive() {
@@ -295,6 +318,16 @@ export class CourseComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.course.id !== courseId || forceReload) {
+      this.gamificationService.getConfig(courseId).subscribe((configRes) => {
+        if (configRes.success && configRes.value) {
+          this.isGamificationEnabled = configRes.value.isGamificationEnabled;
+        } else {
+          this.isGamificationEnabled = false;
+        }
+      });
+    }
+
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c)),
     );
@@ -309,6 +342,13 @@ export class CourseComponent implements OnInit, OnDestroy {
       this.loading = false;
       if (result.success) {
         this.course = result.value;
+        if (this.isGamificationRouteActive()) {
+          this.selectedChapter = null;
+          this.selectedExercise = null;
+          this.selectedProject = null;
+          this.selectedComponent = null;
+          return;
+        }
         if (this.course.chapters.length > 0) {
           //Set selected chapter
           let selectedChapter = this.course.chapters.find(

@@ -7,6 +7,7 @@ import { of, Subject } from "rxjs";
 import { PeriodProvider } from "src/app/services";
 import { AuthService } from "../../services/auth.service";
 import { CourseService } from "../../services/course.service";
+import { GamificationService } from "../../services/gamification.service";
 import {
   createModalRefSpy,
   createModalServiceSpy,
@@ -26,9 +27,24 @@ describe("CourseComponent", () => {
   let periodProvider: PeriodProvider;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let modalServiceSpy: jasmine.SpyObj<BsModalService>;
+  let gamificationServiceSpy: jasmine.SpyObj<GamificationService>;
 
   beforeEach(() => {
     routerSpy = createRouterSpy("/courses/1/chapters/Ch1/testresults");
+    gamificationServiceSpy = jasmine.createSpyObj<GamificationService>("GamificationService", ["getConfig"]);
+    gamificationServiceSpy.getConfig.and.returnValue(
+      of(
+        GetResult.success({
+          courseId: 1,
+          isGamificationEnabled: false,
+          isWeeklyStreakEnabled: false,
+          isLeaderboardEnabled: false,
+          isClassCompetitionEnabled: false,
+          isTeamSynergyEnabled: false,
+          isBadgesEnabled: false,
+        }),
+      ),
+    );
     courseServiceSpy = jasmine.createSpyObj<CourseService>("CourseService", [
       "getCourseContentsById",
     ]);
@@ -69,6 +85,7 @@ describe("CourseComponent", () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         { provide: BsModalService, useValue: modalServiceSpy },
+        { provide: GamificationService, useValue: gamificationServiceSpy },
       ],
     });
     fixture = TestBed.createComponent(CourseComponent);

@@ -12,7 +12,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",
-    "test:coverage": "ng test --watch=false --code-coverage --browsers=ChromeHeadless",
+    "test:coverage": "ng test --watch=false --code-coverage --browsers=ChromeHeadlessCI",
     "sonar": "npx --yes @sonar/scan"
   },
   "private": true,

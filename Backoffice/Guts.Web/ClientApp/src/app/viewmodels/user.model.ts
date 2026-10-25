@@ -38,6 +38,10 @@ export class UserProfile implements IUserProfile {
     return this.roles.indexOf("lector") >= 0;
   }
 
+  public isTeacher(): boolean {
+    return this.isLector();
+  }
+
   public isMemberOf(teamId: number): boolean {
     return this.teams.indexOf(teamId) >= 0;
   }

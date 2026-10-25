@@ -50,6 +50,11 @@ const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: "gamification",
+        component: c.CourseGamificationComponent,
+        canActivate: [authGuard],
+      },
+      {
         path: "chapters/:chapterCode",
         redirectTo: "chapters/:chapterCode/testresults",
         pathMatch: "full",

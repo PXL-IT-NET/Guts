@@ -19,6 +19,7 @@ namespace Guts.Business.Tests.Services
         private Random _random;
         private Mock<ITestRunRepository> _testRunRepositoryMock;
         private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+        private Mock<IGamificationService> _gamificationServiceMock;
 
         [SetUp]
         public void Setup()
@@ -27,7 +28,8 @@ namespace Guts.Business.Tests.Services
             _testRunRepositoryMock = new Mock<ITestRunRepository>();
             _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
 
-            _service = new TestRunService(_testRunRepositoryMock.Object, _solutionFileRepositoryMock.Object);
+            _gamificationServiceMock = new Mock<IGamificationService>();
+            _service = new TestRunService(_testRunRepositoryMock.Object, _solutionFileRepositoryMock.Object, _gamificationServiceMock.Object);
         }
 
         [Test]
@@ -48,6 +50,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(result, Is.Not.Null);
             _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
+            _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
             Assert.That(result, Is.EqualTo(savedTestRun));
         }
 
@@ -163,6 +166,7 @@ namespace Guts.Business.Tests.Services
             //Assert
             Assert.That(result, Is.SameAs(savedTestRun));
             _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
+            _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
             _solutionFileRepositoryMock.Verify(
                 repo => repo.GetLatestForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilePath>()),
                 Times.Never);

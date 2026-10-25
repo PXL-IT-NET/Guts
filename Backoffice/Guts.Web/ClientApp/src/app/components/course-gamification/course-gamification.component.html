@@ -1,0 +1,147 @@
+<div class="gamification-container mt-3">
+  @if (config && !config.isGamificationEnabled && !userProfile.isTeacher()) {
+    <div class="alert alert-info d-flex align-items-center p-4 shadow-sm" id="gamificationDisabledAlert">
+      <i class="bi bi-info-circle-fill fs-2 me-3 text-primary"></i>
+      <div>
+        <h5 class="alert-heading mb-1 fw-bold">Gamification is Disabled</h5>
+        <p class="mb-0 text-body-secondary">
+          Gamification features and the leaderboard are currently disabled for this course by your teacher.
+        </p>
+      </div>
+    </div>
+  } @else {
+    @if (config && !config.isGamificationEnabled && userProfile.isTeacher()) {
+      <div class="alert alert-warning d-flex align-items-center mb-4 shadow-sm" id="teacherGamificationDisabledBanner">
+        <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-warning"></i>
+        <div>
+          <strong>Gamification is currently disabled for students.</strong>
+          <span class="d-block text-body-secondary small">Students cannot view leaderboards or earn XP until you enable gamification in Teacher Controls below.</span>
+        </div>
+      </div>
+    }
+
+    <!-- Force Class Selection Guard (Students only) -->
+    @if (needsClassSelection) {
+      <div class="card border-primary shadow-sm mb-4" id="classSelectionCard">
+        <div class="card-header bg-primary text-white py-3">
+          <h5 class="mb-0 fw-bold">🏫 Select Your Class Group to View Leaderboard</h5>
+        </div>
+        <div class="card-body p-4 text-center">
+          <p class="fs-5 text-body-secondary mb-3">
+            Classes have been set up for this course. To participate in rankings and unlock the leaderboard, please select your class group below.
+          </p>
+          <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+              <label for="forceClassSelect" class="form-label fw-semibold visually-hidden">Class Group</label>
+              <select id="forceClassSelect" class="form-select form-select-lg mb-3" [(ngModel)]="selectedClassGroupId">
+                <option [ngValue]="null" disabled>-- Select Your Class Group --</option>
+                @for (cg of classGroups; track cg.id) {
+                  <option [ngValue]="cg.id">{{ cg.name }}</option>
+                }
+              </select>
+              <button
+                class="btn btn-primary btn-lg w-100"
+                [disabled]="!selectedClassGroupId"
+                (click)="confirmClassSelection()"
+              >
+                <i class="bi bi-trophy-fill me-2"></i> Join Class & Enter Arena
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Hero Card & Profile Overview (only shown once class is selected, and when gamification is enabled or user is teacher) -->
+      @if (config?.isGamificationEnabled || userProfile.isTeacher()) {
+        <app-course-gamification-hero
+          [courseId]="courseId"
+          [periodId]="periodId"
+          [classGroups]="classGroups"
+          (profileLoaded)="onProfileLoaded($event)"
+          (profileUpdated)="onProfileUpdated($event)"
+        ></app-course-gamification-hero>
+      }
+
+      <!-- Tab Navigation -->
+      <ul class="nav nav-pills mb-4 gap-2">
+        @if (config?.isWeeklyStreakEnabled) {
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="activeTab === 'sprint'" (click)="activeTab = 'sprint'">
+              <i class="bi bi-lightning-charge-fill me-1 text-warning"></i> Weekly Sprint
+            </button>
+          </li>
+        }
+        @if (config?.isLeaderboardEnabled) {
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="activeTab === 'hallOfFame'" (click)="activeTab = 'hallOfFame'">
+              <i class="bi bi-trophy-fill me-1 text-primary"></i> Course Hall of Fame
+            </button>
+          </li>
+        }
+        <!-- Hide Class Championship if feature disabled or there are no classes yet -->
+        @if (config?.isClassCompetitionEnabled && hasClasses) {
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="activeTab === 'classes'" (click)="activeTab = 'classes'">
+              <i class="bi bi-people-fill me-1 text-success"></i> Class Championship
+            </button>
+          </li>
+        }
+        @if (config?.isBadgesEnabled) {
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="activeTab === 'badges'" (click)="activeTab = 'badges'">
+              <i class="bi bi-award-fill me-1 text-danger"></i> Badges ({{ profile?.earnedBadges?.length || 0 }}/12)
+            </button>
+          </li>
+        }
+        @if (userProfile.isTeacher()) {
+          <li class="nav-item">
+            <button class="nav-link" [class.active]="activeTab === 'admin'" (click)="activeTab = 'admin'">
+              <i class="bi bi-sliders me-1"></i> Teacher Controls
+            </button>
+          </li>
+        }
+      </ul>
+
+      <!-- Subcomponent 2: Weekly Sprint -->
+      @if (activeTab === 'sprint' && config?.isWeeklyStreakEnabled) {
+        <app-course-gamification-sprint
+          [courseId]="courseId"
+          [periodId]="periodId"
+        ></app-course-gamification-sprint>
+      }
+
+      <!-- Subcomponent 3: Hall of Fame -->
+      @if (activeTab === 'hallOfFame' && config?.isLeaderboardEnabled) {
+        <app-course-gamification-hall-of-fame
+          [courseId]="courseId"
+          [periodId]="periodId"
+        ></app-course-gamification-hall-of-fame>
+      }
+
+      <!-- Subcomponent 4: Class Championship -->
+      @if (activeTab === 'classes' && config?.isClassCompetitionEnabled && hasClasses) {
+        <app-course-gamification-class-championship
+          [courseId]="courseId"
+          [periodId]="periodId"
+        ></app-course-gamification-class-championship>
+      }
+
+      <!-- Subcomponent 5: Achievement Badges -->
+      @if (activeTab === 'badges' && config?.isBadgesEnabled) {
+        <app-course-gamification-badges
+          [profile]="profile"
+        ></app-course-gamification-badges>
+      }
+
+      <!-- Subcomponent 6: Teacher Controls -->
+      @if (activeTab === 'admin' && userProfile.isTeacher()) {
+        <app-course-gamification-admin
+          [courseId]="courseId"
+          [periodId]="periodId"
+          (classesChanged)="onClassesChanged()"
+          (configChanged)="onConfigChanged($event)"
+        ></app-course-gamification-admin>
+      }
+    }
+  }
+</div>
