@@ -944,5 +944,174 @@ namespace Guts.Business.Tests.Services
             Assert.That(badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse && b.Icon == "🤝"), Is.True);
             Assert.That(badges.All(b => b.Type == (int)b.BadgeType), Is.True);
         }
+
+        [Test]
+        public async Task GetStudentCourseProfileAsync_WhenProfileDoesNotExist_ShouldCreateAndReturnDto()
+        {
+            const int userId = 5;
+            const int courseId = 10;
+            const int periodId = 1;
+            var periodMock = new Mock<IPeriod>();
+            periodMock.SetupGet(p => p.Id).Returns(periodId);
+            _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(periodMock.Object);
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+                .ReturnsAsync((StudentCourseProfile)null);
+
+            var createdProfile = new StudentCourseProfile(userId, courseId, periodId)
+            {
+                User = new User { FirstName = "Alice", LastName = "Wonder" }
+            };
+            createdProfile.AwardPassedTestXp(101, DateTime.UtcNow.AddMinutes(-5));
+            createdProfile.AwardAssignmentBonus(201, DateTime.UtcNow.AddMinutes(-4));
+            createdProfile.AwardChapterBonus(301, DateTime.UtcNow.AddMinutes(-3));
+            createdProfile.AwardTeamSynergyBonus(401, DateTime.UtcNow.AddMinutes(-2));
+
+            _studentCourseProfileFactoryMock.Setup(f => f.CreateNew(userId, courseId, periodId))
+                .Returns(createdProfile);
+            _studentCourseProfileRepositoryMock.Setup(r => r.AddAsync(createdProfile))
+                .ReturnsAsync(createdProfile);
+
+            var result = await _service.GetStudentCourseProfileAsync(userId, courseId, null);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.UserId, Is.EqualTo(userId));
+            Assert.That(result.RecentGains, Is.Not.Null);
+            Assert.That(result.RecentGains.Events.Count, Is.GreaterThanOrEqualTo(4));
+        }
+
+        [Test]
+        public async Task GetHallOfFameLeaderboardAsync_WhenEnabled_ShouldReturnOrderedLeaderboard()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsLeaderboardEnabled = true });
+
+            var periodMock = new Mock<IPeriod>();
+            periodMock.SetupGet(p => p.Id).Returns(periodId);
+            _periodRepositoryMock.Setup(r => r.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
+
+            var p1 = new StudentCourseProfile(1, courseId, periodId)
+            {
+                User = new User { FirstName = "Alice", LastName = "One" }
+            };
+            p1.AwardPassedTestXp(1, DateTime.UtcNow);
+            p1.AwardPassedTestXp(2, DateTime.UtcNow); // 20 XP
+
+            var p2 = new StudentCourseProfile(2, courseId, periodId);
+            p2.Enroll(true, "BobGhost", "Ninja", null, true); // UsePseudonym = true
+            p2.AwardPassedTestXp(3, DateTime.UtcNow); // 10 XP
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+                .ReturnsAsync(new List<StudentCourseProfile> { p2, p1 });
+
+            var result = await _service.GetHallOfFameLeaderboardAsync(courseId, 1, periodId);
+
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result[0].UserId, Is.EqualTo(1));
+            Assert.That(result[0].Score, Is.EqualTo(20));
+            Assert.That(result[0].Rank, Is.EqualTo(1));
+            Assert.That(result[0].IsCurrentUser, Is.True);
+
+            Assert.That(result[1].UserId, Is.EqualTo(2));
+            Assert.That(result[1].DisplayName, Is.EqualTo("BobGhost"));
+        }
+
+        [Test]
+        public async Task GetCourseConfigAsync_WhenConfigExists_ShouldReturnDto()
+        {
+            const int courseId = 10;
+            var config = new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsClassCompetitionEnabled = true,
+                IsTeamSynergyEnabled = true,
+                IsBadgesEnabled = true
+            };
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId)).ReturnsAsync(config);
+
+            var dto = await _service.GetCourseConfigAsync(courseId);
+
+            Assert.That(dto, Is.Not.Null);
+            Assert.That(dto.CourseId, Is.EqualTo(courseId));
+            Assert.That(dto.IsGamificationEnabled, Is.True);
+        }
+
+        [Test]
+        public async Task GetCourseConfigAsync_WhenConfigDoesNotExist_ShouldCreateDefaultAndReturnDto()
+        {
+            const int courseId = 10;
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId)).ReturnsAsync((CourseGamificationConfig)null);
+            _courseGamificationConfigRepositoryMock.Setup(r => r.AddAsync(It.IsAny<CourseGamificationConfig>()))
+                .ReturnsAsync((CourseGamificationConfig c) => c);
+
+            var dto = await _service.GetCourseConfigAsync(courseId);
+
+            Assert.That(dto, Is.Not.Null);
+            Assert.That(dto.CourseId, Is.EqualTo(courseId));
+            _courseGamificationConfigRepositoryMock.Verify(r => r.AddAsync(It.IsAny<CourseGamificationConfig>()), Times.Once);
+        }
+
+        [Test]
+        public async Task UpdateCourseConfigAsync_WhenConfigExists_ShouldUpdateAndReturnDto()
+        {
+            const int courseId = 10;
+            var existing = new CourseGamificationConfig(courseId) { IsGamificationEnabled = true };
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId)).ReturnsAsync(existing);
+            _courseGamificationConfigRepositoryMock.Setup(r => r.UpdateAsync(existing)).ReturnsAsync(existing);
+
+            var updateDto = new CourseGamificationConfigDto
+            {
+                CourseId = courseId,
+                IsGamificationEnabled = false,
+                IsWeeklyStreakEnabled = false,
+                IsLeaderboardEnabled = false,
+                IsClassCompetitionEnabled = false,
+                IsTeamSynergyEnabled = false,
+                IsBadgesEnabled = false
+            };
+
+            var result = await _service.UpdateCourseConfigAsync(courseId, updateDto);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.IsGamificationEnabled, Is.False);
+            _courseGamificationConfigRepositoryMock.Verify(r => r.UpdateAsync(existing), Times.Once);
+        }
+
+        [Test]
+        public async Task ClassGroupCrud_ShouldOperateCorrectly()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int classGroupId = 50;
+
+            var periodMock = new Mock<IPeriod>();
+            periodMock.SetupGet(p => p.Id).Returns(periodId);
+            _periodRepositoryMock.Setup(r => r.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
+
+            var group = new CourseClassGroup("1TIN-A", courseId, periodId) { Id = classGroupId };
+            _courseClassGroupRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
+                .ReturnsAsync(new List<CourseClassGroup> { group });
+
+            var groups = await _service.GetCourseClassGroupsAsync(courseId, periodId);
+            Assert.That(groups.Count, Is.EqualTo(1));
+            Assert.That(groups[0].Name, Is.EqualTo("1TIN-A"));
+
+            _courseClassGroupFactoryMock.Setup(f => f.CreateNew("1TIN-B", courseId, periodId))
+                .Returns(new CourseClassGroup("1TIN-B", courseId, periodId) { Id = 51 });
+            _courseClassGroupRepositoryMock.Setup(r => r.AddAsync(It.IsAny<CourseClassGroup>()))
+                .ReturnsAsync((CourseClassGroup g) => g);
+
+            var created = await _service.AddCourseClassGroupAsync(courseId, "1TIN-B", periodId);
+            Assert.That(created.Name, Is.EqualTo("1TIN-B"));
+
+            _courseClassGroupRepositoryMock.Setup(r => r.GetByIdAsync(classGroupId)).ReturnsAsync(group);
+            await _service.DeleteCourseClassGroupAsync(courseId, classGroupId);
+            _courseClassGroupRepositoryMock.Verify(r => r.DeleteAsync(group), Times.Once);
+        }
     }
 }

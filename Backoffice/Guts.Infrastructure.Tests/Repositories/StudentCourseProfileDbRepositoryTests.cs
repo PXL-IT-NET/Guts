@@ -66,4 +66,56 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
         Assert.That(updated.User, Is.Not.Null);
         Assert.That(updated.User.FirstName, Is.EqualTo("Jane"));
     }
+
+    [Test]
+    public async Task GetForLeaderboardByCourseAndPeriodAsync_ShouldReturnOnlyProfilesWithShowInLeaderboard()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user1 = await Seeder.SeedUserAsync("Alice", "One");
+        var user2 = await Seeder.SeedUserAsync("Bob", "Two");
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var profile1 = new StudentCourseProfile(user1.Id, course.Id, period.Id);
+            profile1.Enroll(true, "AliceAlias", "Wizard", null, false); // ShowInLeaderBoard = true
+
+            var profile2 = new StudentCourseProfile(user2.Id, course.Id, period.Id);
+            profile2.HideFromLeaderboard(); // ShowInLeaderBoard = false
+
+            seedContext.StudentCourseProfiles.AddRange(profile1, profile2);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new StudentCourseProfileDbRepository(context);
+
+        var leaderboardProfiles = await repo.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
+        Assert.That(leaderboardProfiles.Count, Is.EqualTo(1));
+        Assert.That(leaderboardProfiles[0].UserId, Is.EqualTo(user1.Id));
+    }
+
+    [Test]
+    public async Task CountAssignmentCompletionsAsync_ShouldCountOnlyCompletedEventsForAssignment()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user = await Seeder.SeedUserAsync("Charlie", "Three");
+        const int assignmentId = 42;
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
+            profile.AwardAssignmentBonus(assignmentId, System.DateTime.UtcNow, 0);
+            seedContext.StudentCourseProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new StudentCourseProfileDbRepository(context);
+
+        var count = await repo.CountAssignmentCompletionsAsync(assignmentId, course.Id, period.Id);
+        Assert.That(count, Is.EqualTo(1));
+
+        var nonExistentCount = await repo.CountAssignmentCompletionsAsync(999, course.Id, period.Id);
+        Assert.That(nonExistentCount, Is.EqualTo(0));
+    }
 }

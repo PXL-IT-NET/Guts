@@ -78,6 +78,18 @@ namespace Guts.Api.Tests.BackgroundServices
             _scopeFactoryMock.Verify(f => f.CreateScope(), Times.Once);
             _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 43, null), Times.Once);
         }
+
+        [Test]
+        public async Task StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
+        {
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await _service.StartAsync(cts.Token);
+            await _service.StopAsync(CancellationToken.None);
+
+            Assert.Pass();
+        }
     }
 }
 

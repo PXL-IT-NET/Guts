@@ -310,7 +310,7 @@ namespace Guts.Business.Services
             return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, DateTime.Now);
         }
 
-        private IReadOnlyList<LeaderboardEntryDto> GetWeeklySprintLeaderboard(IReadOnlyList<StudentCourseProfile> optedInProfiles, int currentUserId, DateTime timestamp)
+        private static List<LeaderboardEntryDto> GetWeeklySprintLeaderboard(IReadOnlyList<StudentCourseProfile> optedInProfiles, int currentUserId, DateTime timestamp)
         {
             DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(timestamp), ISOWeek.GetWeekOfYear(timestamp), DayOfWeek.Monday);
 

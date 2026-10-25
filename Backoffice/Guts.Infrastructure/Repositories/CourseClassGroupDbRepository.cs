@@ -20,6 +20,7 @@ namespace Guts.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
         public async Task<CourseClassGroup> GetByNameAsync(int courseId, int periodId, string name)
         {
             var trimmedLower = name.Trim().ToLower();

@@ -46,13 +46,19 @@ namespace Guts.Api.BackgroundServices
 
         public async Task ExecuteSprintAwardingAsync(int year, int weekNumber, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Starting weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Starting weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+            }
             using (var scope = _serviceScopeFactory.CreateScope())
             {
                 var gamificationService = scope.ServiceProvider.GetRequiredService<IGamificationService>();
                 await gamificationService.AwardWeeklySprintBadgesAsync(year, weekNumber);
             }
-            _logger.LogInformation("Completed weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Completed weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -67,7 +73,10 @@ namespace Guts.Api.BackgroundServices
 
                 if (delay > TimeSpan.Zero)
                 {
-                    _logger.LogInformation("Next sprint badge awarding scheduled for {NextRun} (in {Delay})", nextRun, delay);
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("Next sprint badge awarding scheduled for {NextRun} (in {Delay})", nextRun, delay);
+                    }
                     try
                     {
                         await Task.Delay(delay, stoppingToken);
