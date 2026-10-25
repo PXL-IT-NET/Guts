@@ -198,6 +198,32 @@ namespace Guts.Domain.Tests.GamificationAggregate
             Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
         }
 
+        [Test]
+        public void AwardTeamSynergyBonus_BadgesDisabled_ShouldAdd30XpWithoutBadge()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var now = DateTime.UtcNow;
+
+            bool result = profile.AwardTeamSynergyBonus(99, now, isBadgesEnabled: false);
+
+            Assert.That(result, Is.True);
+            Assert.That(profile.TotalXp, Is.EqualTo(30));
+            Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.False);
+        }
+
+        [Test]
+        public void AwardTeamSynergyBonus_SecondTime_ShouldReturnFalseAndNotAddDuplicateXp()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var now = DateTime.UtcNow;
+
+            profile.AwardTeamSynergyBonus(99, now);
+            bool secondResult = profile.AwardTeamSynergyBonus(99, now.AddMinutes(1));
+
+            Assert.That(secondResult, Is.False);
+            Assert.That(profile.TotalXp, Is.EqualTo(30));
+        }
+
         [TestCase(0, 1, "Byte Novice")]
         [TestCase(30, 2, "Syntax Scout")]
         [TestCase(100, 3, "Logic Apprentice")]

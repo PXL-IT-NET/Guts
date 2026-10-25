@@ -201,7 +201,7 @@ namespace Guts.Domain.GamificationAggregate
             return true;
         }
 
-        public bool AwardTeamSynergyBonus(int componentId, DateTime timestamp)
+        public bool AwardTeamSynergyBonus(int componentId, DateTime timestamp, bool isBadgesEnabled = true)
         {
             bool alreadyAwarded = Events.Any(e => e.EventType == GamificationEventType.TeamSynergy && e.TargetId == componentId);
             if (alreadyAwarded)
@@ -212,7 +212,10 @@ namespace Guts.Domain.GamificationAggregate
             const int xp = 30;
             TotalXp += xp;
             Events.Add(new GamificationEvent(Id, GamificationEventType.TeamSynergy, componentId, xp, timestamp));
-            AwardBadge(BadgeType.TeamPowerhouse, timestamp);
+            if (isBadgesEnabled)
+            {
+                AwardBadge(BadgeType.TeamPowerhouse, timestamp);
+            }
             return true;
         }
 

@@ -9,6 +9,7 @@ using Guts.Common;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Logging;
 
 namespace Guts.Business.Services
@@ -19,6 +20,7 @@ namespace Guts.Business.Services
         private readonly ICourseGamificationConfigRepository _courseGamificationConfigRepository;
         private readonly ICourseClassGroupRepository _courseClassGroupRepository;
         private readonly ICourseRepository _courseRepository;
+        private readonly IProjectTeamRepository _projectTeamRepository;
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IPeriodRepository _periodRepository;
         private readonly IExamRepository _examRepository;
@@ -50,6 +52,7 @@ namespace Guts.Business.Services
             ICourseGamificationConfigRepository courseGamificationConfigRepository,
             ICourseClassGroupRepository courseClassGroupRepository,
             ICourseRepository courseRepository,
+            IProjectTeamRepository projectTeamRepository,
             IAssignmentRepository assignmentRepository,
             IPeriodRepository periodRepository,
             IExamRepository examRepository,
@@ -61,6 +64,7 @@ namespace Guts.Business.Services
             _courseGamificationConfigRepository = courseGamificationConfigRepository;
             _courseClassGroupRepository = courseClassGroupRepository;
             _courseRepository = courseRepository;
+            _projectTeamRepository = projectTeamRepository;
             _assignmentRepository = assignmentRepository;
             _periodRepository = periodRepository;
             _examRepository = examRepository;
@@ -114,7 +118,8 @@ namespace Guts.Business.Services
                     .Select(e => e.TargetId)
                     .ToHashSet();
 
-                if (allAssignmentTestIds.Count > 0 && allAssignmentTestIds.IsSubsetOf(userPassedTestIds))
+                bool allTestsOfAssignmentPassed = allAssignmentTestIds.Count > 0 && allAssignmentTestIds.IsSubsetOf(userPassedTestIds);
+                if (allTestsOfAssignmentPassed)
                 {
                     int previousCompletions = await _studentCourseProfileRepository.CountAssignmentCompletionsAsync(assignment.Id, courseId, periodId);
                     profile.AwardAssignmentBonus(assignment.Id, testRun.CreateDateTime, previousCompletions, config.IsBadgesEnabled);
@@ -125,6 +130,64 @@ namespace Guts.Business.Services
                     if (allTopicTestIds.Count > 0 && allTopicTestIds.IsSubsetOf(userPassedTestIds))
                     {
                         profile.AwardChapterBonus(assignment.TopicId, testRun.CreateDateTime, config.IsBadgesEnabled);
+                    }
+                }
+
+                // Check team synergy bonus (for project components)
+                if (config.IsTeamSynergyEnabled && allTestsOfAssignmentPassed)
+                {
+                    var userTeams = await _projectTeamRepository.GetByUserAsync(testRun.UserId);
+                    var team = userTeams?.FirstOrDefault(t => t.ProjectId == assignment.TopicId);
+
+                    if (team?.TeamUsers != null && team.TeamUsers.Count > 0)
+                    {
+                        var teamUserIds = team.TeamUsers.Select(tu => tu.UserId).Distinct().ToList();
+
+                        var teamProfiles = new List<StudentCourseProfile>();
+                        foreach (var memberId in teamUserIds)
+                        {
+                            var memberProfile = memberId == testRun.UserId
+                                ? profile
+                                : await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(memberId, courseId, periodId);
+
+                            if (memberProfile != null)
+                            {
+                                teamProfiles.Add(memberProfile);
+                            }
+                        }
+
+                        // All team members must have made at least one test of the component green
+                        bool allMembersContributed = teamProfiles.Count == teamUserIds.Count && teamProfiles.All(p =>
+                        {
+                            var memberPassedTests = p.Events
+                                .Where(e => e.EventType == GamificationEventType.PassedTest)
+                                .Select(e => e.TargetId);
+                            return allAssignmentTestIds.Overlaps(memberPassedTests);
+                        });
+
+                        if (allMembersContributed)
+                        {
+                            // All tests of the component must be made green across the team
+                            var allTeamPassedTests = teamProfiles
+                                .SelectMany(p => p.Events
+                                    .Where(e => e.EventType == GamificationEventType.PassedTest)
+                                    .Select(e => e.TargetId))
+                                .ToHashSet();
+
+                            if (allAssignmentTestIds.IsSubsetOf(allTeamPassedTests))
+                            {
+                                foreach (var memberProfile in teamProfiles)
+                                {
+                                    if (memberProfile.AwardTeamSynergyBonus(assignment.Id, testRun.CreateDateTime, config.IsBadgesEnabled))
+                                    {
+                                        if (memberProfile.UserId != testRun.UserId)
+                                        {
+                                            await _studentCourseProfileRepository.UpdateAsync(memberProfile);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

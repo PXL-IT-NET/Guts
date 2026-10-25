@@ -11,10 +11,12 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.PeriodAggregate;
+using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -30,6 +32,7 @@ namespace Guts.Business.Tests.Services
         private Mock<ICourseGamificationConfigRepository> _courseGamificationConfigRepositoryMock;
         private Mock<ICourseClassGroupRepository> _courseClassGroupRepositoryMock;
         private Mock<ICourseRepository> _courseRepositoryMock;
+        private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
         private Mock<IAssignmentRepository> _assignmentRepositoryMock;
         private Mock<IPeriodRepository> _periodRepositoryMock;
         private Mock<IExamRepository> _examRepositoryMock;
@@ -46,6 +49,7 @@ namespace Guts.Business.Tests.Services
             _courseGamificationConfigRepositoryMock = new Mock<ICourseGamificationConfigRepository>();
             _courseClassGroupRepositoryMock = new Mock<ICourseClassGroupRepository>();
             _courseRepositoryMock = new Mock<ICourseRepository>();
+            _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
             _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
             _periodRepositoryMock = new Mock<IPeriodRepository>();
             _examRepositoryMock = new Mock<IExamRepository>();
@@ -62,6 +66,7 @@ namespace Guts.Business.Tests.Services
                 _courseGamificationConfigRepositoryMock.Object,
                 _courseClassGroupRepositoryMock.Object,
                 _courseRepositoryMock.Object,
+                _projectTeamRepositoryMock.Object,
                 _assignmentRepositoryMock.Object,
                 _periodRepositoryMock.Object,
                 _examRepositoryMock.Object,
@@ -192,6 +197,376 @@ namespace Guts.Business.Tests.Services
             Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.SpeedDemon), Is.True);
             Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly && e.XpEarned == 50), Is.True);
             _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_ComponentAllTestsGreenAndAllTeamMembersContributed_ShouldAwardTeamSynergyBonusToAllMembers()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int projectId = 20;
+            const int componentId = 50;
+            const int user1Id = 10;
+            const int user2Id = 20;
+            var now = DateTime.UtcNow;
+
+            var project = new Project(projectId) { CourseId = courseId, PeriodId = periodId };
+            var component = new Assignment
+            {
+                Id = componentId,
+                TopicId = projectId,
+                Topic = project,
+                Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsTeamSynergyEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            var teamMock = new Mock<IProjectTeam>();
+            teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
+            teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
+            {
+                new ProjectTeamUser { UserId = user1Id },
+                new ProjectTeamUser { UserId = user2Id }
+            });
+            _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
+                .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+
+            // User 2 already passed test 1 earlier
+            var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
+            profile2.AwardPassedTestXp(1, now.AddHours(-1));
+
+            // User 1 profile (already passed test 1 earlier, now submitting test run that passes test 2 to make all tests green)
+            var profile1 = new StudentCourseProfile(user1Id, courseId, periodId);
+            profile1.AwardPassedTestXp(1, now.AddHours(-1));
+
+            _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
+                .ReturnsAsync(new List<Assignment> { component });
+            _studentCourseProfileRepositoryMock.Setup(r => r.CountAssignmentCompletionsAsync(componentId, courseId, periodId))
+                .ReturnsAsync(0);
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
+
+            var testRun = new TestRun
+            {
+                AssignmentId = componentId,
+                UserId = user1Id,
+                CreateDateTime = now,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 2, Passed = true }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            // Both members should have received TeamSynergy bonus (+30 XP) and TeamPowerhouse badge
+            Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy && e.TargetId == componentId), Is.True);
+            Assert.That(profile1.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
+
+            Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy && e.TargetId == componentId), Is.True);
+            Assert.That(profile2.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
+
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile2), Times.Once);
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile1), Times.Once);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_ComponentAllTestsGreen_ButOneMemberHasZeroTests_ShouldNotAwardTeamSynergyBonus()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int projectId = 20;
+            const int componentId = 50;
+            const int user1Id = 10;
+            const int user2Id = 20;
+            var now = DateTime.UtcNow;
+
+            var project = new Project(projectId) { CourseId = courseId, PeriodId = periodId };
+            var component = new Assignment
+            {
+                Id = componentId,
+                TopicId = projectId,
+                Topic = project,
+                Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsTeamSynergyEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            var teamMock = new Mock<IProjectTeam>();
+            teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
+            teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
+            {
+                new ProjectTeamUser { UserId = user1Id },
+                new ProjectTeamUser { UserId = user2Id }
+            });
+            _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
+                .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+
+            // User 2 has NO tests passed for this component
+            var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
+
+            // User 1 passes BOTH tests 1 and 2 alone
+            var profile1 = new StudentCourseProfile(user1Id, courseId, periodId);
+            profile1.AwardPassedTestXp(1, now.AddHours(-1));
+
+            _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
+                .ReturnsAsync(new List<Assignment> { component });
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
+
+            var testRun = new TestRun
+            {
+                AssignmentId = componentId,
+                UserId = user1Id,
+                CreateDateTime = now,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 2, Passed = true }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            // Team Synergy MUST NOT be awarded because user 2 has made 0 tests green!
+            Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile2), Times.Never);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_NotAllComponentTestsGreen_ShouldNotAwardTeamSynergyBonus()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int projectId = 20;
+            const int componentId = 50;
+            const int user1Id = 10;
+            const int user2Id = 20;
+            var now = DateTime.UtcNow;
+
+            var project = new Project(projectId) { CourseId = courseId, PeriodId = periodId };
+            // Component has 3 tests, but only tests 1 and 2 are passed
+            var component = new Assignment
+            {
+                Id = componentId,
+                TopicId = projectId,
+                Topic = project,
+                Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 }, new Test { Id = 3 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsTeamSynergyEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            var teamMock = new Mock<IProjectTeam>();
+            teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
+            teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
+            {
+                new ProjectTeamUser { UserId = user1Id },
+                new ProjectTeamUser { UserId = user2Id }
+            });
+            _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
+                .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+
+            var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
+            profile2.AwardPassedTestXp(1, now.AddHours(-1));
+
+            var profile1 = new StudentCourseProfile(user1Id, courseId, periodId);
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
+
+            var testRun = new TestRun
+            {
+                AssignmentId = componentId,
+                UserId = user1Id,
+                CreateDateTime = now,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 2, Passed = true }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            // Test 3 is not green -> no team synergy bonus!
+            Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_TeamSynergyDisabled_ShouldNotAwardTeamSynergyBonus()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int projectId = 20;
+            const int componentId = 50;
+            const int user1Id = 10;
+            const int user2Id = 20;
+            var now = DateTime.UtcNow;
+
+            var project = new Project(projectId) { CourseId = courseId, PeriodId = periodId };
+            var component = new Assignment
+            {
+                Id = componentId,
+                TopicId = projectId,
+                Topic = project,
+                Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsTeamSynergyEnabled = false,
+                    IsBadgesEnabled = true
+                });
+
+            var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
+            profile2.AwardPassedTestXp(1, now.AddHours(-1));
+            var profile1 = new StudentCourseProfile(user1Id, courseId, periodId);
+            profile1.AwardPassedTestXp(1, now.AddHours(-1));
+
+            _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
+                .ReturnsAsync(new List<Assignment> { component });
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
+
+            var testRun = new TestRun
+            {
+                AssignmentId = componentId,
+                UserId = user1Id,
+                CreateDateTime = now,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 2, Passed = true }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            _projectTeamRepositoryMock.Verify(r => r.GetByUserAsync(It.IsAny<int>()), Times.Never);
+            Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_AssignmentTopicIsNull_ShouldSkipProcessing()
+        {
+            const int assignmentId = 42;
+            var testRun = new TestRun
+            {
+                AssignmentId = assignmentId,
+                UserId = 5,
+                CreateDateTime = DateTime.UtcNow,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 1, Passed = true }
+                }
+            };
+
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                Topic = null
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            _courseGamificationConfigRepositoryMock.Verify(r => r.GetByCourseIdAsync(It.IsAny<int>()), Times.Never);
+            _studentCourseProfileRepositoryMock.Verify(r => r.GetByUserCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ProcessTestRunAsync_WhenUserHasNoTeamForTopic_ShouldNotAwardTeamSynergyBonus()
+        {
+            const int courseId = 10;
+            const int periodId = 1;
+            const int chapterId = 20;
+            const int assignmentId = 50;
+            const int user1Id = 10;
+            const int user2Id = 20;
+            var now = DateTime.UtcNow;
+
+            // Topic is a Chapter (or user has no team for this topic)
+            var chapter = new Chapter { Id = chapterId, CourseId = courseId, PeriodId = periodId };
+            var assignment = new Assignment
+            {
+                Id = assignmentId,
+                TopicId = chapterId,
+                Topic = chapter,
+                Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            };
+
+            _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+            _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(chapterId)).ReturnsAsync(new List<Assignment> { assignment });
+            _examRepositoryMock.Setup(r => r.FindWithPartsAndEvaluationsAsync(courseId, periodId)).ReturnsAsync(new List<IExam>());
+            _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new CourseGamificationConfig(courseId)
+                {
+                    IsGamificationEnabled = true,
+                    IsTeamSynergyEnabled = true,
+                    IsBadgesEnabled = true
+                });
+
+            _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
+                .ReturnsAsync(new List<IProjectTeam>());
+
+            var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
+            profile2.AwardPassedTestXp(1, now.AddHours(-1));
+            var profile1 = new StudentCourseProfile(user1Id, courseId, periodId);
+            profile1.AwardPassedTestXp(1, now.AddHours(-1));
+
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
+            _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
+
+            var testRun = new TestRun
+            {
+                AssignmentId = assignmentId,
+                UserId = user1Id,
+                CreateDateTime = now,
+                TestResults = new List<TestResult>
+                {
+                    new TestResult { TestId = 2, Passed = true }
+                }
+            };
+
+            await _service.ProcessTestRunAsync(testRun);
+
+            // User has no team for this topic, so Team Synergy is not awarded
+            _projectTeamRepositoryMock.Verify(r => r.GetByUserAsync(user1Id), Times.Once);
+            Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy), Is.False);
+            _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile2), Times.Never);
         }
 
         [Test]
