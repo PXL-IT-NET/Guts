@@ -11,41 +11,27 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Business.Services.Assessment
 {
-    internal class ProjectTeamAssessmentService : IProjectTeamAssessmentService
+    internal class ProjectTeamAssessmentService(
+        IProjectTeamAssessmentRepository repository,
+        IProjectTeamAssessmentFactory factory,
+        IProjectAssessmentRepository projectAssessmentRepository,
+        IProjectTeamRepository teamRepository,
+        IAssessmentResultFactory assessmentResultFactory)
+        : IProjectTeamAssessmentService
     {
-        private readonly IProjectTeamAssessmentRepository _repository;
-        private readonly IProjectTeamAssessmentFactory _factory;
-        private readonly IProjectAssessmentRepository _projectAssessmentRepository;
-        private readonly IProjectTeamRepository _teamRepository;
-        private readonly IAssessmentResultFactory _assessmentResultFactory;
-
-        public ProjectTeamAssessmentService(
-            IProjectTeamAssessmentRepository repository,
-            IProjectTeamAssessmentFactory factory,
-            IProjectAssessmentRepository projectAssessmentRepository,
-            IProjectTeamRepository teamRepository,
-            IAssessmentResultFactory assessmentResultFactory)
-        {
-            _repository = repository;
-            _factory = factory;
-            _projectAssessmentRepository = projectAssessmentRepository;
-            _teamRepository = teamRepository;
-            _assessmentResultFactory = assessmentResultFactory;
-        }
-
         public async Task<IProjectTeamAssessment> GetOrCreateTeamAssessmentAsync(int projectAssessmentId, int projectTeamId)
         {
             IProjectTeamAssessment teamAssessment;
             try
             {
-                teamAssessment = await _repository.LoadAsync(projectAssessmentId, projectTeamId);
+                teamAssessment = await repository.LoadAsync(projectAssessmentId, projectTeamId);
             }
             catch (DataNotFoundException)
             {
                 IProjectAssessment projectAssessment;
                 try
                 {
-                    projectAssessment = await _projectAssessmentRepository.GetByIdAsync(projectAssessmentId);
+                    projectAssessment = await projectAssessmentRepository.GetByIdAsync(projectAssessmentId);
                 }
                 catch (DataNotFoundException)
                 {
@@ -55,15 +41,15 @@ namespace Guts.Business.Services.Assessment
                 IProjectTeam team;
                 try
                 {
-                    team = await _teamRepository.LoadByIdAsync(projectTeamId);
+                    team = await teamRepository.LoadByIdAsync(projectTeamId);
                 }
                 catch (DataNotFoundException)
                 {
                     throw new ContractException($"The team assessment could not be created. No team with id '{projectTeamId}' could be found.");
                 }
 
-                teamAssessment = _factory.CreateNew(projectAssessment, team);
-                await _repository.AddAsync(teamAssessment);
+                teamAssessment = factory.CreateNew(projectAssessment, team);
+                await repository.AddAsync(teamAssessment);
             }
 
             return teamAssessment;
@@ -88,7 +74,7 @@ namespace Guts.Business.Services.Assessment
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
             List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
-                .Select(teamUser => _assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
+                .Select(teamUser => assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
 
             return results;
         }
@@ -97,7 +83,7 @@ namespace Guts.Business.Services.Assessment
         {
             IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
-            IAssessmentResult result =  _assessmentResultFactory.Create(userId, teamAssessment, false);
+            IAssessmentResult result =  assessmentResultFactory.Create(userId, teamAssessment, false);
             return result;
         }
 
@@ -123,7 +109,7 @@ namespace Guts.Business.Services.Assessment
 
             teamAssessment.ValidateAssessmentsOf(userId);
 
-            await _repository.UpdateAsync(teamAssessment);
+            await repository.UpdateAsync(teamAssessment);
         }
     }
 }

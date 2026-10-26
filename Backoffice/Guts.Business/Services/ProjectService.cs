@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,54 +15,32 @@ using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services
 {
-    internal class ProjectService : IProjectService
+    [method: SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Service orchestrates project domain dependencies; preserving backward compatibility.")]
+    internal class ProjectService(
+        IProjectRepository projectRepository,
+        ICourseRepository courseRepository,
+        IPeriodRepository periodRepository,
+        ITopicRepository topicRepository,
+        IProjectTeamRepository projectTeamRepository,
+        ISolutionFileRepository solutionFileRepository,
+        IAssignmentService assignmentService,
+        IProjectAssessmentRepository projectAssessmentRepository,
+        IProjectAssessmentFactory assessmentFactory,
+        ITestRunRepository testRunRepository)
+        : IProjectService
     {
-        private readonly IProjectRepository _projectRepository;
-        private readonly ICourseRepository _courseRepository;
-        private readonly IPeriodRepository _periodRepository;
-        private readonly ITopicRepository _topicRepository;
-        private readonly IProjectTeamRepository _projectTeamRepository;
-        private readonly ISolutionFileRepository _solutionFileRepository;
-        private readonly IAssignmentService _assignmentService;
-        private readonly IProjectAssessmentRepository _projectAssessmentRepository;
-        private readonly IProjectAssessmentFactory _assessmentFactory;
-        private readonly ITestRunRepository _testRunRepository;
-
-        public ProjectService(IProjectRepository projectRepository,
-            ICourseRepository courseRepository,
-            IPeriodRepository periodRepository,
-            ITopicRepository topicRepository,
-            IProjectTeamRepository projectTeamRepository,
-            ISolutionFileRepository solutionFileRepository,
-            IAssignmentService assignmentService,
-            IProjectAssessmentRepository projectAssessmentRepository,
-            IProjectAssessmentFactory assessmentFactory,
-            ITestRunRepository testRunRepository)
-        {
-            _projectRepository = projectRepository;
-            _courseRepository = courseRepository;
-            _periodRepository = periodRepository;
-            _topicRepository = topicRepository;
-            _projectTeamRepository = projectTeamRepository;
-            _solutionFileRepository = solutionFileRepository;
-            _assignmentService = assignmentService;
-            _projectAssessmentRepository = projectAssessmentRepository;
-            _assessmentFactory = assessmentFactory;
-            _testRunRepository = testRunRepository;
-        }
-
         public async Task<IProject> GetOrCreateProjectAsync(string courseCode, string projectCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
 
             IProject project;
             try
             {
-                project = await _projectRepository.GetSingleAsync(courseCode, projectCode, period.Id);
+                project = await projectRepository.GetSingleAsync(courseCode, projectCode, period.Id);
             }
             catch (DataNotFoundException)
             {
-                Course course = await _courseRepository.GetSingleAsync(courseCode);
+                Course course = await courseRepository.GetSingleAsync(courseCode);
                 project = new Project
                 {
                     Code = projectCode,
@@ -69,7 +48,7 @@ namespace Guts.Business.Services
                     PeriodId = period.Id,
                     Description = projectCode
                 };
-                project = await _projectRepository.AddAsync(project);
+                project = await projectRepository.AddAsync(project);
             }
 
             return project;
@@ -78,12 +57,12 @@ namespace Guts.Business.Services
         public async Task<IProject> CreateProjectAsync(int courseId, Code projectCode,
             string description)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
 
             IProject project;
             try
             {
-                project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+                await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
                 throw new ContractException($"A project with code {projectCode} already exists");
             }
             catch (DataNotFoundException)
@@ -95,25 +74,25 @@ namespace Guts.Business.Services
                     PeriodId = period.Id,
                     Description = description
                 };
-                project = await _projectRepository.AddAsync(project);
+                project = await projectRepository.AddAsync(project);
             }
             return project;
         }
 
         public async Task UpdateProjectAsync(int courseId, string projectCode, string description)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
 
-            await _topicRepository.UpdateAsync(courseId, projectCode, period.Id, description);
+            await topicRepository.UpdateAsync(courseId, projectCode, period.Id, description);
         }
 
         public async Task<IReadOnlyList<IProject>> GetProjectsOfCourseAsync(int courseId, int? periodId = null)
         {
             try
             {
-                IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-                IReadOnlyList<IProject> projects = await _projectRepository.GetByCourseIdAsync(courseId, period.Id);
-                return projects.OrderBy(p => p.Description).ToList();
+                IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+                IReadOnlyList<IProject> projects = await projectRepository.GetByCourseIdAsync(courseId, period.Id);
+                return [.. projects.OrderBy(p => p.Description)];
             }
             catch (DataNotFoundException)
             {
@@ -123,8 +102,9 @@ namespace Guts.Business.Services
 
         public async Task<IProject> LoadProjectAsync(int courseId, string projectCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+
+            IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
             return project;
         }
 
@@ -134,17 +114,18 @@ namespace Guts.Business.Services
             Contracts.Require(!string.IsNullOrEmpty(projectCode), "Project code cannot be empty");
             Contracts.Require(userId > 0, "Invalid user id");
 
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsOfUserAsync(courseId, projectCode, period.Id, userId);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            IProject project = await projectRepository.LoadWithAssignmentsAndTeamsOfUserAsync(courseId, projectCode, period.Id, userId);
             return project;
         }
 
         public async Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
-            IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
 
-            ProjectTeam newTeam = new ProjectTeam
+            IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+
+            ProjectTeam newTeam = new()
             {
                 Name = teamName,
                 ProjectId = project.Id
@@ -154,43 +135,47 @@ namespace Guts.Business.Services
             bool alreadyExists = allTeams.Any(team => string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase));
             Contracts.Require(!alreadyExists, "A team with the same name already exists");
 
-            return await _projectTeamRepository.AddAsync(newTeam);
+            return await projectTeamRepository.AddAsync(newTeam);
         }
 
         public async Task UpdateProjectTeamAsync(int courseId, string projectCode, int teamId, string teamName)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
-            IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
-            IProjectTeam teamToUpdate = await _projectTeamRepository.LoadByIdAsync(teamId);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
+            IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+            IProjectTeam teamToUpdate = await projectTeamRepository.LoadByIdAsync(teamId);
 
             Contracts.Require(teamToUpdate.ProjectId == project.Id, "The team does not belong to the project");
 
             teamToUpdate.Name = teamName;
 
-            await _projectTeamRepository.UpdateAsync(teamToUpdate);
+            await projectTeamRepository.UpdateAsync(teamToUpdate);
         }
 
         public async Task DeleteProjectTeamAsync(int courseId, string projectCode, int teamId)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
-            IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
-            IProjectTeam teamToDelete = await _projectTeamRepository.LoadByIdAsync(teamId);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
+            IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+            IProjectTeam teamToDelete = await projectTeamRepository.LoadByIdAsync(teamId);
 
             Contracts.Require(teamToDelete.ProjectId == project.Id, "The team does not belong to the project");
 
-            await _projectTeamRepository.DeleteAsync(teamToDelete);
+            await projectTeamRepository.DeleteAsync(teamToDelete);
         }
 
         public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
-            IProject project = await _projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
+            Contracts.Require(teamNumberFrom > 0, "The start team number must be greater than zero.");
+            Contracts.Require(teamNumberTo >= teamNumberFrom, "The end team number must be greater than or equal to the start team number.");
+            Contracts.Require(teamNumberTo - teamNumberFrom <= 100, "Cannot generate more than 100 teams in a single request.");
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
+
+            IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
             ICollection<IProjectTeam> allTeams = project.Teams;
 
             for (int teamNumber = teamNumberFrom; teamNumber <= teamNumberTo; teamNumber++)
             {
-                ProjectTeam newTeam = new ProjectTeam
+                ProjectTeam newTeam = new()
                 {
                     Name = $"{teamBaseName} {teamNumber:D2}",
                     ProjectId = project.Id
@@ -198,16 +183,16 @@ namespace Guts.Business.Services
 
                 if (allTeams.All(team => !string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    await _projectTeamRepository.AddAsync(newTeam);
+                    await projectTeamRepository.AddAsync(newTeam);
                 }
             }
         }
 
         public async Task<IReadOnlyList<IProjectTeam>> LoadTeamsOfProjectAsync(int courseId, string projectCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            IProject project = await _projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
-            IReadOnlyList<IProjectTeam> teams = await _projectTeamRepository.GetByProjectWithUsersAsync(project.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+            IReadOnlyList<IProjectTeam> teams = await projectTeamRepository.GetByProjectWithUsersAsync(project.Id);
             return teams;
         }
 
@@ -220,7 +205,7 @@ namespace Guts.Business.Services
             IProjectTeam targetTeam = allTeams.FirstOrDefault(t => t.Id == teamId);
             Contracts.Require(targetTeam != null, $"The team you want to join is not a team of project '{projectCode}'.");
 
-            await _projectTeamRepository.AddUserToTeam(teamId, userId);
+            await projectTeamRepository.AddUserToTeam(teamId, userId);
         }
 
         public async Task RemoveUserFromProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
@@ -229,17 +214,17 @@ namespace Guts.Business.Services
 
             Contracts.Require(project.Teams.Count == 1, "The user is not a member ot the team");
 
-            await _projectTeamRepository.RemoveUserFromTeam(teamId, userId);
+            await projectTeamRepository.RemoveUserFromTeam(teamId, userId);
 
-            await _testRunRepository.RemoveAllTopicTestRunsOfUserAsync(project.Id, userId);
+            await testRunRepository.RemoveAllTopicTestRunsOfUserAsync(project.Id, userId);
         }
 
         public async Task<IReadOnlyList<AssignmentResultDto>> GetResultsForTeamAsync(IProject project, int teamId, DateTime? dateUtc)
         {
-            List<AssignmentResultDto> results = new List<AssignmentResultDto>();
+            List<AssignmentResultDto> results = [];
             foreach (Assignment assignment in project.Assignments)
             {
-                AssignmentResultDto dto = await _assignmentService.GetResultsForTeamAsync(project.Id, assignment.Id, teamId, dateUtc);
+                AssignmentResultDto dto = await assignmentService.GetResultsForTeamAsync(project.Id, assignment.Id, teamId, dateUtc);
                 results.Add(dto);
             }
 
@@ -248,11 +233,11 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<AssignmentStatisticsDto>> GetProjectStatisticsAsync(IProject project, DateTime? dateUtc)
         {
-            List<AssignmentStatisticsDto> results = new List<AssignmentStatisticsDto>();
+            List<AssignmentStatisticsDto> results = [];
             foreach (Assignment assignment in project.Assignments)
             {
                 AssignmentStatisticsDto assignmentStatistics =
-                    await _assignmentService.GetAssignmentTeamStatisticsAsync(project.Id, assignment.Id, dateUtc);
+                    await assignmentService.GetAssignmentTeamStatisticsAsync(project.Id, assignment.Id, dateUtc);
                 results.Add(assignmentStatistics);
             }
             return results;
@@ -260,13 +245,13 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<SolutionDto>> GetAllSolutions(IProject project, DateTime? dateUtc)
         {
-            List<SolutionDto> results = new List<SolutionDto>();
-            foreach (ProjectTeam team in project.Teams)
+            List<SolutionDto> results = [];
+            foreach (IProjectTeam team in project.Teams)
             {
-                List<SolutionFile> teamFiles = new List<SolutionFile>();
+                List<SolutionFile> teamFiles = [];
                 foreach (Assignment assignment in project.Assignments)
                 {
-                    IList<SolutionFile> files = await _solutionFileRepository.GetAllLatestOfAssignmentForTeamAsync(assignment.Id, team.Id, dateUtc);
+                    IList<SolutionFile> files = await solutionFileRepository.GetAllLatestOfAssignmentForTeamAsync(assignment.Id, team.Id, dateUtc);
                     teamFiles.AddRange(files);
 
                 }
@@ -282,16 +267,16 @@ namespace Guts.Business.Services
 
         public async Task<IProjectAssessment> CreateProjectAssessmentAsync(int projectId, string description, DateTime openOnUtc, DateTime deadlineUtc)
         {
-            IProjectAssessment assessment = _assessmentFactory.CreateNew(projectId, description, openOnUtc, deadlineUtc);
-            await _projectAssessmentRepository.AddAsync(assessment);
+            IProjectAssessment assessment = assessmentFactory.CreateNew(projectId, description, openOnUtc, deadlineUtc);
+            await projectAssessmentRepository.AddAsync(assessment);
             return assessment;
         }
 
         public async Task UpdateProjectAssessmentAsync(int id, string description, DateTime openOnUtc, DateTime deadlineUtc)
         {
-            IProjectAssessment existingAssessment = await _projectAssessmentRepository.GetByIdAsync(id);
+            IProjectAssessment existingAssessment = await projectAssessmentRepository.GetByIdAsync(id);
             existingAssessment.Update(description, openOnUtc, deadlineUtc);
-            await _projectAssessmentRepository.UpdateAsync(existingAssessment);
+            await projectAssessmentRepository.UpdateAsync(existingAssessment);
         }
     }
 }

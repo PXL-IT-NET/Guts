@@ -4,7 +4,7 @@ import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal 
 import { ActivatedRoute } from "@angular/router";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
-import { Subscription, Subject } from "rxjs";
+import { Subscription } from "rxjs";
 import {
   AuthService,
   PeriodProvider,
@@ -14,8 +14,6 @@ import {
 import { ProjectAssessmentService } from "src/app/services/project.assessment.service";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
 import {
-  IProjectAssessmentModel,
-  ProjectAssessmentCreateModel,
   ProjectAssessmentModel,
 } from "src/app/viewmodels/projectassessment.model";
 import { UserProfile } from "src/app/viewmodels/user.model";

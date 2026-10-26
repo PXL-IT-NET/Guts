@@ -6,6 +6,8 @@ namespace Guts.Api.Mcp.Prompts;
 [McpServerPromptType]
 public class GutsTestPrompts
 {
+    private const string XUnitFramework = "xUnit";
+    private const string NUnitFramework = "nUnit";
 
     [McpServerPrompt(Name = "exercise_tests_xunit")]
     [Description("""
@@ -14,7 +16,7 @@ public class GutsTestPrompts
                  """)]
     public string CreateGutsXUnitTestsForExercise(string sutClassName)
     {
-        return CreateGutsTests(sutClassName, "xUnit", true);
+        return CreateGutsTests(sutClassName, XUnitFramework, true);
     }
 
     [McpServerPrompt(Name = "exercise_tests_nunit")]
@@ -24,7 +26,7 @@ public class GutsTestPrompts
                  """)]
     public string CreateGutsNUnitTestsForExercise(string sutClassName)
     {
-        return CreateGutsTests(sutClassName, "nUnit", true);
+        return CreateGutsTests(sutClassName, NUnitFramework, true);
     }
 
     [McpServerPrompt(Name = "projectcomponent_tests_xunit")]
@@ -34,7 +36,7 @@ public class GutsTestPrompts
                  """)]
     public string CreateGutsXUnitTestsForProjectComponent(string sutClassName)
     {
-        return CreateGutsTests(sutClassName, "xUnit", false);
+        return CreateGutsTests(sutClassName, XUnitFramework, false);
     }
 
     [McpServerPrompt(Name = "projectcomponent_tests_nunit")]
@@ -44,7 +46,7 @@ public class GutsTestPrompts
                  """)]
     public string CreateGutsNUnitTestsForProjectComponent(string sutClassName)
     {
-        return CreateGutsTests(sutClassName, "nUnit", false);
+        return CreateGutsTests(sutClassName, NUnitFramework, false);
     }
 
     private static string CreateGutsTests(string sutClassName, string testFramework, bool isIndividualExercise)

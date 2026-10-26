@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ namespace Guts.Infrastructure
         {
             object identifierValue = identifierExpression.Compile().Invoke(entity);
             var equalsExpression = Expression.Equal(identifierExpression.Body, Expression.Constant(identifierValue));
-            var filter = Expression.Lambda<Func<T, bool>>(equalsExpression, identifierExpression.Parameters.First());
+            var filter = Expression.Lambda<Func<T, bool>>(equalsExpression, identifierExpression.Parameters[0]);
 
             if (!dbSet.Any(filter))
             {

@@ -6,27 +6,21 @@ using Guts.Domain.TopicAggregate;
 
 namespace Guts.Business.Services
 {
-    internal class TopicService : ITopicService
+    internal class TopicService(
+        ITopicRepository topicRepository,
+        IPeriodRepository periodRepository)
+        : ITopicService
     {
-        private readonly ITopicRepository _topicRepository;
-        private readonly IPeriodRepository _periodRepository;
-
-        public TopicService(ITopicRepository topicRepository,
-            IPeriodRepository periodRepository)
-        {
-            _topicRepository = topicRepository;
-            _periodRepository = periodRepository;
-        }
         public async Task<ITopic> GetTopicAsync(string courseCode, string topicCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            return await _topicRepository.GetSingleAsync(courseCode, topicCode, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            return await topicRepository.GetSingleAsync(courseCode, topicCode, period.Id);
         }
 
         public async Task<IReadOnlyList<ITopic>> GetTopicsByCourseWithAssignmentsAndTestsAsync(int courseId, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            return await _topicRepository.GetByCourseWithAssignmentsAndTestsAsync(courseId, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            return await topicRepository.GetByCourseWithAssignmentsAndTestsAsync(courseId, period.Id);
         }
     }
 }

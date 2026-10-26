@@ -10,6 +10,26 @@ export class Result {
     this.isAuthenticated = true;
   }
 
+  private static extractMessageFromObject(error: object): string {
+    const messageContainer = error as Record<string, any>;
+    let message = "";
+    for (const propertyName in messageContainer) {
+      if (Object.hasOwn(messageContainer, propertyName)) {
+        if (propertyName === "0") {
+          message = <string>(messageContainer as unknown);
+        } else if (typeof messageContainer[propertyName] === "string") {
+          message = <string>messageContainer[propertyName];
+        } else if (Array.isArray(messageContainer[propertyName])) {
+          const lines: string[] = messageContainer[propertyName];
+          for (const line of lines) {
+            message += line + "\n";
+          }
+        }
+      }
+    }
+    return message || JSON.stringify(error) || "Unknown error";
+  }
+
   public static fromHttpErrorResponse(response: HttpErrorResponse): Result {
     const result: Result = {
       success: false,
@@ -41,26 +61,7 @@ export class Result {
       console.log("API client error:");
       console.log(response);
     } else if (response.error instanceof Object) {
-      const messageContainer = response.error as Record<string, any>;
-      for (const propertyName in messageContainer) {
-        if (Object.prototype.hasOwnProperty.call(messageContainer, propertyName)) {
-          if (propertyName === "0") {
-            message = <string>(messageContainer as unknown);
-          } else if (typeof messageContainer[propertyName] === "string") {
-            message = <string>messageContainer[propertyName];
-          } else if (Array.isArray(messageContainer[propertyName])) {
-            const lines: string[] = messageContainer[propertyName];
-            for (const line of lines) {
-              message += line + "\n";
-            }
-          }
-        }
-      }
-
-      if (message === "") {
-        message = JSON.stringify(response.error) || "Unknown error";
-      }
-
+      message = Result.extractMessageFromObject(response.error);
       console.log("API client error:");
       console.log(response);
     }

@@ -309,6 +309,28 @@ namespace Guts.Business.Tests.Services
         }
 
         [Test]
+        [TestCase(0, 5)]
+        [TestCase(-1, 5)]
+        public void GenerateTeamsForProject_StartNumberLessThanOne_ShouldThrowContractException(int from, int to)
+        {
+            Assert.That(() => _service.GenerateTeamsForProject(1, "proj", "Team", from, to),
+                Throws.TypeOf<ContractException>());
+        }
+
+        [Test]
+        public void GenerateTeamsForProject_EndLessThanStart_ShouldThrowContractException()
+        {
+            Assert.That(() => _service.GenerateTeamsForProject(1, "proj", "Team", 5, 4),
+                Throws.TypeOf<ContractException>());
+        }
+
+        [Test]
+        public void GenerateTeamsForProject_RangeExceeds100_ShouldThrowContractException()
+        {
+            Assert.That(() => _service.GenerateTeamsForProject(1, "proj", "Team", 1, 102),
+                Throws.TypeOf<ContractException>());
+        }
+
         public void LoadTeamsOfProject_ShouldLoadTheTeamsOfTheProjectForTheCurrentPeriodWithUsers()
         {
             //Arrange

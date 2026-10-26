@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
-using Guts.Domain.CourseAggregate;
-using Guts.Domain.PeriodAggregate;
 using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.GamificationAggregate

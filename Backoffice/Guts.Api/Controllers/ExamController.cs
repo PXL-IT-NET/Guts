@@ -21,18 +21,10 @@ namespace Guts.Api.Controllers
     [Produces("application/json")]
     [Route("api/exams")]
     [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-    public class ExamController : ControllerBase
+    public class ExamController(
+        IExamService examService,
+        IMapper mapper) : ControllerBase
     {
-        private readonly IExamService _examService;
-        private readonly IMapper _mapper;
-
-        public ExamController(IExamService examService, 
-            IMapper mapper)
-        {
-            _examService = examService;
-            _mapper = mapper;
-        }
-
         /// <summary>
         /// Retrieves all exams of a course.
         /// </summary>
@@ -48,8 +40,8 @@ namespace Guts.Api.Controllers
             {
                 return BadRequest(ErrorModel.FromString("Invalid course Id."));
             }
-            IReadOnlyList<IExam> exams = await _examService.GetExamsAsync(courseId, periodId);
-            IEnumerable<ExamOutputModel> model = exams.Select(e => _mapper.MapToExamOutputModel(e));
+            IReadOnlyList<IExam> exams = await examService.GetExamsAsync(courseId, periodId);
+            IEnumerable<ExamOutputModel> model = exams.Select(e => mapper.MapToExamOutputModel(e));
             return Ok(model);
         }
 
@@ -65,8 +57,8 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                IExam exam = await _examService.GetExamAsync(id);
-                ExamOutputModel model = _mapper.MapToExamOutputModel(exam);
+                IExam exam = await examService.GetExamAsync(id);
+                ExamOutputModel model = mapper.MapToExamOutputModel(exam);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -86,8 +78,8 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                IExam exam = await _examService.CreateExamAsync(model.CourseId, model.Name);
-                ExamOutputModel outputModel = _mapper.MapToExamOutputModel(exam);
+                IExam exam = await examService.CreateExamAsync(model.CourseId, model.Name);
+                ExamOutputModel outputModel = mapper.MapToExamOutputModel(exam);
                 return CreatedAtAction(nameof(GetExam), new { id = outputModel.Id }, outputModel);
             }
             catch (ContractException ex)
@@ -109,10 +101,10 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                var exam = await _examService.GetExamAsync(id);
+                var exam = await examService.GetExamAsync(id);
                 var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
                 if(examPart == null) throw new DataNotFoundException();
-                var model = _mapper.MapToExamPartOutputModel(examPart);
+                var model = mapper.MapToExamPartOutputModel(examPart);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -132,8 +124,8 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                var examPart = await _examService.CreateExamPartAsync(id, model);
-                var outputModel = _mapper.MapToExamPartOutputModel(examPart);
+                var examPart = await examService.CreateExamPartAsync(id, model);
+                var outputModel = mapper.MapToExamPartOutputModel(examPart);
                 return CreatedAtAction(nameof(GetExamPart), new { id = id, examPartId = outputModel.Id }, outputModel);
             }
             catch (ContractException ex)
@@ -153,8 +145,8 @@ namespace Guts.Api.Controllers
         {
             try
             {
-                var exam = await _examService.GetExamAsync(id);
-                await _examService.DeleteExamPartAsync(exam, examPartId);
+                var exam = await examService.GetExamAsync(id);
+                await examService.DeleteExamPartAsync(exam, examPartId);
                 return Ok();
             }
             catch (ContractException ex)
@@ -169,7 +161,7 @@ namespace Guts.Api.Controllers
             IExam exam;
             try
             {
-                exam = await _examService.GetExamAsync(id);
+                exam = await examService.GetExamAsync(id);
             }
             catch (DataNotFoundException)
             {
@@ -178,7 +170,7 @@ namespace Guts.Api.Controllers
 
             var fileDownloadName = $"{exam.Name.ToValidFilePath()}.csv";
 
-            IEnumerable<dynamic> examScoreCsvRecords = await _examService.CalculateExamScoresForCsvAsync(id);
+            IEnumerable<dynamic> examScoreCsvRecords = await examService.CalculateExamScoresForCsvAsync(id);
             
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);

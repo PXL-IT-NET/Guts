@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Guts.Domain.UserAggregate
 {
+    [SuppressMessage("Major Code Smell", "S4035:Classes implementing 'IEquatable<T>' should be sealed or also implement 'IEqualityComparer<T>'", Justification = "Equals implementation explicitly checks GetType() to avoid derived type equality.")]
     public class User : IdentityUser<int>, IEntity, IEquatable<User>
     {
         [Required]

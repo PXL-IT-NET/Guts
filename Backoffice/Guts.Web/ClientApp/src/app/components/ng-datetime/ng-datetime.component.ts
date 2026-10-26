@@ -72,6 +72,10 @@ export class NgDatetimeComponent implements ControlValueAccessor {
   registerOnChange(fn: (value: Date) => void): void {
     this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {}
-  setDisabledState?(isDisabled: boolean): void {}
+  registerOnTouched(fn: any): void {
+    // ControlValueAccessor touch registration callback placeholder
+  }
+  setDisabledState?(isDisabled: boolean): void {
+    // ControlValueAccessor disabled state placeholder
+  }
 }

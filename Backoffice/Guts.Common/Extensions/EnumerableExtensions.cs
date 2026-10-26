@@ -10,7 +10,7 @@ namespace Guts.Common.Extensions
         {
             List<T> list = enumerable.ToList();
             int index = RandomNumberGenerator.GetInt32(0, list.Count);
-            return list.ElementAt(index);
+            return list[index];
         }
     }
 }

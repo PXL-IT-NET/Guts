@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Guts.Common;
 using Guts.Domain.GamificationAggregate;
 using NUnit.Framework;
 

@@ -24,31 +24,16 @@ namespace Guts.Api.Controllers
     /// </summary>
     [Produces("application/json")]
     [Route("api/testruns")]
-    public class TestRunController : ControllerBase
+    public class TestRunController(
+        ITestRunConverter testRunConverter,
+        ITestRunService testRunService,
+        IAssignmentService assignmentService,
+        IChapterService chapterService,
+        IProjectService projectService,
+        ILogger<TestRunController> logger)
+        : ControllerBase
     {
-        private readonly ITestRunConverter _testRunConverter;
-        private readonly ITestRunService _testRunService;
-        private readonly IAssignmentService _assignmentService;
-        private readonly IChapterService _chapterService;
-        private readonly IProjectService _projectService;
-        private readonly ILogger<TestRunController> _logger;
-
         internal const string InvalidTestCodeHashErrorKey = "InvalidTestCodeHash";
-
-        public TestRunController(ITestRunConverter testRunConverter, 
-            ITestRunService testRunService, 
-            IAssignmentService assignmentService,
-            IChapterService chapterService, 
-            IProjectService projectService,
-            ILogger<TestRunController> logger)
-        {
-            _testRunConverter = testRunConverter;
-            _testRunService = testRunService;
-            _assignmentService = assignmentService;
-            _chapterService = chapterService;
-            _projectService = projectService;
-            _logger = logger;
-        }
 
         /// <summary>
         /// Retrieves a testrun.
@@ -59,8 +44,8 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<ActionResult> GetTestRun(int id)
         {
-            var storedTestRun = await _testRunService.GetTestRunAsync(id);
-            var model = _testRunConverter.ToTestRunModel(storedTestRun);
+            var storedTestRun = await testRunService.GetTestRunAsync(id);
+            var model = testRunConverter.ToTestRunModel(storedTestRun);
             return Ok(model);
         }
 
@@ -84,14 +69,14 @@ namespace Guts.Api.Controllers
             Assignment assignment;
             if (IsLector())
             {
-                var chapter = await _chapterService.GetOrCreateChapterAsync(model.Assignment.CourseCode, model.Assignment.TopicCode);
-                assignment = await _assignmentService.GetOrCreateAssignmentAsync(chapter.Id, model.Assignment.AssignmentCode);
+                var chapter = await chapterService.GetOrCreateChapterAsync(model.Assignment.CourseCode, model.Assignment.TopicCode);
+                assignment = await assignmentService.GetOrCreateAssignmentAsync(chapter.Id, model.Assignment.AssignmentCode);
             }
             else
             {
                 try
                 {
-                    assignment = await _assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
+                    assignment = await assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
                 }
                 catch (DataNotFoundException)
                 {
@@ -101,7 +86,7 @@ namespace Guts.Api.Controllers
                 }
             }
 
-            if (!await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, assignment, IsLector()))
+            if (!await assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, assignment, IsLector()))
             {
                 ModelState.AddModelError(InvalidTestCodeHashErrorKey,
                     "The hash of the test code does not match any of the hashes associated with the assignment.");
@@ -128,9 +113,9 @@ namespace Guts.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
+                logger.LogInformation(
                     "Received testrun for project (assignmentCode: {AssignmentCode}, projectCode: {ProjectCode}) from user {UserId}",
                     model.Assignment.AssignmentCode, model.Assignment.TopicCode, GetUserId());
             }
@@ -138,14 +123,14 @@ namespace Guts.Api.Controllers
             Assignment component;
             if (IsLector())
             {
-                var project = await _projectService.GetOrCreateProjectAsync(model.Assignment.CourseCode, model.Assignment.TopicCode, null);
-                component = await _assignmentService.GetOrCreateAssignmentAsync(project.Id, model.Assignment.AssignmentCode);
+                var project = await projectService.GetOrCreateProjectAsync(model.Assignment.CourseCode, model.Assignment.TopicCode, null);
+                component = await assignmentService.GetOrCreateAssignmentAsync(project.Id, model.Assignment.AssignmentCode);
             }
             else
             {
                 try
                 {
-                    component = await _assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
+                    component = await assignmentService.GetAssignmentOfCurrentPeriodAsync(model.Assignment);
                 }
                 catch (DataNotFoundException)
                 {
@@ -155,7 +140,7 @@ namespace Guts.Api.Controllers
                 }
             }
 
-            if (! await _assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, component, IsLector()))
+            if (! await assignmentService.ValidateTestCodeHashAsync(model.TestCodeHash, component, IsLector()))
             {
                 ModelState.AddModelError("InvalidTestCodeHash",
                     "The hash of the test code does not match any of the hashes associated with the assignment.");
@@ -171,30 +156,30 @@ namespace Guts.Api.Controllers
             if (IsLector())
             {
                 var testNames = model.Results.Select(testResult => testResult.TestName).ToList();
-                await _assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
+                await assignmentService.LoadOrCreateTestsForAssignmentAsync(assignment, testNames);
             }
             else
             {
-                await _assignmentService.LoadTestsForAssignmentAsync(assignment);
+                await assignmentService.LoadTestsForAssignmentAsync(assignment);
             }
 
-            TestRun testRun = _testRunConverter.From(model.Results, GetUserId(), assignment);
+            TestRun testRun = testRunConverter.From(model.Results, GetUserId(), assignment);
 
             IList<SolutionFile> solutionFiles = model.SolutionFiles?.Select(sourceFileModel =>
                 SolutionFile.CreateNew(assignment.Id, GetUserId(), sourceFileModel.FilePath,
                     sourceFileModel.Content.TryConvertFromBase64())).ToList();
 
-            TestRun savedTestRun = await _testRunService.RegisterRunAsync(testRun, solutionFiles);
+            TestRun savedTestRun = await testRunService.RegisterRunAsync(testRun, solutionFiles);
 
             LogTestRunRegistered(testRun, solutionFiles);
 
-            var savedModel = _testRunConverter.ToTestRunModel(savedTestRun);
+            var savedModel = testRunConverter.ToTestRunModel(savedTestRun);
             return savedModel;
         }
 
         private void LogTestRunReceived(CreateAssignmentTestRunModel model)
         {
-            if (!_logger.IsEnabled(LogLevel.Information)) return;
+            if (!logger.IsEnabled(LogLevel.Information)) return;
 
             string sourcePaths = string.Empty;
             if (model.SolutionFiles.Any())
@@ -202,18 +187,18 @@ namespace Guts.Api.Controllers
                 sourcePaths = string.Join(";", model.SolutionFiles.Select(sf => sf.FilePath));
             }
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Received testrun for exercise (assignmentCode: {AssignmentCode}, chapterCode: {ChapterCode}, Source files: {SourcePaths}) from user {UserId}",
                 model.Assignment.AssignmentCode, model.Assignment.TopicCode, sourcePaths, GetUserId());
         }
         
         private void LogTestRunRegistered(TestRun testRun, IList<SolutionFile> solutionFiles)
         {
-            if (!_logger.IsEnabled(LogLevel.Information)) return;
+            if (!logger.IsEnabled(LogLevel.Information)) return;
 
             if (testRun == null)
             {
-                _logger.LogInformation("Test run is null");
+                logger.LogInformation("Test run is null");
             }
             else
             {
@@ -230,7 +215,7 @@ namespace Guts.Api.Controllers
                 logMessageBuilder.AppendLine($"#Failing tests: {testRun.TestResults.Count(r => !r.Passed)}");
                 logMessageBuilder.AppendLine($"Sources: {sourcePaths}");
                 logMessageBuilder.AppendLine("-------------------------------------");
-                _logger.LogInformation("{LogMessage}", logMessageBuilder.ToString());
+                logger.LogInformation("{LogMessage}", logMessageBuilder.ToString());
             }
         }
     }

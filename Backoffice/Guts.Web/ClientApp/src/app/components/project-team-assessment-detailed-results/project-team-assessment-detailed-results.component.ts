@@ -1,12 +1,11 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { ChartData, ChartOptions, ScriptableScaleContext } from "chart.js";
+import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
 import { ITeamModel } from "src/app/viewmodels/team.model";
-import { Subject } from "rxjs";
 
 @Component({
   standalone: false,

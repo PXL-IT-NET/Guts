@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,9 +14,11 @@ namespace Guts.Domain.ExamAggregate
     {
         private readonly HashSet<IExamPart> _parts;
 
+        [SuppressMessage("Major Code Smell", "S1144:Unused private types or members should be removed", Justification = "Private setter is required by EF Core property mapping.")]
         public Course Course { get; private set; }
         public int CourseId { get; private set; }
 
+        [SuppressMessage("Major Code Smell", "S1144:Unused private types or members should be removed", Justification = "Private setter is required by EF Core property mapping.")]
         public IPeriod Period { get; private set; }
         public int PeriodId { get; set; }
 

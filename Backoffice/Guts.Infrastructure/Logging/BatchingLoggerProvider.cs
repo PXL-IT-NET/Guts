@@ -146,9 +146,11 @@ namespace Guts.Infrastructure.Logging
             }
             catch (TaskCanceledException)
             {
+                // Cancellation is expected during shutdown
             }
             catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
             {
+                // Cancellation is expected during shutdown
             }
             finally
             {
@@ -158,12 +160,20 @@ namespace Guts.Infrastructure.Logging
 
         public void Dispose()
         {
-            _optionsChangeToken?.Dispose();
-            if (IsEnabled)
-            {
-                Stop();
-            }
+            Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _optionsChangeToken?.Dispose();
+                if (IsEnabled)
+                {
+                    Stop();
+                }
+            }
         }
 
         public ILogger CreateLogger(string categoryName)

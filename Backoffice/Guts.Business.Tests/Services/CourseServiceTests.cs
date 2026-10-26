@@ -1,15 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Guts.Business.Services;
 using Guts.Business.Tests.Builders;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.CourseAggregate;
-using Guts.Domain.PeriodAggregate;
-using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;

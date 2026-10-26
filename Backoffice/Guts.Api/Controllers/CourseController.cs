@@ -15,24 +15,13 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses")]
-    public class CourseController : ControllerBase
+    public class CourseController(
+        ICourseService courseService,
+        IChapterService chapterService,
+        IProjectService projectService,
+        ICourseConverter courseConverter)
+        : ControllerBase
     {
-        private readonly ICourseService _courseService;
-        private readonly IChapterService _chapterService;
-        private readonly IProjectService _projectService;
-        private readonly ICourseConverter _courseConverter;
-
-        public CourseController(ICourseService courseService,
-            IChapterService chapterService,
-            IProjectService projectService,
-            ICourseConverter courseConverter)
-        {
-            _courseService = courseService;
-            _chapterService = chapterService;
-            _projectService = projectService;
-            _courseConverter = courseConverter;
-        }
-
         /// <summary>
         /// Retrieves an overview of all the courses 
         /// </summary>
@@ -41,7 +30,7 @@ namespace Guts.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public async Task<IActionResult> GetCourses()
         {
-            return Ok(await _courseService.GetAllCoursesAsync());
+            return Ok(await courseService.GetAllCoursesAsync());
         }
 
         /// <summary>
@@ -61,10 +50,10 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            var course = await _courseService.GetCourseByIdAsync(courseId);
-            IReadOnlyList<Chapter> chapters = await _chapterService.GetChaptersOfCourseAsync(courseId, periodId);
-            IReadOnlyList<IProject> projects = await _projectService.GetProjectsOfCourseAsync(courseId, periodId);
-            var model = _courseConverter.ToCourseContentsModel(course, chapters, projects);
+            var course = await courseService.GetCourseByIdAsync(courseId);
+            IReadOnlyList<Chapter> chapters = await chapterService.GetChaptersOfCourseAsync(courseId, periodId);
+            IReadOnlyList<IProject> projects = await projectService.GetProjectsOfCourseAsync(courseId, periodId);
+            var model = courseConverter.ToCourseContentsModel(course, chapters, projects);
 
             return Ok(model);
         }
@@ -89,8 +78,8 @@ namespace Guts.Api.Controllers
 
             try
             {
-                var statsDto = await _courseService.GetCourseStatisticsAsync(courseId, periodId);
-                var model = _courseConverter.ToCourseStatisticsModel(statsDto);
+                var statsDto = await courseService.GetCourseStatisticsAsync(courseId, periodId);
+                var model = courseConverter.ToCourseStatisticsModel(statsDto);
                 return Ok(model);
             }
             catch (DataNotFoundException)

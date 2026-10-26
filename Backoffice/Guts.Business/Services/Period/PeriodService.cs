@@ -6,30 +6,22 @@ using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Business.Services.Period
 {
-    public class PeriodService : IPeriodService
+    public class PeriodService(IPeriodFactory factory, IPeriodRepository repository) : IPeriodService
     {
-        private readonly IPeriodFactory _factory;
-        private readonly IPeriodRepository _repository;
-
-        public PeriodService(IPeriodFactory factory, IPeriodRepository repository)
-        {
-            _factory = factory;
-            _repository = repository;
-        }
         public async Task<IPeriod> CreatePeriodAsync(string description, DateTime from, DateTime until)
         {
-            IReadOnlyList<IPeriod> allPeriods = await _repository.GetAllAsync();
-            IPeriod period = _factory.CreateNew(description, from, until, allPeriods);
-            period = await _repository.AddAsync(period);
+            IReadOnlyList<IPeriod> allPeriods = await repository.GetAllAsync();
+            IPeriod period = factory.CreateNew(description, from, until, allPeriods);
+            period = await repository.AddAsync(period);
             return period;
         }
 
         public async Task UpdatePeriodAsync(int periodId, string newDescription, DateTime newFrom, DateTime newUntil)
         {
-            IReadOnlyList<IPeriod> allPeriods = await _repository.GetAllAsync();
-            IPeriod period = await _repository.GetPeriodAsync(periodId);
+            IReadOnlyList<IPeriod> allPeriods = await repository.GetAllAsync();
+            IPeriod period = await repository.GetPeriodAsync(periodId);
             period.Update(newDescription, newFrom, newUntil, allPeriods);
-            await _repository.UpdateAsync(period);
+            await repository.UpdateAsync(period);
         }
     }
 }

@@ -1,21 +1,14 @@
 using System;
-using System.Runtime.Serialization;
 
 namespace Guts.Business
 {
-    [Serializable]
-    public class DataNotFoundException : ApplicationException
+    public class DataNotFoundException : Exception
     {
         public DataNotFoundException()
         {
         }
 
         public DataNotFoundException(string message) : base(message)
-        {
-        }
-
-        [Obsolete("Obsolete")]
-        protected DataNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

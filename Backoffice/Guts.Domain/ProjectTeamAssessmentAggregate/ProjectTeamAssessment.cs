@@ -29,11 +29,11 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
         private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
         {
             Contracts.Require(team != null, "A team must be provided.");
-            Contracts.Require(team!.TeamUsers.Count > 0, "The team has no members.");
+            Contracts.Require(team.TeamUsers.Count > 0, "The team has no members.");
             Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
             Team = team;
 
-            Contracts.Require(projectAssessment!.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
+            Contracts.Require(projectAssessment.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
             ProjectAssessment = projectAssessment;
         }
 
@@ -42,7 +42,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
             {
                 Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
-                Contracts.Require(projectAssessment!.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
+                Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
                 return new ProjectTeamAssessment(projectAssessment, team);
             }
         }

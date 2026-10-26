@@ -66,14 +66,14 @@ if (Get-Module -ListAvailable -Name WebAdministration) {
 }
 
 function Stop-Pool($poolName) {
-    Write-Host "Stopping Application Pool '$poolName'..."
+    Write-Output "Stopping Application Pool '$poolName'..."
     try {
         if (Get-Command Stop-WebAppPool -ErrorAction SilentlyContinue) {
             Stop-WebAppPool -Name $poolName -ErrorAction SilentlyContinue
-            Write-Host "Stop-WebAppPool executed for '$poolName'."
+            Write-Output "Stop-WebAppPool executed for '$poolName'."
         } elseif (Test-Path $appCmd) {
             & $appCmd stop apppool "/apppool.name:$poolName" 2>$null
-            Write-Host "appcmd stop apppool executed for '$poolName'."
+            Write-Output "appcmd stop apppool executed for '$poolName'."
         }
     } catch {
         Write-Warning "Notice when stopping AppPool '$poolName': $_"
@@ -82,14 +82,14 @@ function Stop-Pool($poolName) {
 }
 
 function Start-Pool($poolName) {
-    Write-Host "Starting Application Pool '$poolName'..."
+    Write-Output "Starting Application Pool '$poolName'..."
     try {
         if (Get-Command Start-WebAppPool -ErrorAction SilentlyContinue) {
             Start-WebAppPool -Name $poolName -ErrorAction SilentlyContinue
-            Write-Host "Start-WebAppPool executed for '$poolName'."
+            Write-Output "Start-WebAppPool executed for '$poolName'."
         } elseif (Test-Path $appCmd) {
             & $appCmd start apppool "/apppool.name:$poolName" 2>$null
-            Write-Host "appcmd start apppool executed for '$poolName'."
+            Write-Output "appcmd start apppool executed for '$poolName'."
         }
     } catch {
         Write-Warning "Notice when starting AppPool '$poolName': $_"

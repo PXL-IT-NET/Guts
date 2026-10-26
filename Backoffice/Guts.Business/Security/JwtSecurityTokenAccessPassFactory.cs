@@ -9,21 +9,13 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Guts.Business.Security
 {
-    internal class JwtSecurityTokenAccessPassFactory : ITokenAccessPassFactory
+    internal class JwtSecurityTokenAccessPassFactory(
+        string key,
+        string issuer,
+        string audience,
+        int expirationTimeInMinutes)
+        : ITokenAccessPassFactory
     {
-        private readonly string _key;
-        private readonly string _issuer;
-        private readonly string _audience;
-        private readonly int _expirationTimeInMinutes;
-
-        public JwtSecurityTokenAccessPassFactory(string key, string issuer, string audience, int expirationTimeInMinutes)
-        {
-            _key = key;
-            _issuer = issuer;
-            _audience = audience;
-            _expirationTimeInMinutes = expirationTimeInMinutes;
-        }
-
         public TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles)
         {
             var allClaims = new[]
@@ -40,15 +32,15 @@ namespace Guts.Business.Security
                 allClaims.Add(roleClaim);
             }
 
-            var keyBytes = Encoding.UTF8.GetBytes(_key);
+            var keyBytes = Encoding.UTF8.GetBytes(key);
             var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
             var jwtSecurityToken = new JwtSecurityToken(
-                issuer: _issuer,
-                audience: _audience,
+                issuer: issuer,
+                audience: audience,
                 claims: allClaims,
-                expires: DateTime.UtcNow.AddMinutes(_expirationTimeInMinutes),
+                expires: DateTime.UtcNow.AddMinutes(expirationTimeInMinutes),
                 signingCredentials: signingCredentials);
 
             return new TokenAccessPass

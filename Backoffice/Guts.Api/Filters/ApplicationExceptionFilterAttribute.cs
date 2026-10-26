@@ -12,6 +12,7 @@ namespace Guts.Api.Filters
 {
     /// <inheritdoc />
     [ExcludeFromCodeCoverage]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
     public class ApplicationExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly ILogger _logger;

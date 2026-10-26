@@ -17,28 +17,15 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/projects")]
-    public class ProjectController : ControllerBase
+    public class ProjectController(
+        IProjectService projectService,
+        IProjectConverter projectConverter,
+        ITopicConverter topicConverter,
+        ISolutionFileService solutionFileService,
+        IMemoryCache memoryCache)
+        : ControllerBase
     {
         public const int CacheTimeInSeconds = 60;
-
-        private readonly IProjectService _projectService;
-        private readonly IProjectConverter _projectConverter;
-        private readonly ITopicConverter _topicConverter;
-        private readonly ISolutionFileService _solutionFileService;
-        private readonly IMemoryCache _memoryCache;
-
-        public ProjectController(IProjectService projectService,
-            IProjectConverter projectConverter,
-            ITopicConverter topicConverter,
-            ISolutionFileService solutionFileService,
-            IMemoryCache memoryCache)
-        {
-            _projectService = projectService;
-            _projectConverter = projectConverter;
-            _topicConverter = topicConverter;
-            _solutionFileService = solutionFileService;
-            _memoryCache = memoryCache;
-        }
 
         [HttpGet("{projectCode}")]
         [ProducesResponseType(typeof(ProjectDetailModel), (int)HttpStatusCode.OK)]
@@ -54,14 +41,14 @@ namespace Guts.Api.Controllers
             IProject project;
             if (IsLector())
             {
-                project = await _projectService.LoadProjectAsync(courseId, projectCode, periodId);
+                project = await projectService.LoadProjectAsync(courseId, projectCode, periodId);
             }
             else
             {
-                project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
+                project = await projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
             }
 
-            var model = _projectConverter.ToProjectDetailModel(project);
+            var model = projectConverter.ToProjectDetailModel(project);
 
             return Ok(model);
         }
@@ -78,9 +65,9 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            IProject project = await _projectService.CreateProjectAsync(courseId, model.Code, model.Description);
+            IProject project = await projectService.CreateProjectAsync(courseId, model.Code, model.Description);
 
-            ProjectDetailModel outputModel = _projectConverter.ToProjectDetailModel(project);
+            ProjectDetailModel outputModel = projectConverter.ToProjectDetailModel(project);
 
             return CreatedAtAction(nameof(GetProjectDetails), new{ courseId = courseId, projectCode = outputModel.Code }, outputModel);
         }
@@ -97,7 +84,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            await _projectService.UpdateProjectAsync(courseId, projectCode, model.Description);
+            await projectService.UpdateProjectAsync(courseId, projectCode, model.Description);
 
             return Ok();
         }
@@ -126,17 +113,17 @@ namespace Guts.Api.Controllers
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
             var cacheKey = $"GetProjectStatistics-{courseId}-{projectCode}-{periodId ?? 0}";
-            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
+            if (!useCache || !memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
             {
                 try
                 {
-                    var project = await _projectService.LoadProjectAsync(courseId, projectCode, periodId);
-                    var projectStatistics = await _projectService.GetProjectStatisticsAsync(project, dateUtc);
-                    model = _topicConverter.ToTopicStatisticsModel(project, projectStatistics, "Teams");
+                    var project = await projectService.LoadProjectAsync(courseId, projectCode, periodId);
+                    var projectStatistics = await projectService.GetProjectStatisticsAsync(project, dateUtc);
+                    model = topicConverter.ToTopicStatisticsModel(project, projectStatistics, "Teams");
 
                     if (useCache)
                     {
-                        _memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
+                        memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
                     }
                 }
                 catch (DataNotFoundException)
@@ -152,10 +139,10 @@ namespace Guts.Api.Controllers
         [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
         public async Task<IActionResult> DownloadSourceCodesAsZip(int courseId, string projectCode, [FromQuery] DateTime? date)
         {
-            IProject project = await _projectService.LoadProjectAsync(courseId, projectCode);
-            IReadOnlyList<SolutionDto> solutions = await _projectService.GetAllSolutions(project, date);
+            IProject project = await projectService.LoadProjectAsync(courseId, projectCode);
+            IReadOnlyList<SolutionDto> solutions = await projectService.GetAllSolutions(project, date);
 
-            byte[] bytes = await _solutionFileService.CreateZipFromFiles(solutions);
+            byte[] bytes = await solutionFileService.CreateZipFromFiles(solutions);
             var result = new FileContentResult(bytes, "application/zip")
             {
                 FileDownloadName = $"Project_{projectCode}_sources.zip"

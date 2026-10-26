@@ -6,18 +6,11 @@ using Guts.Domain.LoginSessionAggregate;
 
 namespace Guts.Business.Services
 {
-    internal class LoginSessionService : ILoginSessionService
+    internal class LoginSessionService(ILoginSesssionRepository loginSesssionRepository) : ILoginSessionService
     {
-        private readonly ILoginSesssionRepository _loginSesssionRepository;
-
-        public LoginSessionService(ILoginSesssionRepository loginSesssionRepository)
-        {
-            _loginSesssionRepository = loginSesssionRepository;
-        }
-
         public async Task<LoginSession> GetSessionAsync(string publicIdentifier, string clientIpAddress, string sessionToken = null)
         {
-            return await _loginSesssionRepository.GetSingleAsync(publicIdentifier, clientIpAddress, sessionToken);
+            return await loginSesssionRepository.GetSingleAsync(publicIdentifier, clientIpAddress, sessionToken);
         }
 
         public async Task<LoginSession> CreateSessionAsync(string clientIpAddress)
@@ -32,29 +25,29 @@ namespace Guts.Business.Services
                 CreateDateTime = DateTime.UtcNow
             };
 
-            var addedSession = await _loginSesssionRepository.AddAsync(newSession);
+            var addedSession = await loginSesssionRepository.AddAsync(newSession);
             return addedSession;
         }
 
         public async Task CleanUpOldSessionsAsync()
         {
-            var allSessions = await _loginSesssionRepository.GetAllAsync();
+            var allSessions = await loginSesssionRepository.GetAllAsync();
             var sessionsToDelete = allSessions.Where(s => s.CreateDateTime < DateTime.UtcNow.AddHours(-1)).ToList();
-            await _loginSesssionRepository.DeleteBulkAsync(sessionsToDelete);
+            await loginSesssionRepository.DeleteBulkAsync(sessionsToDelete);
         }
 
         public async Task CancelSessionAsync(string publicIdentifier, string clientIpAddress)
         {
-            var session = await _loginSesssionRepository.GetSingleAsync(publicIdentifier, clientIpAddress);
+            var session = await loginSesssionRepository.GetSingleAsync(publicIdentifier, clientIpAddress);
             session.IsCancelled = true;
-            await _loginSesssionRepository.UpdateAsync(session);
+            await loginSesssionRepository.UpdateAsync(session);
         }
 
         public async Task SetLoginTokenForSessionAsync(string publicIdentifier, string loginToken)
         {
-            var session = await _loginSesssionRepository.GetSingleAsync(publicIdentifier);
+            var session = await loginSesssionRepository.GetSingleAsync(publicIdentifier);
             session.LoginToken = loginToken;
-            await _loginSesssionRepository.UpdateAsync(session);
+            await loginSesssionRepository.UpdateAsync(session);
         }
     }
 }

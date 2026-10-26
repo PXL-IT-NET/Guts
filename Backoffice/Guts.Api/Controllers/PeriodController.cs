@@ -15,21 +15,12 @@ namespace Guts.Api.Controllers;
 
 [Produces("application/json")]
 [Route("api/periods")]
-public class PeriodController : ControllerBase
+public class PeriodController(
+    IPeriodRepository periodRepository,
+    IPeriodService periodService,
+    IMapper mapper)
+    : ControllerBase
 {
-    private readonly IPeriodRepository _periodRepository;
-    private readonly IPeriodService _periodService;
-    private readonly IMapper _mapper;
-
-    public PeriodController(IPeriodRepository periodRepository,
-        IPeriodService periodService,
-        IMapper mapper)
-    {
-        _periodRepository = periodRepository;
-        _periodService = periodService;
-        _mapper = mapper;
-    }
-
     /// <summary>
     /// Retrieves all the periods 
     /// </summary>
@@ -38,8 +29,8 @@ public class PeriodController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetAll()
     {
-        IReadOnlyList<IPeriod> periods = await _periodRepository.GetAllAsync();
-        IList<PeriodOutputModel> models = periods.Select(p => _mapper.MapToPeriodOutputModel(p)).ToList();
+        IReadOnlyList<IPeriod> periods = await periodRepository.GetAllAsync();
+        IList<PeriodOutputModel> models = periods.Select(p => mapper.MapToPeriodOutputModel(p)).ToList();
         return Ok(models);
     }
 
@@ -55,8 +46,8 @@ public class PeriodController : ControllerBase
     {
         try
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(id);
-            PeriodOutputModel model = _mapper.MapToPeriodOutputModel(period);
+            IPeriod period = await periodRepository.GetPeriodAsync(id);
+            PeriodOutputModel model = mapper.MapToPeriodOutputModel(period);
             return Ok(model);
         }
         catch (DataNotFoundException)
@@ -76,8 +67,8 @@ public class PeriodController : ControllerBase
     {
         try
         {
-            IPeriod period = await _periodService.CreatePeriodAsync(model.Description, model.From, model.Until);
-            PeriodOutputModel outputModel = _mapper.MapToPeriodOutputModel(period);
+            IPeriod period = await periodService.CreatePeriodAsync(model.Description, model.From, model.Until);
+            PeriodOutputModel outputModel = mapper.MapToPeriodOutputModel(period);
             return CreatedAtAction(nameof(GetById), new { id = outputModel.Id }, outputModel);
         }
         catch (ContractException ex)

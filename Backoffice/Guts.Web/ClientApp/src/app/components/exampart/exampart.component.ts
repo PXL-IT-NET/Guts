@@ -105,7 +105,7 @@ export class ExampartComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((result) => {
           if (result.success) {
-            this.allAssignments = result.value.sort(
+            this.allAssignments = [...result.value].sort(
               (a: ITopicAssignmentModel, b: ITopicAssignmentModel) => {
                 const topicCompare = a.topicDescription.localeCompare(
                   b.topicDescription,

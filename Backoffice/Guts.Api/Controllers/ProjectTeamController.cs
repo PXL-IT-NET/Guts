@@ -19,36 +19,23 @@ namespace Guts.Api.Controllers;
 
 [Produces("application/json")]
 [Route("api/courses/{courseId}/projects/{projectCode}/teams")]
-public class ProjectTeamController : ControllerBase
+public class ProjectTeamController(
+    IProjectService projectService,
+    IProjectTeamRepository projectTeamRepository,
+    IAssignmentRepository assignmentRepository,
+    ITopicConverter topicConverter,
+    ITeamConverter teamConverter)
+    : ControllerBase
 {
-    private readonly IProjectService _projectService;
-    private readonly IProjectTeamRepository _projectTeamRepository;
-    private readonly IAssignmentRepository _assignmentRepository;
-    private readonly ITopicConverter _topicConverter;
-    private readonly ITeamConverter _teamConverter;
-
-    public ProjectTeamController(IProjectService projectService,
-        IProjectTeamRepository projectTeamRepository,
-        IAssignmentRepository assignmentRepository,
-        ITopicConverter topicConverter,
-        ITeamConverter teamConverter)
-    {
-        _projectService = projectService;
-        _projectTeamRepository = projectTeamRepository;
-        _assignmentRepository = assignmentRepository;
-        _topicConverter = topicConverter;
-        _teamConverter = teamConverter;
-    }
-
     [HttpGet]
     [ProducesResponseType(typeof(IList<TeamDetailsModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectTeams(int courseId, string projectCode, [FromQuery] int? periodId = null)
     {
-        IReadOnlyList<IProjectTeam> teams = await _projectService.LoadTeamsOfProjectAsync(courseId, projectCode, periodId);
+        IReadOnlyList<IProjectTeam> teams = await projectService.LoadTeamsOfProjectAsync(courseId, projectCode, periodId);
 
-        List<TeamDetailsModel> models = teams.Select(team => _teamConverter.ToTeamDetailsModel(team)).ToList();
+        List<TeamDetailsModel> models = teams.Select(team => teamConverter.ToTeamDetailsModel(team)).ToList();
 
         return Ok(models);
     }
@@ -59,12 +46,12 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectTeam(int courseId, string projectCode, int teamId)
     {
-        IProjectTeam team = await _projectTeamRepository.LoadByIdAsync(teamId);
+        IProjectTeam team = await projectTeamRepository.LoadByIdAsync(teamId);
 
         Contracts.Require(team.Project.CourseId == courseId, $"Team with id '{teamId}' is not linked to course with id '{courseId}'");
         Contracts.Require(team.Project.Code == projectCode, $"Team with id '{teamId}' is not linked to project with code '{projectCode}'");
 
-        TeamDetailsModel model = _teamConverter.ToTeamDetailsModel(team);
+        TeamDetailsModel model = teamConverter.ToTeamDetailsModel(team);
 
         return Ok(model);
     }
@@ -76,8 +63,8 @@ public class ProjectTeamController : ControllerBase
     [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     public async Task<IActionResult> AddProjectTeam(int courseId, string projectCode, [FromBody] TeamEditModel model)
     {
-        IProjectTeam createdTeam = await _projectService.AddProjectTeamAsync(courseId, projectCode, model.Name);
-        TeamDetailsModel createdTeamModel = _teamConverter.ToTeamDetailsModel(createdTeam);
+        IProjectTeam createdTeam = await projectService.AddProjectTeamAsync(courseId, projectCode, model.Name);
+        TeamDetailsModel createdTeamModel = teamConverter.ToTeamDetailsModel(createdTeam);
 
         return CreatedAtAction(nameof(GetProjectTeam),
             new { courseId = courseId, projectCode = projectCode, teamId = createdTeamModel.Id }, createdTeamModel);
@@ -90,7 +77,7 @@ public class ProjectTeamController : ControllerBase
     [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     public async Task<IActionResult> UpdateProjectTeam(int courseId, string projectCode, int teamId, [FromBody] TeamEditModel model)
     {
-        await _projectService.UpdateProjectTeamAsync(courseId, projectCode, teamId, model.Name);
+        await projectService.UpdateProjectTeamAsync(courseId, projectCode, teamId, model.Name);
 
         return Ok();
     }
@@ -107,7 +94,7 @@ public class ProjectTeamController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        await _projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.TeamNumberFrom, model.TeamNumberTo);
+        await projectService.GenerateTeamsForProject(courseId, projectCode, model.TeamBaseName, model.TeamNumberFrom, model.TeamNumberTo);
 
         return Ok();
     }
@@ -119,7 +106,7 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
     public async Task<IActionResult> JoinProjectTeam(int courseId, string projectCode, int teamId)
     {
-        await _projectService.AddUserToProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
+        await projectService.AddUserToProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
         return Ok();
     }
 
@@ -130,7 +117,7 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
     public async Task<IActionResult> LeaveProjectTeam(int courseId, string projectCode, int teamId)
     {
-        await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
+        await projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, GetUserId());
         return Ok();
     }
 
@@ -142,7 +129,7 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
     public async Task<IActionResult> RemoveFromProjectTeam(int courseId, string projectCode, int teamId, [FromBody] int userId)
     {
-        await _projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId);
+        await projectService.RemoveUserFromProjectTeamAsync(courseId, projectCode, teamId, userId);
         return Ok();
     }
 
@@ -161,7 +148,7 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectSummary(int courseId, string projectCode, int teamId, [FromQuery] DateTime? date, [FromQuery] int? periodId)
     {
-        IProject project = await _projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
+        IProject project = await projectService.LoadProjectForUserAsync(courseId, projectCode, GetUserId(), periodId);
 
         if (IsStudent())
         {
@@ -178,11 +165,11 @@ public class ProjectTeamController : ControllerBase
 
         var dateUtc = date?.ToUniversalTime();
 
-        project.Assignments = await _assignmentRepository.GetByTopicWithTests(project.Id);
+        project.Assignments = await assignmentRepository.GetByTopicWithTests(project.Id);
 
-        IReadOnlyList<AssignmentResultDto> assignmentResults = await _projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
+        IReadOnlyList<AssignmentResultDto> assignmentResults = await projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
 
-        var model = _topicConverter.ToTopicSummaryModel(project, assignmentResults);
+        var model = topicConverter.ToTopicSummaryModel(project, assignmentResults);
         return Ok(model);
     }
 
@@ -193,7 +180,7 @@ public class ProjectTeamController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> DeleteProjectTeam(int courseId, string projectCode, int teamId)
     {
-        await _projectService.DeleteProjectTeamAsync(courseId, projectCode, teamId);
+        await projectService.DeleteProjectTeamAsync(courseId, projectCode, teamId);
         return Ok();
     }
 }

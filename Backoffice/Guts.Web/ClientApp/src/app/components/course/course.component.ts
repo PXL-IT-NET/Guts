@@ -350,48 +350,11 @@ export class CourseComponent implements OnInit, OnDestroy {
           return;
         }
         if (this.course.chapters.length > 0) {
-          //Set selected chapter
-          let selectedChapter = this.course.chapters.find(
-            (c) => c.code === selectedTopicCode,
-          );
-          if (selectedChapter) {
-            this.selectChapter(selectedChapter);
-          } else {
-            this.navigateToChapter(this.course.chapters[0]);
+          if (!this.handleCourseChapters(selectedTopicCode, selectedAssignmentId)) {
             return;
           }
-
-          //Set selected assignment
-          if (selectedAssignmentId > 0) {
-            let selectedAssignment = selectedChapter.assignments.find(
-              (a) => a.assignmentId === selectedAssignmentId,
-            );
-            if (selectedAssignment) {
-              this.selectedExercise = selectedAssignment;
-              this.selectedComponent = null;
-            }
-          }
         } else if (this.course.projects.length > 0) {
-          //Set selected project
-          let selectedProject = this.course.projects.find(
-            (p) => p.code === selectedTopicCode,
-          );
-          if (selectedProject) {
-            this.selectProject(selectedProject);
-          } else {
-            this.navigateToProject(this.course.projects[0]);
-          }
-
-          //Set selected assignment
-          if (selectedAssignmentId > 0) {
-            let selectedAssignment = selectedProject.assignments.find(
-              (a) => a.assignmentId === selectedAssignmentId,
-            );
-            if (selectedAssignment) {
-              this.selectedComponent = selectedAssignment;
-              this.selectedExercise = null;
-            }
-          }
+          this.handleCourseProjects(selectedTopicCode, selectedAssignmentId);
         } else {
           this.hasContent = false;
           void this.router.navigate(["courses", this.course.id]);
@@ -406,6 +369,40 @@ export class CourseComponent implements OnInit, OnDestroy {
     });
   }
 
+  private handleCourseChapters(selectedTopicCode: string, selectedAssignmentId: number): boolean {
+    const selectedChapter = this.course.chapters.find((ch) => ch.code === selectedTopicCode);
+    if (!selectedChapter) {
+      this.navigateToChapter(this.course.chapters[0]);
+      return false;
+    }
+    this.selectChapter(selectedChapter);
+
+    if (selectedAssignmentId > 0) {
+      const selectedAssignment = selectedChapter.assignments.find((a) => a.assignmentId === selectedAssignmentId);
+      if (selectedAssignment) {
+        this.selectedExercise = selectedAssignment;
+        this.selectedComponent = null;
+      }
+    }
+    return true;
+  }
+
+  private handleCourseProjects(selectedTopicCode: string, selectedAssignmentId: number): void {
+    const selectedProject = this.course.projects.find((p) => p.code === selectedTopicCode);
+    if (selectedProject) {
+      this.selectProject(selectedProject);
+    } else {
+      this.navigateToProject(this.course.projects[0]);
+    }
+
+    if (selectedAssignmentId > 0 && selectedProject) {
+      const selectedAssignment = selectedProject.assignments.find((a) => a.assignmentId === selectedAssignmentId);
+      if (selectedAssignment) {
+        this.selectedComponent = selectedAssignment;
+        this.selectedExercise = null;
+      }
+    }
+  }
   public showAddProjectModal() {
     let modalState: ModalOptions = {
       initialState: {

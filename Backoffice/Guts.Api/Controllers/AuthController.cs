@@ -21,30 +21,15 @@ namespace Guts.Api.Controllers
     /// </summary>
     [Produces("application/json")]
     [Route("api/Auth")]
-    public class AuthController : Controller
+    public class AuthController(
+        UserManager<User> userManager,
+        ICaptchaValidator captchaValidator,
+        IMailSender mailSender,
+        ITokenAccessPassFactory tokenAccessPassFactory,
+        ILoginSessionService loginSessionService,
+        ILogger<AuthController> logger)
+        : Controller
     {
-        private readonly UserManager<User> _userManager;
-        private readonly ICaptchaValidator _captchaValidator;
-        private readonly IMailSender _mailSender;
-        private readonly ITokenAccessPassFactory _tokenAccessPassFactory;
-        private readonly ILoginSessionService _loginSessionService;
-        private readonly ILogger<AuthController> _logger;
-
-        public AuthController(UserManager<User> userManager,
-            ICaptchaValidator captchaValidator,
-            IMailSender mailSender,
-            ITokenAccessPassFactory tokenAccessPassFactory,
-            ILoginSessionService loginSessionService, 
-            ILogger<AuthController> logger)
-        {
-            _userManager = userManager;
-            _captchaValidator = captchaValidator;
-            _mailSender = mailSender;
-            _tokenAccessPassFactory = tokenAccessPassFactory;
-            _loginSessionService = loginSessionService;
-            _logger = logger;
-        }
-
         /// <summary>
         /// Registers a new user in the system.
         /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
@@ -64,7 +49,7 @@ namespace Guts.Api.Controllers
                 return BadRequest("Only PXL email adresses are allowed.");
             }
 
-            var validationResult = await _captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
+            var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
             if (!validationResult.Success)
             {
                 return BadRequest("Could not verify captcha.");
@@ -78,12 +63,12 @@ namespace Guts.Api.Controllers
                 LastName = model.LastName
             };
 
-            var result = await _userManager.CreateAsync(user, model.Password);
+            var result = await userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
                 var role = user.Email.ToLower().EndsWith("@pxl.be") ? Role.Constants.Lector : Role.Constants.Student;
-                await _userManager.AddToRoleAsync(user, role);
+                await userManager.AddToRoleAsync(user, role);
                 await SendConfirmUserEmailMessage(user);
                 return Ok();
             }
@@ -106,14 +91,14 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var user = await _userManager.FindByIdAsync(model.UserId);
+            var user = await userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
                 //don't reveal if the user does not exist
                 return Ok();
             }
 
-            var result = await _userManager.ConfirmEmailAsync(user, model.Token);
+            var result = await userManager.ConfirmEmailAsync(user, model.Token);
 
             if (result.Succeeded)
             {
@@ -138,13 +123,13 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var validationResult = await _captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
+            var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
             if (!validationResult.Success)
             {
                 return BadRequest("Could not verify captcha.");
             }
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            var user = await userManager.FindByEmailAsync(model.Email);
 
             if (user == null)
             {
@@ -159,9 +144,9 @@ namespace Guts.Api.Controllers
                 return Ok();
             }
 
-            var resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetPasswordToken = await userManager.GeneratePasswordResetTokenAsync(user);
 
-            await _mailSender.SendForgotPasswordMessageAsync(user, resetPasswordToken);
+            await mailSender.SendForgotPasswordMessageAsync(user, resetPasswordToken);
 
             return Ok();
         }
@@ -177,14 +162,14 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var user = await _userManager.FindByIdAsync(model.UserId);
+            var user = await userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
                 //don't reveal if the user does not exist
                 return Ok();
             }
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+            var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
 
             if (result.Succeeded)
             {
@@ -210,9 +195,9 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            User user = await _userManager.GetUserAsync(User);
+            User user = await userManager.GetUserAsync(User);
 
-            var result = await _userManager.ChangePasswordAsync(user!, model.CurrentPassword, model.NewPassword);
+            var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
 
             if (result.Succeeded)
             {
@@ -239,36 +224,36 @@ namespace Guts.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var user = await _userManager.FindByNameAsync(model.Email);
+            var user = await userManager.FindByNameAsync(model.Email);
             if (user == null)
             {
-                _logger.LogWarning("Cannot find user by name '{Email}'", model.Email);
+                logger.LogWarning("Cannot find user by name '{Email}'", model.Email);
                 return Unauthorized();
             }
 
-            var isPasswordValid = await _userManager.CheckPasswordAsync(user, model.Password);
+            var isPasswordValid = await userManager.CheckPasswordAsync(user, model.Password);
             if (!isPasswordValid)
             {
-                _logger.LogWarning("Invalid password for user '{UserName}'", user.UserName);
+                logger.LogWarning("Invalid password for user '{UserName}'", user.UserName);
                 return Unauthorized();
             }
 
             if (!user.EmailConfirmed)
             {
-                _logger.LogWarning("Email adress of user is not confirmed: '{Email}'", user.Email);
+                logger.LogWarning("Email adress of user is not confirmed: '{Email}'", user.Email);
                 await SendConfirmUserEmailMessage(user);
 
                 ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");
                 return BadRequest(ModelState);
             }
 
-            var currentClaims = await _userManager.GetClaimsAsync(user);
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var tokenAccessPass = _tokenAccessPassFactory.Create(user, currentClaims, userRoles);
+            var currentClaims = await userManager.GetClaimsAsync(user);
+            var userRoles = await userManager.GetRolesAsync(user);
+            var tokenAccessPass = tokenAccessPassFactory.Create(user, currentClaims, userRoles);
 
             if (!string.IsNullOrEmpty(model.LoginSessionPublicIdentifier))
             {
-                await _loginSessionService.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier, tokenAccessPass.Token);
+                await loginSessionService.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier, tokenAccessPass.Token);
             }
 
             return Ok(tokenAccessPass);
@@ -279,8 +264,8 @@ namespace Guts.Api.Controllers
         [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> CreateLoginSession()
         {
-            await _loginSessionService.CleanUpOldSessionsAsync();
-            var session = await _loginSessionService.CreateSessionAsync(HttpContext.Connection.RemoteIpAddress.ToString());
+            await loginSessionService.CleanUpOldSessionsAsync();
+            var session = await loginSessionService.CreateSessionAsync(HttpContext.Connection.RemoteIpAddress.ToString());
             return Ok(session);
         }
 
@@ -293,7 +278,7 @@ namespace Guts.Api.Controllers
             var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
             try
             {
-                var session = await _loginSessionService.GetSessionAsync(publicIdentifier, clientIp, secretToken);
+                var session = await loginSessionService.GetSessionAsync(publicIdentifier, clientIp, secretToken);
                 return Ok(session);
             }
             catch (DataNotFoundException)
@@ -311,7 +296,7 @@ namespace Guts.Api.Controllers
 
             try
             {
-                await _loginSessionService.CancelSessionAsync(publicIdentifier, clientIp);
+                await loginSessionService.CancelSessionAsync(publicIdentifier, clientIp);
                 return Ok();
             }
             catch (DataNotFoundException)
@@ -322,8 +307,8 @@ namespace Guts.Api.Controllers
 
         private async Task SendConfirmUserEmailMessage(User user)
         {
-            var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            await _mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
+            var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            await mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
         }
 
     }

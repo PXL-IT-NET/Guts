@@ -14,7 +14,6 @@ using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
-using Guts.Domain.TopicAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;

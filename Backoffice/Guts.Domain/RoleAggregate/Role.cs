@@ -1,11 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using Microsoft.AspNetCore.Identity;
 
 namespace Guts.Domain.RoleAggregate
 {
+    [SuppressMessage("Major Code Smell", "S4035:Classes implementing 'IEquatable<T>' should be sealed or also implement 'IEqualityComparer<T>'", Justification = "Equals implementation explicitly checks GetType() to avoid derived type equality.")]
     public class Role : IdentityRole<int>, IEntity, IEquatable<Role>
     {
-        public class Constants
+        public static class Constants
         {
             public const string Student = "student";
             public const string Lector = "lector";

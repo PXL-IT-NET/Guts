@@ -5,14 +5,8 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
 {
-    public class ProjectConverter : IProjectConverter
+    public class ProjectConverter(IMapper mapper) : IProjectConverter
     {
-        private readonly IMapper _mapper;
-
-        public ProjectConverter(IMapper mapper)
-        {
-            _mapper = mapper;
-        }
         public TopicModel ToTopicModel(IProject project)
         {
             return new TopicModel
@@ -20,7 +14,7 @@ namespace Guts.Api.Models.Converters
                 Id = project.Id,
                 Code = project.Code,
                 Description = project.Description,
-                Assignments = project.Assignments.Select(a => _mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
+                Assignments = project.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
                     .ToList()
             };
         }

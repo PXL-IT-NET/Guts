@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
-import { CreateResult, GetResult, PostResult } from "../util/result";
+import { GetResult, PostResult } from "../util/result";
 import {
   IAssessmentResultModel,
   IPeerAssessmentModel,

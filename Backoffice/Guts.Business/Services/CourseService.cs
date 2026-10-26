@@ -8,41 +8,29 @@ using Guts.Domain.CourseAggregate;
 
 namespace Guts.Business.Services
 {
-    internal class CourseService : ICourseService
+    internal class CourseService(
+        ICourseRepository courseRepository,
+        IPeriodRepository periodRepository,
+        IChapterRepository chapterRepository,
+        ITestResultRepository testResultRepository)
+        : ICourseService
     {
-        private readonly ICourseRepository _courseRepository;
-        private readonly IPeriodRepository _periodRepository;
-        private readonly IChapterRepository _chapterRepository;
-        private readonly ITestResultRepository _testResultRepository;
-
-        public CourseService(
-            ICourseRepository courseRepository,
-            IPeriodRepository periodRepository,
-            IChapterRepository chapterRepository,
-            ITestResultRepository testResultRepository)
-        {
-            _courseRepository = courseRepository;
-            _periodRepository = periodRepository;
-            _chapterRepository = chapterRepository;
-            _testResultRepository = testResultRepository;
-        }
-
         public async Task<IReadOnlyList<Course>> GetAllCoursesAsync()
         {
-            return await _courseRepository.GetAllAsync();
+            return await courseRepository.GetAllAsync();
         }
 
         public async Task<Course> GetCourseByIdAsync(int courseId)
         {
-            return await _courseRepository.GetByIdAsync(courseId);
+            return await courseRepository.GetByIdAsync(courseId);
         }
 
         public async Task<CourseStatisticsDto> GetCourseStatisticsAsync(int courseId, int? periodId = null)
         {
-            var course = await _courseRepository.GetByIdAsync(courseId);
-            var period = await _periodRepository.GetPeriodAsync(periodId);
+            var course = await courseRepository.GetByIdAsync(courseId);
+            var period = await periodRepository.GetPeriodAsync(periodId);
 
-            var chapters = await _chapterRepository.GetByCourseIdWithAssignmentsAndTestsAsync(courseId, period.Id);
+            var chapters = await chapterRepository.GetByCourseIdWithAssignmentsAndTestsAsync(courseId, period.Id);
 
             var assignments = chapters.SelectMany(ch => ch.Assignments).ToList();
             var allCourseTestIds = new HashSet<int>(assignments.SelectMany(a => a.Tests).Select(t => t.Id));
@@ -65,7 +53,7 @@ namespace Guts.Business.Services
             }
 
             var assignmentIds = assignments.Select(a => a.Id).ToArray();
-            var lastTestResults = await _testResultRepository.GetLastTestResultsOfAssignmentsAsync(assignmentIds, null);
+            var lastTestResults = await testResultRepository.GetLastTestResultsOfAssignmentsAsync(assignmentIds, null);
 
             var userGroups = lastTestResults
                 .Where(tr => tr.User != null)
@@ -99,7 +87,7 @@ namespace Guts.Business.Services
                         Assignments = new List<CourseStudentAssignmentStatisticsDto>()
                     };
 
-                    foreach (var assignment in chapter.Assignments.OrderBy(a => (string)a.Code))
+                    foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
                     {
                         var assignmentTestIds = new HashSet<int>(assignment.Tests.Select(t => t.Id));
                         var assignmentResults = studentResults.Where(tr => tr.Test?.AssignmentId == assignment.Id).ToList();

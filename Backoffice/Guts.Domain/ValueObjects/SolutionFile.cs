@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using Guts.Common;
@@ -9,6 +10,7 @@ namespace Guts.Domain.ValueObjects
     {
         public int AssignmentId { get; private set; }
 
+        [SuppressMessage("Major Code Smell", "S1144:Unused private types or members should be removed", Justification = "Private setter is required by EF Core property mapping and test builders.")]
         public virtual User User { get; private set; }
         public int UserId { get; private set; }
 
@@ -24,7 +26,7 @@ namespace Guts.Domain.ValueObjects
             Contracts.Require(assignmentId > 0, "The assignment Id must be a positive number.");
             Contracts.Require(userId > 0, "The user Id must be a positive number.");
             Contracts.Require(filePath != null, "The filePath cannot be empty.");
-            Contracts.Require(filePath!.FullPath.Length <= 255, "The length of the filePath can not be more than 255.");
+            Contracts.Require(filePath.FullPath.Length <= 255, "The length of the filePath can not be more than 255.");
             Contracts.Require(content != null, "The content cannot be null.");
             var solutionFile = new SolutionFile
             {

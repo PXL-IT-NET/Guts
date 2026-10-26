@@ -7,18 +7,10 @@ using Guts.Domain.UserAggregate;
 
 namespace Guts.Business.Communication
 {
-    internal class MailSender : IMailSender
+    internal class MailSender(ISmtpClient smtpClient, string fromEmail, string webAppBaseUrl)
+        : IMailSender
     {
-        private readonly Uri _webAppBaseUri;
-        private readonly ISmtpClient _smtpClient;
-        private readonly string _fromEmail;
-
-        public MailSender(ISmtpClient smtpClient, string fromEmail, string webAppBaseUrl)
-        {
-            _webAppBaseUri = new Uri(webAppBaseUrl);
-            _fromEmail = fromEmail;
-            _smtpClient = smtpClient;
-        }
+        private readonly Uri _webAppBaseUri = new(webAppBaseUrl);
 
         public Task SendConfirmUserEmailMessageAsync(User user, string confirmationToken)
         {
@@ -65,14 +57,14 @@ namespace Guts.Business.Communication
 
             var message = new MailMessage
             {
-                From = new MailAddress(_fromEmail),
+                From = new MailAddress(fromEmail),
                 Subject = subject,
                 Body = bodyBuilder.ToString(),
                 IsBodyHtml = true
             };
             message.To.Add(new MailAddress(user.Email));
 
-            await _smtpClient.SendMailAsync(message);
+            await smtpClient.SendMailAsync(message);
         }
     }
 }

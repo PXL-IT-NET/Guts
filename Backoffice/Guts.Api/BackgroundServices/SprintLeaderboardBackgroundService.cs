@@ -9,19 +9,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Guts.Api.BackgroundServices
 {
-    public class SprintLeaderboardBackgroundService : BackgroundService
+    public class SprintLeaderboardBackgroundService(
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger<SprintLeaderboardBackgroundService> logger)
+        : BackgroundService
     {
-        private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly ILogger<SprintLeaderboardBackgroundService> _logger;
-
-        public SprintLeaderboardBackgroundService(
-            IServiceScopeFactory serviceScopeFactory,
-            ILogger<SprintLeaderboardBackgroundService> logger)
-        {
-            _serviceScopeFactory = serviceScopeFactory;
-            _logger = logger;
-        }
-
         public static DateTime GetNextMondayMorningTrigger(DateTime fromUtc)
         {
             int daysUntilMonday = ((int)DayOfWeek.Monday - (int)fromUtc.DayOfWeek + 7) % 7;
@@ -46,24 +38,24 @@ namespace Guts.Api.BackgroundServices
 
         public async Task ExecuteSprintAwardingAsync(int year, int weekNumber, CancellationToken cancellationToken = default)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Starting weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+                logger.LogInformation("Starting weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
             }
-            using (var scope = _serviceScopeFactory.CreateScope())
+            using (var scope = serviceScopeFactory.CreateScope())
             {
                 var gamificationService = scope.ServiceProvider.GetRequiredService<IGamificationService>();
                 await gamificationService.AwardWeeklySprintBadgesAsync(year, weekNumber);
             }
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Completed weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
+                logger.LogInformation("Completed weekly sprint badge awarding for Year {Year}, Week {WeekNumber}", year, weekNumber);
             }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("SprintLeaderboardBackgroundService started.");
+            logger.LogInformation("SprintLeaderboardBackgroundService started.");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -73,9 +65,9 @@ namespace Guts.Api.BackgroundServices
 
                 if (delay > TimeSpan.Zero)
                 {
-                    if (_logger.IsEnabled(LogLevel.Information))
+                    if (logger.IsEnabled(LogLevel.Information))
                     {
-                        _logger.LogInformation("Next sprint badge awarding scheduled for {NextRun} (in {Delay})", nextRun, delay);
+                        logger.LogInformation("Next sprint badge awarding scheduled for {NextRun} (in {Delay})", nextRun, delay);
                     }
                     try
                     {
@@ -93,11 +85,11 @@ namespace Guts.Api.BackgroundServices
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An error occurred while awarding weekly sprint badges.");
+                    logger.LogError(ex, "An error occurred while awarding weekly sprint badges.");
                 }
             }
 
-            _logger.LogInformation("SprintLeaderboardBackgroundService stopped.");
+            logger.LogInformation("SprintLeaderboardBackgroundService stopped.");
         }
     }
 }

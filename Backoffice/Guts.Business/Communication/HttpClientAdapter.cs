@@ -6,14 +6,9 @@ using Newtonsoft.Json;
 
 namespace Guts.Business.Communication
 {
-    internal class HttpClientAdapter : IHttpClient, IDisposable
+    internal sealed class HttpClientAdapter : IHttpClient, IDisposable
     {
-        private readonly HttpClient _httpClient;
-
-        public HttpClientAdapter()
-        {
-            _httpClient = new HttpClient();
-        }
+        private readonly HttpClient _httpClient = new();
 
         public async Task<TResponse> PostAsFormUrlEncodedContentAsync<TResponse>(string url, params KeyValuePair<string, string>[] keyValuePairs)
         {

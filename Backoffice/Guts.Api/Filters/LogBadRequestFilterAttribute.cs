@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
@@ -10,14 +11,10 @@ using Newtonsoft.Json;
 namespace Guts.Api.Filters
 {
     [ExcludeFromCodeCoverage]
-    public class LogBadRequestFilterAttribute : ResultFilterAttribute
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
+    public class LogBadRequestFilterAttribute(ILogger<LogBadRequestFilterAttribute> logger) : ResultFilterAttribute
     {
-        private readonly ILogger _logger;
-
-        public LogBadRequestFilterAttribute(ILogger<LogBadRequestFilterAttribute> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger _logger = logger;
 
         public override void OnResultExecuted(ResultExecutedContext context)
         {

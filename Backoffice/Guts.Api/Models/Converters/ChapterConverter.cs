@@ -6,17 +6,8 @@ using Guts.Domain.UserAggregate;
 
 namespace Guts.Api.Models.Converters
 {
-    public class ChapterConverter : IChapterConverter
+    public class ChapterConverter(IUserConverter userConverter, IMapper mapper) : IChapterConverter
     {
-        private readonly IUserConverter _userConverter;
-        private readonly IMapper _mapper;
-
-        public ChapterConverter(IUserConverter userConverter, IMapper mapper)
-        {
-            _userConverter = userConverter;
-            _mapper = mapper;
-        }
-
         public TopicModel ToTopicModel(Chapter chapter)
         {
             return new TopicModel
@@ -24,7 +15,7 @@ namespace Guts.Api.Models.Converters
                 Id = chapter.Id,
                 Code = chapter.Code,
                 Description = chapter.Description,
-                Assignments = chapter.Assignments.Select(a => _mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
+                Assignments = chapter.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
                     .ToList()
             };
         }
@@ -43,7 +34,7 @@ namespace Guts.Api.Models.Converters
                     Description = assignment.Description,
                     Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
                 }).OrderBy(model => model.Description).ToList(),
-                Users = chapterUsers.Select(user => _userConverter.FromUser(user)).ToList()
+                Users = chapterUsers.Select(user => userConverter.FromUser(user)).ToList()
             };
         }
     }

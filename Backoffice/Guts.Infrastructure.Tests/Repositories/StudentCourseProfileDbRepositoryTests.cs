@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
 using Guts.Infrastructure.Repositories;

@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.GamificationAggregate;
-using Guts.Domain.TestAggregate;
 using Guts.Infrastructure.Migrations;
 using Guts.Infrastructure.Tests.Repositories;
 using Microsoft.Data.Sqlite;

@@ -30,7 +30,7 @@ namespace Guts.Infrastructure.Repositories
             Topic topic = await _context.Topics.FirstOrDefaultAsync(t => t.Course.Id == courseId && t.Code == code && t.PeriodId == periodId);
             Contracts.Require(topic is not null, $"Project or chapter with code '{code}' could not be found");
 
-            topic!.Description = description;
+            topic.Description = description;
             await _context.SaveChangesAsync();
         }
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -38,7 +38,7 @@ namespace Guts.Infrastructure.Logging
         }
 
         /// <inheritdoc />
-        protected override async Task WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken cancellationToken)
+        protected override async Task WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken token)
         {
             Directory.CreateDirectory(_path);
 
@@ -79,7 +79,7 @@ namespace Guts.Infrastructure.Logging
             throw new InvalidDataException("Invalid periodicity");
         }
 
-        private (int Year, int Month, int Day, int Hour, int Minute) GetGrouping(LogMessage message)
+        private static (int Year, int Month, int Day, int Hour, int Minute) GetGrouping(LogMessage message)
         {
             return (message.Timestamp.Year, message.Timestamp.Month, message.Timestamp.Day, message.Timestamp.Hour, message.Timestamp.Minute);
         }

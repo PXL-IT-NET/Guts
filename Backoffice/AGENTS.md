@@ -101,3 +101,4 @@ Guts.Common         ──► Design-by-Contract utilities & shared extensions
   .\run-sonarqube.ps1 -StartServer
   ```
 - Review the analysis results and resolve any reported bugs, vulnerabilities, security hotspots, or code smells.
+- You can also review the public report on https://sonarcloud.io/. The project key is `PXL-IT-NET_Guts`.

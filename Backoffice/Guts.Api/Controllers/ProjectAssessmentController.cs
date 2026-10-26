@@ -14,28 +14,19 @@ namespace Guts.Api.Controllers;
 
 [Produces("application/json")]
 [Route("api/project-assessments")]
-public class ProjectAssessmentController : ControllerBase
+public class ProjectAssessmentController(
+    IProjectService projectService,
+    IProjectAssessmentRepository projectAssessmentRepository,
+    IMapper mapper)
+    : ControllerBase
 {
-    private readonly IProjectService _projectService;
-    private readonly IProjectAssessmentRepository _projectAssessmentRepository;
-    private readonly IMapper _mapper;
-
-    public ProjectAssessmentController(IProjectService projectService,
-        IProjectAssessmentRepository projectAssessmentRepository,
-        IMapper mapper)
-    {
-        _projectService = projectService;
-        _projectAssessmentRepository = projectAssessmentRepository;
-        _mapper = mapper;
-    }
-
     [HttpGet("of-project/{projectId}")]
     [ProducesResponseType(typeof(IList<ProjectAssessmentModel>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectAssessments(int projectId)
     {
-        IReadOnlyList<IProjectAssessment> assessments = await _projectAssessmentRepository.FindByProjectIdAsync(projectId);
-        var models = assessments.Select(a => _mapper.MapToProjectAssessmentModel(a)).ToList();
+        IReadOnlyList<IProjectAssessment> assessments = await projectAssessmentRepository.FindByProjectIdAsync(projectId);
+        var models = assessments.Select(a => mapper.MapToProjectAssessmentModel(a)).ToList();
         return Ok(models);
     }
 
@@ -45,8 +36,8 @@ public class ProjectAssessmentController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectAssessment(int id)
     {
-        IProjectAssessment assessment = await _projectAssessmentRepository.GetByIdAsync(id);
-        ProjectAssessmentModel model = _mapper.MapToProjectAssessmentModel(assessment);
+        IProjectAssessment assessment = await projectAssessmentRepository.GetByIdAsync(id);
+        ProjectAssessmentModel model = mapper.MapToProjectAssessmentModel(assessment);
         return Ok(model);
     }
 
@@ -59,10 +50,10 @@ public class ProjectAssessmentController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        IProjectAssessment assessment = await _projectService.CreateProjectAssessmentAsync(model.ProjectId, model.Description,
+        IProjectAssessment assessment = await projectService.CreateProjectAssessmentAsync(model.ProjectId, model.Description,
             model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
 
-        ProjectAssessmentModel outputModel = _mapper.MapToProjectAssessmentModel(assessment);
+        ProjectAssessmentModel outputModel = mapper.MapToProjectAssessmentModel(assessment);
 
         return CreatedAtAction(nameof(GetProjectAssessment), new { id = assessment.Id }, outputModel);
     }
@@ -76,7 +67,7 @@ public class ProjectAssessmentController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        await _projectService.UpdateProjectAssessmentAsync(id, model.Description,
+        await projectService.UpdateProjectAssessmentAsync(id, model.Description,
             model.OpenOn.ToUniversalTime(), model.Deadline.ToUniversalTime());
 
         return Ok();
@@ -94,8 +85,8 @@ public class ProjectAssessmentController : ControllerBase
             return BadRequest();
         }
 
-        IProjectAssessment assessmentToDelete = await _projectAssessmentRepository.GetByIdAsync(id);
-        await _projectAssessmentRepository.DeleteAsync(assessmentToDelete);
+        IProjectAssessment assessmentToDelete = await projectAssessmentRepository.GetByIdAsync(id);
+        await projectAssessmentRepository.DeleteAsync(assessmentToDelete);
         return Ok();
     }
 }

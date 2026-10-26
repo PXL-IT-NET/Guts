@@ -13,7 +13,7 @@ namespace Guts.Domain.ValueObjects
         public Code(string value)
         {
             Contracts.Require(!string.IsNullOrEmpty(value), "A code cannot be empty");
-            Contracts.Require(value!.Length <= MaxLength, $"A code can not contain more than {MaxLength} characters");
+            Contracts.Require(value.Length <= MaxLength, $"A code can not contain more than {MaxLength} characters");
 
             Contracts.Require(ValidCodeRegex().IsMatch(value), "A code may only consist of letters, numbers, underscores, hyphens or periods");
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
@@ -19,30 +18,16 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/courses/{courseId}/chapters")]
-    public class ChapterController : ControllerBase
+    public class ChapterController(
+        IChapterService chapterService,
+        IChapterConverter chapterConverter,
+        ITopicConverter topicConverter,
+        UserManager<User> userManager,
+        IUserRepository userRepository,
+        IMemoryCache memoryCache)
+        : ControllerBase
     {
-        private readonly IChapterService _chapterService;
-        private readonly IChapterConverter _chapterConverter;
-        private readonly ITopicConverter _topicConverter;
-        private readonly UserManager<User> _userManager;
-        private readonly IUserRepository _userRepository;
-        private readonly IMemoryCache _memoryCache;
         public const int CacheTimeInSeconds = 300;
-
-        public ChapterController(IChapterService chapterService,
-            IChapterConverter chapterConverter,
-            ITopicConverter topicConverter,
-            UserManager<User> userManager, 
-            IUserRepository userRepository,
-            IMemoryCache memoryCache)
-        {
-            _chapterService = chapterService;
-            _chapterConverter = chapterConverter;
-            _topicConverter = topicConverter;
-            _userManager = userManager;
-            _userRepository = userRepository;
-            _memoryCache = memoryCache;
-        }
 
         /// <summary>
         /// Retrieves the properties of a chapter of a course (for the current period).
@@ -64,20 +49,20 @@ namespace Guts.Api.Controllers
 
             try
             {
-                Chapter chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
+                Chapter chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
 
-                List<User> chapterUsers = new List<User>();
+                List<User> chapterUsers = [];
                 if (IsLector())
                 {
-                    chapterUsers.AddRange(await _userRepository.GetUsersOfTopicAsync(chapter.Id));
+                    chapterUsers.AddRange(await userRepository.GetUsersOfTopicAsync(chapter.Id));
                 }
 
                 if (chapterUsers.Count == 0) //add the own user
                 {
-                    chapterUsers.Add(await _userManager.GetUserAsync(User));
+                    chapterUsers.Add(await userManager.GetUserAsync(User));
                 }
 
-                var model = _chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
+                var model = chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -98,7 +83,7 @@ namespace Guts.Api.Controllers
                 return BadRequest();
             }
 
-            await _chapterService.UpdateChapterAsync(courseId, chapterCode, model.Description);
+            await chapterService.UpdateChapterAsync(courseId, chapterCode, model.Description);
 
             return Ok();
         }
@@ -138,9 +123,9 @@ namespace Guts.Api.Controllers
 
             try
             {
-                var chapter = await _chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
-                var assignmentResults = await _chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
-                var model = _topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
+                var chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
+                var assignmentResults = await chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
+                var model = topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
                 return Ok(model);
             }
             catch (DataNotFoundException)
@@ -172,17 +157,17 @@ namespace Guts.Api.Controllers
             bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
 
             var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-{periodId ?? 0}";
-            if (!useCache || !_memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
+            if (!useCache || !memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
             {
                 try
                 {
-                    var chapter = await _chapterService.LoadChapterAsync(courseId, chapterCode, periodId);
-                    var chapterStatistics = await _chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
-                    model = _topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
+                    var chapter = await chapterService.LoadChapterAsync(courseId, chapterCode, periodId);
+                    var chapterStatistics = await chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
+                    model = topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
 
                     if (useCache)
                     {
-                        _memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
+                        memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
                     }
                 }
                 catch (DataNotFoundException)

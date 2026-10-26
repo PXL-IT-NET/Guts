@@ -1,9 +1,7 @@
-﻿using System;
-using System.Runtime.Serialization;
+using System;
 
 namespace Guts.Common
 {
-    [Serializable]
     public class ContractException : Exception
     {
         public ContractException()
@@ -17,12 +15,6 @@ namespace Guts.Common
 
         public ContractException(string message, Exception inner)
             : base(message, inner)
-        {
-        }
-
-        [Obsolete("Obsolete")]
-        protected ContractException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
         {
         }
     }

@@ -2,11 +2,10 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ProjectService } from "../../services/project.service";
-import { GetResult } from "../../util/result";
 import { ToastrService } from "ngx-toastr";
 import { Subscription } from "rxjs";
 import { ITeamDetailsModel } from "../../viewmodels/team.model";
-import { PostResult } from "../../util/result";
+import { GetResult, PostResult } from "../../util/result";
 import { AuthService } from "../../services/auth.service";
 import { UserProfile } from "../../viewmodels/user.model";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
@@ -224,7 +223,7 @@ export class ProjectTeamComponent implements OnInit {
       .subscribe((result: GetResult<ITeamDetailsModel[]>) => {
         this.loading = false;
         if (result.success) {
-          this.teams = result.value.sort((a, b) =>
+          this.teams = [...result.value].sort((a, b) =>
             a.name.localeCompare(b.name),
           );
           this.myTeam =

@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy } from "@angular/core";
-import { Chart } from "chart.js";
 
 @Component({
   standalone: false,

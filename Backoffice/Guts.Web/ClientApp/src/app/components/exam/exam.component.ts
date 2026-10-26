@@ -16,7 +16,7 @@ import { AuthService } from "../../services/auth.service";
 import { ActivatedRoute } from "@angular/router";
 import { UserProfile } from "../../viewmodels/user.model";
 import { ExamModel, ExamPartModel } from "../../viewmodels/exam.model";
-import { Subscription, Subject } from "rxjs";
+import { Subscription } from "rxjs";
 import { ToastrService } from "ngx-toastr";
 
 @Component({

@@ -1,3 +1,5 @@
+using Guts.Domain.AssignmentAggregate;
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,24 +11,24 @@ using Guts.Common;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestRunAggregate;
-using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Logging;
 
 namespace Guts.Business.Services
 {
-    public class GamificationService : IGamificationService
+    [method: SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Service orchestrates gamification domain dependencies; preserving backward compatibility.")]
+    public class GamificationService(
+        IStudentCourseProfileRepository studentCourseProfileRepository,
+        ICourseGamificationConfigRepository courseGamificationConfigRepository,
+        ICourseClassGroupRepository courseClassGroupRepository,
+        ICourseRepository courseRepository,
+        IProjectTeamRepository projectTeamRepository,
+        IAssignmentRepository assignmentRepository,
+        IPeriodRepository periodRepository,
+        IStudentCourseProfileFactory studentCourseProfileFactory,
+        ICourseClassGroupFactory courseClassGroupFactory,
+        ILogger<GamificationService> logger)
+        : IGamificationService
     {
-        private readonly IStudentCourseProfileRepository _studentCourseProfileRepository;
-        private readonly ICourseGamificationConfigRepository _courseGamificationConfigRepository;
-        private readonly ICourseClassGroupRepository _courseClassGroupRepository;
-        private readonly ICourseRepository _courseRepository;
-        private readonly IProjectTeamRepository _projectTeamRepository;
-        private readonly IAssignmentRepository _assignmentRepository;
-        private readonly IPeriodRepository _periodRepository;
-        private readonly IStudentCourseProfileFactory _studentCourseProfileFactory;
-        private readonly ICourseClassGroupFactory _courseClassGroupFactory;
-        private readonly ILogger<GamificationService> _logger;
-
         private static readonly Dictionary<BadgeType, (string Name, string Description, string Icon)> BadgeMetadata = new()
         {
             { BadgeType.FirstSpark, ("First Spark", "Passed your first test in the course", "🌱") },
@@ -46,30 +48,6 @@ namespace Guts.Business.Services
             { BadgeType.TeamPowerhouse, ("Team Powerhouse", "Project team where all members have green tests", "🤝") }
         };
 
-        public GamificationService(
-            IStudentCourseProfileRepository studentCourseProfileRepository,
-            ICourseGamificationConfigRepository courseGamificationConfigRepository,
-            ICourseClassGroupRepository courseClassGroupRepository,
-            ICourseRepository courseRepository,
-            IProjectTeamRepository projectTeamRepository,
-            IAssignmentRepository assignmentRepository,
-            IPeriodRepository periodRepository,
-            IStudentCourseProfileFactory studentCourseProfileFactory,
-            ICourseClassGroupFactory courseClassGroupFactory,
-            ILogger<GamificationService> logger)
-        {
-            _studentCourseProfileRepository = studentCourseProfileRepository;
-            _courseGamificationConfigRepository = courseGamificationConfigRepository;
-            _courseClassGroupRepository = courseClassGroupRepository;
-            _courseRepository = courseRepository;
-            _projectTeamRepository = projectTeamRepository;
-            _assignmentRepository = assignmentRepository;
-            _periodRepository = periodRepository;
-            _studentCourseProfileFactory = studentCourseProfileFactory;
-            _courseClassGroupFactory = courseClassGroupFactory;
-            _logger = logger;
-        }
-
         public async Task ProcessTestRunAsync(TestRun testRun)
         {
             if (testRun?.TestResults == null || !testRun.TestResults.Any(tr => tr.Passed))
@@ -79,7 +57,7 @@ namespace Guts.Business.Services
 
             try
             {
-                var assignment = await _assignmentRepository.GetSingleWithTestsAndCourseAsync(testRun.AssignmentId);
+                var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(testRun.AssignmentId);
                 if (assignment?.Topic == null)
                 {
                     return;
@@ -88,128 +66,151 @@ namespace Guts.Business.Services
                 int courseId = assignment.Topic.CourseId;
                 int periodId = assignment.Topic.PeriodId;
 
-                // Check course gamification config
-                var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+                var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
                 if (config == null || !config.IsGamificationEnabled)
                 {
                     return;
                 }
 
-                var profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(testRun.UserId, courseId, periodId);
-                if (profile == null)
-                {
-                    profile = _studentCourseProfileFactory.CreateNew(testRun.UserId, courseId, periodId);
-                    profile = await _studentCourseProfileRepository.AddAsync(profile);
-                }
+                var profile = await GetOrCreateProfileAsync(testRun.UserId, courseId, periodId);
 
-                // Award XP for each passing test
-                foreach (var passingResult in testRun.TestResults.Where(tr => tr.Passed))
-                {
-                    profile.AwardPassedTestXp(passingResult.TestId, testRun.CreateDateTime, config.IsWeeklyStreakEnabled, config.IsBadgesEnabled);
-                }
+                AwardPassedTestsXp(profile, testRun, config);
 
-                // Check assignment completion
                 var allAssignmentTestIds = assignment.Tests.Select(t => t.Id).ToHashSet();
                 var userPassedTestIds = profile.Events
                     .Where(e => e.EventType == GamificationEventType.PassedTest)
                     .Select(e => e.TargetId)
                     .ToHashSet();
 
-                bool allTestsOfAssignmentPassed = allAssignmentTestIds.Count > 0 && allAssignmentTestIds.IsSubsetOf(userPassedTestIds);
-                if (allTestsOfAssignmentPassed)
-                {
-                    int previousCompletions = await _studentCourseProfileRepository.CountAssignmentCompletionsAsync(assignment.Id, courseId, periodId);
-                    profile.AwardAssignmentBonus(assignment.Id, testRun.CreateDateTime, previousCompletions, config.IsBadgesEnabled);
+                bool allTestsOfAssignmentPassed = await CheckAssignmentAndTopicCompletionAsync(
+                    profile, assignment, courseId, periodId, testRun.CreateDateTime, config, userPassedTestIds, allAssignmentTestIds);
 
-                    // Check if entire topic / chapter is completed
-                    var topicAssignments = await _assignmentRepository.GetByTopicWithTests(assignment.TopicId);
-                    var allTopicTestIds = topicAssignments.SelectMany(a => a.Tests).Select(t => t.Id).ToHashSet();
-                    if (allTopicTestIds.Count > 0 && allTopicTestIds.IsSubsetOf(userPassedTestIds))
-                    {
-                        profile.AwardChapterBonus(assignment.TopicId, testRun.CreateDateTime, config.IsBadgesEnabled);
-                    }
-                }
-
-                // Check team synergy bonus (for project components)
                 if (config.IsTeamSynergyEnabled && allTestsOfAssignmentPassed)
                 {
-                    var userTeams = await _projectTeamRepository.GetByUserAsync(testRun.UserId);
-                    var team = userTeams?.FirstOrDefault(t => t.ProjectId == assignment.TopicId);
-
-                    if (team?.TeamUsers != null && team.TeamUsers.Count > 0)
-                    {
-                        var teamUserIds = team.TeamUsers.Select(tu => tu.UserId).Distinct().ToList();
-
-                        var teamProfiles = new List<StudentCourseProfile>();
-                        foreach (var memberId in teamUserIds)
-                        {
-                            var memberProfile = memberId == testRun.UserId
-                                ? profile
-                                : await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(memberId, courseId, periodId);
-
-                            if (memberProfile != null)
-                            {
-                                teamProfiles.Add(memberProfile);
-                            }
-                        }
-
-                        // All team members must have made at least one test of the component green
-                        bool allMembersContributed = teamProfiles.Count == teamUserIds.Count && teamProfiles.All(p =>
-                        {
-                            var memberPassedTests = p.Events
-                                .Where(e => e.EventType == GamificationEventType.PassedTest)
-                                .Select(e => e.TargetId);
-                            return allAssignmentTestIds.Overlaps(memberPassedTests);
-                        });
-
-                        if (allMembersContributed)
-                        {
-                            // All tests of the component must be made green across the team
-                            var allTeamPassedTests = teamProfiles
-                                .SelectMany(p => p.Events
-                                    .Where(e => e.EventType == GamificationEventType.PassedTest)
-                                    .Select(e => e.TargetId))
-                                .ToHashSet();
-
-                            if (allAssignmentTestIds.IsSubsetOf(allTeamPassedTests))
-                            {
-                                foreach (var memberProfile in teamProfiles)
-                                {
-                                    if (memberProfile.AwardTeamSynergyBonus(assignment.Id, testRun.CreateDateTime, config.IsBadgesEnabled))
-                                    {
-                                        if (memberProfile.UserId != testRun.UserId)
-                                        {
-                                            await _studentCourseProfileRepository.UpdateAsync(memberProfile);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    await CheckTeamSynergyBonusAsync(profile, assignment, allAssignmentTestIds, courseId, periodId, testRun, config);
                 }
 
-                await _studentCourseProfileRepository.UpdateAsync(profile);
+                await studentCourseProfileRepository.UpdateAsync(profile);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to process gamification for test run {TestRunId}", testRun.Id);
+                logger.LogError(ex, "Failed to process gamification for test run {TestRunId}", testRun.Id);
             }
         }
 
+        private async Task<StudentCourseProfile> GetOrCreateProfileAsync(int userId, int courseId, int periodId)
+        {
+            var profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, periodId);
+            if (profile == null)
+            {
+                profile = studentCourseProfileFactory.CreateNew(userId, courseId, periodId);
+                profile = await studentCourseProfileRepository.AddAsync(profile);
+            }
+            return profile;
+        }
+
+        private static void AwardPassedTestsXp(StudentCourseProfile profile, TestRun testRun, CourseGamificationConfig config)
+        {
+            foreach (var passingResult in testRun.TestResults.Where(tr => tr.Passed))
+            {
+                profile.AwardPassedTestXp(passingResult.TestId, testRun.CreateDateTime, config.IsWeeklyStreakEnabled, config.IsBadgesEnabled);
+            }
+        }
+
+        private async Task<bool> CheckAssignmentAndTopicCompletionAsync(
+            StudentCourseProfile profile,
+            Assignment assignment,
+            int courseId,
+            int periodId,
+            DateTime testRunDateTime,
+            CourseGamificationConfig config,
+            HashSet<int> userPassedTestIds,
+            HashSet<int> allAssignmentTestIds)
+        {
+            bool allTestsOfAssignmentPassed = allAssignmentTestIds.Count > 0 && allAssignmentTestIds.IsSubsetOf(userPassedTestIds);
+            if (allTestsOfAssignmentPassed)
+            {
+                int previousCompletions = await studentCourseProfileRepository.CountAssignmentCompletionsAsync(assignment.Id, courseId, periodId);
+                profile.AwardAssignmentBonus(assignment.Id, testRunDateTime, previousCompletions, config.IsBadgesEnabled);
+
+                var topicAssignments = await assignmentRepository.GetByTopicWithTests(assignment.TopicId);
+                var allTopicTestIds = topicAssignments.SelectMany(a => a.Tests).Select(t => t.Id).ToHashSet();
+                if (allTopicTestIds.Count > 0 && allTopicTestIds.IsSubsetOf(userPassedTestIds))
+                {
+                    profile.AwardChapterBonus(assignment.TopicId, testRunDateTime, config.IsBadgesEnabled);
+                }
+            }
+            return allTestsOfAssignmentPassed;
+        }
+
+        private async Task CheckTeamSynergyBonusAsync(
+            StudentCourseProfile profile,
+            Assignment assignment,
+            HashSet<int> allAssignmentTestIds,
+            int courseId,
+            int periodId,
+            TestRun testRun,
+            CourseGamificationConfig config)
+        {
+            var userTeams = await projectTeamRepository.GetByUserAsync(testRun.UserId);
+            var team = userTeams?.FirstOrDefault(t => t.ProjectId == assignment.TopicId);
+
+            if (team?.TeamUsers == null || team.TeamUsers.Count == 0) return;
+
+            var teamUserIds = team.TeamUsers.Select(tu => tu.UserId).Distinct().ToList();
+            var teamProfiles = new List<StudentCourseProfile>();
+            foreach (var memberId in teamUserIds)
+            {
+                var memberProfile = memberId == testRun.UserId
+                    ? profile
+                    : await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(memberId, courseId, periodId);
+
+                if (memberProfile != null)
+                {
+                    teamProfiles.Add(memberProfile);
+                }
+            }
+
+            bool allMembersContributed = teamProfiles.Count == teamUserIds.Count && teamProfiles.All(p =>
+            {
+                var memberPassedTests = p.Events
+                    .Where(e => e.EventType == GamificationEventType.PassedTest)
+                    .Select(e => e.TargetId);
+                return allAssignmentTestIds.Overlaps(memberPassedTests);
+            });
+
+            if (!allMembersContributed) return;
+
+            var allTeamPassedTests = teamProfiles
+                .SelectMany(p => p.Events
+                    .Where(e => e.EventType == GamificationEventType.PassedTest)
+                    .Select(e => e.TargetId))
+                .ToHashSet();
+
+            if (!allAssignmentTestIds.IsSubsetOf(allTeamPassedTests)) return;
+
+            foreach (var memberProfile in teamProfiles.Where(p => p.AwardTeamSynergyBonus(assignment.Id, testRun.CreateDateTime, config.IsBadgesEnabled)))
+            {
+                if (memberProfile.UserId != testRun.UserId)
+                {
+                    await studentCourseProfileRepository.UpdateAsync(memberProfile);
+                }
+            }
+        }
         public async Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null)
         {
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
 
             if (profile == null)
             {
-                profile = _studentCourseProfileFactory.CreateNew(userId, courseId, period.Id);
-                profile = await _studentCourseProfileRepository.AddAsync(profile);
+                profile = studentCourseProfileFactory.CreateNew(userId, courseId, period.Id);
+                profile = await studentCourseProfileRepository.AddAsync(profile);
             }
 
             if (profile.User == null)
             {
-                profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id) ?? profile;
+                profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id) ?? profile;
             }
 
             var previousVisit = profile.LastLeaderboardVisitDate;
@@ -248,7 +249,7 @@ namespace Guts.Business.Services
 
             if (profile.RecordLeaderboardVisit(DateTime.UtcNow))
             {
-                await _studentCourseProfileRepository.UpdateAsync(profile);
+                await studentCourseProfileRepository.UpdateAsync(profile);
             }
 
             var dto = MapToProfileDto(profile);
@@ -262,24 +263,24 @@ namespace Guts.Business.Services
             Contracts.Require(enrollDto != null, "Enrollment data is required.");
             ArgumentNullException.ThrowIfNull(enrollDto);
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
 
             if (profile == null)
             {
-                profile = _studentCourseProfileFactory.CreateNew(userId, courseId, period.Id);
+                profile = studentCourseProfileFactory.CreateNew(userId, courseId, period.Id);
                 profile.Enroll(enrollDto.ShowInLeaderBoard, enrollDto.Pseudonym, enrollDto.Avatar, enrollDto.ClassGroupId, enrollDto.UsePseudonym);
-                profile = await _studentCourseProfileRepository.AddAsync(profile);
+                profile = await studentCourseProfileRepository.AddAsync(profile);
             }
             else
             {
                 profile.Enroll(enrollDto.ShowInLeaderBoard, enrollDto.Pseudonym, enrollDto.Avatar, enrollDto.ClassGroupId, enrollDto.UsePseudonym);
-                profile = await _studentCourseProfileRepository.UpdateAsync(profile);
+                profile = await studentCourseProfileRepository.UpdateAsync(profile);
             }
 
             if (profile.ClassGroupId.HasValue && (profile.ClassGroup == null || profile.ClassGroup.Id != profile.ClassGroupId.Value))
             {
-                profile.ClassGroup = await _courseClassGroupRepository.GetByIdAsync(profile.ClassGroupId.Value);
+                profile.ClassGroup = await courseClassGroupRepository.GetByIdAsync(profile.ClassGroupId.Value);
             }
             else if (!profile.ClassGroupId.HasValue)
             {
@@ -288,7 +289,7 @@ namespace Guts.Business.Services
 
             if (profile.User == null)
             {
-                profile = await _studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id) ?? profile;
+                profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id) ?? profile;
             }
 
             return MapToProfileDto(profile);
@@ -296,14 +297,14 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<LeaderboardEntryDto>> GetWeeklySprintLeaderboardAsync(int courseId, int currentUserId, int? periodId = null)
         {
-            var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled))
             {
                 return new List<LeaderboardEntryDto>();
             }
 
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            IReadOnlyList<StudentCourseProfile> optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            IReadOnlyList<StudentCourseProfile> optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
 
             return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, DateTime.Now);
         }
@@ -362,14 +363,14 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<LeaderboardEntryDto>> GetHallOfFameLeaderboardAsync(int courseId, int currentUserId, int? periodId = null)
         {
-            var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config != null && (!config.IsGamificationEnabled || !config.IsLeaderboardEnabled))
             {
                 return new List<LeaderboardEntryDto>();
             }
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
 
             var ordered = optedInProfiles
                 .OrderByDescending(p => p.TotalXp)
@@ -411,15 +412,15 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(int courseId, int? periodId = null)
         {
-            var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config != null && (!config.IsGamificationEnabled || !config.IsClassCompetitionEnabled))
             {
                 return new List<ClassGroupLeaderboardEntryDto>();
             }
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var classGroups = await _courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
-            var optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var classGroups = await courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
+            var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
 
             var result = new List<ClassGroupLeaderboardEntryDto>();
 
@@ -453,11 +454,11 @@ namespace Guts.Business.Services
 
         public async Task<CourseGamificationConfigDto> GetCourseConfigAsync(int courseId)
         {
-            var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config == null)
             {
                 config = new CourseGamificationConfig(courseId);
-                config = await _courseGamificationConfigRepository.AddAsync(config);
+                config = await courseGamificationConfigRepository.AddAsync(config);
             }
 
             return new CourseGamificationConfigDto
@@ -477,7 +478,7 @@ namespace Guts.Business.Services
             Contracts.Require(configDto != null, "Config data is required.");
             ArgumentNullException.ThrowIfNull(configDto);
 
-            var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
             if (config == null)
             {
                 config = new CourseGamificationConfig(courseId);
@@ -487,7 +488,7 @@ namespace Guts.Business.Services
                 config.IsClassCompetitionEnabled = configDto.IsClassCompetitionEnabled;
                 config.IsTeamSynergyEnabled = configDto.IsTeamSynergyEnabled;
                 config.IsBadgesEnabled = configDto.IsBadgesEnabled;
-                config = await _courseGamificationConfigRepository.AddAsync(config);
+                config = await courseGamificationConfigRepository.AddAsync(config);
             }
             else
             {
@@ -497,7 +498,7 @@ namespace Guts.Business.Services
                 config.IsClassCompetitionEnabled = configDto.IsClassCompetitionEnabled;
                 config.IsTeamSynergyEnabled = configDto.IsTeamSynergyEnabled;
                 config.IsBadgesEnabled = configDto.IsBadgesEnabled;
-                config = await _courseGamificationConfigRepository.UpdateAsync(config);
+                config = await courseGamificationConfigRepository.UpdateAsync(config);
             }
 
             return new CourseGamificationConfigDto
@@ -514,8 +515,8 @@ namespace Guts.Business.Services
 
         public async Task<IReadOnlyList<CourseClassGroupDto>> GetCourseClassGroupsAsync(int courseId, int? periodId = null)
         {
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var groups = await _courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var groups = await courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
 
             return groups.Select(g => new CourseClassGroupDto
             {
@@ -530,12 +531,12 @@ namespace Guts.Business.Services
         {
             Contracts.Require(!string.IsNullOrWhiteSpace(name), "Class group name cannot be empty.");
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
-            var existing = await _courseClassGroupRepository.GetByNameAsync(courseId, period.Id, name);
+            var period = await periodRepository.GetPeriodAsync(periodId);
+            var existing = await courseClassGroupRepository.GetByNameAsync(courseId, period.Id, name);
             Contracts.Require(existing == null, $"Class group with name '{name}' already exists for this course.");
 
-            var group = _courseClassGroupFactory.CreateNew(name, courseId, period.Id);
-            group = await _courseClassGroupRepository.AddAsync(group);
+            var group = courseClassGroupFactory.CreateNew(name, courseId, period.Id);
+            group = await courseClassGroupRepository.AddAsync(group);
 
             return new CourseClassGroupDto
             {
@@ -548,13 +549,13 @@ namespace Guts.Business.Services
 
         public async Task DeleteCourseClassGroupAsync(int courseId, int classGroupId)
         {
-            var group = await _courseClassGroupRepository.GetByIdAsync(classGroupId);
+            var group = await courseClassGroupRepository.GetByIdAsync(classGroupId);
             if (group.CourseId != courseId)
             {
                 throw new DataNotFoundException("Class group not found for this course.");
             }
 
-            await _courseClassGroupRepository.DeleteAsync(group);
+            await courseClassGroupRepository.DeleteAsync(group);
         }
 
         public async Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)
@@ -562,84 +563,79 @@ namespace Guts.Business.Services
             DateTime friday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Friday);
             DateTime fridayCutoff = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59, DateTimeKind.Utc);
 
-            var period = await _periodRepository.GetPeriodAsync(periodId);
+            var period = await periodRepository.GetPeriodAsync(periodId);
             if (period == null) return;
 
-            var courses = await _courseRepository.GetAllAsync();
+            var courses = await courseRepository.GetAllAsync();
 
             foreach (var course in courses)
             {
-                var config = await _courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
-                if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled))
+                await AwardWeeklySprintBadgesForCourseAsync(course.Id, period.Id, fridayCutoff);
+            }
+        }
+
+        private async Task AwardWeeklySprintBadgesForCourseAsync(int courseId, int periodId, DateTime fridayCutoff)
+        {
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled))
+            {
+                return;
+            }
+
+            var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId);
+            var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
+            var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
+            if (topEntries.Count == 0) return;
+
+            var topEntry = topEntries[0];
+
+            foreach (var entry in topEntries)
+            {
+                var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
+                if (profile != null && AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff))
                 {
-                    continue;
-                }
-
-                var optedInProfiles = await _studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
-                var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
-                var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
-                if (topEntries.Count == 0) continue;
-
-                var topEntry = topEntries[0];
-
-                for (int i = 0; i < topEntries.Count; i++)
-                {
-                    var entry = topEntries[i];
-                    int rank = entry.Rank;
-                    var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
-                    if (profile == null) continue;
-
-                    bool modified = false;
-
-                    // Award SprintGold to rank 1 or tied for 1st place
-                    if (rank == 1 || (entry.Score == topEntry.Score && entry.GreenTestsCount == topEntry.GreenTestsCount))
-                    {
-                        if (profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    if (rank <= 2)
-                    {
-                        if (profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    if (rank <= 3)
-                    {
-                        if (profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    if (rank <= 4)
-                    {
-                        if (profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    if (rank <= 5)
-                    {
-                        if (profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
-                        {
-                            modified = true;
-                        }
-                    }
-
-                    if (modified)
-                    {
-                        await _studentCourseProfileRepository.UpdateAsync(profile);
-                    }
+                    await studentCourseProfileRepository.UpdateAsync(profile);
                 }
             }
         }
 
+        private static bool AwardSprintBadgesForEntry(
+            StudentCourseProfile profile,
+            LeaderboardEntryDto entry,
+            LeaderboardEntryDto topEntry,
+            DateTime fridayCutoff)
+        {
+            bool modified = false;
+            int rank = entry.Rank;
+
+            if ((rank == 1 || (entry.Score == topEntry.Score && entry.GreenTestsCount == topEntry.GreenTestsCount)) &&
+                profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
+            {
+                modified = true;
+            }
+
+            if (rank <= 2 && profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
+            {
+                modified = true;
+            }
+
+            if (rank <= 3 && profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
+            {
+                modified = true;
+            }
+
+            if (rank <= 4 && profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
+            {
+                modified = true;
+            }
+
+            if (rank <= 5 && profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
+            {
+                modified = true;
+            }
+
+            return modified;
+        }
         public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()
         {
             return BadgeMetadata.Select(kvp => new BadgeMetadataDto

@@ -9,15 +9,8 @@ namespace Guts.Api.Controllers
 {
     [Produces("application/json")]
     [Route("api/users")]
-    public class UserController : ControllerBase
+    public class UserController(IProjectTeamRepository projectTeamRepository) : ControllerBase
     {
-        private readonly IProjectTeamRepository _projectTeamRepository;
-
-        public UserController(IProjectTeamRepository projectTeamRepository)
-        {
-            _projectTeamRepository = projectTeamRepository;
-        }
-
         [HttpGet("current/profile")]
         [ProducesResponseType(typeof(UserProfileModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
@@ -28,7 +21,7 @@ namespace Guts.Api.Controllers
                 Id = GetUserId(),
                 Email = GetUserEmail(),
                 Roles = GetUserRoles(),
-                Teams = (await _projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList()
+                Teams = (await projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList()
             };
             return Ok(model);
         }

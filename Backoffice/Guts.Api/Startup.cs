@@ -7,13 +7,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using Guts.Api.Filters;
 using Guts.Api.Models;
@@ -26,14 +23,9 @@ using NSwag.Generation.Processors.Security;
 namespace Guts.Api
 {
     [ExcludeFromCodeCoverage]
-    public class Startup
+    public class Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; } = configuration;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -90,7 +82,7 @@ namespace Guts.Api
 
             services.AddOpenApiDocument(document =>
             {
-                document.AddSecurity("bearer", Enumerable.Empty<string>(), new OpenApiSecurityScheme
+                document.AddSecurity("bearer", [], new OpenApiSecurityScheme
                 {
                     Type = OpenApiSecuritySchemeType.ApiKey,
                     Name = "Authorization",
@@ -100,7 +92,7 @@ namespace Guts.Api
                 });
                 document.PostProcess = document =>
                 {
-                    document.Schemes = new List<OpenApiSchema> { OpenApiSchema.Https };
+                    document.Schemes = [OpenApiSchema.Https];
                     document.Info.Title = "GUTS Api";
                     document.Info.Description =
                         "Service that collects and queries data about runs of automated tests in programming exercises.";
@@ -125,7 +117,7 @@ namespace Guts.Api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {

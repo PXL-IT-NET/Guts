@@ -10,46 +10,33 @@ using Guts.Domain.ValueObjects;
 
 namespace Guts.Business.Services
 {
-    internal class ChapterService : IChapterService
+    internal class ChapterService(
+        IChapterRepository chapterRepository,
+        ITopicRepository topicRepository,
+        ICourseRepository courseRepository,
+        IPeriodRepository periodRepository,
+        IAssignmentService assignmentService)
+        : IChapterService
     {
-        private readonly IChapterRepository _chapterRepository;
-        private readonly ITopicRepository _topicRepository;
-        private readonly ICourseRepository _courseRepository;
-        private readonly IPeriodRepository _periodRepository;
-        private readonly IAssignmentService _assignmentService;
-
-        public ChapterService(IChapterRepository chapterRepository,
-            ITopicRepository topicRepository,
-            ICourseRepository courseRepository,
-            IPeriodRepository periodRepository,
-            IAssignmentService assignmentService)
-        {
-            _chapterRepository = chapterRepository;
-            _topicRepository = topicRepository;
-            _courseRepository = courseRepository;
-            _periodRepository = periodRepository;
-            _assignmentService = assignmentService;
-        }
-
         public async Task<Chapter> GetOrCreateChapterAsync(string courseCode, Code chapterCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
 
             Chapter chapter;
             try
             {
-                chapter = await _chapterRepository.GetSingleAsync(courseCode, chapterCode, period.Id);
+                chapter = await chapterRepository.GetSingleAsync(courseCode, chapterCode, period.Id);
             }
             catch (DataNotFoundException)
             {
-                var course = await _courseRepository.GetSingleAsync(courseCode);
+                var course = await courseRepository.GetSingleAsync(courseCode);
                 chapter = new Chapter
                 {
                     Code = chapterCode,
                     CourseId = course.Id,
                     PeriodId = period.Id
                 };
-                chapter = await _chapterRepository.AddAsync(chapter);
+                chapter = await chapterRepository.AddAsync(chapter);
             }
 
             return chapter;
@@ -57,24 +44,24 @@ namespace Guts.Business.Services
 
         public async Task UpdateChapterAsync(int courseId, Code chapterCode, string description)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(null);
+            IPeriod period = await periodRepository.GetPeriodAsync(null);
 
-            await _topicRepository.UpdateAsync(courseId, chapterCode, period.Id, description);
+            await topicRepository.UpdateAsync(courseId, chapterCode, period.Id, description);
         }
 
         public async Task<Chapter> LoadChapterAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
 
-            var chapter = await _chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, period.Id);
+            var chapter = await chapterRepository.LoadWithAssignmentsAsync(courseId, chapterCode, period.Id);
 
             return chapter;
         }
 
         public async Task<Chapter> LoadChapterWithTestsAsync(int courseId, Code chapterCode, int? periodId = null)
         {
-            IPeriod period = await _periodRepository.GetPeriodAsync(periodId);
-            Chapter chapter = await _chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, period.Id);
+            IPeriod period = await periodRepository.GetPeriodAsync(periodId);
+            Chapter chapter = await chapterRepository.LoadWithAssignmentsAndTestsAsync(courseId, chapterCode, period.Id);
 
             return chapter;
         }
@@ -84,7 +71,7 @@ namespace Guts.Business.Services
             var results = new List<AssignmentResultDto>();
             foreach (var assignment in chapter.Assignments)
             {
-                var dto = await _assignmentService.GetResultsForUserAsync(assignment.Id, userId, dateUtc);
+                var dto = await assignmentService.GetResultsForUserAsync(assignment.Id, userId, dateUtc);
                 results.Add(dto);
             }
 
@@ -96,7 +83,7 @@ namespace Guts.Business.Services
             var results = new List<AssignmentStatisticsDto>();
             foreach (var assignment in chapter.Assignments)
             {
-                var assignmentStatisticsDto = await _assignmentService.GetAssignmentUserStatisticsAsync(assignment.Id, dateUtc);
+                var assignmentStatisticsDto = await assignmentService.GetAssignmentUserStatisticsAsync(assignment.Id, dateUtc);
                 results.Add(assignmentStatisticsDto);
             }
             return results;
@@ -107,14 +94,14 @@ namespace Guts.Business.Services
             IPeriod period;
             try
             {
-                period = await _periodRepository.GetPeriodAsync(periodId);
+                period = await periodRepository.GetPeriodAsync(periodId);
             }
             catch (DataNotFoundException)
             {
                 return new List<Chapter>();
             }
 
-            IList<Chapter> chapters = await _chapterRepository.GetByCourseIdAsync(courseId, period.Id);
+            IList<Chapter> chapters = await chapterRepository.GetByCourseIdAsync(courseId, period.Id);
             return chapters.ToList();
         }
     }

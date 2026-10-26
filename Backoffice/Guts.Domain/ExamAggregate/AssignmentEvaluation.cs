@@ -1,4 +1,3 @@
-using System.Linq;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 

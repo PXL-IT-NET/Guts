@@ -8,17 +8,9 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 
 namespace Guts.Api.Models.Converters
 {
-    public class CourseConverter : ICourseConverter
+    public class CourseConverter(IChapterConverter chapterConverter, IProjectConverter projectConverter)
+        : ICourseConverter
     {
-        private readonly IChapterConverter _chapterConverter;
-        private readonly IProjectConverter _projectConverter;
-
-        public CourseConverter(IChapterConverter chapterConverter, IProjectConverter projectConverter)
-        {
-            _chapterConverter = chapterConverter;
-            _projectConverter = projectConverter;
-        }
-
         public CourseContentsModel ToCourseContentsModel(Course course,
             IReadOnlyList<Chapter> chapters,
             IReadOnlyList<IProject> projects)
@@ -33,25 +25,25 @@ namespace Guts.Api.Models.Converters
                 Id = course.Id,
                 Code = course.Code,
                 Name = course.Name,
-                Chapters = chapters.Select(chapter => _chapterConverter.ToTopicModel(chapter)).ToList(),
-                Projects = projects.Select(project => _projectConverter.ToTopicModel(project)).ToList()
+                Chapters = chapters.Select(chapter => chapterConverter.ToTopicModel(chapter)).ToList(),
+                Projects = projects.Select(project => projectConverter.ToTopicModel(project)).ToList()
             };
 
             return model;
         }
 
-        public CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto dto)
+        public CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto courseStatisticsDto)
         {
-            ArgumentNullException.ThrowIfNull(dto);
+            ArgumentNullException.ThrowIfNull(courseStatisticsDto);
 
             var model = new CourseStatisticsModel
             {
-                CourseId = dto.CourseId,
-                CourseCode = dto.CourseCode,
-                CourseName = dto.CourseName,
-                TotalAssignments = dto.TotalAssignments,
-                TotalTests = dto.TotalTests,
-                Students = dto.Students.Select(s => new CourseStudentStatisticsModel
+                CourseId = courseStatisticsDto.CourseId,
+                CourseCode = courseStatisticsDto.CourseCode,
+                CourseName = courseStatisticsDto.CourseName,
+                TotalAssignments = courseStatisticsDto.TotalAssignments,
+                TotalTests = courseStatisticsDto.TotalTests,
+                Students = courseStatisticsDto.Students.Select(s => new CourseStudentStatisticsModel
                 {
                     StudentId = s.StudentId,
                     FirstName = s.FirstName,
