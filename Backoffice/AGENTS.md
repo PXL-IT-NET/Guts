@@ -31,6 +31,9 @@ For a high-level overview of the entire GUTS repository and client libraries, se
 7. **Build, Test, and SonarQube Quality Checks**:
    - The solution must build cleanly, and all tests must pass.
    - Start the SonarQube container, run Sonar checks, and fix any reported issues or code smells before completing the task.
+8. **Spec-Driven Development (SDD)**:
+   - Feature specifications, technical designs, and TDD implementation plans live in [`specs/`](specs/README.md).
+   - For new features or significant changes, follow the 4-phase workflow (`spec.md` ➔ `design.md` ➔ `tasks.md` ➔ inside-out TDD implementation) using the templates in [`specs/_templates/`](specs/_templates/).
 
 ---
 

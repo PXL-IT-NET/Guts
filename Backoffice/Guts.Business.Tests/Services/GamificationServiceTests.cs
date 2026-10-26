@@ -1262,4 +1262,84 @@ public class GamificationServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(async () =>
             await _service.DeleteCourseClassGroupAsync(10, 50));
     }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WithMultiplePassedTests_ShouldSummarizePassedTestsIntoSingleEvent()
+    {
+        const int userId = 5;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        var previousVisit = DateTime.UtcNow.AddDays(-2);
+        profile.RecordLeaderboardVisit(previousVisit);
+
+        // Older event before previous visit (should be excluded)
+        profile.AwardPassedTestXp(999, previousVisit.AddHours(-1));
+
+        // 10 passing tests after previous visit
+        DateTime latestTestTime = previousVisit.AddHours(1);
+        for (int i = 1; i <= 10; i++)
+        {
+            latestTestTime = previousVisit.AddHours(i);
+            profile.AwardPassedTestXp(i, latestTestTime);
+        }
+
+        // Plus an assignment bonus after the tests
+        DateTime assignmentBonusTime = latestTestTime.AddMinutes(5);
+        profile.AwardAssignmentBonus(10, assignmentBonusTime);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.RecentGains, Is.Not.Null);
+        Assert.That(result.RecentGains.TotalXpGained, Is.EqualTo(150)); // 100 XP (10 tests) + 50 XP (assignment bonus)
+        Assert.That(result.RecentGains.Events.Count, Is.EqualTo(2));
+
+        // Ordered by CreatedAt descending: assignment bonus first, then summarized passed tests
+        Assert.That(result.RecentGains.Events[0].Description, Is.EqualTo("Completed assignment bonus"));
+        Assert.That(result.RecentGains.Events[0].XpEarned, Is.EqualTo(50));
+        Assert.That(result.RecentGains.Events[0].CreatedAt, Is.EqualTo(assignmentBonusTime));
+
+        Assert.That(result.RecentGains.Events[1].Description, Is.EqualTo("Made 10 tests green"));
+        Assert.That(result.RecentGains.Events[1].XpEarned, Is.EqualTo(100));
+        Assert.That(result.RecentGains.Events[1].CreatedAt, Is.EqualTo(latestTestTime));
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WithSinglePassedTest_ShouldUseSingularDescription()
+    {
+        const int userId = 5;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        var testTime = DateTime.UtcNow.AddMinutes(-15);
+        profile.AwardPassedTestXp(42, testTime);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result.RecentGains, Is.Not.Null);
+        Assert.That(result.RecentGains.TotalXpGained, Is.EqualTo(10));
+        Assert.That(result.RecentGains.Events.Count, Is.EqualTo(1));
+        Assert.That(result.RecentGains.Events[0].Description, Is.EqualTo("Made 1 test green"));
+        Assert.That(result.RecentGains.Events[0].XpEarned, Is.EqualTo(10));
+        Assert.That(result.RecentGains.Events[0].CreatedAt, Is.EqualTo(testTime));
+    }
 }

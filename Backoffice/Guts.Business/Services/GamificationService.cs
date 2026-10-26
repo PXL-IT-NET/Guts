@@ -219,26 +219,7 @@ public class GamificationService(
             ? profile.Events.Where(e => e.CreatedAt > previousVisit.Value).OrderByDescending(e => e.CreatedAt).ToList()
             : profile.Events.OrderByDescending(e => e.CreatedAt).ToList();
 
-        var recentEventDtos = new List<RecentXpEventDto>();
-        foreach (var evt in recentEvents)
-        {
-            string desc = evt.EventType switch
-            {
-                GamificationEventType.PassedTest => $"Passed test #{evt.TargetId}",
-                GamificationEventType.AssignmentCompleted => "Completed assignment bonus",
-                GamificationEventType.AssignmentCompletedQuickly => "Quick assignment completion bonus (Top 10)",
-                GamificationEventType.ChapterCompleted => "Completed chapter bonus",
-                GamificationEventType.TeamSynergy => "Team synergy bonus",
-                _ => "Gamification bonus"
-            };
-
-            recentEventDtos.Add(new RecentXpEventDto
-            {
-                Description = desc,
-                XpEarned = evt.XpEarned,
-                CreatedAt = evt.CreatedAt
-            });
-        }
+        var recentEventDtos = BuildRecentEventDtos(recentEvents);
 
         var recentGains = new RecentXpGainDto
         {
@@ -256,6 +237,48 @@ public class GamificationService(
         dto.LastLeaderboardVisitDate = previousVisit;
         dto.RecentGains = recentGains;
         return dto;
+    }
+
+    private static List<RecentXpEventDto> BuildRecentEventDtos(IReadOnlyList<GamificationEvent> recentEvents)
+    {
+        var recentEventDtos = new List<RecentXpEventDto>();
+
+        var passedTestEvents = recentEvents
+            .Where(e => e.EventType == GamificationEventType.PassedTest)
+            .ToList();
+
+        if (passedTestEvents.Count > 0)
+        {
+            int count = passedTestEvents.Count;
+            string testWord = count == 1 ? "test" : "tests";
+            recentEventDtos.Add(new RecentXpEventDto
+            {
+                Description = $"Made {count} {testWord} green",
+                XpEarned = passedTestEvents.Sum(e => e.XpEarned),
+                CreatedAt = passedTestEvents.Max(e => e.CreatedAt)
+            });
+        }
+
+        foreach (var evt in recentEvents.Where(e => e.EventType != GamificationEventType.PassedTest))
+        {
+            string desc = evt.EventType switch
+            {
+                GamificationEventType.AssignmentCompleted => "Completed assignment bonus",
+                GamificationEventType.AssignmentCompletedQuickly => "Quick assignment completion bonus (Top 10)",
+                GamificationEventType.ChapterCompleted => "Completed chapter bonus",
+                GamificationEventType.TeamSynergy => "Team synergy bonus",
+                _ => "Gamification bonus"
+            };
+
+            recentEventDtos.Add(new RecentXpEventDto
+            {
+                Description = desc,
+                XpEarned = evt.XpEarned,
+                CreatedAt = evt.CreatedAt
+            });
+        }
+
+        return recentEventDtos.OrderByDescending(e => e.CreatedAt).ToList();
     }
 
     public async Task<StudentGamificationProfileDto> EnrollStudentAsync(int userId, int courseId, EnrollStudentDto enrollDto, int? periodId = null)

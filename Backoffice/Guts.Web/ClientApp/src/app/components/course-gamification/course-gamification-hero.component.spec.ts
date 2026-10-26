@@ -172,11 +172,11 @@ describe("CourseGamificationHeroComponent", () => {
     component.profile = {
       ...mockProfile,
       recentGains: {
-        totalXpGained: 60,
+        totalXpGained: 150,
         previousVisitDate: "2026-10-20T10:00:00Z",
         events: [
-          { description: "Completed assignment bonus", xpEarned: 50, createdAt: "2026-10-22T10:00:00Z" },
-          { description: "Passed test #1", xpEarned: 10, createdAt: "2026-10-22T10:05:00Z" },
+          { description: "Completed assignment bonus", xpEarned: 50, createdAt: "2026-10-22T10:05:00Z" },
+          { description: "Made 10 tests green", xpEarned: 100, createdAt: "2026-10-22T10:00:00Z" },
         ],
       },
     };
@@ -184,10 +184,11 @@ describe("CourseGamificationHeroComponent", () => {
 
     const alertEl = fixture.nativeElement.querySelector("#recentGainsAlert");
     expect(alertEl).toBeTruthy();
-    expect(alertEl.textContent).toContain("+60 XP earned since your last visit");
+    expect(alertEl.textContent).toContain("+150 XP earned since your last visit");
     expect(alertEl.textContent).toMatch(/Last visited on \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/);
     expect(alertEl.textContent).toContain("Completed assignment bonus");
-    expect(alertEl.textContent).toContain("Passed test #1");
+    expect(alertEl.textContent).toContain("Made 10 tests green");
+    expect(alertEl.textContent).toContain("+100 XP");
   });
 
   it("should display no recent gains info when visited before but 0 XP gained", () => {
