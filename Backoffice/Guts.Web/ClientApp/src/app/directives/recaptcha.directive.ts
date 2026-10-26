@@ -28,8 +28,8 @@ export class RecaptchaDirective implements OnInit, OnDestroy {
   private checkInterval: any;
 
   constructor(
-    private el: ElementRef,
-    private renderer: Renderer2,
+    private readonly el: ElementRef,
+    private readonly renderer: Renderer2,
   ) {}
 
   ngOnInit(): void {
@@ -67,7 +67,7 @@ export class RecaptchaDirective implements OnInit, OnDestroy {
   private renderRecaptcha(): void {
     // Wait for grecaptcha to be fully ready
     this.checkInterval = setInterval(() => {
-      if (window.grecaptcha && window.grecaptcha.render) {
+      if (window.grecaptcha?.render) {
         clearInterval(this.checkInterval);
 
         this.widgetId = window.grecaptcha.render(this.el.nativeElement, {

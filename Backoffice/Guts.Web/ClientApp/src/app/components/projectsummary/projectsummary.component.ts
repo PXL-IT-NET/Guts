@@ -14,9 +14,9 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./projectsummary.component.html",
 })
 export class ProjectSummaryComponent implements OnChanges {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _model = signal<TopicSummaryModel>(new TopicSummaryModel());
+  private readonly _model = signal<TopicSummaryModel>(new TopicSummaryModel());
   public get model(): TopicSummaryModel {
     return this._model();
   }
@@ -24,7 +24,7 @@ export class ProjectSummaryComponent implements OnChanges {
     this._model.set(v);
   }
 
-  private _statistics = signal<TopicStatisticsModel>({
+  private readonly _statistics = signal<TopicStatisticsModel>({
     id: 0,
     code: "",
     description: "",
@@ -38,7 +38,7 @@ export class ProjectSummaryComponent implements OnChanges {
     this._statistics.set(v);
   }
 
-  private _loadingSummary = signal<boolean>(false);
+  private readonly _loadingSummary = signal<boolean>(false);
   public get loadingSummary(): boolean {
     return this._loadingSummary();
   }
@@ -46,7 +46,7 @@ export class ProjectSummaryComponent implements OnChanges {
     this._loadingSummary.set(v);
   }
 
-  private _loadingStatistics = signal<boolean>(false);
+  private readonly _loadingStatistics = signal<boolean>(false);
   public get loadingStatistics(): boolean {
     return this._loadingStatistics();
   }
@@ -60,8 +60,8 @@ export class ProjectSummaryComponent implements OnChanges {
   @Input() public statusDate: Date;
 
   constructor(
-    private projectService: ProjectService,
-    private toastr: ToastrService,
+    private readonly projectService: ProjectService,
+    private readonly toastr: ToastrService,
   ) {
     this.courseId = 0;
     this.teamId = 0;

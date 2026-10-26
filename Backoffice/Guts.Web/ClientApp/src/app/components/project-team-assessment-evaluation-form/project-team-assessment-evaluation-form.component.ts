@@ -14,11 +14,11 @@ import { PeerAssessmentModel } from "src/app/viewmodels/projectassessment.model"
 export class ProjectTeamAssessmentEvaluationFormComponent
   implements OnInit
 {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private projectAssessmentId: number;
   private teamId: number;
 
-  private _peerAssessments = signal<PeerAssessmentModel[]>([]);
+  private readonly _peerAssessments = signal<PeerAssessmentModel[]>([]);
   public get peerAssessments(): PeerAssessmentModel[] {
     return this._peerAssessments();
   }
@@ -27,10 +27,10 @@ export class ProjectTeamAssessmentEvaluationFormComponent
   }
 
   constructor(
-    private projectTeamAssessmentService: ProjectTeamAssessmentService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private toastr: ToastrService,
+    private readonly projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly toastr: ToastrService,
   ) {
     this.projectAssessmentId = 0;
     this.teamId = 0;

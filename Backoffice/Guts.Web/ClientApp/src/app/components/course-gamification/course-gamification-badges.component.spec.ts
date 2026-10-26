@@ -89,7 +89,7 @@ describe("CourseGamificationBadgesComponent", () => {
   it("should create and load badges from backend", () => {
     expect(component).toBeTruthy();
     expect(gamificationServiceMock.getBadgeMetadata).toHaveBeenCalled();
-    expect(component.allBadges.length).toBe(mockBadges.length);
+    expect(component.allBadges).toHaveSize(mockBadges.length);
     expect(component.allBadges.some((b) => b.badgeType === 3)).toBe(false);
     expect(component.allBadges.some((b) => b.badgeType === 11 && b.name === "Sprint Gold")).toBe(true);
     expect(component.allBadges.some((b) => b.badgeType === 13 && b.name === "Sprint Silver")).toBe(true);

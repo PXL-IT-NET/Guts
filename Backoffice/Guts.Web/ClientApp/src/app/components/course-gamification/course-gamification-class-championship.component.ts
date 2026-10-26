@@ -20,7 +20,7 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
   @Input() public courseId: number = 0;
   @Input() public periodId?: number;
 
-  private _classLeaderboard = signal<IClassGroupLeaderboardEntryModel[]>([]);
+  private readonly _classLeaderboard = signal<IClassGroupLeaderboardEntryModel[]>([]);
   public get classLeaderboard(): IClassGroupLeaderboardEntryModel[] {
     return this._classLeaderboard();
   }
@@ -28,7 +28,7 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
     this._classLeaderboard.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -36,7 +36,7 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
     this._loading.set(v);
   }
 
-  constructor(private gamificationService: GamificationService) {}
+  constructor(private readonly gamificationService: GamificationService) {}
 
   public ngOnInit(): void {
     this.loadClassLeaderboard();

@@ -15,9 +15,9 @@ import { IPeriodModel, PeriodModel } from "src/app/viewmodels/period.model";
   styleUrls: ["./nav-menu.component.scss"],
 })
 export class NavMenuComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -25,7 +25,7 @@ export class NavMenuComponent implements OnInit {
     this._userProfile.set(v);
   }
 
-  private _allPeriods = signal<IPeriodModel[]>([]);
+  private readonly _allPeriods = signal<IPeriodModel[]>([]);
   public get allPeriods(): IPeriodModel[] {
     return this._allPeriods();
   }
@@ -33,7 +33,7 @@ export class NavMenuComponent implements OnInit {
     this._allPeriods.set(v);
   }
 
-  private _selectedPeriod = signal<IPeriodModel>(new PeriodModel());
+  private readonly _selectedPeriod = signal<IPeriodModel>(new PeriodModel());
   public get selectedPeriod(): IPeriodModel {
     return this._selectedPeriod();
   }
@@ -42,10 +42,10 @@ export class NavMenuComponent implements OnInit {
   }
 
   constructor(
-    private router: Router,
-    private authService: AuthService,
-    private periodService: PeriodService,
-    private periodProvider: PeriodProvider,
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly periodService: PeriodService,
+    private readonly periodProvider: PeriodProvider,
   ) {}
 
   ngOnInit(): void {
@@ -83,8 +83,7 @@ export class NavMenuComponent implements OnInit {
                 }
 
                 if (this.allPeriods.length > 0) {
-                  this.periodProvider.period =
-                    this.allPeriods[this.allPeriods.length - 1];
+                  this.periodProvider.period = this.allPeriods.at(-1)!;
                 }
               }
             });

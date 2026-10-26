@@ -31,9 +31,9 @@ import {
   templateUrl: "./exampart.component.html",
 })
 export class ExampartComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _model = signal<ExamPartModel>(new ExamPartModel());
+  private readonly _model = signal<ExamPartModel>(new ExamPartModel());
   @Input() public get model(): ExamPartModel {
     return this._model();
   }
@@ -45,7 +45,7 @@ export class ExampartComponent implements OnInit {
   @Output() public examPartDeleted = new EventEmitter<ExamPartModel>();
   @Output() public examPartAdded = new EventEmitter<ExamPartModel>();
 
-  private _allAssignments = signal<ITopicAssignmentModel[]>([]);
+  private readonly _allAssignments = signal<ITopicAssignmentModel[]>([]);
   public get allAssignments(): ITopicAssignmentModel[] {
     return this._allAssignments();
   }
@@ -53,7 +53,7 @@ export class ExampartComponent implements OnInit {
     this._allAssignments.set(v);
   }
 
-  private _newAssigmnentEvaluation = signal<AssignmentEvaluation>(new AssignmentEvaluation());
+  private readonly _newAssigmnentEvaluation = signal<AssignmentEvaluation>(new AssignmentEvaluation());
   public get newAssigmnentEvaluation(): AssignmentEvaluation {
     return this._newAssigmnentEvaluation();
   }
@@ -61,7 +61,7 @@ export class ExampartComponent implements OnInit {
     this._newAssigmnentEvaluation.set(v);
   }
 
-  private _isCollapsed = signal<boolean>(true);
+  private readonly _isCollapsed = signal<boolean>(true);
   public get isCollapsed(): boolean {
     return this._isCollapsed();
   }
@@ -87,10 +87,10 @@ export class ExampartComponent implements OnInit {
   private courseId: number;
 
   constructor(
-    private route: ActivatedRoute,
-    private assignmentService: AssignmentService,
-    private examService: ExamService,
-    private toastr: ToastrService,
+    private readonly route: ActivatedRoute,
+    private readonly assignmentService: AssignmentService,
+    private readonly examService: ExamService,
+    private readonly toastr: ToastrService,
   ) {
     this.isCollapsed = true;
     this.courseId = 0;

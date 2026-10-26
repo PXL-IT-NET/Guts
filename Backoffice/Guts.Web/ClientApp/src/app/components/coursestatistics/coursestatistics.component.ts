@@ -34,7 +34,7 @@ export type CourseStatisticsSortField =
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
   @Input() public courseId: number = 0;
 
-  private _model = signal<ICourseStatisticsModel | null>(null);
+  private readonly _model = signal<ICourseStatisticsModel | null>(null);
   public get model(): ICourseStatisticsModel | null {
     return this._model();
   }
@@ -42,7 +42,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._model.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -50,7 +50,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._loading.set(v);
   }
 
-  private _selectedPeriod = signal<IPeriodModel | null>(null);
+  private readonly _selectedPeriod = signal<IPeriodModel | null>(null);
   public get selectedPeriod(): IPeriodModel | null {
     return this._selectedPeriod();
   }
@@ -58,7 +58,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._selectedPeriod.set(v);
   }
 
-  private _sortField = signal<CourseStatisticsSortField>("lastName");
+  private readonly _sortField = signal<CourseStatisticsSortField>("lastName");
   public get sortField(): CourseStatisticsSortField {
     return this._sortField();
   }
@@ -66,7 +66,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._sortField.set(v);
   }
 
-  private _sortDirection = signal<"asc" | "desc">("asc");
+  private readonly _sortDirection = signal<"asc" | "desc">("asc");
   public get sortDirection(): "asc" | "desc" {
     return this._sortDirection();
   }
@@ -74,12 +74,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     this._sortDirection.set(v);
   }
 
-  private _expandedStudentIds = signal<Set<number>>(new Set());
+  private readonly _expandedStudentIds = signal<Set<number>>(new Set());
   public get expandedStudentIds(): Set<number> {
     return this._expandedStudentIds();
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -91,12 +91,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
   private userProfileSubscription?: Subscription;
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private courseService: CourseService,
-    private authService: AuthService,
-    private periodProvider: PeriodProvider,
-    private toastr: ToastrService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly courseService: CourseService,
+    private readonly authService: AuthService,
+    private readonly periodProvider: PeriodProvider,
+    private readonly toastr: ToastrService,
   ) {}
 
   public ngOnInit(): void {
@@ -114,7 +114,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (!profile.isLector()) {
           this.toastr.error("Only lectors can view course statistics.");
           void this.router.navigate(["/courses", this.courseId]);
-          return;
         }
       });
 

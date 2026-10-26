@@ -103,7 +103,7 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
       teamAssessmentServiceSpy.getMyResultOfProjectTeamAssessment,
     ).toHaveBeenCalledWith(5, 20);
     expect(component.result).toEqual(sampleResult);
-    expect(component.chartData.datasets.length).toBe(2);
+    expect(component.chartData.datasets).toHaveSize(2);
     expect(component.chartData.datasets[0].label).toBe("Peers");
     expect(component.chartData.datasets[0].data).toEqual([3.5, 3, 3.5, 4]);
     expect(component.chartData.datasets[1].label).toBe("Self");

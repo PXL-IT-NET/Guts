@@ -48,7 +48,7 @@ describe("CourseGamificationClassChampionshipComponent", () => {
 
   it("should create and load class leaderboard data", () => {
     expect(component).toBeTruthy();
-    expect(component.classLeaderboard.length).toBe(1);
+    expect(component.classLeaderboard).toHaveSize(1);
     expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledWith(10, undefined);
   });
 });

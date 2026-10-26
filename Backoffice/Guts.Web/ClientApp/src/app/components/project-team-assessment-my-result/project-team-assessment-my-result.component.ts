@@ -15,9 +15,9 @@ import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.mod
 export class ProjectTeamAssessmentMyResultComponent
   implements OnInit
 {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _result = signal<IAssessmentResultModel | null>(null);
+  private readonly _result = signal<IAssessmentResultModel | null>(null);
   public get result(): IAssessmentResultModel {
     return this._result();
   }
@@ -41,9 +41,9 @@ export class ProjectTeamAssessmentMyResultComponent
   };
 
   constructor(
-    private projectTeamAssessmentService: ProjectTeamAssessmentService,
-    private toastr: ToastrService,
-    private route: ActivatedRoute,
+    private readonly projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private readonly toastr: ToastrService,
+    private readonly route: ActivatedRoute,
   ) {
     this.chartData = {
       datasets: [],
@@ -64,24 +64,26 @@ export class ProjectTeamAssessmentMyResultComponent
           if (result.success) {
             this.result = result.value;
 
-            this.chartData.datasets.push({
-              label: "Peers",
-              data: [
-                this.result.averageResult.peerValue,
-                this.result.effortResult.peerValue,
-                this.result.contributionResult.peerValue,
-                this.result.cooperationResult.peerValue,
-              ],
-            });
-            this.chartData.datasets.push({
-              label: "Self",
-              data: [
-                this.result.averageResult.selfValue,
-                this.result.effortResult.selfValue,
-                this.result.contributionResult.selfValue,
-                this.result.cooperationResult.selfValue,
-              ],
-            });
+            this.chartData.datasets.push(
+              {
+                label: "Peers",
+                data: [
+                  this.result.averageResult.peerValue,
+                  this.result.effortResult.peerValue,
+                  this.result.contributionResult.peerValue,
+                  this.result.cooperationResult.peerValue,
+                ],
+              },
+              {
+                label: "Self",
+                data: [
+                  this.result.averageResult.selfValue,
+                  this.result.effortResult.selfValue,
+                  this.result.contributionResult.selfValue,
+                  this.result.cooperationResult.selfValue,
+                ],
+              },
+            );
             this.chartData.labels = [
               "Average",
               "Effort",

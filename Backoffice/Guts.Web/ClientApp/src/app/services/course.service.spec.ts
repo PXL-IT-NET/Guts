@@ -31,7 +31,7 @@ describe("CourseService", () => {
     service.getCourses().subscribe((r) => (res = r));
     httpMock.expectOne("api/courses").flush([{ id: 1, code: "C1", name: "N" }]);
     expect(res.success).toBeTrue();
-    expect(res.value.length).toBe(1);
+    expect(res.value).toHaveSize(1);
 
     service.getCourses().subscribe((r) => (res = r));
     httpMock

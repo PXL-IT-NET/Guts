@@ -131,7 +131,7 @@ describe("CourseGamificationComponent", () => {
   it("should create component and load class groups and config", () => {
     expect(component).toBeTruthy();
     expect(component.courseId).toBe(10);
-    expect(component.classGroups.length).toBe(2);
+    expect(component.classGroups).toHaveSize(2);
     expect(component.hasClasses).toBeTrue();
     expect(component.config?.isGamificationEnabled).toBeTrue();
   });

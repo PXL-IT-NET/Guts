@@ -24,7 +24,7 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
   @Input() public courseId: number = 0;
   @Input() public periodId?: number;
 
-  private _weeklySprint = signal<ILeaderboardEntryModel[]>([]);
+  private readonly _weeklySprint = signal<ILeaderboardEntryModel[]>([]);
   public get weeklySprint(): ILeaderboardEntryModel[] {
     return this._weeklySprint();
   }
@@ -32,7 +32,7 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
     this._weeklySprint.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -42,7 +42,7 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
 
   public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
-  constructor(private gamificationService: GamificationService) {}
+  constructor(private readonly gamificationService: GamificationService) {}
 
   public ngOnInit(): void {
     this.loadSprint();

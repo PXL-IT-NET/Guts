@@ -14,7 +14,7 @@ import {
   providedIn: "root",
 })
 export class ProjectAssessmentService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public getAssessmentsOfProject(
     projectId: number,

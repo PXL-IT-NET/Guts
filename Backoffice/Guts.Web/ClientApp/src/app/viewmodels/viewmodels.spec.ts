@@ -95,7 +95,7 @@ describe("ViewModels", () => {
 
       expect(topic.totalTests).toBe(13);
       expect(topic.totalGreenTests).toBe(9);
-      expect(topic.assignmentSummaries.length).toBe(2);
+      expect(topic.assignmentSummaries).toHaveSize(2);
     });
   });
 
@@ -142,7 +142,7 @@ describe("ViewModels", () => {
         ],
       });
 
-      expect(topicStats.assignmentStatistics.length).toBe(1);
+      expect(topicStats.assignmentStatistics).toHaveSize(1);
       expect(
         topicStats.assignmentStatistics[0] instanceof AssignmentStatisticsModel,
       ).toBeTrue();
@@ -168,7 +168,7 @@ describe("ViewModels", () => {
 
       expect(detail.firstRun).toContain("10/05/2026");
       expect(detail.lastRun).toContain("11/05/2026");
-      expect(detail.solutionFiles.length).toBe(1);
+      expect(detail.solutionFiles).toHaveSize(1);
       expect(detail.solutionFiles[0] instanceof SolutionFileModel).toBeTrue();
       expect(detail.solutionFiles[0].isCollapsed).toBeTrue();
     });
@@ -200,7 +200,7 @@ describe("ViewModels", () => {
       });
 
       expect(exam.isCollapsed).toBeTrue();
-      expect(exam.parts.length).toBe(1);
+      expect(exam.parts).toHaveSize(1);
       const part: ExamPartModel = exam.parts[0];
       expect(part.deadlineDate).toEqual({ year: 2026, month: 6, day: 15 });
       expect(part.deadlineTime).toEqual({ hour: 14, minute: 30, second: 0 });

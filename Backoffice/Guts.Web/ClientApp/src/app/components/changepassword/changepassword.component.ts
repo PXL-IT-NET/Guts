@@ -8,7 +8,7 @@ import { ChangePasswordModel } from "../../viewmodels/changepassword.model";
   templateUrl: "./changepassword.component.html",
 })
 export class ChangePasswordComponent {
-  private _error = signal<string>("");
+  private readonly _error = signal<string>("");
   public get error(): string {
     return this._error();
   }
@@ -16,7 +16,7 @@ export class ChangePasswordComponent {
     this._error.set(v);
   }
 
-  private _success = signal<boolean>(false);
+  private readonly _success = signal<boolean>(false);
   public get success(): boolean {
     return this._success();
   }
@@ -24,7 +24,7 @@ export class ChangePasswordComponent {
     this._success.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -34,7 +34,7 @@ export class ChangePasswordComponent {
 
   public model: ChangePasswordModel;
 
-  constructor(private authenticationService: AuthService) {
+  constructor(private readonly authenticationService: AuthService) {
     this.model = new ChangePasswordModel();
   }
 

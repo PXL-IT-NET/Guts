@@ -22,11 +22,11 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./project-team-edit.component.html",
 })
 export class ProjectTeamEditComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
 
-  private _team = signal<ITeamDetailsModel>({} as ITeamDetailsModel);
+  private readonly _team = signal<ITeamDetailsModel>({} as ITeamDetailsModel);
   @Input()
   public get team(): ITeamDetailsModel {
     return this._team();
@@ -35,7 +35,7 @@ export class ProjectTeamEditComponent implements OnInit {
     this._team.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -48,9 +48,9 @@ export class ProjectTeamEditComponent implements OnInit {
   }>;
 
   constructor(
-    public modalRef: BsModalRef,
-    private projectService: ProjectService,
-    private toastr: ToastrService,
+    public readonly modalRef: BsModalRef,
+    private readonly projectService: ProjectService,
+    private readonly toastr: ToastrService,
   ) {}
 
   ngOnInit() {

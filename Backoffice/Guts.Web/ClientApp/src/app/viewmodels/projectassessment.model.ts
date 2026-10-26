@@ -1,10 +1,12 @@
 import { formatDateTime } from "../util/date.util";
 
+export type AssessmentDate = Date | string | null;
+
 export class ProjectAssessmentCreateModel {
   projectId: number;
   description: string;
-  openOn: Date | string | null;
-  deadline: Date | string | null;
+  openOn: AssessmentDate;
+  deadline: AssessmentDate;
 
   constructor(projectId: number) {
     this.projectId = projectId;
@@ -17,8 +19,8 @@ export class ProjectAssessmentCreateModel {
 export class ProjectAssessmentUpdateModel {
   id: number;
   description: string;
-  openOn: Date | string | null;
-  deadline: Date | string | null;
+  openOn: AssessmentDate;
+  deadline: AssessmentDate;
 
   constructor() {
     this.id = 0;

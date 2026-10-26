@@ -10,9 +10,9 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   templateUrl: "./home.component.html",
 })
 export class HomeComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -20,7 +20,7 @@ export class HomeComponent implements OnInit {
     this._userProfile.set(v);
   }
 
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   ngOnInit(): void {
     this.authService

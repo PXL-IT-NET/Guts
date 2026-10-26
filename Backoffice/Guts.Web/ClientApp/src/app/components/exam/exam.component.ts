@@ -26,9 +26,9 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./exam.component.html",
 })
 export class ExamComponent implements OnInit, OnChanges {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -36,7 +36,7 @@ export class ExamComponent implements OnInit, OnChanges {
     this._loading.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -44,7 +44,7 @@ export class ExamComponent implements OnInit, OnChanges {
     this._userProfile.set(v);
   }
 
-  private _exams = signal<ExamModel[]>([]);
+  private readonly _exams = signal<ExamModel[]>([]);
   public get exams(): ExamModel[] {
     return this._exams();
   }
@@ -52,7 +52,7 @@ export class ExamComponent implements OnInit, OnChanges {
     this._exams.set(v);
   }
 
-  private _newExam = signal<ExamModel>(new ExamModel());
+  private readonly _newExam = signal<ExamModel>(new ExamModel());
   public get newExam(): ExamModel {
     return this._newExam();
   }
@@ -65,10 +65,10 @@ export class ExamComponent implements OnInit, OnChanges {
   private userProfileSubscription: Subscription;
 
   constructor(
-    private route: ActivatedRoute,
-    private examService: ExamService,
-    private authService: AuthService,
-    private toastr: ToastrService,
+    private readonly route: ActivatedRoute,
+    private readonly examService: ExamService,
+    private readonly authService: AuthService,
+    private readonly toastr: ToastrService,
   ) {
     this.exams = [];
     this.newExam = new ExamModel();

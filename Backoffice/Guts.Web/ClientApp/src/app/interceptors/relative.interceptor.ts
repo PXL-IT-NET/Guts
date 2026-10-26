@@ -13,7 +13,7 @@ import { ClientSettings } from "../services/client.settings";
 
 export const relativeInterceptor: HttpInterceptorFn = (req, next) => {
   const url = req.url.toLowerCase();
-  if (url.startsWith("http") || url.indexOf("api/clientsettings") >= 0) {
+  if (url.startsWith("http") || url.includes("api/clientsettings")) {
     return next(req);
   }
 
@@ -34,7 +34,7 @@ export const relativeInterceptor: HttpInterceptorFn = (req, next) => {
 export class RelativeInterceptor implements HttpInterceptor {
   private settingsService: ClientSettingsService;
 
-  constructor(private injector: Injector) {
+  constructor(private readonly injector: Injector) {
     this.settingsService = injector.get(ClientSettingsService);
   }
 
@@ -44,7 +44,7 @@ export class RelativeInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<any>> {
     //do not modify request to an absolute url or to retrieve client settings
     let url = req.url.toLowerCase();
-    if (url.startsWith("http") || url.indexOf("api/clientsettings") >= 0) {
+    if (url.startsWith("http") || url.includes("api/clientsettings")) {
       return next.handle(req);
     }
 

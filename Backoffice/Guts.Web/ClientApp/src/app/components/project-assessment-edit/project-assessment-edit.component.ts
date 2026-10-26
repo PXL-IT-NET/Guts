@@ -34,7 +34,7 @@ export class ProjectAssessmentEditComponent implements OnInit {
 
   @Output() public assessmentEdited: EventEmitter<void>;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -49,9 +49,9 @@ export class ProjectAssessmentEditComponent implements OnInit {
   }>;
 
   constructor(
-    public modalRef: BsModalRef,
-    private projectAssessmentService: ProjectAssessmentService,
-    private toastr: ToastrService,
+    public readonly modalRef: BsModalRef,
+    private readonly projectAssessmentService: ProjectAssessmentService,
+    private readonly toastr: ToastrService,
   ) {
     this.assessmentEdited = new EventEmitter<void>();
   }

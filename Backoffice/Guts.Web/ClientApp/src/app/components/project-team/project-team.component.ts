@@ -19,9 +19,9 @@ import { PeriodProvider } from "src/app/services/period.provider";
   templateUrl: "./project-team.component.html",
 })
 export class ProjectTeamComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -29,7 +29,7 @@ export class ProjectTeamComponent implements OnInit {
     this._loading.set(v);
   }
 
-  private _teams = signal<ITeamDetailsModel[]>([]);
+  private readonly _teams = signal<ITeamDetailsModel[]>([]);
   public get teams(): ITeamDetailsModel[] {
     return this._teams();
   }
@@ -37,7 +37,7 @@ export class ProjectTeamComponent implements OnInit {
     this._teams.set(v);
   }
 
-  private _myTeam = signal<ITeamDetailsModel | null>(null);
+  private readonly _myTeam = signal<ITeamDetailsModel | null>(null);
   public get myTeam(): ITeamDetailsModel | null {
     return this._myTeam();
   }
@@ -45,7 +45,7 @@ export class ProjectTeamComponent implements OnInit {
     this._myTeam.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -53,7 +53,7 @@ export class ProjectTeamComponent implements OnInit {
     this._userProfile.set(v);
   }
 
-  private _activePeriod = signal<boolean>(true);
+  private readonly _activePeriod = signal<boolean>(true);
   public get activePeriod(): boolean {
     return this._activePeriod();
   }
@@ -73,12 +73,12 @@ export class ProjectTeamComponent implements OnInit {
   private projectCode: string;
 
   constructor(
-    private projectService: ProjectService,
-    private authService: AuthService,
-    private periodProvider: PeriodProvider,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
-    private modalService: BsModalService,
+    private readonly projectService: ProjectService,
+    private readonly authService: AuthService,
+    private readonly periodProvider: PeriodProvider,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
+    private readonly modalService: BsModalService,
   ) {
     this.teamBaseName = "";
     this.teamNumberFrom = 0;

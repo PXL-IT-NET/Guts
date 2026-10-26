@@ -8,7 +8,7 @@ import { PostResult } from "../util/result";
   providedIn: "root",
 })
 export class TestService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public deleteTest(testId: number): Observable<PostResult> {
     return this.http.delete("api/tests/" + testId, {}).pipe(

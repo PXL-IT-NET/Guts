@@ -9,7 +9,7 @@ import { ResetPasswordModel } from "../../viewmodels/resetpassword.model";
   templateUrl: "./resetpassword.component.html",
 })
 export class ResetPasswordComponent implements OnInit {
-  private _error = signal<string>("");
+  private readonly _error = signal<string>("");
   public get error(): string {
     return this._error();
   }
@@ -17,7 +17,7 @@ export class ResetPasswordComponent implements OnInit {
     this._error.set(v);
   }
 
-  private _success = signal<boolean>(false);
+  private readonly _success = signal<boolean>(false);
   public get success(): boolean {
     return this._success();
   }
@@ -25,7 +25,7 @@ export class ResetPasswordComponent implements OnInit {
     this._success.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -36,8 +36,8 @@ export class ResetPasswordComponent implements OnInit {
   public model: ResetPasswordModel;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
-    private authenticationService: AuthService,
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly authenticationService: AuthService,
   ) {
     this.model = {
       userId: "",

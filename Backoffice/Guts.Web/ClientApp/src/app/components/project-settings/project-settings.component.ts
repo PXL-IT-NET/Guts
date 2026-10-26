@@ -22,7 +22,7 @@ export class ProjectSettingsComponent implements OnInit {
   private courseId: number;
   private projectCode: string;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -35,7 +35,7 @@ export class ProjectSettingsComponent implements OnInit {
     description: FormControl<string | null>;
   }>;
 
-  private _project = signal<IProjectDetailsModel>({} as IProjectDetailsModel);
+  private readonly _project = signal<IProjectDetailsModel>({} as IProjectDetailsModel);
   public get project(): IProjectDetailsModel {
     return this._project();
   }
@@ -44,9 +44,9 @@ export class ProjectSettingsComponent implements OnInit {
   }
 
   constructor(
-    private projectService: ProjectService,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
+    private readonly projectService: ProjectService,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
   ) {
     this.courseId = 0;
     this.projectCode = "";

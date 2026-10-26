@@ -21,7 +21,7 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./chaptersummary.component.html",
 })
 export class ChapterSummaryComponent implements OnChanges {
-  private _model = signal<TopicSummaryModel>(new TopicSummaryModel());
+  private readonly _model = signal<TopicSummaryModel>(new TopicSummaryModel());
   public get model(): TopicSummaryModel {
     return this._model();
   }
@@ -29,7 +29,7 @@ export class ChapterSummaryComponent implements OnChanges {
     this._model.set(v);
   }
 
-  private _statistics = signal<TopicStatisticsModel>({
+  private readonly _statistics = signal<TopicStatisticsModel>({
     id: 0,
     code: "",
     description: "",
@@ -43,7 +43,7 @@ export class ChapterSummaryComponent implements OnChanges {
     this._statistics.set(v);
   }
 
-  private _loadingSummary = signal<boolean>(false);
+  private readonly _loadingSummary = signal<boolean>(false);
   public get loadingSummary(): boolean {
     return this._loadingSummary();
   }
@@ -51,7 +51,7 @@ export class ChapterSummaryComponent implements OnChanges {
     this._loadingSummary.set(v);
   }
 
-  private _loadingStatistics = signal<boolean>(false);
+  private readonly _loadingStatistics = signal<boolean>(false);
   public get loadingStatistics(): boolean {
     return this._loadingStatistics();
   }
@@ -65,9 +65,9 @@ export class ChapterSummaryComponent implements OnChanges {
   @Input() public statusDate: Date;
 
   constructor(
-    private chapterService: ChapterService,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
+    private readonly chapterService: ChapterService,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
   ) {
     this.courseId = 0;
     this.userId = 0;

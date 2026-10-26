@@ -16,7 +16,7 @@ export const authGuard: CanActivateFn = () => {
   providedIn: "root",
 })
 export class AuthGuard {
-  constructor(private router: Router) {}
+  constructor(private readonly router: Router) {}
 
   canActivate() {
     if (localStorage.getItem(LocalStorageKeys.currentToken)) {

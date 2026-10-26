@@ -95,7 +95,7 @@ describe("CourseGamificationHeroComponent", () => {
   });
 
   it("should provide exactly 20 distinct avatars", () => {
-    expect(component.availableAvatars.length).toBe(20);
+    expect(component.availableAvatars).toHaveSize(20);
     const ids = new Set(component.availableAvatars.map((a) => a.id));
     expect(ids.size).toBe(20);
   });

@@ -35,7 +35,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   @Output() public profileLoaded = new EventEmitter<IStudentGamificationProfileModel>();
   @Output() public profileUpdated = new EventEmitter<IStudentGamificationProfileModel>();
 
-  private _profile = signal<IStudentGamificationProfileModel | null>(null);
+  private readonly _profile = signal<IStudentGamificationProfileModel | null>(null);
   @Input()
   public get profile(): IStudentGamificationProfileModel | null {
     return this._profile();
@@ -44,7 +44,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     this._profile.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -52,7 +52,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     this._userProfile.set(v);
   }
 
-  private _showSettingsModal = signal<boolean>(false);
+  private readonly _showSettingsModal = signal<boolean>(false);
   public get showSettingsModal(): boolean {
     return this._showSettingsModal();
   }
@@ -60,7 +60,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     this._showSettingsModal.set(v);
   }
 
-  private _editModel = signal<IEnrollStudentModel>({
+  private readonly _editModel = signal<IEnrollStudentModel>({
     showInLeaderBoard: true,
     usePseudonym: true,
     pseudonym: "",
@@ -77,9 +77,9 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
   constructor(
-    private gamificationService: GamificationService,
-    private authService: AuthService,
-    private toastr: ToastrService,
+    private readonly gamificationService: GamificationService,
+    private readonly authService: AuthService,
+    private readonly toastr: ToastrService,
   ) {}
 
   public ngOnInit(): void {

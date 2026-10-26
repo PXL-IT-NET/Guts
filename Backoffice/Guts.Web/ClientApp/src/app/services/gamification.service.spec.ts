@@ -84,7 +84,7 @@ describe("GamificationService", () => {
       .flush([{ rank: 1, userId: 5, score: 50 }]);
 
     expect(res.success).toBeTrue();
-    expect(res.value.length).toBe(1);
+    expect(res.value).toHaveSize(1);
     expect(res.value[0].rank).toBe(1);
   });
 
@@ -112,7 +112,7 @@ describe("GamificationService", () => {
       ]);
 
     expect(res.success).toBeTrue();
-    expect(res.value.length).toBe(2);
+    expect(res.value).toHaveSize(2);
     expect(res.value[0].name).toBe("First Spark");
   });
 });

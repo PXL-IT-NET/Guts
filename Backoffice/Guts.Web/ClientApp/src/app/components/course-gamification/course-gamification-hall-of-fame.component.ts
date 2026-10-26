@@ -24,7 +24,7 @@ export class CourseGamificationHallOfFameComponent implements OnInit, OnChanges 
   @Input() public courseId: number = 0;
   @Input() public periodId?: number;
 
-  private _hallOfFame = signal<ILeaderboardEntryModel[]>([]);
+  private readonly _hallOfFame = signal<ILeaderboardEntryModel[]>([]);
   public get hallOfFame(): ILeaderboardEntryModel[] {
     return this._hallOfFame();
   }
@@ -32,7 +32,7 @@ export class CourseGamificationHallOfFameComponent implements OnInit, OnChanges 
     this._hallOfFame.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -42,7 +42,7 @@ export class CourseGamificationHallOfFameComponent implements OnInit, OnChanges 
 
   public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
-  constructor(private gamificationService: GamificationService) {}
+  constructor(private readonly gamificationService: GamificationService) {}
 
   public ngOnInit(): void {
     this.loadHallOfFame();

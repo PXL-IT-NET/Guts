@@ -164,7 +164,7 @@ describe("CourseStatisticsComponent", () => {
   it("should sort students by lastName ascending by default", () => {
     fixture.detectChanges();
     const sorted = component.sortedStudents;
-    expect(sorted.length).toBe(2);
+    expect(sorted).toHaveSize(2);
     expect(sorted[0].lastName).toBe("Alpha");
     expect(sorted[1].lastName).toBe("Zeta");
   });

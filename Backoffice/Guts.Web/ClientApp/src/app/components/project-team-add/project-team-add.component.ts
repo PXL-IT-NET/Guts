@@ -22,13 +22,13 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./project-team-add.component.html",
 })
 export class ProjectTeamAddComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   @Input() public courseId: number;
   @Input() public projectCode: string;
 
   @Output() public teamsAdded: EventEmitter<void>;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -44,9 +44,9 @@ export class ProjectTeamAddComponent implements OnInit {
   }>;
 
   constructor(
-    public modalRef: BsModalRef,
-    private projectService: ProjectService,
-    private toastr: ToastrService,
+    public readonly modalRef: BsModalRef,
+    private readonly projectService: ProjectService,
+    private readonly toastr: ToastrService,
   ) {
     this.teamsAdded = new EventEmitter<void>();
   }

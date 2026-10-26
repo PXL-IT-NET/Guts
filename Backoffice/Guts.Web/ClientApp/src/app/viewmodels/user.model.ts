@@ -12,19 +12,13 @@ export interface IUserProfile {
 }
 
 export class UserProfile implements IUserProfile {
-  public id: number;
-  public email: string;
-  public roles: string[];
-  public teams: number[];
-  public isAuthenticated: boolean;
+  public id = 0;
+  public email = "";
+  public roles: string[] = [];
+  public teams: number[] = [];
+  public isAuthenticated = false;
 
   constructor(source?: IUserProfile) {
-    this.id = 0;
-    this.roles = [];
-    this.teams = [];
-    this.email = "";
-    this.isAuthenticated = false;
-
     if (source) {
       this.id = source.id;
       this.email = source.email;
@@ -35,7 +29,7 @@ export class UserProfile implements IUserProfile {
   }
 
   public isLector(): boolean {
-    return this.roles.indexOf("lector") >= 0;
+    return this.roles.includes("lector");
   }
 
   public isTeacher(): boolean {
@@ -43,6 +37,6 @@ export class UserProfile implements IUserProfile {
   }
 
   public isMemberOf(teamId: number): boolean {
-    return this.teams.indexOf(teamId) >= 0;
+    return this.teams.includes(teamId);
   }
 }

@@ -19,7 +19,7 @@ import { saveAs } from "file-saver";
   providedIn: "root",
 })
 export class ExamService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public getExamsOfCourse(
     courseId: number,

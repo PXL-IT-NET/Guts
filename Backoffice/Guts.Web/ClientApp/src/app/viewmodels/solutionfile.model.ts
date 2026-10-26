@@ -4,15 +4,11 @@ export interface ISolutionFileModel {
 }
 
 export class SolutionFileModel implements ISolutionFileModel {
-  public filePath: string;
-  public content: string;
-  public isCollapsed: boolean;
+  public filePath = "";
+  public content = "";
+  public isCollapsed = true;
 
   constructor(source?: ISolutionFileModel) {
-    this.filePath = "";
-    this.content = "";
-    this.isCollapsed = true;
-
     if (source) {
       this.filePath = source.filePath;
       this.content = source.content;

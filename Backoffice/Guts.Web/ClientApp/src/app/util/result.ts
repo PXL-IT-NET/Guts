@@ -1,14 +1,9 @@
 import { HttpErrorResponse } from "@angular/common/http";
 
 export class Result {
-  public success: boolean;
-  public isAuthenticated: boolean;
+  public success = false;
+  public isAuthenticated = true;
   public message?: string;
-
-  constructor() {
-    this.success = false;
-    this.isAuthenticated = true;
-  }
 
   private static extractMessageFromObject(error: object): string {
     const messageContainer = error as Record<string, any>;
@@ -54,7 +49,7 @@ export class Result {
       console.log(response);
     } else if (
       typeof response.error === "string" ||
-      response.error instanceof String
+      Object.prototype.toString.call(response.error) === "[object String]"
     ) {
       message = response.error.toString();
 
@@ -72,9 +67,6 @@ export class Result {
 }
 
 export class PostResult extends Result {
-  constructor() {
-    super();
-  }
 
   public static success(): PostResult {
     const result = new PostResult();
@@ -89,10 +81,6 @@ export class PostResult extends Result {
 
 export class CreateResult<T> extends Result {
   public value: T;
-
-  constructor() {
-    super();
-  }
 
   public static success<T>(value: T): CreateResult<T> {
     const result = new CreateResult<T>();

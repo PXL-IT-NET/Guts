@@ -51,7 +51,7 @@ describe("CourseGamificationHallOfFameComponent", () => {
 
   it("should create and load hall of fame data", () => {
     expect(component).toBeTruthy();
-    expect(component.hallOfFame.length).toBe(1);
+    expect(component.hallOfFame).toHaveSize(1);
     expect(gamificationServiceSpy.getHallOfFame).toHaveBeenCalledWith(10, undefined);
   });
 

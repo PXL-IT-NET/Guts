@@ -21,9 +21,9 @@ import { ProjectAssessmentService } from "../../services/project.assessment.serv
   templateUrl: "./project-assessment-add.component.html",
 })
 export class ProjectAssessmentAddComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -42,9 +42,9 @@ export class ProjectAssessmentAddComponent implements OnInit {
   @Output() public assessmentAdded: EventEmitter<IProjectAssessmentModel>;
 
   constructor(
-    public modalRef: BsModalRef,
-    private projectAssessmentService: ProjectAssessmentService,
-    private toastr: ToastrService,
+    public readonly modalRef: BsModalRef,
+    private readonly projectAssessmentService: ProjectAssessmentService,
+    private readonly toastr: ToastrService,
   ) {
     this.assessmentAdded = new EventEmitter<IProjectAssessmentModel>();
   }

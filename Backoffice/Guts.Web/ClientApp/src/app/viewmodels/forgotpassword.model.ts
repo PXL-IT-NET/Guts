@@ -1,9 +1,4 @@
-﻿export class ForgotPasswordModel {
-  email: string;
-  captchaToken: string;
-
-  constructor() {
-    this.email = "";
-    this.captchaToken = "";
-  }
+export class ForgotPasswordModel {
+  email = "";
+  captchaToken = "";
 }

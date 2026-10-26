@@ -24,7 +24,7 @@ export class ChapterSettingsComponent implements OnInit {
   private courseId: number;
   private chapterCode: string;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -37,7 +37,7 @@ export class ChapterSettingsComponent implements OnInit {
     description: FormControl<string | null>;
   }>;
 
-  private _chapter = signal<IChapterDetailsModel>({
+  private readonly _chapter = signal<IChapterDetailsModel>({
     id: 0,
     code: "",
     description: "",
@@ -53,9 +53,9 @@ export class ChapterSettingsComponent implements OnInit {
   }
 
   constructor(
-    private chapterService: ChapterService,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
+    private readonly chapterService: ChapterService,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
   ) {
     this.courseId = 0;
     this.chapterCode = "";

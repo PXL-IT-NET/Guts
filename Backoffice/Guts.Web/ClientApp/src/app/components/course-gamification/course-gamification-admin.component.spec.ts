@@ -62,7 +62,7 @@ describe("CourseGamificationAdminComponent", () => {
     expect(gamificationServiceSpy.getConfig).toHaveBeenCalledWith(10);
     expect(gamificationServiceSpy.getClasses).toHaveBeenCalledWith(10, 1);
     expect(component.config?.isGamificationEnabled).toBeTrue();
-    expect(component.classGroups.length).toBe(2);
+    expect(component.classGroups).toHaveSize(2);
   });
 
   it("should save configuration and emit configChanged", () => {
@@ -83,7 +83,7 @@ describe("CourseGamificationAdminComponent", () => {
     component.addClass();
 
     expect(gamificationServiceSpy.addClass).toHaveBeenCalledWith(10, "1TIN-C", 1);
-    expect(component.classGroups.length).toBe(3);
+    expect(component.classGroups).toHaveSize(3);
     expect(component.newClassName).toBe("");
     expect(component.classesChanged.emit).toHaveBeenCalled();
     expect(toastrSpy.success).toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("CourseGamificationAdminComponent", () => {
     component.deleteClass(1);
 
     expect(gamificationServiceSpy.deleteClass).toHaveBeenCalledWith(10, 1);
-    expect(component.classGroups.length).toBe(1);
+    expect(component.classGroups).toHaveSize(1);
     expect(component.classGroups.find((c) => c.id === 1)).toBeUndefined();
     expect(component.classesChanged.emit).toHaveBeenCalled();
     expect(toastrSpy.success).toHaveBeenCalled();

@@ -94,7 +94,7 @@ describe("ProjectTeamEditComponent", () => {
         10,
         100,
       );
-      expect(component.team.members.length).toBe(1);
+      expect(component.team.members).toHaveSize(1);
       expect(component.team.members[0].userId).toBe(101);
     });
 
@@ -104,7 +104,7 @@ describe("ProjectTeamEditComponent", () => {
       component.removeFromTeam({ userId: 100, name: "Alice" });
 
       expect(projectServiceSpy.removeFromTeam).not.toHaveBeenCalled();
-      expect(component.team.members.length).toBe(2);
+      expect(component.team.members).toHaveSize(2);
     });
 
     it("should show toastr error when removeFromTeam fails", () => {
@@ -120,7 +120,7 @@ describe("ProjectTeamEditComponent", () => {
         "unknown error",
         "Could not remove user from team",
       );
-      expect(component.team.members.length).toBe(2);
+      expect(component.team.members).toHaveSize(2);
     });
   });
 

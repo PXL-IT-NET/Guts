@@ -110,7 +110,7 @@ describe("TypeaheadComponent", () => {
       component.search(text$).subscribe((res) => (results = res));
 
       component.onClick();
-      expect(results.length).toBe(3);
+      expect(results).toHaveSize(3);
       expect(results).toEqual(sampleUsers);
     }));
 
@@ -123,15 +123,15 @@ describe("TypeaheadComponent", () => {
 
       text$.next("bob");
       tick(199);
-      expect(results.length).toBe(0);
+      expect(results).toHaveSize(0);
 
       tick(1);
-      expect(results.length).toBe(1);
+      expect(results).toHaveSize(1);
       expect(results[0].fullName).toBe("Bob Jones");
 
       text$.next("SMI");
       tick(200);
-      expect(results.length).toBe(1);
+      expect(results).toHaveSize(1);
       expect(results[0].fullName).toBe("Alice Smith");
     }));
 
@@ -146,7 +146,7 @@ describe("TypeaheadComponent", () => {
 
       text$.next("charlie@test");
       tick(200);
-      expect(results.length).toBe(1);
+      expect(results).toHaveSize(1);
       expect(results[0].fullName).toBe("Charlie Brown");
     }));
 

@@ -14,9 +14,9 @@ import { UserProfile } from "src/app/viewmodels/user.model";
   styleUrls: ["./sidebar-menu.component.scss"],
 })
 export class SidebarMenuComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _courses = signal<ICourseModel[]>([]);
+  private readonly _courses = signal<ICourseModel[]>([]);
   public get courses(): ICourseModel[] {
     return this._courses();
   }
@@ -24,7 +24,7 @@ export class SidebarMenuComponent implements OnInit {
     this._courses.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -33,9 +33,9 @@ export class SidebarMenuComponent implements OnInit {
   }
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
-    private courseService: CourseService,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly courseService: CourseService,
   ) {}
 
   ngOnInit(): void {

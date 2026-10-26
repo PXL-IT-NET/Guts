@@ -105,7 +105,7 @@ describe("ExampartComponent", () => {
       numberOfTestsAlreadyGreenAtStart: 0,
     });
     component.addAssignment();
-    expect(component.model.assignmentEvaluations.length).toBe(1);
+    expect(component.model.assignmentEvaluations).toHaveSize(1);
 
     const savedPart = new ExamPartModel();
     savedPart.id = 15;

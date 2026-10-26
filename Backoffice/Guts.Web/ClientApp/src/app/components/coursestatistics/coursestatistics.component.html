@@ -65,51 +65,49 @@
           <thead class="table-light">
             <tr>
               <th style="width: 40px;" class="text-center"></th>
-              <th
-                role="button"
-                tabindex="0"
-                class="user-select-none"
-                (click)="setSort('lastName')"
-                (keydown.enter)="setSort('lastName')"
-                title="Sort by last name"
-              >
-                <span>Last name</span>
-                <span class="bi ms-1" [ngClass]="getSortIcon('lastName')"></span>
+              <th scope="col">
+                <button
+                  type="button"
+                  class="btn btn-link p-0 text-decoration-none text-dark fw-bold d-inline-flex align-items-center user-select-none"
+                  (click)="setSort('lastName')"
+                  title="Sort by last name"
+                >
+                  <span>Last name</span>
+                  <span class="bi ms-1" [ngClass]="getSortIcon('lastName')"></span>
+                </button>
               </th>
-              <th
-                role="button"
-                tabindex="0"
-                class="user-select-none"
-                (click)="setSort('firstName')"
-                (keydown.enter)="setSort('firstName')"
-                title="Sort by first name"
-              >
-                <span>First name</span>
-                <span class="bi ms-1" [ngClass]="getSortIcon('firstName')"></span>
+              <th scope="col">
+                <button
+                  type="button"
+                  class="btn btn-link p-0 text-decoration-none text-dark fw-bold d-inline-flex align-items-center user-select-none"
+                  (click)="setSort('firstName')"
+                  title="Sort by first name"
+                >
+                  <span>First name</span>
+                  <span class="bi ms-1" [ngClass]="getSortIcon('firstName')"></span>
+                </button>
               </th>
-              <th
-                role="button"
-                tabindex="0"
-                class="user-select-none"
-                style="width: 220px;"
-                (click)="setSort('assignmentsWorkedOn')"
-                (keydown.enter)="setSort('assignmentsWorkedOn')"
-                title="Sort by assignments worked on"
-              >
-                <span>Assignments worked on</span>
-                <span class="bi ms-1" [ngClass]="getSortIcon('assignmentsWorkedOn')"></span>
+              <th style="width: 220px;" scope="col">
+                <button
+                  type="button"
+                  class="btn btn-link p-0 text-decoration-none text-dark fw-bold d-inline-flex align-items-center user-select-none"
+                  (click)="setSort('assignmentsWorkedOn')"
+                  title="Sort by assignments worked on"
+                >
+                  <span>Assignments worked on</span>
+                  <span class="bi ms-1" [ngClass]="getSortIcon('assignmentsWorkedOn')"></span>
+                </button>
               </th>
-              <th
-                role="button"
-                tabindex="0"
-                class="user-select-none"
-                style="width: 300px;"
-                (click)="setSort('completionPercentage')"
-                (keydown.enter)="setSort('completionPercentage')"
-                title="Sort by course completion"
-              >
-                <span>Course completion</span>
-                <span class="bi ms-1" [ngClass]="getSortIcon('completionPercentage')"></span>
+              <th style="width: 300px;" scope="col">
+                <button
+                  type="button"
+                  class="btn btn-link p-0 text-decoration-none text-dark fw-bold d-inline-flex align-items-center user-select-none"
+                  (click)="setSort('completionPercentage')"
+                  title="Sort by course completion"
+                >
+                  <span>Course completion</span>
+                  <span class="bi ms-1" [ngClass]="getSortIcon('completionPercentage')"></span>
+                </button>
               </th>
             </tr>
           </thead>

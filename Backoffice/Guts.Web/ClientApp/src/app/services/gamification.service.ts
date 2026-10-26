@@ -19,8 +19,8 @@ import { PeriodProvider } from "./period.provider";
 })
 export class GamificationService {
   constructor(
-    private http: HttpClient,
-    private periodProvider: PeriodProvider,
+    private readonly http: HttpClient,
+    private readonly periodProvider: PeriodProvider,
   ) {}
 
   private appendPeriod(url: string, periodId?: number): string {

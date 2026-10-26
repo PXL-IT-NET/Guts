@@ -13,8 +13,8 @@ import { PeriodProvider } from "./period.provider";
 
 export abstract class TopicServiceBase {
   protected constructor(
-    protected http: HttpClient,
-    protected periodProvider: PeriodProvider,
+    protected readonly http: HttpClient,
+    protected readonly periodProvider: PeriodProvider,
     private readonly topicSegment: "chapters" | "projects",
   ) {}
 

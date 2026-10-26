@@ -40,7 +40,7 @@ export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
     }
   }
 
-  private _chartData: any | null = null;
+  private _chartData: any = null;
   get chartData(): any {
     if (!this._chartData) {
       let data = [];

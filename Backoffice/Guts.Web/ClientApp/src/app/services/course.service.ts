@@ -13,7 +13,7 @@ import { GetResult } from "../util/result";
   providedIn: "root",
 })
 export class CourseService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public getCourses(): Observable<GetResult<ICourseModel[]>> {
     return this.http.get<ICourseModel[]>("api/courses").pipe(

@@ -8,14 +8,14 @@ import { ActivatedRoute } from "@angular/router";
   templateUrl: "./courseconfig.component.html",
 })
 export class CourseConfigComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   @Input() public courseId: number = 0;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private readonly route: ActivatedRoute) {}
 
   ngOnInit() {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      if (params && params["courseId"]) {
+      if (params?.["courseId"]) {
         this.courseId = +params["courseId"];
       }
     });

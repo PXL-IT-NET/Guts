@@ -12,9 +12,9 @@ import { ToastrService } from "ngx-toastr";
   templateUrl: "./project.component.html",
 })
 export class ProjectComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _model = signal<IProjectDetailsModel>({
+  private readonly _model = signal<IProjectDetailsModel>({
     id: 0,
     code: "",
     description: "",
@@ -29,7 +29,7 @@ export class ProjectComponent implements OnInit {
     this._model.set(v);
   }
 
-  private _selectedDate = signal<Date>(new Date());
+  private readonly _selectedDate = signal<Date>(new Date());
   public get selectedDate(): Date {
     return this._selectedDate();
   }
@@ -37,7 +37,7 @@ export class ProjectComponent implements OnInit {
     this._selectedDate.set(v);
   }
 
-  private _selectedAssignmentId = signal<number>(0);
+  private readonly _selectedAssignmentId = signal<number>(0);
   public get selectedAssignmentId(): number {
     return this._selectedAssignmentId();
   }
@@ -45,7 +45,7 @@ export class ProjectComponent implements OnInit {
     this._selectedAssignmentId.set(v);
   }
 
-  private _selectedTeamId = signal<number>(0);
+  private readonly _selectedTeamId = signal<number>(0);
   public get selectedTeamId(): number {
     return this._selectedTeamId();
   }
@@ -55,7 +55,7 @@ export class ProjectComponent implements OnInit {
 
   public datePickerSettings: any;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -67,10 +67,10 @@ export class ProjectComponent implements OnInit {
   public projectCode: string;
 
   constructor(
-    private projectService: ProjectService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
+    private readonly projectService: ProjectService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
   ) {
     this.courseId = 0;
     this.projectCode = "";

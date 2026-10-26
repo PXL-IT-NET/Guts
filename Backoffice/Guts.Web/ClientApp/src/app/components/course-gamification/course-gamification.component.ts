@@ -31,7 +31,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   @ViewChild(CourseGamificationHeroComponent)
   public heroComponent?: CourseGamificationHeroComponent;
 
-  private _courseId = signal<number>(0);
+  private readonly _courseId = signal<number>(0);
   public get courseId(): number {
     return this._courseId();
   }
@@ -39,7 +39,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._courseId.set(v);
   }
 
-  private _periodId = signal<number | undefined>(undefined);
+  private readonly _periodId = signal<number | undefined>(undefined);
   public get periodId(): number | undefined {
     return this._periodId();
   }
@@ -47,7 +47,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._periodId.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -55,7 +55,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._loading.set(v);
   }
 
-  private _activeTab = signal<string>("sprint");
+  private readonly _activeTab = signal<string>("sprint");
   public get activeTab(): string {
     return this._activeTab();
   }
@@ -63,7 +63,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._activeTab.set(v);
   }
 
-  private _profile = signal<IStudentGamificationProfileModel | null>(null);
+  private readonly _profile = signal<IStudentGamificationProfileModel | null>(null);
   public get profile(): IStudentGamificationProfileModel | null {
     return this._profile();
   }
@@ -71,7 +71,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._profile.set(v);
   }
 
-  private _config = signal<ICourseGamificationConfigModel | null>(null);
+  private readonly _config = signal<ICourseGamificationConfigModel | null>(null);
   public get config(): ICourseGamificationConfigModel | null {
     return this._config();
   }
@@ -79,7 +79,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._config.set(v);
   }
 
-  private _classGroups = signal<ICourseClassGroupModel[]>([]);
+  private readonly _classGroups = signal<ICourseClassGroupModel[]>([]);
   public get classGroups(): ICourseClassGroupModel[] {
     return this._classGroups();
   }
@@ -87,7 +87,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._classGroups.set(v);
   }
 
-  private _selectedClassGroupId = signal<number | null>(null);
+  private readonly _selectedClassGroupId = signal<number | null>(null);
   public get selectedClassGroupId(): number | null {
     return this._selectedClassGroupId();
   }
@@ -95,7 +95,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._selectedClassGroupId.set(v);
   }
 
-  private _needsClassSelection = signal<boolean>(false);
+  private readonly _needsClassSelection = signal<boolean>(false);
   public get needsClassSelection(): boolean {
     return this._needsClassSelection();
   }
@@ -103,7 +103,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._needsClassSelection.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -115,11 +115,11 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   private periodSub?: Subscription;
 
   constructor(
-    private route: ActivatedRoute,
-    private gamificationService: GamificationService,
-    private authService: AuthService,
-    private periodProvider: PeriodProvider,
-    private toastr: ToastrService,
+    private readonly route: ActivatedRoute,
+    private readonly gamificationService: GamificationService,
+    private readonly authService: AuthService,
+    private readonly periodProvider: PeriodProvider,
+    private readonly toastr: ToastrService,
   ) {}
 
   public ngOnInit(): void {
@@ -238,7 +238,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   public checkClassSelectionRequirement(): void {
     const isStudent = !this.userProfile.isTeacher();
     const hasClasses = this.classGroups.length > 0;
-    const notInClass = !this.profile || !this.profile.classGroupId;
+    const notInClass = !this.profile?.classGroupId;
 
     this.needsClassSelection = isStudent && hasClasses && notInClass;
   }
@@ -253,19 +253,12 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.activeTab === "sprint" && !this.config.isWeeklyStreakEnabled) {
-      this.activeTab = this.getFirstEnabledTab();
-    } else if (
-      this.activeTab === "hallOfFame" &&
-      !this.config.isLeaderboardEnabled
-    ) {
-      this.activeTab = this.getFirstEnabledTab();
-    } else if (
-      this.activeTab === "classes" &&
-      (!this.config.isClassCompetitionEnabled || !this.hasClasses)
-    ) {
-      this.activeTab = this.getFirstEnabledTab();
-    } else if (this.activeTab === "badges" && !this.config.isBadgesEnabled) {
+    const isSprintDisabled = this.activeTab === "sprint" && !this.config.isWeeklyStreakEnabled;
+    const isHallOfFameDisabled = this.activeTab === "hallOfFame" && !this.config.isLeaderboardEnabled;
+    const isClassesDisabled = this.activeTab === "classes" && (!this.config.isClassCompetitionEnabled || !this.hasClasses);
+    const isBadgesDisabled = this.activeTab === "badges" && !this.config.isBadgesEnabled;
+
+    if (isSprintDisabled || isHallOfFameDisabled || isClassesDisabled || isBadgesDisabled) {
       this.activeTab = this.getFirstEnabledTab();
     }
   }

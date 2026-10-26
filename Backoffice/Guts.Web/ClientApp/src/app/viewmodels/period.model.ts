@@ -7,19 +7,13 @@ export interface IPeriodModel {
 }
 
 export class PeriodModel implements IPeriodModel {
-  public id: number;
-  public description: string;
-  public from: Date | null;
-  public until: Date | null;
-  public isActive: boolean;
+  public id = 0;
+  public description = "";
+  public from: Date | null = null;
+  public until: Date | null = null;
+  public isActive = false;
 
   constructor(source?: IPeriodModel) {
-    this.id = 0;
-    this.description = "";
-    this.from = null;
-    this.until = null;
-    this.isActive = false;
-
     if (source) {
       this.id = source.id;
       this.description = source.description;

@@ -1,7 +1,3 @@
-﻿export class ClientSettings {
-  public apiBaseUrl: string;
-
-  constructor() {
-    this.apiBaseUrl = "";
-  }
+export class ClientSettings {
+  public apiBaseUrl = "";
 }

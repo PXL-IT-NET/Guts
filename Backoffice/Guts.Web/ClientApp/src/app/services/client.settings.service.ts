@@ -7,7 +7,7 @@ import { environment } from "../../environments/environment";
   providedIn: "root",
 })
 export class ClientSettingsService {
-  constructor(@Inject("BASE_URL") private baseUrl: string) {}
+  constructor(@Inject("BASE_URL") private readonly baseUrl: string) {}
 
   public get(): Observable<ClientSettings> {
     const settings = new ClientSettings();

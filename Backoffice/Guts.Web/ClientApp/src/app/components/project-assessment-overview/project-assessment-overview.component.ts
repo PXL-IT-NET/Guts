@@ -28,10 +28,10 @@ import { PostResult } from "../../util/result";
   templateUrl: "./project-assessment-overview.component.html",
 })
 export class ProjectAssessmentOverviewComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private userProfileSubscription: Subscription;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -39,7 +39,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this._loading.set(v);
   }
 
-  private _project = signal<IProjectDetailsModel>({
+  private readonly _project = signal<IProjectDetailsModel>({
     id: 0,
     code: "",
     description: "",
@@ -54,7 +54,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this._project.set(v);
   }
 
-  private _assessments = signal<ProjectAssessmentModel[]>([]);
+  private readonly _assessments = signal<ProjectAssessmentModel[]>([]);
   public get assessments(): ProjectAssessmentModel[] {
     return this._assessments();
   }
@@ -62,7 +62,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this._assessments.set(v);
   }
 
-  private _selectedTeamId = signal<number>(0);
+  private readonly _selectedTeamId = signal<number>(0);
   public get selectedTeamId(): number {
     return this._selectedTeamId();
   }
@@ -70,7 +70,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this._selectedTeamId.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -78,7 +78,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     this._userProfile.set(v);
   }
 
-  private _activePeriod = signal<boolean>(true);
+  private readonly _activePeriod = signal<boolean>(true);
   public get activePeriod(): boolean {
     return this._activePeriod();
   }
@@ -89,14 +89,14 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
   public modalRef: BsModalRef;
 
   constructor(
-    private projectService: ProjectService,
-    private projectAssessmentService: ProjectAssessmentService,
-    private projectTeamAssessmentService: ProjectTeamAssessmentService,
-    private modalService: BsModalService,
-    private authService: AuthService,
-    private toastr: ToastrService,
-    private route: ActivatedRoute,
-    private periodProvider: PeriodProvider,
+    private readonly projectService: ProjectService,
+    private readonly projectAssessmentService: ProjectAssessmentService,
+    private readonly projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private readonly modalService: BsModalService,
+    private readonly authService: AuthService,
+    private readonly toastr: ToastrService,
+    private readonly route: ActivatedRoute,
+    private readonly periodProvider: PeriodProvider,
   ) {
     this.loading = false;
     this.project = {

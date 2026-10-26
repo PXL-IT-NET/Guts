@@ -32,7 +32,7 @@ export class ProjectAddComponent implements OnInit {
 
   @Output() public projectAdded: EventEmitter<IProjectDetailsModel>;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -46,9 +46,9 @@ export class ProjectAddComponent implements OnInit {
   }>;
 
   constructor(
-    public modalRef: BsModalRef,
-    private projectService: ProjectService,
-    private toastr: ToastrService,
+    public readonly modalRef: BsModalRef,
+    private readonly projectService: ProjectService,
+    private readonly toastr: ToastrService,
   ) {
     this.projectAdded = new EventEmitter<IProjectDetailsModel>();
   }

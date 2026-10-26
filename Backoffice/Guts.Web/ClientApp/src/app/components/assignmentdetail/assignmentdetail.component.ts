@@ -15,9 +15,9 @@ import {
   styleUrls: ["./assignmentdetail.component.css"],
 })
 export class AssignmentDetailComponent implements OnChanges {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _model = signal<AssignmentDetailModel>(new AssignmentDetailModel());
+  private readonly _model = signal<AssignmentDetailModel>(new AssignmentDetailModel());
   public get model(): AssignmentDetailModel {
     return this._model();
   }
@@ -25,7 +25,7 @@ export class AssignmentDetailComponent implements OnChanges {
     this._model.set(v);
   }
 
-  private _loading = signal<boolean>(true);
+  private readonly _loading = signal<boolean>(true);
   public get loading(): boolean {
     return this._loading();
   }
@@ -39,8 +39,8 @@ export class AssignmentDetailComponent implements OnChanges {
   @Input() public statusDate: Date;
 
   constructor(
-    private route: ActivatedRoute,
-    private assignmentService: AssignmentService,
+    private readonly route: ActivatedRoute,
+    private readonly assignmentService: AssignmentService,
   ) {
     this.assignmentId = 0;
     this.userId = 0;

@@ -15,13 +15,12 @@ import {
   NgbTypeahead,
   NgbTypeaheadSelectItemEvent,
 } from "@ng-bootstrap/ng-bootstrap";
-import { Observable, Subject } from "rxjs";
+import { Observable, Subject, mergeWith } from "rxjs";
 import {
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
-  merge,
 } from "rxjs/operators";
 
 @Component({
@@ -50,7 +49,7 @@ export class TypeaheadComponent<T = any>
     return this.items;
   }
 
-  private _selectedItem = signal<T | null>(null);
+  private readonly _selectedItem = signal<T | null>(null);
   @Input() public get selectedItem(): T | null {
     return this._selectedItem();
   }
@@ -68,7 +67,7 @@ export class TypeaheadComponent<T = any>
   @Input() public placeholder: string = "";
   @Input() public readonly: boolean = false;
 
-  private _disabled = signal<boolean>(false);
+  private readonly _disabled = signal<boolean>(false);
   @Input() public get disabled(): boolean {
     return this._disabled();
   }
@@ -86,7 +85,7 @@ export class TypeaheadComponent<T = any>
   @ViewChild("instance", { static: false })
   public typeaheadInstance!: NgbTypeahead;
 
-  private _innerValue = signal<any>(null);
+  private readonly _innerValue = signal<any>(null);
   public get innerValue(): any {
     return this._innerValue();
   }
@@ -138,12 +137,12 @@ export class TypeaheadComponent<T = any>
     );
     const clicksWithClosedPopup$ = this.click$.pipe(
       filter(
-        () => !this.typeaheadInstance || !this.typeaheadInstance.isPopupOpen(),
+        () => !this.typeaheadInstance?.isPopupOpen(),
       ),
     );
 
     return clicksWithClosedPopup$.pipe(
-      merge(debouncedText$),
+      mergeWith(debouncedText$),
       map((term: string) => {
         const items = this.items || [];
         if (!term || term.length === 0) {
@@ -188,8 +187,7 @@ export class TypeaheadComponent<T = any>
     } else if (typeof val === "object") {
       this.updateValue(val, true);
     } else if (
-      this.items &&
-      this.items.some((item) => typeof item === "string" && item === val)
+      this.items?.some((item) => typeof item === "string" && item === val)
     ) {
       this.updateValue(val, true);
     } else if (this.allowCustomValue) {

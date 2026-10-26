@@ -40,7 +40,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
 export class TokenInterceptor implements HttpInterceptor {
   private authService: AuthService;
 
-  constructor(private injector: Injector) {
+  constructor(private readonly injector: Injector) {
     this.authService = injector.get(AuthService);
   }
 
@@ -58,20 +58,18 @@ export class TokenInterceptor implements HttpInterceptor {
     }
 
     return next.handle(request).pipe(
-      tap(
-        (event: HttpEvent<any>) => {
+      tap({
+        next: (event: HttpEvent<any>) => {
           if (event instanceof HttpResponse) {
             // do stuff with response if you want
           }
         },
-        (err: any) => {
-          if (err instanceof HttpErrorResponse) {
-            if (err.status === 401) {
-              this.authService.clearToken();
-            }
+        error: (err: any) => {
+          if (err instanceof HttpErrorResponse && err.status === 401) {
+            this.authService.clearToken();
           }
         },
-      ),
+      }),
     );
   }
 }

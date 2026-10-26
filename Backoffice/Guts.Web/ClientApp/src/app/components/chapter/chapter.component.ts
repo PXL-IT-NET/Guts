@@ -13,9 +13,9 @@ import { IUserModel } from "../../viewmodels/user.model";
   templateUrl: "./chapter.component.html",
 })
 export class ChapterComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _model = signal<IChapterDetailsModel>({
+  private readonly _model = signal<IChapterDetailsModel>({
     id: 0,
     code: "",
     description: "",
@@ -30,7 +30,7 @@ export class ChapterComponent implements OnInit {
     this._model.set(v);
   }
 
-  private _selectedAssignmentId = signal<number>(0);
+  private readonly _selectedAssignmentId = signal<number>(0);
   public get selectedAssignmentId(): number {
     return this._selectedAssignmentId();
   }
@@ -38,7 +38,7 @@ export class ChapterComponent implements OnInit {
     this._selectedAssignmentId.set(v);
   }
 
-  private _selectedUser = signal<IUserModel | null>(null);
+  private readonly _selectedUser = signal<IUserModel | null>(null);
   public get selectedUser(): IUserModel | null {
     return this._selectedUser();
   }
@@ -46,7 +46,7 @@ export class ChapterComponent implements OnInit {
     this._selectedUser.set(v);
   }
 
-  private _selectedDate = signal<Date>(new Date());
+  private readonly _selectedDate = signal<Date>(new Date());
   public get selectedDate(): Date {
     return this._selectedDate();
   }
@@ -56,7 +56,7 @@ export class ChapterComponent implements OnInit {
 
   public datePickerSettings: any;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -68,9 +68,9 @@ export class ChapterComponent implements OnInit {
   public chapterCode: string;
 
   constructor(
-    private chapterService: ChapterService,
-    private route: ActivatedRoute,
-    private toastr: ToastrService,
+    private readonly chapterService: ChapterService,
+    private readonly route: ActivatedRoute,
+    private readonly toastr: ToastrService,
   ) {
     this.datePickerSettings = {
       bigBanner: true,

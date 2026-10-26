@@ -20,7 +20,7 @@ import {
 export class CourseGamificationBadgesComponent implements OnInit {
   @Input() public profile: IStudentGamificationProfileModel | null = null;
 
-  private _allBadges = signal<IBadgeMetadataModel[]>([]);
+  private readonly _allBadges = signal<IBadgeMetadataModel[]>([]);
   public get allBadges(): IBadgeMetadataModel[] {
     return this._allBadges();
   }
@@ -28,7 +28,7 @@ export class CourseGamificationBadgesComponent implements OnInit {
     this._allBadges.set(v);
   }
 
-  constructor(private gamificationService: GamificationService) {}
+  constructor(private readonly gamificationService: GamificationService) {}
 
   public ngOnInit(): void {
     this.gamificationService.getBadgeMetadata().subscribe((result) => {

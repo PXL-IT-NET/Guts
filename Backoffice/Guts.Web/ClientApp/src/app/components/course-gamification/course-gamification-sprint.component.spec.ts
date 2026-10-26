@@ -51,7 +51,7 @@ describe("CourseGamificationSprintComponent", () => {
 
   it("should create and load weekly sprint data", () => {
     expect(component).toBeTruthy();
-    expect(component.weeklySprint.length).toBe(1);
+    expect(component.weeklySprint).toHaveSize(1);
     expect(gamificationServiceSpy.getWeeklySprint).toHaveBeenCalledWith(10, undefined);
   });
 });

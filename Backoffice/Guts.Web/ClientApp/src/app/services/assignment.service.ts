@@ -10,7 +10,7 @@ import { map, catchError } from "rxjs/operators";
   providedIn: "root",
 })
 export class AssignmentService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public getAssignmentDetail(
     assignmentId: number,

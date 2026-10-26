@@ -21,7 +21,7 @@ import {
   templateUrl: "./assignment-settings.component.html",
 })
 export class AssignmentSettingsComponent {
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -34,9 +34,9 @@ export class AssignmentSettingsComponent {
   @Output() public assignmentChanged = new EventEmitter<IAssignmentModel>();
 
   constructor(
-    private testService: TestService,
-    private assignmentService: AssignmentService,
-    private toastr: ToastrService,
+    private readonly testService: TestService,
+    private readonly assignmentService: AssignmentService,
+    private readonly toastr: ToastrService,
   ) {
     this.assignment = {} as IAssignmentModel;
     this.assignmentKind = "assignment";

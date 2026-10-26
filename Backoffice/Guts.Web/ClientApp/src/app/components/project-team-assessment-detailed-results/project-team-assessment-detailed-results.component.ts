@@ -16,9 +16,9 @@ import { ITeamModel } from "src/app/viewmodels/team.model";
 export class ProjectTeamAssessmentDetailedResultsComponent
   implements OnInit
 {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _allTeams = signal<ITeamModel[]>([]);
+  private readonly _allTeams = signal<ITeamModel[]>([]);
   public get allTeams(): ITeamModel[] {
     return this._allTeams();
   }
@@ -26,7 +26,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._allTeams.set(v);
   }
 
-  private _currentTeam = signal<ITeamModel>({ id: 0, name: "" });
+  private readonly _currentTeam = signal<ITeamModel>({ id: 0, name: "" });
   public get currentTeam(): ITeamModel {
     return this._currentTeam();
   }
@@ -34,7 +34,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._currentTeam.set(v);
   }
 
-  private _previousTeam = signal<ITeamModel | null>(null);
+  private readonly _previousTeam = signal<ITeamModel | null>(null);
   public get previousTeam(): ITeamModel | null {
     return this._previousTeam();
   }
@@ -42,7 +42,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._previousTeam.set(v);
   }
 
-  private _nextTeam = signal<ITeamModel | null>(null);
+  private readonly _nextTeam = signal<ITeamModel | null>(null);
   public get nextTeam(): ITeamModel | null {
     return this._nextTeam();
   }
@@ -50,7 +50,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._nextTeam.set(v);
   }
 
-  private _results = signal<IAssessmentResultModel[]>([]);
+  private readonly _results = signal<IAssessmentResultModel[]>([]);
   public get results(): IAssessmentResultModel[] {
     return this._results();
   }
@@ -58,7 +58,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._results.set(v);
   }
 
-  private _teamGrade = signal<number>(0);
+  private readonly _teamGrade = signal<number>(0);
   public get teamGrade(): number {
     return this._teamGrade();
   }
@@ -66,7 +66,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._teamGrade.set(v);
   }
 
-  private _gradeCorrectionType = signal<GradeCorrectionType>(GradeCorrectionType.Peers);
+  private readonly _gradeCorrectionType = signal<GradeCorrectionType>(GradeCorrectionType.Peers);
   public get gradeCorrectionType(): GradeCorrectionType {
     return this._gradeCorrectionType();
   }
@@ -74,7 +74,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._gradeCorrectionType.set(v);
   }
 
-  private _selfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _selfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
   public get selfChartData(): ChartData<"bar", number[]> {
     return this._selfChartData();
   }
@@ -82,7 +82,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._selfChartData.set(v);
   }
 
-  private _peerChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peerChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
   public get peerChartData(): ChartData<"bar", number[]> {
     return this._peerChartData();
   }
@@ -90,7 +90,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._peerChartData.set(v);
   }
 
-  private _peerAndSelfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peerAndSelfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
   public get peerAndSelfChartData(): ChartData<"bar", number[]> {
     return this._peerAndSelfChartData();
   }
@@ -98,7 +98,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._peerAndSelfChartData.set(v);
   }
 
-  private _peersVersusSelfChartData = signal<ChartData<"radar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peersVersusSelfChartData = signal<ChartData<"radar", number[]>>({ datasets: [], labels: [] });
   public get peersVersusSelfChartData(): ChartData<"radar", number[]> {
     return this._peersVersusSelfChartData();
   }
@@ -148,10 +148,10 @@ export class ProjectTeamAssessmentDetailedResultsComponent
   };
 
   constructor(
-    private projectTeamAssessmentService: ProjectTeamAssessmentService,
-    private projectService: ProjectService,
-    private toastr: ToastrService,
-    private route: ActivatedRoute,
+    private readonly projectTeamAssessmentService: ProjectTeamAssessmentService,
+    private readonly projectService: ProjectService,
+    private readonly toastr: ToastrService,
+    private readonly route: ActivatedRoute,
   ) {
     this.allTeams = [];
     this.currentTeam = {
@@ -225,18 +225,20 @@ export class ProjectTeamAssessmentDetailedResultsComponent
               (result) => result.cooperationResult.peerValue,
             );
 
-            this.peersVersusSelfChartData.datasets.push({
-              label: "Peers",
-              data: this.results.map(
-                (result) => result.averageResult.peerValue,
-              ),
-            });
-            this.peersVersusSelfChartData.datasets.push({
-              label: "Self",
-              data: this.results.map(
-                (result) => result.averageResult.selfValue,
-              ),
-            });
+            this.peersVersusSelfChartData.datasets.push(
+              {
+                label: "Peers",
+                data: this.results.map(
+                  (result) => result.averageResult.peerValue,
+                ),
+              },
+              {
+                label: "Self",
+                data: this.results.map(
+                  (result) => result.averageResult.selfValue,
+                ),
+              },
+            );
             this.peersVersusSelfChartData.labels = this.results.map(
               (result) => result.subject.fullName,
             );
@@ -303,25 +305,27 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     selectCooperationScore: (result: IAssessmentResultModel) => number,
   ) {
     chartData.datasets = [];
-    chartData.datasets.push({
-      label: "Average",
-      data: this.results.map((result) => selectAverageScore(result)),
-    });
-    chartData.datasets.push({
-      label: "Effort",
-      barPercentage: 0.2,
-      data: this.results.map((result) => selectEffortScore(result)),
-    });
-    chartData.datasets.push({
-      label: "Actual contribution",
-      barPercentage: 0.2,
-      data: this.results.map((result) => selectContributionScore(result)),
-    });
-    chartData.datasets.push({
-      label: "Cooperation",
-      barPercentage: 0.2,
-      data: this.results.map((result) => selectCooperationScore(result)),
-    });
+    chartData.datasets.push(
+      {
+        label: "Average",
+        data: this.results.map((result) => selectAverageScore(result)),
+      },
+      {
+        label: "Effort",
+        barPercentage: 0.2,
+        data: this.results.map((result) => selectEffortScore(result)),
+      },
+      {
+        label: "Actual contribution",
+        barPercentage: 0.2,
+        data: this.results.map((result) => selectContributionScore(result)),
+      },
+      {
+        label: "Cooperation",
+        barPercentage: 0.2,
+        data: this.results.map((result) => selectCooperationScore(result)),
+      },
+    );
     chartData.labels = this.results.map((result) => result.subject.fullName);
   }
 

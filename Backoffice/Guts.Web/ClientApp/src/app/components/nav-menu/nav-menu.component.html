@@ -37,21 +37,14 @@
     <!-- show period dropdown -->
     @if (allPeriods.length > 0) {
       <li class="nav-item dropdown">
-        <a
-          class="nav-link dropdown-toggle show"
-          role="button"
-          tabindex="0"
-          (keydown.enter)="$event.preventDefault()"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
+        <button class="nav-link dropdown-toggle show btn btn-link text-decoration-none border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="bi bi-calendar"></span>
           <span> {{ selectedPeriod.description }}</span>
-        </a>
+        </button>
         <ul class="dropdown-menu dropdown-menu-end">
           @for (period of allPeriods; track period) {
             <li>
-              <a class="dropdown-item" (click)="selectPeriod(period)" (keydown.enter)="selectPeriod(period)" tabindex="0" role="button">
+              <button type="button" class="dropdown-item" (click)="selectPeriod(period)">
                 <span
                   [ngClass]="{
                     'bi-lock': !period.isActive,
@@ -63,24 +56,17 @@
                   ({{ period.from | date: "dd/MM/yyyy" }} -
                   {{ period.until | date: "dd/MM/yyyy" }})</span
                 >
-              </a>
+              </button>
             </li>
           }
         </ul>
       </li>
     }
     <li class="nav-item dropdown">
-      <a
-        class="nav-link dropdown-toggle show"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="$event.preventDefault()"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
+      <button class="nav-link dropdown-toggle show btn btn-link text-decoration-none border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="bi bi-person"></span>
         <span> {{ userProfile.email }}</span>
-      </a>
+      </button>
       <ul class="dropdown-menu dropdown-menu-end">
         @if (userProfile.isAuthenticated) {
           <li>
@@ -90,10 +76,10 @@
             </a>
           </li>
           <li>
-            <a class="dropdown-item" (click)="logout()" (keydown.enter)="logout()" tabindex="0" role="button">
+            <button type="button" class="dropdown-item" (click)="logout()">
               <span class="bi bi-power"></span>
               <span> Afmelden</span>
-            </a>
+            </button>
           </li>
         }
         @if (!userProfile.isAuthenticated) {

@@ -23,14 +23,14 @@ export class AuthService {
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
   private currentUserProfile: UserProfile;
 
-  constructor(private http: HttpClient) {
+  constructor(private readonly http: HttpClient) {
     this.currentUserProfile = null;
 
     // set token if saved in local storage
     this.tokenModel = JSON.parse(
       String(localStorage.getItem(LocalStorageKeys.currentToken)),
     );
-    let isLoggedIn: boolean = Boolean(this.tokenModel && this.tokenModel.token);
+    let isLoggedIn: boolean = Boolean(this.tokenModel?.token);
     this._isLoggedIn.set(isLoggedIn);
     this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
   }
@@ -62,7 +62,7 @@ export class AuthService {
     return this.http.post("api/auth/token", model).pipe(
       map((object: Object) => {
         const tokenModel = object as TokenModel;
-        if (tokenModel && tokenModel.token) {
+        if (tokenModel?.token) {
           // set token property
           this.tokenModel = tokenModel;
 

@@ -25,8 +25,8 @@ export class AssignmentSummaryComponent {
   public chartOptions: ChartOptions<"doughnut"> = {};
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {
     this.model = new AssignmentSummaryModel();
     this.courseId = 0;

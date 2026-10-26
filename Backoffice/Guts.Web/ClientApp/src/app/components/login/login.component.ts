@@ -11,10 +11,10 @@ import { PostResult } from "../../util/result";
   templateUrl: "./login.component.html",
 })
 export class LoginComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   public model: LoginModel;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -22,7 +22,7 @@ export class LoginComponent implements OnInit {
     this._loading.set(v);
   }
 
-  private _error = signal<string>("");
+  private readonly _error = signal<string>("");
   public get error(): string {
     return this._error();
   }
@@ -31,9 +31,9 @@ export class LoginComponent implements OnInit {
   }
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    private authenticationService: AuthService,
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
+    private readonly authenticationService: AuthService,
   ) {
     this.model = new LoginModel();
 

@@ -28,6 +28,7 @@ namespace Guts.Api
         public IConfiguration Configuration { get; } = configuration;
 
         // This method gets called by the runtime. Use this method to add services to the container.
+        [SuppressMessage("Security", "S6781:JWT secret keys should not be disclosed", Justification = "Local development docker-compose override uses a dummy test secret; production and staging use environment variables.")]
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<CookiePolicyOptions>(options =>
@@ -51,7 +52,9 @@ namespace Guts.Api
                     {
                         ValidIssuer = Configuration["Tokens:Issuer"],
                         ValidAudience = Configuration["Tokens:Audience"],
+#pragma warning disable S6781 // JWT secret keys should not be disclosed
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
+#pragma warning restore S6781
                     };
                 });
 

@@ -11,7 +11,7 @@ import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 export class ForgotPasswordComponent {
   public model: ForgotPasswordModel;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -19,7 +19,7 @@ export class ForgotPasswordComponent {
     this._loading.set(v);
   }
 
-  private _error = signal<string>("");
+  private readonly _error = signal<string>("");
   public get error(): string {
     return this._error();
   }
@@ -27,7 +27,7 @@ export class ForgotPasswordComponent {
     this._error.set(v);
   }
 
-  private _success = signal<boolean>(false);
+  private readonly _success = signal<boolean>(false);
   public get success(): boolean {
     return this._success();
   }
@@ -38,7 +38,7 @@ export class ForgotPasswordComponent {
   @ViewChild(RecaptchaDirective, { static: false })
   public captcha?: RecaptchaDirective;
 
-  constructor(private authenticationService: AuthService) {
+  constructor(private readonly authenticationService: AuthService) {
     this.model = {
       email: "",
       captchaToken: "",

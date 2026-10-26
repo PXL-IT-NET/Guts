@@ -22,7 +22,7 @@ import { GamificationService } from "../../services/gamification.service";
   templateUrl: "./course.component.html",
 })
 export class CourseComponent implements OnInit, OnDestroy {
-  private _course = signal<ICourseContentsModel>({
+  private readonly _course = signal<ICourseContentsModel>({
     id: 0,
     code: "",
     name: "",
@@ -36,7 +36,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._course.set(v);
   }
 
-  private _selectedChapter = signal<ITopicModel | null>(null);
+  private readonly _selectedChapter = signal<ITopicModel | null>(null);
   public get selectedChapter(): ITopicModel | null {
     return this._selectedChapter();
   }
@@ -44,7 +44,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._selectedChapter.set(v);
   }
 
-  private _selectedExercise = signal<IAssignmentModel | null>(null);
+  private readonly _selectedExercise = signal<IAssignmentModel | null>(null);
   public get selectedExercise(): IAssignmentModel | null {
     return this._selectedExercise();
   }
@@ -52,7 +52,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._selectedExercise.set(v);
   }
 
-  private _selectedProject = signal<ITopicModel | null>(null);
+  private readonly _selectedProject = signal<ITopicModel | null>(null);
   public get selectedProject(): ITopicModel | null {
     return this._selectedProject();
   }
@@ -60,7 +60,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._selectedProject.set(v);
   }
 
-  private _selectedComponent = signal<IAssignmentModel | null>(null);
+  private readonly _selectedComponent = signal<IAssignmentModel | null>(null);
   public get selectedComponent(): IAssignmentModel | null {
     return this._selectedComponent();
   }
@@ -68,7 +68,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._selectedComponent.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -76,7 +76,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._loading.set(v);
   }
 
-  private _userProfile = signal<UserProfile>(new UserProfile());
+  private readonly _userProfile = signal<UserProfile>(new UserProfile());
   public get userProfile(): UserProfile {
     return this._userProfile();
   }
@@ -84,7 +84,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._userProfile.set(v);
   }
 
-  private _hasContent = signal<boolean>(true);
+  private readonly _hasContent = signal<boolean>(true);
   public get hasContent(): boolean {
     return this._hasContent();
   }
@@ -92,7 +92,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._hasContent.set(v);
   }
 
-  private _activePeriod = signal<boolean>(true);
+  private readonly _activePeriod = signal<boolean>(true);
   public get activePeriod(): boolean {
     return this._activePeriod();
   }
@@ -100,7 +100,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._activePeriod.set(v);
   }
 
-  private _isGamificationEnabled = signal<boolean>(false);
+  private readonly _isGamificationEnabled = signal<boolean>(false);
   public get isGamificationEnabled(): boolean {
     return this._isGamificationEnabled();
   }
@@ -115,13 +115,13 @@ export class CourseComponent implements OnInit, OnDestroy {
   public modalRef: BsModalRef;
 
   constructor(
-    private router: Router,
-    private courseService: CourseService,
-    private periodProvider: PeriodProvider,
-    private authService: AuthService,
-    private toastr: ToastrService,
-    private modalService: BsModalService,
-    private gamificationService: GamificationService,
+    private readonly router: Router,
+    private readonly courseService: CourseService,
+    private readonly periodProvider: PeriodProvider,
+    private readonly authService: AuthService,
+    private readonly toastr: ToastrService,
+    private readonly modalService: BsModalService,
+    private readonly gamificationService: GamificationService,
   ) {
     this.course = {
       id: 0,
@@ -218,22 +218,22 @@ export class CourseComponent implements OnInit, OnDestroy {
 
   private handleNavigationEvent(forceReload: boolean = false) {
     const url = this.router.url;
-    const courseIdMatch = url.match(/courses\/(?<courseId>\d+)/);
+    const courseIdMatch = /courses\/(?<courseId>\d+)/.exec(url);
     const courseId = courseIdMatch ? +courseIdMatch.groups.courseId : 0;
 
-    const chapterCodeMatch = url.match(/chapters\/(?<chapterCode>[^\/]+)/);
+    const chapterCodeMatch = /chapters\/(?<chapterCode>[^/]+)/.exec(url);
     const chapterCode = chapterCodeMatch
       ? chapterCodeMatch.groups.chapterCode
       : "";
 
-    const projectCodeMatch = url.match(/projects\/(?<projectCode>[^\/]+)/);
+    const projectCodeMatch = /projects\/(?<projectCode>[^/]+)/.exec(url);
     const projectCode = projectCodeMatch
       ? projectCodeMatch.groups.projectCode
       : "";
 
     const topicCode = chapterCode || projectCode;
 
-    const assignmentIdMatch = url.match(/assignmentId=(?<assignmentId>\d+)/);
+    const assignmentIdMatch = /assignmentId=(?<assignmentId>\d+)/.exec(url);
     const assignmentId = assignmentIdMatch
       ? +assignmentIdMatch.groups.assignmentId
       : 0;

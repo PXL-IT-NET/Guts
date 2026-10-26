@@ -9,9 +9,9 @@ import { AuthService } from "../../services/auth.service";
   templateUrl: "./confirmemail.component.html",
 })
 export class ConfirmEmailComponent implements OnInit {
-  private destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private _message = signal<string>("Confirming email...");
+  private readonly _message = signal<string>("Confirming email...");
   public get message(): string {
     return this._message();
   }
@@ -19,7 +19,7 @@ export class ConfirmEmailComponent implements OnInit {
     this._message.set(v);
   }
 
-  private _confirmed = signal<boolean>(false);
+  private readonly _confirmed = signal<boolean>(false);
   public get confirmed(): boolean {
     return this._confirmed();
   }
@@ -27,7 +27,7 @@ export class ConfirmEmailComponent implements OnInit {
     this._confirmed.set(v);
   }
 
-  private _loading = signal<boolean>(true);
+  private readonly _loading = signal<boolean>(true);
   public get loading(): boolean {
     return this._loading();
   }
@@ -36,8 +36,8 @@ export class ConfirmEmailComponent implements OnInit {
   }
 
   constructor(
-    private activatedRoute: ActivatedRoute,
-    private authenticationService: AuthService,
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly authenticationService: AuthService,
   ) {}
 
   ngOnInit() {

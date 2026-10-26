@@ -9,7 +9,7 @@ import { IPeriodModel, PeriodModel } from "../viewmodels/period.model";
   providedIn: "root",
 })
 export class PeriodService {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public getAll(): Observable<GetResult<PeriodModel[]>> {
     return this.http.get<IPeriodModel[]>("api/periods").pipe(

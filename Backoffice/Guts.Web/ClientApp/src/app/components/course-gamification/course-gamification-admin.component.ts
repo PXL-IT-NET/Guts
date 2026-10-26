@@ -29,7 +29,7 @@ export class CourseGamificationAdminComponent implements OnInit, OnChanges {
   @Output() public classesChanged = new EventEmitter<void>();
   @Output() public configChanged = new EventEmitter<ICourseGamificationConfigModel>();
 
-  private _config = signal<ICourseGamificationConfigModel | null>(null);
+  private readonly _config = signal<ICourseGamificationConfigModel | null>(null);
   public get config(): ICourseGamificationConfigModel | null {
     return this._config();
   }
@@ -37,7 +37,7 @@ export class CourseGamificationAdminComponent implements OnInit, OnChanges {
     this._config.set(v);
   }
 
-  private _classGroups = signal<ICourseClassGroupModel[]>([]);
+  private readonly _classGroups = signal<ICourseClassGroupModel[]>([]);
   public get classGroups(): ICourseClassGroupModel[] {
     return this._classGroups();
   }
@@ -45,7 +45,7 @@ export class CourseGamificationAdminComponent implements OnInit, OnChanges {
     this._classGroups.set(v);
   }
 
-  private _newClassName = signal<string>("");
+  private readonly _newClassName = signal<string>("");
   public get newClassName(): string {
     return this._newClassName();
   }
@@ -53,7 +53,7 @@ export class CourseGamificationAdminComponent implements OnInit, OnChanges {
     this._newClassName.set(v);
   }
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -62,8 +62,8 @@ export class CourseGamificationAdminComponent implements OnInit, OnChanges {
   }
 
   constructor(
-    private gamificationService: GamificationService,
-    private toastr: ToastrService,
+    private readonly gamificationService: GamificationService,
+    private readonly toastr: ToastrService,
   ) {}
 
   public ngOnInit(): void {

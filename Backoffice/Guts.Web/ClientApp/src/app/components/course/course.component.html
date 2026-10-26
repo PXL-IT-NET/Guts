@@ -24,22 +24,14 @@
       <!-- Chapters -->
       @if (course.chapters.length > 0) {
         <li class="nav-item dropdown nav-item-main">
-          <a
-            class="nav-link dropdown-toggle"
-            data-bs-toggle="dropdown"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.preventDefault()"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
+          <button type="button" class="nav-link dropdown-toggle border-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span>Chapter&nbsp;</span>
             @if (selectedChapter) {
               <span class="fw-bold"
                 >&apos;{{ selectedChapter.description }}&apos;</span
               >
             }
-          </a>
+          </button>
           <div class="dropdown-menu">
             @for (chapter of course.chapters; track chapter) {
               <a class="dropdown-item" (click)="navigateToChapter(chapter)">{{
@@ -62,23 +54,14 @@
       }
       @if (selectedChapter && selectedChapter.assignments.length > 0) {
         <li class="nav-item dropdown">
-          <a
-            class="nav-link dropdown-toggle"
-            [ngClass]="{ active: isChapterTestResultDetailRouteActive() }"
-            data-bs-toggle="dropdown"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.preventDefault()"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
+          <button type="button" class="nav-link dropdown-toggle border-0" [ngClass]="{ active: isChapterTestResultDetailRouteActive() }" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span>Test results - Detail&nbsp;</span>
             @if (selectedExercise) {
               <span class="fw-bold"
                 >&apos;{{ selectedExercise.description }}&apos;</span
               >
             }
-          </a>
+          </button>
           <div class="dropdown-menu">
             @for (exercise of selectedChapter.assignments; track exercise) {
               <a class="dropdown-item" (click)="navigateToExercise(exercise)">{{
@@ -106,22 +89,14 @@
       <!-- Projects -->
       @if (course.projects.length > 0) {
         <li class="nav-item dropdown nav-item-main">
-          <a
-            class="nav-link dropdown-toggle"
-            data-bs-toggle="dropdown"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.preventDefault()"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
+          <button type="button" class="nav-link dropdown-toggle border-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span>Project&nbsp;</span>
             @if (selectedProject) {
               <span class="fw-bold"
                 >&apos;{{ selectedProject.description }}&apos;</span
               >
             }
-          </a>
+          </button>
           <div class="dropdown-menu">
             @for (project of course.projects; track project) {
               <a class="dropdown-item" (click)="navigateToProject(project)">{{
@@ -161,23 +136,14 @@
       }
       @if (selectedProject && selectedProject.assignments.length > 0) {
         <li class="nav-item dropdown">
-          <a
-            class="nav-link dropdown-toggle"
-            [ngClass]="{ active: projectTestResultsDetailActive }"
-            data-bs-toggle="dropdown"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.preventDefault()"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
+          <button type="button" class="nav-link dropdown-toggle border-0" [ngClass]="{ active: projectTestResultsDetailActive }" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span>Test results - Detail&nbsp;</span>
             @if (projectTestResultsDetailActive) {
               <span class="fw-bold"
                 >&apos;{{ selectedComponent.description }}&apos;</span
               >
             }
-          </a>
+          </button>
           <div class="dropdown-menu">
             @for (component of selectedProject.assignments; track component) {
               <a

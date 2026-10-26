@@ -128,11 +128,11 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     expect(component.currentTeam.id).toBe(20);
     expect(component.previousTeam?.id).toBe(10);
     expect(component.nextTeam?.id).toBe(30);
-    expect(component.results.length).toBe(1);
-    expect(component.peerAndSelfChartData.datasets.length).toBe(4);
-    expect(component.selfChartData.datasets.length).toBe(4);
-    expect(component.peerChartData.datasets.length).toBe(4);
-    expect(component.peersVersusSelfChartData.datasets.length).toBe(2);
+    expect(component.results).toHaveSize(1);
+    expect(component.peerAndSelfChartData.datasets).toHaveSize(4);
+    expect(component.selfChartData.datasets).toHaveSize(4);
+    expect(component.peerChartData.datasets).toHaveSize(4);
+    expect(component.peersVersusSelfChartData.datasets).toHaveSize(2);
     expect(component.peersVersusSelfChartData.labels).toEqual(["Alice A"]);
 
     // Navigate to first team without reloading project details

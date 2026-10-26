@@ -25,7 +25,7 @@ import { formatDateTimeLocal } from "../../util/date.util";
   ],
 })
 export class NgDatetimeComponent implements ControlValueAccessor {
-  private _dateStringSignal = signal<string>("");
+  private readonly _dateStringSignal = signal<string>("");
 
   public get _dateString(): string {
     return this._dateStringSignal();

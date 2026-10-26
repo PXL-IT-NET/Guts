@@ -12,7 +12,7 @@ import { RecaptchaDirective } from "../../directives/recaptcha.directive";
 export class RegisterComponent {
   public model: RegisterModel;
 
-  private _loading = signal<boolean>(false);
+  private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
     return this._loading();
   }
@@ -20,7 +20,7 @@ export class RegisterComponent {
     this._loading.set(v);
   }
 
-  private _error = signal<string>("");
+  private readonly _error = signal<string>("");
   public get error(): string {
     return this._error();
   }
@@ -28,7 +28,7 @@ export class RegisterComponent {
     this._error.set(v);
   }
 
-  private _registered = signal<boolean>(false);
+  private readonly _registered = signal<boolean>(false);
   public get registered(): boolean {
     return this._registered();
   }
@@ -40,8 +40,8 @@ export class RegisterComponent {
   public captcha?: RecaptchaDirective;
 
   constructor(
-    private router: Router,
-    private authenticationService: AuthService,
+    private readonly router: Router,
+    private readonly authenticationService: AuthService,
   ) {
     this.model = new RegisterModel();
   }
