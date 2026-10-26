@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace Guts.Api.Models
+namespace Guts.Api.Models;
+
+public class RecaptchaVerificationResultModel
 {
-    public class RecaptchaVerificationResultModel
-    {
-        public Boolean Success { get; set; }
-    }
+    public Boolean Success { get; set; }
 }

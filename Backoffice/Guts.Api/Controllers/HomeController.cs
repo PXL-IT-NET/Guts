@@ -1,16 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Guts.Api.Controllers
+namespace Guts.Api.Controllers;
+
+[Route("")]
+[AllowAnonymous]
+public class HomeController : Controller
 {
     [Route("")]
-    [AllowAnonymous]
-    public class HomeController : Controller
+    public IActionResult Index()
     {
-        [Route("")]
-        public IActionResult Index()
-        {
-            return RedirectPermanent("~/swagger");
-        }
+        return RedirectPermanent("~/swagger");
     }
 }

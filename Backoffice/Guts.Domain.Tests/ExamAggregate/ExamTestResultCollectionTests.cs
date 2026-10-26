@@ -4,25 +4,24 @@ using Guts.Domain.ExamAggregate;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.ExamAggregate
+namespace Guts.Domain.Tests.ExamAggregate;
+
+[TestFixture]
+public class ExamTestResultCollectionTests
 {
-    [TestFixture]
-    public class ExamTestResultCollectionTests
+    [Test]
+    public void AddedExamPartResultCollection_ShouldBeRetrievableByExamPartId()
     {
-        [Test]
-        public void AddedExamPartResultCollection_ShouldBeRetrievableByExamPartId()
-        {
-            //Arrange
-            var collection =new ExamTestResultCollection();
-            int examPartId = Random.Shared.NextPositive();
-            var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
+        //Arrange
+        var collection =new ExamTestResultCollection();
+        int examPartId = Random.Shared.NextPositive();
+        var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
 
-            //Act
-            collection.AddExamPartResults(examPartId, examPartTestResultCollectionMock.Object);
-            var retrievedExamPartTestResultCollection = collection.GetExamPartResults(examPartId);
+        //Act
+        collection.AddExamPartResults(examPartId, examPartTestResultCollectionMock.Object);
+        var retrievedExamPartTestResultCollection = collection.GetExamPartResults(examPartId);
 
-            //Assert
-            Assert.That(retrievedExamPartTestResultCollection, Is.SameAs(examPartTestResultCollectionMock.Object));
-        }
+        //Assert
+        Assert.That(retrievedExamPartTestResultCollection, Is.SameAs(examPartTestResultCollectionMock.Object));
     }
 }

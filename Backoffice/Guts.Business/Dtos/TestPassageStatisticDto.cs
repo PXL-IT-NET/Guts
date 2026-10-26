@@ -1,8 +1,7 @@
-﻿namespace Guts.Business.Dtos
+﻿namespace Guts.Business.Dtos;
+
+public class TestPassageStatisticDto
 {
-    public class TestPassageStatisticDto
-    {
-        public int AmountOfPassedTests { get; set; }
-        public int AmountOfUsers { get; set; }
-    }
+    public int AmountOfPassedTests { get; set; }
+    public int AmountOfUsers { get; set; }
 }

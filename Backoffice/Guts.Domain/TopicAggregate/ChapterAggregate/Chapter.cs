@@ -1,6 +1,5 @@
-namespace Guts.Domain.TopicAggregate.ChapterAggregate
+namespace Guts.Domain.TopicAggregate.ChapterAggregate;
+
+public class Chapter : Topic
 {
-    public class Chapter : Topic
-    {
-    }
 }

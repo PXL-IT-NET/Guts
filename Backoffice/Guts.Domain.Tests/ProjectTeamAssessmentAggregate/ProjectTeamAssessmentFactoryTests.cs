@@ -7,126 +7,125 @@ using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
 
-namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate;
+
+public class ProjectTeamAssessmentFactoryTests
 {
-    public class ProjectTeamAssessmentFactoryTests
-    {
-        private ProjectTeamAssessment.Factory _factory;
+    private ProjectTeamAssessment.Factory _factory;
       
-        private ProjectAssessmentMockBuilder _projectAssessmentMockBuilder;
-        private Mock<IProjectAssessment> _projectAssessmentMock;
+    private ProjectAssessmentMockBuilder _projectAssessmentMockBuilder;
+    private Mock<IProjectAssessment> _projectAssessmentMock;
 
-        private ProjectTeamMockBuilder _projectTeamMockBuilder;
-        private Mock<IProjectTeam> _projectTeamMock;
+    private ProjectTeamMockBuilder _projectTeamMockBuilder;
+    private Mock<IProjectTeam> _projectTeamMock;
         
-        [SetUp]
-        public void BeforeEachTest()
-        {
-            _projectAssessmentMockBuilder = new ProjectAssessmentMockBuilder();
-            _projectAssessmentMock = _projectAssessmentMockBuilder.Build();
+    [SetUp]
+    public void BeforeEachTest()
+    {
+        _projectAssessmentMockBuilder = new ProjectAssessmentMockBuilder();
+        _projectAssessmentMock = _projectAssessmentMockBuilder.Build();
 
-            _projectTeamMockBuilder = new ProjectTeamMockBuilder();
-            _projectTeamMock = _projectTeamMockBuilder.Build();
+        _projectTeamMockBuilder = new ProjectTeamMockBuilder();
+        _projectTeamMock = _projectTeamMockBuilder.Build();
 
-            _factory = new ProjectTeamAssessment.Factory();
-        }
+        _factory = new ProjectTeamAssessment.Factory();
+    }
 
-        [Test]
-        public void CreateNew_ValidInput_ShouldInitializeCorrectly()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
-            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_ValidInput_ShouldInitializeCorrectly()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
 
-            _projectTeamMockBuilder.WithMembers(4);
+        _projectTeamMockBuilder.WithMembers(4);
 
-            //Act
-            IProjectTeamAssessment result = _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object);
+        //Act
+        IProjectTeamAssessment result = _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object);
 
-            //Assert
-            Assert.That(result.ProjectAssessment, Is.EqualTo(_projectAssessmentMock.Object));
-            Assert.That(result.Team, Is.EqualTo(_projectTeamMock.Object));
-            Assert.That(result.PeerAssessments, Has.Count.Zero);
-        }
+        //Assert
+        Assert.That(result.ProjectAssessment, Is.EqualTo(_projectAssessmentMock.Object));
+        Assert.That(result.Team, Is.EqualTo(_projectTeamMock.Object));
+        Assert.That(result.PeerAssessments, Has.Count.Zero);
+    }
 
-        [Test]
-        public void CreateNew_ProjectAssessmentNotOpenYet_ShouldThrowContractException()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(1);
-            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_ProjectAssessmentNotOpenYet_ShouldThrowContractException()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(1);
+        _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
 
-            _projectTeamMockBuilder.WithMembers(4);
+        _projectTeamMockBuilder.WithMembers(4);
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
+            Throws.InstanceOf<ContractException>());
+    }
 
-        [Test]
-        public void CreateNew_NoTeamProvided_ShouldThrowContractException()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
-            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_NoTeamProvided_ShouldThrowContractException()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, null),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, null),
+            Throws.InstanceOf<ContractException>());
+    }
 
-        [Test]
-        public void CreateNew_TeamHasNoMembers_ShouldThrowContractException()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
-            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_TeamHasNoMembers_ShouldThrowContractException()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
 
-            _projectTeamMockBuilder.WithMembers(0);
+        _projectTeamMockBuilder.WithMembers(0);
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
+            Throws.InstanceOf<ContractException>());
+    }
 
-        [Test]
-        public void CreateNew_NoProjectAssessmentProvided_ShouldThrowContractException()
-        {
-            //Arrange
-            _projectTeamMockBuilder.WithMembers(4);
+    [Test]
+    public void CreateNew_NoProjectAssessmentProvided_ShouldThrowContractException()
+    {
+        //Arrange
+        _projectTeamMockBuilder.WithMembers(4);
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(null, _projectTeamMock.Object),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(null, _projectTeamMock.Object),
+            Throws.InstanceOf<ContractException>());
+    }
 
-        [Test]
-        public void CreateNew_NewUnsavedProjectAssessment_ShouldThrowContractException()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
-            _projectAssessmentMockBuilder.WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_NewUnsavedProjectAssessment_ShouldThrowContractException()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        _projectAssessmentMockBuilder.WithOpenOn(openOnUtc);
 
-            _projectTeamMockBuilder.WithMembers(4);
+        _projectTeamMockBuilder.WithMembers(4);
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
+            Throws.InstanceOf<ContractException>());
+    }
 
-        [Test]
-        public void CreateNew_TeamUsersNotLoadedWithUserData_ShouldThrowContractException()
-        {
-            //Arrange
-            DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
-            _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
+    [Test]
+    public void CreateNew_TeamUsersNotLoadedWithUserData_ShouldThrowContractException()
+    {
+        //Arrange
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        _projectAssessmentMockBuilder.WithId().WithOpenOn(openOnUtc);
 
-            var teamUserWithoutUserLoaded = new ProjectTeamUser { UserId = 1, User = null };
-            _projectTeamMock.SetupGet(pt => pt.TeamUsers).Returns(new[] { teamUserWithoutUserLoaded });
+        var teamUserWithoutUserLoaded = new ProjectTeamUser { UserId = 1, User = null };
+        _projectTeamMock.SetupGet(pt => pt.TeamUsers).Returns(new[] { teamUserWithoutUserLoaded });
 
-            //Act + Assert
-            Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.CreateNew(_projectAssessmentMock.Object, _projectTeamMock.Object),
+            Throws.InstanceOf<ContractException>());
     }
 }

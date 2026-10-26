@@ -1,7 +1,6 @@
-namespace Guts.Business.Captcha
+namespace Guts.Business.Captcha;
+
+public class CaptchaVerificationResult
 {
-    public class CaptchaVerificationResult
-    {
-        public bool Success { get; set; }
-    }
+    public bool Success { get; set; }
 }

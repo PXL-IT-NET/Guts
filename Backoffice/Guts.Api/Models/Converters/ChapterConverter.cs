@@ -4,38 +4,37 @@ using Guts.Api.Models.AssignmentModels;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Api.Models.Converters
-{
-    public class ChapterConverter(IUserConverter userConverter, IMapper mapper) : IChapterConverter
-    {
-        public TopicModel ToTopicModel(Chapter chapter)
-        {
-            return new TopicModel
-            {
-                Id = chapter.Id,
-                Code = chapter.Code,
-                Description = chapter.Description,
-                Assignments = chapter.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
-                    .ToList()
-            };
-        }
+namespace Guts.Api.Models.Converters;
 
-        public ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers)
+public class ChapterConverter(IUserConverter userConverter, IMapper mapper) : IChapterConverter
+{
+    public TopicModel ToTopicModel(Chapter chapter)
+    {
+        return new TopicModel
         {
-            return new ChapterDetailModel
+            Id = chapter.Id,
+            Code = chapter.Code,
+            Description = chapter.Description,
+            Assignments = chapter.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
+                .ToList()
+        };
+    }
+
+    public ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers)
+    {
+        return new ChapterDetailModel
+        {
+            Id = chapter.Id,
+            Code = chapter.Code,
+            Description = chapter.Description,
+            Exercises = chapter.Assignments.Select(assignment => new AssignmentModel
             {
-                Id = chapter.Id,
-                Code = chapter.Code,
-                Description = chapter.Description,
-                Exercises = chapter.Assignments.Select(assignment => new AssignmentModel
-                {
-                    AssignmentId = assignment.Id,
-                    Code = assignment.Code,
-                    Description = assignment.Description,
-                    Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
-                }).OrderBy(model => model.Description).ToList(),
-                Users = chapterUsers.Select(user => userConverter.FromUser(user)).ToList()
-            };
-        }
+                AssignmentId = assignment.Id,
+                Code = assignment.Code,
+                Description = assignment.Description,
+                Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
+            }).OrderBy(model => model.Description).ToList(),
+            Users = chapterUsers.Select(user => userConverter.FromUser(user)).ToList()
+        };
     }
 }

@@ -1,8 +1,7 @@
-﻿namespace Guts.Api.Models
+﻿namespace Guts.Api.Models;
+
+public class SolutionFileOutputModel
 {
-    public class SolutionFileOutputModel
-    {
-        public string FilePath { get; set; }
-        public string Content { get; set; }
-    }
+    public string FilePath { get; set; }
+    public string Content { get; set; }
 }

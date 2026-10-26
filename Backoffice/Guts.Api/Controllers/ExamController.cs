@@ -16,169 +16,168 @@ using Guts.Domain.ExamAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Guts.Api.Controllers
+namespace Guts.Api.Controllers;
+
+[Produces("application/json")]
+[Route("api/exams")]
+[Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+public class ExamController(
+    IExamService examService,
+    IMapper mapper) : ControllerBase
 {
-    [Produces("application/json")]
-    [Route("api/exams")]
-    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-    public class ExamController(
-        IExamService examService,
-        IMapper mapper) : ControllerBase
+    /// <summary>
+    /// Retrieves all exams of a course.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course</param>
+    /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ExamOutputModel>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult> GetExams([FromQuery] int courseId, [FromQuery] int? periodId = null)
     {
-        /// <summary>
-        /// Retrieves all exams of a course.
-        /// </summary>
-        /// <param name="courseId">Identifier of the course</param>
-        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
-        [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ExamOutputModel>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult> GetExams([FromQuery] int courseId, [FromQuery] int? periodId = null)
+        if (courseId <= 0)
         {
-            if (courseId <= 0)
-            {
-                return BadRequest(ErrorModel.FromString("Invalid course Id."));
-            }
-            IReadOnlyList<IExam> exams = await examService.GetExamsAsync(courseId, periodId);
-            IEnumerable<ExamOutputModel> model = exams.Select(e => mapper.MapToExamOutputModel(e));
+            return BadRequest(ErrorModel.FromString("Invalid course Id."));
+        }
+        IReadOnlyList<IExam> exams = await examService.GetExamsAsync(courseId, periodId);
+        IEnumerable<ExamOutputModel> model = exams.Select(e => mapper.MapToExamOutputModel(e));
+        return Ok(model);
+    }
+
+    /// <summary>
+    /// Retrieves an exam.
+    /// </summary>
+    /// <param name="id">Identifier of the exam in the database</param>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult> GetExam(int id)
+    {
+        try
+        {
+            IExam exam = await examService.GetExamAsync(id);
+            ExamOutputModel model = mapper.MapToExamOutputModel(exam);
             return Ok(model);
         }
-
-        /// <summary>
-        /// Retrieves an exam.
-        /// </summary>
-        /// <param name="id">Identifier of the exam in the database</param>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult> GetExam(int id)
+        catch (DataNotFoundException)
         {
-            try
-            {
-                IExam exam = await examService.GetExamAsync(id);
-                ExamOutputModel model = mapper.MapToExamOutputModel(exam);
-                return Ok(model);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new exam
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.Created)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
+    {
+        try
+        {
+            IExam exam = await examService.CreateExamAsync(model.CourseId, model.Name);
+            ExamOutputModel outputModel = mapper.MapToExamOutputModel(exam);
+            return CreatedAtAction(nameof(GetExam), new { id = outputModel.Id }, outputModel);
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Retrieves an exam part.
+    /// </summary>
+    /// <param name="id">Identifier of the exam</param>
+    /// <param name="examPartId">Identifier of the exam part</param>
+    [HttpGet("{id}/parts/{examPartId}")]
+    [ProducesResponseType(typeof(ExamPartOutputModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<ActionResult> GetExamPart(int id, int examPartId)
+    {
+        try
+        {
+            var exam = await examService.GetExamAsync(id);
+            var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
+            if(examPart == null) throw new DataNotFoundException();
+            var model = mapper.MapToExamPartOutputModel(examPart);
+            return Ok(model);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Adds a new exam part to an existing exam
+    /// </summary>
+    [HttpPost("{id}/parts")]
+    [ProducesResponseType(typeof(ExamPartOutputModel), (int)HttpStatusCode.Created)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PostExamPart(int id, [FromBody]ExamPartDto model)
+    {
+        try
+        {
+            var examPart = await examService.CreateExamPartAsync(id, model);
+            var outputModel = mapper.MapToExamPartOutputModel(examPart);
+            return CreatedAtAction(nameof(GetExamPart), new { id = id, examPartId = outputModel.Id }, outputModel);
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Deletes an exam part from an existing exam
+    /// </summary>
+    [HttpDelete("{id}/parts/{examPartId}")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> DeleteExamPart(int id, int examPartId)
+    {
+        try
+        {
+            var exam = await examService.GetExamAsync(id);
+            await examService.DeleteExamPartAsync(exam, examPartId);
+            return Ok();
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    [HttpGet("{id}/downloadscores")]
+    public async Task<IActionResult> DownloadExamScores(int id)
+    {
+        IExam exam;
+        try
+        {
+            exam = await examService.GetExamAsync(id);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
         }
 
-        /// <summary>
-        /// Creates a new exam
-        /// </summary>
-        [HttpPost]
-        [ProducesResponseType(typeof(ExamOutputModel), (int)HttpStatusCode.Created)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> PostExam([FromBody]ExamCreationModel model)
-        {
-            try
-            {
-                IExam exam = await examService.CreateExamAsync(model.CourseId, model.Name);
-                ExamOutputModel outputModel = mapper.MapToExamOutputModel(exam);
-                return CreatedAtAction(nameof(GetExam), new { id = outputModel.Id }, outputModel);
-            }
-            catch (ContractException ex)
-            {
-                return BadRequest(ErrorModel.FromException(ex));
-            }
-        }
+        var fileDownloadName = $"{exam.Name.ToValidFilePath()}.csv";
 
-        /// <summary>
-        /// Retrieves an exam part.
-        /// </summary>
-        /// <param name="id">Identifier of the exam</param>
-        /// <param name="examPartId">Identifier of the exam part</param>
-        [HttpGet("{id}/parts/{examPartId}")]
-        [ProducesResponseType(typeof(ExamPartOutputModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult> GetExamPart(int id, int examPartId)
-        {
-            try
-            {
-                var exam = await examService.GetExamAsync(id);
-                var examPart = exam.Parts.FirstOrDefault(part => part.Id == examPartId);
-                if(examPart == null) throw new DataNotFoundException();
-                var model = mapper.MapToExamPartOutputModel(examPart);
-                return Ok(model);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
-        }
-
-        /// <summary>
-        /// Adds a new exam part to an existing exam
-        /// </summary>
-        [HttpPost("{id}/parts")]
-        [ProducesResponseType(typeof(ExamPartOutputModel), (int)HttpStatusCode.Created)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> PostExamPart(int id, [FromBody]ExamPartDto model)
-        {
-            try
-            {
-                var examPart = await examService.CreateExamPartAsync(id, model);
-                var outputModel = mapper.MapToExamPartOutputModel(examPart);
-                return CreatedAtAction(nameof(GetExamPart), new { id = id, examPartId = outputModel.Id }, outputModel);
-            }
-            catch (ContractException ex)
-            {
-                return BadRequest(ErrorModel.FromException(ex));
-            }
-        }
-
-        /// <summary>
-        /// Deletes an exam part from an existing exam
-        /// </summary>
-        [HttpDelete("{id}/parts/{examPartId}")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> DeleteExamPart(int id, int examPartId)
-        {
-            try
-            {
-                var exam = await examService.GetExamAsync(id);
-                await examService.DeleteExamPartAsync(exam, examPartId);
-                return Ok();
-            }
-            catch (ContractException ex)
-            {
-                return BadRequest(ErrorModel.FromException(ex));
-            }
-        }
-
-        [HttpGet("{id}/downloadscores")]
-        public async Task<IActionResult> DownloadExamScores(int id)
-        {
-            IExam exam;
-            try
-            {
-                exam = await examService.GetExamAsync(id);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
-
-            var fileDownloadName = $"{exam.Name.ToValidFilePath()}.csv";
-
-            IEnumerable<dynamic> examScoreCsvRecords = await examService.CalculateExamScoresForCsvAsync(id);
+        IEnumerable<dynamic> examScoreCsvRecords = await examService.CalculateExamScoresForCsvAsync(id);
             
-            var memoryStream = new MemoryStream();
-            var streamWriter = new StreamWriter(memoryStream);
-            var csv = new CsvWriter(streamWriter, new CultureInfo("nl-BE"));
-            await csv.WriteRecordsAsync(examScoreCsvRecords);
-            await streamWriter.FlushAsync();
-            memoryStream.Position = 0;
-            return File(memoryStream, "text/csv", fileDownloadName);
-        }
+        var memoryStream = new MemoryStream();
+        var streamWriter = new StreamWriter(memoryStream);
+        var csv = new CsvWriter(streamWriter, new CultureInfo("nl-BE"));
+        await csv.WriteRecordsAsync(examScoreCsvRecords);
+        await streamWriter.FlushAsync();
+        memoryStream.Position = 0;
+        return File(memoryStream, "text/csv", fileDownloadName);
     }
 }

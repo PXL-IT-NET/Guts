@@ -2,45 +2,44 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Guts.Common;
 
-namespace Guts.Domain.ValueObjects
+namespace Guts.Domain.ValueObjects;
+
+public partial class Code : ValueObject<Code>
 {
-    public partial class Code : ValueObject<Code>
+    public const int MaxLength = 64;
+
+    public string Value { get; }
+
+    public Code(string value)
     {
-        public const int MaxLength = 64;
+        Contracts.Require(!string.IsNullOrEmpty(value), "A code cannot be empty");
+        Contracts.Require(value.Length <= MaxLength, $"A code can not contain more than {MaxLength} characters");
 
-        public string Value { get; }
+        Contracts.Require(ValidCodeRegex().IsMatch(value), "A code may only consist of letters, numbers, underscores, hyphens or periods");
 
-        public Code(string value)
-        {
-            Contracts.Require(!string.IsNullOrEmpty(value), "A code cannot be empty");
-            Contracts.Require(value.Length <= MaxLength, $"A code can not contain more than {MaxLength} characters");
+        Value = value;
+    }
 
-            Contracts.Require(ValidCodeRegex().IsMatch(value), "A code may only consist of letters, numbers, underscores, hyphens or periods");
+    [GeneratedRegex(@"^[\w-\.]+$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ValidCodeRegex();
 
-            Value = value;
-        }
+    public static implicit operator string(Code code)
+    {
+        return code?.Value;
+    }
 
-        [GeneratedRegex(@"^[\w-\.]+$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-        private static partial Regex ValidCodeRegex();
+    public static implicit operator Code(string value)
+    {
+        return new Code(value);
+    }
 
-        public static implicit operator string(Code code)
-        {
-            return code?.Value;
-        }
+    protected override IEnumerable<object> GetEqualityComponents()
+    {
+        yield return Value;
+    }
 
-        public static implicit operator Code(string value)
-        {
-            return new Code(value);
-        }
-
-        protected override IEnumerable<object> GetEqualityComponents()
-        {
-            yield return Value;
-        }
-
-        public override string ToString()
-        {
-            return Value;
-        }
+    public override string ToString()
+    {
+        return Value;
     }
 }

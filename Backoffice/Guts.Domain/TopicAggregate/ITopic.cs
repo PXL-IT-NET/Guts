@@ -4,16 +4,15 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.TopicAggregate
+namespace Guts.Domain.TopicAggregate;
+
+public interface ITopic : IEntity
 {
-    public interface ITopic : IEntity
-    {
-        ICollection<Assignment> Assignments { get; set; }
-        Code Code { get; }
-        Course Course { get; }
-        int CourseId { get; }
-        string Description { get; }
-        IPeriod Period { get; }
-        int PeriodId { get; }
-    }
+    ICollection<Assignment> Assignments { get; set; }
+    Code Code { get; }
+    Course Course { get; }
+    int CourseId { get; }
+    string Description { get; }
+    IPeriod Period { get; }
+    int PeriodId { get; }
 }

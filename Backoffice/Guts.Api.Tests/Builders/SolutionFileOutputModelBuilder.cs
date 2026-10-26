@@ -1,24 +1,23 @@
 using System;
 using Guts.Api.Models;
 
-namespace Guts.Api.Tests.Builders
+namespace Guts.Api.Tests.Builders;
+
+internal class SolutionFileOutputModelBuilder
 {
-    internal class SolutionFileOutputModelBuilder
+    private readonly SolutionFileOutputModel _outputModel;
+
+    public SolutionFileOutputModelBuilder()
     {
-        private readonly SolutionFileOutputModel _outputModel;
-
-        public SolutionFileOutputModelBuilder()
+        _outputModel = new SolutionFileOutputModel
         {
-            _outputModel = new SolutionFileOutputModel
-            {
-                Content = Guid.NewGuid().ToString(),
-                FilePath = Guid.NewGuid().ToString()
-            };
-        }
+            Content = Guid.NewGuid().ToString(),
+            FilePath = Guid.NewGuid().ToString()
+        };
+    }
 
-        public SolutionFileOutputModel Build()
-        {
-            return _outputModel;
-        }
+    public SolutionFileOutputModel Build()
+    {
+        return _outputModel;
     }
 }

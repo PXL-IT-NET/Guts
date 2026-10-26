@@ -1,10 +1,9 @@
 ﻿using Guts.Domain.ProjectTeamAssessmentAggregate;
 
-namespace Guts.Domain.AssessmentResultAggregate
+namespace Guts.Domain.AssessmentResultAggregate;
+
+public interface IAssessmentResultFactory
 {
-    public interface IAssessmentResultFactory
-    {
-        IAssessmentResult Create(int subjectId, IProjectTeamAssessment projectTeamAssessment,
-            bool includePeerAssessments);
-    }
+    IAssessmentResult Create(int subjectId, IProjectTeamAssessment projectTeamAssessment,
+        bool includePeerAssessments);
 }

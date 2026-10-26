@@ -2,12 +2,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.ExamAggregate;
 
-namespace Guts.Business.Repositories
-{
-    public interface IExamRepository : IBasicRepository<IExam>
-    {
-        Task<IExam> LoadDeepAsync(int examId);
+namespace Guts.Business.Repositories;
 
-        Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int courseId, int periodId);
-    }
+public interface IExamRepository : IBasicRepository<IExam>
+{
+    Task<IExam> LoadDeepAsync(int examId);
+
+    Task<IReadOnlyList<IExam>> FindWithPartsAndEvaluationsAsync(int courseId, int periodId);
 }

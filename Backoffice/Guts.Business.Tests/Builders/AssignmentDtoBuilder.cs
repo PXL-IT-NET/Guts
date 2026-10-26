@@ -1,31 +1,30 @@
 using System;
 using Guts.Business.Dtos;
 
-namespace Guts.Business.Tests.Builders
+namespace Guts.Business.Tests.Builders;
+
+public class AssignmentDtoBuilder
 {
-    public class AssignmentDtoBuilder
+    private readonly AssignmentDto _dto;
+
+    public AssignmentDtoBuilder()
     {
-        private readonly AssignmentDto _dto;
-
-        public AssignmentDtoBuilder()
+        _dto = new AssignmentDto
         {
-            _dto = new AssignmentDto
-            {
-                CourseCode = Guid.NewGuid().ToString(),
-                TopicCode = Guid.NewGuid().ToString(),
-                AssignmentCode = Guid.NewGuid().ToString()
-            };
-        }
+            CourseCode = Guid.NewGuid().ToString(),
+            TopicCode = Guid.NewGuid().ToString(),
+            AssignmentCode = Guid.NewGuid().ToString()
+        };
+    }
 
-        public AssignmentDtoBuilder WithAssignmentCode(string code)
-        {
-            _dto.AssignmentCode = code;
-            return this;
-        }
+    public AssignmentDtoBuilder WithAssignmentCode(string code)
+    {
+        _dto.AssignmentCode = code;
+        return this;
+    }
 
-        public AssignmentDto Build()
-        {
-            return _dto;
-        }
+    public AssignmentDto Build()
+    {
+        return _dto;
     }
 }

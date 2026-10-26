@@ -1,25 +1,24 @@
 using System;
 using Guts.Api.Models;
 
-namespace Guts.Api.Tests.Builders
+namespace Guts.Api.Tests.Builders;
+
+internal class ConfirmEmailModelBuilder
 {
-    internal class ConfirmEmailModelBuilder
+    private readonly ConfirmEmailModel _model;
+
+    public ConfirmEmailModelBuilder()
     {
-        private readonly ConfirmEmailModel _model;
-
-        public ConfirmEmailModelBuilder()
+        _model = new ConfirmEmailModel
         {
-            _model = new ConfirmEmailModel
-            {
-                UserId = Guid.NewGuid().ToString(),
-                Token = Guid.NewGuid().ToString()
-            };
-        }
-
-        public ConfirmEmailModel Build()
-        {
-            return _model;
-        }
-
+            UserId = Guid.NewGuid().ToString(),
+            Token = Guid.NewGuid().ToString()
+        };
     }
+
+    public ConfirmEmailModel Build()
+    {
+        return _model;
+    }
+
 }

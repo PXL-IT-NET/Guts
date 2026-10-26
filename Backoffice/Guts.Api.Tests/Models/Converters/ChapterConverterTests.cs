@@ -13,130 +13,129 @@ using Guts.Domain.UserAggregate;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Api.Tests.Models.Converters
+namespace Guts.Api.Tests.Models.Converters;
+
+[TestFixture]
+internal class ChapterConverterTests
 {
-    [TestFixture]
-    internal class ChapterConverterTests
+    private ChapterConverter _converter = null!;
+    private Mock<IUserConverter> _userConverterMock = null!;
+
+    [SetUp]
+    public void Setup()
     {
-        private ChapterConverter _converter = null!;
-        private Mock<IUserConverter> _userConverterMock = null!;
-
-        [SetUp]
-        public void Setup()
-        {
-            _userConverterMock = new Mock<IUserConverter>();
-            var mapperMock = new Mock<IMapper>();
-            mapperMock.Setup(m => m.MapToAssignmentModel(It.IsAny<Assignment>()))
-                .Returns<Assignment>(a => new AssignmentModel
-                {
-                    AssignmentId = a.Id,
-                    Code = a.Code,
-                    Description = a.Description
-                });
-            _converter = new ChapterConverter(_userConverterMock.Object, mapperMock.Object);
-        }
-
-        [Test]
-        public void ToTopicModel_ShouldCorrectlyCovertValidChapter()
-        {
-            //Arrange
-            Chapter chapter = new ChapterBuilder().WithId().WithAssignments(2,0).Build();
-
-            //Act
-            TopicModel model = _converter.ToTopicModel(chapter);
-
-            //Assert
-            Assert.That(model, Is.Not.Null);
-            Assert.That(model.Id, Is.EqualTo(chapter.Id));
-            Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
-            Assert.That(model.Description, Is.EqualTo(chapter.Description));
-            Assert.That(model.Assignments.Count, Is.EqualTo(chapter.Assignments.Count));
-            foreach (Assignment assignment in chapter.Assignments)
+        _userConverterMock = new Mock<IUserConverter>();
+        var mapperMock = new Mock<IMapper>();
+        mapperMock.Setup(m => m.MapToAssignmentModel(It.IsAny<Assignment>()))
+            .Returns<Assignment>(a => new AssignmentModel
             {
-                AssignmentModel assignmentModel = model.Assignments.FirstOrDefault(a => a.AssignmentId == assignment.Id);
-                Assert.That(assignmentModel, Is.Not.Null);
-                Assert.That(assignmentModel.Code, Is.EqualTo(assignment.Code));
-                Assert.That(assignmentModel.Description, Is.EqualTo(assignment.Description));
+                AssignmentId = a.Id,
+                Code = a.Code,
+                Description = a.Description
+            });
+        _converter = new ChapterConverter(_userConverterMock.Object, mapperMock.Object);
+    }
+
+    [Test]
+    public void ToTopicModel_ShouldCorrectlyCovertValidChapter()
+    {
+        //Arrange
+        Chapter chapter = new ChapterBuilder().WithId().WithAssignments(2,0).Build();
+
+        //Act
+        TopicModel model = _converter.ToTopicModel(chapter);
+
+        //Assert
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.Id, Is.EqualTo(chapter.Id));
+        Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
+        Assert.That(model.Description, Is.EqualTo(chapter.Description));
+        Assert.That(model.Assignments.Count, Is.EqualTo(chapter.Assignments.Count));
+        foreach (Assignment assignment in chapter.Assignments)
+        {
+            AssignmentModel assignmentModel = model.Assignments.FirstOrDefault(a => a.AssignmentId == assignment.Id);
+            Assert.That(assignmentModel, Is.Not.Null);
+            Assert.That(assignmentModel.Code, Is.EqualTo(assignment.Code));
+            Assert.That(assignmentModel.Description, Is.EqualTo(assignment.Description));
+        }
+    }
+
+    [Test]
+    public void ToTopicModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
+    {
+        Assert.That(() => _converter.ToTopicModel(null), Throws.InstanceOf<NullReferenceException>());
+    }
+
+    [Test]
+    public void ToTopicModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+    {
+        Chapter chapter = new ChapterBuilder().WithId().Build();
+        chapter.Assignments = null;
+
+        Assert.That(() => _converter.ToTopicModel(chapter), Throws.ArgumentNullException);
+    }
+
+    [Test]
+    public void ToChapterDetailModel_ShouldCorrectlyCovertValidChapter()
+    {
+        //Arrange
+        Chapter chapter = new ChapterBuilder().WithId().WithAssignments(2, 2).Build();
+        var chapterUsers = new List<User>
+        {
+            new UserBuilder().WithId().Build(),
+            new UserBuilder().WithId().Build(),
+        };
+
+        //Act
+        ChapterDetailModel model = _converter.ToChapterDetailModel(chapter, chapterUsers);
+
+        //Assert
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.Id, Is.EqualTo(chapter.Id));
+        Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
+        Assert.That(model.Description, Is.EqualTo(chapter.Description));
+        Assert.That(model.Exercises.Count, Is.EqualTo(chapter.Assignments.Count));
+        foreach (Assignment assignment in chapter.Assignments)
+        {
+            AssignmentModel assignmentModel = model.Exercises.FirstOrDefault(a => a.AssignmentId == assignment.Id);
+            Assert.That(assignmentModel, Is.Not.Null);
+            Assert.That(assignmentModel.Code, Is.EqualTo(assignment.Code));
+            Assert.That(assignmentModel.Description, Is.EqualTo(assignment.Description));
+            Assert.That(assignmentModel.Tests.Count, Is.EqualTo(assignment.Tests.Count));
+            foreach (Test test in assignment.Tests)
+            {
+                TestModel testModel = assignmentModel.Tests.FirstOrDefault(t => t.Id == test.Id);
+                Assert.That(testModel, Is.Not.Null);
+                Assert.That(testModel.TestName, Is.EqualTo(test.TestName));
             }
         }
-
-        [Test]
-        public void ToTopicModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
+        Assert.That(model.Users.Count, Is.EqualTo(chapterUsers.Count));
+        foreach (User user in chapterUsers)
         {
-            Assert.That(() => _converter.ToTopicModel(null), Throws.InstanceOf<NullReferenceException>());
+            _userConverterMock.Verify(uc => uc.FromUser(user), Times.Once);
         }
+    }
 
-        [Test]
-        public void ToTopicModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
-        {
-            Chapter chapter = new ChapterBuilder().WithId().Build();
-            chapter.Assignments = null;
+    [Test]
+    public void ToChapterDetailModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
+    {
+        Assert.That(() => _converter.ToChapterDetailModel(null, new List<User>()), Throws.InstanceOf<NullReferenceException>());
+    }
 
-            Assert.That(() => _converter.ToTopicModel(chapter), Throws.ArgumentNullException);
-        }
+    [Test]
+    public void ToChapterDetailModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
+    {
+        Chapter chapter = new ChapterBuilder().WithId().Build();
+        chapter.Assignments = null;
 
-        [Test]
-        public void ToChapterDetailModel_ShouldCorrectlyCovertValidChapter()
-        {
-            //Arrange
-            Chapter chapter = new ChapterBuilder().WithId().WithAssignments(2, 2).Build();
-            var chapterUsers = new List<User>
-            {
-                new UserBuilder().WithId().Build(),
-                new UserBuilder().WithId().Build(),
-            };
+        Assert.That(() => _converter.ToChapterDetailModel(chapter, new List<User>()), Throws.ArgumentNullException);
+    }
 
-            //Act
-            ChapterDetailModel model = _converter.ToChapterDetailModel(chapter, chapterUsers);
+    [Test]
+    public void ToChapterDetailModel_WhenChapterUsersAreNull_ShouldThrowArgumentNullException()
+    {
+        Chapter chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
 
-            //Assert
-            Assert.That(model, Is.Not.Null);
-            Assert.That(model.Id, Is.EqualTo(chapter.Id));
-            Assert.That(model.Code, Is.EqualTo(chapter.Code.Value));
-            Assert.That(model.Description, Is.EqualTo(chapter.Description));
-            Assert.That(model.Exercises.Count, Is.EqualTo(chapter.Assignments.Count));
-            foreach (Assignment assignment in chapter.Assignments)
-            {
-                AssignmentModel assignmentModel = model.Exercises.FirstOrDefault(a => a.AssignmentId == assignment.Id);
-                Assert.That(assignmentModel, Is.Not.Null);
-                Assert.That(assignmentModel.Code, Is.EqualTo(assignment.Code));
-                Assert.That(assignmentModel.Description, Is.EqualTo(assignment.Description));
-                Assert.That(assignmentModel.Tests.Count, Is.EqualTo(assignment.Tests.Count));
-                foreach (Test test in assignment.Tests)
-                {
-                    TestModel testModel = assignmentModel.Tests.FirstOrDefault(t => t.Id == test.Id);
-                    Assert.That(testModel, Is.Not.Null);
-                    Assert.That(testModel.TestName, Is.EqualTo(test.TestName));
-                }
-            }
-            Assert.That(model.Users.Count, Is.EqualTo(chapterUsers.Count));
-            foreach (User user in chapterUsers)
-            {
-                _userConverterMock.Verify(uc => uc.FromUser(user), Times.Once);
-            }
-        }
-
-        [Test]
-        public void ToChapterDetailModel_WhenChapterIsNull_ShouldThrowNullReferenceException()
-        {
-            Assert.That(() => _converter.ToChapterDetailModel(null, new List<User>()), Throws.InstanceOf<NullReferenceException>());
-        }
-
-        [Test]
-        public void ToChapterDetailModel_WhenAssignmentsAreNull_ShouldThrowArgumentNullException()
-        {
-            Chapter chapter = new ChapterBuilder().WithId().Build();
-            chapter.Assignments = null;
-
-            Assert.That(() => _converter.ToChapterDetailModel(chapter, new List<User>()), Throws.ArgumentNullException);
-        }
-
-        [Test]
-        public void ToChapterDetailModel_WhenChapterUsersAreNull_ShouldThrowArgumentNullException()
-        {
-            Chapter chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
-
-            Assert.That(() => _converter.ToChapterDetailModel(chapter, null), Throws.ArgumentNullException);
-        }
+        Assert.That(() => _converter.ToChapterDetailModel(chapter, null), Throws.ArgumentNullException);
     }
 }

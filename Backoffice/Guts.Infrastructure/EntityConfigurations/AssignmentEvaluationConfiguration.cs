@@ -2,14 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Guts.Infrastructure.EntityConfigurations
+namespace Guts.Infrastructure.EntityConfigurations;
+
+internal class AssignmentEvaluationConfiguration : IEntityTypeConfiguration<AssignmentEvaluation>
 {
-    internal class AssignmentEvaluationConfiguration : IEntityTypeConfiguration<AssignmentEvaluation>
+    public void Configure(EntityTypeBuilder<AssignmentEvaluation> builder)
     {
-        public void Configure(EntityTypeBuilder<AssignmentEvaluation> builder)
-        {
-            builder.HasOne(assignmentEvaluation => assignmentEvaluation.Assignment).WithMany()
-                .HasForeignKey(assignmentEvaluation => assignmentEvaluation.AssignmentId);
-        }
+        builder.HasOne(assignmentEvaluation => assignmentEvaluation.Assignment).WithMany()
+            .HasForeignKey(assignmentEvaluation => assignmentEvaluation.AssignmentId);
     }
 }

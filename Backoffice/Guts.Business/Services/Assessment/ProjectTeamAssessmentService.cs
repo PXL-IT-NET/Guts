@@ -9,107 +9,106 @@ using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
-namespace Guts.Business.Services.Assessment
+namespace Guts.Business.Services.Assessment;
+
+internal class ProjectTeamAssessmentService(
+    IProjectTeamAssessmentRepository repository,
+    IProjectTeamAssessmentFactory factory,
+    IProjectAssessmentRepository projectAssessmentRepository,
+    IProjectTeamRepository teamRepository,
+    IAssessmentResultFactory assessmentResultFactory)
+    : IProjectTeamAssessmentService
 {
-    internal class ProjectTeamAssessmentService(
-        IProjectTeamAssessmentRepository repository,
-        IProjectTeamAssessmentFactory factory,
-        IProjectAssessmentRepository projectAssessmentRepository,
-        IProjectTeamRepository teamRepository,
-        IAssessmentResultFactory assessmentResultFactory)
-        : IProjectTeamAssessmentService
+    public async Task<IProjectTeamAssessment> GetOrCreateTeamAssessmentAsync(int projectAssessmentId, int projectTeamId)
     {
-        public async Task<IProjectTeamAssessment> GetOrCreateTeamAssessmentAsync(int projectAssessmentId, int projectTeamId)
+        IProjectTeamAssessment teamAssessment;
+        try
         {
-            IProjectTeamAssessment teamAssessment;
+            teamAssessment = await repository.LoadAsync(projectAssessmentId, projectTeamId);
+        }
+        catch (DataNotFoundException)
+        {
+            IProjectAssessment projectAssessment;
             try
             {
-                teamAssessment = await repository.LoadAsync(projectAssessmentId, projectTeamId);
+                projectAssessment = await projectAssessmentRepository.GetByIdAsync(projectAssessmentId);
             }
             catch (DataNotFoundException)
             {
-                IProjectAssessment projectAssessment;
-                try
-                {
-                    projectAssessment = await projectAssessmentRepository.GetByIdAsync(projectAssessmentId);
-                }
-                catch (DataNotFoundException)
-                {
-                    throw new ContractException($"The team assessment could not be created. No project assessment with id '{projectAssessmentId}' could be found.");
-                }
-
-                IProjectTeam team;
-                try
-                {
-                    team = await teamRepository.LoadByIdAsync(projectTeamId);
-                }
-                catch (DataNotFoundException)
-                {
-                    throw new ContractException($"The team assessment could not be created. No team with id '{projectTeamId}' could be found.");
-                }
-
-                teamAssessment = factory.CreateNew(projectAssessment, team);
-                await repository.AddAsync(teamAssessment);
+                throw new ContractException($"The team assessment could not be created. No project assessment with id '{projectAssessmentId}' could be found.");
             }
 
-            return teamAssessment;
-        }
-
-        public async Task<ProjectTeamAssessmentStatusDto> GetStatusAsync(int projectAssessmentId, int teamId)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-
-            return new ProjectTeamAssessmentStatusDto
+            IProjectTeam team;
+            try
             {
-                Id = teamAssessment.Id,
-                TeamId = teamId,
-                IsComplete = teamAssessment.IsComplete,
-                PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
-                    new UserDto { FirstName = user.FirstName, LastName = user.LastName, Id = user.Id }).ToList(),
-            };
-        }
-
-        public async Task<IReadOnlyList<IAssessmentResult>> GetResultsForLectorAsync(int projectAssessmentId, int teamId)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-
-            List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
-                .Select(teamUser => assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
-
-            return results;
-        }
-
-        public async Task<IAssessmentResult> GetResultForStudent(int projectAssessmentId, int teamId, int userId)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-
-            IAssessmentResult result =  assessmentResultFactory.Create(userId, teamAssessment, false);
-            return result;
-        }
-
-        public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-
-            IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeerAssessmentsOf(userId);
-            IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeerAssessmentsOf(userId);
-
-            return storedAssessments.Concat(missingAssessments).ToList();
-        }
-
-        public async Task SavePeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId, IReadOnlyList<PeerAssessmentDto> peerAssessments)
-        {
-            IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
-            foreach (PeerAssessmentDto dto in peerAssessments)
+                team = await teamRepository.LoadByIdAsync(projectTeamId);
+            }
+            catch (DataNotFoundException)
             {
-                Contracts.Require(dto.UserId == userId, $"Only peer assessments of user with id '{userId}' are allowed.");
-                teamAssessment.AddOrUpdatePeerAssessment(userId, dto.SubjectId, dto.CooperationScore,
-                    dto.ContributionScore, dto.EffortScore, dto.Explanation);
+                throw new ContractException($"The team assessment could not be created. No team with id '{projectTeamId}' could be found.");
             }
 
-            teamAssessment.ValidateAssessmentsOf(userId);
-
-            await repository.UpdateAsync(teamAssessment);
+            teamAssessment = factory.CreateNew(projectAssessment, team);
+            await repository.AddAsync(teamAssessment);
         }
+
+        return teamAssessment;
+    }
+
+    public async Task<ProjectTeamAssessmentStatusDto> GetStatusAsync(int projectAssessmentId, int teamId)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+        return new ProjectTeamAssessmentStatusDto
+        {
+            Id = teamAssessment.Id,
+            TeamId = teamId,
+            IsComplete = teamAssessment.IsComplete,
+            PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
+                new UserDto { FirstName = user.FirstName, LastName = user.LastName, Id = user.Id }).ToList(),
+        };
+    }
+
+    public async Task<IReadOnlyList<IAssessmentResult>> GetResultsForLectorAsync(int projectAssessmentId, int teamId)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+        List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
+            .Select(teamUser => assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
+
+        return results;
+    }
+
+    public async Task<IAssessmentResult> GetResultForStudent(int projectAssessmentId, int teamId, int userId)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+        IAssessmentResult result =  assessmentResultFactory.Create(userId, teamAssessment, false);
+        return result;
+    }
+
+    public async Task<IReadOnlyList<IPeerAssessment>> GetPeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+
+        IReadOnlyList<IPeerAssessment> storedAssessments =  teamAssessment.GetPeerAssessmentsOf(userId);
+        IReadOnlyList<IPeerAssessment> missingAssessments = teamAssessment.GetMissingPeerAssessmentsOf(userId);
+
+        return storedAssessments.Concat(missingAssessments).ToList();
+    }
+
+    public async Task SavePeerAssessmentsOfUserAsync(int projectAssessmentId, int teamId, int userId, IReadOnlyList<PeerAssessmentDto> peerAssessments)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+        foreach (PeerAssessmentDto dto in peerAssessments)
+        {
+            Contracts.Require(dto.UserId == userId, $"Only peer assessments of user with id '{userId}' are allowed.");
+            teamAssessment.AddOrUpdatePeerAssessment(userId, dto.SubjectId, dto.CooperationScore,
+                dto.ContributionScore, dto.EffortScore, dto.Explanation);
+        }
+
+        teamAssessment.ValidateAssessmentsOf(userId);
+
+        await repository.UpdateAsync(teamAssessment);
     }
 }

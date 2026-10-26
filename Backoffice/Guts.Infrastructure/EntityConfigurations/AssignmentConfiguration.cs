@@ -2,13 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Guts.Infrastructure.EntityConfigurations
+namespace Guts.Infrastructure.EntityConfigurations;
+
+internal class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 {
-    internal class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
+    public void Configure(EntityTypeBuilder<Assignment> builder)
     {
-        public void Configure(EntityTypeBuilder<Assignment> builder)
-        {
-            builder.ToTable("Assignments");
-        }
+        builder.ToTable("Assignments");
     }
 }

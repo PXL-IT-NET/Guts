@@ -15,517 +15,516 @@ using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Business.Tests.Services
+namespace Guts.Business.Tests.Services;
+
+[TestFixture]
+public class AssignmentServiceTests
 {
-    [TestFixture]
-    public class AssignmentServiceTests
+    private AssignmentService _service;
+    private Random _random;
+    private Mock<IAssignmentRepository> _assignmentRepositoryMock;
+    private Mock<ITestRepository> _testRepositoryMock;
+    private Mock<ITestResultRepository> _testResultRepositoryMock;
+    private Mock<ITestRunRepository> _testRunRepositoryMock;
+    private Mock<ITopicService> _topicServiceMock;
+    private Mock<IAssignmentWithResultsConverter> _assignmentWithResultsConverterMock;
+    private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+
+    [SetUp]
+    public void Setup()
     {
-        private AssignmentService _service;
-        private Random _random;
-        private Mock<IAssignmentRepository> _assignmentRepositoryMock;
-        private Mock<ITestRepository> _testRepositoryMock;
-        private Mock<ITestResultRepository> _testResultRepositoryMock;
-        private Mock<ITestRunRepository> _testRunRepositoryMock;
-        private Mock<ITopicService> _topicServiceMock;
-        private Mock<IAssignmentWithResultsConverter> _assignmentWithResultsConverterMock;
-        private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+        _random = new Random();
+        _testRepositoryMock = new Mock<ITestRepository>();
+        _topicServiceMock = new Mock<ITopicService>();
+        _testResultRepositoryMock = new Mock<ITestResultRepository>();
+        _testRunRepositoryMock = new Mock<ITestRunRepository>();
+        _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
+        _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
+        _assignmentWithResultsConverterMock = new Mock<IAssignmentWithResultsConverter>();
 
-        [SetUp]
-        public void Setup()
+        _service = new AssignmentService(_assignmentRepositoryMock.Object, 
+            _topicServiceMock.Object,
+            _testRepositoryMock.Object,
+            _testResultRepositoryMock.Object,
+            _testRunRepositoryMock.Object,
+            _solutionFileRepositoryMock.Object,
+            _assignmentWithResultsConverterMock.Object);
+    }
+
+    [Test]
+    public void GetAssignmentAsync_ShouldRetrieveTheTopicAndThenTheAssignment()
+    {
+        //Arrange
+        var dto = new AssignmentDtoBuilder().Build();
+        var existingTopic = new ChapterBuilder().WithId().Build();
+        var existingAssignment = new AssignmentBuilder().WithId().Build();
+
+        _topicServiceMock.Setup(service => service.GetTopicAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+            .ReturnsAsync(existingTopic);
+
+        _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(existingAssignment);
+
+        //Act
+        var assignment = _service.GetAssignmentOfCurrentPeriodAsync(dto).Result;
+
+        //Assert
+        Assert.That(assignment, Is.SameAs(existingAssignment));
+        _topicServiceMock.Verify(service => service.GetTopicAsync(dto.CourseCode, dto.TopicCode, null), Times.Once);
+        _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingTopic.Id, dto.AssignmentCode), Times.Once);
+    }
+
+    [Test]
+    public void LoadTestsForAssignmentAsync_ShouldLoadExistingTests()
+    {
+        //Arrange
+        var assignment = new AssignmentBuilder().WithId().Build();
+
+        var existingTests = new List<Test>
         {
-            _random = new Random();
-            _testRepositoryMock = new Mock<ITestRepository>();
-            _topicServiceMock = new Mock<ITopicService>();
-            _testResultRepositoryMock = new Mock<ITestResultRepository>();
-            _testRunRepositoryMock = new Mock<ITestRunRepository>();
-            _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
-            _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
-            _assignmentWithResultsConverterMock = new Mock<IAssignmentWithResultsConverter>();
+            new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build(),
+            new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build()
+        };
 
-            _service = new AssignmentService(_assignmentRepositoryMock.Object, 
-                _topicServiceMock.Object,
-                _testRepositoryMock.Object,
-                _testResultRepositoryMock.Object,
-                _testRunRepositoryMock.Object,
-                _solutionFileRepositoryMock.Object,
-                _assignmentWithResultsConverterMock.Object);
+        _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
+
+        //Act
+        _service.LoadTestsForAssignmentAsync(assignment).Wait();
+
+        //Assert
+        _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+        Assert.That(assignment.Tests, Is.Not.Null);
+        Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
+    }
+
+    [Test]
+    public void LoadOrCreateTestsForAssignmentAsync_ShouldCreateNonExistingTests()
+    {
+        //Arrange
+        var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        var assignment = new Assignment
+        {
+            Id = _random.NextPositive()
+        };
+
+        _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>());
+        _testRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Test>())).ReturnsAsync((Test test) =>
+        {
+            test.Id = _random.NextPositive();
+            return test;
+        });
+
+        //Act
+        _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
+
+        //Assert
+        _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+        _testRepositoryMock.Verify(repo => repo.AddAsync(It.Is<Test>(test => testNames.Contains(test.TestName))), Times.Exactly(testNames.Count));
+        Assert.That(assignment.Tests, Is.Not.Null);
+        Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
+        Assert.That(assignment.Tests, Has.All.Matches<Test>(test => test.Id > 0) );
+        Assert.That(assignment.Tests, Has.All.Matches<Test>(test => testNames.Contains(test.TestName)));
+
+    }
+
+    [Test]
+    public void LoadOrCreateTestsForAssignmentAsync_ShouldLoadExistingTests()
+    {
+        //Arrange
+        var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        List<Test> existingTests = testNames.Select(name => new Test
+        {
+            Id = _random.NextPositive(),
+            TestName = name
+        }).ToList();
+
+        var assignment = new Assignment
+        {
+            Id = _random.NextPositive(),
+        };
+
+        _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
+
+        //Act
+        _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
+
+        //Assert
+        _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
+        _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
+        Assert.That(assignment.Tests, Is.Not.Null);
+        Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
+    }
+
+    [Test]
+    public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToAnAssignmentResultDto()
+    {
+        //Arrange
+        var assignmentId = _random.NextPositive();
+        var userId = _random.NextPositive();
+        var lastTestResults = new List<TestResult>();
+
+        _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfUser(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(lastTestResults);
+
+        //Act
+        var result = _service.GetResultsForUserAsync(assignmentId, userId, null).Result;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.TestResults, Is.SameAs(lastTestResults));
+        Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
+        _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfUser(assignmentId, userId, null), Times.Once);
+    }
+
+    [Test]
+    public void GetResultsForTeamAsync_ShouldRetrieveLastTestsResultsForTeamAndConvertThemToAnAssignmentResultDto()
+    {
+        //Arrange
+        var projectId = _random.NextPositive();
+        var assignmentId = _random.NextPositive();
+        var teamId = _random.NextPositive();
+        var lastTestResults = new List<TestResult>();
+
+        _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(lastTestResults);
+
+        //Act
+        var result = _service.GetResultsForTeamAsync(projectId, assignmentId, teamId, null).Result;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.TestResults, Is.SameAs(lastTestResults));
+        Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
+        _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfTeam(projectId, assignmentId, teamId, null), Times.Once);
+    }
+
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldReturnTrueForAValidHash()
+    {
+        //Arrange
+        var testCodeHash = Guid.NewGuid().ToString();
+        var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
+
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
+
+        //Assert
+        Assert.That(isValid, Is.True);
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+    }
+
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldReturnFalseForAnInValidHash()
+    {
+        //Arrange
+        var validHash = Guid.NewGuid().ToString();
+        var invalidHash = Guid.NewGuid().ToString();
+        var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(validHash).Build();
+
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(invalidHash, assignment, false).Result;
+
+        //Assert
+        Assert.That(isValid, Is.False);
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+    }
+
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldAddTheHashForLectors()
+    {
+        //Arrange
+        var testCodeHash = Guid.NewGuid().ToString();
+        var assignment = new AssignmentBuilder().WithId().Build();
+
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
+
+        //Assert
+        Assert.That(isValid, Is.True);
+        Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(assignment), Times.Once);
+    }
+
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldNotAddHashesThatAlreadyExist()
+    {
+        //Arrange
+        var testCodeHash = Guid.NewGuid().ToString();
+        var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
+
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
+
+        //Assert
+        Assert.That(isValid, Is.True);
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+    }
+
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldReturnTrueIfTheHashIsEmptyAndTheAssignmentHasNoHashes()
+    {
+        //Arrange
+        var testCodeHash = string.Empty;
+        var assignment = new AssignmentBuilder().WithId().Build();
+
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
+
+        //Assert
+        Assert.That(isValid, Is.True);
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
+    }
+
+    [Test]
+    public void GetAssignmentUserStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
+    {
+        //Arrange
+        var assignmentId = _random.NextPositive();
+        var date = DateTime.UtcNow;
+        var lastTestResults = new List<TestResult>();
+        var assignmentStatisticsDto = new AssignmentStatisticsDto();
+
+        _testResultRepositoryMock
+            .Setup(repo => repo.GetLastTestResultsOfAllUsers(It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(lastTestResults);
+
+        _assignmentWithResultsConverterMock
+            .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
+            .Returns(assignmentStatisticsDto);
+
+        //Act
+        var result = _service.GetAssignmentUserStatisticsAsync(assignmentId, date).Result;
+
+        //Assert
+        Assert.That(result, Is.SameAs(assignmentStatisticsDto));
+        _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllUsers(assignmentId, date), Times.Once);
+        _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
+    }
+
+    [Test]
+    public void GetAssignmentTeamStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
+    {
+        //Arrange
+        var projectId = _random.NextPositive();
+        var assignmentId = _random.NextPositive();
+        var date = DateTime.UtcNow;
+        var lastTestResults = new List<TestResult>();
+        var assignmentStatisticsDto = new AssignmentStatisticsDto();
+
+        _testResultRepositoryMock
+            .Setup(repo => repo.GetLastTestResultsOfAllTeams(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(lastTestResults);
+
+        _assignmentWithResultsConverterMock
+            .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
+            .Returns(assignmentStatisticsDto);
+
+        //Act
+        var result = _service.GetAssignmentTeamStatisticsAsync(projectId, assignmentId, date).Result;
+
+        //Assert
+        Assert.That(result, Is.SameAs(assignmentStatisticsDto));
+        _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllTeams(projectId, assignmentId, date), Times.Once);
+        _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
+    }
+
+    [Test]
+    public void GetUserTestRunInfoForAssignment_ShouldRetrieveTestrunsOfAUserForAnAssignmentAndReturnTheCorrectInfo()
+    {
+        //Arrange
+        var random = new Random();
+        var now = DateTime.UtcNow;
+        int assignmentId = random.NextPositive();
+        int userId = random.NextPositive();
+        var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
+        var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
+        var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
+        var testRuns = new List<TestRun>
+        {
+            firstRun,
+            secondRun,
+            lastRun
+        };
+        _testRunRepositoryMock
+            .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(testRuns);
+
+        //Act
+        var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
+
+        //Assert
+        Assert.That(testRunInfo, Is.Not.Null);
+        _testRunRepositoryMock.Verify(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now), Times.Once);
+        Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
+        Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
+        Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
+    }
+
+    [Test]
+    public void GetTeamTestRunInfoForAssignment_ShouldRetrieveTestrunsOfATeamForAnAssignmentAndReturnTheCorrectInfo()
+    {
+        //Arrange
+        var random = new Random();
+        var now = DateTime.UtcNow;
+        int assignmentId = random.NextPositive();
+        int teamId = random.NextPositive();
+        var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
+        var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
+        var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
+        var testRuns = new List<TestRun>
+        {
+            firstRun,
+            secondRun,
+            lastRun
+        };
+        _testRunRepositoryMock
+            .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(testRuns);
+
+        //Act
+        var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
+
+        //Assert
+        Assert.That(testRunInfo, Is.Not.Null);
+        _testRunRepositoryMock.Verify(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now), Times.Once);
+        Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
+        Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
+        Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
+    }
+
+    [Test]
+    public void GetAllSolutions_ShouldGetTheLastSolutionFilesForEachUserOrderedByUserFullName()
+    {
+        //Arrange
+        var assignmentId = _random.NextPositive();
+        var numberOfUsers = _random.Next(5, 21);
+        var solutionFilesWithUser = new List<SolutionFile>();
+        for (int i = 0; i < numberOfUsers; i++)
+        {
+            solutionFilesWithUser.Add(new SolutionFileBuilder().WithUser().Build());
         }
 
-        [Test]
-        public void GetAssignmentAsync_ShouldRetrieveTheTopicAndThenTheAssignment()
+        _solutionFileRepositoryMock.Setup(repo => repo.GetAllLatestOfAssignmentAsync(assignmentId))
+            .ReturnsAsync(solutionFilesWithUser);
+
+        //Act
+        var assignmentSolutionDtos = _service.GetAllSolutions(assignmentId).Result;
+
+        //Assert
+        _solutionFileRepositoryMock.Verify();
+
+        Assert.That(assignmentSolutionDtos, Has.Count.EqualTo(numberOfUsers));
+        foreach (var assignmentSolutionDto in assignmentSolutionDtos)
         {
-            //Arrange
-            var dto = new AssignmentDtoBuilder().Build();
-            var existingTopic = new ChapterBuilder().WithId().Build();
-            var existingAssignment = new AssignmentBuilder().WithId().Build();
-
-            _topicServiceMock.Setup(service => service.GetTopicAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
-                .ReturnsAsync(existingTopic);
-
-            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<string>()))
-                .ReturnsAsync(existingAssignment);
-
-            //Act
-            var assignment = _service.GetAssignmentOfCurrentPeriodAsync(dto).Result;
-
-            //Assert
-            Assert.That(assignment, Is.SameAs(existingAssignment));
-            _topicServiceMock.Verify(service => service.GetTopicAsync(dto.CourseCode, dto.TopicCode, null), Times.Once);
-            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(existingTopic.Id, dto.AssignmentCode), Times.Once);
+            var matchingSolutionFile = solutionFilesWithUser.FirstOrDefault(t => t.UserId == assignmentSolutionDto.WriterId);
+            Assert.That(matchingSolutionFile, Is.Not.Null);
+            Assert.That(assignmentSolutionDto.SolutionFiles, Has.One.EqualTo(matchingSolutionFile));
+            Assert.That(assignmentSolutionDto.WriterName, Does.StartWith(matchingSolutionFile.User.FirstName));
+            Assert.That(assignmentSolutionDto.WriterName, Does.EndWith(matchingSolutionFile.User.LastName));
         }
-
-        [Test]
-        public void LoadTestsForAssignmentAsync_ShouldLoadExistingTests()
-        {
-            //Arrange
-            var assignment = new AssignmentBuilder().WithId().Build();
-
-            var existingTests = new List<Test>
-            {
-                new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build(),
-                new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build()
-            };
-
-            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
-
-            //Act
-            _service.LoadTestsForAssignmentAsync(assignment).Wait();
-
-            //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
-            Assert.That(assignment.Tests, Is.Not.Null);
-            Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
-        }
-
-        [Test]
-        public void LoadOrCreateTestsForAssignmentAsync_ShouldCreateNonExistingTests()
-        {
-            //Arrange
-            var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
-            var assignment = new Assignment
-            {
-                Id = _random.NextPositive()
-            };
-
-            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>());
-            _testRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Test>())).ReturnsAsync((Test test) =>
-            {
-                test.Id = _random.NextPositive();
-                return test;
-            });
-
-            //Act
-            _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
-
-            //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
-            _testRepositoryMock.Verify(repo => repo.AddAsync(It.Is<Test>(test => testNames.Contains(test.TestName))), Times.Exactly(testNames.Count));
-            Assert.That(assignment.Tests, Is.Not.Null);
-            Assert.That(assignment.Tests.Count, Is.EqualTo(testNames.Count));
-            Assert.That(assignment.Tests, Has.All.Matches<Test>(test => test.Id > 0) );
-            Assert.That(assignment.Tests, Has.All.Matches<Test>(test => testNames.Contains(test.TestName)));
-
-        }
-
-        [Test]
-        public void LoadOrCreateTestsForAssignmentAsync_ShouldLoadExistingTests()
-        {
-            //Arrange
-            var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
-            List<Test> existingTests = testNames.Select(name => new Test
-            {
-                Id = _random.NextPositive(),
-                TestName = name
-            }).ToList();
-
-            var assignment = new Assignment
-            {
-                Id = _random.NextPositive(),
-            };
-
-            _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
-
-            //Act
-            _service.LoadOrCreateTestsForAssignmentAsync(assignment, testNames).Wait();
-
-            //Assert
-            _testRepositoryMock.Verify(repo => repo.FindByAssignmentId(assignment.Id), Times.Once);
-            _testRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Test>()), Times.Never);
-            Assert.That(assignment.Tests, Is.Not.Null);
-            Assert.That(assignment.Tests, Is.EquivalentTo(existingTests));
-        }
-
-        [Test]
-        public void GetResultsForUserAsyncShouldRetrieveLastTestsResultsForUserAndConvertThemToAnAssignmentResultDto()
-        {
-            //Arrange
-            var assignmentId = _random.NextPositive();
-            var userId = _random.NextPositive();
-            var lastTestResults = new List<TestResult>();
-
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfUser(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(lastTestResults);
-
-            //Act
-            var result = _service.GetResultsForUserAsync(assignmentId, userId, null).Result;
-
-            //Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.TestResults, Is.SameAs(lastTestResults));
-            Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfUser(assignmentId, userId, null), Times.Once);
-        }
-
-        [Test]
-        public void GetResultsForTeamAsync_ShouldRetrieveLastTestsResultsForTeamAndConvertThemToAnAssignmentResultDto()
-        {
-            //Arrange
-            var projectId = _random.NextPositive();
-            var assignmentId = _random.NextPositive();
-            var teamId = _random.NextPositive();
-            var lastTestResults = new List<TestResult>();
-
-            _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(lastTestResults);
-
-            //Act
-            var result = _service.GetResultsForTeamAsync(projectId, assignmentId, teamId, null).Result;
-
-            //Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.TestResults, Is.SameAs(lastTestResults));
-            Assert.That(result.AssignmentId, Is.EqualTo(assignmentId));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfTeam(projectId, assignmentId, teamId, null), Times.Once);
-        }
-
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldReturnTrueForAValidHash()
-        {
-            //Arrange
-            var testCodeHash = Guid.NewGuid().ToString();
-            var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
-
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
-
-            //Assert
-            Assert.That(isValid, Is.True);
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
-        }
-
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldReturnFalseForAnInValidHash()
-        {
-            //Arrange
-            var validHash = Guid.NewGuid().ToString();
-            var invalidHash = Guid.NewGuid().ToString();
-            var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(validHash).Build();
-
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(invalidHash, assignment, false).Result;
-
-            //Assert
-            Assert.That(isValid, Is.False);
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
-        }
-
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldAddTheHashForLectors()
-        {
-            //Arrange
-            var testCodeHash = Guid.NewGuid().ToString();
-            var assignment = new AssignmentBuilder().WithId().Build();
-
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
-
-            //Assert
-            Assert.That(isValid, Is.True);
-            Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(assignment), Times.Once);
-        }
-
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldNotAddHashesThatAlreadyExist()
-        {
-            //Arrange
-            var testCodeHash = Guid.NewGuid().ToString();
-            var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(testCodeHash).Build();
-
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, true).Result;
-
-            //Assert
-            Assert.That(isValid, Is.True);
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
-        }
-
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldReturnTrueIfTheHashIsEmptyAndTheAssignmentHasNoHashes()
-        {
-            //Arrange
-            var testCodeHash = string.Empty;
-            var assignment = new AssignmentBuilder().WithId().Build();
-
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(testCodeHash, assignment, false).Result;
-
-            //Assert
-            Assert.That(isValid, Is.True);
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
-        }
-
-        [Test]
-        public void GetAssignmentUserStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
-        {
-            //Arrange
-            var assignmentId = _random.NextPositive();
-            var date = DateTime.UtcNow;
-            var lastTestResults = new List<TestResult>();
-            var assignmentStatisticsDto = new AssignmentStatisticsDto();
-
-            _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResultsOfAllUsers(It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(lastTestResults);
-
-            _assignmentWithResultsConverterMock
-                .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
-                .Returns(assignmentStatisticsDto);
-
-            //Act
-            var result = _service.GetAssignmentUserStatisticsAsync(assignmentId, date).Result;
-
-            //Assert
-            Assert.That(result, Is.SameAs(assignmentStatisticsDto));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllUsers(assignmentId, date), Times.Once);
-            _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
-        }
-
-        [Test]
-        public void GetAssignmentTeamStatisticsAsync_ShouldGetLastTestResultsAndConvertThem()
-        {
-            //Arrange
-            var projectId = _random.NextPositive();
-            var assignmentId = _random.NextPositive();
-            var date = DateTime.UtcNow;
-            var lastTestResults = new List<TestResult>();
-            var assignmentStatisticsDto = new AssignmentStatisticsDto();
-
-            _testResultRepositoryMock
-                .Setup(repo => repo.GetLastTestResultsOfAllTeams(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(lastTestResults);
-
-            _assignmentWithResultsConverterMock
-                .Setup(converter => converter.ToAssignmentStatisticsDto(It.IsAny<int>(), It.IsAny<IList<TestResult>>()))
-                .Returns(assignmentStatisticsDto);
-
-            //Act
-            var result = _service.GetAssignmentTeamStatisticsAsync(projectId, assignmentId, date).Result;
-
-            //Assert
-            Assert.That(result, Is.SameAs(assignmentStatisticsDto));
-            _testResultRepositoryMock.Verify(repo => repo.GetLastTestResultsOfAllTeams(projectId, assignmentId, date), Times.Once);
-            _assignmentWithResultsConverterMock.Verify(converter => converter.ToAssignmentStatisticsDto(assignmentId, lastTestResults), Times.Once);
-        }
-
-        [Test]
-        public void GetUserTestRunInfoForAssignment_ShouldRetrieveTestrunsOfAUserForAnAssignmentAndReturnTheCorrectInfo()
-        {
-            //Arrange
-            var random = new Random();
-            var now = DateTime.UtcNow;
-            int assignmentId = random.NextPositive();
-            int userId = random.NextPositive();
-            var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
-            var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
-            var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
-            var testRuns = new List<TestRun>
-            {
-                firstRun,
-                secondRun,
-                lastRun
-            };
-            _testRunRepositoryMock
-                .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(testRuns);
-
-            //Act
-            var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
-
-            //Assert
-            Assert.That(testRunInfo, Is.Not.Null);
-            _testRunRepositoryMock.Verify(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now), Times.Once);
-            Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
-            Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
-            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
-        }
-
-        [Test]
-        public void GetTeamTestRunInfoForAssignment_ShouldRetrieveTestrunsOfATeamForAnAssignmentAndReturnTheCorrectInfo()
-        {
-            //Arrange
-            var random = new Random();
-            var now = DateTime.UtcNow;
-            int assignmentId = random.NextPositive();
-            int teamId = random.NextPositive();
-            var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
-            var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
-            var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
-            var testRuns = new List<TestRun>
-            {
-                firstRun,
-                secondRun,
-                lastRun
-            };
-            _testRunRepositoryMock
-                .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(testRuns);
-
-            //Act
-            var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
-
-            //Assert
-            Assert.That(testRunInfo, Is.Not.Null);
-            _testRunRepositoryMock.Verify(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now), Times.Once);
-            Assert.That(testRunInfo.FirstRunDateTime, Is.EqualTo(firstRun.CreateDateTime));
-            Assert.That(testRunInfo.LastRunDateTime, Is.EqualTo(lastRun.CreateDateTime));
-            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(testRuns.Count));
-        }
-
-        [Test]
-        public void GetAllSolutions_ShouldGetTheLastSolutionFilesForEachUserOrderedByUserFullName()
-        {
-            //Arrange
-            var assignmentId = _random.NextPositive();
-            var numberOfUsers = _random.Next(5, 21);
-            var solutionFilesWithUser = new List<SolutionFile>();
-            for (int i = 0; i < numberOfUsers; i++)
-            {
-                solutionFilesWithUser.Add(new SolutionFileBuilder().WithUser().Build());
-            }
-
-            _solutionFileRepositoryMock.Setup(repo => repo.GetAllLatestOfAssignmentAsync(assignmentId))
-                .ReturnsAsync(solutionFilesWithUser);
-
-            //Act
-            var assignmentSolutionDtos = _service.GetAllSolutions(assignmentId).Result;
-
-            //Assert
-            _solutionFileRepositoryMock.Verify();
-
-            Assert.That(assignmentSolutionDtos, Has.Count.EqualTo(numberOfUsers));
-            foreach (var assignmentSolutionDto in assignmentSolutionDtos)
-            {
-                var matchingSolutionFile = solutionFilesWithUser.FirstOrDefault(t => t.UserId == assignmentSolutionDto.WriterId);
-                Assert.That(matchingSolutionFile, Is.Not.Null);
-                Assert.That(assignmentSolutionDto.SolutionFiles, Has.One.EqualTo(matchingSolutionFile));
-                Assert.That(assignmentSolutionDto.WriterName, Does.StartWith(matchingSolutionFile.User.FirstName));
-                Assert.That(assignmentSolutionDto.WriterName, Does.EndWith(matchingSolutionFile.User.LastName));
-            }
            
-            Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.WriterName)));
-        }
+        Assert.That(assignmentSolutionDtos,Is.EquivalentTo(assignmentSolutionDtos.OrderBy(dto => dto.WriterName)));
+    }
 
-        [Test]
-        public void GetOrCreateAssignmentAsync_ShouldReturnExistingAssignmentIfItExists()
-        {
-            //Arrange
-            int topicId = _random.NextPositive();
-            var existingAssignment = new AssignmentBuilder().WithId().Build();
+    [Test]
+    public void GetOrCreateAssignmentAsync_ShouldReturnExistingAssignmentIfItExists()
+    {
+        //Arrange
+        int topicId = _random.NextPositive();
+        var existingAssignment = new AssignmentBuilder().WithId().Build();
 
-            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, existingAssignment.Code))
-                .ReturnsAsync(existingAssignment);
+        _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, existingAssignment.Code))
+            .ReturnsAsync(existingAssignment);
 
-            //Act
-            var result = _service.GetOrCreateAssignmentAsync(topicId, existingAssignment.Code).Result;
+        //Act
+        var result = _service.GetOrCreateAssignmentAsync(topicId, existingAssignment.Code).Result;
 
-            //Assert
-            Assert.That(result, Is.SameAs(existingAssignment));
-            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, existingAssignment.Code), Times.Once);
-            _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Never);
-        }
+        //Assert
+        Assert.That(result, Is.SameAs(existingAssignment));
+        _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, existingAssignment.Code), Times.Once);
+        _assignmentRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Assignment>()), Times.Never);
+    }
 
-        [Test]
-        public void GetOrCreateAssignmentAsync_ShouldCreateAndReturnNewAssignmentIfItDoesNotExist()
-        {
-            //Arrange
-            int topicId = _random.NextPositive();
-            var addedAssignment = new AssignmentBuilder().WithId().Build();
+    [Test]
+    public void GetOrCreateAssignmentAsync_ShouldCreateAndReturnNewAssignmentIfItDoesNotExist()
+    {
+        //Arrange
+        int topicId = _random.NextPositive();
+        var addedAssignment = new AssignmentBuilder().WithId().Build();
 
-            _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, addedAssignment.Code))
-                .ThrowsAsync(new DataNotFoundException());
-            _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>()))
-                .ReturnsAsync(addedAssignment);
+        _assignmentRepositoryMock.Setup(repo => repo.GetSingleAsync(topicId, addedAssignment.Code))
+            .ThrowsAsync(new DataNotFoundException());
+        _assignmentRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Assignment>()))
+            .ReturnsAsync(addedAssignment);
 
-            //Act
-            var result = _service.GetOrCreateAssignmentAsync(topicId, addedAssignment.Code).Result;
+        //Act
+        var result = _service.GetOrCreateAssignmentAsync(topicId, addedAssignment.Code).Result;
 
-            //Assert
-            Assert.That(result, Is.SameAs(addedAssignment));
-            _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, addedAssignment.Code), Times.Once);
-            _assignmentRepositoryMock.Verify(
-                repo => repo.AddAsync(It.Is<Assignment>(a => a.TopicId == topicId && a.Code == addedAssignment.Code)),
-                Times.Once);
-        }
+        //Assert
+        Assert.That(result, Is.SameAs(addedAssignment));
+        _assignmentRepositoryMock.Verify(repo => repo.GetSingleAsync(topicId, addedAssignment.Code), Times.Once);
+        _assignmentRepositoryMock.Verify(
+            repo => repo.AddAsync(It.Is<Assignment>(a => a.TopicId == topicId && a.Code == addedAssignment.Code)),
+            Times.Once);
+    }
 
-        [Test]
-        public void GetUserTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
-        {
-            //Arrange
-            int assignmentId = _random.NextPositive();
-            int userId = _random.NextPositive();
-            DateTime now = DateTime.UtcNow;
+    [Test]
+    public void GetUserTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
+    {
+        //Arrange
+        int assignmentId = _random.NextPositive();
+        int userId = _random.NextPositive();
+        DateTime now = DateTime.UtcNow;
 
-            _testRunRepositoryMock
-                .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now))
-                .ReturnsAsync(new List<TestRun>());
+        _testRunRepositoryMock
+            .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now))
+            .ReturnsAsync(new List<TestRun>());
 
-            //Act
-            var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
+        //Act
+        var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
 
-            //Assert
-            Assert.That(testRunInfo, Is.Not.Null);
-            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
-            Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
-            Assert.That(testRunInfo.LastRunDateTime, Is.Null);
-        }
+        //Assert
+        Assert.That(testRunInfo, Is.Not.Null);
+        Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
+        Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
+        Assert.That(testRunInfo.LastRunDateTime, Is.Null);
+    }
 
-        [Test]
-        public void GetTeamTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
-        {
-            //Arrange
-            int assignmentId = _random.NextPositive();
-            int teamId = _random.NextPositive();
-            DateTime now = DateTime.UtcNow;
+    [Test]
+    public void GetTeamTestRunInfoForAssignment_NoTestRuns_ShouldReturnDefaultInfo()
+    {
+        //Arrange
+        int assignmentId = _random.NextPositive();
+        int teamId = _random.NextPositive();
+        DateTime now = DateTime.UtcNow;
 
-            _testRunRepositoryMock
-                .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now))
-                .ReturnsAsync(new List<TestRun>());
+        _testRunRepositoryMock
+            .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now))
+            .ReturnsAsync(new List<TestRun>());
 
-            //Act
-            var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
+        //Act
+        var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;
 
-            //Assert
-            Assert.That(testRunInfo, Is.Not.Null);
-            Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
-            Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
-            Assert.That(testRunInfo.LastRunDateTime, Is.Null);
-        }
+        //Assert
+        Assert.That(testRunInfo, Is.Not.Null);
+        Assert.That(testRunInfo.NumberOfRuns, Is.EqualTo(0));
+        Assert.That(testRunInfo.FirstRunDateTime, Is.Null);
+        Assert.That(testRunInfo.LastRunDateTime, Is.Null);
+    }
 
-        [Test]
-        public void ValidateTestCodeHashAsyncShouldReturnFalseForLectorWhenHashIsEmptyAndAssignmentHasHashes()
-        {
-            //Arrange
-            var existingHash = Guid.NewGuid().ToString();
-            var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(existingHash).Build();
+    [Test]
+    public void ValidateTestCodeHashAsyncShouldReturnFalseForLectorWhenHashIsEmptyAndAssignmentHasHashes()
+    {
+        //Arrange
+        var existingHash = Guid.NewGuid().ToString();
+        var assignment = new AssignmentBuilder().WithId().WithTestCodeHash(existingHash).Build();
 
-            //Act
-            var isValid = _service.ValidateTestCodeHashAsync(string.Empty, assignment, true).Result;
+        //Act
+        var isValid = _service.ValidateTestCodeHashAsync(string.Empty, assignment, true).Result;
 
-            //Assert
-            Assert.That(isValid, Is.False);
-            Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
-            _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
-        }
+        //Assert
+        Assert.That(isValid, Is.False);
+        Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
+        _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
     }
 }

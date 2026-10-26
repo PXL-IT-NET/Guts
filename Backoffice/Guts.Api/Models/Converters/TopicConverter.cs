@@ -6,128 +6,127 @@ using Guts.Business.Dtos;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TopicAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public class TopicConverter : ITopicConverter
 {
-    public class TopicConverter : ITopicConverter
+    public TopicSummaryModel ToTopicSummaryModel(ITopic topic, IReadOnlyList<AssignmentResultDto> assignmentResults)
     {
-        public TopicSummaryModel ToTopicSummaryModel(ITopic topic, IReadOnlyList<AssignmentResultDto> assignmentResults)
+        if (topic.Assignments == null)
         {
-            if (topic.Assignments == null)
-            {
-                throw new ArgumentException("Chapter should have assignments loaded", nameof(topic));
-            }
-
-            if (topic.Assignments.Any(ex => ex.Tests == null))
-            {
-                throw new ArgumentException("All assignments of the chapter should have their tests loaded", nameof(topic));
-            }
-
-            var model = new TopicSummaryModel
-            {
-                Id = topic.Id,
-                Code = topic.Code,
-                Description = topic.Description,
-                AssignmentSummaries = new List<AssignmentSummaryModel>()
-            };
-
-            foreach (var assignment in topic.Assignments.OrderBy(a => a.Code))
-            {
-                var assignmentSummaryModel = CreateAssignmentSummaryModel(assignment, assignmentResults);
-                model.AssignmentSummaries.Add(assignmentSummaryModel);
-            }
-            return model;
+            throw new ArgumentException("Chapter should have assignments loaded", nameof(topic));
         }
 
-        public TopicStatisticsModel ToTopicStatisticsModel(ITopic topic, IReadOnlyList<AssignmentStatisticsDto> assignmentStatistics, string unit)
+        if (topic.Assignments.Any(ex => ex.Tests == null))
         {
-            var model = new TopicStatisticsModel
-            {
-                Id = topic.Id,
-                Code = topic.Code,
-                AssignmentStatistics = new List<AssignmentStatisticsModel>()
-            };
-
-            foreach (var assignment in topic.Assignments.OrderBy(a => a.Code))
-            {
-                var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, assignmentStatistics, unit);
-                model.AssignmentStatistics.Add(assignmentStatisticsModel);
-            }
-
-            return model;
+            throw new ArgumentException("All assignments of the chapter should have their tests loaded", nameof(topic));
         }
 
-        private static AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
-            IReadOnlyList<AssignmentResultDto> assignmentResults)
+        var model = new TopicSummaryModel
         {
-            var assignmentSummaryModel = new AssignmentSummaryModel
-            {
-                AssignmentId = assignment.Id,
-                Code = assignment.Code,
-                Description = assignment.Description,
-                NumberOfTests = assignment.Tests.Count,
-                Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList(),
-            };
+            Id = topic.Id,
+            Code = topic.Code,
+            Description = topic.Description,
+            AssignmentSummaries = new List<AssignmentSummaryModel>()
+        };
 
-            EnsureAssignmentDescription(assignmentSummaryModel, assignment);
+        foreach (var assignment in topic.Assignments.OrderBy(a => a.Code))
+        {
+            var assignmentSummaryModel = CreateAssignmentSummaryModel(assignment, assignmentResults);
+            model.AssignmentSummaries.Add(assignmentSummaryModel);
+        }
+        return model;
+    }
 
-            var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assignment.Id);
-            if (matchingResult != null)
-            {
-                assignmentSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
-                assignmentSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
-            }
-            return assignmentSummaryModel;
+    public TopicStatisticsModel ToTopicStatisticsModel(ITopic topic, IReadOnlyList<AssignmentStatisticsDto> assignmentStatistics, string unit)
+    {
+        var model = new TopicStatisticsModel
+        {
+            Id = topic.Id,
+            Code = topic.Code,
+            AssignmentStatistics = new List<AssignmentStatisticsModel>()
+        };
+
+        foreach (var assignment in topic.Assignments.OrderBy(a => a.Code))
+        {
+            var assignmentStatisticsModel = CreateAssignmentStatisticsModel(assignment, assignmentStatistics, unit);
+            model.AssignmentStatistics.Add(assignmentStatisticsModel);
         }
 
-        private static AssignmentStatisticsModel CreateAssignmentStatisticsModel(
-            Assignment assignment,
-            IReadOnlyList<AssignmentStatisticsDto> assignmentStatisticsList, 
-            string unit)
+        return model;
+    }
+
+    private static AssignmentSummaryModel CreateAssignmentSummaryModel(Assignment assignment,
+        IReadOnlyList<AssignmentResultDto> assignmentResults)
+    {
+        var assignmentSummaryModel = new AssignmentSummaryModel
         {
-            var model = new AssignmentStatisticsModel
-            {
-                AssignmentId = assignment.Id,
-                Code = assignment.Code,
-                Description = assignment.Description,
-                TotalNumberOfUnits = 0,
-                Unit = unit,
-                TestPassageStatistics = new List<TestPassageStatisticModel>(),
-                Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
-            };
+            AssignmentId = assignment.Id,
+            Code = assignment.Code,
+            Description = assignment.Description,
+            NumberOfTests = assignment.Tests.Count,
+            Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList(),
+        };
 
-            EnsureAssignmentDescription(model, assignment);
+        EnsureAssignmentDescription(assignmentSummaryModel, assignment);
 
-            var assignmentStatistics = assignmentStatisticsList.FirstOrDefault(result => result.AssignmentId == assignment.Id);
-            if (assignmentStatistics != null)
+        var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assignment.Id);
+        if (matchingResult != null)
+        {
+            assignmentSummaryModel.NumberOfPassedTests = matchingResult.TestResults.Count(result => result.Passed);
+            assignmentSummaryModel.NumberOfFailedTests = matchingResult.TestResults.Count(result => !result.Passed);
+        }
+        return assignmentSummaryModel;
+    }
+
+    private static AssignmentStatisticsModel CreateAssignmentStatisticsModel(
+        Assignment assignment,
+        IReadOnlyList<AssignmentStatisticsDto> assignmentStatisticsList, 
+        string unit)
+    {
+        var model = new AssignmentStatisticsModel
+        {
+            AssignmentId = assignment.Id,
+            Code = assignment.Code,
+            Description = assignment.Description,
+            TotalNumberOfUnits = 0,
+            Unit = unit,
+            TestPassageStatistics = new List<TestPassageStatisticModel>(),
+            Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
+        };
+
+        EnsureAssignmentDescription(model, assignment);
+
+        var assignmentStatistics = assignmentStatisticsList.FirstOrDefault(result => result.AssignmentId == assignment.Id);
+        if (assignmentStatistics != null)
+        {
+            model.TotalNumberOfUnits = assignmentStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
+            foreach (var testPassageStatistic in assignmentStatistics.TestPassageStatistics)
             {
-                model.TotalNumberOfUnits = assignmentStatistics.TestPassageStatistics.Sum(s => s.AmountOfUsers);
-                foreach (var testPassageStatistic in assignmentStatistics.TestPassageStatistics)
+                var testPassageStatisticModel = new TestPassageStatisticModel
                 {
-                    var testPassageStatisticModel = new TestPassageStatisticModel
-                    {
-                        AmountOfPassedTestsRange = $"{testPassageStatistic.AmountOfPassedTests} tests",
-                        NumberOfUsers = testPassageStatistic.AmountOfUsers
-                    };
-                    model.TestPassageStatistics.Add(testPassageStatisticModel);
-                }
+                    AmountOfPassedTestsRange = $"{testPassageStatistic.AmountOfPassedTests} tests",
+                    NumberOfUsers = testPassageStatistic.AmountOfUsers
+                };
+                model.TestPassageStatistics.Add(testPassageStatisticModel);
             }
-
-            return model;
         }
 
-        private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
+        return model;
+    }
+
+    private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
+    {
+        _ = int.TryParse(assignment.Code, out int assignmentNumber);
+        if (assignmentModel.Description == assignmentNumber.ToString())
         {
-            _ = int.TryParse(assignment.Code, out int assignmentNumber);
-            if (assignmentModel.Description == assignmentNumber.ToString())
+            if (assignmentNumber > 0)
             {
-                if (assignmentNumber > 0)
-                {
-                    assignmentModel.Description = "Assignment " + assignmentNumber;
-                }
-                else
-                {
-                    assignmentModel.Description = assignment.Code;
-                }
+                assignmentModel.Description = "Assignment " + assignmentNumber;
+            }
+            else
+            {
+                assignmentModel.Description = assignment.Code;
             }
         }
     }

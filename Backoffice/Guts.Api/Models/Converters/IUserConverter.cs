@@ -1,9 +1,8 @@
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public interface IUserConverter
 {
-    public interface IUserConverter
-    {
-        UserModel FromUser(User user);
-    }
+    UserModel FromUser(User user);
 }

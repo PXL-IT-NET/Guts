@@ -3,46 +3,45 @@ using Guts.Infrastructure.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Guts.Bootstrapper.Logging
+namespace Guts.Bootstrapper.Logging;
+
+/// <summary>
+/// Extensions for adding the <see cref="ILoggingBuilder" /> to the <see cref="FileLoggerProvider" />
+/// </summary>
+public static class FileLoggerFactoryExtensions
 {
     /// <summary>
-    /// Extensions for adding the <see cref="ILoggingBuilder" /> to the <see cref="FileLoggerProvider" />
+    /// Adds a file logger named 'File' to the factory.
     /// </summary>
-    public static class FileLoggerFactoryExtensions
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    public static ILoggingBuilder AddFile(this ILoggingBuilder builder)
     {
-        /// <summary>
-        /// Adds a file logger named 'File' to the factory.
-        /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        public static ILoggingBuilder AddFile(this ILoggingBuilder builder)
-        {
-            builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
-            return builder;
-        }
+        builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
+        return builder;
+    }
 
-        /// <summary>
-        /// Adds a file logger named 'File' to the factory.
-        /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        /// <param name="filenamePrefix">Sets the filename prefix to use for log files</param>
-        public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string filenamePrefix)
-        {
-            builder.AddFile(options => options.FileName = filenamePrefix);
-            return builder;
-        }
+    /// <summary>
+    /// Adds a file logger named 'File' to the factory.
+    /// </summary>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="filenamePrefix">Sets the filename prefix to use for log files</param>
+    public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string filenamePrefix)
+    {
+        builder.AddFile(options => options.FileName = filenamePrefix);
+        return builder;
+    }
 
-        /// <summary>
-        /// Adds a file logger named 'File' to the factory.
-        /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        /// <param name="configure">Configure an instance of the <see cref="FileLoggerOptions" /> to set logging options</param>
-        public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Action<FileLoggerOptions> configure)
-        {
-            ArgumentNullException.ThrowIfNull(configure);
-            builder.AddFile();
-            builder.Services.Configure(configure);
+    /// <summary>
+    /// Adds a file logger named 'File' to the factory.
+    /// </summary>
+    /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+    /// <param name="configure">Configure an instance of the <see cref="FileLoggerOptions" /> to set logging options</param>
+    public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Action<FileLoggerOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        builder.AddFile();
+        builder.Services.Configure(configure);
 
-            return builder;
-        }
+        return builder;
     }
 }

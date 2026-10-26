@@ -4,42 +4,41 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.TopicAggregate
-{
-    public class Topic : AggregateRoot, ITopic //TODO: make internal
-    {
-        private string _code;
+namespace Guts.Domain.TopicAggregate;
 
-        public Code Code
+public abstract class Topic : AggregateRoot, ITopic
+{
+    private string _code;
+
+    public Code Code
+    {
+        get => _code;
+        set
         {
-            get => _code;
-            set
+            _code = value;
+            if (string.IsNullOrEmpty(Description))
             {
-                _code = value;
-                if (string.IsNullOrEmpty(Description))
-                {
-                    Description = value;
-                }
+                Description = value;
             }
         }
+    }
 
-        public string Description { get; set; }
+    public string Description { get; set; }
 
-        public Course Course { get; set; }
-        public int CourseId { get; set; }
+    public Course Course { get; set; }
+    public int CourseId { get; set; }
 
-        public IPeriod Period { get; set; }
-        public int PeriodId { get; set; }
+    public IPeriod Period { get; set; }
+    public int PeriodId { get; set; }
 
-        public ICollection<Assignment> Assignments { get; set; } = new HashSet<Assignment>();
+    public ICollection<Assignment> Assignments { get; set; } = new HashSet<Assignment>();
 
-        protected Topic()
-        {
-        }
+    protected Topic()
+    {
+    }
 
-        protected Topic(int id) : base(id)
-        {
+    protected Topic(int id) : base(id)
+    {
             
-        }
     }
 }

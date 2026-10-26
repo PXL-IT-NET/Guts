@@ -3,11 +3,10 @@ using System.Threading.Tasks;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Business.Services
+namespace Guts.Business.Services;
+
+public interface ITestRunService
 {
-    public interface ITestRunService
-    {
-        Task<TestRun> GetTestRunAsync(int id);
-        Task<TestRun> RegisterRunAsync(TestRun run, IEnumerable<SolutionFile> solutionFiles);
-    }
+    Task<TestRun> GetTestRunAsync(int id);
+    Task<TestRun> RegisterRunAsync(TestRun run, IEnumerable<SolutionFile> solutionFiles);
 }

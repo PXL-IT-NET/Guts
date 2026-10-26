@@ -7,183 +7,182 @@ using Guts.Domain.Tests.Builders;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.ExamAggregate
+namespace Guts.Domain.Tests.ExamAggregate;
+
+[TestFixture]
+public class ExamScoreTests
 {
-    [TestFixture]
-    public class ExamScoreTests
+    [Test]
+    public void Constructor_ShouldSetPropertiesUsingUserAndExam()
     {
-        [Test]
-        public void Constructor_ShouldSetPropertiesUsingUserAndExam()
+        //Arrange
+        var user = new UserBuilder().Build();
+        var examBuilder = new ExamBuilder();
+        double maximumScore = 0.0;
+        for (int i = 0; i < Random.Shared.Next(2,11); i++)
         {
-            //Arrange
-            var user = new UserBuilder().Build();
-            var examBuilder = new ExamBuilder();
-            double maximumScore = 0.0;
-            for (int i = 0; i < Random.Shared.Next(2,11); i++)
-            {
-                var examPartMock = new Mock<IExamPart>();
-                var examPartMaximumScore = Random.Shared.Next(10, 100);
-                maximumScore += examPartMaximumScore;
-                examPartMock.SetupGet(part => part.MaximumScore).Returns(examPartMaximumScore);
-                examBuilder.WithExamPart(examPartMock.Object);
-            }
-
-            var exam = examBuilder.Build();
-
-            //Act
-            var examScore = new ExamScore(user, exam);
-
-            //Assert
-            Assert.That(examScore.FirstName, Is.EqualTo(user.FirstName));
-            Assert.That(examScore.LastName, Is.EqualTo(user.LastName));
-            Assert.That(examScore.NormalizedMaximumScore, Is.EqualTo(exam.MaximumScore));
-            Assert.That(examScore.MaximumScore, Is.EqualTo(maximumScore));
-            Assert.That(examScore.Score, Is.Zero);
-            Assert.That(examScore.ExamPartScores, Has.Count.Zero);
-        }
-
-        [Test]
-        public void Constructor_ShouldTrimUserFirstAndLastName()
-        {
-            //Arrange
-            var user = new UserBuilder()
-                .WithFirstName("   John Jane ")
-                .WithLastName("  Doe the unknown    ")
-                .Build();
-            var exam = new ExamBuilder().Build();
-
-            //Act
-            var examScore = new ExamScore(user, exam);
-
-            //Assert
-            Assert.That(examScore.FirstName, Is.EqualTo("John Jane"));
-            Assert.That(examScore.LastName, Is.EqualTo("Doe the unknown"));
-        }
-
-        [Test]
-        public void Constructor_NullFirstAndLastName_ShouldCoalesceToEmptyString()
-        {
-            //Arrange
-            var user = new UserBuilder()
-                .WithFirstName(null)
-                .WithLastName(null)
-                .Build();
-            var exam = new ExamBuilder().Build();
-
-            //Act
-            var examScore = new ExamScore(user, exam);
-
-            //Assert
-            Assert.That(examScore.FirstName, Is.EqualTo(string.Empty));
-            Assert.That(examScore.LastName, Is.EqualTo(string.Empty));
-        }
-
-        [Test]
-        public void AddExamPartScore_ShouldAccumulateScoreAndCalculateRoundedNormalizedScore()
-        {
-            //Arrange
-            var user = new UserBuilder().Build();
             var examPartMock = new Mock<IExamPart>();
-            examPartMock.SetupGet(p => p.MaximumScore).Returns(40);
-            var exam = new ExamBuilder().WithExamPart(examPartMock.Object).Build();
-            var examScore = new ExamScore(user, exam);
-
-            var partScore1 = new Mock<IExamPartScore>();
-            partScore1.SetupGet(s => s.Score).Returns(15);
-            var partScore2 = new Mock<IExamPartScore>();
-            partScore2.SetupGet(s => s.Score).Returns(10);
-
-            //Act
-            examScore.AddExamPartScore(partScore1.Object);
-            examScore.AddExamPartScore(partScore2.Object);
-
-            //Assert
-            Assert.That(examScore.ExamPartScores, Has.Count.EqualTo(2));
-            Assert.That(examScore.Score, Is.EqualTo(25));
-            // 25 * (20 / 40) = 12.5 -> rounds away from zero to 13
-            Assert.That(examScore.NormalizedScore, Is.EqualTo(13));
+            var examPartMaximumScore = Random.Shared.Next(10, 100);
+            maximumScore += examPartMaximumScore;
+            examPartMock.SetupGet(part => part.MaximumScore).Returns(examPartMaximumScore);
+            examBuilder.WithExamPart(examPartMock.Object);
         }
 
-        [Test]
-        public void ToCsvRecord_ShouldContainTheUserDataAndScoreTotals()
+        var exam = examBuilder.Build();
+
+        //Act
+        var examScore = new ExamScore(user, exam);
+
+        //Assert
+        Assert.That(examScore.FirstName, Is.EqualTo(user.FirstName));
+        Assert.That(examScore.LastName, Is.EqualTo(user.LastName));
+        Assert.That(examScore.NormalizedMaximumScore, Is.EqualTo(exam.MaximumScore));
+        Assert.That(examScore.MaximumScore, Is.EqualTo(maximumScore));
+        Assert.That(examScore.Score, Is.Zero);
+        Assert.That(examScore.ExamPartScores, Has.Count.Zero);
+    }
+
+    [Test]
+    public void Constructor_ShouldTrimUserFirstAndLastName()
+    {
+        //Arrange
+        var user = new UserBuilder()
+            .WithFirstName("   John Jane ")
+            .WithLastName("  Doe the unknown    ")
+            .Build();
+        var exam = new ExamBuilder().Build();
+
+        //Act
+        var examScore = new ExamScore(user, exam);
+
+        //Assert
+        Assert.That(examScore.FirstName, Is.EqualTo("John Jane"));
+        Assert.That(examScore.LastName, Is.EqualTo("Doe the unknown"));
+    }
+
+    [Test]
+    public void Constructor_NullFirstAndLastName_ShouldCoalesceToEmptyString()
+    {
+        //Arrange
+        var user = new UserBuilder()
+            .WithFirstName(null)
+            .WithLastName(null)
+            .Build();
+        var exam = new ExamBuilder().Build();
+
+        //Act
+        var examScore = new ExamScore(user, exam);
+
+        //Assert
+        Assert.That(examScore.FirstName, Is.EqualTo(string.Empty));
+        Assert.That(examScore.LastName, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void AddExamPartScore_ShouldAccumulateScoreAndCalculateRoundedNormalizedScore()
+    {
+        //Arrange
+        var user = new UserBuilder().Build();
+        var examPartMock = new Mock<IExamPart>();
+        examPartMock.SetupGet(p => p.MaximumScore).Returns(40);
+        var exam = new ExamBuilder().WithExamPart(examPartMock.Object).Build();
+        var examScore = new ExamScore(user, exam);
+
+        var partScore1 = new Mock<IExamPartScore>();
+        partScore1.SetupGet(s => s.Score).Returns(15);
+        var partScore2 = new Mock<IExamPartScore>();
+        partScore2.SetupGet(s => s.Score).Returns(10);
+
+        //Act
+        examScore.AddExamPartScore(partScore1.Object);
+        examScore.AddExamPartScore(partScore2.Object);
+
+        //Assert
+        Assert.That(examScore.ExamPartScores, Has.Count.EqualTo(2));
+        Assert.That(examScore.Score, Is.EqualTo(25));
+        // 25 * (20 / 40) = 12.5 -> rounds away from zero to 13
+        Assert.That(examScore.NormalizedScore, Is.EqualTo(13));
+    }
+
+    [Test]
+    public void ToCsvRecord_ShouldContainTheUserDataAndScoreTotals()
+    {
+        //Arrange
+        var user = new UserBuilder().Build();
+        var exam = new ExamBuilder().Build();
+        var examScore = new ExamScore(user, exam);
+
+        //Act
+        ExpandoObject record = examScore.ToCsvRecord();
+
+        //Assert
+        var dictionary = (IDictionary<string, object>) record;
+        Assert.That(dictionary["LastName"], Is.EqualTo(examScore.LastName));
+        Assert.That(dictionary["FirstName"], Is.EqualTo(examScore.FirstName));
+
+        Assert.That(dictionary[$"Total({examScore.MaximumScore})"], Is.EqualTo(examScore.Score));
+        Assert.That(dictionary[$"Total({examScore.NormalizedMaximumScore})"], Is.EqualTo(examScore.NormalizedScore));
+    }
+
+    [Test]
+    public void ToCsvRecord_ShouldContainScoresOfEachAssignmentOfEachExamPart()
+    {
+        //Arrange
+        var user = new UserBuilder().Build();
+        var exam = new ExamBuilder().Build();
+        var examScore = new ExamScore(user, exam);
+        AddSomeExamPartScores(examScore);
+
+        //Act
+        ExpandoObject record = examScore.ToCsvRecord();
+
+        //Assert
+        var dictionary = (IDictionary<string, object>)record;
+        foreach (var examPartScore in examScore.ExamPartScores)
         {
-            //Arrange
-            var user = new UserBuilder().Build();
-            var exam = new ExamBuilder().Build();
-            var examScore = new ExamScore(user, exam);
-
-            //Act
-            ExpandoObject record = examScore.ToCsvRecord();
-
-            //Assert
-            var dictionary = (IDictionary<string, object>) record;
-            Assert.That(dictionary["LastName"], Is.EqualTo(examScore.LastName));
-            Assert.That(dictionary["FirstName"], Is.EqualTo(examScore.FirstName));
-
-            Assert.That(dictionary[$"Total({examScore.MaximumScore})"], Is.EqualTo(examScore.Score));
-            Assert.That(dictionary[$"Total({examScore.NormalizedMaximumScore})"], Is.EqualTo(examScore.NormalizedScore));
-        }
-
-        [Test]
-        public void ToCsvRecord_ShouldContainScoresOfEachAssignmentOfEachExamPart()
-        {
-            //Arrange
-            var user = new UserBuilder().Build();
-            var exam = new ExamBuilder().Build();
-            var examScore = new ExamScore(user, exam);
-            AddSomeExamPartScores(examScore);
-
-            //Act
-            ExpandoObject record = examScore.ToCsvRecord();
-
-            //Assert
-            var dictionary = (IDictionary<string, object>)record;
-            foreach (var examPartScore in examScore.ExamPartScores)
+            Assert.That(dictionary[$"Total_{examPartScore.ExamPartDescription}({examPartScore.MaximumScore})"], Is.EqualTo(examPartScore.Score));
+            foreach (var assignmentEvaluationScore in examPartScore.AssignmentEvaluationScores)
             {
-                Assert.That(dictionary[$"Total_{examPartScore.ExamPartDescription}({examPartScore.MaximumScore})"], Is.EqualTo(examPartScore.Score));
-                foreach (var assignmentEvaluationScore in examPartScore.AssignmentEvaluationScores)
-                {
-                    Assert.That(dictionary[$"{assignmentEvaluationScore.AssignmentDescription}_NbrPassed({assignmentEvaluationScore.NumberOfTests})"], 
-                        Is.EqualTo(assignmentEvaluationScore.NumberOfPassedTests));
-                    Assert.That(dictionary[$"{assignmentEvaluationScore.AssignmentDescription}_Score({assignmentEvaluationScore.MaximumScore})"],
-                        Is.EqualTo(assignmentEvaluationScore.Score));
-                }
+                Assert.That(dictionary[$"{assignmentEvaluationScore.AssignmentDescription}_NbrPassed({assignmentEvaluationScore.NumberOfTests})"], 
+                    Is.EqualTo(assignmentEvaluationScore.NumberOfPassedTests));
+                Assert.That(dictionary[$"{assignmentEvaluationScore.AssignmentDescription}_Score({assignmentEvaluationScore.MaximumScore})"],
+                    Is.EqualTo(assignmentEvaluationScore.Score));
             }
         }
+    }
 
-        private static void AddSomeExamPartScores(ExamScore examScore)
+    private static void AddSomeExamPartScores(ExamScore examScore)
+    {
+        for (int i = 0; i < Random.Shared.Next(1, 5); i++)
         {
-            for (int i = 0; i < Random.Shared.Next(1, 5); i++)
+            List<IAssignmentEvaluationScore> assignmentEvaluationScores = new List<IAssignmentEvaluationScore>();
+            for (int j = 0; j < Random.Shared.Next(1, 5); j++)
             {
-                List<IAssignmentEvaluationScore> assignmentEvaluationScores = new List<IAssignmentEvaluationScore>();
-                for (int j = 0; j < Random.Shared.Next(1, 5); j++)
-                {
-                    var assignmentEvaluationScoreMock = new Mock<IAssignmentEvaluationScore>();
-                    assignmentEvaluationScoreMock.SetupGet(score => score.AssignmentDescription)
-                        .Returns(Random.Shared.NextString());
-                    assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfTests)
-                        .Returns(Random.Shared.Next(5, 11));
-                    assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfPassedTests)
-                        .Returns(Random.Shared.Next(0, 6));
-                    assignmentEvaluationScoreMock.SetupGet(score => score.MaximumScore)
-                        .Returns(Random.Shared.Next(10, 21));
-                    assignmentEvaluationScoreMock.SetupGet(score => score.Score)
-                        .Returns(Random.Shared.Next(0, 11));
-                    assignmentEvaluationScores.Add(assignmentEvaluationScoreMock.Object);
-                }
-
-                var examPartScoreMock = new Mock<IExamPartScore>();
-                examPartScoreMock.SetupGet(examPartScore => examPartScore.AssignmentEvaluationScores)
-                    .Returns(assignmentEvaluationScores);
-                examPartScoreMock.SetupGet(examPartScore => examPartScore.ExamPartDescription)
+                var assignmentEvaluationScoreMock = new Mock<IAssignmentEvaluationScore>();
+                assignmentEvaluationScoreMock.SetupGet(score => score.AssignmentDescription)
                     .Returns(Random.Shared.NextString());
-                examPartScoreMock.SetupGet(examPartScore => examPartScore.MaximumScore)
+                assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfTests)
+                    .Returns(Random.Shared.Next(5, 11));
+                assignmentEvaluationScoreMock.SetupGet(score => score.NumberOfPassedTests)
+                    .Returns(Random.Shared.Next(0, 6));
+                assignmentEvaluationScoreMock.SetupGet(score => score.MaximumScore)
                     .Returns(Random.Shared.Next(10, 21));
-                examPartScoreMock.SetupGet(examPartScore => examPartScore.Score)
+                assignmentEvaluationScoreMock.SetupGet(score => score.Score)
                     .Returns(Random.Shared.Next(0, 11));
-
-                examScore.AddExamPartScore(examPartScoreMock.Object);
+                assignmentEvaluationScores.Add(assignmentEvaluationScoreMock.Object);
             }
+
+            var examPartScoreMock = new Mock<IExamPartScore>();
+            examPartScoreMock.SetupGet(examPartScore => examPartScore.AssignmentEvaluationScores)
+                .Returns(assignmentEvaluationScores);
+            examPartScoreMock.SetupGet(examPartScore => examPartScore.ExamPartDescription)
+                .Returns(Random.Shared.NextString());
+            examPartScoreMock.SetupGet(examPartScore => examPartScore.MaximumScore)
+                .Returns(Random.Shared.Next(10, 21));
+            examPartScoreMock.SetupGet(examPartScore => examPartScore.Score)
+                .Returns(Random.Shared.Next(0, 11));
+
+            examScore.AddExamPartScore(examPartScoreMock.Object);
         }
     }
 }

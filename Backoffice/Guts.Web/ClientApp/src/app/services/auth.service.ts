@@ -119,11 +119,7 @@ export class AuthService {
   }
 
   public logout(): void {
-    // clear token remove user from local storage to log user out
-    this.tokenModel = null;
-    localStorage.removeItem(LocalStorageKeys.currentToken);
-    this.setLoggedInState(false);
-    this.currentUserProfile = null;
+    this.clearToken();
   }
 
   public register(model: RegisterModel): Observable<PostResult> {

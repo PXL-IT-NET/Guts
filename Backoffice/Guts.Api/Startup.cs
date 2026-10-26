@@ -20,151 +20,150 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Hosting;
 using NSwag.Generation.Processors.Security;
 
-namespace Guts.Api
+namespace Guts.Api;
+
+[ExcludeFromCodeCoverage]
+public class Startup(IConfiguration configuration)
 {
-    [ExcludeFromCodeCoverage]
-    public class Startup(IConfiguration configuration)
+    public IConfiguration Configuration { get; } = configuration;
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    [SuppressMessage("Security", "S6781:JWT secret keys should not be disclosed", Justification = "Local development docker-compose override uses a dummy test secret; production and staging use environment variables.")]
+    public void ConfigureServices(IServiceCollection services)
     {
-        public IConfiguration Configuration { get; } = configuration;
-
-        // This method gets called by the runtime. Use this method to add services to the container.
-        [SuppressMessage("Security", "S6781:JWT secret keys should not be disclosed", Justification = "Local development docker-compose override uses a dummy test secret; production and staging use environment variables.")]
-        public void ConfigureServices(IServiceCollection services)
+        services.Configure<CookiePolicyOptions>(options =>
         {
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
+            // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+            options.CheckConsentNeeded = context => true;
+            options.MinimumSameSitePolicy = SameSiteMode.None;
+        });
 
-            services.AddCors();
+        services.AddCors();
 
-            services.AddAuthentication(options =>
+        services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-                .AddJwtBearer(options =>
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
                 {
-                    options.RequireHttpsMetadata = false;
-                    options.SaveToken = true;
-                    options.TokenValidationParameters = new TokenValidationParameters()
-                    {
-                        ValidIssuer = Configuration["Tokens:Issuer"],
-                        ValidAudience = Configuration["Tokens:Audience"],
+                    ValidIssuer = Configuration["Tokens:Issuer"],
+                    ValidAudience = Configuration["Tokens:Audience"],
 #pragma warning disable S6781 // JWT secret keys should not be disclosed
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
 #pragma warning restore S6781
-                    };
-                });
-
-            services.AddAuthorization(options =>
-            {
-                var authenticatedUsersOnlyPolicy = new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-                    .RequireAuthenticatedUser()
-                    .Build();
-
-                options.AddPolicy(ApiConstants.AuthenticatedUsersOnlyPolicy, authenticatedUsersOnlyPolicy);
-                options.DefaultPolicy = authenticatedUsersOnlyPolicy;
-
-                var lectorsOnlyPolicy = new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-                    .RequireAuthenticatedUser()
-                    .RequireRole(Role.Constants.Lector)
-                    .Build();
-                options.AddPolicy(ApiConstants.LectorsOnlyPolicy, lectorsOnlyPolicy);
-            });
-
-            services.AddControllers(options =>
-            {
-                options.Filters.Add(new AuthorizeFilter(ApiConstants.AuthenticatedUsersOnlyPolicy));
-                options.Filters.Add<ApplicationExceptionFilterAttribute>();
-                options.Filters.Add<LogBadRequestFilterAttribute>();
-            });
-
-            services.AddOpenApiDocument(document =>
-            {
-                document.AddSecurity("bearer", [], new OpenApiSecurityScheme
-                {
-                    Type = OpenApiSecuritySchemeType.ApiKey,
-                    Name = "Authorization",
-                    Description =
-                        "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
-                    In = OpenApiSecurityApiKeyLocation.Header
-                });
-                document.PostProcess = document =>
-                {
-                    document.Schemes = [OpenApiSchema.Https];
-                    document.Info.Title = "GUTS Api";
-                    document.Info.Description =
-                        "Service that collects and queries data about runs of automated tests in programming exercises.";
                 };
-                document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
             });
 
-            services.AddMemoryCache();
-
-            services.AddMcpServer()
-                .WithHttpTransport(options =>
-                {
-                    options.Stateless = true;
-                })
-                .WithResourcesFromAssembly()
-                .WithPromptsFromAssembly();
-
-            services.AddSingleton<IMapper, Mapper>();
-
-            services.AddApplicationServices(Configuration);
-            services.AddHostedService<SprintLeaderboardBackgroundService>();
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        services.AddAuthorization(options =>
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionJsonResponse();
-            }
-            else
-            {
-                app.UseHsts();
-            }
+            var authenticatedUsersOnlyPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .Build();
 
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            options.AddPolicy(ApiConstants.AuthenticatedUsersOnlyPolicy, authenticatedUsersOnlyPolicy);
+            options.DefaultPolicy = authenticatedUsersOnlyPolicy;
+
+            var lectorsOnlyPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .RequireRole(Role.Constants.Lector)
+                .Build();
+            options.AddPolicy(ApiConstants.LectorsOnlyPolicy, lectorsOnlyPolicy);
+        });
+
+        services.AddControllers(options =>
+        {
+            options.Filters.Add(new AuthorizeFilter(ApiConstants.AuthenticatedUsersOnlyPolicy));
+            options.Filters.Add<ApplicationExceptionFilterAttribute>();
+            options.Filters.Add<LogBadRequestFilterAttribute>();
+        });
+
+        services.AddOpenApiDocument(document =>
+        {
+            document.AddSecurity("bearer", [], new OpenApiSecurityScheme
             {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                Type = OpenApiSecuritySchemeType.ApiKey,
+                Name = "Authorization",
+                Description =
+                    "Copy 'Bearer ' + valid JWT token into field. You can retrieve a JWT token via '/api/Auth/token'",
+                In = OpenApiSecurityApiKeyLocation.Header
             });
-
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseCookiePolicy();
-
-            app.UseOpenApi();
-            app.UseSwaggerUi();
-
-            app.UseCors(builder =>
+            document.PostProcess = document =>
             {
-                builder.AllowAnyHeader();
-                builder.WithExposedHeaders("Content-Disposition");
-                builder.AllowAnyMethod();
-                builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
+                document.Schemes = [OpenApiSchema.Https];
+                document.Info.Title = "GUTS Api";
+                document.Info.Description =
+                    "Service that collects and queries data about runs of automated tests in programming exercises.";
+            };
+            document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
+        });
 
-                string[] allowedOrigins = Configuration.GetSection("AllowedOrigins").Get<string[]>();
-                builder.WithOrigins(allowedOrigins);
+        services.AddMemoryCache();
 
-            });
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
+        services.AddMcpServer()
+            .WithHttpTransport(options =>
             {
-                endpoints.MapControllers();
-                endpoints.MapMcp("/mcp");
-            });
+                options.Stateless = true;
+            })
+            .WithResourcesFromAssembly()
+            .WithPromptsFromAssembly();
+
+        services.AddSingleton<IMapper, Mapper>();
+
+        services.AddApplicationServices(Configuration);
+        services.AddHostedService<SprintLeaderboardBackgroundService>();
+    }
+
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionJsonResponse();
         }
+        else
+        {
+            app.UseHsts();
+        }
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
+
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseCookiePolicy();
+
+        app.UseOpenApi();
+        app.UseSwaggerUi();
+
+        app.UseCors(builder =>
+        {
+            builder.AllowAnyHeader();
+            builder.WithExposedHeaders("Content-Disposition");
+            builder.AllowAnyMethod();
+            builder.SetPreflightMaxAge(TimeSpan.FromHours(1));
+
+            string[] allowedOrigins = Configuration.GetSection("AllowedOrigins").Get<string[]>();
+            builder.WithOrigins(allowedOrigins);
+
+        });
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapMcp("/mcp");
+        });
     }
 }

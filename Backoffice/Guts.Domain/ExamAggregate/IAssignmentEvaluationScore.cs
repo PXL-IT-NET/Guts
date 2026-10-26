@@ -1,12 +1,11 @@
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public interface IAssignmentEvaluationScore
 {
-    public interface IAssignmentEvaluationScore
-    {
-        int AssignmentEvaluationId { get; }
-        string AssignmentDescription { get; }
-        double Score { get; }
-        double MaximumScore { get; }
-        int NumberOfTests { get; }
-        int NumberOfPassedTests { get; set; }
-    }
+    int AssignmentEvaluationId { get; }
+    string AssignmentDescription { get; }
+    double Score { get; }
+    double MaximumScore { get; }
+    int NumberOfTests { get; }
+    int NumberOfPassedTests { get; set; }
 }

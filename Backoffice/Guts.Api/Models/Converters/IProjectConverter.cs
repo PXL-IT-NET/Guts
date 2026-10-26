@@ -1,11 +1,10 @@
 ﻿using Guts.Api.Models.ProjectModels;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public interface IProjectConverter
 {
-    public interface IProjectConverter
-    {
-        TopicModel ToTopicModel(IProject project);
-        ProjectDetailModel ToProjectDetailModel(IProject project);
-    }
+    TopicModel ToTopicModel(IProject project);
+    ProjectDetailModel ToProjectDetailModel(IProject project);
 }

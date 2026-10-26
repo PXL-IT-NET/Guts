@@ -10,96 +10,95 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Polly;
 
-namespace Guts.Infrastructure
+namespace Guts.Infrastructure;
+
+internal class GutsDbInitializer
 {
-    internal class GutsDbInitializer
+    private readonly GutsContext _context;
+    private readonly ILogger _logger;
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<Role> _roleManager;
+
+    public GutsDbInitializer(GutsContext context, ILogger logger, UserManager<User> userManager, RoleManager<Role> roleManager)
     {
-        private readonly GutsContext _context;
-        private readonly ILogger _logger;
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<Role> _roleManager;
-
-        public GutsDbInitializer(GutsContext context, ILogger logger, UserManager<User> userManager, RoleManager<Role> roleManager)
-        {
-            _context = context;
-            _logger = logger;
-            _userManager = userManager;
-            _roleManager = roleManager;
-        }
-
-        public void DoAutomaticMigrations()
-        {
-            var pendingMigrations = _context.Database.GetPendingMigrations().ToList();
-            if (pendingMigrations.Count == 0)
-            {
-                _logger.LogInformation("No pending migrations found.");
-                return;
-            }
-
-            _logger.LogInformation("Migrating database...");
-
-            try
-            {
-
-                var retry = Policy.Handle<SqlException>()
-                    .WaitAndRetry(new TimeSpan[]
-                    {
-                        TimeSpan.FromSeconds(3),
-                        TimeSpan.FromSeconds(5),
-                        TimeSpan.FromSeconds(8),
-                    });
-                retry.Execute(() => _context.Database.Migrate());
-
-                _logger.LogInformation("Migration succeeded");
-            }
-            catch (Exception e)
-            {
-                _logger.LogCritical(e, "Error when trying to migrate database.");
-            }
-        }
-
-        public void Seed()
-        {
-            AddRolesIfNotExists().Wait();
-
-            var dotNetEssentialsCourse = new Course
-            {
-                Code = "dotNet1",
-                Name = ".NET Essentials"
-            };
-            _context.Courses.AddIfNotExists(c => c.Code, dotNetEssentialsCourse);
-
-            var dotAdvancedCourse = new Course
-            {
-                Code = "dotNet2",
-                Name = ".NET Advanced"
-            };
-            _context.Courses.AddIfNotExists(c => c.Code, dotAdvancedCourse);
-
-            _context.SaveChanges();
-        }
-
-        private async Task AddRolesIfNotExists()
-        {
-            if (await _roleManager.RoleExistsAsync(Role.Constants.Student)) return;
-
-            await _roleManager.CreateAsync(new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpper() });
-            await _roleManager.CreateAsync(new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpper() });
-
-            //link exsting students to the "student" role
-            var students = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToListAsync();
-            foreach (var student in students)
-            {
-                await _userManager.AddToRoleAsync(student, Role.Constants.Student);
-            }
-
-            //link exsting lectors to the "lector" role
-            var lectors = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToListAsync();
-            foreach (var lector in lectors)
-            {
-                await _userManager.AddToRoleAsync(lector, Role.Constants.Lector);
-            }
-        }
-
+        _context = context;
+        _logger = logger;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
+
+    public void DoAutomaticMigrations()
+    {
+        var pendingMigrations = _context.Database.GetPendingMigrations().ToList();
+        if (pendingMigrations.Count == 0)
+        {
+            _logger.LogInformation("No pending migrations found.");
+            return;
+        }
+
+        _logger.LogInformation("Migrating database...");
+
+        try
+        {
+
+            var retry = Policy.Handle<SqlException>()
+                .WaitAndRetry(new TimeSpan[]
+                {
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(8),
+                });
+            retry.Execute(() => _context.Database.Migrate());
+
+            _logger.LogInformation("Migration succeeded");
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical(e, "Error when trying to migrate database.");
+        }
+    }
+
+    public void Seed()
+    {
+        AddRolesIfNotExists().Wait();
+
+        var dotNetEssentialsCourse = new Course
+        {
+            Code = "dotNet1",
+            Name = ".NET Essentials"
+        };
+        _context.Courses.AddIfNotExists(c => c.Code, dotNetEssentialsCourse);
+
+        var dotAdvancedCourse = new Course
+        {
+            Code = "dotNet2",
+            Name = ".NET Advanced"
+        };
+        _context.Courses.AddIfNotExists(c => c.Code, dotAdvancedCourse);
+
+        _context.SaveChanges();
+    }
+
+    private async Task AddRolesIfNotExists()
+    {
+        if (await _roleManager.RoleExistsAsync(Role.Constants.Student)) return;
+
+        await _roleManager.CreateAsync(new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpper() });
+        await _roleManager.CreateAsync(new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpper() });
+
+        //link exsting students to the "student" role
+        var students = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToListAsync();
+        foreach (var student in students)
+        {
+            await _userManager.AddToRoleAsync(student, Role.Constants.Student);
+        }
+
+        //link exsting lectors to the "lector" role
+        var lectors = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToListAsync();
+        foreach (var lector in lectors)
+        {
+            await _userManager.AddToRoleAsync(lector, Role.Constants.Lector);
+        }
+    }
+
 }

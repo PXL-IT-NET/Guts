@@ -1,7 +1,6 @@
-namespace Guts.Domain
+namespace Guts.Domain;
+
+public interface IEntity
 {
-    public interface IEntity
-    {
-        public int Id { get; }
-    }
+    public int Id { get; }
 }

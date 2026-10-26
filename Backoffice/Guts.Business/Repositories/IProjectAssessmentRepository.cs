@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
-namespace Guts.Business.Repositories
+namespace Guts.Business.Repositories;
+
+public interface IProjectAssessmentRepository : IBasicRepository<IProjectAssessment>
 {
-    public interface IProjectAssessmentRepository : IBasicRepository<IProjectAssessment>
-    {
-        Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId);
-    }
+    Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId);
 }

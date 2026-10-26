@@ -3,61 +3,60 @@ using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
 
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public class ExamPartTestResultCollection : ValueObject<ExamPartTestResultCollection>, IExamPartTestResultCollection
 {
-    public class ExamPartTestResultCollection : ValueObject<ExamPartTestResultCollection>, IExamPartTestResultCollection
+    private readonly Dictionary<int, IDictionary<int, AssignmentResult>> _userAssignmentDictionary;
+
+    private ExamPartTestResultCollection()
     {
-        private readonly Dictionary<int, IDictionary<int, AssignmentResult>> _userAssignmentDictionary;
+        _userAssignmentDictionary = new Dictionary<int, IDictionary<int, AssignmentResult>>();
+    }
 
-        private ExamPartTestResultCollection()
+    public static ExamPartTestResultCollection FromLastTestResults(IEnumerable<TestResult> lastTestResults)
+    {
+        var collection = new ExamPartTestResultCollection();
+        foreach (var assignmentGroup in lastTestResults.GroupBy(result => result.Test.AssignmentId))
         {
-            _userAssignmentDictionary = new Dictionary<int, IDictionary<int, AssignmentResult>>();
-        }
-
-        public static ExamPartTestResultCollection FromLastTestResults(IEnumerable<TestResult> lastTestResults)
-        {
-            var collection = new ExamPartTestResultCollection();
-            foreach (var assignmentGroup in lastTestResults.GroupBy(result => result.Test.AssignmentId))
+            var userResultDictionary = new Dictionary<int, AssignmentResult>();
+            foreach (var userResultGroup in assignmentGroup.GroupBy(result => result.UserId))
             {
-                var userResultDictionary = new Dictionary<int, AssignmentResult>();
-                foreach (var userResultGroup in assignmentGroup.GroupBy(result => result.UserId))
-                {
-                    userResultDictionary.Add(userResultGroup.Key, new AssignmentResult(assignmentGroup.Key, userResultGroup.Key, userResultGroup));
-                }
-                collection._userAssignmentDictionary.Add(assignmentGroup.Key, userResultDictionary);
+                userResultDictionary.Add(userResultGroup.Key, new AssignmentResult(assignmentGroup.Key, userResultGroup.Key, userResultGroup));
             }
-
-            return collection;
+            collection._userAssignmentDictionary.Add(assignmentGroup.Key, userResultDictionary);
         }
 
-        public IAssignmentResult GetAssignmentResultFor(int userId, int assignmentId)
-        {
-            if (_userAssignmentDictionary.TryGetValue(assignmentId,
+        return collection;
+    }
+
+    public IAssignmentResult GetAssignmentResultFor(int userId, int assignmentId)
+    {
+        if (_userAssignmentDictionary.TryGetValue(assignmentId,
                 out IDictionary<int, AssignmentResult> assignmentResultDictionary) &&
-                assignmentResultDictionary.TryGetValue(userId, out AssignmentResult assignmentResult))
-            {
-                return assignmentResult;
-            }
-            return new AssignmentResult(assignmentId, userId);
-        }
-
-
-        protected override IEnumerable<object> GetEqualityComponents()
+            assignmentResultDictionary.TryGetValue(userId, out AssignmentResult assignmentResult))
         {
-            foreach (var key in _userAssignmentDictionary.Keys)
+            return assignmentResult;
+        }
+        return new AssignmentResult(assignmentId, userId);
+    }
+
+
+    protected override IEnumerable<object> GetEqualityComponents()
+    {
+        foreach (var key in _userAssignmentDictionary.Keys)
+        {
+            yield return key;
+        }
+        foreach (var assignmentResultDictionary in _userAssignmentDictionary.Values)
+        {
+            foreach (var key in assignmentResultDictionary.Keys)
             {
                 yield return key;
             }
-            foreach (var assignmentResultDictionary in _userAssignmentDictionary.Values)
+            foreach (var value in assignmentResultDictionary.Values)
             {
-                foreach (var key in assignmentResultDictionary.Keys)
-                {
-                    yield return key;
-                }
-                foreach (var value in assignmentResultDictionary.Values)
-                {
-                    yield return value;
-                }
+                yield return value;
             }
         }
     }

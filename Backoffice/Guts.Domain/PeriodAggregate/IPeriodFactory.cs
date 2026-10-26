@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Guts.Domain.PeriodAggregate
+namespace Guts.Domain.PeriodAggregate;
+
+public interface IPeriodFactory
 {
-    public interface IPeriodFactory
-    {
-        Period CreateNew(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> existingPeriods);
-    }
+    Period CreateNew(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> existingPeriods);
 }

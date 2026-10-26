@@ -5,84 +5,83 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;
 
-namespace Guts.Domain.Tests.Builders
+namespace Guts.Domain.Tests.Builders;
+
+internal class AssignmentBuilder : BaseBuilder<Assignment>
 {
-    internal class AssignmentBuilder : BaseBuilder<Assignment>
+    public AssignmentBuilder()
     {
-        public AssignmentBuilder()
+        Item = new Assignment
         {
-            Item = new Assignment
-            {
-                TopicId = Random.Shared.NextPositive(),
-                Code = Guid.NewGuid().ToString(),
-                Description = Guid.NewGuid().ToString(),
-                Tests = new List<Test>()
-            };
-        }
+            TopicId = Random.Shared.NextPositive(),
+            Code = Guid.NewGuid().ToString(),
+            Description = Guid.NewGuid().ToString(),
+            Tests = new List<Test>()
+        };
+    }
 
-        public AssignmentBuilder WithId()
-        {
-            Item.Id = Random.Shared.NextPositive();
-            return this;
-        }
+    public AssignmentBuilder WithId()
+    {
+        Item.Id = Random.Shared.NextPositive();
+        return this;
+    }
 
-        public AssignmentBuilder WithId(int id)
-        {
-            Item.Id = id;
-            return this;
-        }
+    public AssignmentBuilder WithId(int id)
+    {
+        Item.Id = id;
+        return this;
+    }
 
-        public AssignmentBuilder WithCode(string code)
-        {
-            Item.Code = code;
-            return this;
-        }
+    public AssignmentBuilder WithCode(string code)
+    {
+        Item.Code = code;
+        return this;
+    }
 
-        public AssignmentBuilder WithRandomTests(int numberOfTests)
+    public AssignmentBuilder WithRandomTests(int numberOfTests)
+    {
+        var tests = new List<Test>();
+        for (int i = 0; i < numberOfTests; i++)
         {
-            var tests = new List<Test>();
-            for (int i = 0; i < numberOfTests; i++)
-            {
-                var test = new Test
-                {
-                    Id = Random.Shared.NextPositive(),
-                    TestName = Guid.NewGuid().ToString(),
-                    AssignmentId = Item.Id
-                };
-                tests.Add(test);
-            }
-            Item.Tests = tests;
-            return this;
-        }
-
-        public AssignmentBuilder WithTopic(Topic topic)
-        {
-            Item.Topic = topic;
-            Item.TopicId = topic.Id;
-            return this;
-        }
-
-        public AssignmentBuilder WithoutTopicLoaded()
-        {
-            Item.Topic = null;
-            return this;
-        }
-
-        public AssignmentBuilder WithoutTestsLoaded()
-        {
-            Item.Tests = null;
-            return this;
-        }
-
-        public AssignmentBuilder WithTestCodeHash(string testCodeHash)
-        {
-            Item.TestCodeHashes.Add(new TestCodeHash
+            var test = new Test
             {
                 Id = Random.Shared.NextPositive(),
-                AssignmentId = Item.Id,
-                Hash = testCodeHash
-            });
-            return this;
+                TestName = Guid.NewGuid().ToString(),
+                AssignmentId = Item.Id
+            };
+            tests.Add(test);
         }
+        Item.Tests = tests;
+        return this;
+    }
+
+    public AssignmentBuilder WithTopic(Topic topic)
+    {
+        Item.Topic = topic;
+        Item.TopicId = topic.Id;
+        return this;
+    }
+
+    public AssignmentBuilder WithoutTopicLoaded()
+    {
+        Item.Topic = null;
+        return this;
+    }
+
+    public AssignmentBuilder WithoutTestsLoaded()
+    {
+        Item.Tests = null;
+        return this;
+    }
+
+    public AssignmentBuilder WithTestCodeHash(string testCodeHash)
+    {
+        Item.TestCodeHashes.Add(new TestCodeHash
+        {
+            Id = Random.Shared.NextPositive(),
+            AssignmentId = Item.Id,
+            Hash = testCodeHash
+        });
+        return this;
     }
 }

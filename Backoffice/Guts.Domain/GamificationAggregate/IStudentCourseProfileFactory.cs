@@ -1,7 +1,6 @@
-namespace Guts.Domain.GamificationAggregate
+namespace Guts.Domain.GamificationAggregate;
+
+public interface IStudentCourseProfileFactory
 {
-    public interface IStudentCourseProfileFactory
-    {
-        StudentCourseProfile CreateNew(int userId, int courseId, int periodId);
-    }
+    StudentCourseProfile CreateNew(int userId, int courseId, int periodId);
 }

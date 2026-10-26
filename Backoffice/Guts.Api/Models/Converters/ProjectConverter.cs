@@ -3,44 +3,43 @@ using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.ProjectModels;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public class ProjectConverter(IMapper mapper) : IProjectConverter
 {
-    public class ProjectConverter(IMapper mapper) : IProjectConverter
+    public TopicModel ToTopicModel(IProject project)
     {
-        public TopicModel ToTopicModel(IProject project)
+        return new TopicModel
         {
-            return new TopicModel
-            {
-                Id = project.Id,
-                Code = project.Code,
-                Description = project.Description,
-                Assignments = project.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
-                    .ToList()
-            };
-        }
+            Id = project.Id,
+            Code = project.Code,
+            Description = project.Description,
+            Assignments = project.Assignments.Select(a => mapper.MapToAssignmentModel(a)).OrderBy(m => m.Code)
+                .ToList()
+        };
+    }
 
-        public ProjectDetailModel ToProjectDetailModel(IProject project)
+    public ProjectDetailModel ToProjectDetailModel(IProject project)
+    {
+        var model = new ProjectDetailModel
         {
-            var model = new ProjectDetailModel
+            Id = project.Id,
+            Code = project.Code,
+            Description = project.Description,
+            Teams = project.Teams.Select(t => new TeamModel
             {
-                Id = project.Id,
-                Code = project.Code,
-                Description = project.Description,
-                Teams = project.Teams.Select(t => new TeamModel
-                {
-                    Id = t.Id,
-                    Name = t.Name
-                }).OrderBy(team => team.Name).ToList(),
-                Components = project.Assignments.Select(a => new AssignmentModel
-                {
-                    AssignmentId = a.Id,
-                    Code = a.Code,
-                    Description = a.Description,
-                    Tests = a.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
-                }).OrderBy(c => c.Code).ToList()
-            };
+                Id = t.Id,
+                Name = t.Name
+            }).OrderBy(team => team.Name).ToList(),
+            Components = project.Assignments.Select(a => new AssignmentModel
+            {
+                AssignmentId = a.Id,
+                Code = a.Code,
+                Description = a.Description,
+                Tests = a.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
+            }).OrderBy(c => c.Code).ToList()
+        };
 
-            return model;
-        }
+        return model;
     }
 }

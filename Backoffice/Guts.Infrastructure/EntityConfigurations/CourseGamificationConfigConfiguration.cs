@@ -2,18 +2,16 @@ using Guts.Domain.GamificationAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Guts.Infrastructure.EntityConfigurations
+namespace Guts.Infrastructure.EntityConfigurations;
+
+internal class CourseGamificationConfigConfiguration : IEntityTypeConfiguration<CourseGamificationConfig>
 {
-    internal class CourseGamificationConfigConfiguration : IEntityTypeConfiguration<CourseGamificationConfig>
+    public void Configure(EntityTypeBuilder<CourseGamificationConfig> builder)
     {
-        public void Configure(EntityTypeBuilder<CourseGamificationConfig> builder)
-        {
-            builder.ToTable("CourseGamificationConfigs");
+        builder.ToTable("CourseGamificationConfigs");
 
-            builder.HasIndex(cgc => cgc.CourseId).IsUnique();
+        builder.HasIndex(cgc => cgc.CourseId).IsUnique();
 
-            builder.Property(cgc => cgc.IsGamificationEnabled).HasDefaultValue(false);
-        }
+        builder.Property(cgc => cgc.IsGamificationEnabled).HasDefaultValue(false);
     }
 }
-

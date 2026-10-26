@@ -8,89 +8,88 @@ using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public class AssignmentConverter : IAssignmentConverter
 {
-    public class AssignmentConverter : IAssignmentConverter
+    public AssignmentDetailModel ToAssignmentDetailModel(
+        Assignment assignment,
+        AssignmentTestRunInfoDto testRunInfo,
+        IList<TestResult> results,
+        IList<SolutionFile> solutionFiles)
     {
-        public AssignmentDetailModel ToAssignmentDetailModel(
-            Assignment assignment,
-            AssignmentTestRunInfoDto testRunInfo,
-            IList<TestResult> results,
-            IList<SolutionFile> solutionFiles)
+        if (assignment.Topic?.Course == null)
         {
-            if (assignment.Topic?.Course == null)
+            throw new ArgumentException("Assignment should have topic and course loaded", nameof(assignment));
+        }
+
+        if (assignment.Tests == null)
+        {
+            throw new ArgumentException("Assignment should have tests loaded", nameof(assignment));
+        }
+
+        ArgumentNullException.ThrowIfNull(testRunInfo);
+
+        results ??= new List<TestResult>();
+        solutionFiles ??= new List<SolutionFile>();
+
+        var model = new AssignmentDetailModel
+        {
+            TopicCode = assignment.Topic.Code,
+            Code = assignment.Code,
+            AssignmentId = assignment.Id,
+            CourseName = assignment.Topic.Course.Name,
+            CourseId= assignment.Topic.CourseId,
+            Tests = assignment.Tests.Select(t => new TestModel{Id = t.Id, TestName = t.TestName}).ToList(),
+            TestResults = new List<TestResultModel>(),
+            FirstRun =  testRunInfo.FirstRunDateTime, 
+            LastRun = testRunInfo.LastRunDateTime,
+            NumberOfRuns = testRunInfo.NumberOfRuns,
+            SolutionFiles = new List<SolutionFileOutputModel>()
+        };
+
+        AddTestResults(model, assignment, results);
+
+        AddSolutionFiles(model, solutionFiles);
+
+        return model;
+    }
+
+    private static void AddTestResults(AssignmentDetailModel model, Assignment assignment,
+        IList<TestResult> results)
+    {
+        foreach (Test test in assignment.Tests)
+        {
+            var testResultModel = new TestResultModel
             {
-                throw new ArgumentException("Assignment should have topic and course loaded", nameof(assignment));
-            }
-
-            if (assignment.Tests == null)
-            {
-                throw new ArgumentException("Assignment should have tests loaded", nameof(assignment));
-            }
-
-            ArgumentNullException.ThrowIfNull(testRunInfo);
-
-            results ??= new List<TestResult>();
-            solutionFiles ??= new List<SolutionFile>();
-
-            var model = new AssignmentDetailModel
-            {
-                TopicCode = assignment.Topic.Code,
-                Code = assignment.Code,
-                AssignmentId = assignment.Id,
-                CourseName = assignment.Topic.Course.Name,
-                CourseId= assignment.Topic.CourseId,
-                Tests = assignment.Tests.Select(t => new TestModel{Id = t.Id, TestName = t.TestName}).ToList(),
-                TestResults = new List<TestResultModel>(),
-                FirstRun =  testRunInfo.FirstRunDateTime, 
-                LastRun = testRunInfo.LastRunDateTime,
-                NumberOfRuns = testRunInfo.NumberOfRuns,
-                SolutionFiles = new List<SolutionFileOutputModel>()
+                TestName = test.TestName,
+                Runned = false,
+                Passed = false,
+                Message = string.Empty
             };
 
-            AddTestResults(model, assignment, results);
-
-            AddSolutionFiles(model, solutionFiles);
-
-            return model;
-        }
-
-        private static void AddTestResults(AssignmentDetailModel model, Assignment assignment,
-            IList<TestResult> results)
-        {
-            foreach (Test test in assignment.Tests)
+            TestResult matchingResult = results?.FirstOrDefault(r => r.TestId == test.Id);
+            if (matchingResult != null)
             {
-                var testResultModel = new TestResultModel
-                {
-                    TestName = test.TestName,
-                    Runned = false,
-                    Passed = false,
-                    Message = string.Empty
-                };
-
-                TestResult matchingResult = results?.FirstOrDefault(r => r.TestId == test.Id);
-                if (matchingResult != null)
-                {
-                    testResultModel.Runned = true;
-                    testResultModel.Passed = matchingResult.Passed;
-                    testResultModel.Message = matchingResult.Message;
-                }
-
-                model.TestResults.Add(testResultModel);
+                testResultModel.Runned = true;
+                testResultModel.Passed = matchingResult.Passed;
+                testResultModel.Message = matchingResult.Message;
             }
+
+            model.TestResults.Add(testResultModel);
         }
+    }
 
-        private static void AddSolutionFiles(AssignmentDetailModel model, IList<SolutionFile> solutionFiles)
+    private static void AddSolutionFiles(AssignmentDetailModel model, IList<SolutionFile> solutionFiles)
+    {
+        foreach (var solutionFile in solutionFiles)
         {
-            foreach (var solutionFile in solutionFiles)
+            var solutionFileModel = new SolutionFileOutputModel
             {
-                var solutionFileModel = new SolutionFileOutputModel
-                {
-                    FilePath = solutionFile.FilePath,
-                    Content = solutionFile.Content
-                };
-                model.SolutionFiles.Add(solutionFileModel);
-            }
+                FilePath = solutionFile.FilePath,
+                Content = solutionFile.Content
+            };
+            model.SolutionFiles.Add(solutionFileModel);
         }
     }
 }

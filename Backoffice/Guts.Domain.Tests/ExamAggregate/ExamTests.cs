@@ -10,170 +10,169 @@ using Guts.Domain.UserAggregate;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.ExamAggregate
+namespace Guts.Domain.Tests.ExamAggregate;
+
+[TestFixture]
+public class ExamTests
 {
-    [TestFixture]
-    public class ExamTests
+    private Exam.Factory _factory;
+    private Exam _existingExam;
+
+    [SetUp]
+    public void SetUp()
     {
-        private Exam.Factory _factory;
-        private Exam _existingExam;
+        _factory = new Exam.Factory();
+        var examId = Random.Shared.NextPositive();
+        _existingExam = new ExamBuilder().WithId(examId).Build();
+    }
 
-        [SetUp]
-        public void SetUp()
+    [Test]
+    public void Factory_CreateNew_ShouldConstructExamCorrectly()
+    {
+        var validCourseId = Random.Shared.NextPositive();
+        var validPeriodId = Random.Shared.NextPositive();
+        var validName = Random.Shared.NextString();
+        var exam = _factory.CreateNew(validCourseId, validPeriodId, validName);
+
+        Assert.That(exam, Is.Not.Null);
+        Assert.That(exam.Id, Is.EqualTo(0));
+        Assert.That(exam.CourseId, Is.EqualTo(validCourseId));
+        Assert.That(exam.Name, Is.EqualTo(validName));
+        Assert.That(exam.PeriodId, Is.EqualTo(validPeriodId));
+        Assert.That(exam.MaximumScore, Is.EqualTo(20));
+        Assert.That(exam.Parts, Is.Empty);
+    }
+
+    [TestCase(0, 1, "someName")] //invalid course
+    [TestCase(-1, 1, "someName")]
+    [TestCase(1, 1, null)] //invalid name
+    [TestCase(1, 1, "")]
+    [TestCase(1, 0, "someName")] //invalid period
+    [TestCase(1, -1, "someName")]
+    public void Factory_CreateNew_ShouldThrowContractExceptionOnInvalidInput(int courseId, int periodId, string name)
+    {
+        Assert.That(() => _factory.CreateNew(courseId, periodId, name), Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void AddExamPart_ShouldCorrectlyCreateAndAddAnExamPart()
+    {
+        var validName = Random.Shared.NextString();
+        var validDeadline = DateTime.UtcNow.AddDays(1);
+
+        var addedPart = _existingExam.AddExamPart(validName, validDeadline);
+
+        Assert.That(addedPart, Is.Not.Null);
+        Assert.That(addedPart, Is.SameAs(_existingExam.Parts.FirstOrDefault()));
+        Assert.That(addedPart.ExamId, Is.EqualTo(_existingExam.Id));
+        Assert.That(addedPart.Name, Is.EqualTo(validName));
+        Assert.That(addedPart.Deadline, Is.EqualTo(validDeadline));
+    }
+
+    [Test]
+    public void DeleteExamPart_ShouldRemoveAnExistingExamPart()
+    {
+        //Arrange
+        var examPartToKeep = new ExamPartBuilder().WithId().Build();
+        var examPartToDelete = new ExamPartBuilder().WithId().Build();
+        var exam = new ExamBuilder()
+            .WithExamPart(examPartToKeep)
+            .WithExamPart(examPartToDelete)
+            .Build();
+
+        //Act
+        exam.DeleteExamPart(examPartToDelete.Id);
+
+        //Assert
+        Assert.That(exam.Parts, Has.Count.EqualTo(1));
+        Assert.That(exam.Parts, Has.One.EqualTo(examPartToKeep));
+    }
+
+    [Test]
+    public void DeleteExamPart_ShouldThrowContractExceptionWhenPartDoesNotExist()
+    {
+        //Arrange
+        var examPart = new ExamPartBuilder().WithId().Build();
+        var exam = new ExamBuilder()
+            .WithExamPart(examPart)
+            .Build();
+        int nonExistingExamPartId = examPart.Id + 1;
+
+        //Act + Assert
+        Assert.That(() =>exam.DeleteExamPart(nonExistingExamPartId), Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void CalculateScoreForUser_ShouldAggregateExamPartScoresForUser()
+    {
+        //Arrange
+        User user = new UserBuilder().WithId().Build();
+        var examBuilder = new ExamBuilder();
+
+        var examTestResultCollectionMock = new Mock<IExamTestResultCollection>();
+        var verifyExamPartActions = new List<Action<int, IExamScore>>();
+        for (int i = 0; i < Random.Shared.Next(2,10); i++)
         {
-            _factory = new Exam.Factory();
-            var examId = Random.Shared.NextPositive();
-            _existingExam = new ExamBuilder().WithId(examId).Build();
+            verifyExamPartActions.Add(AddExamPartMockToExam(examBuilder, examTestResultCollectionMock));
         }
-
-        [Test]
-        public void Factory_CreateNew_ShouldConstructExamCorrectly()
-        {
-            var validCourseId = Random.Shared.NextPositive();
-            var validPeriodId = Random.Shared.NextPositive();
-            var validName = Random.Shared.NextString();
-            var exam = _factory.CreateNew(validCourseId, validPeriodId, validName);
-
-            Assert.That(exam, Is.Not.Null);
-            Assert.That(exam.Id, Is.EqualTo(0));
-            Assert.That(exam.CourseId, Is.EqualTo(validCourseId));
-            Assert.That(exam.Name, Is.EqualTo(validName));
-            Assert.That(exam.PeriodId, Is.EqualTo(validPeriodId));
-            Assert.That(exam.MaximumScore, Is.EqualTo(20));
-            Assert.That(exam.Parts, Is.Empty);
-        }
-
-        [TestCase(0, 1, "someName")] //invalid course
-        [TestCase(-1, 1, "someName")]
-        [TestCase(1, 1, null)] //invalid name
-        [TestCase(1, 1, "")]
-        [TestCase(1, 0, "someName")] //invalid period
-        [TestCase(1, -1, "someName")]
-        public void Factory_CreateNew_ShouldThrowContractExceptionOnInvalidInput(int courseId, int periodId, string name)
-        {
-            Assert.That(() => _factory.CreateNew(courseId, periodId, name), Throws.InstanceOf<ContractException>());
-        }
-
-        [Test]
-        public void AddExamPart_ShouldCorrectlyCreateAndAddAnExamPart()
-        {
-            var validName = Random.Shared.NextString();
-            var validDeadline = DateTime.UtcNow.AddDays(1);
-
-            var addedPart = _existingExam.AddExamPart(validName, validDeadline);
-
-            Assert.That(addedPart, Is.Not.Null);
-            Assert.That(addedPart, Is.SameAs(_existingExam.Parts.FirstOrDefault()));
-            Assert.That(addedPart.ExamId, Is.EqualTo(_existingExam.Id));
-            Assert.That(addedPart.Name, Is.EqualTo(validName));
-            Assert.That(addedPart.Deadline, Is.EqualTo(validDeadline));
-        }
-
-        [Test]
-        public void DeleteExamPart_ShouldRemoveAnExistingExamPart()
-        {
-            //Arrange
-            var examPartToKeep = new ExamPartBuilder().WithId().Build();
-            var examPartToDelete = new ExamPartBuilder().WithId().Build();
-            var exam = new ExamBuilder()
-                .WithExamPart(examPartToKeep)
-                .WithExamPart(examPartToDelete)
-                .Build();
-
-            //Act
-            exam.DeleteExamPart(examPartToDelete.Id);
-
-            //Assert
-            Assert.That(exam.Parts, Has.Count.EqualTo(1));
-            Assert.That(exam.Parts, Has.One.EqualTo(examPartToKeep));
-        }
-
-        [Test]
-        public void DeleteExamPart_ShouldThrowContractExceptionWhenPartDoesNotExist()
-        {
-            //Arrange
-            var examPart = new ExamPartBuilder().WithId().Build();
-            var exam = new ExamBuilder()
-                .WithExamPart(examPart)
-                .Build();
-            int nonExistingExamPartId = examPart.Id + 1;
-
-            //Act + Assert
-            Assert.That(() =>exam.DeleteExamPart(nonExistingExamPartId), Throws.InstanceOf<ContractException>());
-        }
-
-        [Test]
-        public void CalculateScoreForUser_ShouldAggregateExamPartScoresForUser()
-        {
-            //Arrange
-            User user = new UserBuilder().WithId().Build();
-            var examBuilder = new ExamBuilder();
-
-            var examTestResultCollectionMock = new Mock<IExamTestResultCollection>();
-            var verifyExamPartActions = new List<Action<int, IExamScore>>();
-            for (int i = 0; i < Random.Shared.Next(2,10); i++)
-            {
-                verifyExamPartActions.Add(AddExamPartMockToExam(examBuilder, examTestResultCollectionMock));
-            }
             
-            var exam = examBuilder.Build();
+        var exam = examBuilder.Build();
 
-            ////Act
-            var examScore = exam.CalculateScoreForUser(user, examTestResultCollectionMock.Object);
+        ////Act
+        var examScore = exam.CalculateScoreForUser(user, examTestResultCollectionMock.Object);
 
-            //Assert
-            Assert.That(examScore, Is.Not.Null);
-            foreach (var verifyExamPartAction in verifyExamPartActions)
-            {
-                verifyExamPartAction(user.Id, examScore);
-            }
-        }
-
-        [Test]
-        public void ExamTestResultCollection_AddGetAndEquality_ShouldWorkCorrectly()
+        //Assert
+        Assert.That(examScore, Is.Not.Null);
+        foreach (var verifyExamPartAction in verifyExamPartActions)
         {
-            var col1 = new ExamTestResultCollection();
-            var col2 = new ExamTestResultCollection();
-            var col3 = new ExamTestResultCollection();
-
-            var partResults = new Mock<IExamPartTestResultCollection>().Object;
-
-            col1.AddExamPartResults(5, partResults);
-            col2.AddExamPartResults(5, partResults);
-            col3.AddExamPartResults(6, partResults);
-
-            Assert.That(col1.GetExamPartResults(5), Is.EqualTo(partResults));
-            Assert.That(col1, Is.EqualTo(col2));
-            Assert.That(col1.GetHashCode(), Is.EqualTo(col2.GetHashCode()));
-            Assert.That(col1, Is.Not.EqualTo(col3));
+            verifyExamPartAction(user.Id, examScore);
         }
+    }
 
-        private Action<int, IExamScore> AddExamPartMockToExam(ExamBuilder examBuilder,
-            Mock<IExamTestResultCollection> examTestResultCollectionMock)
+    [Test]
+    public void ExamTestResultCollection_AddGetAndEquality_ShouldWorkCorrectly()
+    {
+        var col1 = new ExamTestResultCollection();
+        var col2 = new ExamTestResultCollection();
+        var col3 = new ExamTestResultCollection();
+
+        var partResults = new Mock<IExamPartTestResultCollection>().Object;
+
+        col1.AddExamPartResults(5, partResults);
+        col2.AddExamPartResults(5, partResults);
+        col3.AddExamPartResults(6, partResults);
+
+        Assert.That(col1.GetExamPartResults(5), Is.EqualTo(partResults));
+        Assert.That(col1, Is.EqualTo(col2));
+        Assert.That(col1.GetHashCode(), Is.EqualTo(col2.GetHashCode()));
+        Assert.That(col1, Is.Not.EqualTo(col3));
+    }
+
+    private Action<int, IExamScore> AddExamPartMockToExam(ExamBuilder examBuilder,
+        Mock<IExamTestResultCollection> examTestResultCollectionMock)
+    {
+        var examPartScoreMock = new Mock<IExamPartScore>();
+        IExamPartScore examPartScore = examPartScoreMock.Object;
+
+        var examPartMock = new Mock<IExamPart>();
+        var examPartId = Random.Shared.NextPositive();
+        examPartMock.SetupGet(part => part.Id).Returns(examPartId);
+        examPartMock
+            .Setup(part => part.CalculateScoreForUser(It.IsAny<int>(), It.IsAny<IExamPartTestResultCollection>()))
+            .Returns(examPartScoreMock.Object);
+
+        var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
+        examTestResultCollectionMock.Setup(examTestResults => examTestResults.GetExamPartResults(examPartId))
+            .Returns(examPartTestResultCollectionMock.Object);
+
+        examBuilder.WithExamPart(examPartMock.Object);
+
+        void VerifyExamPartUsageForUserIdAndScore(int userId, IExamScore examScore)
         {
-            var examPartScoreMock = new Mock<IExamPartScore>();
-            IExamPartScore examPartScore = examPartScoreMock.Object;
-
-            var examPartMock = new Mock<IExamPart>();
-            var examPartId = Random.Shared.NextPositive();
-            examPartMock.SetupGet(part => part.Id).Returns(examPartId);
-            examPartMock
-                .Setup(part => part.CalculateScoreForUser(It.IsAny<int>(), It.IsAny<IExamPartTestResultCollection>()))
-                .Returns(examPartScoreMock.Object);
-
-            var examPartTestResultCollectionMock = new Mock<IExamPartTestResultCollection>();
-            examTestResultCollectionMock.Setup(examTestResults => examTestResults.GetExamPartResults(examPartId))
-                .Returns(examPartTestResultCollectionMock.Object);
-
-            examBuilder.WithExamPart(examPartMock.Object);
-
-            void VerifyExamPartUsageForUserIdAndScore(int userId, IExamScore examScore)
-            {
-                examPartMock.Verify(part => part.CalculateScoreForUser(userId, examPartTestResultCollectionMock.Object));
-                Assert.That(examScore.ExamPartScores, Has.One.EqualTo(examPartScore));
-            }
-
-            return VerifyExamPartUsageForUserIdAndScore;
+            examPartMock.Verify(part => part.CalculateScoreForUser(userId, examPartTestResultCollectionMock.Object));
+            Assert.That(examScore.ExamPartScores, Has.One.EqualTo(examPartScore));
         }
+
+        return VerifyExamPartUsageForUserIdAndScore;
     }
 }

@@ -10,167 +10,166 @@ using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Business.Tests.Services
+namespace Guts.Business.Tests.Services;
+
+[TestFixture]
+public class TestRunServiceTests
 {
-    [TestFixture]
-    public class TestRunServiceTests
+    private TestRunService _service;
+    private Random _random;
+    private Mock<ITestRunRepository> _testRunRepositoryMock;
+    private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
+    private Mock<IGamificationService> _gamificationServiceMock;
+
+    [SetUp]
+    public void Setup()
     {
-        private TestRunService _service;
-        private Random _random;
-        private Mock<ITestRunRepository> _testRunRepositoryMock;
-        private Mock<ISolutionFileRepository> _solutionFileRepositoryMock;
-        private Mock<IGamificationService> _gamificationServiceMock;
+        _random = new Random();
+        _testRunRepositoryMock = new Mock<ITestRunRepository>();
+        _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
 
-        [SetUp]
-        public void Setup()
+        _gamificationServiceMock = new Mock<IGamificationService>();
+        _service = new TestRunService(_testRunRepositoryMock.Object, _solutionFileRepositoryMock.Object, _gamificationServiceMock.Object);
+    }
+
+    [Test]
+    public void RegisterRunAsync_ShouldSaveTheRunInTheRepository()
+    {
+        //Arrange
+        var toBeSavedTestRun = new TestRun();
+
+        var savedTestRun = new TestRun
         {
-            _random = new Random();
-            _testRunRepositoryMock = new Mock<ITestRunRepository>();
-            _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
+            Id = _random.NextPositive()
+        };
+        _testRunRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<TestRun>())).ReturnsAsync(savedTestRun);
 
-            _gamificationServiceMock = new Mock<IGamificationService>();
-            _service = new TestRunService(_testRunRepositoryMock.Object, _solutionFileRepositoryMock.Object, _gamificationServiceMock.Object);
+        //Act
+        var result = _service.RegisterRunAsync(toBeSavedTestRun, new List<SolutionFile>()).Result;
+
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
+        _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
+        Assert.That(result, Is.EqualTo(savedTestRun));
+    }
+
+    [Test]
+    public void RegisterRunAsync_ShouldSaveNewerSolutionFile()
+    {
+        //Arrange
+        int assignmentId = _random.NextPositive();
+        int userId = _random.NextPositive();
+        var solutionFiles = new List<SolutionFile>();
+        int numberOfFiles = _random.Next(1, 5);
+        for (int i = 0; i < numberOfFiles; i++)
+        {
+            solutionFiles.Add(new SolutionFileBuilder().WithUserId(userId).WithAssignmentId(assignmentId).Build());
         }
 
-        [Test]
-        public void RegisterRunAsync_ShouldSaveTheRunInTheRepository()
+        DateTime minimumDate = solutionFiles.Min(sf => sf.ModifyDateTime);
+        _solutionFileRepositoryMock
+            .Setup(repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()))
+            .ReturnsAsync((int previousAssignmentId, int previousUserId, FilePath path) => new SolutionFileBuilder()
+                .WithUserId(previousUserId)
+                .WithAssignmentId(previousAssignmentId)
+                .WithPath(path)
+                .WithModifiedDateBefore(minimumDate)
+                .Build());
+
+        var toBeSavedTestRun = new TestRun();
+        _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun));
+
+        //Act
+        _service.RegisterRunAsync(toBeSavedTestRun, solutionFiles).Wait();
+
+        //Assert
+        _testRunRepositoryMock.Verify();
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()),
+            Times.Exactly(solutionFiles.Count));
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsIn<SolutionFile>(solutionFiles)),
+            Times.Exactly(solutionFiles.Count));
+    }
+
+    [Test]
+    public void RegisterRunAsync_ShouldNotAddUnchangedSolutionFile()
+    {
+        //Arrange
+        int assignmentId = _random.NextPositive();
+        int userId = _random.NextPositive();
+        SolutionFile solutionFile =
+            new SolutionFileBuilder().WithUserId(userId).WithAssignmentId(assignmentId).Build();
+        var solutionFiles = new List<SolutionFile>{ solutionFile};
+
+        _solutionFileRepositoryMock
+            .Setup(repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()))
+            .ReturnsAsync((int previousAssignmentId, int previousUserId, FilePath path) => new SolutionFileBuilder()
+                .WithUserId(previousUserId)
+                .WithAssignmentId(previousAssignmentId)
+                .WithPath(path)
+                .WithContent(solutionFile.Content)
+                .WithModifiedDateBefore(solutionFile.ModifyDateTime)
+                .Build());
+
+        var toBeSavedTestRun = new TestRun();
+        _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun));
+
+        //Act
+        _service.RegisterRunAsync(toBeSavedTestRun, solutionFiles).Wait();
+
+        //Assert
+        _testRunRepositoryMock.Verify();
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()),
+            Times.Exactly(solutionFiles.Count));
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsIn<SolutionFile>(solutionFiles)),
+            Times.Never);
+    }
+
+    [Test]
+    public void GetTestRunAsync_ShouldRetrieveItFromTheRepositoryAndReturnIt()
+    {
+        //Arrange
+        var storedTestRun = new TestRun
         {
-            //Arrange
-            var toBeSavedTestRun = new TestRun();
+            Id = _random.NextPositive()
+        };
 
-            var savedTestRun = new TestRun
-            {
-                Id = _random.NextPositive()
-            };
-            _testRunRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<TestRun>())).ReturnsAsync(savedTestRun);
+        _testRunRepositoryMock.Setup(repo => repo.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(storedTestRun);
 
-            //Act
-            var result = _service.RegisterRunAsync(toBeSavedTestRun, new List<SolutionFile>()).Result;
+        //Act
+        var result = _service.GetTestRunAsync(storedTestRun.Id).Result;
 
-            //Assert
-            Assert.That(result, Is.Not.Null);
-            _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
-            _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
-            Assert.That(result, Is.EqualTo(savedTestRun));
-        }
+        //Assert
+        Assert.That(result, Is.Not.Null);
+        _testRunRepositoryMock.Verify(repo => repo.GetByIdAsync(storedTestRun.Id), Times.Once);
+        Assert.That(result, Is.EqualTo(storedTestRun));
+    }
 
-        [Test]
-        public void RegisterRunAsync_ShouldSaveNewerSolutionFile()
+    [Test]
+    public void RegisterRunAsync_NullSolutionFiles_ShouldSaveRunWithoutCallingSolutionFileRepository()
+    {
+        //Arrange
+        var toBeSavedTestRun = new TestRun();
+        var savedTestRun = new TestRun
         {
-            //Arrange
-            int assignmentId = _random.NextPositive();
-            int userId = _random.NextPositive();
-            var solutionFiles = new List<SolutionFile>();
-            int numberOfFiles = _random.Next(1, 5);
-            for (int i = 0; i < numberOfFiles; i++)
-            {
-                solutionFiles.Add(new SolutionFileBuilder().WithUserId(userId).WithAssignmentId(assignmentId).Build());
-            }
+            Id = _random.NextPositive()
+        };
+        _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun)).ReturnsAsync(savedTestRun);
 
-            DateTime minimumDate = solutionFiles.Min(sf => sf.ModifyDateTime);
-            _solutionFileRepositoryMock
-                .Setup(repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()))
-                .ReturnsAsync((int previousAssignmentId, int previousUserId, FilePath path) => new SolutionFileBuilder()
-                    .WithUserId(previousUserId)
-                    .WithAssignmentId(previousAssignmentId)
-                    .WithPath(path)
-                    .WithModifiedDateBefore(minimumDate)
-                    .Build());
+        //Act
+        var result = _service.RegisterRunAsync(toBeSavedTestRun, null).Result;
 
-            var toBeSavedTestRun = new TestRun();
-            _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun));
-
-            //Act
-            _service.RegisterRunAsync(toBeSavedTestRun, solutionFiles).Wait();
-
-            //Assert
-            _testRunRepositoryMock.Verify();
-            _solutionFileRepositoryMock.Verify(
-                repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()),
-                Times.Exactly(solutionFiles.Count));
-            _solutionFileRepositoryMock.Verify(
-                repo => repo.AddAsync(It.IsIn<SolutionFile>(solutionFiles)),
-                Times.Exactly(solutionFiles.Count));
-        }
-
-        [Test]
-        public void RegisterRunAsync_ShouldNotAddUnchangedSolutionFile()
-        {
-            //Arrange
-            int assignmentId = _random.NextPositive();
-            int userId = _random.NextPositive();
-            SolutionFile solutionFile =
-                new SolutionFileBuilder().WithUserId(userId).WithAssignmentId(assignmentId).Build();
-            var solutionFiles = new List<SolutionFile>{ solutionFile};
-
-            _solutionFileRepositoryMock
-                .Setup(repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()))
-                .ReturnsAsync((int previousAssignmentId, int previousUserId, FilePath path) => new SolutionFileBuilder()
-                    .WithUserId(previousUserId)
-                    .WithAssignmentId(previousAssignmentId)
-                    .WithPath(path)
-                    .WithContent(solutionFile.Content)
-                    .WithModifiedDateBefore(solutionFile.ModifyDateTime)
-                    .Build());
-
-            var toBeSavedTestRun = new TestRun();
-            _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun));
-
-            //Act
-            _service.RegisterRunAsync(toBeSavedTestRun, solutionFiles).Wait();
-
-            //Assert
-            _testRunRepositoryMock.Verify();
-            _solutionFileRepositoryMock.Verify(
-                repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()),
-                Times.Exactly(solutionFiles.Count));
-            _solutionFileRepositoryMock.Verify(
-                repo => repo.AddAsync(It.IsIn<SolutionFile>(solutionFiles)),
-                Times.Never);
-        }
-
-        [Test]
-        public void GetTestRunAsync_ShouldRetrieveItFromTheRepositoryAndReturnIt()
-        {
-            //Arrange
-            var storedTestRun = new TestRun
-            {
-                Id = _random.NextPositive()
-            };
-
-            _testRunRepositoryMock.Setup(repo => repo.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(storedTestRun);
-
-            //Act
-            var result = _service.GetTestRunAsync(storedTestRun.Id).Result;
-
-            //Assert
-            Assert.That(result, Is.Not.Null);
-            _testRunRepositoryMock.Verify(repo => repo.GetByIdAsync(storedTestRun.Id), Times.Once);
-            Assert.That(result, Is.EqualTo(storedTestRun));
-        }
-
-        [Test]
-        public void RegisterRunAsync_NullSolutionFiles_ShouldSaveRunWithoutCallingSolutionFileRepository()
-        {
-            //Arrange
-            var toBeSavedTestRun = new TestRun();
-            var savedTestRun = new TestRun
-            {
-                Id = _random.NextPositive()
-            };
-            _testRunRepositoryMock.Setup(repo => repo.AddAsync(toBeSavedTestRun)).ReturnsAsync(savedTestRun);
-
-            //Act
-            var result = _service.RegisterRunAsync(toBeSavedTestRun, null).Result;
-
-            //Assert
-            Assert.That(result, Is.SameAs(savedTestRun));
-            _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
-            _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
-            _solutionFileRepositoryMock.Verify(
-                repo => repo.GetLatestForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilePath>()),
-                Times.Never);
-            _solutionFileRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<SolutionFile>()), Times.Never);
-        }
+        //Assert
+        Assert.That(result, Is.SameAs(savedTestRun));
+        _testRunRepositoryMock.Verify(repo => repo.AddAsync(toBeSavedTestRun), Times.Once);
+        _gamificationServiceMock.Verify(service => service.ProcessTestRunAsync(savedTestRun), Times.Once);
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.GetLatestForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilePath>()),
+            Times.Never);
+        _solutionFileRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<SolutionFile>()), Times.Never);
     }
 }

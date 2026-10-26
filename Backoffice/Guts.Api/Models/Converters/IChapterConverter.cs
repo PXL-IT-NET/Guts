@@ -2,11 +2,10 @@
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public interface IChapterConverter
 {
-    public interface IChapterConverter
-    {
-        TopicModel ToTopicModel(Chapter chapter);
-        ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers);
-    }
+    TopicModel ToTopicModel(Chapter chapter);
+    ChapterDetailModel ToChapterDetailModel(Chapter chapter, IList<User> chapterUsers);
 }

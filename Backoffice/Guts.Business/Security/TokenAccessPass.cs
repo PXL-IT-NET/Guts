@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Guts.Business.Security
+namespace Guts.Business.Security;
+
+public class TokenAccessPass
 {
-    public class TokenAccessPass
-    {
-        public string Token { get; set; }
-        public DateTime Expiration { get; set; }
-    }
+    public string Token { get; set; }
+    public DateTime Expiration { get; set; }
 }

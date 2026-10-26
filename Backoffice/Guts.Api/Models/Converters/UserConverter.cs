@@ -1,16 +1,15 @@
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public class UserConverter : IUserConverter
 {
-    public class UserConverter : IUserConverter
+    public UserModel FromUser(User user)
     {
-        public UserModel FromUser(User user)
+        return new UserModel
         {
-            return new UserModel
-            {
-                Id = user.Id,
-                FullName = $"{user.FirstName} {user.LastName}".Trim()
-            };
-        }
+            Id = user.Id,
+            FullName = $"{user.FirstName} {user.LastName}".Trim()
+        };
     }
 }

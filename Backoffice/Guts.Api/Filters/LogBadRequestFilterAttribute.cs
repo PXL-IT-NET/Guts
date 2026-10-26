@@ -8,32 +8,31 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Guts.Api.Filters
+namespace Guts.Api.Filters;
+
+[ExcludeFromCodeCoverage]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
+public class LogBadRequestFilterAttribute(ILogger<LogBadRequestFilterAttribute> logger) : ResultFilterAttribute
 {
-    [ExcludeFromCodeCoverage]
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
-    public class LogBadRequestFilterAttribute(ILogger<LogBadRequestFilterAttribute> logger) : ResultFilterAttribute
+    private readonly ILogger _logger = logger;
+
+    public override void OnResultExecuted(ResultExecutedContext context)
     {
-        private readonly ILogger _logger = logger;
-
-        public override void OnResultExecuted(ResultExecutedContext context)
+        if (context.HttpContext?.Response == null) return;
+        if (context.HttpContext.Response.StatusCode == (int)HttpStatusCode.BadRequest)
         {
-            if (context.HttpContext?.Response == null) return;
-            if (context.HttpContext.Response.StatusCode == (int)HttpStatusCode.BadRequest)
+            StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.AppendLine("Bad request detected.");
+            messageBuilder.AppendLine($"Request: {context.HttpContext.Request.Method} - {context.HttpContext.Request.GetDisplayUrl()}");
+
+            if (context.Result is BadRequestObjectResult badRequestObjectResult)
             {
-                StringBuilder messageBuilder = new StringBuilder();
-                messageBuilder.AppendLine("Bad request detected.");
-                messageBuilder.AppendLine($"Request: {context.HttpContext.Request.Method} - {context.HttpContext.Request.GetDisplayUrl()}");
-
-                if (context.Result is BadRequestObjectResult badRequestObjectResult)
-                {
-                    string badRequestValue = JsonConvert.SerializeObject(badRequestObjectResult.Value);
-                    messageBuilder.AppendLine($"Response object: {badRequestValue}");
-                }
-
-                _logger.LogWarning("{Message}", messageBuilder.ToString());
+                string badRequestValue = JsonConvert.SerializeObject(badRequestObjectResult.Value);
+                messageBuilder.AppendLine($"Response object: {badRequestValue}");
             }
-            base.OnResultExecuted(context);
+
+            _logger.LogWarning("{Message}", messageBuilder.ToString());
         }
+        base.OnResultExecuted(context);
     }
 }

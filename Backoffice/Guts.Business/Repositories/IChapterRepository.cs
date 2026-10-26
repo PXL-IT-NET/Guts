@@ -2,14 +2,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 
-namespace Guts.Business.Repositories
+namespace Guts.Business.Repositories;
+
+public interface IChapterRepository : IBasicRepository<Chapter>
 {
-    public interface IChapterRepository : IBasicRepository<Chapter>
-    {
-        Task<Chapter> GetSingleAsync(string courseCode, string code, int periodId);
-        Task<Chapter> LoadWithAssignmentsAsync(int courseId, string code, int periodId);
-        Task<Chapter> LoadWithAssignmentsAndTestsAsync(int courseId, string code, int periodId);
-        Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId);
-        Task<IList<Chapter>> GetByCourseIdWithAssignmentsAndTestsAsync(int courseId, int periodId);
-    }
+    Task<Chapter> GetSingleAsync(string courseCode, string code, int periodId);
+    Task<Chapter> LoadWithAssignmentsAsync(int courseId, string code, int periodId);
+    Task<Chapter> LoadWithAssignmentsAndTestsAsync(int courseId, string code, int periodId);
+    Task<IList<Chapter>> GetByCourseIdAsync(int courseId, int periodId);
+    Task<IList<Chapter>> GetByCourseIdWithAssignmentsAndTestsAsync(int courseId, int periodId);
 }

@@ -14,169 +14,168 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Guts.Api.Controllers
+namespace Guts.Api.Controllers;
+
+[Produces("application/json")]
+[Route("api/courses/{courseId}/chapters")]
+public class ChapterController(
+    IChapterService chapterService,
+    IChapterConverter chapterConverter,
+    ITopicConverter topicConverter,
+    UserManager<User> userManager,
+    IUserRepository userRepository,
+    IMemoryCache memoryCache)
+    : ControllerBase
 {
-    [Produces("application/json")]
-    [Route("api/courses/{courseId}/chapters")]
-    public class ChapterController(
-        IChapterService chapterService,
-        IChapterConverter chapterConverter,
-        ITopicConverter topicConverter,
-        UserManager<User> userManager,
-        IUserRepository userRepository,
-        IMemoryCache memoryCache)
-        : ControllerBase
+    public const int CacheTimeInSeconds = 300;
+
+    /// <summary>
+    /// Retrieves the properties of a chapter of a course (for the current period).
+    /// This includes the assignments of the chapter with their tests and the users that submitted testresults
+    /// </summary>
+    /// <param name="courseId">Identifier of the course in the database.</param>
+    /// <param name="chapterCode">Sequence number of the chapter</param>
+    /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
+    [HttpGet("{chapterCode}")]
+    [ProducesResponseType(typeof(ChapterDetailModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetChapterDetails(int courseId, string chapterCode, [FromQuery] int? periodId = null)
     {
-        public const int CacheTimeInSeconds = 300;
-
-        /// <summary>
-        /// Retrieves the properties of a chapter of a course (for the current period).
-        /// This includes the assignments of the chapter with their tests and the users that submitted testresults
-        /// </summary>
-        /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterCode">Sequence number of the chapter</param>
-        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
-        [HttpGet("{chapterCode}")]
-        [ProducesResponseType(typeof(ChapterDetailModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterDetails(int courseId, string chapterCode, [FromQuery] int? periodId = null)
+        if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
         {
-            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                Chapter chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
-
-                List<User> chapterUsers = [];
-                if (IsLector())
-                {
-                    chapterUsers.AddRange(await userRepository.GetUsersOfTopicAsync(chapter.Id));
-                }
-
-                if (chapterUsers.Count == 0) //add the own user
-                {
-                    chapterUsers.Add(await userManager.GetUserAsync(User));
-                }
-
-                var model = chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
-                return Ok(model);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
+            return BadRequest();
         }
 
-        [HttpPut("{chapterCode}")]
-        [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> UpdateChapter(int courseId, string chapterCode, [FromBody] TopicUpdateModel model)
+        try
         {
-            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
+            Chapter chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
+
+            List<User> chapterUsers = [];
+            if (IsLector())
             {
-                return BadRequest();
+                chapterUsers.AddRange(await userRepository.GetUsersOfTopicAsync(chapter.Id));
             }
 
-            await chapterService.UpdateChapterAsync(courseId, chapterCode, model.Description);
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
-        /// The overview contains testresults for the authorized user.
-        /// </summary>
-        /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterCode"></param>
-        /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
-        /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
-        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
-        [HttpGet("{chapterCode}/users/{userId}/summary")]
-        [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterSummary(int courseId, string chapterCode, int userId,
-            [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(chapterCode) || userId < 1)
+            if (chapterUsers.Count == 0) //add the own user
             {
-                return BadRequest();
+                chapterUsers.Add(await userManager.GetUserAsync(User));
             }
 
-            if (IsStudent())
-            {
-                //students can only see their own chapter summary
-                if (!IsOwnUserId(userId)) return Forbid();
-            }
-            else if (!IsLector())
-            {
-                return Forbid();
-            }
-
-            var dateUtc = date?.ToUniversalTime();
-
-            try
-            {
-                var chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
-                var assignmentResults = await chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
-                var model = topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
-                return Ok(model);
-            }
-            catch (DataNotFoundException)
-            {
-                return NotFound();
-            }
-        }
-
-        /// <summary>
-        /// Retrieves an overview of the assignment statistics for a chapter of a course (for the current period).
-        /// </summary>
-        /// <param name="courseId">Identifier of the course in the database.</param>
-        /// <param name="chapterCode">Sequence number of the chapter.</param>
-        /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
-        /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
-        [HttpGet("{chapterCode}/statistics")]
-        [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, 
-            [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
-        {
-            if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
-            {
-                return BadRequest();
-            }
-
-            var dateUtc = date?.ToUniversalTime();
-            bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
-
-            var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-{periodId ?? 0}";
-            if (!useCache || !memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
-            {
-                try
-                {
-                    var chapter = await chapterService.LoadChapterAsync(courseId, chapterCode, periodId);
-                    var chapterStatistics = await chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
-                    model = topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
-
-                    if (useCache)
-                    {
-                        memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
-                    }
-                }
-                catch (DataNotFoundException)
-                {
-                    return NotFound();
-                }
-            }
-
+            var model = chapterConverter.ToChapterDetailModel(chapter, chapterUsers);
             return Ok(model);
         }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPut("{chapterCode}")]
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> UpdateChapter(int courseId, string chapterCode, [FromBody] TopicUpdateModel model)
+    {
+        if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
+        {
+            return BadRequest();
+        }
+
+        await chapterService.UpdateChapterAsync(courseId, chapterCode, model.Description);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Retrieves an overview of the testresults for a chapter of a course (for the current period).
+    /// The overview contains testresults for the authorized user.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course in the database.</param>
+    /// <param name="chapterCode"></param>
+    /// <param name="userId">Identifier of the user for which the summary should be retrieved.</param>
+    /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+    /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
+    [HttpGet("{chapterCode}/users/{userId}/summary")]
+    [ProducesResponseType(typeof(TopicSummaryModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetChapterSummary(int courseId, string chapterCode, int userId,
+        [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
+    {
+        if (courseId < 1 || string.IsNullOrEmpty(chapterCode) || userId < 1)
+        {
+            return BadRequest();
+        }
+
+        if (IsStudent())
+        {
+            //students can only see their own chapter summary
+            if (!IsOwnUserId(userId)) return Forbid();
+        }
+        else if (!IsLector())
+        {
+            return Forbid();
+        }
+
+        var dateUtc = date?.ToUniversalTime();
+
+        try
+        {
+            var chapter = await chapterService.LoadChapterWithTestsAsync(courseId, chapterCode, periodId);
+            var assignmentResults = await chapterService.GetResultsForUserAsync(chapter, userId, dateUtc);
+            var model = topicConverter.ToTopicSummaryModel(chapter, assignmentResults);
+            return Ok(model);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Retrieves an overview of the assignment statistics for a chapter of a course (for the current period).
+    /// </summary>
+    /// <param name="courseId">Identifier of the course in the database.</param>
+    /// <param name="chapterCode">Sequence number of the chapter.</param>
+    /// <param name="date">Optional date parameter. If provided the status of the summary on that date will be returned.</param>
+    /// <param name="periodId">Optional period identifier. If provided data from a specific period will be returned.</param>
+    [HttpGet("{chapterCode}/statistics")]
+    [ProducesResponseType(typeof(TopicStatisticsModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetChapterStatistics(int courseId, string chapterCode, 
+        [FromQuery] DateTime? date, [FromQuery] int? periodId = null)
+    {
+        if (courseId < 1 || string.IsNullOrEmpty(chapterCode))
+        {
+            return BadRequest();
+        }
+
+        var dateUtc = date?.ToUniversalTime();
+        bool useCache = !(dateUtc.HasValue && DateTime.UtcNow.Subtract(dateUtc.Value).TotalSeconds > CacheTimeInSeconds);
+
+        var cacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-{periodId ?? 0}";
+        if (!useCache || !memoryCache.TryGetValue(cacheKey, out TopicStatisticsModel model))
+        {
+            try
+            {
+                var chapter = await chapterService.LoadChapterAsync(courseId, chapterCode, periodId);
+                var chapterStatistics = await chapterService.GetChapterStatisticsAsync(chapter, dateUtc);
+                model = topicConverter.ToTopicStatisticsModel(chapter, chapterStatistics, "Students");
+
+                if (useCache)
+                {
+                    memoryCache.Set(cacheKey, model, DateTime.Now.AddSeconds(CacheTimeInSeconds));
+                }
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        return Ok(model);
     }
 }

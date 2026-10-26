@@ -1,7 +1,6 @@
-﻿namespace Guts.Web
+﻿namespace Guts.Web;
+
+public class ClientSettings
 {
-    public class ClientSettings
-    {
-        public string ApiBaseUrl { get; set; }
-    }
+    public string ApiBaseUrl { get; set; }
 }

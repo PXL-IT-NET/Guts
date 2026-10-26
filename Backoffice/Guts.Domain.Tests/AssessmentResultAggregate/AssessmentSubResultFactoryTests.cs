@@ -7,111 +7,110 @@ using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.AssessmentResultAggregate
+namespace Guts.Domain.Tests.AssessmentResultAggregate;
+
+public class AssessmentSubResultFactoryTests
 {
-    public class AssessmentSubResultFactoryTests
+    private AssessmentSubResult.Factory _factory;
+
+    [SetUp]
+    public void BeforeEachTest()
     {
-        private AssessmentSubResult.Factory _factory;
+        _factory = new AssessmentSubResult.Factory();
+    }
 
-        [SetUp]
-        public void BeforeEachTest()
+    [Test]
+    public void Create_ValidInput_ShouldCreateResultForSubject()
+    {
+        //Arrange
+        User peer1 = new UserBuilder().WithId().Build();
+        User peer2 = new UserBuilder().WithId().Build();
+
+        var peerAssessments = new List<IPeerAssessment>
         {
-            _factory = new AssessmentSubResult.Factory();
-        }
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer1, peer1)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build(),
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer1, peer2)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build(),
 
-        [Test]
-        public void Create_ValidInput_ShouldCreateResultForSubject()
-        {
-            //Arrange
-            User peer1 = new UserBuilder().WithId().Build();
-            User peer2 = new UserBuilder().WithId().Build();
-
-            var peerAssessments = new List<IPeerAssessment>
-            {
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer1, peer1)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build(),
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer1, peer2)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build(),
-
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer2, peer1)
-                    .WithScores(AssessmentScore.WayBelowAverage, AssessmentScore.AboveAverage, AssessmentScore.WayAboveAverage)
-                    .Build(),
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer2, peer2)
-                    .WithScores(AssessmentScore.AboveAverage, AssessmentScore.BelowAverage, AssessmentScore.WayAboveAverage)
-                    .Build()
-            };
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer2, peer1)
+                .WithScores(AssessmentScore.WayBelowAverage, AssessmentScore.AboveAverage, AssessmentScore.WayAboveAverage)
+                .Build(),
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer2, peer2)
+                .WithScores(AssessmentScore.AboveAverage, AssessmentScore.BelowAverage, AssessmentScore.WayAboveAverage)
+                .Build()
+        };
 
             
 
-            //Act
-            IAssessmentSubResult result = _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore);
+        //Act
+        IAssessmentSubResult result = _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore);
 
-            //Assert
-            Assert.That(result.AverageValue, Is.EqualTo( (3 + 3 + 1 + 4) / 4.0));
-            Assert.That(result.AverageSelfValue, Is.EqualTo((3 + 4) / 2.0));
-            Assert.That(result.AveragePeerValue, Is.EqualTo((3 + 1) / 2.0));
+        //Assert
+        Assert.That(result.AverageValue, Is.EqualTo( (3 + 3 + 1 + 4) / 4.0));
+        Assert.That(result.AverageSelfValue, Is.EqualTo((3 + 4) / 2.0));
+        Assert.That(result.AveragePeerValue, Is.EqualTo((3 + 1) / 2.0));
 
-            Assert.That(result.Value, Is.EqualTo((3 + 1) / 2.0));
-            Assert.That(result.SelfValue, Is.EqualTo(3.0));
-            Assert.That(result.PeerValue, Is.EqualTo(1.0));
+        Assert.That(result.Value, Is.EqualTo((3 + 1) / 2.0));
+        Assert.That(result.SelfValue, Is.EqualTo(3.0));
+        Assert.That(result.PeerValue, Is.EqualTo(1.0));
 
-            Assert.That(result.Score, Is.EqualTo(AssessmentScore.BelowAverage));
-            Assert.That(result.SelfScore, Is.EqualTo(AssessmentScore.Average));
-            Assert.That(result.PeerScore, Is.EqualTo(AssessmentScore.WayBelowAverage));
-        }
+        Assert.That(result.Score, Is.EqualTo(AssessmentScore.BelowAverage));
+        Assert.That(result.SelfScore, Is.EqualTo(AssessmentScore.Average));
+        Assert.That(result.PeerScore, Is.EqualTo(AssessmentScore.WayBelowAverage));
+    }
 
-        [Test]
-        public void Create_SubjectHasNotEvaluatedItself_ShouldThrowContractException()
+    [Test]
+    public void Create_SubjectHasNotEvaluatedItself_ShouldThrowContractException()
+    {
+        //Arrange
+        User peer1 = new UserBuilder().WithId().Build();
+        User peer2 = new UserBuilder().WithId().Build();
+
+        var peerAssessments = new List<IPeerAssessment>
         {
-            //Arrange
-            User peer1 = new UserBuilder().WithId().Build();
-            User peer2 = new UserBuilder().WithId().Build();
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer2, peer1)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build(),
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer2, peer2)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build()
+        };
 
-            var peerAssessments = new List<IPeerAssessment>
-            {
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer2, peer1)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build(),
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer2, peer2)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build()
-            };
+        //Act + Assert
+        Assert.That(() => _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore),
+            Throws.InstanceOf<ContractException>());
+    }
 
-            //Act + Assert
-            Assert.That(() => _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore),
-                Throws.InstanceOf<ContractException>());
-        }
+    [Test]
+    public void Create_NoOtherPeerEvaluatedSubject_ShouldThrowContractException()
+    {
+        //Arrange
+        User peer1 = new UserBuilder().WithId().Build();
+        User peer2 = new UserBuilder().WithId().Build();
 
-        [Test]
-        public void Create_NoOtherPeerEvaluatedSubject_ShouldThrowContractException()
+        var peerAssessments = new List<IPeerAssessment>
         {
-            //Arrange
-            User peer1 = new UserBuilder().WithId().Build();
-            User peer2 = new UserBuilder().WithId().Build();
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer1, peer1)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build(),
+            new PeerAssessmentBuilder()
+                .WithUserAndSubject(peer1, peer2)
+                .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
+                .Build()
+        };
 
-            var peerAssessments = new List<IPeerAssessment>
-            {
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer1, peer1)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build(),
-                new PeerAssessmentBuilder()
-                    .WithUserAndSubject(peer1, peer2)
-                    .WithScores(AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average)
-                    .Build()
-            };
-
-            //Act + Assert
-            Assert.That(() => _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.Create(peer1.Id, peerAssessments, pa => pa.ContributionScore),
+            Throws.InstanceOf<ContractException>());
     }
 }

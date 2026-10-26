@@ -4,11 +4,10 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public interface ICourseConverter
 {
-    public interface ICourseConverter
-    {
-        CourseContentsModel ToCourseContentsModel(Course course, IReadOnlyList<Chapter> chapters, IReadOnlyList<IProject> projects);
-        CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto courseStatisticsDto);
-    }
+    CourseContentsModel ToCourseContentsModel(Course course, IReadOnlyList<Chapter> chapters, IReadOnlyList<IProject> projects);
+    CourseStatisticsModel ToCourseStatisticsModel(CourseStatisticsDto courseStatisticsDto);
 }

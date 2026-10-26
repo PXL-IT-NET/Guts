@@ -1,10 +1,9 @@
 ﻿using Guts.Api.Models.ProjectModels;
 using Guts.Domain.ProjectTeamAggregate;
 
-namespace Guts.Api.Models.Converters
+namespace Guts.Api.Models.Converters;
+
+public interface ITeamConverter
 {
-    public interface ITeamConverter
-    {
-        TeamDetailsModel ToTeamDetailsModel(IProjectTeam projectTeam);
-    }
+    TeamDetailsModel ToTeamDetailsModel(IProjectTeam projectTeam);
 }

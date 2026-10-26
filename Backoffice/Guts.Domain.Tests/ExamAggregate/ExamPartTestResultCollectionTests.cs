@@ -8,105 +8,104 @@ using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.ExamAggregate
+namespace Guts.Domain.Tests.ExamAggregate;
+
+[TestFixture]
+public class ExamPartTestResultCollectionTests
 {
-    [TestFixture]
-    public class ExamPartTestResultCollectionTests
+    [Test]
+    public void FromLastTestResults_ShouldOrganizeTestResultsByUserAndAssignment()
     {
-        [Test]
-        public void FromLastTestResults_ShouldOrganizeTestResultsByUserAndAssignment()
+        //Arrange
+        var user1Id = Random.Shared.NextPositive();
+        var user2Id = Random.Shared.NextPositive();
+
+        var assignment1 = new AssignmentBuilder().WithId().WithRandomTests(2).Build();
+        var assignment2 = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+
+        var lastTestResults = new List<TestResult>
         {
-            //Arrange
-            var user1Id = Random.Shared.NextPositive();
-            var user2Id = Random.Shared.NextPositive();
+            //user1
+            new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment1.Tests.First()).Build(),
+            new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment1.Tests.ElementAt(1)).Build(),
+            new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment2.Tests.First()).Build(),
 
-            var assignment1 = new AssignmentBuilder().WithId().WithRandomTests(2).Build();
-            var assignment2 = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+            //user2
+            new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment1.Tests.First()).Build(),
+            new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment1.Tests.ElementAt(1)).Build(),
+            new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment2.Tests.First()).Build(),
+        };
 
-            var lastTestResults = new List<TestResult>
-            {
-                //user1
-                new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment1.Tests.First()).Build(),
-                new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment1.Tests.ElementAt(1)).Build(),
-                new TestResultBuilder().WithUser(user1Id).WithPassed(true).WithTest(assignment2.Tests.First()).Build(),
+        //Act
+        var collection = ExamPartTestResultCollection.FromLastTestResults(lastTestResults);
 
-                //user2
-                new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment1.Tests.First()).Build(),
-                new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment1.Tests.ElementAt(1)).Build(),
-                new TestResultBuilder().WithUser(user2Id).WithPassed(false).WithTest(assignment2.Tests.First()).Build(),
-            };
+        var assignment1ResultForUser1 = collection.GetAssignmentResultFor(user1Id, assignment1.Id);
+        var assignment2ResultForUser1 = collection.GetAssignmentResultFor(user1Id, assignment2.Id);
+        var assignment1ResultForUser2 = collection.GetAssignmentResultFor(user2Id, assignment1.Id);
+        var assignment2ResultForUser2 = collection.GetAssignmentResultFor(user2Id, assignment2.Id);
 
-            //Act
-            var collection = ExamPartTestResultCollection.FromLastTestResults(lastTestResults);
+        //Assert
+        AssertAssignmentResult(assignment1ResultForUser1, user1Id, assignment1.Id, 2);
+        AssertAssignmentResult(assignment2ResultForUser1, user1Id, assignment2.Id, 1);
+        AssertAssignmentResult(assignment1ResultForUser2, user2Id, assignment1.Id, 0);
+        AssertAssignmentResult(assignment2ResultForUser2, user2Id, assignment2.Id, 0);
+    }
 
-            var assignment1ResultForUser1 = collection.GetAssignmentResultFor(user1Id, assignment1.Id);
-            var assignment2ResultForUser1 = collection.GetAssignmentResultFor(user1Id, assignment2.Id);
-            var assignment1ResultForUser2 = collection.GetAssignmentResultFor(user2Id, assignment1.Id);
-            var assignment2ResultForUser2 = collection.GetAssignmentResultFor(user2Id, assignment2.Id);
+    private static void AssertAssignmentResult(IAssignmentResult assignment1ResultForUser1, int expectedUserId,
+        int expectedAssignmentId, int expectedNumberOfPassingTests)
+    {
+        Assert.That(assignment1ResultForUser1.UserId, Is.EqualTo(expectedUserId));
+        Assert.That(assignment1ResultForUser1.AssignmentId, Is.EqualTo(expectedAssignmentId));
+        Assert.That(assignment1ResultForUser1.NumberOfPassingTests, Is.EqualTo(expectedNumberOfPassingTests));
+    }
 
-            //Assert
-            AssertAssignmentResult(assignment1ResultForUser1, user1Id, assignment1.Id, 2);
-            AssertAssignmentResult(assignment2ResultForUser1, user1Id, assignment2.Id, 1);
-            AssertAssignmentResult(assignment1ResultForUser2, user2Id, assignment1.Id, 0);
-            AssertAssignmentResult(assignment2ResultForUser2, user2Id, assignment2.Id, 0);
-        }
+    [Test]
+    public void GetAssignmentResultFor_NonExistentAssignmentOrUser_ShouldReturnEmptyAssignmentResult()
+    {
+        //Arrange
+        var userId = Random.Shared.NextPositive();
+        var otherUserId = userId + 1;
+        var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+        var otherAssignmentId = assignment.Id + 1;
 
-        private static void AssertAssignmentResult(IAssignmentResult assignment1ResultForUser1, int expectedUserId,
-            int expectedAssignmentId, int expectedNumberOfPassingTests)
+        var lastTestResults = new List<TestResult>
         {
-            Assert.That(assignment1ResultForUser1.UserId, Is.EqualTo(expectedUserId));
-            Assert.That(assignment1ResultForUser1.AssignmentId, Is.EqualTo(expectedAssignmentId));
-            Assert.That(assignment1ResultForUser1.NumberOfPassingTests, Is.EqualTo(expectedNumberOfPassingTests));
-        }
+            new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+        };
 
-        [Test]
-        public void GetAssignmentResultFor_NonExistentAssignmentOrUser_ShouldReturnEmptyAssignmentResult()
+        var collection = ExamPartTestResultCollection.FromLastTestResults(lastTestResults);
+
+        //Act
+        var missingAssignmentResult = collection.GetAssignmentResultFor(userId, otherAssignmentId);
+        var missingUserResult = collection.GetAssignmentResultFor(otherUserId, assignment.Id);
+
+        //Assert
+        AssertAssignmentResult(missingAssignmentResult, userId, otherAssignmentId, 0);
+        AssertAssignmentResult(missingUserResult, otherUserId, assignment.Id, 0);
+    }
+
+    [Test]
+    public void Equality_SameResults_ShouldBeEqual()
+    {
+        var userId = Random.Shared.NextPositive();
+        var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
+        var testResultsA = new List<TestResult>
         {
-            //Arrange
-            var userId = Random.Shared.NextPositive();
-            var otherUserId = userId + 1;
-            var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
-            var otherAssignmentId = assignment.Id + 1;
-
-            var lastTestResults = new List<TestResult>
-            {
-                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
-            };
-
-            var collection = ExamPartTestResultCollection.FromLastTestResults(lastTestResults);
-
-            //Act
-            var missingAssignmentResult = collection.GetAssignmentResultFor(userId, otherAssignmentId);
-            var missingUserResult = collection.GetAssignmentResultFor(otherUserId, assignment.Id);
-
-            //Assert
-            AssertAssignmentResult(missingAssignmentResult, userId, otherAssignmentId, 0);
-            AssertAssignmentResult(missingUserResult, otherUserId, assignment.Id, 0);
-        }
-
-        [Test]
-        public void Equality_SameResults_ShouldBeEqual()
+            new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+        };
+        var testResultsB = new List<TestResult>
         {
-            var userId = Random.Shared.NextPositive();
-            var assignment = new AssignmentBuilder().WithId().WithRandomTests(1).Build();
-            var testResultsA = new List<TestResult>
-            {
-                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
-            };
-            var testResultsB = new List<TestResult>
-            {
-                new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
-            };
+            new TestResultBuilder().WithUser(userId).WithPassed(true).WithTest(assignment.Tests.First()).Build()
+        };
 
-            var collectionA = ExamPartTestResultCollection.FromLastTestResults(testResultsA);
-            var collectionB = ExamPartTestResultCollection.FromLastTestResults(testResultsB);
-            var differentCollection = ExamPartTestResultCollection.FromLastTestResults(new List<TestResult>());
+        var collectionA = ExamPartTestResultCollection.FromLastTestResults(testResultsA);
+        var collectionB = ExamPartTestResultCollection.FromLastTestResults(testResultsB);
+        var differentCollection = ExamPartTestResultCollection.FromLastTestResults(new List<TestResult>());
 
-            Assert.That(collectionA.Equals(collectionB), Is.True);
-            Assert.That(collectionA == collectionB, Is.True);
-            Assert.That(collectionA.GetHashCode(), Is.EqualTo(collectionB.GetHashCode()));
-            Assert.That(collectionA.Equals(differentCollection), Is.False);
-            Assert.That(collectionA != differentCollection, Is.True);
-        }
+        Assert.That(collectionA.Equals(collectionB), Is.True);
+        Assert.That(collectionA == collectionB, Is.True);
+        Assert.That(collectionA.GetHashCode(), Is.EqualTo(collectionB.GetHashCode()));
+        Assert.That(collectionA.Equals(differentCollection), Is.False);
+        Assert.That(collectionA != differentCollection, Is.True);
     }
 }

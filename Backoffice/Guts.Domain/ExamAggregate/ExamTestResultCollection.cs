@@ -1,37 +1,36 @@
 using System.Collections.Generic;
 
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public class ExamTestResultCollection : ValueObject<ExamTestResultCollection>, IExamTestResultCollection
 {
-    public class ExamTestResultCollection : ValueObject<ExamTestResultCollection>, IExamTestResultCollection
+    private readonly Dictionary<int, IExamPartTestResultCollection> _examPartTestResults;
+
+    public ExamTestResultCollection()
     {
-        private readonly Dictionary<int, IExamPartTestResultCollection> _examPartTestResults;
+        _examPartTestResults = new Dictionary<int, IExamPartTestResultCollection>();
+    }
 
-        public ExamTestResultCollection()
+    public void AddExamPartResults(int examPartId, IExamPartTestResultCollection examPartTestResults)
+    {
+        _examPartTestResults.Add(examPartId, examPartTestResults);
+    }
+
+    public IExamPartTestResultCollection GetExamPartResults(int examPartId)
+    {
+        return _examPartTestResults[examPartId];
+    }
+
+    protected override IEnumerable<object> GetEqualityComponents()
+    {
+        foreach (var key in _examPartTestResults.Keys)
         {
-            _examPartTestResults = new Dictionary<int, IExamPartTestResultCollection>();
+            yield return key;
         }
 
-        public void AddExamPartResults(int examPartId, IExamPartTestResultCollection examPartTestResults)
+        foreach (var value in _examPartTestResults.Values)
         {
-            _examPartTestResults.Add(examPartId, examPartTestResults);
-        }
-
-        public IExamPartTestResultCollection GetExamPartResults(int examPartId)
-        {
-            return _examPartTestResults[examPartId];
-        }
-
-        protected override IEnumerable<object> GetEqualityComponents()
-        {
-            foreach (var key in _examPartTestResults.Keys)
-            {
-                yield return key;
-            }
-
-            foreach (var value in _examPartTestResults.Values)
-            {
-                yield return value;
-            }
+            yield return value;
         }
     }
 }

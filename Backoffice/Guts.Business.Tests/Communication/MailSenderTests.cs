@@ -7,61 +7,60 @@ using Guts.Domain.UserAggregate;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Business.Tests.Communication
+namespace Guts.Business.Tests.Communication;
+
+[TestFixture]
+public class MailSenderTests
 {
-    [TestFixture]
-    public class MailSenderTests
+    private Mock<ISmtpClient> _smtpClientMock;
+    private MailSender _mailSender;
+    private string _fromEmail;
+    private string _webAppBaseUrl;
+    private User _user;
+
+    [SetUp]
+    public void Setup()
     {
-        private Mock<ISmtpClient> _smtpClientMock;
-        private MailSender _mailSender;
-        private string _fromEmail;
-        private string _webAppBaseUrl;
-        private User _user;
+        _smtpClientMock = new Mock<ISmtpClient>();
+        _fromEmail = "someFromEmailAddress@test.com";
+        _webAppBaseUrl = "http://someWebAppUrl.com";
+        _mailSender = new MailSender(_smtpClientMock.Object, _fromEmail, _webAppBaseUrl);
+        _user = new User { Id = new Random().NextPositive(), Email = "someUserEmailAddress@test.com" };
+    }
 
-        [SetUp]
-        public void Setup()
-        {
-            _smtpClientMock = new Mock<ISmtpClient>();
-            _fromEmail = "someFromEmailAddress@test.com";
-            _webAppBaseUrl = "http://someWebAppUrl.com";
-            _mailSender = new MailSender(_smtpClientMock.Object, _fromEmail, _webAppBaseUrl);
-            _user = new User { Id = new Random().NextPositive(), Email = "someUserEmailAddress@test.com" };
-        }
+    [Test]
+    public void SendConfirmUserEmailMessageAsync_ShouldSendMailWithConfirmationData()
+    {
+        //Arrange
+        var confirmationToken = Guid.NewGuid().ToString();
 
-        [Test]
-        public void SendConfirmUserEmailMessageAsync_ShouldSendMailWithConfirmationData()
-        {
-            //Arrange
-            var confirmationToken = Guid.NewGuid().ToString();
+        //Act
+        _mailSender.SendConfirmUserEmailMessageAsync(_user, confirmationToken).Wait();
 
-            //Act
-            _mailSender.SendConfirmUserEmailMessageAsync(_user, confirmationToken).Wait();
+        //Assert
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
+            VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), confirmationToken))), Times.Once);
+    }
 
-            //Assert
-            _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
-                VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), confirmationToken))), Times.Once);
-        }
+    [Test]
+    public void SendForgotPasswordMessageAsync_ShouldSendMailWithConfirmPasswordData()
+    {
+        //Arrange
+        var forgotPasswordToken = Guid.NewGuid().ToString();
 
-        [Test]
-        public void SendForgotPasswordMessageAsync_ShouldSendMailWithConfirmPasswordData()
-        {
-            //Arrange
-            var forgotPasswordToken = Guid.NewGuid().ToString();
+        //Act
+        _mailSender.SendForgotPasswordMessageAsync(_user, forgotPasswordToken).Wait();
 
-            //Act
-            _mailSender.SendForgotPasswordMessageAsync(_user, forgotPasswordToken).Wait();
+        //Assert
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
+            VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), forgotPasswordToken))), Times.Once);
+    }
 
-            //Assert
-            _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
-                VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), forgotPasswordToken))), Times.Once);
-        }
+    private static bool VerifyMailMessage(MailMessage message, string fromEmail, params string[] bodyParts)
+    {
+        if (!string.Equals(message.From.Address, fromEmail, StringComparison.OrdinalIgnoreCase)) return false;
+        var body = message.Body;
 
-        private static bool VerifyMailMessage(MailMessage message, string fromEmail, params string[] bodyParts)
-        {
-            if (!string.Equals(message.From.Address, fromEmail, StringComparison.OrdinalIgnoreCase)) return false;
-            var body = message.Body;
-
-            return bodyParts.All(bodyPart => body.Contains(bodyPart, StringComparison.OrdinalIgnoreCase));
-        }
+        return bodyParts.All(bodyPart => body.Contains(bodyPart, StringComparison.OrdinalIgnoreCase));
     }
 }

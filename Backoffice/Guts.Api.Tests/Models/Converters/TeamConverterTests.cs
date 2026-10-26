@@ -7,74 +7,73 @@ using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.UserAggregate;
 using NUnit.Framework;
 
-namespace Guts.Api.Tests.Models.Converters
+namespace Guts.Api.Tests.Models.Converters;
+
+[TestFixture]
+internal class TeamConverterTests
 {
-    [TestFixture]
-    internal class TeamConverterTests
+    private TeamConverter _converter;
+
+    [SetUp]
+    public void Setup()
     {
-        private TeamConverter _converter;
+        _converter = new TeamConverter();
+    }
 
-        [SetUp]
-        public void Setup()
+    [Test]
+    public void ToTeamDetailsModel_ShouldCorrectlyConvertValidProjectTeam()
+    {
+        //Arrange
+        var team = new ProjectTeamBuilder().WithId().WithUsers(2).Build();
+
+        //Act
+        var model = _converter.ToTeamDetailsModel(team);
+
+        //Assert
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.Id, Is.EqualTo(team.Id));
+        Assert.That(model.Name, Is.EqualTo(team.Name));
+
+        foreach (var teamUser in team.TeamUsers)
         {
-            _converter = new TeamConverter();
+            User user = teamUser.User;
+            var matchingTeamUserModel = model.Members.FirstOrDefault(m => m.UserId == user.Id);
+            Assert.That(matchingTeamUserModel, Is.Not.Null);
+            Assert.That(matchingTeamUserModel.Name, Is.EqualTo(user.FirstName + " " + user.LastName));
         }
+    }
 
-        [Test]
-        public void ToTeamDetailsModel_ShouldCorrectlyConvertValidProjectTeam()
+    [Test]
+    public void ToTeamDetailsModel_ShouldThrowArgumentExceptionWhenTeamUsersAreMissing()
+    {
+        //Arrange
+        var team = new ProjectTeamBuilder().WithId().Build();
+        team.TeamUsers = null;
+
+        //Act + Assert
+        Assert.That(() => _converter.ToTeamDetailsModel(team), Throws.InstanceOf<ArgumentException>());
+    }
+
+    [Test]
+    public void ToTeamDetailsModel_ShouldThrowArgumentExceptionWhenUsersAreMissing()
+    {
+        //Arrange
+        var team = new ProjectTeamBuilder().WithId().Build();
+        team.TeamUsers = new List<IProjectTeamUser>
         {
-            //Arrange
-            var team = new ProjectTeamBuilder().WithId().WithUsers(2).Build();
-
-            //Act
-            var model = _converter.ToTeamDetailsModel(team);
-
-            //Assert
-            Assert.That(model, Is.Not.Null);
-            Assert.That(model.Id, Is.EqualTo(team.Id));
-            Assert.That(model.Name, Is.EqualTo(team.Name));
-
-            foreach (var teamUser in team.TeamUsers)
+            new ProjectTeamUser
             {
-                User user = teamUser.User;
-                var matchingTeamUserModel = model.Members.FirstOrDefault(m => m.UserId == user.Id);
-                Assert.That(matchingTeamUserModel, Is.Not.Null);
-                Assert.That(matchingTeamUserModel.Name, Is.EqualTo(user.FirstName + " " + user.LastName));
+                User = null
             }
-        }
+        };
 
-        [Test]
-        public void ToTeamDetailsModel_ShouldThrowArgumentExceptionWhenTeamUsersAreMissing()
-        {
-            //Arrange
-            var team = new ProjectTeamBuilder().WithId().Build();
-            team.TeamUsers = null;
+        //Act + Assert
+        Assert.That(() => _converter.ToTeamDetailsModel(team), Throws.InstanceOf<ArgumentException>());
+    }
 
-            //Act + Assert
-            Assert.That(() => _converter.ToTeamDetailsModel(team), Throws.InstanceOf<ArgumentException>());
-        }
-
-        [Test]
-        public void ToTeamDetailsModel_ShouldThrowArgumentExceptionWhenUsersAreMissing()
-        {
-            //Arrange
-            var team = new ProjectTeamBuilder().WithId().Build();
-            team.TeamUsers = new List<IProjectTeamUser>
-            {
-                new ProjectTeamUser
-                {
-                    User = null
-                }
-            };
-
-            //Act + Assert
-            Assert.That(() => _converter.ToTeamDetailsModel(team), Throws.InstanceOf<ArgumentException>());
-        }
-
-        [Test]
-        public void ToTeamDetailsModel_WhenTeamIsNull_ShouldThrowNullReferenceException()
-        {
-            Assert.That(() => _converter.ToTeamDetailsModel(null), Throws.InstanceOf<NullReferenceException>());
-        }
+    [Test]
+    public void ToTeamDetailsModel_WhenTeamIsNull_ShouldThrowNullReferenceException()
+    {
+        Assert.That(() => _converter.ToTeamDetailsModel(null), Throws.InstanceOf<NullReferenceException>());
     }
 }

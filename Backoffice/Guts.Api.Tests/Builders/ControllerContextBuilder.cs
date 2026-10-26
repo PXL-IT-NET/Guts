@@ -6,76 +6,75 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Guts.Api.Tests.Builders
+namespace Guts.Api.Tests.Builders;
+
+internal class ControllerContextBuilder
 {
-    internal class ControllerContextBuilder
+    private readonly ControllerContext _context;
+    private readonly Random _random;
+
+    public ControllerContextBuilder()
     {
-        private readonly ControllerContext _context;
-        private readonly Random _random;
+        _random = new Random();
+        _context = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
+    }
 
-        public ControllerContextBuilder()
+    public ControllerContextBuilder WithUser(string nameIdentifier)
+    {
+        var claims = new List<Claim>
         {
-            _random = new Random();
-            _context = new ControllerContext { HttpContext = new DefaultHttpContext() };
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
-        }
+            new Claim(ClaimTypes.NameIdentifier, nameIdentifier)
+        };
+        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        return this;
+    }
 
-        public ControllerContextBuilder WithUser(string nameIdentifier)
+    public ControllerContextBuilder WithRole(string role)
+    {
+        var claims = new List<Claim>
         {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, nameIdentifier)
-            };
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
-            return this;
-        }
+            new Claim(ClaimTypes.Role, role)
+        };
+        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        return this;
+    }
 
-        public ControllerContextBuilder WithRole(string role)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Role, role)
-            };
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
-            return this;
-        }
+    public ControllerContextBuilder WithUserWithoutNameIdentifier()
+    {
+        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
+        return this;
+    }
 
-        public ControllerContextBuilder WithUserWithoutNameIdentifier()
-        {
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
-            return this;
-        }
+    public ControllerContextBuilder WithClientIp()
+    {
+        var maxValue = Convert.ToInt64("FFFFFFFF", 16);
+        var address = Convert.ToInt64(_random.NextDouble() * maxValue);
+        _context.HttpContext.Connection.RemoteIpAddress = new IPAddress(address);
+        return this;
+    }
 
-        public ControllerContextBuilder WithClientIp()
-        {
-            var maxValue = Convert.ToInt64("FFFFFFFF", 16);
-            var address = Convert.ToInt64(_random.NextDouble() * maxValue);
-            _context.HttpContext.Connection.RemoteIpAddress = new IPAddress(address);
-            return this;
-        }
+    public ControllerContextBuilder WithClientIp(string ipString)
+    {
+        var ipAddress = IPAddress.Parse(ipString);
+        _context.HttpContext.Connection.RemoteIpAddress = ipAddress;
+        return this;
+    }
 
-        public ControllerContextBuilder WithClientIp(string ipString)
+    public ControllerContextBuilder WithEmail(string email)
+    {
+        var claims = new List<Claim>
         {
-            var ipAddress = IPAddress.Parse(ipString);
-            _context.HttpContext.Connection.RemoteIpAddress = ipAddress;
-            return this;
-        }
+            new Claim(ClaimTypes.Email, email)
+        };
+        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        return this;
+    }
 
-        public ControllerContextBuilder WithEmail(string email)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Email, email)
-            };
-            _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
-            return this;
-        }
-
-        public ControllerContext Build()
-        {
-            return _context;
-        }
+    public ControllerContext Build()
+    {
+        return _context;
+    }
 
         
-    }
 }

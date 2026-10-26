@@ -14,302 +14,301 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Guts.Api.Controllers
+namespace Guts.Api.Controllers;
+
+/// <summary>
+/// Register and confirm users, authenticate users (bearer token).
+/// </summary>
+[Produces("application/json")]
+[Route("api/Auth")]
+public class AuthController(
+    UserManager<User> userManager,
+    ICaptchaValidator captchaValidator,
+    IMailSender mailSender,
+    ITokenAccessPassFactory tokenAccessPassFactory,
+    ILoginSessionService loginSessionService,
+    ILogger<AuthController> logger)
+    : Controller
 {
     /// <summary>
-    /// Register and confirm users, authenticate users (bearer token).
+    /// Registers a new user in the system.
+    /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
     /// </summary>
-    [Produces("application/json")]
-    [Route("api/Auth")]
-    public class AuthController(
-        UserManager<User> userManager,
-        ICaptchaValidator captchaValidator,
-        IMailSender mailSender,
-        ITokenAccessPassFactory tokenAccessPassFactory,
-        ILoginSessionService loginSessionService,
-        ILogger<AuthController> logger)
-        : Controller
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
-        /// <summary>
-        /// Registers a new user in the system.
-        /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
-        /// </summary>
-        [HttpPost("register")]
-        [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var email = model.Email.ToLower();
+        var isPxlEmail = email.EndsWith("@pxl.be") || email.EndsWith("@student.pxl.be");
+        if (!isPxlEmail)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var email = model.Email.ToLower();
-            var isPxlEmail = email.EndsWith("@pxl.be") || email.EndsWith("@student.pxl.be");
-            if (!isPxlEmail)
-            {
-                return BadRequest("Only PXL email adresses are allowed.");
-            }
-
-            var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
-            if (!validationResult.Success)
-            {
-                return BadRequest("Could not verify captcha.");
-            }
-
-            var user = new User
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FirstName = model.FirstName,
-                LastName = model.LastName
-            };
-
-            var result = await userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
-            {
-                var role = user.Email.ToLower().EndsWith("@pxl.be") ? Role.Constants.Lector : Role.Constants.Student;
-                await userManager.AddToRoleAsync(user, role);
-                await SendConfirmUserEmailMessage(user);
-                return Ok();
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
-            return BadRequest(ModelState);
+            return BadRequest("Only PXL email adresses are allowed.");
         }
 
-        /// <summary>
-        /// Confirms the email address of a registered user by providing the token that was send to the users email adres.
-        /// </summary>
-        [HttpPost("confirmemail")]
-        [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailModel model)
+        var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
+        if (!validationResult.Success)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = await userManager.FindByIdAsync(model.UserId);
-            if (user == null)
-            {
-                //don't reveal if the user does not exist
-                return Ok();
-            }
-
-            var result = await userManager.ConfirmEmailAsync(user, model.Token);
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
-            return BadRequest(ModelState);
+            return BadRequest("Could not verify captcha.");
         }
 
-        /// <summary>
-        /// Sends an email to a user with a token (link) that can be used to reset the password of the user.
-        /// </summary>
-        [HttpPost("forgotpassword")]
-        [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> SendForgotPasswordMail([FromBody] ForgotPasswordModel model)
+        var user = new User
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            UserName = model.Email,
+            Email = model.Email,
+            FirstName = model.FirstName,
+            LastName = model.LastName
+        };
 
-            var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
-            if (!validationResult.Success)
-            {
-                return BadRequest("Could not verify captcha.");
-            }
+        var result = await userManager.CreateAsync(user, model.Password);
 
-            var user = await userManager.FindByEmailAsync(model.Email);
-
-            if (user == null)
-            {
-                //don't reveal if the user does not exist
-                return Ok();
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                //send a confirmation email, but don't reveal the email is not yet confirmed
-                await SendConfirmUserEmailMessage(user);
-                return Ok();
-            }
-
-            var resetPasswordToken = await userManager.GeneratePasswordResetTokenAsync(user);
-
-            await mailSender.SendForgotPasswordMessageAsync(user, resetPasswordToken);
-
+        if (result.Succeeded)
+        {
+            var role = user.Email.ToLower().EndsWith("@pxl.be") ? Role.Constants.Lector : Role.Constants.Student;
+            await userManager.AddToRoleAsync(user, role);
+            await SendConfirmUserEmailMessage(user);
             return Ok();
         }
 
-        /// <summary>
-        /// Resets the password of a user using a token that was sent to the users email address.
-        /// </summary>
-        [HttpPost("resetpassword")]
-        [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        foreach (var error in result.Errors)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            ModelState.AddModelError(error.Code, error.Description);
+        }
+        return BadRequest(ModelState);
+    }
 
-            var user = await userManager.FindByIdAsync(model.UserId);
-            if (user == null)
-            {
-                //don't reveal if the user does not exist
-                return Ok();
-            }
+    /// <summary>
+    /// Confirms the email address of a registered user by providing the token that was send to the users email adres.
+    /// </summary>
+    [HttpPost("confirmemail")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+        {
+            //don't reveal if the user does not exist
+            return Ok();
+        }
 
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
+        var result = await userManager.ConfirmEmailAsync(user, model.Token);
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
+        if (result.Succeeded)
+        {
+            return Ok();
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(error.Code, error.Description);
+        }
+        return BadRequest(ModelState);
+    }
+
+    /// <summary>
+    /// Sends an email to a user with a token (link) that can be used to reset the password of the user.
+    /// </summary>
+    [HttpPost("forgotpassword")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> SendForgotPasswordMail([FromBody] ForgotPasswordModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var validationResult = await captchaValidator.Validate(model.CaptchaToken, Request.HttpContext.Connection.RemoteIpAddress);
+        if (!validationResult.Success)
+        {
+            return BadRequest("Could not verify captcha.");
+        }
+
+        var user = await userManager.FindByEmailAsync(model.Email);
+
+        if (user == null)
+        {
+            //don't reveal if the user does not exist
+            return Ok();
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            //send a confirmation email, but don't reveal the email is not yet confirmed
+            await SendConfirmUserEmailMessage(user);
+            return Ok();
+        }
+
+        var resetPasswordToken = await userManager.GeneratePasswordResetTokenAsync(user);
+
+        await mailSender.SendForgotPasswordMessageAsync(user, resetPasswordToken);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Resets the password of a user using a token that was sent to the users email address.
+    /// </summary>
+    [HttpPost("resetpassword")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+        {
+            //don't reveal if the user does not exist
+            return Ok();
+        }
+
+        var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
+
+        if (result.Succeeded)
+        {
+            return Ok();
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(error.Code, error.Description);
+        }
+        return BadRequest(ModelState);
+    }
+
+    /// <summary>
+    /// Changes the password of the authenticated user.
+    /// </summary>
+    [HttpPost("changepassword")]
+    [Authorize]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        User user = await userManager.GetUserAsync(User);
+
+        var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
+        if (result.Succeeded)
+        {
+            return Ok();
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(error.Code, error.Description);
+        }
+
+        return BadRequest(ModelState);
+    }
+
+    /// <summary>
+    /// Request a (bearer) token that can be used to authenticate yourself in future requests.
+    /// </summary>
+    [HttpPost("token")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(TokenAccessPass), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> CreateToken([FromBody] LoginModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var user = await userManager.FindByNameAsync(model.Email);
+        if (user == null)
+        {
+            logger.LogWarning("Cannot find user by name '{Email}'", model.Email);
+            return Unauthorized();
+        }
+
+        var isPasswordValid = await userManager.CheckPasswordAsync(user, model.Password);
+        if (!isPasswordValid)
+        {
+            logger.LogWarning("Invalid password for user '{UserName}'", user.UserName);
+            return Unauthorized();
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            logger.LogWarning("Email adress of user is not confirmed: '{Email}'", user.Email);
+            await SendConfirmUserEmailMessage(user);
+
+            ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");
             return BadRequest(ModelState);
         }
 
-        /// <summary>
-        /// Changes the password of the authenticated user.
-        /// </summary>
-        [HttpPost("changepassword")]
-        [Authorize]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+        var currentClaims = await userManager.GetClaimsAsync(user);
+        var userRoles = await userManager.GetRolesAsync(user);
+        var tokenAccessPass = tokenAccessPassFactory.Create(user, currentClaims, userRoles);
+
+        if (!string.IsNullOrEmpty(model.LoginSessionPublicIdentifier))
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            User user = await userManager.GetUserAsync(User);
-
-            var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
-
-            return BadRequest(ModelState);
+            await loginSessionService.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier, tokenAccessPass.Token);
         }
 
-        /// <summary>
-        /// Request a (bearer) token that can be used to authenticate yourself in future requests.
-        /// </summary>
-        [HttpPost("token")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(TokenAccessPass), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        public async Task<IActionResult> CreateToken([FromBody] LoginModel model)
+        return Ok(tokenAccessPass);
+    }
+
+    [HttpPost("loginsession")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
+    public async Task<IActionResult> CreateLoginSession()
+    {
+        await loginSessionService.CleanUpOldSessionsAsync();
+        var session = await loginSessionService.CreateSessionAsync(HttpContext.Connection.RemoteIpAddress.ToString());
+        return Ok(session);
+    }
+
+    [HttpPost("loginsession/{publicIdentifier}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> RetrieveLoginSession(string publicIdentifier, [FromBody] string secretToken)
+    {
+        var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
+        try
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = await userManager.FindByNameAsync(model.Email);
-            if (user == null)
-            {
-                logger.LogWarning("Cannot find user by name '{Email}'", model.Email);
-                return Unauthorized();
-            }
-
-            var isPasswordValid = await userManager.CheckPasswordAsync(user, model.Password);
-            if (!isPasswordValid)
-            {
-                logger.LogWarning("Invalid password for user '{UserName}'", user.UserName);
-                return Unauthorized();
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                logger.LogWarning("Email adress of user is not confirmed: '{Email}'", user.Email);
-                await SendConfirmUserEmailMessage(user);
-
-                ModelState.AddModelError("EmailNotConfirmed", $"Please confirm your email address. A confirmation mail has been sent to {user.Email}.");
-                return BadRequest(ModelState);
-            }
-
-            var currentClaims = await userManager.GetClaimsAsync(user);
-            var userRoles = await userManager.GetRolesAsync(user);
-            var tokenAccessPass = tokenAccessPassFactory.Create(user, currentClaims, userRoles);
-
-            if (!string.IsNullOrEmpty(model.LoginSessionPublicIdentifier))
-            {
-                await loginSessionService.SetLoginTokenForSessionAsync(model.LoginSessionPublicIdentifier, tokenAccessPass.Token);
-            }
-
-            return Ok(tokenAccessPass);
-        }
-
-        [HttpPost("loginsession")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> CreateLoginSession()
-        {
-            await loginSessionService.CleanUpOldSessionsAsync();
-            var session = await loginSessionService.CreateSessionAsync(HttpContext.Connection.RemoteIpAddress.ToString());
+            var session = await loginSessionService.GetSessionAsync(publicIdentifier, clientIp, secretToken);
             return Ok(session);
         }
-
-        [HttpPost("loginsession/{publicIdentifier}")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(LoginSession), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> RetrieveLoginSession(string publicIdentifier, [FromBody] string secretToken)
+        catch (DataNotFoundException)
         {
-            var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
-            try
-            {
-                var session = await loginSessionService.GetSessionAsync(publicIdentifier, clientIp, secretToken);
-                return Ok(session);
-            }
-            catch (DataNotFoundException)
-            {
-                return BadRequest();
-            }
+            return BadRequest();
         }
-
-        [HttpPatch("loginsession/{publicIdentifier}/cancel")]
-        [AllowAnonymous]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task<IActionResult> CancelLoginSession(string publicIdentifier)
-        {
-            var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
-
-            try
-            {
-                await loginSessionService.CancelSessionAsync(publicIdentifier, clientIp);
-                return Ok();
-            }
-            catch (DataNotFoundException)
-            {
-                return BadRequest();
-            }
-        }
-
-        private async Task SendConfirmUserEmailMessage(User user)
-        {
-            var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-            await mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
-        }
-
     }
+
+    [HttpPatch("loginsession/{publicIdentifier}/cancel")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> CancelLoginSession(string publicIdentifier)
+    {
+        var clientIp = HttpContext.Connection.RemoteIpAddress.ToString();
+
+        try
+        {
+            await loginSessionService.CancelSessionAsync(publicIdentifier, clientIp);
+            return Ok();
+        }
+        catch (DataNotFoundException)
+        {
+            return BadRequest();
+        }
+    }
+
+    private async Task SendConfirmUserEmailMessage(User user)
+    {
+        var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        await mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
+    }
+
 }

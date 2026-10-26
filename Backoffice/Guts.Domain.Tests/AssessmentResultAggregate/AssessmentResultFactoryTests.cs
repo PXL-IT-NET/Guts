@@ -10,141 +10,140 @@ using Guts.Domain.ValueObjects;
 using Moq;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.AssessmentResultAggregate
+namespace Guts.Domain.Tests.AssessmentResultAggregate;
+
+public class AssessmentResultFactoryTests
 {
-    public class AssessmentResultFactoryTests
+    private AssessmentResult.Factory _factory;
+    private Mock<IAssessmentSubResultFactory> _assessmentSubResultFactoryMock;
+
+    [SetUp]
+    public void BeforeEachTest()
     {
-        private AssessmentResult.Factory _factory;
-        private Mock<IAssessmentSubResultFactory> _assessmentSubResultFactoryMock;
+        _assessmentSubResultFactoryMock = new Mock<IAssessmentSubResultFactory>();
+        _factory = new AssessmentResult.Factory(_assessmentSubResultFactoryMock.Object);
+    }
 
-        [SetUp]
-        public void BeforeEachTest()
+    [Test]
+    public void Create_ValidInput_ShouldCreateResultForSubject()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        User subject = projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
+
+        var expectedPeerAssessments =
+            projectTeamAssessment.PeerAssessments.Where(pa => pa.Subject.Id == subject.Id && pa.User.Id != subject.Id).ToList();
+        var expectedSelfAssessment = projectTeamAssessment.PeerAssessments.Single(pa =>
+            pa.Subject.Id == subject.Id && pa.User.Id == subject.Id);
+
+        var dummyPeerAssessment = new PeerAssessmentBuilder().WithScores(AssessmentScore.WayBelowAverage, AssessmentScore.Average, AssessmentScore.AboveAverage).Build();
+
+        var contributionResultMock = new Mock<IAssessmentSubResult>();
+        _assessmentSubResultFactoryMock.Setup(
+                sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
+                    It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
+                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.ContributionScore)))
+            .Returns(contributionResultMock.Object).Verifiable();
+
+        var effortResultMock = new Mock<IAssessmentSubResult>();
+        _assessmentSubResultFactoryMock.Setup(
+                sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
+                    It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
+                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.EffortScore)))
+            .Returns(effortResultMock.Object).Verifiable();
+
+        var cooperationResultMock = new Mock<IAssessmentSubResult>();
+        _assessmentSubResultFactoryMock.Setup(
+                sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
+                    It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
+                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.CooperationScore)))
+            .Returns(cooperationResultMock.Object).Verifiable();
+
+        var averageResultMock = new Mock<IAssessmentSubResult>();
+        _assessmentSubResultFactoryMock.Setup(
+                sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
+                    It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
+                        calculateScoreFunction(dummyPeerAssessment) == (dummyPeerAssessment.CooperationScore + dummyPeerAssessment.EffortScore + dummyPeerAssessment.ContributionScore) / 3.0)))
+            .Returns(averageResultMock.Object).Verifiable();
+
+        //Act
+        IAssessmentResult result = _factory.Create(subject.Id, projectTeamAssessment, true);
+
+        //Assert
+        Assert.That(result.PeerAssessments, Is.EquivalentTo(expectedPeerAssessments));
+        Assert.That(result.Subject, Is.SameAs(subject));
+        Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
+        Assert.That(result.ContributionResult, Is.SameAs(contributionResultMock.Object));
+        Assert.That(result.EffortResult, Is.SameAs(effortResultMock.Object));
+        Assert.That(result.CooperationResult, Is.SameAs(cooperationResultMock.Object));
+        Assert.That(result.AverageResult, Is.SameAs(averageResultMock.Object));
+
+        _assessmentSubResultFactoryMock.Verify();
+    }
+
+    [Test]
+    public void Create_SubjectNotInTeam_ShouldThrowContractException()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+
+        int unknownSubjectId = Random.Shared.NextPositive();
+        while (projectTeamAssessment.Team.TeamUsers.Any(tu => tu.UserId == unknownSubjectId))
         {
-            _assessmentSubResultFactoryMock = new Mock<IAssessmentSubResultFactory>();
-            _factory = new AssessmentResult.Factory(_assessmentSubResultFactoryMock.Object);
+            unknownSubjectId = Random.Shared.NextPositive();
         }
 
-        [Test]
-        public void Create_ValidInput_ShouldCreateResultForSubject()
-        {
-            //Arrange
-            ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
-            User subject = projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
+        //Act + Assert
+        Assert.That(() => _factory.Create(unknownSubjectId, projectTeamAssessment, true),
+            Throws.InstanceOf<ContractException>());
 
-            var expectedPeerAssessments =
-                projectTeamAssessment.PeerAssessments.Where(pa => pa.Subject.Id == subject.Id && pa.User.Id != subject.Id).ToList();
-            var expectedSelfAssessment = projectTeamAssessment.PeerAssessments.Single(pa =>
-                pa.Subject.Id == subject.Id && pa.User.Id == subject.Id);
+    }
 
-            var dummyPeerAssessment = new PeerAssessmentBuilder().WithScores(AssessmentScore.WayBelowAverage, AssessmentScore.Average, AssessmentScore.AboveAverage).Build();
+    [Test]
+    public void Create_ValidInput_NoPeerAssessmentsRequestedInResult_ShouldCreateResultForSubject()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        User subject = projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
 
-            var contributionResultMock = new Mock<IAssessmentSubResult>();
-            _assessmentSubResultFactoryMock.Setup(
-                    sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
-                        It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                            calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.ContributionScore)))
-                .Returns(contributionResultMock.Object).Verifiable();
+        var expectedSelfAssessment = projectTeamAssessment.PeerAssessments.Single(pa =>
+            pa.Subject.Id == subject.Id && pa.User.Id == subject.Id);
 
-            var effortResultMock = new Mock<IAssessmentSubResult>();
-            _assessmentSubResultFactoryMock.Setup(
-                    sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
-                        It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                            calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.EffortScore)))
-                .Returns(effortResultMock.Object).Verifiable();
+        //Act
+        IAssessmentResult result = _factory.Create(subject.Id, projectTeamAssessment, false);
 
-            var cooperationResultMock = new Mock<IAssessmentSubResult>();
-            _assessmentSubResultFactoryMock.Setup(
-                    sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
-                        It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                            calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.CooperationScore)))
-                .Returns(cooperationResultMock.Object).Verifiable();
+        //Assert
+        Assert.That(result.PeerAssessments, Has.Count.Zero);
+        Assert.That(result.Subject, Is.SameAs(subject));
+        Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
+    }
 
-            var averageResultMock = new Mock<IAssessmentSubResult>();
-            _assessmentSubResultFactoryMock.Setup(
-                    sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
-                        It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                            calculateScoreFunction(dummyPeerAssessment) == (dummyPeerAssessment.CooperationScore + dummyPeerAssessment.EffortScore + dummyPeerAssessment.ContributionScore) / 3.0)))
-                .Returns(averageResultMock.Object).Verifiable();
+    [Test]
+    public void Create_SubjectHasNoSelfAssessment_ShouldThrowContractException()
+    {
+        //Arrange
+        var builder = new ProjectTeamAssessmentBuilder();
+        ProjectTeamAssessment projectTeamAssessment = builder.Build();
+        User subject = projectTeamAssessment.Team.TeamUsers.First().User;
+        User otherPeer = projectTeamAssessment.Team.TeamUsers.Last().User;
+        builder.WithPeerAssessment(otherPeer, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
 
-            //Act
-            IAssessmentResult result = _factory.Create(subject.Id, projectTeamAssessment, true);
+        //Act + Assert
+        Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
+            Throws.InstanceOf<ContractException>());
+    }
 
-            //Assert
-            Assert.That(result.PeerAssessments, Is.EquivalentTo(expectedPeerAssessments));
-            Assert.That(result.Subject, Is.SameAs(subject));
-            Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
-            Assert.That(result.ContributionResult, Is.SameAs(contributionResultMock.Object));
-            Assert.That(result.EffortResult, Is.SameAs(effortResultMock.Object));
-            Assert.That(result.CooperationResult, Is.SameAs(cooperationResultMock.Object));
-            Assert.That(result.AverageResult, Is.SameAs(averageResultMock.Object));
+    [Test]
+    public void Create_IncludePeerAssessmentsTrueAndNoPeerEvaluatedSubject_ShouldThrowContractException()
+    {
+        //Arrange
+        var builder = new ProjectTeamAssessmentBuilder();
+        ProjectTeamAssessment projectTeamAssessment = builder.Build();
+        User subject = projectTeamAssessment.Team.TeamUsers.First().User;
+        builder.WithPeerAssessment(subject, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
 
-            _assessmentSubResultFactoryMock.Verify();
-        }
-
-        [Test]
-        public void Create_SubjectNotInTeam_ShouldThrowContractException()
-        {
-            //Arrange
-            ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
-
-            int unknownSubjectId = Random.Shared.NextPositive();
-            while (projectTeamAssessment.Team.TeamUsers.Any(tu => tu.UserId == unknownSubjectId))
-            {
-                unknownSubjectId = Random.Shared.NextPositive();
-            }
-
-            //Act + Assert
-            Assert.That(() => _factory.Create(unknownSubjectId, projectTeamAssessment, true),
-                Throws.InstanceOf<ContractException>());
-
-        }
-
-        [Test]
-        public void Create_ValidInput_NoPeerAssessmentsRequestedInResult_ShouldCreateResultForSubject()
-        {
-            //Arrange
-            ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
-            User subject = projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
-
-            var expectedSelfAssessment = projectTeamAssessment.PeerAssessments.Single(pa =>
-                pa.Subject.Id == subject.Id && pa.User.Id == subject.Id);
-
-            //Act
-            IAssessmentResult result = _factory.Create(subject.Id, projectTeamAssessment, false);
-
-            //Assert
-            Assert.That(result.PeerAssessments, Has.Count.Zero);
-            Assert.That(result.Subject, Is.SameAs(subject));
-            Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
-        }
-
-        [Test]
-        public void Create_SubjectHasNoSelfAssessment_ShouldThrowContractException()
-        {
-            //Arrange
-            var builder = new ProjectTeamAssessmentBuilder();
-            ProjectTeamAssessment projectTeamAssessment = builder.Build();
-            User subject = projectTeamAssessment.Team.TeamUsers.First().User;
-            User otherPeer = projectTeamAssessment.Team.TeamUsers.Last().User;
-            builder.WithPeerAssessment(otherPeer, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
-
-            //Act + Assert
-            Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
-                Throws.InstanceOf<ContractException>());
-        }
-
-        [Test]
-        public void Create_IncludePeerAssessmentsTrueAndNoPeerEvaluatedSubject_ShouldThrowContractException()
-        {
-            //Arrange
-            var builder = new ProjectTeamAssessmentBuilder();
-            ProjectTeamAssessment projectTeamAssessment = builder.Build();
-            User subject = projectTeamAssessment.Team.TeamUsers.First().User;
-            builder.WithPeerAssessment(subject, subject, AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average);
-
-            //Act + Assert
-            Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
-                Throws.InstanceOf<ContractException>());
-        }
+        //Act + Assert
+        Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
+            Throws.InstanceOf<ContractException>());
     }
 }

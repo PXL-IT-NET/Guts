@@ -4,27 +4,26 @@ using Guts.Business.Repositories;
 using Guts.Domain.LoginSessionAggregate;
 using Microsoft.EntityFrameworkCore;
 
-namespace Guts.Infrastructure.Repositories
+namespace Guts.Infrastructure.Repositories;
+
+internal class LoginSesssionDbRepository : BaseDbRepository<LoginSession, LoginSession>, ILoginSesssionRepository
 {
-    internal class LoginSesssionDbRepository : BaseDbRepository<LoginSession, LoginSession>, ILoginSesssionRepository
+    public LoginSesssionDbRepository(GutsContext context) : base(context)
     {
-        public LoginSesssionDbRepository(GutsContext context) : base(context)
+    }
+
+    public async Task<LoginSession> GetSingleAsync(string publicIdentifier, string ipAddress = null, string sessionToken = null)
+    {
+        var session = await _context.LoginSessions.FirstOrDefaultAsync(s =>
+            (s.PublicIdentifier == publicIdentifier) && 
+            (ipAddress == null || s.IpAddress == ipAddress) &&
+            (sessionToken == null || s.SessionToken == sessionToken));
+
+        if (session == null)
         {
+            throw new DataNotFoundException();
         }
 
-        public async Task<LoginSession> GetSingleAsync(string publicIdentifier, string ipAddress = null, string sessionToken = null)
-        {
-            var session = await _context.LoginSessions.FirstOrDefaultAsync(s =>
-                (s.PublicIdentifier == publicIdentifier) && 
-                (ipAddress == null || s.IpAddress == ipAddress) &&
-                (sessionToken == null || s.SessionToken == sessionToken));
-
-            if (session == null)
-            {
-                throw new DataNotFoundException();
-            }
-
-            return session;
-        }
+        return session;
     }
 }

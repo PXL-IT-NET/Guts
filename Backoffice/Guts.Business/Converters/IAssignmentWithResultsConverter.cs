@@ -2,10 +2,9 @@
 using Guts.Business.Dtos;
 using Guts.Domain.TestRunAggregate;
 
-namespace Guts.Business.Converters
+namespace Guts.Business.Converters;
+
+public interface IAssignmentWithResultsConverter
 {
-    public interface IAssignmentWithResultsConverter
-    {
-        AssignmentStatisticsDto ToAssignmentStatisticsDto(int assignmentId, IList<TestResult> lastResultsOfMultipleUsers);
-    }
+    AssignmentStatisticsDto ToAssignmentStatisticsDto(int assignmentId, IList<TestResult> lastResultsOfMultipleUsers);
 }

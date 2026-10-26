@@ -7,135 +7,134 @@ using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.ProjectTeamAssessmentAggregate;
+
+internal class ProjectTeamAssessment : AggregateRoot, IProjectTeamAssessment
 {
-    internal class ProjectTeamAssessment : AggregateRoot, IProjectTeamAssessment
+    private readonly HashSet<IPeerAssessment> _peerAssessments;
+
+    public IProjectAssessment ProjectAssessment { get; private set; }
+
+    public IProjectTeam Team { get; private set; }
+
+    public IReadOnlyCollection<IPeerAssessment> PeerAssessments => _peerAssessments;
+
+    public bool IsComplete => (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
+
+    private ProjectTeamAssessment()
     {
-        private readonly HashSet<IPeerAssessment> _peerAssessments;
+        _peerAssessments = new HashSet<IPeerAssessment>();
+    }
 
-        public IProjectAssessment ProjectAssessment { get; private set; }
+    private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
+    {
+        Contracts.Require(team != null, "A team must be provided.");
+        Contracts.Require(team.TeamUsers.Count > 0, "The team has no members.");
+        Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
+        Team = team;
 
-        public IProjectTeam Team { get; private set; }
+        Contracts.Require(projectAssessment.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
+        ProjectAssessment = projectAssessment;
+    }
 
-        public IReadOnlyCollection<IPeerAssessment> PeerAssessments => _peerAssessments;
-
-        public bool IsComplete => (int)Math.Pow(Team.TeamUsers.Count, 2) == _peerAssessments.Count;
-
-        private ProjectTeamAssessment()
+    public class Factory : IProjectTeamAssessmentFactory
+    {
+        public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
         {
-            _peerAssessments = new HashSet<IPeerAssessment>();
+            Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
+            Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
+            return new ProjectTeamAssessment(projectAssessment, team);
+        }
+    }
+
+    public IPeerAssessment AddOrUpdatePeerAssessment(int userId, int subjectId,
+        AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore,
+        string explanation)
+    {
+        RequireUserToBeATeamMember(userId);
+        RequireUserToBeATeamMember(subjectId);
+        Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change a peer assessment.");
+        Contracts.Require(cooperationScore != AssessmentScore.NullScore, "An empty score for 'cooperation' is not allowed.");
+        Contracts.Require(contributionScore != AssessmentScore.NullScore, "An empty score for 'contribution' is not allowed.");
+        Contracts.Require(effortScore != AssessmentScore.NullScore, "An empty score for 'effort' is not allowed.");
+
+        //require that explanation is not empty when any of the scores is not 'Average'
+        if (cooperationScore != AssessmentScore.Average || contributionScore != AssessmentScore.Average ||
+            effortScore != AssessmentScore.Average)
+        {
+            Contracts.Require(!string.IsNullOrWhiteSpace(explanation), "An explanation is required when a score is not 'Equal to group average' (3).");
         }
 
-        private ProjectTeamAssessment(IProjectAssessment projectAssessment, IProjectTeam team) : this()
+        IPeerAssessment peerAssessment = _peerAssessments.SingleOrDefault(pa => pa.User.Id == userId && pa.Subject.Id == subjectId);
+        if (peerAssessment == null)
         {
-            Contracts.Require(team != null, "A team must be provided.");
-            Contracts.Require(team.TeamUsers.Count > 0, "The team has no members.");
-            Contracts.Require(team.TeamUsers.First().User != null, "The users of team must be loaded with user data.");
-            Team = team;
-
-            Contracts.Require(projectAssessment.Id > 0, "A project team assessment can only created for an existing (stored) project assessment.");
-            ProjectAssessment = projectAssessment;
-        }
-
-        public class Factory : IProjectTeamAssessmentFactory
-        {
-            public IProjectTeamAssessment CreateNew(IProjectAssessment projectAssessment, IProjectTeam team)
-            {
-                Contracts.Require(projectAssessment != null, "A project assessment must be provided to create a project team assessment.");
-                Contracts.Require(projectAssessment.OpenOnUtc <= DateTime.UtcNow, "The project team assessment cannot be created because the project assessment is not opened yet.");
-                return new ProjectTeamAssessment(projectAssessment, team);
-            }
-        }
-
-        public IPeerAssessment AddOrUpdatePeerAssessment(int userId, int subjectId,
-            AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore,
-            string explanation)
-        {
-            RequireUserToBeATeamMember(userId);
-            RequireUserToBeATeamMember(subjectId);
-            Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change a peer assessment.");
-            Contracts.Require(cooperationScore != AssessmentScore.NullScore, "An empty score for 'cooperation' is not allowed.");
-            Contracts.Require(contributionScore != AssessmentScore.NullScore, "An empty score for 'contribution' is not allowed.");
-            Contracts.Require(effortScore != AssessmentScore.NullScore, "An empty score for 'effort' is not allowed.");
-
-            //require that explanation is not empty when any of the scores is not 'Average'
-            if (cooperationScore != AssessmentScore.Average || contributionScore != AssessmentScore.Average ||
-                effortScore != AssessmentScore.Average)
-            {
-                Contracts.Require(!string.IsNullOrWhiteSpace(explanation), "An explanation is required when a score is not 'Equal to group average' (3).");
-            }
-
-            IPeerAssessment peerAssessment = _peerAssessments.SingleOrDefault(pa => pa.User.Id == userId && pa.Subject.Id == subjectId);
-            if (peerAssessment == null)
-            {
-                User user = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
-                User subject = Team.TeamUsers.Single(tu => tu.UserId == subjectId).User;
-                peerAssessment = new PeerAssessment(Id, user, subject);
-                _peerAssessments.Add(peerAssessment);
-            }
-
-            peerAssessment.SetScores(cooperationScore, contributionScore, effortScore, explanation);
-            return peerAssessment;
-        }
-
-        public IReadOnlyList<IPeerAssessment> GetPeerAssessmentsOf(int userId)
-        {
-            RequireUserToBeATeamMember(userId);
-
-            return _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
-        }
-
-        public IReadOnlyList<IPeerAssessment> GetMissingPeerAssessmentsOf(int userId)
-        {
-            RequireUserToBeATeamMember(userId);
             User user = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
-            List<IPeerAssessment> storedAssessments = _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
-            List<IPeerAssessment> missingAssessments = new List<IPeerAssessment>();
-
-            foreach (IProjectTeamUser teamUser in Team.TeamUsers.Where(teamUser => storedAssessments.All(a => a.Subject.Id != teamUser.UserId)))
-            {
-                missingAssessments.Add(new PeerAssessment(Id, user, teamUser.User));
-            }
-            return missingAssessments;
+            User subject = Team.TeamUsers.Single(tu => tu.UserId == subjectId).User;
+            peerAssessment = new PeerAssessment(Id, user, subject);
+            _peerAssessments.Add(peerAssessment);
         }
 
-        public IReadOnlyList<User> GetPeersThatNeedToEvaluateOthers()
+        peerAssessment.SetScores(cooperationScore, contributionScore, effortScore, explanation);
+        return peerAssessment;
+    }
+
+    public IReadOnlyList<IPeerAssessment> GetPeerAssessmentsOf(int userId)
+    {
+        RequireUserToBeATeamMember(userId);
+
+        return _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
+    }
+
+    public IReadOnlyList<IPeerAssessment> GetMissingPeerAssessmentsOf(int userId)
+    {
+        RequireUserToBeATeamMember(userId);
+        User user = Team.TeamUsers.Single(tu => tu.UserId == userId).User;
+        List<IPeerAssessment> storedAssessments = _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
+        List<IPeerAssessment> missingAssessments = new List<IPeerAssessment>();
+
+        foreach (IProjectTeamUser teamUser in Team.TeamUsers.Where(teamUser => storedAssessments.All(a => a.Subject.Id != teamUser.UserId)))
         {
-            var peers = new List<User>();
-            foreach (User user in Team.TeamUsers.Select(tu => tu.User))
-            {
-                if (_peerAssessments.Count(pa => pa.User.Id == user.Id) < Team.TeamUsers.Count)
-                {
-                    peers.Add(user);
-                }
-            }
-            return peers;
+            missingAssessments.Add(new PeerAssessment(Id, user, teamUser.User));
         }
+        return missingAssessments;
+    }
 
-        public void ValidateAssessmentsOf(int userId)
+    public IReadOnlyList<User> GetPeersThatNeedToEvaluateOthers()
+    {
+        var peers = new List<User>();
+        foreach (User user in Team.TeamUsers.Select(tu => tu.User))
         {
-            List<IPeerAssessment> allAssessmentsOfUser = _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
-            if (allAssessmentsOfUser.Count == Team.TeamUsers.Count)
+            if (_peerAssessments.Count(pa => pa.User.Id == user.Id) < Team.TeamUsers.Count)
             {
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average contribution score. Maybe you mean that everyone's score should be 'Average'?");
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore > AssessmentScore.Average),
-                    "It is not possible that everyone has an above average effort score. Maybe you mean that everyone's score should be 'Average'?");
-
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average contribution score. Maybe you mean that everyone's score should be 'Average'?");
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
-                Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore < AssessmentScore.Average),
-                    "It is not possible that everyone has a below average effort score. Maybe you mean that everyone's score should be 'Average'?");
+                peers.Add(user);
             }
         }
+        return peers;
+    }
 
-        private void RequireUserToBeATeamMember(int userId)
+    public void ValidateAssessmentsOf(int userId)
+    {
+        List<IPeerAssessment> allAssessmentsOfUser = _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
+        if (allAssessmentsOfUser.Count == Team.TeamUsers.Count)
         {
-            Contracts.Require(Team.TeamUsers.Any(tu => tu.UserId == userId), $"The user with id '{userId}' is not a member of the team.");
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore > AssessmentScore.Average),
+                "It is not possible that everyone has an above average contribution score. Maybe you mean that everyone's score should be 'Average'?");
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore > AssessmentScore.Average),
+                "It is not possible that everyone has an above average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore > AssessmentScore.Average),
+                "It is not possible that everyone has an above average effort score. Maybe you mean that everyone's score should be 'Average'?");
+
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.ContributionScore < AssessmentScore.Average),
+                "It is not possible that everyone has a below average contribution score. Maybe you mean that everyone's score should be 'Average'?");
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.CooperationScore < AssessmentScore.Average),
+                "It is not possible that everyone has a below average cooperation score. Maybe you mean that everyone's score should be 'Average'?");
+            Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore < AssessmentScore.Average),
+                "It is not possible that everyone has a below average effort score. Maybe you mean that everyone's score should be 'Average'?");
         }
+    }
+
+    private void RequireUserToBeATeamMember(int userId)
+    {
+        Contracts.Require(Team.TeamUsers.Any(tu => tu.UserId == userId), $"The user with id '{userId}' is not a member of the team.");
     }
 }

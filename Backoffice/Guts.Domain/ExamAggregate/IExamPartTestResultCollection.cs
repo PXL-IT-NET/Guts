@@ -1,9 +1,8 @@
 using Guts.Domain.AssignmentAggregate;
 
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public interface IExamPartTestResultCollection
 {
-    public interface IExamPartTestResultCollection
-    {
-        IAssignmentResult GetAssignmentResultFor(int userId, int assignmentId);
-    }
+    IAssignmentResult GetAssignmentResultFor(int userId, int assignmentId);
 }

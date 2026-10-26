@@ -1,10 +1,9 @@
-﻿namespace Guts.Infrastructure.Logging
+﻿namespace Guts.Infrastructure.Logging;
+
+public enum PeriodicityOptions
 {
-    public enum PeriodicityOptions
-    {
-        Daily,
-        Hourly,
-        Minutely,
-        Monthly
-    }
+    Daily,
+    Hourly,
+    Minutely,
+    Monthly
 }

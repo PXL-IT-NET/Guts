@@ -1,16 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Guts.Api.Models
+namespace Guts.Api.Models;
+
+public class LoginModel
 {
-    public class LoginModel
-    {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Please fill in a valid (pxl) email address")]
-        public string Email { get; set; }
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Please fill in a valid (pxl) email address")]
+    public string Email { get; set; }
 
-        [Required(ErrorMessage = "Password is required")]
-        public string Password { get; set; }
+    [Required(ErrorMessage = "Password is required")]
+    public string Password { get; set; }
 
-        public string LoginSessionPublicIdentifier { get; set; }
-    }
+    public string LoginSessionPublicIdentifier { get; set; }
 }

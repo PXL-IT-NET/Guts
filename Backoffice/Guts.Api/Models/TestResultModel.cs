@@ -1,10 +1,9 @@
-﻿namespace Guts.Api.Models
+﻿namespace Guts.Api.Models;
+
+public class TestResultModel
 {
-    public class TestResultModel
-    {
-        public string TestName { get; set; }
-        public bool Runned { get; set; }
-        public bool Passed { get; set; }
-        public string Message { get; set; }
-    }
+    public string TestName { get; set; }
+    public bool Runned { get; set; }
+    public bool Passed { get; set; }
+    public string Message { get; set; }
 }

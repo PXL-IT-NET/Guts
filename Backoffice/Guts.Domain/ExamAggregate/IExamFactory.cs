@@ -1,7 +1,6 @@
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public interface IExamFactory
 {
-    public interface IExamFactory
-    {
-        Exam CreateNew(int courseId, int periodId, string name);
-    }
+    Exam CreateNew(int courseId, int periodId, string name);
 }

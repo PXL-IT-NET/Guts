@@ -6,184 +6,183 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Guts.Infrastructure.Logging
+namespace Guts.Infrastructure.Logging;
+
+/// <summary>
+/// Abstract provider that writes logs to a concurrent collection and flushes batches of logs to the backing store (e.g. a file)
+/// This all happens in a background thread.
+/// </summary>
+public abstract class BatchingLoggerProvider : ILoggerProvider, ISupportExternalScope
 {
-    /// <summary>
-    /// Abstract provider that writes logs to a concurrent collection and flushes batches of logs to the backing store (e.g. a file)
-    /// This all happens in a background thread.
-    /// </summary>
-    public abstract class BatchingLoggerProvider : ILoggerProvider, ISupportExternalScope
+    private readonly List<LogMessage> _currentBatch = new List<LogMessage>();
+    private readonly TimeSpan _interval;
+    private readonly int? _queueSize;
+    private readonly int? _batchSize;
+    private readonly IDisposable _optionsChangeToken;
+
+    private BlockingCollection<LogMessage> _messageQueue;
+    private Task _outputTask;
+    private CancellationTokenSource _cancellationTokenSource;
+
+    private bool _includeScopes;
+    private IExternalScopeProvider _scopeProvider;
+
+    internal IExternalScopeProvider ScopeProvider => _includeScopes ? _scopeProvider : null;
+
+    protected BatchingLoggerProvider(IOptionsMonitor<BatchingLoggerOptions> options)
     {
-        private readonly List<LogMessage> _currentBatch = new List<LogMessage>();
-        private readonly TimeSpan _interval;
-        private readonly int? _queueSize;
-        private readonly int? _batchSize;
-        private readonly IDisposable _optionsChangeToken;
+        // NOTE: Only IsEnabled and IncludeScopes are monitored
 
-        private BlockingCollection<LogMessage> _messageQueue;
-        private Task _outputTask;
-        private CancellationTokenSource _cancellationTokenSource;
-
-        private bool _includeScopes;
-        private IExternalScopeProvider _scopeProvider;
-
-        internal IExternalScopeProvider ScopeProvider => _includeScopes ? _scopeProvider : null;
-
-        protected BatchingLoggerProvider(IOptionsMonitor<BatchingLoggerOptions> options)
+        var loggerOptions = options.CurrentValue;
+        if (loggerOptions.BatchSize <= 0)
         {
-            // NOTE: Only IsEnabled and IncludeScopes are monitored
-
-            var loggerOptions = options.CurrentValue;
-            if (loggerOptions.BatchSize <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.BatchSize)} must be a positive number.");
-            }
-            if (loggerOptions.FlushPeriod <= TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.FlushPeriod)} must be longer than zero.");
-            }
-
-            _interval = loggerOptions.FlushPeriod;
-            _batchSize = loggerOptions.BatchSize;
-            _queueSize = loggerOptions.BackgroundQueueSize;
-
-            _optionsChangeToken = options.OnChange(UpdateOptions);
-            UpdateOptions(options.CurrentValue);
+            throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.BatchSize)} must be a positive number.");
+        }
+        if (loggerOptions.FlushPeriod <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), $"{nameof(loggerOptions.FlushPeriod)} must be longer than zero.");
         }
 
-        public bool IsEnabled { get; private set; }
+        _interval = loggerOptions.FlushPeriod;
+        _batchSize = loggerOptions.BatchSize;
+        _queueSize = loggerOptions.BackgroundQueueSize;
 
-        private void UpdateOptions(BatchingLoggerOptions options)
+        _optionsChangeToken = options.OnChange(UpdateOptions);
+        UpdateOptions(options.CurrentValue);
+    }
+
+    public bool IsEnabled { get; private set; }
+
+    private void UpdateOptions(BatchingLoggerOptions options)
+    {
+        var oldIsEnabled = IsEnabled;
+        IsEnabled = options.IsEnabled;
+        _includeScopes = options.IncludeScopes;
+
+        if (oldIsEnabled != IsEnabled)
         {
-            var oldIsEnabled = IsEnabled;
-            IsEnabled = options.IsEnabled;
-            _includeScopes = options.IncludeScopes;
-
-            if (oldIsEnabled != IsEnabled)
+            if (IsEnabled)
             {
-                if (IsEnabled)
-                {
-                    Start();
-                }
-                else
-                {
-                    Stop();
-                }
+                Start();
             }
-
-        }
-
-        protected abstract Task WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken token);
-
-        private async Task ProcessLogQueue()
-        {
-            while (!_cancellationTokenSource.IsCancellationRequested)
+            else
             {
-                var limit = _batchSize ?? int.MaxValue;
-
-                while (limit > 0 && _messageQueue.TryTake(out var message))
-                {
-                    _currentBatch.Add(message);
-                    limit--;
-                }
-
-                if (_currentBatch.Count > 0)
-                {
-                    try
-                    {
-                        await WriteMessagesAsync(_currentBatch, _cancellationTokenSource.Token);
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-
-                    _currentBatch.Clear();
-                }
-
-                await IntervalAsync(_interval, _cancellationTokenSource.Token);
+                Stop();
             }
         }
 
-        protected virtual Task IntervalAsync(TimeSpan interval, CancellationToken cancellationToken)
-        {
-            return Task.Delay(interval, cancellationToken);
-        }
+    }
 
-        internal void AddMessage(DateTimeOffset timestamp, string message)
+    protected abstract Task WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken token);
+
+    private async Task ProcessLogQueue()
+    {
+        while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            if (!_messageQueue.IsAddingCompleted)
+            var limit = _batchSize ?? int.MaxValue;
+
+            while (limit > 0 && _messageQueue.TryTake(out var message))
+            {
+                _currentBatch.Add(message);
+                limit--;
+            }
+
+            if (_currentBatch.Count > 0)
             {
                 try
                 {
-                    _messageQueue.Add(new LogMessage { Message = message, Timestamp = timestamp }, _cancellationTokenSource.Token);
+                    await WriteMessagesAsync(_currentBatch, _cancellationTokenSource.Token);
                 }
                 catch
                 {
-                    //cancellation token canceled or CompleteAdding called
+                    // ignored
                 }
+
+                _currentBatch.Clear();
             }
+
+            await IntervalAsync(_interval, _cancellationTokenSource.Token);
         }
+    }
 
-        private void Start()
+    protected virtual Task IntervalAsync(TimeSpan interval, CancellationToken cancellationToken)
+    {
+        return Task.Delay(interval, cancellationToken);
+    }
+
+    internal void AddMessage(DateTimeOffset timestamp, string message)
+    {
+        if (!_messageQueue.IsAddingCompleted)
         {
-            _messageQueue = _queueSize == null ?
-                new BlockingCollection<LogMessage>(new ConcurrentQueue<LogMessage>()) :
-                new BlockingCollection<LogMessage>(new ConcurrentQueue<LogMessage>(), _queueSize.Value);
-
-            _cancellationTokenSource = new CancellationTokenSource();
-            _outputTask = Task.Run(ProcessLogQueue, _cancellationTokenSource.Token);
-        }
-
-        private void Stop()
-        {
-            _cancellationTokenSource.Cancel();
-            _messageQueue.CompleteAdding();
-
             try
             {
-                _outputTask.Wait(_interval, CancellationToken.None);
+                _messageQueue.Add(new LogMessage { Message = message, Timestamp = timestamp }, _cancellationTokenSource.Token);
             }
-            catch (TaskCanceledException)
+            catch
             {
-                // Cancellation is expected during shutdown
+                //cancellation token canceled or CompleteAdding called
             }
-            catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
+        }
+    }
+
+    private void Start()
+    {
+        _messageQueue = _queueSize == null ?
+            new BlockingCollection<LogMessage>(new ConcurrentQueue<LogMessage>()) :
+            new BlockingCollection<LogMessage>(new ConcurrentQueue<LogMessage>(), _queueSize.Value);
+
+        _cancellationTokenSource = new CancellationTokenSource();
+        _outputTask = Task.Run(ProcessLogQueue, _cancellationTokenSource.Token);
+    }
+
+    private void Stop()
+    {
+        _cancellationTokenSource.Cancel();
+        _messageQueue.CompleteAdding();
+
+        try
+        {
+            _outputTask.Wait(_interval, CancellationToken.None);
+        }
+        catch (TaskCanceledException)
+        {
+            // Cancellation is expected during shutdown
+        }
+        catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
+        {
+            // Cancellation is expected during shutdown
+        }
+        finally
+        {
+            _cancellationTokenSource.Dispose();
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _optionsChangeToken?.Dispose();
+            if (IsEnabled)
             {
-                // Cancellation is expected during shutdown
-            }
-            finally
-            {
-                _cancellationTokenSource.Dispose();
+                Stop();
             }
         }
+    }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+    public ILogger CreateLogger(string categoryName)
+    {
+        return new BatchingLogger(this, categoryName);
+    }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _optionsChangeToken?.Dispose();
-                if (IsEnabled)
-                {
-                    Stop();
-                }
-            }
-        }
-
-        public ILogger CreateLogger(string categoryName)
-        {
-            return new BatchingLogger(this, categoryName);
-        }
-
-        void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
-        {
-            _scopeProvider = scopeProvider;
-        }
+    void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
+    {
+        _scopeProvider = scopeProvider;
     }
 }

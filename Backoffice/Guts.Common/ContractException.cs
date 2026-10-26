@@ -1,21 +1,20 @@
 using System;
 
-namespace Guts.Common
+namespace Guts.Common;
+
+public class ContractException : Exception
 {
-    public class ContractException : Exception
+    public ContractException()
     {
-        public ContractException()
-        {
-        }
+    }
 
-        public ContractException(string message)
-            : base(message)
-        {
-        }
+    public ContractException(string message)
+        : base(message)
+    {
+    }
 
-        public ContractException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+    public ContractException(string message, Exception inner)
+        : base(message, inner)
+    {
     }
 }

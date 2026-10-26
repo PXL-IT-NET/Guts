@@ -1,24 +1,23 @@
 using System;
 using Guts.Api.Models;
 
-namespace Guts.Api.Tests.Builders
+namespace Guts.Api.Tests.Builders;
+
+internal class ChangePasswordModelBuilder
 {
-    internal class ChangePasswordModelBuilder
+    private readonly ChangePasswordModel _model;
+
+    public ChangePasswordModelBuilder()
     {
-        private readonly ChangePasswordModel _model;
-
-        public ChangePasswordModelBuilder()
+        _model = new ChangePasswordModel
         {
-            _model = new ChangePasswordModel
-            {
-                CurrentPassword = Guid.NewGuid().ToString(),
-                NewPassword = Guid.NewGuid().ToString()
-            };
-        }
+            CurrentPassword = Guid.NewGuid().ToString(),
+            NewPassword = Guid.NewGuid().ToString()
+        };
+    }
 
-        public ChangePasswordModel Build()
-        {
-            return _model;
-        }
+    public ChangePasswordModel Build()
+    {
+        return _model;
     }
 }

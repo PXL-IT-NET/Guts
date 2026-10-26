@@ -1,44 +1,43 @@
 using System;
 using Guts.Api.Models;
 
-namespace Guts.Api.Tests.Builders
+namespace Guts.Api.Tests.Builders;
+
+internal class RegisterModelBuilder
 {
-    internal class RegisterModelBuilder
+    private readonly RegisterModel _model;
+
+    public RegisterModelBuilder()
     {
-        private readonly RegisterModel _model;
-
-        public RegisterModelBuilder()
+        _model = new RegisterModel
         {
-            _model = new RegisterModel
-            {
-                Email = Guid.NewGuid().ToString(),
-                Password = Guid.NewGuid().ToString(),
-                CaptchaToken = Guid.NewGuid().ToString()
-            };
-        }
-
-        public RegisterModelBuilder WithEmail(string email)
-        {
-            _model.Email = email;
-            return this;
-        }
-
-        public RegisterModelBuilder WithValidStudentEmail()
-        {
-            _model.Email = string.Concat(Guid.NewGuid().ToString(), "@student.pxl.be");
-            return this;
-        }
-
-        public RegisterModelBuilder WithValidLectorEmail()
-        {
-            _model.Email = string.Concat(Guid.NewGuid().ToString(), "@pxl.be");
-            return this;
-        }
-
-        public RegisterModel Build()
-        {
-            return _model;
-        }
-
+            Email = Guid.NewGuid().ToString(),
+            Password = Guid.NewGuid().ToString(),
+            CaptchaToken = Guid.NewGuid().ToString()
+        };
     }
+
+    public RegisterModelBuilder WithEmail(string email)
+    {
+        _model.Email = email;
+        return this;
+    }
+
+    public RegisterModelBuilder WithValidStudentEmail()
+    {
+        _model.Email = string.Concat(Guid.NewGuid().ToString(), "@student.pxl.be");
+        return this;
+    }
+
+    public RegisterModelBuilder WithValidLectorEmail()
+    {
+        _model.Email = string.Concat(Guid.NewGuid().ToString(), "@pxl.be");
+        return this;
+    }
+
+    public RegisterModel Build()
+    {
+        return _model;
+    }
+
 }

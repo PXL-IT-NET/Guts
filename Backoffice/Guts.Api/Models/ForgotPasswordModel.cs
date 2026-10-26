@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Guts.Api.Models
-{
-    public class ForgotPasswordModel
-    {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Please fill in a valid (pxl) email address")]
-        public string Email { get; set; }
+namespace Guts.Api.Models;
 
-        [Required(ErrorMessage = "You must prove that you are not a robot")]
-        public string CaptchaToken { get; set; }
-    }
+public class ForgotPasswordModel
+{
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Please fill in a valid (pxl) email address")]
+    public string Email { get; set; }
+
+    [Required(ErrorMessage = "You must prove that you are not a robot")]
+    public string CaptchaToken { get; set; }
 }

@@ -4,19 +4,18 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Domain.ExamAggregate
+namespace Guts.Domain.ExamAggregate;
+
+public interface IExam : IEntity
 {
-    public interface IExam : IEntity
-    {
-        Course Course { get; }
-        int CourseId { get; }
-        IPeriod Period { get; }
-        int PeriodId { get; set; }
-        string Name { get; }
-        int MaximumScore { get; } //TODO: rename to NormalizedMaximumScore
-        IReadOnlyCollection<IExamPart> Parts { get; }
-        IExamPart AddExamPart(string name, DateTime deadline);
-        void DeleteExamPart(int examPartId);
-        IExamScore CalculateScoreForUser(User user, IExamTestResultCollection examTestResults);
-    }
+    Course Course { get; }
+    int CourseId { get; }
+    IPeriod Period { get; }
+    int PeriodId { get; set; }
+    string Name { get; }
+    int MaximumScore { get; }
+    IReadOnlyCollection<IExamPart> Parts { get; }
+    IExamPart AddExamPart(string name, DateTime deadline);
+    void DeleteExamPart(int examPartId);
+    IExamScore CalculateScoreForUser(User user, IExamTestResultCollection examTestResults);
 }

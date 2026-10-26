@@ -1,9 +1,8 @@
-namespace Guts.Domain.AssignmentAggregate
+namespace Guts.Domain.AssignmentAggregate;
+
+public interface IAssignmentResult
 {
-    public interface IAssignmentResult
-    {
-        int AssignmentId { get; set; }
-        int UserId { get; set; }
-        int NumberOfPassingTests { get; }
-    }
+    int AssignmentId { get; set; }
+    int UserId { get; set; }
+    int NumberOfPassingTests { get; }
 }

@@ -22,525 +22,524 @@ using Moq;
 using NUnit.Framework;
 using ControllerBase = Guts.Api.Controllers.ControllerBase;
 
-namespace Guts.Api.Tests.Controllers
+namespace Guts.Api.Tests.Controllers;
+
+[TestFixture]
+public class ChapterControllerTests
 {
-    [TestFixture]
-    public class ChapterControllerTests
+    private Mock<IChapterService> _chapterServiceMock;
+    private Mock<IChapterConverter> _chapterConverterMock;
+    private Mock<ITopicConverter> _topicConverterMock;
+    private ChapterController _controller;
+    private int _userId;
+    private Mock<UserManager<User>> _userManagerMock;
+    private Mock<IMemoryCache> _memoryCacheMock;
+    private Mock<IUserRepository> _userRepositoryMock;
+
+    [SetUp]
+    public void Setup()
     {
-        private Mock<IChapterService> _chapterServiceMock;
-        private Mock<IChapterConverter> _chapterConverterMock;
-        private Mock<ITopicConverter> _topicConverterMock;
-        private ChapterController _controller;
-        private int _userId;
-        private Mock<UserManager<User>> _userManagerMock;
-        private Mock<IMemoryCache> _memoryCacheMock;
-        private Mock<IUserRepository> _userRepositoryMock;
+        _userId = Random.Shared.NextPositive();
+        _chapterServiceMock = new Mock<IChapterService>();
+        _topicConverterMock = new Mock<ITopicConverter>();
+        _chapterConverterMock = new Mock<IChapterConverter>();
+        _memoryCacheMock = new Mock<IMemoryCache>();
+        _userRepositoryMock = new Mock<IUserRepository>();
 
-        [SetUp]
-        public void Setup()
+        Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
+        Mock<IPasswordHasher<User>> passwordHasherMock = new Mock<IPasswordHasher<User>>();
+        Mock<ILookupNormalizer> lookupNormalizerMock = new Mock<ILookupNormalizer>();
+        Mock<IdentityErrorDescriber> errorsMock = new Mock<IdentityErrorDescriber>();
+        Mock<ILogger<UserManager<User>>> loggerMock = new Mock<ILogger<UserManager<User>>>();
+
+        _userManagerMock = new Mock<UserManager<User>>(
+            userStoreMock.Object,
+            null,
+            passwordHasherMock.Object,
+            null,
+            null,
+            lookupNormalizerMock.Object,
+            errorsMock.Object,
+            null,
+            loggerMock.Object);
+
+        object cachedChapterStatisticsModel;
+        _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel)).Returns(false);
+
+        _controller = new ChapterController(_chapterServiceMock.Object,  
+            _chapterConverterMock.Object, 
+            _topicConverterMock.Object,
+            _userManagerMock.Object,
+            _userRepositoryMock.Object,
+            _memoryCacheMock.Object)
         {
-            _userId = Random.Shared.NextPositive();
-            _chapterServiceMock = new Mock<IChapterService>();
-            _topicConverterMock = new Mock<ITopicConverter>();
-            _chapterConverterMock = new Mock<IChapterConverter>();
-            _memoryCacheMock = new Mock<IMemoryCache>();
-            _userRepositoryMock = new Mock<IUserRepository>();
-
-            Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
-            Mock<IPasswordHasher<User>> passwordHasherMock = new Mock<IPasswordHasher<User>>();
-            Mock<ILookupNormalizer> lookupNormalizerMock = new Mock<ILookupNormalizer>();
-            Mock<IdentityErrorDescriber> errorsMock = new Mock<IdentityErrorDescriber>();
-            Mock<ILogger<UserManager<User>>> loggerMock = new Mock<ILogger<UserManager<User>>>();
-
-            _userManagerMock = new Mock<UserManager<User>>(
-                userStoreMock.Object,
-                null,
-                passwordHasherMock.Object,
-                null,
-                null,
-                lookupNormalizerMock.Object,
-                errorsMock.Object,
-                null,
-                loggerMock.Object);
-
-            object cachedChapterStatisticsModel;
-            _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel)).Returns(false);
-
-            _controller = new ChapterController(_chapterServiceMock.Object,  
-                _chapterConverterMock.Object, 
-                _topicConverterMock.Object,
-                _userManagerMock.Object,
-                _userRepositoryMock.Object,
-                _memoryCacheMock.Object)
-            {
-                ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(Role.Constants.Student).Build()
-            };
+            ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(Role.Constants.Student).Build()
+        };
            
-        }
+    }
 
-        [Test]
-        public void ShouldInheritFromControllerBase()
-        {
-            Assert.That(_controller, Is.InstanceOf<ControllerBase>());
-        }
+    [Test]
+    public void ShouldInheritFromControllerBase()
+    {
+        Assert.That(_controller, Is.InstanceOf<ControllerBase>());
+    }
 
-        [Test]
-        public void GetChapterSummaryShouldReturnContentsIfParametersAreValid()
-        {
-            //Arrange
-            Chapter existingChapter = new ChapterBuilder().WithId().Build();
-            TopicSummaryModel chapterContents = new TopicSummaryModel();
-            var userAssignmentResults = new List<AssignmentResultDto>();
-            int periodId = Random.Shared.NextPositive();
+    [Test]
+    public void GetChapterSummaryShouldReturnContentsIfParametersAreValid()
+    {
+        //Arrange
+        Chapter existingChapter = new ChapterBuilder().WithId().Build();
+        TopicSummaryModel chapterContents = new TopicSummaryModel();
+        var userAssignmentResults = new List<AssignmentResultDto>();
+        int periodId = Random.Shared.NextPositive();
           
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .ReturnsAsync(existingChapter);
-            _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<Chapter>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(userAssignmentResults);
-            _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(It.IsAny<Chapter>(), 
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .ReturnsAsync(existingChapter);
+        _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(It.IsAny<Chapter>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(userAssignmentResults);
+        _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(It.IsAny<Chapter>(), 
                 It.IsAny<IReadOnlyList<AssignmentResultDto>>()))
-                .Returns(chapterContents);
+            .Returns(chapterContents);
 
-            //Act
-            OkObjectResult actionResult =
-                _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, _userId, null, periodId)
-                    .Result as OkObjectResult;
+        //Act
+        OkObjectResult actionResult =
+            _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, _userId, null, periodId)
+                .Result as OkObjectResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
 
-            _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter, _userId, null), Times.Once);
+        _chapterServiceMock.Verify(service => service.GetResultsForUserAsync(existingChapter, _userId, null), Times.Once);
 
-            _topicConverterMock.Verify(converter => converter.ToTopicSummaryModel(existingChapter, userAssignmentResults), Times.Once);
-            Assert.That(actionResult.Value, Is.EqualTo(chapterContents));
-        }
+        _topicConverterMock.Verify(converter => converter.ToTopicSummaryModel(existingChapter, userAssignmentResults), Times.Once);
+        Assert.That(actionResult.Value, Is.EqualTo(chapterContents));
+    }
 
-        [Test]
-        [TestCase(0, "validCode", 1)]
-        [TestCase(-1, "validCode", 1)]
-        [TestCase(1, "validCode", 0)]
-        public void GetChapterSummaryShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode, int userId)
-        {
-            //Act
-            BadRequestResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, userId, null, null).Result as BadRequestResult;
+    [Test]
+    [TestCase(0, "validCode", 1)]
+    [TestCase(-1, "validCode", 1)]
+    [TestCase(1, "validCode", 0)]
+    public void GetChapterSummaryShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode, int userId)
+    {
+        //Act
+        BadRequestResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, userId, null, null).Result as BadRequestResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, null), Times.Never);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, null), Times.Never);
+    }
 
-        [Test]
-        public void GetChapterSummaryShouldReturnNotFoundWhenServiceCannotFindChapter()
-        {
-            //Arrange
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .Throws<DataNotFoundException>();
+    [Test]
+    public void GetChapterSummaryShouldReturnNotFoundWhenServiceCannotFindChapter()
+    {
+        //Arrange
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .Throws<DataNotFoundException>();
 
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
 
-            //Act
-            NotFoundResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as NotFoundResult;
+        //Act
+        NotFoundResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as NotFoundResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapterCode, null), Times.Once);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(courseId, chapterCode, null), Times.Once);
+    }
 
-        [Test]
-        [TestCase(0, "validCode")]
-        [TestCase(1, null)]
-        [TestCase(-1, "validCode")]
-        [TestCase(1, "")]
-        public void GetChapterStatisticsShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
-        {
-            //Act
-            BadRequestResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null).Result as BadRequestResult;
+    [Test]
+    [TestCase(0, "validCode")]
+    [TestCase(1, null)]
+    [TestCase(-1, "validCode")]
+    [TestCase(1, "")]
+    public void GetChapterStatisticsShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
+    {
+        //Act
+        BadRequestResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null).Result as BadRequestResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
+    }
 
-        [Test]
-        public void GetChapterStatisticsShouldReturnNotFoundWhenServiceCannotFindChapter()
-        {
-            //Arrange
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .Throws<DataNotFoundException>();
+    [Test]
+    public void GetChapterStatisticsShouldReturnNotFoundWhenServiceCannotFindChapter()
+    {
+        //Arrange
+        _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .Throws<DataNotFoundException>();
 
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-            int periodId = Random.Shared.NextPositive();
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
+        int periodId = Random.Shared.NextPositive();
 
-            //Act
-            NotFoundResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null, periodId).Result as NotFoundResult;
+        //Act
+        NotFoundResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, null, periodId).Result as NotFoundResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, periodId), Times.Once);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(courseId, chapterCode, periodId), Times.Once);
+    }
 
-        [Test]
-        public void GetChapterStatisticsShouldReturnStatisticsIfParametersAreValid()
-        {
-            //Arrange
-            Chapter existingChapter = new ChapterBuilder().WithId().Build();
-            var chapterStatistics = new List<AssignmentStatisticsDto>();
-            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
-            DateTime date = DateTime.Now.AddDays(-1);
-            int periodId = Random.Shared.NextPositive();
+    [Test]
+    public void GetChapterStatisticsShouldReturnStatisticsIfParametersAreValid()
+    {
+        //Arrange
+        Chapter existingChapter = new ChapterBuilder().WithId().Build();
+        var chapterStatistics = new List<AssignmentStatisticsDto>();
+        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        DateTime date = DateTime.Now.AddDays(-1);
+        int periodId = Random.Shared.NextPositive();
 
 
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .ReturnsAsync(existingChapter);
+        _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .ReturnsAsync(existingChapter);
 
-            _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(chapterStatistics);
+        _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
-                .Returns(chapterStatisticsModel);
+        _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            .Returns(chapterStatisticsModel);
 
-            //Act
-            OkObjectResult actionResult =
-                _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
-                    .Result as OkObjectResult;
+        //Act
+        OkObjectResult actionResult =
+            _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
+                .Result as OkObjectResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
-            _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, date.ToUniversalTime()), Times.Once);
-            _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
-            Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, periodId), Times.Once);
+        _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, date.ToUniversalTime()), Times.Once);
+        _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
+        Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
+    }
 
-        [Test]
-        public void GetChapterStatisticsShouldUseCacheWhenDateIsCloseToNow()
-        {
-            //Arrange
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-            DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
-            string expectedCacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-0";
+    [Test]
+    public void GetChapterStatisticsShouldUseCacheWhenDateIsCloseToNow()
+    {
+        //Arrange
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
+        DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
+        string expectedCacheKey = $"GetChapterStatistics-{courseId}-{chapterCode}-0";
 
-            object cachedChapterStatisticsModel = new TopicStatisticsModel();
-            _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
-                .Returns(true);
+        object cachedChapterStatisticsModel = new TopicStatisticsModel();
+        _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
+            .Returns(true);
           
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, date, null).Result as OkObjectResult;
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterStatistics(courseId, chapterCode, date, null).Result as OkObjectResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            Assert.That(actionResult.Value, Is.EqualTo(cachedChapterStatisticsModel));
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        Assert.That(actionResult.Value, Is.EqualTo(cachedChapterStatisticsModel));
 
-            _memoryCacheMock.Verify(cache => cache.TryGetValue(expectedCacheKey, out cachedChapterStatisticsModel), Times.Once);
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
-        }
+        _memoryCacheMock.Verify(cache => cache.TryGetValue(expectedCacheKey, out cachedChapterStatisticsModel), Times.Once);
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
+    }
 
-        [Test]
-        public void GetChapterStatisticsShouldNotUseCacheWhenDateIsTooFarInThePast()
-        {
-            //Arrange
-            Chapter existingChapter = new ChapterBuilder().WithId().Build();
-            List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
-            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
-            DateTime aLongTimeAgo = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds - 1);
+    [Test]
+    public void GetChapterStatisticsShouldNotUseCacheWhenDateIsTooFarInThePast()
+    {
+        //Arrange
+        Chapter existingChapter = new ChapterBuilder().WithId().Build();
+        List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
+        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        DateTime aLongTimeAgo = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds - 1);
 
 
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .ReturnsAsync(existingChapter);
+        _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .ReturnsAsync(existingChapter);
 
-            _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(chapterStatistics);
+        _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
-                .Returns(chapterStatisticsModel);
+        _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            .Returns(chapterStatisticsModel);
 
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, aLongTimeAgo, null).Result as OkObjectResult;
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, aLongTimeAgo, null).Result as OkObjectResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            object cachedEntry;
-            _memoryCacheMock.Verify(cache => cache.TryGetValue(It.IsAny<object>(), out cachedEntry), Times.Never);
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        object cachedEntry;
+        _memoryCacheMock.Verify(cache => cache.TryGetValue(It.IsAny<object>(), out cachedEntry), Times.Never);
 
-            _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, null), Times.Once);
-            _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, aLongTimeAgo.ToUniversalTime()), Times.Once);
-            _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
-            Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
-        }
+        _chapterServiceMock.Verify(service => service.LoadChapterAsync(existingChapter.CourseId, existingChapter.Code, null), Times.Once);
+        _chapterServiceMock.Verify(service => service.GetChapterStatisticsAsync(existingChapter, aLongTimeAgo.ToUniversalTime()), Times.Once);
+        _topicConverterMock.Verify(converter => converter.ToTopicStatisticsModel(existingChapter, chapterStatistics, "Students"), Times.Once);
+        Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
+    }
 
-        [Test]
-        public void GetChapterStatisticsShouldCacheCreatedModel()
-        {
-            //Arrange
-            Chapter existingChapter = new ChapterBuilder().WithId().Build();
-            List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
-            TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
-            DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
-            int periodId = Random.Shared.NextPositive();
-            string expectedCacheKey = $"GetChapterStatistics-{existingChapter.CourseId}-{existingChapter.Code}-{periodId}";
+    [Test]
+    public void GetChapterStatisticsShouldCacheCreatedModel()
+    {
+        //Arrange
+        Chapter existingChapter = new ChapterBuilder().WithId().Build();
+        List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
+        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
+        int periodId = Random.Shared.NextPositive();
+        string expectedCacheKey = $"GetChapterStatistics-{existingChapter.CourseId}-{existingChapter.Code}-{periodId}";
             
 
-            _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
-                .ReturnsAsync(existingChapter);
+        _chapterServiceMock.Setup(service => service.LoadChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()))
+            .ReturnsAsync(existingChapter);
 
-            _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
-                .ReturnsAsync(chapterStatistics);
+        _chapterServiceMock.Setup(service => service.GetChapterStatisticsAsync(It.IsAny<Chapter>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync(chapterStatistics);
 
-            _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
-                .Returns(chapterStatisticsModel);
+        _topicConverterMock.Setup(converter => converter.ToTopicStatisticsModel(It.IsAny<Chapter>(), It.IsAny<IReadOnlyList<AssignmentStatisticsDto>>(), It.IsAny<string>()))
+            .Returns(chapterStatisticsModel);
 
-            object cachedChapterStatisticsModel;
-            _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
-                .Returns(false);
+        object cachedChapterStatisticsModel;
+        _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
+            .Returns(false);
 
-            Mock<ICacheEntry> cacheEntryMock = new Mock<ICacheEntry>();
-            _memoryCacheMock.Setup(cache => cache.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
+        Mock<ICacheEntry> cacheEntryMock = new Mock<ICacheEntry>();
+        _memoryCacheMock.Setup(cache => cache.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
 
-            //Act
-            OkObjectResult actionResult =
-                _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
-                    .Result as OkObjectResult;
+        //Act
+        OkObjectResult actionResult =
+            _controller.GetChapterStatistics(existingChapter.CourseId, existingChapter.Code, date, periodId)
+                .Result as OkObjectResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _memoryCacheMock.Verify(cache => cache.TryGetValue(expectedCacheKey, out cachedChapterStatisticsModel), Times.Once);
-            _memoryCacheMock.Verify(cache => cache.CreateEntry(expectedCacheKey), Times.Once);
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _memoryCacheMock.Verify(cache => cache.TryGetValue(expectedCacheKey, out cachedChapterStatisticsModel), Times.Once);
+        _memoryCacheMock.Verify(cache => cache.CreateEntry(expectedCacheKey), Times.Once);
 
-            Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
-        }
+        Assert.That(actionResult.Value, Is.EqualTo(chapterStatisticsModel));
+    }
 
-        [Test]
-        [TestCase(0, "validCode")]
-        [TestCase(-1, "validCode")]
-        [TestCase(1, "")]
-        [TestCase(1, null)]
-        public void GetChapterDetails_ShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
+    [Test]
+    [TestCase(0, "validCode")]
+    [TestCase(-1, "validCode")]
+    [TestCase(1, "")]
+    [TestCase(1, null)]
+    public void GetChapterDetails_ShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
+    {
+        //Act
+        BadRequestResult actionResult = _controller.GetChapterDetails(courseId, chapterCode).Result as BadRequestResult;
+
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
+    }
+
+    [Test]
+    public void GetChapterDetails_WhenChapterDoesNotExist_ShouldReturnNotFound()
+    {
+        //Arrange
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(courseId, chapterCode, null))
+            .ThrowsAsync(new DataNotFoundException());
+
+        //Act
+        NotFoundResult actionResult = _controller.GetChapterDetails(courseId, chapterCode).Result as NotFoundResult;
+
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+    }
+
+    [Test]
+    public void GetChapterDetails_AsLectorWithTopicUsers_ShouldReturnDetailsWithAllTopicUsers()
+    {
+        //Arrange
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(_userId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
+
+        Chapter chapter = new ChapterBuilder().WithId().Build();
+        int periodId = Random.Shared.NextPositive();
+        var topicUsers = new List<User>
         {
-            //Act
-            BadRequestResult actionResult = _controller.GetChapterDetails(courseId, chapterCode).Result as BadRequestResult;
+            new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build(),
+            new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build()
+        };
+        var detailModel = new ChapterDetailModel();
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
-        }
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, periodId))
+            .ReturnsAsync(chapter);
+        _userRepositoryMock.Setup(repo => repo.GetUsersOfTopicAsync(chapter.Id))
+            .ReturnsAsync(topicUsers);
+        _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
+            .Returns(detailModel);
 
-        [Test]
-        public void GetChapterDetails_WhenChapterDoesNotExist_ShouldReturnNotFound()
-        {
-            //Arrange
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(courseId, chapterCode, null))
-                .ThrowsAsync(new DataNotFoundException());
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code, periodId).Result as OkObjectResult;
 
-            //Act
-            NotFoundResult actionResult = _controller.GetChapterDetails(courseId, chapterCode).Result as NotFoundResult;
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        Assert.That(actionResult.Value, Is.SameAs(detailModel));
+        _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(chapter.Id), Times.Once);
+        _userManagerMock.Verify(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()), Times.Never);
+        _chapterConverterMock.Verify(
+            converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 2)),
+            Times.Once);
+    }
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-        }
+    [Test]
+    public void GetChapterDetails_AsLectorWithEmptyTopicUsers_ShouldFallbackToOwnUser()
+    {
+        //Arrange
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(_userId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
 
-        [Test]
-        public void GetChapterDetails_AsLectorWithTopicUsers_ShouldReturnDetailsWithAllTopicUsers()
-        {
-            //Arrange
-            _controller.ControllerContext = new ControllerContextBuilder()
-                .WithUser(_userId.ToString())
-                .WithRole(Role.Constants.Lector)
-                .Build();
+        Chapter chapter = new ChapterBuilder().WithId().Build();
+        User ownUser = new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build();
+        var detailModel = new ChapterDetailModel();
 
-            Chapter chapter = new ChapterBuilder().WithId().Build();
-            int periodId = Random.Shared.NextPositive();
-            var topicUsers = new List<User>
-            {
-                new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build(),
-                new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build()
-            };
-            var detailModel = new ChapterDetailModel();
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, null))
+            .ReturnsAsync(chapter);
+        _userRepositoryMock.Setup(repo => repo.GetUsersOfTopicAsync(chapter.Id))
+            .ReturnsAsync(new List<User>());
+        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+            .ReturnsAsync(ownUser);
+        _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
+            .Returns(detailModel);
 
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, periodId))
-                .ReturnsAsync(chapter);
-            _userRepositoryMock.Setup(repo => repo.GetUsersOfTopicAsync(chapter.Id))
-                .ReturnsAsync(topicUsers);
-            _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
-                .Returns(detailModel);
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code).Result as OkObjectResult;
 
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code, periodId).Result as OkObjectResult;
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        Assert.That(actionResult.Value, Is.SameAs(detailModel));
+        _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(chapter.Id), Times.Once);
+        _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
+        _chapterConverterMock.Verify(
+            converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 1 && users[0] == ownUser)),
+            Times.Once);
+    }
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            Assert.That(actionResult.Value, Is.SameAs(detailModel));
-            _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(chapter.Id), Times.Once);
-            _userManagerMock.Verify(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()), Times.Never);
-            _chapterConverterMock.Verify(
-                converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 2)),
-                Times.Once);
-        }
+    [Test]
+    public void GetChapterDetails_AsStudent_ShouldLoadOwnUserViaUserManager()
+    {
+        //Arrange
+        Chapter chapter = new ChapterBuilder().WithId().Build();
+        User ownUser = new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build();
+        var detailModel = new ChapterDetailModel();
 
-        [Test]
-        public void GetChapterDetails_AsLectorWithEmptyTopicUsers_ShouldFallbackToOwnUser()
-        {
-            //Arrange
-            _controller.ControllerContext = new ControllerContextBuilder()
-                .WithUser(_userId.ToString())
-                .WithRole(Role.Constants.Lector)
-                .Build();
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, null))
+            .ReturnsAsync(chapter);
+        _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+            .ReturnsAsync(ownUser);
+        _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
+            .Returns(detailModel);
 
-            Chapter chapter = new ChapterBuilder().WithId().Build();
-            User ownUser = new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build();
-            var detailModel = new ChapterDetailModel();
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code).Result as OkObjectResult;
 
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, null))
-                .ReturnsAsync(chapter);
-            _userRepositoryMock.Setup(repo => repo.GetUsersOfTopicAsync(chapter.Id))
-                .ReturnsAsync(new List<User>());
-            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
-                .ReturnsAsync(ownUser);
-            _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
-                .Returns(detailModel);
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        Assert.That(actionResult.Value, Is.SameAs(detailModel));
+        _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(It.IsAny<int>()), Times.Never);
+        _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
+        _chapterConverterMock.Verify(
+            converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 1 && users[0] == ownUser)),
+            Times.Once);
+    }
 
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code).Result as OkObjectResult;
+    [Test]
+    [TestCase(0, "validCode")]
+    [TestCase(-1, "validCode")]
+    [TestCase(1, "")]
+    [TestCase(1, null)]
+    public void UpdateChapter_ShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
+    {
+        //Arrange
+        var model = new TopicUpdateModel { Description = Random.Shared.NextString() };
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            Assert.That(actionResult.Value, Is.SameAs(detailModel));
-            _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(chapter.Id), Times.Once);
-            _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
-            _chapterConverterMock.Verify(
-                converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 1 && users[0] == ownUser)),
-                Times.Once);
-        }
+        //Act
+        BadRequestResult actionResult = _controller.UpdateChapter(courseId, chapterCode, model).Result as BadRequestResult;
 
-        [Test]
-        public void GetChapterDetails_AsStudent_ShouldLoadOwnUserViaUserManager()
-        {
-            //Arrange
-            Chapter chapter = new ChapterBuilder().WithId().Build();
-            User ownUser = new Guts.Domain.Tests.Builders.UserBuilder().WithId().Build();
-            var detailModel = new ChapterDetailModel();
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.UpdateChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<string>()), Times.Never);
+    }
 
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(chapter.CourseId, chapter.Code, null))
-                .ReturnsAsync(chapter);
-            _userManagerMock.Setup(manager => manager.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
-                .ReturnsAsync(ownUser);
-            _chapterConverterMock.Setup(converter => converter.ToChapterDetailModel(chapter, It.IsAny<IList<User>>()))
-                .Returns(detailModel);
+    [Test]
+    public void UpdateChapter_WithValidInput_ShouldUpdateChapterAndReturnOk()
+    {
+        //Arrange
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
+        var model = new TopicUpdateModel { Description = Random.Shared.NextString() };
 
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterDetails(chapter.CourseId, chapter.Code).Result as OkObjectResult;
+        //Act
+        OkResult actionResult = _controller.UpdateChapter(courseId, chapterCode, model).Result as OkResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            Assert.That(actionResult.Value, Is.SameAs(detailModel));
-            _userRepositoryMock.Verify(repo => repo.GetUsersOfTopicAsync(It.IsAny<int>()), Times.Never);
-            _userManagerMock.Verify(manager => manager.GetUserAsync(_controller.User), Times.Once);
-            _chapterConverterMock.Verify(
-                converter => converter.ToChapterDetailModel(chapter, It.Is<IList<User>>(users => users.Count == 1 && users[0] == ownUser)),
-                Times.Once);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.UpdateChapterAsync(courseId, chapterCode, model.Description), Times.Once);
+    }
 
-        [Test]
-        [TestCase(0, "validCode")]
-        [TestCase(-1, "validCode")]
-        [TestCase(1, "")]
-        [TestCase(1, null)]
-        public void UpdateChapter_ShouldReturnBadRequestOnInvalidInput(int courseId, string chapterCode)
-        {
-            //Arrange
-            var model = new TopicUpdateModel { Description = Random.Shared.NextString() };
+    [Test]
+    public void GetChapterSummary_StudentRequestingAnotherUserSummary_ShouldReturnForbid()
+    {
+        //Arrange
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
+        int otherUserId = _userId + 1;
 
-            //Act
-            BadRequestResult actionResult = _controller.UpdateChapter(courseId, chapterCode, model).Result as BadRequestResult;
+        //Act
+        ForbidResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, otherUserId, null).Result as ForbidResult;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.UpdateChapterAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<string>()), Times.Never);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
+    }
 
-        [Test]
-        public void UpdateChapter_WithValidInput_ShouldUpdateChapterAndReturnOk()
-        {
-            //Arrange
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-            var model = new TopicUpdateModel { Description = Random.Shared.NextString() };
+    [Test]
+    public void GetChapterSummary_LectorRequestingAnyUserSummary_ShouldReturnOk()
+    {
+        //Arrange
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(_userId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
 
-            //Act
-            OkResult actionResult = _controller.UpdateChapter(courseId, chapterCode, model).Result as OkResult;
+        Chapter existingChapter = new ChapterBuilder().WithId().Build();
+        TopicSummaryModel chapterContents = new TopicSummaryModel();
+        var userAssignmentResults = new List<AssignmentResultDto>();
+        int studentUserId = _userId + 1;
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.UpdateChapterAsync(courseId, chapterCode, model.Description), Times.Once);
-        }
+        _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code, null))
+            .ReturnsAsync(existingChapter);
+        _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(existingChapter, studentUserId, null))
+            .ReturnsAsync(userAssignmentResults);
+        _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(existingChapter, userAssignmentResults))
+            .Returns(chapterContents);
 
-        [Test]
-        public void GetChapterSummary_StudentRequestingAnotherUserSummary_ShouldReturnForbid()
-        {
-            //Arrange
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-            int otherUserId = _userId + 1;
+        //Act
+        OkObjectResult actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, studentUserId, null).Result as OkObjectResult;
 
-            //Act
-            ForbidResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, otherUserId, null).Result as ForbidResult;
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        Assert.That(actionResult.Value, Is.SameAs(chapterContents));
+    }
 
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
-        }
+    [Test]
+    public void GetChapterSummary_UserWithNeitherRole_ShouldReturnForbid()
+    {
+        //Arrange
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(_userId.ToString())
+            .Build();
 
-        [Test]
-        public void GetChapterSummary_LectorRequestingAnyUserSummary_ShouldReturnOk()
-        {
-            //Arrange
-            _controller.ControllerContext = new ControllerContextBuilder()
-                .WithUser(_userId.ToString())
-                .WithRole(Role.Constants.Lector)
-                .Build();
+        int courseId = Random.Shared.NextPositive();
+        string chapterCode = Guid.NewGuid().ToString();
 
-            Chapter existingChapter = new ChapterBuilder().WithId().Build();
-            TopicSummaryModel chapterContents = new TopicSummaryModel();
-            var userAssignmentResults = new List<AssignmentResultDto>();
-            int studentUserId = _userId + 1;
+        //Act
+        ForbidResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as ForbidResult;
 
-            _chapterServiceMock.Setup(service => service.LoadChapterWithTestsAsync(existingChapter.CourseId, existingChapter.Code, null))
-                .ReturnsAsync(existingChapter);
-            _chapterServiceMock.Setup(service => service.GetResultsForUserAsync(existingChapter, studentUserId, null))
-                .ReturnsAsync(userAssignmentResults);
-            _topicConverterMock.Setup(converter => converter.ToTopicSummaryModel(existingChapter, userAssignmentResults))
-                .Returns(chapterContents);
-
-            //Act
-            OkObjectResult actionResult = _controller.GetChapterSummary(existingChapter.CourseId, existingChapter.Code, studentUserId, null).Result as OkObjectResult;
-
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            Assert.That(actionResult.Value, Is.SameAs(chapterContents));
-        }
-
-        [Test]
-        public void GetChapterSummary_UserWithNeitherRole_ShouldReturnForbid()
-        {
-            //Arrange
-            _controller.ControllerContext = new ControllerContextBuilder()
-                .WithUser(_userId.ToString())
-                .Build();
-
-            int courseId = Random.Shared.NextPositive();
-            string chapterCode = Guid.NewGuid().ToString();
-
-            //Act
-            ForbidResult actionResult = _controller.GetChapterSummary(courseId, chapterCode, _userId, null).Result as ForbidResult;
-
-            //Assert
-            Assert.That(actionResult, Is.Not.Null);
-            _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
-        }
+        //Assert
+        Assert.That(actionResult, Is.Not.Null);
+        _chapterServiceMock.Verify(service => service.LoadChapterWithTestsAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int?>()), Times.Never);
     }
 }

@@ -1,21 +1,20 @@
 ﻿using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
 
-namespace Guts.Domain.ProjectTeamAssessmentAggregate
+namespace Guts.Domain.ProjectTeamAssessmentAggregate;
+
+public interface IPeerAssessment
 {
-    public interface IPeerAssessment
-    {
-        int ProjectTeamAssessmentId { get; }
-        User Subject { get; }
-        User User { get; }
-        AssessmentScore ContributionScore { get; }
-        AssessmentScore CooperationScore { get; }
-        AssessmentScore EffortScore { get; }
+    int ProjectTeamAssessmentId { get; }
+    User Subject { get; }
+    User User { get; }
+    AssessmentScore ContributionScore { get; }
+    AssessmentScore CooperationScore { get; }
+    AssessmentScore EffortScore { get; }
 
-        bool IsSelfAssessment { get; }
+    bool IsSelfAssessment { get; }
 
-        string Explanation { get; }
+    string Explanation { get; }
 
-        void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, string explanation);
-    }
+    void SetScores(AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, string explanation);
 }
