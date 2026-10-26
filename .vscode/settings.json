@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "pxl-it-net",
+    "projectKey": "PXL-IT-NET_Guts"
+  }
+}
