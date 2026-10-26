@@ -15,8 +15,8 @@ export class ProjectTeamAssessmentEvaluationFormComponent
   implements OnInit
 {
   private readonly destroyRef = inject(DestroyRef);
-  private projectAssessmentId: number;
-  private teamId: number;
+  private projectAssessmentId = 0;
+  private teamId = 0;
 
   private readonly _peerAssessments = signal<PeerAssessmentModel[]>([]);
   public get peerAssessments(): PeerAssessmentModel[] {
@@ -31,10 +31,7 @@ export class ProjectTeamAssessmentEvaluationFormComponent
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly toastr: ToastrService,
-  ) {
-    this.projectAssessmentId = 0;
-    this.teamId = 0;
-  }
+  ) {}
 
   ngOnInit(): void {
     this.projectAssessmentId = this.route.snapshot.params["assessmentId"];

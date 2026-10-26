@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Guts.Domain.ProjectTeamAggregate;
 
 using Guts.Api.Models.ProjectModels;
@@ -22,17 +23,17 @@ namespace Guts.Api.Models.Converters
                 Members = new List<TeamUserModel>()
             };
 
-            foreach (var teamUser in projectTeam.TeamUsers)
+            foreach (var user in projectTeam.TeamUsers.Select(teamUser => teamUser.User))
             {
-                if (teamUser.User == null)
+                if (user == null)
                 {
                     throw new ArgumentException("The users should be loaded");
                 }
 
                 var member = new TeamUserModel
                 {
-                    UserId = teamUser.User.Id,
-                    Name = (teamUser.User.FirstName + " " + teamUser.User.LastName).Trim()
+                    UserId = user.Id,
+                    Name = (user.FirstName + " " + user.LastName).Trim()
                 };
                 model.Members.Add(member);
             }

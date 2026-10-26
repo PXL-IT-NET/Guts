@@ -4,30 +4,20 @@ export type AssessmentDate = Date | string | null;
 
 export class ProjectAssessmentCreateModel {
   projectId: number;
-  description: string;
-  openOn: AssessmentDate;
-  deadline: AssessmentDate;
+  description = "";
+  openOn: AssessmentDate = null;
+  deadline: AssessmentDate = null;
 
   constructor(projectId: number) {
     this.projectId = projectId;
-    this.description = "";
-    this.openOn = null;
-    this.deadline = null;
   }
 }
 
 export class ProjectAssessmentUpdateModel {
-  id: number;
-  description: string;
-  openOn: AssessmentDate;
-  deadline: AssessmentDate;
-
-  constructor() {
-    this.id = 0;
-    this.description = "";
-    this.openOn = null;
-    this.deadline = null;
-  }
+  id = 0;
+  description = "";
+  openOn: AssessmentDate = null;
+  deadline: AssessmentDate = null;
 }
 
 export interface IProjectAssessmentModel {
@@ -39,9 +29,9 @@ export interface IProjectAssessmentModel {
 }
 
 export class ProjectAssessmentModel implements IProjectAssessmentModel {
-  public id: number;
-  public description: string;
-  public openOnUtc: Date | null;
+  public id = 0;
+  public description = "";
+  public openOnUtc: Date | null = null;
   public get openOnDisplay(): string {
     return formatDateTime(this.openOnUtc);
   }
@@ -59,7 +49,7 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
     return Date.now() > new Date(this.openOnUtc).getTime();
   }
 
-  public deadlineUtc: Date | null;
+  public deadlineUtc: Date | null = null;
   public get deadlineDisplay(): string {
     return formatDateTime(this.deadlineUtc);
   }
@@ -68,15 +58,10 @@ export class ProjectAssessmentModel implements IProjectAssessmentModel {
     return Date.now() > new Date(this.deadlineUtc).getTime();
   }
 
-  public teamStatus: IProjectTeamAssessmentStatusModel;
+  public teamStatus: IProjectTeamAssessmentStatusModel =
+    new ProjectTeamAssessmentStatusModel();
 
   constructor(source?: IProjectAssessmentModel) {
-    this.id = 0;
-    this.description = "";
-    this.openOnUtc = null;
-    this.deadlineUtc = null;
-    this.teamStatus = new ProjectTeamAssessmentStatusModel();
-
     if (source) {
       this.id = source.id;
       this.description = source.description;
@@ -96,17 +81,12 @@ export interface IProjectTeamAssessmentStatusModel {
 }
 
 export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentStatusModel {
-  public id: number;
-  public teamId: number;
-  public isComplete: boolean;
-  public peersThatNeedToEvaluateOthers: IUserModel[];
+  public id = 0;
+  public teamId = 0;
+  public isComplete = false;
+  public peersThatNeedToEvaluateOthers: IUserModel[] = [];
 
   constructor(source?: IProjectTeamAssessmentStatusModel) {
-    this.id = 0;
-    this.teamId = 0;
-    this.isComplete = false;
-    this.peersThatNeedToEvaluateOthers = [];
-
     if (source) {
       Object.assign(this, source);
       this.peersThatNeedToEvaluateOthers =
@@ -121,13 +101,10 @@ export interface IUserModel {
 }
 
 export class UserModel implements IUserModel {
-  public id: number;
-  public fullName: string;
+  public id = 0;
+  public fullName = "";
 
   constructor(source?: IUserModel) {
-    this.id = 0;
-    this.fullName = "";
-
     if (source) {
       Object.assign(this, source);
     }
@@ -145,23 +122,15 @@ export interface IPeerAssessmentModel {
 }
 
 export class PeerAssessmentModel implements IPeerAssessmentModel {
-  public subject: IUserModel;
-  public user: IUserModel;
-  public contributionScore: number;
-  public cooperationScore: number;
-  public effortScore: number;
-  public isSelfAssessment: boolean;
-  public explanation: string;
+  public subject: IUserModel = new UserModel();
+  public user: IUserModel = new UserModel();
+  public contributionScore = -1;
+  public cooperationScore = -1;
+  public effortScore = -1;
+  public isSelfAssessment = false;
+  public explanation = "";
 
   constructor(source?: IPeerAssessmentModel) {
-    this.subject = new UserModel();
-    this.user = new UserModel();
-    this.contributionScore = -1;
-    this.cooperationScore = -1;
-    this.effortScore = -1;
-    this.isSelfAssessment = false;
-    this.explanation = "";
-
     if (source) {
       Object.assign(this, source);
       this.subject = new UserModel(source.subject);

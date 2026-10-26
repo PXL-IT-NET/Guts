@@ -4,8 +4,8 @@ import { ToastrService } from "ngx-toastr";
 import { BehaviorSubject, Subject } from "rxjs";
 
 export class ActivatedRouteStub {
-  private paramsSubject = new BehaviorSubject<Params>({});
-  private queryParamsSubject = new BehaviorSubject<Params>({});
+  private readonly paramsSubject = new BehaviorSubject<Params>({});
+  private readonly queryParamsSubject = new BehaviorSubject<Params>({});
 
   public params = this.paramsSubject.asObservable();
   public queryParams = this.queryParamsSubject.asObservable();

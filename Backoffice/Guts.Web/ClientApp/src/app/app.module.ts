@@ -8,7 +8,7 @@ import {
   withInterceptors,
   withXhr
 } from "@angular/common/http";
-import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import { provideAnimations } from "@angular/platform-browser/animations";
 import {
   BaseChartDirective,
   provideCharts,
@@ -88,7 +88,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     BrowserModule,
     AppRoutingModule,
     CommonModule,
-    BrowserAnimationsModule,
     BaseChartDirective,
     RecaptchaDirective,
     c.EmptyComponent,
@@ -102,6 +101,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
   ],
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideAnimations(),
     NgbAccordionConfig,
     NgbTypeahead,
     NgbTypeaheadConfig,

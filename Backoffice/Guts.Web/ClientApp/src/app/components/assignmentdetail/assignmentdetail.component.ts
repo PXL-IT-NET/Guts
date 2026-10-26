@@ -33,20 +33,15 @@ export class AssignmentDetailComponent implements OnChanges {
     this._loading.set(v);
   }
 
-  @Input() public assignmentId: number;
-  @Input() public teamId: number;
-  @Input() public userId: number;
-  @Input() public statusDate: Date;
+  @Input() public assignmentId = 0;
+  @Input() public teamId = 0;
+  @Input() public userId = 0;
+  @Input() public statusDate: Date = new Date();
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly assignmentService: AssignmentService,
-  ) {
-    this.assignmentId = 0;
-    this.userId = 0;
-    this.teamId = 0;
-    this.statusDate = new Date();
-  }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.assignmentId > 0 && (this.userId > 0 || this.teamId > 0)) {

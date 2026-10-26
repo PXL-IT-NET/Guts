@@ -12,23 +12,15 @@ export interface ITestPassageStatisticModel {
 }
 
 export class AssignmentStatisticsModel implements IAssignmentStatisticsModel {
-  public assignmentId: number;
-  public code: string;
-  public description: string;
-  public totalNumberOfUnits: number;
-  public unit: string;
-  public testPassageStatistics: ITestPassageStatisticModel[];
-  public tests: ITestModel[];
+  public assignmentId = 0;
+  public code = "";
+  public description = "";
+  public totalNumberOfUnits = 0;
+  public unit = "";
+  public testPassageStatistics: ITestPassageStatisticModel[] = [];
+  public tests: ITestModel[] = [];
 
   constructor(source?: IAssignmentStatisticsModel) {
-    this.assignmentId = 0;
-    this.code = "";
-    this.description = "";
-    this.totalNumberOfUnits = 0;
-    this.unit = "";
-    this.testPassageStatistics = [];
-    this.tests = [];
-
     if (source) {
       this.assignmentId = source.assignmentId;
       this.code = source.code;

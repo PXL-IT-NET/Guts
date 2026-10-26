@@ -19,8 +19,8 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
   templateUrl: "./project-settings.component.html",
 })
 export class ProjectSettingsComponent implements OnInit {
-  private courseId: number;
-  private projectCode: string;
+  private courseId = 0;
+  private projectCode = "";
 
   private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
@@ -47,10 +47,7 @@ export class ProjectSettingsComponent implements OnInit {
     private readonly projectService: ProjectService,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
-  ) {
-    this.courseId = 0;
-    this.projectCode = "";
-  }
+  ) {}
 
   ngOnInit() {
     this.editProjectForm = new FormGroup({

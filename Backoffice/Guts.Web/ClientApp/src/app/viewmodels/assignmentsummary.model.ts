@@ -8,25 +8,16 @@ export interface IAssignmentSummaryModel extends IAssignmentModel {
 }
 
 export class AssignmentSummaryModel implements IAssignmentSummaryModel {
-  public assignmentId: number;
-  public code: string;
-  public description: string;
-  public numberOfTests: number;
-  public numberOfPassedTests: number;
-  public numberOfFailedTests: number;
-  public numberOfUsers: number;
-  public tests: ITestModel[];
+  public assignmentId = 0;
+  public code = "";
+  public description = "";
+  public numberOfTests = 0;
+  public numberOfPassedTests = 0;
+  public numberOfFailedTests = 0;
+  public numberOfUsers = 0;
+  public tests: ITestModel[] = [];
 
   constructor(source?: IAssignmentSummaryModel) {
-    this.assignmentId = 0;
-    this.code = "";
-    this.description = "";
-    this.numberOfTests = 0;
-    this.numberOfPassedTests = 0;
-    this.numberOfFailedTests = 0;
-    this.numberOfUsers = 0;
-    this.tests = [];
-
     if (source) {
       this.assignmentId = source.assignmentId;
       this.code = source.code;

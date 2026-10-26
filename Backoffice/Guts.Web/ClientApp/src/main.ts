@@ -1,6 +1,6 @@
 /// <reference types="@angular/localize" />
 
-import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
+import { platformBrowser } from "@angular/platform-browser";
 
 import { AppModule } from "./app/app.module";
 
@@ -10,6 +10,6 @@ export function getBaseUrl() {
 
 const providers = [{ provide: "BASE_URL", useFactory: getBaseUrl, deps: [] }];
 
-platformBrowserDynamic(providers)
+platformBrowser(providers)
   .bootstrapModule(AppModule)
   .catch((err) => console.error(err));

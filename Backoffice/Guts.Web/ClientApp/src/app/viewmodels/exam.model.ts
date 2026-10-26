@@ -23,17 +23,12 @@ export interface IAssignmentEvaluation {
 }
 
 export class AssignmentEvaluation implements IAssignmentEvaluation {
-  public id: number;
-  public assignmentId: number;
-  public maximumScore: number;
-  public numberOfTestsAlreadyGreenAtStart: number;
+  public id = 0;
+  public assignmentId = 0;
+  public maximumScore: number = null;
+  public numberOfTestsAlreadyGreenAtStart: number = null;
 
   constructor(source?: IAssignmentEvaluation) {
-    this.id = 0;
-    this.assignmentId = 0;
-    this.maximumScore = null;
-    this.numberOfTestsAlreadyGreenAtStart = null;
-
     if (source) {
       this.id = source.id;
       this.assignmentId = source.assignmentId;
@@ -45,9 +40,9 @@ export class AssignmentEvaluation implements IAssignmentEvaluation {
 }
 
 export class ExamPartModel implements IExamPartModel {
-  public id: number;
-  public name: string;
-  public assignmentEvaluations: IAssignmentEvaluation[];
+  public id = 0;
+  public name = "";
+  public assignmentEvaluations: IAssignmentEvaluation[] = [];
 
   public deadlineDate: NgbDateStruct;
   public deadlineTime: NgbTimeStruct;
@@ -76,42 +71,32 @@ export class ExamPartModel implements IExamPartModel {
   }
 
   constructor(source?: IExamPartModel) {
-    this.id = 0;
-    this.name = "";
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     this.deadline = startOfDay;
-    this.assignmentEvaluations = [];
 
     if (source) {
-      ((this.id = source.id),
-        (this.name = source.name),
-        (this.deadline = source.deadline),
-        (this.assignmentEvaluations = source.assignmentEvaluations.map(
-          (ae) => new AssignmentEvaluation(ae),
-        )));
+      this.id = source.id;
+      this.name = source.name;
+      this.deadline = source.deadline;
+      this.assignmentEvaluations = source.assignmentEvaluations.map(
+        (ae) => new AssignmentEvaluation(ae),
+      );
     }
   }
 }
 
 export class ExamModel implements IExamModel {
-  public id: number;
-  public courseId: number;
-  public name: string;
-  public maximumScore: number;
-  public parts: ExamPartModel[];
+  public id = 0;
+  public courseId = 0;
+  public name = "";
+  public maximumScore = 0;
+  public parts: ExamPartModel[] = [];
 
   //UI
-  public isCollapsed: boolean;
+  public isCollapsed = true;
 
   constructor(source?: IExamModel) {
-    this.id = 0;
-    this.courseId = 0;
-    this.name = "";
-    this.maximumScore = 0;
-    this.parts = [];
-    this.isCollapsed = true;
-
     if (source) {
       this.id = source.id;
       this.courseId = source.courseId;

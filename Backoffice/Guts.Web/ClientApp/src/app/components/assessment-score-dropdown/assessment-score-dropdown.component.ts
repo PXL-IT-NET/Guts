@@ -8,12 +8,8 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from 
 })
 export class AssessmentScoreDropdownComponent {
   @Input() public value: number;
-  @Input() public disabled: boolean;
+  @Input() public disabled = false;
   @Output() valueChange = new EventEmitter<number>();
-
-  public constructor() {
-    this.disabled = false;
-  }
 
   onValueChange(newValue: number) {
     this.value = newValue;

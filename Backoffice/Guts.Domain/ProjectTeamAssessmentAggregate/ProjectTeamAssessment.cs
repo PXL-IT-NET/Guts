@@ -92,12 +92,9 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate
             List<IPeerAssessment> storedAssessments = _peerAssessments.Where(pa => pa.User.Id == userId).ToList();
             List<IPeerAssessment> missingAssessments = new List<IPeerAssessment>();
 
-            foreach (IProjectTeamUser teamUser in Team.TeamUsers)
+            foreach (IProjectTeamUser teamUser in Team.TeamUsers.Where(teamUser => storedAssessments.All(a => a.Subject.Id != teamUser.UserId)))
             {
-                if (storedAssessments.All(a => a.Subject.Id != teamUser.UserId))
-                {
-                    missingAssessments.Add(new PeerAssessment(Id, user, teamUser.User));
-                }
+                missingAssessments.Add(new PeerAssessment(Id, user, teamUser.User));
             }
             return missingAssessments;
         }

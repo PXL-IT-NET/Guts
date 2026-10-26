@@ -21,8 +21,8 @@ import { ITopicUpdateModel } from "src/app/viewmodels/topic.model";
   templateUrl: "./chapter-settings.component.html",
 })
 export class ChapterSettingsComponent implements OnInit {
-  private courseId: number;
-  private chapterCode: string;
+  private courseId = 0;
+  private chapterCode = "";
 
   private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
@@ -56,10 +56,7 @@ export class ChapterSettingsComponent implements OnInit {
     private readonly chapterService: ChapterService,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
-  ) {
-    this.courseId = 0;
-    this.chapterCode = "";
-  }
+  ) {}
 
   ngOnInit() {
     this.editChapterForm = new FormGroup({

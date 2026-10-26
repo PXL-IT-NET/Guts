@@ -53,7 +53,11 @@ export class ProjectComponent implements OnInit {
     this._selectedTeamId.set(v);
   }
 
-  public datePickerSettings: any;
+  public datePickerSettings: any = {
+    bigBanner: true,
+    timePicker: true,
+    format: "dd-MM-yyyy HH:mm",
+  };
 
   private readonly _loading = signal<boolean>(false);
   public get loading(): boolean {
@@ -63,23 +67,15 @@ export class ProjectComponent implements OnInit {
     this._loading.set(v);
   }
 
-  public courseId: number;
-  public projectCode: string;
+  public courseId = 0;
+  public projectCode = "";
 
   constructor(
     private readonly projectService: ProjectService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
-  ) {
-    this.courseId = 0;
-    this.projectCode = "";
-    this.datePickerSettings = {
-      bigBanner: true,
-      timePicker: true,
-      format: "dd-MM-yyyy HH:mm",
-    };
-  }
+  ) {}
 
   ngOnInit() {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {

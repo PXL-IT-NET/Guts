@@ -144,11 +144,7 @@
                       <div
                         class="progress-bar"
                         [ngClass]="getProgressBarClass(student.completionPercentage)"
-                        role="progressbar"
                         [style.width.%]="student.completionPercentage"
-                        [attr.aria-valuenow]="student.completionPercentage"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
                       ></div>
                     </div>
                     <span class="text-nowrap small">

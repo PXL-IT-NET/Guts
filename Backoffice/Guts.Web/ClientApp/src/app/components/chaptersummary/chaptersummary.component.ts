@@ -59,21 +59,16 @@ export class ChapterSummaryComponent implements OnChanges {
     this._loadingStatistics.set(v);
   }
 
-  @Input() public courseId: number;
-  @Input() public userId: number;
-  @Input() public chapterCode: string;
-  @Input() public statusDate: Date;
+  @Input() public courseId = 0;
+  @Input() public userId = 0;
+  @Input() public chapterCode = "";
+  @Input() public statusDate: Date = new Date();
 
   constructor(
     private readonly chapterService: ChapterService,
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
-  ) {
-    this.courseId = 0;
-    this.userId = 0;
-    this.chapterCode = "";
-    this.statusDate = new Date();
-  }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.courseId || this.courseId <= 0) return;

@@ -54,20 +54,15 @@ export class ProjectSummaryComponent implements OnChanges {
     this._loadingStatistics.set(v);
   }
 
-  @Input() public courseId: number;
-  @Input() public teamId: number;
-  @Input() public projectCode: string;
-  @Input() public statusDate: Date;
+  @Input() public courseId = 0;
+  @Input() public teamId = 0;
+  @Input() public projectCode = "";
+  @Input() public statusDate: Date = new Date();
 
   constructor(
     private readonly projectService: ProjectService,
     private readonly toastr: ToastrService,
-  ) {
-    this.courseId = 0;
-    this.teamId = 0;
-    this.projectCode = "";
-    this.statusDate = new Date();
-  }
+  ) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.courseId <= 0) return;

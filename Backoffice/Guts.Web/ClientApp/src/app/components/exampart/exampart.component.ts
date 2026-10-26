@@ -84,17 +84,14 @@ export class ExampartComponent implements OnInit {
     return this.newAssignmentEvaluationForm.controls.numberOfTestsAlreadyGreenAtStart;
   }
 
-  private courseId: number;
+  private courseId = 0;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly assignmentService: AssignmentService,
     private readonly examService: ExamService,
     private readonly toastr: ToastrService,
-  ) {
-    this.isCollapsed = true;
-    this.courseId = 0;
-  }
+  ) {}
 
   ngOnInit() {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {

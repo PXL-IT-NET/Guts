@@ -97,21 +97,7 @@ export class ProjectAssessmentOverviewComponent implements OnInit {
     private readonly toastr: ToastrService,
     private readonly route: ActivatedRoute,
     private readonly periodProvider: PeriodProvider,
-  ) {
-    this.loading = false;
-    this.project = {
-      id: 0,
-      code: "",
-      description: "",
-      components: [],
-      teams: [],
-      assignments: [],
-    };
-
-    this.assessments = [];
-    this.selectedTeamId = 0;
-    this.userProfile = new UserProfile();
-  }
+  ) {}
 
   ngOnInit(): void {
     this.userProfile = new UserProfile();

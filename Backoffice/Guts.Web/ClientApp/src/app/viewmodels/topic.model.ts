@@ -24,14 +24,13 @@ export class TopicStatisticsModel implements ITopicStatisticsModel {
   public code: string;
   public description: string;
   public assignments: IAssignmentModel[];
-  public assignmentStatistics: AssignmentStatisticsModel[];
+  public assignmentStatistics: AssignmentStatisticsModel[] = [];
 
   constructor(source: ITopicStatisticsModel) {
     this.id = source.id;
     this.code = source.code;
     this.description = source.description;
     this.assignments = source.assignments;
-    this.assignmentStatistics = [];
 
     if (source.assignmentStatistics) {
       for (let exerciseStatistic of source.assignmentStatistics) {
@@ -47,23 +46,15 @@ export interface ITopicSummaryModel extends ITopicModel {
 }
 
 export class TopicSummaryModel implements ITopicSummaryModel {
-  public id: number;
-  public code: string;
-  public description: string;
-  public assignmentSummaries: AssignmentSummaryModel[];
-  public totalGreenTests: number;
-  public totalTests: number;
-  public assignments: IAssignmentModel[];
+  public id = 0;
+  public code = "";
+  public description = "";
+  public assignmentSummaries: AssignmentSummaryModel[] = [];
+  public totalGreenTests = 0;
+  public totalTests = 0;
+  public assignments: IAssignmentModel[] = [];
 
   constructor(source?: ITopicSummaryModel) {
-    this.id = 0;
-    this.code = "";
-    this.description = "";
-    this.assignmentSummaries = [];
-    this.assignments = [];
-    this.totalGreenTests = 0;
-    this.totalTests = 0;
-
     if (source) {
       this.id = source.id;
       this.code = source.code;

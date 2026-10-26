@@ -38,7 +38,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   providedIn: "root",
 })
 export class TokenInterceptor implements HttpInterceptor {
-  private authService: AuthService;
+  private readonly authService: AuthService;
 
   constructor(private readonly injector: Injector) {
     this.authService = injector.get(AuthService);

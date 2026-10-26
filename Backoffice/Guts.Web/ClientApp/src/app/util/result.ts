@@ -39,11 +39,12 @@ export class Result {
       response.status >= 500 ||
       response.error instanceof ProgressEvent
     ) {
+      const statusText = (response as { statusText?: string }).statusText ?? "";
       message =
         "There is a technical problem with the Guts server. (status: " +
         response.status +
         " " +
-        response.statusText +
+        statusText +
         ")";
       console.log("API server error:");
       console.log(response);

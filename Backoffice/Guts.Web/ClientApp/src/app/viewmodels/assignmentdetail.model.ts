@@ -15,33 +15,20 @@ export interface IAssignmentDetailModel extends IAssignmentModel {
 }
 
 export class AssignmentDetailModel implements IAssignmentDetailModel {
-  public assignmentId: number;
-  public code: string;
-  public description: string;
-  public topicCode: string;
-  public courseName: string;
-  public courseId: number;
-  public tests: ITestModel[];
-  public testResults: ITestResultModel[];
-  public firstRun: string;
-  public lastRun: string;
-  public numberOfRuns: number;
-  public solutionFiles: SolutionFileModel[];
+  public assignmentId = 0;
+  public code = "";
+  public description = "";
+  public topicCode = "";
+  public courseName = "";
+  public courseId = 0;
+  public tests: ITestModel[] = [];
+  public testResults: ITestResultModel[] = [];
+  public firstRun = "";
+  public lastRun = "";
+  public numberOfRuns = 0;
+  public solutionFiles: SolutionFileModel[] = [];
 
   constructor(source?: IAssignmentDetailModel) {
-    this.assignmentId = 0;
-    this.code = "";
-    this.description = "";
-    this.topicCode = "";
-    this.courseName = "";
-    this.courseId = 0;
-    this.tests = [];
-    this.testResults = [];
-    this.firstRun = "";
-    this.lastRun = "";
-    this.numberOfRuns = 0;
-    this.solutionFiles = [];
-
     if (source) {
       this.assignmentId = source.assignmentId;
       this.code = source.code;

@@ -128,6 +128,7 @@ jobs:
             "**/TestResults/**",
             "**/*.spec.ts",
             "**/Guts.Web/ClientApp/src/environments/**",
+            "**/Guts.Web/ClientApp/src/styles/sketchy/**",
             "**/Guts.Web/ClientApp/karma.conf.js",
             "**/Guts.Web/ClientApp/proxy.conf.js",
             "**/Guts.Web/ClientApp/aspnetcore-https.js"

@@ -33,12 +33,10 @@ namespace Guts.Domain.ExamAggregate
         public IAssignmentResult GetAssignmentResultFor(int userId, int assignmentId)
         {
             if (_userAssignmentDictionary.TryGetValue(assignmentId,
-                out IDictionary<int, AssignmentResult> assignmentResultDictionary))
+                out IDictionary<int, AssignmentResult> assignmentResultDictionary) &&
+                assignmentResultDictionary.TryGetValue(userId, out AssignmentResult assignmentResult))
             {
-                if (assignmentResultDictionary.TryGetValue(userId, out AssignmentResult assignmentResult))
-                {
-                    return assignmentResult;
-                }
+                return assignmentResult;
             }
             return new AssignmentResult(assignmentId, userId);
         }

@@ -18,14 +18,12 @@ import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 })
 export class AuthService {
   private tokenModel: TokenModel | null;
-  private loggedInStateSubject: BehaviorSubject<boolean>;
+  private readonly loggedInStateSubject: BehaviorSubject<boolean>;
   private readonly _isLoggedIn = signal<boolean>(false);
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
-  private currentUserProfile: UserProfile;
+  private currentUserProfile: UserProfile = null;
 
   constructor(private readonly http: HttpClient) {
-    this.currentUserProfile = null;
-
     // set token if saved in local storage
     this.tokenModel = JSON.parse(
       String(localStorage.getItem(LocalStorageKeys.currentToken)),
@@ -50,8 +48,9 @@ export class AuthService {
   public clearToken(): void {
     this.tokenModel = null;
     localStorage.removeItem(LocalStorageKeys.currentToken);
-    this.currentUserProfile = null;
+
     this.setLoggedInState(false);
+    this.currentUserProfile = null;
   }
 
   public invalidateUserProfileCache(): void {

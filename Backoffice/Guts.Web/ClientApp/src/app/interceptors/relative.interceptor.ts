@@ -32,7 +32,7 @@ export const relativeInterceptor: HttpInterceptorFn = (req, next) => {
   providedIn: "root",
 })
 export class RelativeInterceptor implements HttpInterceptor {
-  private settingsService: ClientSettingsService;
+  private readonly settingsService: ClientSettingsService;
 
   constructor(private readonly injector: Injector) {
     this.settingsService = injector.get(ClientSettingsService);

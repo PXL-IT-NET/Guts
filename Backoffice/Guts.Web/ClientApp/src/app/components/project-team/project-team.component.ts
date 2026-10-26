@@ -61,16 +61,16 @@ export class ProjectTeamComponent implements OnInit {
     this._activePeriod.set(v);
   }
 
-  public teamBaseName: string;
-  public teamNumberFrom: number;
-  public teamNumberTo: number;
+  public teamBaseName = "";
+  public teamNumberFrom = 0;
+  public teamNumberTo = 0;
 
   public modalRef: BsModalRef;
 
   private userProfileSubscription: Subscription;
 
-  private courseId: number;
-  private projectCode: string;
+  private courseId = 0;
+  private projectCode = "";
 
   constructor(
     private readonly projectService: ProjectService,
@@ -79,13 +79,7 @@ export class ProjectTeamComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly toastr: ToastrService,
     private readonly modalService: BsModalService,
-  ) {
-    this.teamBaseName = "";
-    this.teamNumberFrom = 0;
-    this.teamNumberTo = 0;
-    this.courseId = 0;
-    this.projectCode = "";
-  }
+  ) {}
 
   ngOnInit() {
     this.courseId = +this.route.parent.snapshot.params["courseId"];
