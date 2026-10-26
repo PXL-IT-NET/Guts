@@ -68,6 +68,14 @@ describe("ProjectAssessmentService", () => {
     });
     expect(createRes.success).toBeTrue();
 
+    service
+      .addProjectAssessment(new ProjectAssessmentCreateModel(3))
+      .subscribe((r) => (createRes = r));
+    httpMock
+      .expectOne("api/project-assessments")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(createRes.success).toBeFalse();
+
     const updateModel = new ProjectAssessmentUpdateModel();
     updateModel.id = 2;
     let updateRes: any;
@@ -79,12 +87,25 @@ describe("ProjectAssessmentService", () => {
     putReq.flush({});
     expect(updateRes.success).toBeTrue();
 
+    service
+      .updateProjectAssessment(updateModel)
+      .subscribe((r) => (updateRes = r));
+    httpMock
+      .expectOne("api/project-assessments/2")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(updateRes.success).toBeFalse();
+
     let deleteRes: any;
     service.deleteProjectAssessment(2).subscribe((r) => (deleteRes = r));
     const delReq = httpMock.expectOne("api/project-assessments/2");
     expect(delReq.request.method).toBe("DELETE");
     delReq.flush({});
     expect(deleteRes.success).toBeTrue();
+
+    service.deleteProjectAssessment(2).subscribe((r) => (deleteRes = r));
+    httpMock
+      .expectOne("api/project-assessments/2")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(deleteRes.success).toBeFalse();
   });
 });
-

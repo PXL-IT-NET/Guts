@@ -4,6 +4,7 @@ using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ExamAggregate;
+using Guts.Domain.TestRunAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
 using Moq;
@@ -126,6 +127,25 @@ namespace Guts.Domain.Tests.ExamAggregate
             {
                 verifyExamPartAction(user.Id, examScore);
             }
+        }
+
+        [Test]
+        public void ExamTestResultCollection_AddGetAndEquality_ShouldWorkCorrectly()
+        {
+            var col1 = new ExamTestResultCollection();
+            var col2 = new ExamTestResultCollection();
+            var col3 = new ExamTestResultCollection();
+
+            var partResults = new Mock<IExamPartTestResultCollection>().Object;
+
+            col1.AddExamPartResults(5, partResults);
+            col2.AddExamPartResults(5, partResults);
+            col3.AddExamPartResults(6, partResults);
+
+            Assert.That(col1.GetExamPartResults(5), Is.EqualTo(partResults));
+            Assert.That(col1, Is.EqualTo(col2));
+            Assert.That(col1.GetHashCode(), Is.EqualTo(col2.GetHashCode()));
+            Assert.That(col1, Is.Not.EqualTo(col3));
         }
 
         private Action<int, IExamScore> AddExamPartMockToExam(ExamBuilder examBuilder,

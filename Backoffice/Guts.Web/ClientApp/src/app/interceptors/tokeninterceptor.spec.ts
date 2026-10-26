@@ -5,9 +5,10 @@ import {
   HttpResponse,
 } from "@angular/common/http";
 import { Injector } from "@angular/core";
+import { TestBed } from "@angular/core/testing";
 import { of, throwError } from "rxjs";
 import { AuthService } from "../services/auth.service";
-import { TokenInterceptor } from "./tokeninterceptor";
+import { TokenInterceptor, tokenInterceptor } from "./tokeninterceptor";
 
 describe("TokenInterceptor", () => {
   let interceptor: TokenInterceptor;
@@ -22,6 +23,10 @@ describe("TokenInterceptor", () => {
     nextHandlerSpy = jasmine.createSpyObj<HttpHandler>("HttpHandler", [
       "handle",
     ]);
+
+    TestBed.configureTestingModule({
+      providers: [{ provide: AuthService, useValue: authServiceSpy }],
+    });
 
     const injector = Injector.create({
       providers: [{ provide: AuthService, useValue: authServiceSpy }],
@@ -78,5 +83,27 @@ describe("TokenInterceptor", () => {
 
     expect(authServiceSpy.clearToken).not.toHaveBeenCalled();
   });
-});
 
+  it("tokenInterceptor function should attach token when available and clear token on 401", () => {
+    let forwardedReq: HttpRequest<unknown> | null = null;
+    authServiceSpy.getToken.and.returnValue("fn-jwt");
+
+    TestBed.runInInjectionContext(() => {
+      tokenInterceptor(new HttpRequest("GET", "api/courses"), (req) => {
+        forwardedReq = req;
+        return of(new HttpResponse({ status: 200 }));
+      }).subscribe();
+    });
+    expect(forwardedReq!.headers.get("Authorization")).toBe("Bearer fn-jwt");
+
+    authServiceSpy.getToken.and.returnValue(null);
+    TestBed.runInInjectionContext(() => {
+      tokenInterceptor(new HttpRequest("GET", "api/courses"), (req) => {
+        forwardedReq = req;
+        return throwError(() => new HttpErrorResponse({ status: 401 }));
+      }).subscribe({ error: () => {} });
+    });
+    expect(forwardedReq!.headers.has("Authorization")).toBeFalse();
+    expect(authServiceSpy.clearToken).toHaveBeenCalled();
+  });
+});

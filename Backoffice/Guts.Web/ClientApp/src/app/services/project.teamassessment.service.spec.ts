@@ -50,6 +50,16 @@ describe("ProjectTeamAssessmentService", () => {
       statusRes.value instanceof ProjectTeamAssessmentStatusModel,
     ).toBeTrue();
 
+    service
+      .getStatusOfProjectTeamAssessment(10, 20)
+      .subscribe((r) => (statusRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/status",
+      )
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(statusRes.success).toBeFalse();
+
     let detailedRes: any;
     service
       .getDetailedResultsOfProjectTeamAssessment(10, 20)
@@ -61,6 +71,16 @@ describe("ProjectTeamAssessmentService", () => {
       .flush([]);
     expect(detailedRes.success).toBeTrue();
 
+    service
+      .getDetailedResultsOfProjectTeamAssessment(10, 20)
+      .subscribe((r) => (detailedRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/detailed-results",
+      )
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(detailedRes.success).toBeFalse();
+
     let myRes: any;
     service
       .getMyResultOfProjectTeamAssessment(10, 20)
@@ -71,6 +91,16 @@ describe("ProjectTeamAssessmentService", () => {
       )
       .flush({ individualGrade: 15 });
     expect(myRes.success).toBeTrue();
+
+    service
+      .getMyResultOfProjectTeamAssessment(10, 20)
+      .subscribe((r) => (myRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/my-result",
+      )
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(myRes.success).toBeFalse();
 
     let peersRes: any;
     service.getPeerAssessmentsOfUser(10, 20).subscribe((r) => (peersRes = r));
@@ -92,6 +122,14 @@ describe("ProjectTeamAssessmentService", () => {
     expect(peersRes.success).toBeTrue();
     expect(peersRes.value[0] instanceof PeerAssessmentModel).toBeTrue();
 
+    service.getPeerAssessmentsOfUser(10, 20).subscribe((r) => (peersRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/peer-assessments",
+      )
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(peersRes.success).toBeFalse();
+
     let saveRes: any;
     service
       .savePeerAssessment(10, 20, [new PeerAssessmentModel()])
@@ -102,6 +140,15 @@ describe("ProjectTeamAssessmentService", () => {
     expect(postReq.request.method).toBe("POST");
     postReq.flush({});
     expect(saveRes.success).toBeTrue();
+
+    service
+      .savePeerAssessment(10, 20, [new PeerAssessmentModel()])
+      .subscribe((r) => (saveRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/peer-assessments",
+      )
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(saveRes.success).toBeFalse();
   });
 });
-

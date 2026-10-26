@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA, SimpleChange } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { CourseGamificationHallOfFameComponent } from "./course-gamification-hall-of-fame.component";
@@ -49,10 +49,22 @@ describe("CourseGamificationHallOfFameComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create and load hall of fame data", () => {
+  it("should create and load hall of fame data and reload on ngOnChanges", () => {
     expect(component).toBeTruthy();
     expect(component.hallOfFame).toHaveSize(1);
+    expect(component.loading).toBeFalse();
     expect(gamificationServiceSpy.getHallOfFame).toHaveBeenCalledWith(10, undefined);
+    expect(component.getAvatarIcon("Unknown")).toBe("🐱");
+
+    component.ngOnChanges({
+      courseId: new SimpleChange(10, 20, false),
+    });
+    expect(gamificationServiceSpy.getHallOfFame).toHaveBeenCalledTimes(2);
+
+    component.ngOnChanges({
+      periodId: new SimpleChange(1, 2, false),
+    });
+    expect(gamificationServiceSpy.getHallOfFame).toHaveBeenCalledTimes(3);
   });
 
   it("should update the DOM when hall of fame data arrives asynchronously", () => {
@@ -74,4 +86,3 @@ describe("CourseGamificationHallOfFameComponent", () => {
     expect(asyncFixture.nativeElement.textContent).toContain("PixelMage");
   });
 });
-

@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA, SimpleChange } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of } from "rxjs";
 import { CourseGamificationHeroComponent } from "./course-gamification-hero.component";
@@ -94,10 +94,27 @@ describe("CourseGamificationHeroComponent", () => {
     expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
   });
 
-  it("should provide exactly 20 distinct avatars", () => {
+  it("should reload profile on ngOnChanges when profile is null and courseId/periodId change", () => {
+    gamificationServiceSpy.getProfile.calls.reset();
+    component.profile = null;
+    component.ngOnChanges({
+      courseId: new SimpleChange(10, 20, false),
+    });
+    expect(gamificationServiceSpy.getProfile).toHaveBeenCalled();
+
+    gamificationServiceSpy.getProfile.calls.reset();
+    component.profile = null;
+    component.ngOnChanges({
+      periodId: new SimpleChange(1, 2, false),
+    });
+    expect(gamificationServiceSpy.getProfile).toHaveBeenCalled();
+  });
+
+  it("should provide exactly 20 distinct avatars and fallback icon for unknown avatar", () => {
     expect(component.availableAvatars).toHaveSize(20);
     const ids = new Set(component.availableAvatars.map((a) => a.id));
     expect(ids.size).toBe(20);
+    expect(component.getAvatarIcon("UnknownAvatar")).toBe("🐱");
   });
 
   it("should open settings modal and populate editModel", () => {
@@ -107,7 +124,7 @@ describe("CourseGamificationHeroComponent", () => {
     expect(component.editModel.showInLeaderBoard).toBeTrue();
   });
 
-  it("should save settings and emit updated profile", () => {
+  it("should save settings and emit updated profile or handle error", () => {
     spyOn(component.profileUpdated, "emit");
     component.openSettings();
     component.editModel.pseudonym = "NewHero";
@@ -117,6 +134,10 @@ describe("CourseGamificationHeroComponent", () => {
     expect(toastrSpy.success).toHaveBeenCalled();
     expect(component.showSettingsModal).toBeFalse();
     expect(component.profileUpdated.emit).toHaveBeenCalledWith(mockProfile);
+
+    gamificationServiceSpy.enroll.and.returnValue(of({ success: false, message: "Save err" } as any));
+    component.saveSettings();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Save err", "Error");
   });
 
   it("should update class group badge when saving settings with new class group", () => {
@@ -198,7 +219,7 @@ describe("CourseGamificationHeroComponent", () => {
     expect(nameEl.textContent.trim()).toBe("PixelMage");
   });
 
-  it("should display firstname and lastname instead of email when usePseudonym is false", () => {
+  it("should display firstname and lastname or fallback to email when usePseudonym is false", () => {
     component.profile = {
       ...mockProfile,
       usePseudonym: false,
@@ -209,7 +230,16 @@ describe("CourseGamificationHeroComponent", () => {
 
     const nameEl = fixture.nativeElement.querySelector("h3");
     expect(nameEl.textContent.trim()).toBe("Alice Smith");
-    expect(nameEl.textContent).not.toContain("student@pxl.be");
+
+    component.profile = {
+      ...mockProfile,
+      usePseudonym: false,
+      firstName: "",
+      lastName: "",
+    };
+    expect(component.getDisplayName()).toBe("student@pxl.be");
+
+    component.profile = null;
+    expect(component.getDisplayName()).toBe("");
   });
 });
-

@@ -134,6 +134,8 @@ describe("CourseGamificationComponent", () => {
     expect(component.classGroups).toHaveSize(2);
     expect(component.hasClasses).toBeTrue();
     expect(component.config?.isGamificationEnabled).toBeTrue();
+    component.loading = true;
+    expect(component.loading).toBeTrue();
   });
 
   it("should only retrieve profile once on initialization even with active period", () => {
@@ -186,7 +188,7 @@ describe("CourseGamificationComponent", () => {
     expect(component.needsClassSelection).toBeFalse();
   });
 
-  it("should confirm class selection and unlock leaderboard", () => {
+  it("should confirm class selection and unlock leaderboard or show error on failure", () => {
     component.heroComponent = {
       loadProfile: jasmine.createSpy("loadProfile"),
     } as any;
@@ -206,6 +208,35 @@ describe("CourseGamificationComponent", () => {
     expect(component.needsClassSelection).toBeFalse();
     expect(toastrSpy.success).toHaveBeenCalled();
     expect(component.heroComponent.loadProfile).toHaveBeenCalled();
+
+    // Test failure path and null profile fallback
+    component.profile = null;
+    gamificationServiceSpy.enroll.and.returnValue(of({ success: false, message: "Fail" } as any));
+    component.confirmClassSelection();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Fail", "Error");
+  });
+
+  it("should handle onProfileLoaded, onProfileUpdated, onClassesChanged, and onConfigChanged", () => {
+    component.onProfileLoaded({ ...mockProfile, totalXp: 300 });
+    expect(component.profile?.totalXp).toBe(300);
+
+    component.onProfileUpdated({
+      ...mockProfile,
+      classGroupId: 2,
+      classGroupName: "",
+    });
+    expect(component.profile?.classGroupName).toBe("1TIN-B");
+
+    gamificationServiceSpy.getClasses.calls.reset();
+    component.onClassesChanged();
+    expect(gamificationServiceSpy.getClasses).toHaveBeenCalled();
+
+    component.onConfigChanged({ ...mockConfig, isWeeklyStreakEnabled: false });
+    expect(component.config?.isWeeklyStreakEnabled).toBeFalse();
+
+    gamificationServiceSpy.getConfig.calls.reset();
+    component.onConfigChanged();
+    expect(gamificationServiceSpy.getConfig).toHaveBeenCalled();
   });
 
   it("should show disabled alert when gamification is disabled and user is student", () => {
@@ -237,7 +268,7 @@ describe("CourseGamificationComponent", () => {
     expect(bannerEl).toBeTruthy();
   });
 
-  it("should adjust active tab if current tab is disabled by switch", () => {
+  it("should adjust active tab and getFirstEnabledTab for all combinations", () => {
     component.activeTab = "sprint";
     component.config = {
       ...mockConfig,
@@ -245,7 +276,39 @@ describe("CourseGamificationComponent", () => {
       isLeaderboardEnabled: true,
     };
     component.adjustActiveTabForConfig();
-
     expect(component.activeTab).toBe("hallOfFame");
+
+    component.config = {
+      ...mockConfig,
+      isWeeklyStreakEnabled: false,
+      isLeaderboardEnabled: false,
+      isClassCompetitionEnabled: true,
+    };
+    component.adjustActiveTabForConfig();
+    expect(component.activeTab).toBe("classes");
+
+    component.config = {
+      ...mockConfig,
+      isWeeklyStreakEnabled: false,
+      isLeaderboardEnabled: false,
+      isClassCompetitionEnabled: false,
+      isBadgesEnabled: true,
+    };
+    component.adjustActiveTabForConfig();
+    expect(component.activeTab).toBe("badges");
+
+    const teacherProfile = new UserProfile();
+    teacherProfile.id = 1;
+    teacherProfile.roles = ["lector"];
+    component.userProfile = teacherProfile;
+    component.config = {
+      ...mockConfig,
+      isWeeklyStreakEnabled: false,
+      isLeaderboardEnabled: false,
+      isClassCompetitionEnabled: false,
+      isBadgesEnabled: false,
+    };
+    component.adjustActiveTabForConfig();
+    expect(component.activeTab).toBe("admin");
   });
 });

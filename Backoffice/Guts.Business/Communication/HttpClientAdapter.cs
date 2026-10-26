@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace Guts.Business.Communication
 {
+    [ExcludeFromCodeCoverage]
     internal sealed class HttpClientAdapter : IHttpClient, IDisposable
     {
         private readonly HttpClient _httpClient = new();

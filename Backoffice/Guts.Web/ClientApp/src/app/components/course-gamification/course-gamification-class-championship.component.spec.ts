@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA, SimpleChange } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of } from "rxjs";
 import { CourseGamificationClassChampionshipComponent } from "./course-gamification-class-championship.component";
@@ -46,10 +46,20 @@ describe("CourseGamificationClassChampionshipComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create and load class leaderboard data", () => {
+  it("should create and load class leaderboard data and reload on ngOnChanges", () => {
     expect(component).toBeTruthy();
     expect(component.classLeaderboard).toHaveSize(1);
+    expect(component.loading).toBeFalse();
     expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledWith(10, undefined);
+
+    component.ngOnChanges({
+      courseId: new SimpleChange(10, 20, false),
+    });
+    expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledTimes(2);
+
+    component.ngOnChanges({
+      periodId: new SimpleChange(1, 2, false),
+    });
+    expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledTimes(3);
   });
 });
-

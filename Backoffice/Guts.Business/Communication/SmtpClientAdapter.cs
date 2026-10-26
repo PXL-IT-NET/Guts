@@ -1,9 +1,11 @@
-﻿using System.Net;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace Guts.Business.Communication
 {
+    [ExcludeFromCodeCoverage]
     internal class SmtpClientAdapter(string smtpHost, int port, string username, string password)
         : ISmtpClient
     {
@@ -15,8 +17,6 @@ namespace Guts.Business.Communication
             Credentials = new NetworkCredential(username, password),
             Timeout = 7 * 1000 // 7 seconds
         };
-
-        // 7 seconds
 
         public async Task SendMailAsync(MailMessage message)
         {

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Guts.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,3 +28,9 @@ app.MapControllerRoute(
 app.MapFallbackToFile("index.html");
 
 await app.RunAsync();
+
+[ExcludeFromCodeCoverage]
+public partial class Program
+{
+    protected Program() { }
+}

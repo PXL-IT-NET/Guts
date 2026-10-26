@@ -36,7 +36,7 @@ describe("CourseComponent", () => {
       of(
         GetResult.success({
           courseId: 1,
-          isGamificationEnabled: false,
+          isGamificationEnabled: true,
           isWeeklyStreakEnabled: false,
           isLeaderboardEnabled: false,
           isClassCompetitionEnabled: false,
@@ -121,6 +121,95 @@ describe("CourseComponent", () => {
     expect(courseServiceSpy.getCourseContentsById).toHaveBeenCalledWith(1, 2);
     expect(component.selectedChapter).toEqual(chapter);
     expect(component.selectedExercise).toEqual(chapter.assignments[0]);
+    expect(component.isGamificationEnabled).toBeTrue();
+    expect(component.isChapterTestResultDetailRouteActive()).toBeTrue();
+  });
+
+  it("should navigate to first chapter or project when topicCode is not found", () => {
+    routerSpy.url = "/courses/1/chapters/Unknown/testresults";
+    const chapter = {
+      id: 5,
+      code: "Ch1",
+      description: "Chapter 1",
+      assignments: [],
+    };
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [chapter],
+          projects: [],
+        }),
+      ),
+    );
+
+    component.ngOnInit();
+    expect(routerSpy.navigate).toHaveBeenCalledWith([
+      "courses",
+      1,
+      "chapters",
+      "Ch1",
+      "testresults",
+    ]);
+
+    routerSpy.url = "/courses/1/projects/Unknown/assessments";
+    const project = {
+      id: 6,
+      code: "P1",
+      description: "Project 1",
+      assignments: [],
+    };
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [],
+          projects: [project],
+        }),
+      ),
+    );
+    component.course.id = 0;
+    routerSpy.events$.next(new NavigationEnd(1, routerSpy.url, routerSpy.url));
+    expect(routerSpy.navigate).toHaveBeenCalledWith([
+      "courses",
+      1,
+      "projects",
+      "P1",
+      "assessments",
+    ]);
+  });
+
+  it("should handle gamification route and error responses", () => {
+    routerSpy.url = "/courses/1/gamification";
+    gamificationServiceSpy.getConfig.and.returnValue(of({ success: false, message: "Err" } as any));
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [{ id: 5, code: "Ch1", description: "Chapter 1", assignments: [] }],
+          projects: [],
+        }),
+      ),
+    );
+
+    component.ngOnInit();
+    expect(component.isGamificationRouteActive()).toBeTrue();
+    expect(component.isGamificationEnabled).toBeFalse();
+    expect(component.selectedChapter).toBeNull();
+
+    component.navigateToGamification();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(["courses", 1, "gamification"]);
+
+    courseServiceSpy.getCourseContentsById.and.returnValue(of({ success: false, message: "API fail" } as any));
+    component.course.id = 0;
+    routerSpy.events$.next(new NavigationEnd(1, "/courses/1", "/courses/1"));
+    expect(toastrSpy.error).toHaveBeenCalled();
   });
 
   it("should select project and component when course contains projects", () => {
@@ -150,6 +239,9 @@ describe("CourseComponent", () => {
     expect(component.selectedComponent).toEqual(project.assignments[0]);
     expect(component.projectTestResultsDetailActive).toBeTrue();
     expect(component.projectTestResultsOverviewActive).toBeFalse();
+
+    component.selectedComponent = null;
+    expect(component.projectTestResultsOverviewActive).toBeTrue();
   });
 
   it("should set hasContent=false when course has no chapters and no projects", () => {
@@ -275,4 +367,3 @@ describe("CourseComponent", () => {
     });
   });
 });
-

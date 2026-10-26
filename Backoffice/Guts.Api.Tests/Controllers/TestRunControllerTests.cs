@@ -49,6 +49,7 @@ namespace Guts.Api.Tests.Controllers
             _chapterServiceMock = new Mock<IChapterService>();
             _projectServiceMock = new Mock<IProjectService>();
             _loggerMock = new Mock<ILogger<TestRunController>>();
+            _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
             _userId = _random.Next(1, int.MaxValue);
             _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
@@ -83,6 +84,29 @@ namespace Guts.Api.Tests.Controllers
 
             _chapterServiceMock.Verify();
             _assignmentServiceMock.Verify();
+        }
+
+        [Test]
+        public void PostExerciseTestRun_WhenLoggerDisabled_ShouldAlsoSaveItInTheRepository()
+        {
+            //Arrange
+            _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(false);
+            var chapter = new ChapterBuilder().WithId().Build();
+            var assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
+            var assignmentDto = new AssignmentDtoBuilder().WithAssignmentCode(assignment.Code).Build();
+
+            _chapterServiceMock.Setup(service => service.GetOrCreateChapterAsync(assignmentDto.CourseCode, assignmentDto.TopicCode, null))
+                .ReturnsAsync(chapter);
+            _assignmentServiceMock
+                .Setup(service => service.GetOrCreateAssignmentAsync(chapter.Id, assignmentDto.AssignmentCode))
+                .ReturnsAsync(assignment);
+
+            var postedModel = new CreateAssignmentTestRunModelBuilder()
+                .WithAssignment(assignmentDto)
+                .WithSolutionFile()
+                .Build();
+
+            TestPostAssignmentTestRun(() => _controller.PostExerciseTestRun(postedModel), postedModel, assignment);
         }
 
         [Test]

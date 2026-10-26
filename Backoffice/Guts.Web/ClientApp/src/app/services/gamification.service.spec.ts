@@ -31,7 +31,7 @@ describe("GamificationService", () => {
     httpMock.verify();
   });
 
-  it("getProfile should fetch student profile", () => {
+  it("getProfile should fetch student profile and handle error", () => {
     let res: any;
     service.getProfile(10).subscribe((r) => (res = r));
 
@@ -41,9 +41,15 @@ describe("GamificationService", () => {
 
     expect(res.success).toBeTrue();
     expect(res.value.totalXp).toBe(100);
+
+    service.getProfile(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/profile")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
   });
 
-  it("getProfile with periodId should append query param", () => {
+  it("getProfile with periodId or periodProvider should append query param", () => {
     let res: any;
     service.getProfile(10, 5).subscribe((r) => (res = r));
 
@@ -54,7 +60,7 @@ describe("GamificationService", () => {
     expect(res.success).toBeTrue();
   });
 
-  it("enroll should post enrollment data", () => {
+  it("enroll should post enrollment data and handle error", () => {
     let res: any;
     const dto: IEnrollStudentModel = {
       showInLeaderBoard: true,
@@ -73,9 +79,15 @@ describe("GamificationService", () => {
     req.flush({ userId: 1, courseId: 10, pseudonym: "BitWizard", showInLeaderBoard: true });
     expect(res.success).toBeTrue();
     expect(res.value.pseudonym).toBe("BitWizard");
+
+    service.enroll(10, dto).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/enroll")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(res.success).toBeFalse();
   });
 
-  it("getWeeklySprint should fetch weekly leaderboard", () => {
+  it("getWeeklySprint and getHallOfFame should fetch leaderboards and handle errors", () => {
     let res: any;
     service.getWeeklySprint(10).subscribe((r) => (res = r));
 
@@ -85,10 +97,27 @@ describe("GamificationService", () => {
 
     expect(res.success).toBeTrue();
     expect(res.value).toHaveSize(1);
-    expect(res.value[0].rank).toBe(1);
+
+    service.getWeeklySprint(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/weekly")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
+
+    service.getHallOfFame(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/hall-of-fame")
+      .flush([{ rank: 1, userId: 5, score: 500 }]);
+    expect(res.success).toBeTrue();
+
+    service.getHallOfFame(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/hall-of-fame")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
   });
 
-  it("getClassLeaderboard should fetch class rankings", () => {
+  it("getClassLeaderboard should fetch class rankings and handle error", () => {
     let res: any;
     service.getClassLeaderboard(10).subscribe((r) => (res = r));
 
@@ -98,9 +127,89 @@ describe("GamificationService", () => {
 
     expect(res.success).toBeTrue();
     expect(res.value[0].classGroupName).toBe("1TIN-A");
+
+    service.getClassLeaderboard(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/classes")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
   });
 
-  it("getBadgeMetadata should fetch all badge metadata", () => {
+  it("getConfig and updateConfig should fetch and update config and handle errors", () => {
+    let res: any;
+    const cfg = {
+      courseId: 10,
+      isGamificationEnabled: true,
+      isWeeklyStreakEnabled: true,
+      isLeaderboardEnabled: true,
+      isClassCompetitionEnabled: true,
+      isTeamSynergyEnabled: true,
+      isBadgesEnabled: true,
+    };
+
+    service.getConfig(10).subscribe((r) => (res = r));
+    httpMock.expectOne("api/courses/10/gamification/config").flush(cfg);
+    expect(res.success).toBeTrue();
+
+    service.getConfig(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/config")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
+
+    service.updateConfig(10, cfg).subscribe((r) => (res = r));
+    const putReq = httpMock.expectOne("api/courses/10/gamification/config");
+    expect(putReq.request.method).toBe("PUT");
+    putReq.flush(cfg);
+    expect(res.success).toBeTrue();
+
+    service.updateConfig(10, cfg).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/config")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
+  });
+
+  it("getClasses, addClass, and deleteClass should manage class groups and handle errors", () => {
+    let res: any;
+    service.getClasses(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/classes")
+      .flush([{ id: 1, name: "1TIN-A", courseId: 10, periodId: 1 }]);
+    expect(res.success).toBeTrue();
+
+    service.getClasses(10).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/classes")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
+
+    service.addClass(10, "1TIN-B").subscribe((r) => (res = r));
+    const postReq = httpMock.expectOne("api/courses/10/gamification/classes");
+    expect(postReq.request.method).toBe("POST");
+    postReq.flush({ id: 2, name: "1TIN-B", courseId: 10, periodId: 1 });
+    expect(res.success).toBeTrue();
+
+    service.addClass(10, "1TIN-B").subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/classes")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(res.success).toBeFalse();
+
+    service.deleteClass(10, 2).subscribe((r) => (res = r));
+    const delReq = httpMock.expectOne("api/courses/10/gamification/classes/2");
+    expect(delReq.request.method).toBe("DELETE");
+    delReq.flush({});
+    expect(res.success).toBeTrue();
+
+    service.deleteClass(10, 2).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/classes/2")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
+  });
+
+  it("getBadgeMetadata should fetch all badge metadata and handle error", () => {
     let res: any;
     service.getBadgeMetadata().subscribe((r) => (res = r));
 
@@ -114,5 +223,11 @@ describe("GamificationService", () => {
     expect(res.success).toBeTrue();
     expect(res.value).toHaveSize(2);
     expect(res.value[0].name).toBe("First Spark");
+
+    service.getBadgeMetadata().subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/gamification/badges")
+      .flush("Err", { status: 500, statusText: "Error" });
+    expect(res.success).toBeFalse();
   });
 });

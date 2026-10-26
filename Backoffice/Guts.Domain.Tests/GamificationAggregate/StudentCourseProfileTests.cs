@@ -46,12 +46,14 @@ namespace Guts.Domain.Tests.GamificationAggregate
         }
 
         [Test]
-        public void HideFromLeaderboard_ShouldSetShowInLeaderBoardToFalse()
+        public void HideFromLeaderboard_And_ShowOnLeaderboard_ShouldToggleShowInLeaderBoard()
         {
             var profile = _factory.CreateNew(1, 2, 3);
             Assert.That(profile.ShowInLeaderBoard, Is.True);
             profile.HideFromLeaderboard();
             Assert.That(profile.ShowInLeaderBoard, Is.False);
+            profile.ShowOnLeaderboard();
+            Assert.That(profile.ShowInLeaderBoard, Is.True);
         }
 
         [Test]
@@ -128,14 +130,46 @@ namespace Guts.Domain.Tests.GamificationAggregate
         }
 
         [Test]
-        public void AwardAssignmentBonus_FirstTime_ShouldAdd50Xp()
+        public void AwardPassedTestXp_WhenStreakAndBadgesDisabled_ShouldNotRecordStreakOrBadges()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+            bool result = profile.AwardPassedTestXp(101, now, isStreakEnabled: false, isBadgesEnabled: false);
+
+            Assert.That(result, Is.True);
+            Assert.That(profile.TotalXp, Is.EqualTo(10));
+            Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+            Assert.That(profile.Badges, Is.Empty);
+        }
+
+        [Test]
+        public void RecordWeeklyActivity_4And8Weeks_ShouldAwardOnFireAndIronWillBadges()
+        {
+            var profile = _factory.CreateNew(1, 2, 3);
+            var startMonday = new DateTime(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc);
+
+            for (int w = 0; w < 8; w++)
+            {
+                profile.RecordWeeklyActivity(startMonday.AddDays(w * 7));
+            }
+
+            Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(8));
+            Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.OnFire), Is.True);
+            Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.IronWill), Is.True);
+        }
+
+        [Test]
+        public void AwardAssignmentBonus_FirstTime_ShouldAdd50Xp_AndDuplicateShouldReturnFalse()
         {
             var profile = _factory.CreateNew(1, 2, 3);
             var now = DateTime.UtcNow;
 
             bool result = profile.AwardAssignmentBonus(55, now);
+            bool duplicate = profile.AwardAssignmentBonus(55, now.AddMinutes(1));
 
             Assert.That(result, Is.True);
+            Assert.That(duplicate, Is.False);
             Assert.That(profile.TotalXp, Is.EqualTo(50));
             Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompleted && e.TargetId == 55), Is.True);
         }
@@ -172,14 +206,16 @@ namespace Guts.Domain.Tests.GamificationAggregate
         }
 
         [Test]
-        public void AwardChapterBonus_FirstTime_ShouldAdd100XpAndCleanSweepBadge()
+        public void AwardChapterBonus_FirstTime_ShouldAdd100XpAndCleanSweepBadge_AndDuplicateShouldReturnFalse()
         {
             var profile = _factory.CreateNew(1, 2, 3);
             var now = DateTime.UtcNow;
 
             bool result = profile.AwardChapterBonus(77, now);
+            bool duplicate = profile.AwardChapterBonus(77, now.AddMinutes(1));
 
             Assert.That(result, Is.True);
+            Assert.That(duplicate, Is.False);
             Assert.That(profile.TotalXp, Is.EqualTo(100));
             Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CleanSweep), Is.True);
         }

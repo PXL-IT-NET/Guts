@@ -140,12 +140,16 @@ describe("CourseStatisticsComponent", () => {
     component = fixture.componentInstance;
   });
 
-  it("should create and load statistics on init", () => {
+  it("should create and load statistics on init and handle API error", () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.courseId).toBe(1);
     expect(courseServiceSpy.getCourseStatistics).toHaveBeenCalledWith(1, 5);
     expect(component.model).toEqual(mockStats);
+
+    courseServiceSpy.getCourseStatistics.and.returnValue(of({ success: false, message: "Stats fail" } as any));
+    component.loadStatistics();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Stats fail", "Error");
   });
 
   it("should redirect non-lectors to course page", () => {
@@ -161,12 +165,47 @@ describe("CourseStatisticsComponent", () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(["/courses", 1]);
   });
 
-  it("should sort students by lastName ascending by default", () => {
+  it("should sort students by lastName ascending by default and handle ties and getSortIcon", () => {
     fixture.detectChanges();
+    expect(component.getSortIcon("lastName")).toBe("bi-sort-down text-primary");
+    expect(component.getSortIcon("firstName")).toBe("bi-arrow-down-up text-muted");
+
     const sorted = component.sortedStudents;
     expect(sorted).toHaveSize(2);
     expect(sorted[0].lastName).toBe("Alpha");
     expect(sorted[1].lastName).toBe("Zeta");
+
+    component.setSort("lastName");
+    expect(component.getSortIcon("lastName")).toBe("bi-sort-up-alt text-primary");
+
+    // Test tie-breakers when two students share same values
+    component.model = {
+      ...mockStats,
+      students: [
+        { ...mockStats.students[0], firstName: "Bob", lastName: "Same", assignmentsWorkedOn: 2, completionPercentage: 50 },
+        { ...mockStats.students[1], firstName: "Alice", lastName: "Same", assignmentsWorkedOn: 2, completionPercentage: 50 },
+      ],
+    };
+    component.sortField = "lastName";
+    component.sortDirection = "asc";
+    expect(component.sortedStudents[0].firstName).toBe("Alice");
+
+    component.model = {
+      ...mockStats,
+      students: [
+        { ...mockStats.students[0], firstName: "Same", lastName: "Zeta", assignmentsWorkedOn: 2, completionPercentage: 50 },
+        { ...mockStats.students[1], firstName: "Same", lastName: "Alpha", assignmentsWorkedOn: 2, completionPercentage: 50 },
+      ],
+    };
+    component.sortField = "firstName";
+    expect(component.sortedStudents[0].lastName).toBe("Alpha");
+    component.sortField = "assignmentsWorkedOn";
+    expect(component.sortedStudents[0].lastName).toBe("Alpha");
+    component.sortField = "completionPercentage";
+    expect(component.sortedStudents[0].lastName).toBe("Alpha");
+
+    component.model = null;
+    expect(component.sortedStudents).toEqual([]);
   });
 
   it("should toggle lastName sort direction when clicked again", () => {

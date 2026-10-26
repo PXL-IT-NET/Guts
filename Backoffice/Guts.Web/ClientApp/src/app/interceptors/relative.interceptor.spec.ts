@@ -1,9 +1,10 @@
 import { HttpHandler, HttpRequest, HttpResponse } from "@angular/common/http";
 import { Injector } from "@angular/core";
+import { TestBed } from "@angular/core/testing";
 import { of } from "rxjs";
 import { ClientSettings } from "../services/client.settings";
 import { ClientSettingsService } from "../services/client.settings.service";
-import { RelativeInterceptor } from "./relative.interceptor";
+import { RelativeInterceptor, relativeInterceptor } from "./relative.interceptor";
 
 describe("RelativeInterceptor", () => {
   let interceptor: RelativeInterceptor;
@@ -23,6 +24,12 @@ describe("RelativeInterceptor", () => {
       "handle",
     ]);
     nextHandlerSpy.handle.and.returnValue(of(new HttpResponse({ status: 200 })));
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ClientSettingsService, useValue: settingsServiceSpy },
+      ],
+    });
 
     const injector = Injector.create({
       providers: [
@@ -60,5 +67,27 @@ describe("RelativeInterceptor", () => {
     const forwardedRequest = nextHandlerSpy.handle.calls.mostRecent().args[0];
     expect(forwardedRequest.url).toBe("api/clientsettings");
   });
-});
 
+  it("relativeInterceptor function should prepend apiBaseUrl for relative URLs and skip absolute/clientsettings", () => {
+    let forwardedUrl = "";
+    const nextFn = (req: HttpRequest<unknown>) => {
+      forwardedUrl = req.url;
+      return of(new HttpResponse({ status: 200 }));
+    };
+
+    TestBed.runInInjectionContext(() => {
+      relativeInterceptor(new HttpRequest("GET", "api/courses"), nextFn).subscribe();
+    });
+    expect(forwardedUrl).toBe("https://api.guts.pxl.be/api/courses");
+
+    TestBed.runInInjectionContext(() => {
+      relativeInterceptor(new HttpRequest("GET", "https://external.org/x"), nextFn).subscribe();
+    });
+    expect(forwardedUrl).toBe("https://external.org/x");
+
+    TestBed.runInInjectionContext(() => {
+      relativeInterceptor(new HttpRequest("GET", "api/clientsettings"), nextFn).subscribe();
+    });
+    expect(forwardedUrl).toBe("api/clientsettings");
+  });
+});

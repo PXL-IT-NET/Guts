@@ -96,6 +96,31 @@ namespace Guts.Domain.Tests.GamificationAggregate
             Assert.That(streak.IsActiveInWeek(now), Is.True);
             Assert.That(streak.IsActiveInWeek(now.AddDays(10)), Is.False);
         }
+
+        [Test]
+        public void RecordActivity_PastWeek_ShouldReturnUnchangedStreak()
+        {
+            var week2 = new DateTime(2026, 10, 26); // Monday Week 44
+            var week1 = week2.AddDays(-7); // Monday Week 43
+
+            var streak = new WeeklyStreak().RecordActivity(week2);
+            var updated = streak.RecordActivity(week1);
+
+            Assert.That(updated, Is.EqualTo(streak));
+            Assert.That(updated.CurrentStreak, Is.EqualTo(1));
+            Assert.That(updated.LastActiveWeek, Is.EqualTo(ISOWeek.GetWeekOfYear(week2)));
+        }
+
+        [Test]
+        public void Equality_SameAndDifferentValues_ShouldCompareCorrectly()
+        {
+            var s1 = new WeeklyStreak(2, 4, 2026, 43);
+            var s2 = new WeeklyStreak(2, 4, 2026, 43);
+            var s3 = new WeeklyStreak(1, 4, 2026, 43);
+
+            Assert.That(s1, Is.EqualTo(s2));
+            Assert.That(s1.GetHashCode(), Is.EqualTo(s2.GetHashCode()));
+            Assert.That(s1, Is.Not.EqualTo(s3));
+        }
     }
 }
-

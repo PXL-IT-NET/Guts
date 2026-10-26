@@ -164,5 +164,56 @@ namespace Guts.Api.Tests.Controllers
             Assert.That(okResult, Is.Not.Null);
             Assert.That(okResult.Value, Is.EqualTo(badgeList));
         }
+
+        [Test]
+        public async Task GetConfig_ShouldReturnCourseConfigFromService()
+        {
+            var configDto = new CourseGamificationConfigDto
+            {
+                CourseId = CourseId,
+                IsGamificationEnabled = true,
+                IsLeaderboardEnabled = true
+            };
+            _gamificationServiceMock.Setup(s => s.GetCourseConfigAsync(CourseId)).ReturnsAsync(configDto);
+
+            var actionResult = await _controller.GetConfig(CourseId);
+
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult.Value, Is.EqualTo(configDto));
+        }
+
+        [Test]
+        public async Task UpdateConfig_ShouldCallServiceAndReturnUpdatedConfig()
+        {
+            var configDto = new CourseGamificationConfigDto
+            {
+                CourseId = CourseId,
+                IsGamificationEnabled = false
+            };
+            _gamificationServiceMock.Setup(s => s.UpdateCourseConfigAsync(CourseId, configDto)).ReturnsAsync(configDto);
+
+            var actionResult = await _controller.UpdateConfig(CourseId, configDto);
+
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult.Value, Is.EqualTo(configDto));
+        }
+
+        [Test]
+        public async Task GetClasses_ShouldReturnCourseClassGroupsFromService()
+        {
+            var classes = new List<CourseClassGroupDto>
+            {
+                new CourseClassGroupDto { Id = 1, Name = "1TIN-A", CourseId = CourseId, PeriodId = PeriodId }
+            };
+            _gamificationServiceMock.Setup(s => s.GetCourseClassGroupsAsync(CourseId, PeriodId)).ReturnsAsync(classes);
+
+            var actionResult = await _controller.GetClasses(CourseId, PeriodId);
+
+            var okResult = actionResult as OkObjectResult;
+            Assert.That(okResult, Is.Not.Null);
+            Assert.That(okResult.Value, Is.EqualTo(classes));
+        }
     }
 }

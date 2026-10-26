@@ -4,7 +4,7 @@ import { of, Subject } from "rxjs";
 import { CourseGamificationAdminComponent } from "./course-gamification-admin.component";
 import { GamificationService } from "../../services/gamification.service";
 import { ToastrService } from "ngx-toastr";
-import { GetResult } from "../../util/result";
+import { GetResult, CreateResult, PostResult } from "../../util/result";
 import {
   ICourseGamificationConfigModel,
   ICourseClassGroupModel,
@@ -63,20 +63,25 @@ describe("CourseGamificationAdminComponent", () => {
     expect(gamificationServiceSpy.getClasses).toHaveBeenCalledWith(10, 1);
     expect(component.config?.isGamificationEnabled).toBeTrue();
     expect(component.classGroups).toHaveSize(2);
+    expect(component.loading).toBeFalse();
   });
 
-  it("should save configuration and emit configChanged", () => {
+  it("should save configuration and emit configChanged or show error", () => {
     gamificationServiceSpy.updateConfig.and.returnValue(of(GetResult.success(mockConfig)));
     spyOn(component.configChanged, "emit");
     component.saveConfig();
     expect(gamificationServiceSpy.updateConfig).toHaveBeenCalledWith(10, mockConfig);
     expect(toastrSpy.success).toHaveBeenCalled();
     expect(component.configChanged.emit).toHaveBeenCalledWith(mockConfig);
+
+    gamificationServiceSpy.updateConfig.and.returnValue(of({ success: false, message: "Config err" } as any));
+    component.saveConfig();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Config err", "Error");
   });
 
-  it("should add class group and emit classesChanged", () => {
+  it("should add class group and emit classesChanged or show error", () => {
     const newClass: ICourseClassGroupModel = { id: 3, name: "1TIN-C", courseId: 10, periodId: 1 };
-    gamificationServiceSpy.addClass.and.returnValue(of(GetResult.success(newClass)));
+    gamificationServiceSpy.addClass.and.returnValue(of(CreateResult.success(newClass)));
     spyOn(component.classesChanged, "emit");
 
     component.newClassName = "1TIN-C";
@@ -87,11 +92,16 @@ describe("CourseGamificationAdminComponent", () => {
     expect(component.newClassName).toBe("");
     expect(component.classesChanged.emit).toHaveBeenCalled();
     expect(toastrSpy.success).toHaveBeenCalled();
+
+    gamificationServiceSpy.addClass.and.returnValue(of({ success: false, message: "Add err" } as any));
+    component.newClassName = "1TIN-D";
+    component.addClass();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Add err", "Error");
   });
 
-  it("should delete class group when confirmed and emit classesChanged", () => {
-    spyOn(window, "confirm").and.returnValue(true);
-    gamificationServiceSpy.deleteClass.and.returnValue(of(GetResult.success(true)));
+  it("should delete class group when confirmed and emit classesChanged or handle cancel/error", () => {
+    const confirmSpy = spyOn(window, "confirm").and.returnValue(true);
+    gamificationServiceSpy.deleteClass.and.returnValue(of(PostResult.success()));
     spyOn(component.classesChanged, "emit");
 
     component.deleteClass(1);
@@ -101,6 +111,15 @@ describe("CourseGamificationAdminComponent", () => {
     expect(component.classGroups.find((c) => c.id === 1)).toBeUndefined();
     expect(component.classesChanged.emit).toHaveBeenCalled();
     expect(toastrSpy.success).toHaveBeenCalled();
+
+    gamificationServiceSpy.deleteClass.and.returnValue(of({ success: false, message: "Del err" } as any));
+    component.deleteClass(2);
+    expect(toastrSpy.error).toHaveBeenCalledWith("Del err", "Error");
+
+    gamificationServiceSpy.deleteClass.calls.reset();
+    confirmSpy.and.returnValue(false);
+    component.deleteClass(2);
+    expect(gamificationServiceSpy.deleteClass).not.toHaveBeenCalled();
   });
 
   it("should reload data on ngOnChanges when courseId or periodId change", () => {
@@ -129,4 +148,3 @@ describe("CourseGamificationAdminComponent", () => {
     expect(asyncFixture.nativeElement.querySelector("#cfgGamification")).not.toBeNull();
   });
 });
-

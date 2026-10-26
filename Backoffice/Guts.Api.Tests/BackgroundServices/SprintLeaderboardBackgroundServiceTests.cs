@@ -28,6 +28,7 @@ namespace Guts.Api.Tests.BackgroundServices
             _serviceProviderMock = new Mock<IServiceProvider>();
             _gamificationServiceMock = new Mock<IGamificationService>();
             _loggerMock = new Mock<ILogger<SprintLeaderboardBackgroundService>>();
+            _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
             _scopeFactoryMock.Setup(f => f.CreateScope()).Returns(_scopeMock.Object);
             _scopeMock.Setup(s => s.ServiceProvider).Returns(_serviceProviderMock.Object);
@@ -80,6 +81,17 @@ namespace Guts.Api.Tests.BackgroundServices
         }
 
         [Test]
+        public async Task ExecuteSprintAwardingAsync_WhenLoggerDisabled_ShouldStillCallGamificationService()
+        {
+            _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(false);
+            var executionTime = new DateTime(2026, 10, 26, 0, 1, 0, DateTimeKind.Utc);
+
+            await _service.ExecuteSprintAwardingAsync(executionTime, CancellationToken.None);
+
+            _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 43, null), Times.Once);
+        }
+
+        [Test]
         public async Task StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
         {
             using var cts = new CancellationTokenSource();
@@ -90,6 +102,17 @@ namespace Guts.Api.Tests.BackgroundServices
 
             Assert.Pass();
         }
+
+        [Test]
+        public async Task StartAsync_WhenRunningAndThenStopped_ShouldEnterLoopAndCancelDelayGracefully()
+        {
+            using var cts = new CancellationTokenSource();
+
+            await _service.StartAsync(cts.Token);
+            await Task.Delay(50);
+            await _service.StopAsync(CancellationToken.None);
+
+            Assert.Pass();
+        }
     }
 }
-

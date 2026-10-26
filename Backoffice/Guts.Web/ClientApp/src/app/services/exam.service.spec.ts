@@ -58,6 +58,12 @@ describe("ExamService", () => {
     req1.flush({ id: 5, courseId: 2, name: "New", maximumScore: 20, parts: [] });
     expect(examRes.success).toBeTrue();
 
+    service.saveExam(exam).subscribe((r) => (examRes = r));
+    httpMock
+      .expectOne("api/exams")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(examRes.success).toBeFalse();
+
     let partRes: any;
     const part = new ExamPartModel();
     service.saveExamPart(5, part).subscribe((r) => (partRes = r));
@@ -70,6 +76,12 @@ describe("ExamService", () => {
       assignmentEvaluations: [],
     });
     expect(partRes.success).toBeTrue();
+
+    service.saveExamPart(5, part).subscribe((r) => (partRes = r));
+    httpMock
+      .expectOne("api/exams/5/parts")
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(partRes.success).toBeFalse();
   });
 
   it("deleteExamPart should DELETE exam part and handle error", () => {
@@ -87,8 +99,22 @@ describe("ExamService", () => {
     expect(res.success).toBeFalse();
   });
 
-  it("getExamResultsDownloadUrl should handle HTTP error", () => {
+  it("getExamResultsDownloadUrl should handle success and HTTP error", () => {
     let res: any;
+    service.getExamResultsDownloadUrl(5).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/exams/5/downloadscores")
+      .flush(new Blob(["a,b"]), {
+        headers: { "content-disposition": 'attachment; filename="scores.csv"' },
+      });
+    expect(res.success).toBeTrue();
+
+    service.getExamResultsDownloadUrl(5).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/exams/5/downloadscores")
+      .flush(new Blob(["a,b"]));
+    expect(res.success).toBeTrue();
+
     service.getExamResultsDownloadUrl(5).subscribe((r) => (res = r));
     httpMock
       .expectOne("api/exams/5/downloadscores")
@@ -96,4 +122,3 @@ describe("ExamService", () => {
     expect(res.success).toBeFalse();
   });
 });
-
