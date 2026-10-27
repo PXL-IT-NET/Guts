@@ -122,4 +122,78 @@ public class WeeklyStreakTests
         Assert.That(s1.GetHashCode(), Is.EqualTo(s2.GetHashCode()));
         Assert.That(s1, Is.Not.EqualTo(s3));
     }
+
+    [Test]
+    public void NeedsEvaluation_WhenZeroStreakOrActiveCurrentOrPreviousWeek_ShouldReturnFalse()
+    {
+        var emptyStreak = new WeeklyStreak();
+        var week43 = new DateTime(2026, 10, 19); // Monday Week 43
+        var week44 = week43.AddDays(7); // Monday Week 44
+
+        Assert.That(emptyStreak.NeedsEvaluation(week44), Is.False);
+
+        var activeWeek43 = emptyStreak.RecordActivity(week43);
+        Assert.That(activeWeek43.NeedsEvaluation(week43), Is.False); // Same week (weeksDiff == 0)
+        Assert.That(activeWeek43.NeedsEvaluation(week44), Is.False); // Next week (weeksDiff == 1)
+    }
+
+    [Test]
+    public void NeedsEvaluation_WhenActiveStreakMissedLastWeek_ShouldReturnTrue()
+    {
+        var week42 = new DateTime(2026, 10, 12); // Monday Week 42
+        var week44 = week42.AddDays(14); // Monday Week 44 (missed Week 43)
+
+        var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));
+
+        Assert.That(streak.NeedsEvaluation(week44), Is.True);
+    }
+
+    [Test]
+    public void EvaluateStreak_WhenDoesNotNeedEvaluation_ShouldReturnSameInstance()
+    {
+        var week43 = new DateTime(2026, 10, 19); // Week 43
+        var week44 = week43.AddDays(7); // Week 44
+        var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week43), ISOWeek.GetWeekOfYear(week43));
+
+        var evaluated = streak.EvaluateStreak(week44, hasPassedAllAvailableTests: false);
+
+        Assert.That(evaluated, Is.SameAs(streak));
+    }
+
+    [Test]
+    public void EvaluateStreak_WhenMissedLastWeekAndNotAllTestsPassed_ShouldResetCurrentStreakToZeroAndKeepBestStreak()
+    {
+        var week42 = new DateTime(2026, 10, 12); // Week 42
+        var week44 = week42.AddDays(14); // Week 44 (missed Week 43)
+        var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));
+
+        var evaluated = streak.EvaluateStreak(week44, hasPassedAllAvailableTests: false);
+
+        Assert.That(evaluated.CurrentStreak, Is.Zero);
+        Assert.That(evaluated.BestStreak, Is.EqualTo(5));
+        Assert.That(evaluated.LastActiveYear, Is.EqualTo(ISOWeek.GetYear(week42)));
+        Assert.That(evaluated.LastActiveWeek, Is.EqualTo(ISOWeek.GetWeekOfYear(week42)));
+        Assert.That(evaluated.NeedsEvaluation(week44), Is.False);
+    }
+
+    [Test]
+    public void EvaluateStreak_WhenMissedLastWeekAndAllAvailableTestsPassed_ShouldKeepStreakAndAdvanceLastActiveWeek()
+    {
+        var week42 = new DateTime(2026, 10, 12); // Week 42
+        var week43 = week42.AddDays(7); // Week 43
+        var week44 = week42.AddDays(14); // Week 44 (missed Week 43)
+        var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));
+
+        var evaluated = streak.EvaluateStreak(week44, hasPassedAllAvailableTests: true);
+
+        Assert.That(evaluated.CurrentStreak, Is.EqualTo(3));
+        Assert.That(evaluated.BestStreak, Is.EqualTo(5));
+        Assert.That(evaluated.LastActiveYear, Is.EqualTo(ISOWeek.GetYear(week43)));
+        Assert.That(evaluated.LastActiveWeek, Is.EqualTo(ISOWeek.GetWeekOfYear(week43)));
+        Assert.That(evaluated.NeedsEvaluation(week44), Is.False);
+
+        // Subsequent activity in Week 44 should increment from 3 to 4
+        var afterNewTestInWeek44 = evaluated.RecordActivity(week44);
+        Assert.That(afterNewTestInWeek44.CurrentStreak, Is.EqualTo(4));
+    }
 }

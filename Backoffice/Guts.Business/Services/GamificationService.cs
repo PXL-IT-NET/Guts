@@ -228,7 +228,11 @@ public class GamificationService(
             Events = recentEventDtos
         };
 
-        if (profile.RecordLeaderboardVisit(DateTime.UtcNow))
+        DateTime now = DateTime.UtcNow;
+        bool streakUpdated = await EvaluateSingleProfileWeeklyStreakIfNeededAsync(profile, courseId, period.Id, now);
+        bool visitUpdated = profile.RecordLeaderboardVisit(now);
+
+        if (streakUpdated || visitUpdated)
         {
             await studentCourseProfileRepository.UpdateAsync(profile);
         }
@@ -237,6 +241,25 @@ public class GamificationService(
         dto.LastLeaderboardVisitDate = previousVisit;
         dto.RecentGains = recentGains;
         return dto;
+    }
+
+    private async Task<bool> EvaluateSingleProfileWeeklyStreakIfNeededAsync(
+        StudentCourseProfile profile,
+        int courseId,
+        int periodId,
+        DateTime timestamp)
+    {
+        if (!profile.NeedsWeeklyStreakEvaluation(timestamp))
+        {
+            return false;
+        }
+
+        bool hasPassedAnyTests = profile.Events.Any(e => e.EventType == GamificationEventType.PassedTest);
+        IReadOnlyList<int> courseTestIds = hasPassedAnyTests
+            ? await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId)
+            : Array.Empty<int>();
+
+        return profile.EvaluateWeeklyStreak(timestamp, courseTestIds);
     }
 
     private static List<RecentXpEventDto> BuildRecentEventDtos(IReadOnlyList<GamificationEvent> recentEvents)
@@ -585,21 +608,27 @@ public class GamificationService(
     {
         DateTime friday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Friday);
         DateTime fridayCutoff = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59, DateTimeKind.Utc);
+        DateTime nextMonday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday).AddDays(7);
 
         var period = await periodRepository.GetPeriodAsync(periodId);
         if (period == null) return;
 
         var courses = await courseRepository.GetAllAsync();
 
-        foreach (var course in courses)
+        foreach (int courseId in courses.Select(course => course.Id))
         {
-            await AwardWeeklySprintBadgesForCourseAsync(course.Id, period.Id, fridayCutoff);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
+            await AwardWeeklySprintBadgesForCourseAsync(courseId, period.Id, fridayCutoff, config);
+            await EvaluateWeeklyStreaksForCourseAsync(courseId, period.Id, nextMonday, config);
         }
     }
 
-    private async Task AwardWeeklySprintBadgesForCourseAsync(int courseId, int periodId, DateTime fridayCutoff)
+    private async Task AwardWeeklySprintBadgesForCourseAsync(
+        int courseId,
+        int periodId,
+        DateTime fridayCutoff,
+        CourseGamificationConfig config)
     {
-        var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
         if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled))
         {
             return;
@@ -619,6 +648,44 @@ public class GamificationService(
             {
                 await studentCourseProfileRepository.UpdateAsync(profile);
             }
+        }
+    }
+
+    private async Task EvaluateWeeklyStreaksForCourseAsync(
+        int courseId,
+        int periodId,
+        DateTime evaluationTimestamp,
+        CourseGamificationConfig config)
+    {
+        if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled))
+        {
+            return;
+        }
+
+        var profiles = await studentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, periodId);
+        if (profiles == null || profiles.Count == 0)
+        {
+            return;
+        }
+
+        var candidates = profiles.Where(p => p.NeedsWeeklyStreakEvaluation(evaluationTimestamp)).ToList();
+        if (candidates.Count == 0)
+        {
+            return;
+        }
+
+        bool anyCandidateHasPassedTests = candidates.Any(p => p.Events.Any(e => e.EventType == GamificationEventType.PassedTest));
+        IReadOnlyList<int> courseTestIds = anyCandidateHasPassedTests
+            ? await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId)
+            : Array.Empty<int>();
+
+        var modifiedProfiles = candidates
+            .Where(candidate => candidate.EvaluateWeeklyStreak(evaluationTimestamp, courseTestIds))
+            .ToList();
+
+        if (modifiedProfiles.Count > 0)
+        {
+            await studentCourseProfileRepository.UpdateRangeAsync(modifiedProfiles);
         }
     }
 

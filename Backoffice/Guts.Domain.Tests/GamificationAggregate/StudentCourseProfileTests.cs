@@ -316,4 +316,79 @@ public class StudentCourseProfileTests
         Assert.That(profile.AwardBadge(BadgeType.SprintGold, timestamp), Is.False);
         Assert.That(profile.Badges.Count(b => b.BadgeType == BadgeType.SprintGold), Is.EqualTo(1));
     }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenStreakDoesNotNeedEvaluation_ShouldShortCircuitAndReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week43 = new DateTime(2026, 10, 19, 10, 0, 0, DateTimeKind.Utc);
+        var week44 = week43.AddDays(7);
+
+        profile.AwardPassedTestXp(101, week43);
+
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102 });
+
+        Assert.That(changed, Is.False);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekAndNotAllTestsPassed_ShouldResetCurrentStreakToZeroAndReturnTrue()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week41 = new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc);
+        var week42 = week41.AddDays(7);
+        var week44 = week41.AddDays(21); // Missed Week 43
+
+        profile.AwardPassedTestXp(101, week41);
+        profile.AwardPassedTestXp(102, week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.True);
+
+        // Test 103 is not yet passed
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102, 103 });
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+        Assert.That(profile.WeeklyStreak.BestStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekAndNoCourseTestsExist_ShouldResetCurrentStreakToZero()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week42 = new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc);
+        var week44 = week42.AddDays(14); // Missed Week 43
+
+        profile.RecordWeeklyActivity(week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(1));
+
+        bool changed = profile.EvaluateWeeklyStreak(week44, Array.Empty<int>());
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekButAllAvailableCourseTestsPassed_ShouldKeepStreakAndReturnTrue()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week41 = new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc);
+        var week42 = week41.AddDays(7);
+        var week44 = week41.AddDays(21); // Missed Week 43
+
+        profile.AwardPassedTestXp(101, week41);
+        profile.AwardPassedTestXp(102, week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+
+        // Student has already passed both available course tests (101 and 102)
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102 });
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.WeeklyStreak.BestStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+    }
 }

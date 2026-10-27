@@ -75,6 +75,39 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
         return LastActiveYear == year && LastActiveWeek == week;
     }
 
+    public bool NeedsEvaluation(DateTime timestamp)
+    {
+        if (CurrentStreak == 0 || LastActiveYear == 0)
+        {
+            return false;
+        }
+
+        int year = ISOWeek.GetYear(timestamp);
+        int week = ISOWeek.GetWeekOfYear(timestamp);
+        return CalculateWeeksDifference(LastActiveYear, LastActiveWeek, year, week) > 1;
+    }
+
+    public WeeklyStreak EvaluateStreak(DateTime timestamp, bool hasPassedAllAvailableTests)
+    {
+        if (!NeedsEvaluation(timestamp))
+        {
+            return this;
+        }
+
+        if (hasPassedAllAvailableTests)
+        {
+            int currentYear = ISOWeek.GetYear(timestamp);
+            int currentWeek = ISOWeek.GetWeekOfYear(timestamp);
+            DateTime previousWeekMonday = ISOWeek.ToDateTime(currentYear, currentWeek, DayOfWeek.Monday).AddDays(-7);
+            int prevYear = ISOWeek.GetYear(previousWeekMonday);
+            int prevWeek = ISOWeek.GetWeekOfYear(previousWeekMonday);
+
+            return new WeeklyStreak(CurrentStreak, BestStreak, prevYear, prevWeek);
+        }
+
+        return new WeeklyStreak(0, BestStreak, LastActiveYear, LastActiveWeek);
+    }
+
     public static int CalculateWeeksDifference(int fromYear, int fromWeek, int toYear, int toWeek)
     {
         if (fromYear == 0) return 1;

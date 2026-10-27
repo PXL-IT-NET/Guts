@@ -1342,4 +1342,156 @@ public class GamificationServiceTests
         Assert.That(result.RecentGains.Events[0].XpEarned, Is.EqualTo(10));
         Assert.That(result.RecentGains.Events[0].CreatedAt, Is.EqualTo(testTime));
     }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenStreakDoesNotNeedEvaluation_ShouldNotQueryCourseTestIds()
+    {
+        const int userId = 5;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        profile.AwardPassedTestXp(101, DateTime.UtcNow.AddDays(-2));
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result.CurrentWeeklyStreak, Is.EqualTo(1));
+        _assignmentRepositoryMock.Verify(r => r.GetCourseTestIdsAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenMissedLastWeekAndNotAllTestsPassed_ShouldResetCurrentStreakToZeroAndPersist()
+    {
+        const int userId = 5;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        // Active 3 weeks ago and 2 weeks ago (streak = 2), missed last week
+        var threeWeeksAgo = DateTime.UtcNow.AddDays(-21);
+        var twoWeeksAgo = DateTime.UtcNow.AddDays(-14);
+        profile.AwardPassedTestXp(101, threeWeeksAgo);
+        profile.AwardPassedTestXp(102, twoWeeksAgo);
+        // Visit recorded 2 minutes ago so RecordLeaderboardVisit returns false (streak evaluation alone triggers UpdateAsync)
+        profile.RecordLeaderboardVisit(DateTime.UtcNow.AddMinutes(-2));
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
+            .ReturnsAsync(new List<int> { 101, 102, 103 }); // 103 not passed yet
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result.CurrentWeeklyStreak, Is.Zero);
+        Assert.That(result.BestWeeklyStreak, Is.EqualTo(2));
+        _assignmentRepositoryMock.Verify(r => r.GetCourseTestIdsAsync(courseId, periodId), Times.Once);
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenMissedLastWeekButAllAvailableCourseTestsPassed_ShouldKeepStreakAndPersist()
+    {
+        const int userId = 5;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        var threeWeeksAgo = DateTime.UtcNow.AddDays(-21);
+        var twoWeeksAgo = DateTime.UtcNow.AddDays(-14);
+        profile.AwardPassedTestXp(101, threeWeeksAgo);
+        profile.AwardPassedTestXp(102, twoWeeksAgo);
+        profile.RecordLeaderboardVisit(DateTime.UtcNow.AddMinutes(-2));
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
+            .ReturnsAsync(new List<int> { 101, 102 }); // All available tests passed!
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result.CurrentWeeklyStreak, Is.EqualTo(2));
+        Assert.That(result.BestWeeklyStreak, Is.EqualTo(2));
+        _assignmentRepositoryMock.Verify(r => r.GetCourseTestIdsAsync(courseId, periodId), Times.Once);
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_ShouldEvaluateWeeklyStreaksAndBatchSaveModifiedProfiles()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43; // Evaluating completed Week 43 (Monday Oct 19 - Sunday Oct 25)
+        var week41 = new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc);
+        var week42 = new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc);
+        var week43 = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsBadgesEnabled = true
+            });
+
+        // Student 1: Active in Week 41 and 42, missed Week 43, has NOT passed test 103 -> streak should reset to 0
+        var s1Expired = new StudentCourseProfile(1, courseId, periodId);
+        s1Expired.AwardPassedTestXp(101, week41);
+        s1Expired.AwardPassedTestXp(102, week42);
+
+        // Student 2: Active in Week 41 and 42, missed Week 43, HAS passed all tests (101, 102, 103) -> streak kept at 2
+        var s2Protected = new StudentCourseProfile(2, courseId, periodId);
+        s2Protected.AwardPassedTestXp(101, week41);
+        s2Protected.AwardPassedTestXp(102, week42);
+        s2Protected.AwardPassedTestXp(103, week42.AddHours(1));
+
+        // Student 3: Active in Week 43 -> does not need streak evaluation
+        var s3Active = new StudentCourseProfile(3, courseId, periodId);
+        s3Active.AwardPassedTestXp(101, week43);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });
+        _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
+            .ReturnsAsync(new List<int> { 101, 102, 103 });
+
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+        Assert.That(s1Expired.WeeklyStreak.CurrentStreak, Is.Zero);
+        Assert.That(s1Expired.WeeklyStreak.BestStreak, Is.EqualTo(2));
+
+        Assert.That(s2Protected.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(s2Protected.WeeklyStreak.BestStreak, Is.EqualTo(2));
+        Assert.That(s2Protected.WeeklyStreak.LastActiveWeek, Is.EqualTo(weekNumber));
+
+        Assert.That(s3Active.WeeklyStreak.CurrentStreak, Is.EqualTo(1));
+
+        _assignmentRepositoryMock.Verify(r => r.GetCourseTestIdsAsync(courseId, periodId), Times.Once);
+        _studentCourseProfileRepositoryMock.Verify(
+            r => r.UpdateRangeAsync(It.Is<IEnumerable<StudentCourseProfile>>(list =>
+                list.Contains(s1Expired) && list.Contains(s2Protected) && !list.Contains(s3Active))),
+            Times.Once);
+    }
 }

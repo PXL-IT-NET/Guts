@@ -243,6 +243,33 @@ public class StudentCourseProfile : AggregateRoot
         }
     }
 
+    public bool NeedsWeeklyStreakEvaluation(DateTime timestamp)
+    {
+        return WeeklyStreak.NeedsEvaluation(timestamp);
+    }
+
+    public bool EvaluateWeeklyStreak(DateTime timestamp, IReadOnlyCollection<int> allAvailableCourseTestIds)
+    {
+        if (!WeeklyStreak.NeedsEvaluation(timestamp))
+        {
+            return false;
+        }
+
+        bool hasPassedAllAvailableTests = false;
+        if (allAvailableCourseTestIds is { Count: > 0 })
+        {
+            var passedTestIds = Events
+                .Where(e => e.EventType == GamificationEventType.PassedTest)
+                .Select(e => e.TargetId)
+                .ToHashSet();
+
+            hasPassedAllAvailableTests = allAvailableCourseTestIds.All(passedTestIds.Contains);
+        }
+
+        WeeklyStreak = WeeklyStreak.EvaluateStreak(timestamp, hasPassedAllAvailableTests);
+        return true;
+    }
+
     public class Factory : IStudentCourseProfileFactory
     {
         public StudentCourseProfile CreateNew(int userId, int courseId, int periodId)

@@ -22,6 +22,18 @@ internal class StudentCourseProfileDbRepository : BaseDbRepository<StudentCourse
             .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.CourseId == courseId && sp.PeriodId == periodId);
     }
 
+    public async Task<IReadOnlyList<StudentCourseProfile>> GetByCourseAndPeriodAsync(int courseId, int periodId)
+    {
+        return await _context.StudentCourseProfiles
+            .AsSplitQuery()
+            .Include(sp => sp.Badges)
+            .Include(sp => sp.Events)
+            .Include(sp => sp.ClassGroup)
+            .Include(sp => sp.User)
+            .Where(sp => sp.CourseId == courseId && sp.PeriodId == periodId)
+            .ToListAsync();
+    }
+
     public async Task<IReadOnlyList<StudentCourseProfile>> GetForLeaderboardByCourseAndPeriodAsync(int courseId, int periodId)
     {
         return await _context.StudentCourseProfiles
@@ -41,5 +53,11 @@ internal class StudentCourseProfileDbRepository : BaseDbRepository<StudentCourse
                               ge.TargetId == assignmentId &&
                               ge.StudentCourseProfile.CourseId == courseId &&
                               ge.StudentCourseProfile.PeriodId == periodId);
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<StudentCourseProfile> entities)
+    {
+        _context.StudentCourseProfiles.UpdateRange(entities);
+        await _context.SaveChangesAsync();
     }
 }

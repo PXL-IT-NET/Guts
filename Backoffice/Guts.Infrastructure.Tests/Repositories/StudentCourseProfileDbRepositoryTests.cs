@@ -117,4 +117,51 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
         var nonExistentCount = await repo.CountAssignmentCompletionsAsync(999, course.Id, period.Id);
         Assert.That(nonExistentCount, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task GetByCourseAndPeriodAsync_And_UpdateRangeAsync_ShouldLoadAllProfilesAndPersistBatchUpdates()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user1 = await Seeder.SeedUserAsync("Alice", "One");
+        var user2 = await Seeder.SeedUserAsync("Bob", "Two");
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var profile1 = new StudentCourseProfile(user1.Id, course.Id, period.Id);
+            profile1.AwardPassedTestXp(101, new System.DateTime(2026, 10, 5, 10, 0, 0, System.DateTimeKind.Utc));
+
+            var profile2 = new StudentCourseProfile(user2.Id, course.Id, period.Id);
+            profile2.HideFromLeaderboard();
+            profile2.AwardPassedTestXp(101, new System.DateTime(2026, 10, 5, 10, 0, 0, System.DateTimeKind.Utc));
+
+            seedContext.StudentCourseProfiles.AddRange(profile1, profile2);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using (var updateContext = CreateDbContext())
+        {
+            var repo = new StudentCourseProfileDbRepository(updateContext);
+            var allProfiles = await repo.GetByCourseAndPeriodAsync(course.Id, period.Id);
+
+            Assert.That(allProfiles, Has.Count.EqualTo(2));
+
+            var evalTime = new System.DateTime(2026, 10, 19, 10, 0, 0, System.DateTimeKind.Utc); // Missed Week 42
+            foreach (var p in allProfiles)
+            {
+                p.EvaluateWeeklyStreak(evalTime, new[] { 101, 102 }); // Not all tests passed -> streak resets to 0
+            }
+
+            await repo.UpdateRangeAsync(allProfiles);
+        }
+
+        await using (var verifyContext = CreateDbContext())
+        {
+            var repo = new StudentCourseProfileDbRepository(verifyContext);
+            var verifiedProfiles = await repo.GetByCourseAndPeriodAsync(course.Id, period.Id);
+
+            Assert.That(verifiedProfiles, Has.Count.EqualTo(2));
+            Assert.That(verifiedProfiles[0].WeeklyStreak.CurrentStreak, Is.Zero);
+            Assert.That(verifiedProfiles[1].WeeklyStreak.CurrentStreak, Is.Zero);
+        }
+    }
 }

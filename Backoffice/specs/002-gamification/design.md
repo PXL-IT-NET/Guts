@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs a hosted background worker (`SprintLeaderboardBackgroundService`) to award weekly sprint medals.
+The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs a hosted background worker (`SprintLeaderboardBackgroundService`) to award weekly sprint medals and evaluate weekly streak expiration/protection.
 
 ```mermaid
 flowchart TD
@@ -20,6 +20,7 @@ flowchart TD
     GS --> SCPR["IStudentCourseProfileRepository"]
     GS --> CGCR["ICourseGamificationConfigRepository"]
     GS --> CCGR["ICourseClassGroupRepository"]
+    GS --> AR["IAssignmentRepository"]
     SCPR --> SCP["StudentCourseProfile (AggregateRoot)"]
     SCP --> WS["WeeklyStreak (ValueObject)"]
     SCP --> SB["StudentBadge (Entity)"]
@@ -46,11 +47,18 @@ flowchart TD
      - `AwardTeamSynergyBonus(componentId, timestamp, isBadgesEnabled)` — Awards `+30 XP` and `TeamPowerhouse` badge.
      - `AwardBadge(badgeType, timestamp)` — Idempotently adds a `StudentBadge`.
      - `RecordWeeklyActivity(timestamp)` — Updates `WeeklyStreak` and awards `OnFire` (4 weeks) / `IronWill` (8 weeks).
+     - `NeedsWeeklyStreakEvaluation(timestamp)` — Fast in-memory check (`WeeklyStreak.NeedsEvaluation(timestamp)`) returning `true` only when `CurrentStreak > 0` and `weeksDiff > 1`.
+     - `EvaluateWeeklyStreak(timestamp, allAvailableCourseTestIds)` — Short-circuits in memory if `!NeedsWeeklyStreakEvaluation(timestamp)`; otherwise checks whether all available course tests (`allAvailableCourseTestIds.Count > 0`) have been passed by the student (`GamificationEventType.PassedTest`), transitions `WeeklyStreak` via `WeeklyStreak.EvaluateStreak(timestamp, hasPassedAllAvailableTests)`, and returns `true` if `WeeklyStreak` changed.
    - Factory: `StudentCourseProfile.Factory` (`IStudentCourseProfileFactory`).
 
 2. **`WeeklyStreak` (`WeeklyStreak.cs`)**
    - `ValueObject<WeeklyStreak>` tracking `CurrentStreak`, `BestStreak`, `LastActiveYear`, and `LastActiveWeek` using `System.Globalization.ISOWeek`.
-   - Immutable transition via `RecordActivity(DateTime timestamp)` and query helper `IsActiveInWeek(DateTime timestamp)`.
+   - Immutable transitions via:
+     - `RecordActivity(DateTime timestamp)` — Increments or starts streak when XP is earned in a week.
+     - `EvaluateStreak(DateTime timestamp, bool hasPassedAllAvailableTests)` — Evaluates streak expiration across ISO week boundaries (`weeksDiff > 1`): resets `CurrentStreak` to `0` (preserving `BestStreak`) if no XP was earned in the last week and not all available course tests are passed, or keeps `CurrentStreak` and advances `LastActiveYear`/`LastActiveWeek` to the preceding ISO week when `hasPassedAllAvailableTests == true`.
+   - Query helpers:
+     - `IsActiveInWeek(DateTime timestamp)`
+     - `NeedsEvaluation(DateTime timestamp)` — Returns `true` only when `CurrentStreak > 0`, `LastActiveYear > 0`, and `CalculateWeeksDifference(LastActiveYear, LastActiveWeek, year, week) > 1`. Once evaluated, either `CurrentStreak` becomes `0` or `LastActiveWeek` becomes `week - 1` (`weeksDiff == 1`), ensuring `NeedsEvaluation` is `false` for the remainder of the week.
 
 3. **`CourseGamificationConfig` (`CourseGamificationConfig.cs`)**
    - `AggregateRoot` storing course-level toggles: `IsGamificationEnabled` (default `false`), `IsWeeklyStreakEnabled`, `IsLeaderboardEnabled`, `IsClassCompetitionEnabled`, `IsTeamSynergyEnabled`, `IsBadgesEnabled` (all default `true`).
@@ -74,27 +82,31 @@ flowchart TD
 ### Repository Contracts (`Guts.Business/Repositories/`)
 - `IStudentCourseProfileRepository`:
   - `GetByUserCourseAndPeriodAsync(int userId, int courseId, int periodId)`
+  - `GetByCourseAndPeriodAsync(int courseId, int periodId)` — Retrieves all profiles for a `(courseId, periodId)` (for weekly background evaluation).
   - `GetForLeaderboardByCourseAndPeriodAsync(int courseId, int periodId)`
   - `CountAssignmentCompletionsAsync(int assignmentId, int courseId, int periodId)`
+  - `UpdateRangeAsync(IEnumerable<StudentCourseProfile> entities)` — Batch-persists modified profiles in a single `SaveChangesAsync()` call.
 - `ICourseGamificationConfigRepository`:
   - `GetByCourseIdAsync(int courseId)`
 - `ICourseClassGroupRepository`:
   - `GetByCourseAndPeriodAsync(int courseId, int periodId)`
   - `GetByNameAsync(int courseId, int periodId, string name)`
+- `IAssignmentRepository`:
+  - `GetCourseTestIdsAsync(int courseId, int periodId)` — Lightweight `SELECT t.Id` projection returning `IReadOnlyList<int>` without materializing or tracking `Assignment`/`Test` entity graphs.
 
 ### Application Services (`Guts.Business/Services/`)
 - **`IGamificationService` / `GamificationService`** (`GamificationService.cs`):
   - `ProcessTestRunAsync(TestRun testRun)` (invoked by `TestRunService.RegisterRunAsync`)
   - `GetStudentCourseProfileAsync(userId, courseId, periodId)`:
+    - Performs an in-memory `profile.NeedsWeeklyStreakEvaluation(DateTime.UtcNow)` check first (`false` on 99.9% of requests -> zero extra SQL queries). Only when `true`, lazily fetches `GetCourseTestIdsAsync(courseId, periodId)` (if the student has any `PassedTest` events), evaluates `profile.EvaluateWeeklyStreak(...)`, and persists the single profile update.
     - Filters `profile.Events` where `CreatedAt > previousVisit` (or all events if never visited).
     - Groups all `GamificationEventType.PassedTest` events into a single `RecentXpEventDto` (`Description = count == 1 ? "Made 1 test green" : $"Made {count} tests green"`, `XpEarned = sum`, `CreatedAt = max`), while mapping bonus events (`AssignmentCompleted`, `AssignmentCompletedQuickly`, `ChapterCompleted`, `TeamSynergy`) individually, ordered by `CreatedAt` descending.
   - `EnrollStudentAsync(userId, courseId, enrollDto, periodId)`
-  - `GetWeeklySprintLeaderboardAsync(courseId, currentUserId, periodId)`
-  - `GetHallOfFameLeaderboardAsync(courseId, currentUserId, periodId)`
+  - `GetWeeklySprintLeaderboardAsync(courseId, currentUserId, periodId)` & `GetHallOfFameLeaderboardAsync(courseId, currentUserId, periodId)` — Strictly read-only leaderboard projections with zero extra queries or `N+1` writes.
   - `GetClassGroupLeaderboardAsync(courseId, periodId)`
   - `GetCourseConfigAsync(courseId)` & `UpdateCourseConfigAsync(courseId, configDto)`
   - `GetCourseClassGroupsAsync(courseId, periodId)`, `AddCourseClassGroupAsync(courseId, name, periodId)`, `DeleteCourseClassGroupAsync(courseId, classGroupId)`
-  - `AwardWeeklySprintBadgesAsync(year, weekNumber, periodId)`
+  - `AwardWeeklySprintBadgesAsync(year, weekNumber, periodId)` — Awards top-5 sprint medals for the completed ISO week and evaluates weekly streak expiration/protection across all course profiles that have `NeedsWeeklyStreakEvaluation == true` (fetching `GetCourseTestIdsAsync` at most once per course only if a candidate profile has `PassedTest` events, and batch-saving modified profiles via `UpdateRangeAsync`).
   - `GetBadgeMetadata()`
 
 ### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
@@ -107,10 +119,12 @@ flowchart TD
 ### Repository Implementations (`Guts.Infrastructure/Repositories/`)
 - `StudentCourseProfileDbRepository`:
   - Uses `.AsSplitQuery()` with `.Include(sp => sp.Badges)`, `.Include(sp => sp.Events)`, `.Include(sp => sp.ClassGroup)`, and `.Include(sp => sp.User)`.
-  - `GetForLeaderboardByCourseAndPeriodAsync` filters by `sp.ShowInLeaderBoard`.
+  - `GetByCourseAndPeriodAsync` loads all profiles for `(CourseId, PeriodId)`, while `GetForLeaderboardByCourseAndPeriodAsync` additionally filters by `sp.ShowInLeaderBoard`.
+  - `UpdateRangeAsync` updates modified profiles in a single `_context.SaveChangesAsync()` call.
   - `CountAssignmentCompletionsAsync` counts `GamificationEvents` with `EventType == GamificationEventType.AssignmentCompleted`.
 - `CourseGamificationConfigDbRepository`: Queries `CourseGamificationConfigs` by `CourseId`.
 - `CourseClassGroupDbRepository`: Queries `CourseClassGroups` by `(CourseId, PeriodId)` and case-insensitive/trimmed `Name`.
+- `AssignmentDbRepository`: `GetCourseTestIdsAsync(courseId, periodId)` executes `_context.Tests.Where(t => t.Assignment.Topic.CourseId == courseId && t.Assignment.Topic.PeriodId == periodId).Select(t => t.Id).ToListAsync()`.
 
 ---
 
@@ -149,4 +163,3 @@ Base route: `api/courses/{courseId}/gamification` (`[Authorize]`)
 - `course-gamification-class-championship`: Class Group competition view.
 - `course-gamification-badges`: Badge showcase grid (earned vs. locked badges).
 - `course-gamification-admin`: Lector administration panel for feature toggles and class group management.
-

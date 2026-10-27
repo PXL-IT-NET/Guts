@@ -10,4 +10,5 @@ public interface IAssignmentRepository : IBasicRepository<Assignment>
     Task<Assignment> GetSingleWithTestsAsync(int assignmentId);
     Task<Assignment> GetSingleWithTestsAndCourseAsync(int assignmentId);
     Task<IList<Assignment>> GetByTopicWithTests(int topicId);
+    Task<IReadOnlyList<int>> GetCourseTestIdsAsync(int courseId, int periodId);
 }

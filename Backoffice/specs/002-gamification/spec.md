@@ -20,10 +20,11 @@ When enabled by a Lector for a course (`CourseGamificationConfig`), students ear
 
 - **US-1 (Configure Course Gamification & Class Groups)**: As a **Lector**, I want to toggle gamification and its individual sub-features (Weekly Streaks, Leaderboards, Class Competition, Team Synergy, Badges) per course, and manage `CourseClassGroup` entities so I can tailor the experience to my course structure.
 - **US-2 (Manage Student Profile & Privacy)**: As a **Student**, I want to customize my avatar, pseudonym, class group membership, and leaderboard visibility (`ShowInLeaderBoard`, `UsePseudonym`) so I can participate comfortably.
-- **US-3 (Earn XP, Levels, Streaks, and Badges from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak updates, and badges when my IDE submits passing test runs (`TestRun`) for exercises and project components.
+- **US-3 (Earn XP, Levels, Streaks, and Badges from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, and badges when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
 - **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events are listed individually.
 - **US-5 (Compete on Leaderboards)**: As a **Student** or **Lector**, I want to view the **Weekly Sprint Leaderboard** (current ISO week XP), **Hall of Fame Leaderboard** (all-time course XP), and **Class Championship Leaderboard** (average XP per class group).
 - **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`).
+- **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
 
 ---
 
@@ -91,6 +92,12 @@ When enabled by a Lector for a course (`CourseGamificationConfig`), students ear
   - The resulting `RecentGains.Events` list is ordered by `CreatedAt` descending.
 - **And** `LastLeaderboardVisitDate` is updated to `DateTime.UtcNow` if more than 10 minutes have elapsed since the previous recorded visit.
 
+### AC-6: Weekly Streak Loss & All-Tests-Passed Protection
+- **Given** a student with an active `WeeklyStreak` (`CurrentStreak > 0`) in a course where `IsGamificationEnabled == true` and `IsWeeklyStreakEnabled == true`
+- **When** the previous ISO week has elapsed and the student earned `0 XP` during that week:
+  - **If** the student has **not** yet passed all available tests in the course (across all topics/assignments in the active period, or when no tests exist yet), **Then** the student loses their weekly streak (`CurrentStreak` is reset to `0`, while `BestStreak` is preserved).
+  - **If** the student has already passed **all** available tests in the course (and the course has at least 1 test), **Then** the student's `CurrentStreak` is kept (preserved without resetting) so they can continue their streak once new tests are provisioned.
+
 ---
 
 ## 4. Domain Rules & Invariants
@@ -99,10 +106,10 @@ When enabled by a Lector for a course (`CourseGamificationConfig`), students ear
   $$\text{Level} = \lfloor \sqrt{\text{TotalXp} / 25.0} \rfloor + 1$$
   Titles map from Level 1 (`"Byte Novice"`), 2 (`"Syntax Scout"`), 3 (`"Logic Apprentice"`), 4 (`"Code Crafter"`), 5 (`"Algorithm Ace"`), 6 (`"Refactor Ranger"`), 7 (`"System Architect"`), 8 (`"Bug Whisperer"`), 9 (`"Full-Stack Guru"`), to Level 10+ (`"Code Titan"`).
 - **DR-2 (Idempotent XP & Badges)**: Each `(GamificationEventType, TargetId)` combination and each `BadgeType` can be awarded **at most once** per `StudentCourseProfile`.
-- **DR-3 (`WeeklyStreak` ISO-Week Calculation)**:
-  - Activity in the same ISO year & week leaves the streak unchanged.
-  - Activity in the immediately following ISO week (`weeksDiff == 1`) increments `CurrentStreak` by 1 and updates `BestStreak = Math.Max(BestStreak, CurrentStreak)`.
-  - Activity after a gap (`weeksDiff > 1`) resets `CurrentStreak` to `1` while preserving `BestStreak`.
+- **DR-3 (`WeeklyStreak` ISO-Week Calculation & Expiration)**:
+  - Earning XP in the same ISO year & week leaves the streak unchanged.
+  - Earning XP in the immediately following ISO week (`weeksDiff == 1`) increments `CurrentStreak` by 1 and updates `BestStreak = Math.Max(BestStreak, CurrentStreak)`.
+  - If no XP is earned in the last ISO week (`weeksDiff > 1`), the streak is lost (`CurrentStreak` resets to `0`, or becomes `1` upon earning new XP in a later week) while preserving `BestStreak` — **unless** the student has already passed 100% of all currently available tests in the course, in which case `CurrentStreak` is kept.
   - `BestStreak` must always be $\ge$ `CurrentStreak`, and all values must be non-negative.
 - **DR-4 (Profile Enrollment Defaults)**: Default `Pseudonym` is `"Student_{UserId}"` (if blank/omitted) and default `Avatar` is `"CodeCat"` (if blank/omitted).
 - **DR-5 (Unique Class Group Names)**: Within a `(courseId, periodId)`, `CourseClassGroup.Name` cannot be empty/whitespace and must be unique.

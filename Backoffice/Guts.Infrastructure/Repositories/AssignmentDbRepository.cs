@@ -59,4 +59,12 @@ internal class AssignmentDbRepository : BaseDbRepository<Assignment, Assignment>
             .ToListAsync();
         return assignments;
     }
+
+    public async Task<IReadOnlyList<int>> GetCourseTestIdsAsync(int courseId, int periodId)
+    {
+        return await _context.Tests
+            .Where(t => t.Assignment.Topic.CourseId == courseId && t.Assignment.Topic.PeriodId == periodId)
+            .Select(t => t.Id)
+            .ToListAsync();
+    }
 }

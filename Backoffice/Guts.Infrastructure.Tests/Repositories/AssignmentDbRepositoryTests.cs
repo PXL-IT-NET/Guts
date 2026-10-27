@@ -9,6 +9,8 @@ namespace Guts.Infrastructure.Tests.Repositories;
 [TestFixture]
 internal class AssignmentDbRepositoryTests : RepositoryTestsBase
 {
+    private int _courseId;
+    private int _periodId;
     private int _topicId;
     private int _assignmentId;
 
@@ -18,6 +20,8 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
         var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("CS1");
         var chapter = await Seeder.SeedChapterAsync(course.Id, period.Id, "Ch1", "Chapter 1", "Ex1", "Test_A", "Test_B");
 
+        _courseId = course.Id;
+        _periodId = period.Id;
         _topicId = chapter.Id;
         _assignmentId = chapter.Assignments.First().Id;
     }
@@ -59,5 +63,18 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
         var byTopic = await repo.GetByTopicWithTests(_topicId);
         Assert.That(byTopic, Has.Count.EqualTo(1));
         Assert.That(byTopic[0].Tests, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task GetCourseTestIdsAsync_ShouldReturnOnlyTestIdsForCourseAndPeriod()
+    {
+        await using var context = CreateDbContext();
+        var repo = new AssignmentDbRepository(context);
+
+        var testIds = await repo.GetCourseTestIdsAsync(_courseId, _periodId);
+        Assert.That(testIds, Has.Count.EqualTo(2));
+
+        var emptyIds = await repo.GetCourseTestIdsAsync(99999, _periodId);
+        Assert.That(emptyIds, Is.Empty);
     }
 }
