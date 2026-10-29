@@ -74,10 +74,8 @@
         </div>
       </div>
     } @else {
-      <!-- Hero Card & Profile Overview (only shown once class is selected, and when gamification is enabled or user is teacher) -->
-      @if (
-        (config?.isGamificationEnabled || userProfile.isTeacher()) && profile
-      ) {
+      <!-- Student Hero Card & Profile Overview (Students only; teachers do not have a hero summary) -->
+      @if (!userProfile.isTeacher() && config?.isGamificationEnabled && profile) {
         <app-course-gamification-hero
           [courseId]="courseId"
           [periodId]="periodId"
@@ -86,6 +84,46 @@
           (profileLoaded)="onProfileLoaded($event)"
           (profileUpdated)="onProfileUpdated($event)"
         ></app-course-gamification-hero>
+      }
+
+      <!-- Teacher Student Perspective Selector (Teachers only) -->
+      @if (userProfile.isTeacher()) {
+        <div
+          class="card border-0 shadow-sm mb-4 bg-body-tertiary"
+          id="teacherStudentPerspectiveBar"
+        >
+          <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
+            <div>
+              <h6 class="mb-1 fw-bold">
+                <i class="bi bi-eye-fill me-1 text-primary"></i>
+                Teacher View & Student Perspective
+              </h6>
+              <small class="text-body-secondary">
+                Teachers are excluded from rankings. View all Hall of Fame levels or select a student to see the leaderboard from their perspective.
+              </small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <label for="studentPerspectiveSelect" class="form-label mb-0 fw-semibold text-nowrap">
+                Perspective:
+              </label>
+              <select
+                id="studentPerspectiveSelect"
+                class="form-select form-select-sm"
+                style="min-width: 260px;"
+                [(ngModel)]="perspectiveUserId"
+              >
+                <option [ngValue]="null">
+                  🌐 All Levels (Teacher Overview)
+                </option>
+                @for (student of studentOptions; track student.userId) {
+                  <option [ngValue]="student.userId">
+                    #{{ student.rank }} {{ student.displayName }} ({{ student.tierIcon }} {{ student.tierName }} — {{ student.score }} XP)
+                  </option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
       }
 
       <!-- Tab Navigation -->
@@ -158,6 +196,8 @@
         <app-course-gamification-sprint
           [courseId]="courseId"
           [periodId]="periodId"
+          [isTeacher]="userProfile.isTeacher()"
+          [perspectiveUserId]="perspectiveUserId"
         ></app-course-gamification-sprint>
       }
 
@@ -166,6 +206,9 @@
         <app-course-gamification-hall-of-fame
           [courseId]="courseId"
           [periodId]="periodId"
+          [isTeacher]="userProfile.isTeacher()"
+          [perspectiveUserId]="perspectiveUserId"
+          (studentOptionsLoaded)="onStudentOptionsLoaded($event)"
         ></app-course-gamification-hall-of-fame>
       }
 

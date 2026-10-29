@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Guts.Business.Dtos.Gamification;
 using Guts.Business.Services;
+using Guts.Domain.GamificationAggregate;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,19 +35,35 @@ public class GamificationController(IGamificationService gamificationService) : 
 
     [HttpGet("leaderboard/weekly")]
     [ProducesResponseType(typeof(IReadOnlyList<LeaderboardEntryDto>), (int)HttpStatusCode.OK)]
-    public async Task<IActionResult> GetWeeklySprint(int courseId, [FromQuery] int? periodId = null)
+    public async Task<IActionResult> GetWeeklySprint(
+        int courseId,
+        [FromQuery] int? periodId = null,
+        [FromQuery] int? perspectiveUserId = null)
     {
-        int userId = GetUserId();
-        var leaderboard = await gamificationService.GetWeeklySprintLeaderboardAsync(courseId, userId, periodId);
+        int effectiveUserId = IsLector() && perspectiveUserId.HasValue
+            ? perspectiveUserId.Value
+            : GetUserId();
+        var leaderboard = await gamificationService.GetWeeklySprintLeaderboardAsync(courseId, effectiveUserId, periodId);
         return Ok(leaderboard);
     }
 
     [HttpGet("leaderboard/hall-of-fame")]
-    [ProducesResponseType(typeof(IReadOnlyList<LeaderboardEntryDto>), (int)HttpStatusCode.OK)]
-    public async Task<IActionResult> GetHallOfFame(int courseId, [FromQuery] int? periodId = null)
+    [ProducesResponseType(typeof(HallOfFameLeaderboardDto), (int)HttpStatusCode.OK)]
+    public async Task<IActionResult> GetHallOfFame(
+        int courseId,
+        [FromQuery] int? periodId = null,
+        [FromQuery] int? perspectiveUserId = null,
+        [FromQuery] HallOfFameTier? tier = null)
     {
         int userId = GetUserId();
-        var leaderboard = await gamificationService.GetHallOfFameLeaderboardAsync(courseId, userId, periodId);
+        bool isLector = IsLector();
+        var leaderboard = await gamificationService.GetHallOfFameLeaderboardAsync(
+            courseId,
+            userId,
+            periodId,
+            isLector,
+            isLector ? perspectiveUserId : null,
+            isLector ? tier : null);
         return Ok(leaderboard);
     }
 

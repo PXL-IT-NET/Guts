@@ -1,6 +1,9 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.RoleAggregate;
 using Guts.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using NUnit.Framework;
 
 namespace Guts.Infrastructure.Tests.Repositories;
@@ -76,10 +79,10 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
         await using (var seedContext = CreateDbContext())
         {
             var profile1 = new StudentCourseProfile(user1.Id, course.Id, period.Id);
-            profile1.Enroll(true, "AliceAlias", "Wizard", null, false); // ShowInLeaderBoard = true
+            profile1.Enroll(true, "AliceAlias", "Wizard", null, false);
 
             var profile2 = new StudentCourseProfile(user2.Id, course.Id, period.Id);
-            profile2.HideFromLeaderboard(); // ShowInLeaderBoard = false
+            profile2.HideFromLeaderboard();
 
             seedContext.StudentCourseProfiles.AddRange(profile1, profile2);
             await seedContext.SaveChangesAsync();
@@ -145,10 +148,10 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
 
             Assert.That(allProfiles, Has.Count.EqualTo(2));
 
-            var evalTime = new System.DateTime(2026, 10, 19, 10, 0, 0, System.DateTimeKind.Utc); // Missed Week 42
+            var evalTime = new System.DateTime(2026, 10, 19, 10, 0, 0, System.DateTimeKind.Utc);
             foreach (var p in allProfiles)
             {
-                p.EvaluateWeeklyStreak(evalTime, new[] { 101, 102 }); // Not all tests passed -> streak resets to 0
+                p.EvaluateWeeklyStreak(evalTime, new[] { 101, 102 });
             }
 
             await repo.UpdateRangeAsync(allProfiles);
@@ -163,5 +166,50 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
             Assert.That(verifiedProfiles[0].WeeklyStreak.CurrentStreak, Is.Zero);
             Assert.That(verifiedProfiles[1].WeeklyStreak.CurrentStreak, Is.Zero);
         }
+    }
+
+    [Test]
+    public async Task IsUserLectorAsync_And_LeaderboardQueries_ShouldIdentifyAndExcludeLectors()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var student = await Seeder.SeedUserAsync("Student", "One");
+        var lector = await Seeder.SeedUserAsync("Teacher", "Lector");
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var lectorRole = new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpperInvariant() };
+            seedContext.Roles.Add(lectorRole);
+            await seedContext.SaveChangesAsync();
+
+            seedContext.UserRoles.Add(new IdentityUserRole<int>
+            {
+                UserId = lector.Id,
+                RoleId = lectorRole.Id
+            });
+
+            var studentProfile = new StudentCourseProfile(student.Id, course.Id, period.Id);
+            studentProfile.AwardAssignmentBonus(42, System.DateTime.UtcNow, 0);
+
+            var lectorProfile = new StudentCourseProfile(lector.Id, course.Id, period.Id);
+            lectorProfile.AwardAssignmentBonus(42, System.DateTime.UtcNow, 0);
+
+            seedContext.StudentCourseProfiles.AddRange(studentProfile, lectorProfile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new StudentCourseProfileDbRepository(context);
+
+        Assert.That(await repo.IsUserLectorAsync(lector.Id), Is.True);
+        Assert.That(await repo.IsUserLectorAsync(student.Id), Is.False);
+
+        var leaderboardProfiles = await repo.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
+        Assert.That(leaderboardProfiles.Select(p => p.UserId), Is.EqualTo(new[] { student.Id }));
+
+        var courseProfiles = await repo.GetByCourseAndPeriodAsync(course.Id, period.Id);
+        Assert.That(courseProfiles.Select(p => p.UserId), Is.EqualTo(new[] { student.Id }));
+
+        var completionCount = await repo.CountAssignmentCompletionsAsync(42, course.Id, period.Id);
+        Assert.That(completionCount, Is.EqualTo(1));
     }
 }

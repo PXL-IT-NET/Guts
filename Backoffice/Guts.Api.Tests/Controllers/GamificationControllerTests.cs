@@ -4,6 +4,8 @@ using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
 using Guts.Business.Dtos.Gamification;
 using Guts.Business.Services;
+using Guts.Domain.GamificationAggregate;
+using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
@@ -77,7 +79,7 @@ public class GamificationControllerTests
     }
 
     [Test]
-    public async Task GetWeeklySprint_ShouldReturnLeaderboard()
+    public async Task GetWeeklySprint_ForStudent_ShouldIgnorePerspectiveUserIdAndUseCurrentUserId()
     {
         var leaderboard = new List<LeaderboardEntryDto>
         {
@@ -86,7 +88,7 @@ public class GamificationControllerTests
         };
         _gamificationServiceMock.Setup(s => s.GetWeeklySprintLeaderboardAsync(CourseId, UserId, PeriodId)).ReturnsAsync(leaderboard);
 
-        var actionResult = await _controller.GetWeeklySprint(CourseId, PeriodId);
+        var actionResult = await _controller.GetWeeklySprint(CourseId, PeriodId, perspectiveUserId: 999);
 
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);
@@ -94,15 +96,71 @@ public class GamificationControllerTests
     }
 
     [Test]
-    public async Task GetHallOfFame_ShouldReturnLeaderboard()
+    public async Task GetWeeklySprint_ForLectorWithPerspectiveUserId_ShouldPassPerspectiveUserId()
     {
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(UserId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
+
+        const int perspectiveUserId = 555;
         var leaderboard = new List<LeaderboardEntryDto>
         {
-            new LeaderboardEntryDto { Rank = 1, UserId = 1, Score = 500 }
+            new LeaderboardEntryDto { Rank = 1, UserId = perspectiveUserId, Score = 100, IsCurrentUser = true }
         };
-        _gamificationServiceMock.Setup(s => s.GetHallOfFameLeaderboardAsync(CourseId, UserId, PeriodId)).ReturnsAsync(leaderboard);
+        _gamificationServiceMock.Setup(s => s.GetWeeklySprintLeaderboardAsync(CourseId, perspectiveUserId, PeriodId))
+            .ReturnsAsync(leaderboard);
 
-        var actionResult = await _controller.GetHallOfFame(CourseId, PeriodId);
+        var actionResult = await _controller.GetWeeklySprint(CourseId, PeriodId, perspectiveUserId);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(leaderboard));
+    }
+
+    [Test]
+    public async Task GetHallOfFame_ForStudent_ShouldIgnoreLectorQueryParametersAndReturnLeaderboard()
+    {
+        var leaderboard = new HallOfFameLeaderboardDto
+        {
+            Entries = new List<LeaderboardEntryDto>
+            {
+                new LeaderboardEntryDto { Rank = 1, UserId = 1, Score = 500 }
+            }
+        };
+        _gamificationServiceMock
+            .Setup(s => s.GetHallOfFameLeaderboardAsync(CourseId, UserId, PeriodId, false, null, null))
+            .ReturnsAsync(leaderboard);
+
+        var actionResult = await _controller.GetHallOfFame(CourseId, PeriodId, perspectiveUserId: 77, tier: HallOfFameTier.Gold);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(leaderboard));
+    }
+
+    [Test]
+    public async Task GetHallOfFame_ForLector_ShouldPassIsLectorPerspectiveUserIdAndTier()
+    {
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(UserId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
+
+        const int selectedStudentId = 88;
+        var leaderboard = new HallOfFameLeaderboardDto
+        {
+            CurrentUserRank = 18,
+            Entries = new List<LeaderboardEntryDto>
+            {
+                new LeaderboardEntryDto { Rank = 18, UserId = selectedStudentId, Score = 250, IsCurrentUser = true }
+            }
+        };
+        _gamificationServiceMock
+            .Setup(s => s.GetHallOfFameLeaderboardAsync(CourseId, UserId, PeriodId, true, selectedStudentId, HallOfFameTier.Diamond))
+            .ReturnsAsync(leaderboard);
+
+        var actionResult = await _controller.GetHallOfFame(CourseId, PeriodId, selectedStudentId, HallOfFameTier.Diamond);
 
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);
@@ -154,7 +212,7 @@ public class GamificationControllerTests
     {
         var badgeList = new List<BadgeMetadataDto>
         {
-            new BadgeMetadataDto { BadgeType = Domain.GamificationAggregate.BadgeType.FirstSpark, Name = "First Spark", Icon = "🌱" }
+            new BadgeMetadataDto { BadgeType = BadgeType.FirstSpark, Name = "First Spark", Icon = "🌱" }
         };
         _gamificationServiceMock.Setup(s => s.GetBadgeMetadata()).Returns(badgeList);
 

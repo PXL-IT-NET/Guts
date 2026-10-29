@@ -15,6 +15,7 @@ import {
   IStudentGamificationProfileModel,
   ICourseClassGroupModel,
   ICourseGamificationConfigModel,
+  IHallOfFameLeaderboardModel,
 } from "../../viewmodels/gamification.model";
 import { UserProfile } from "../../viewmodels/user.model";
 
@@ -69,6 +70,25 @@ describe("CourseGamificationComponent", () => {
     isBadgesEnabled: true,
   };
 
+  const mockHallOfFame: IHallOfFameLeaderboardModel = {
+    entries: [],
+    currentTier: null,
+    visibleTiers: [],
+    allTiers: [],
+    nextTargetStudent: null,
+    currentUserRank: null,
+    studentOptions: [
+      {
+        userId: 5,
+        displayName: "PixelMage",
+        rank: 1,
+        score: 180,
+        tierName: "Obsidian",
+        tierIcon: "🌋",
+      },
+    ],
+  };
+
   beforeEach(() => {
     gamificationServiceSpy = jasmine.createSpyObj<GamificationService>(
       "GamificationService",
@@ -97,6 +117,9 @@ describe("CourseGamificationComponent", () => {
     );
     gamificationServiceSpy.enroll.and.returnValue(
       of(GetResult.success(mockProfile)),
+    );
+    gamificationServiceSpy.getHallOfFame.and.returnValue(
+      of(GetResult.success(mockHallOfFame)),
     );
 
     const userProfile = new UserProfile();
@@ -148,6 +171,32 @@ describe("CourseGamificationComponent", () => {
 
     expect(gamificationServiceSpy.getProfile).toHaveBeenCalledTimes(1);
     testFixture.componentInstance.ngOnDestroy();
+  });
+
+  it("should not load personal profile or render hero for teacher, and should render student perspective bar", () => {
+    const teacherProfile = new UserProfile();
+    teacherProfile.id = 1;
+    teacherProfile.roles = ["lector"];
+    authServiceSpy.getUserProfile.and.returnValue(of(teacherProfile));
+    gamificationServiceSpy.getProfile.calls.reset();
+
+    const teacherFixture = TestBed.createComponent(CourseGamificationComponent);
+    const teacherComp = teacherFixture.componentInstance;
+    teacherFixture.detectChanges();
+
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+    expect(teacherComp.studentOptions).toHaveSize(1);
+    expect(teacherFixture.nativeElement.querySelector("app-course-gamification-hero")).toBeNull();
+
+    const perspectiveBar = teacherFixture.nativeElement.querySelector("#teacherStudentPerspectiveBar");
+    expect(perspectiveBar).toBeTruthy();
+
+    teacherComp.perspectiveUserId = 5;
+    expect(teacherComp.perspectiveUserId).toBe(5);
+
+    teacherComp.perspectiveUserId = null;
+    expect(teacherComp.perspectiveUserId).toBeNull();
+    teacherComp.ngOnDestroy();
   });
 
   it("should hide class championship if there are no classes", () => {

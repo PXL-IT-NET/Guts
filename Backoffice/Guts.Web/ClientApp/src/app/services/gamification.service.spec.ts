@@ -87,7 +87,7 @@ describe("GamificationService", () => {
     expect(res.success).toBeFalse();
   });
 
-  it("getWeeklySprint and getHallOfFame should fetch leaderboards and handle errors", () => {
+  it("getWeeklySprint and getHallOfFame should fetch leaderboards with perspective and tier params and handle errors", () => {
     let res: any;
     service.getWeeklySprint(10).subscribe((r) => (res = r));
 
@@ -98,16 +98,47 @@ describe("GamificationService", () => {
     expect(res.success).toBeTrue();
     expect(res.value).toHaveSize(1);
 
+    service.getWeeklySprint(10, 2, 15).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/weekly?periodId=2&perspectiveUserId=15")
+      .flush([{ rank: 1, userId: 15, score: 50, isCurrentUser: true }]);
+    expect(res.success).toBeTrue();
+
     service.getWeeklySprint(10).subscribe((r) => (res = r));
     httpMock
       .expectOne("api/courses/10/gamification/leaderboard/weekly")
       .flush("Err", { status: 500, statusText: "Error" });
     expect(res.success).toBeFalse();
 
+    const mockHallOfFameResponse = {
+      entries: [{ rank: 1, userId: 5, score: 500 }],
+      currentTier: {
+        tier: 8,
+        name: "Obsidian",
+        icon: "🌋",
+        minRank: 1,
+        maxRank: 15,
+        isCurrentTier: true,
+      },
+      visibleTiers: [],
+      allTiers: [],
+      nextTargetStudent: null,
+      currentUserRank: 1,
+      studentOptions: [],
+    };
+
     service.getHallOfFame(10).subscribe((r) => (res = r));
     httpMock
       .expectOne("api/courses/10/gamification/leaderboard/hall-of-fame")
-      .flush([{ rank: 1, userId: 5, score: 500 }]);
+      .flush(mockHallOfFameResponse);
+    expect(res.success).toBeTrue();
+    expect(res.value.entries).toHaveSize(1);
+    expect(res.value.currentTier?.name).toBe("Obsidian");
+
+    service.getHallOfFame(10, 3, 25, 7).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/hall-of-fame?periodId=3&perspectiveUserId=25&tier=7")
+      .flush(mockHallOfFameResponse);
     expect(res.success).toBeTrue();
 
     service.getHallOfFame(10).subscribe((r) => (res = r));

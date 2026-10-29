@@ -312,6 +312,12 @@ namespace Guts.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("BestHallOfFameRank")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BestHallOfFameTier")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ClassGroupId")
                         .HasColumnType("int");
 
@@ -319,6 +325,9 @@ namespace Guts.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("LastLeaderboardVisitDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastXpEarnedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("PeriodId")
@@ -334,6 +343,11 @@ namespace Guts.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<int>("TotalGreenTests")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<int>("TotalXp")
                         .HasColumnType("int");
 
@@ -347,9 +361,9 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("ClassGroupId");
 
-                    b.HasIndex("CourseId");
-
                     b.HasIndex("PeriodId");
+
+                    b.HasIndex("CourseId", "PeriodId", "ShowInLeaderBoard");
 
                     b.HasIndex("UserId", "CourseId", "PeriodId")
                         .IsUnique();

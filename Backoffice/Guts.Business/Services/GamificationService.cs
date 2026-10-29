@@ -57,6 +57,11 @@ public class GamificationService(
 
         try
         {
+            if (await studentCourseProfileRepository.IsUserLectorAsync(testRun.UserId))
+            {
+                return;
+            }
+
             var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(testRun.AssignmentId);
             if (assignment?.Topic == null)
             {
@@ -73,6 +78,8 @@ public class GamificationService(
             }
 
             var profile = await GetOrCreateProfileAsync(testRun.UserId, courseId, periodId);
+            int xpBefore = profile.TotalXp;
+            DateTime? lastXpBefore = profile.LastXpEarnedAt;
 
             AwardPassedTestsXp(profile, testRun, config);
 
@@ -90,11 +97,67 @@ public class GamificationService(
                 await CheckTeamSynergyBonusAsync(profile, assignment, allAssignmentTestIds, courseId, periodId, testRun, config);
             }
 
+            if (config.IsLeaderboardEnabled && profile.ShowInLeaderBoard && profile.TotalXp > xpBefore)
+            {
+                await EvaluateHallOfFameRankingAfterTestRunAsync(
+                    profile, courseId, periodId, xpBefore, lastXpBefore, testRun.CreateDateTime);
+            }
+
             await studentCourseProfileRepository.UpdateAsync(profile);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to process gamification for test run {TestRunId}", testRun.Id);
+        }
+    }
+
+    private async Task EvaluateHallOfFameRankingAfterTestRunAsync(
+        StudentCourseProfile profile,
+        int courseId,
+        int periodId,
+        int xpBefore,
+        DateTime? lastXpBefore,
+        DateTime timestamp)
+    {
+        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId);
+        if (optedInProfiles == null || optedInProfiles.Count == 0)
+        {
+            return;
+        }
+
+        var competitors = optedInProfiles
+            .Where(p => p.UserId != profile.UserId)
+            .Select(p => (p.UserId, p.Id, Score: p.TotalXp, LastXpAt: p.LastXpEarnedAt ?? DateTime.MaxValue))
+            .ToList();
+
+        if (competitors.Count == 0)
+        {
+            profile.EvaluateHallOfFameProgression(1, 1, timestamp);
+            return;
+        }
+
+        var beforeOrdering = competitors
+            .Append((profile.UserId, profile.Id, Score: xpBefore, LastXpAt: lastXpBefore ?? DateTime.MaxValue))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.LastXpAt)
+            .ThenBy(x => x.Id)
+            .ThenBy(x => x.UserId)
+            .ToList();
+
+        var afterOrdering = competitors
+            .Append((profile.UserId, profile.Id, Score: profile.TotalXp, LastXpAt: profile.LastXpEarnedAt ?? DateTime.MaxValue))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.LastXpAt)
+            .ThenBy(x => x.Id)
+            .ThenBy(x => x.UserId)
+            .ToList();
+
+        int previousRank = beforeOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
+        int newRank = afterOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
+
+        if (previousRank > 0 && newRank > 0)
+        {
+            profile.EvaluateHallOfFameProgression(previousRank, newRank, timestamp);
         }
     }
 
@@ -197,6 +260,7 @@ public class GamificationService(
             }
         }
     }
+
     public async Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null)
     {
         var period = await periodRepository.GetPeriodAsync(periodId);
@@ -282,7 +346,25 @@ public class GamificationService(
             });
         }
 
-        foreach (var evt in recentEvents.Where(e => e.EventType != GamificationEventType.PassedTest))
+        var overtakeEvents = recentEvents
+            .Where(e => e.EventType == GamificationEventType.HallOfFameOvertake)
+            .ToList();
+
+        if (overtakeEvents.Count > 0)
+        {
+            int count = overtakeEvents.Count;
+            string studentWord = count == 1 ? "student" : "students";
+            recentEventDtos.Add(new RecentXpEventDto
+            {
+                Description = $"Overtake bonus (surpassed {count} {studentWord} in Hall of Fame)",
+                XpEarned = overtakeEvents.Sum(e => e.XpEarned),
+                CreatedAt = overtakeEvents.Max(e => e.CreatedAt)
+            });
+        }
+
+        foreach (var evt in recentEvents.Where(e =>
+                     e.EventType != GamificationEventType.PassedTest &&
+                     e.EventType != GamificationEventType.HallOfFameOvertake))
         {
             string desc = evt.EventType switch
             {
@@ -290,6 +372,8 @@ public class GamificationService(
                 GamificationEventType.AssignmentCompletedQuickly => "Quick assignment completion bonus (Top 10)",
                 GamificationEventType.ChapterCompleted => "Completed chapter bonus",
                 GamificationEventType.TeamSynergy => "Team synergy bonus",
+                GamificationEventType.HallOfFameTierUp =>
+                    $"Hall of Fame level up bonus ({HallOfFameLeague.GetTierMetadata((HallOfFameTier)evt.TargetId).Name})",
                 _ => "Gamification bonus"
             };
 
@@ -350,9 +434,11 @@ public class GamificationService(
         }
 
         IPeriod period = await periodRepository.GetPeriodAsync(periodId);
-        IReadOnlyList<StudentCourseProfile> optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+        DateTime now = DateTime.Now;
+        DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(now), ISOWeek.GetWeekOfYear(now), DayOfWeek.Monday);
+        IReadOnlyList<StudentCourseProfile> optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(courseId, period.Id, startOfWeek);
 
-        return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, DateTime.Now);
+        return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, now);
     }
 
     private static List<LeaderboardEntryDto> GetWeeklySprintLeaderboard(IReadOnlyList<StudentCourseProfile> optedInProfiles, int currentUserId, DateTime timestamp)
@@ -372,6 +458,7 @@ public class GamificationService(
                     GreenTests = greenTests
                 };
             })
+            .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.GreenTests)
             .ToList();
@@ -380,14 +467,7 @@ public class GamificationService(
         for (int i = 0; i < scored.Count; i++)
         {
             var item = scored[i];
-            string displayName = item.Profile.UsePseudonym
-                ? item.Profile.Pseudonym
-                : $"{item.Profile.User?.FirstName} {item.Profile.User?.LastName}".Trim();
-
-            if (string.IsNullOrWhiteSpace(displayName))
-            {
-                displayName = item.Profile.Pseudonym;
-            }
+            string displayName = GetDisplayName(item.Profile);
 
             result.Add(new LeaderboardEntryDto
             {
@@ -407,12 +487,18 @@ public class GamificationService(
         return result;
     }
 
-    public async Task<IReadOnlyList<LeaderboardEntryDto>> GetHallOfFameLeaderboardAsync(int courseId, int currentUserId, int? periodId = null)
+    public async Task<HallOfFameLeaderboardDto> GetHallOfFameLeaderboardAsync(
+        int courseId,
+        int currentUserId,
+        int? periodId = null,
+        bool isLector = false,
+        int? perspectiveUserId = null,
+        HallOfFameTier? selectedTier = null)
     {
         var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
         if (config != null && (!config.IsGamificationEnabled || !config.IsLeaderboardEnabled))
         {
-            return new List<LeaderboardEntryDto>();
+            return new HallOfFameLeaderboardDto();
         }
 
         var period = await periodRepository.GetPeriodAsync(periodId);
@@ -420,40 +506,173 @@ public class GamificationService(
 
         var ordered = optedInProfiles
             .OrderByDescending(p => p.TotalXp)
-            .ThenByDescending(p => p.Events.Count(e => e.EventType == GamificationEventType.PassedTest))
+            .ThenBy(p => p.LastXpEarnedAt ?? DateTime.MaxValue)
+            .ThenBy(p => p.Id)
+            .ThenBy(p => p.UserId)
             .ToList();
 
-        var result = new List<LeaderboardEntryDto>();
-        for (int i = 0; i < ordered.Count; i++)
+        int effectiveTargetUserId = isLector ? (perspectiveUserId ?? 0) : currentUserId;
+        var allEntries = BuildHallOfFameEntries(ordered, effectiveTargetUserId);
+        var tierCounts = allEntries
+            .GroupBy(e => e.Tier)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var allTiers = HallOfFameLeague.GetAllTiersDescending()
+            .Select(tier => MapToTierDto(tier, false, tierCounts.GetValueOrDefault(tier, 0)))
+            .ToList();
+
+        var studentOptions = isLector
+            ? allEntries.Select(e => new HallOfFameStudentOptionDto
+            {
+                UserId = e.UserId,
+                DisplayName = e.DisplayName,
+                Rank = e.Rank,
+                Score = e.Score,
+                TierName = e.TierName,
+                TierIcon = e.TierIcon
+            }).ToList()
+            : new List<HallOfFameStudentOptionDto>();
+
+        bool isStudentPerspective = !isLector || perspectiveUserId.HasValue;
+        if (isStudentPerspective)
         {
-            var profile = ordered[i];
-            string displayName = profile.UsePseudonym
-                ? profile.Pseudonym
-                : $"{profile.User?.FirstName} {profile.User?.LastName}".Trim();
+            return BuildStudentPerspectiveHallOfFame(allEntries, allTiers, tierCounts, studentOptions, effectiveTargetUserId);
+        }
 
-            if (string.IsNullOrWhiteSpace(displayName))
+        return BuildLectorOverviewHallOfFame(allEntries, allTiers, tierCounts, studentOptions, selectedTier);
+    }
+
+    private static List<LeaderboardEntryDto> BuildHallOfFameEntries(
+        IReadOnlyList<StudentCourseProfile> orderedProfiles,
+        int effectiveTargetUserId)
+    {
+        var allEntries = new List<LeaderboardEntryDto>(orderedProfiles.Count);
+        for (int i = 0; i < orderedProfiles.Count; i++)
+        {
+            var profile = orderedProfiles[i];
+            int rank = i + 1;
+            var tier = HallOfFameLeague.GetTierForRank(rank);
+            var tierMeta = HallOfFameLeague.GetTierMetadata(tier);
+            int totalGreen = profile.TotalGreenTests;
+
+            allEntries.Add(new LeaderboardEntryDto
             {
-                displayName = profile.Pseudonym;
-            }
-
-            int totalGreen = profile.Events.Count(e => e.EventType == GamificationEventType.PassedTest);
-
-            result.Add(new LeaderboardEntryDto
-            {
-                Rank = i + 1,
+                Rank = rank,
                 UserId = profile.UserId,
-                DisplayName = displayName,
+                DisplayName = GetDisplayName(profile),
                 Avatar = profile.Avatar,
                 ClassGroupName = profile.ClassGroup?.Name ?? "Unassigned",
                 Score = profile.TotalXp,
                 Level = profile.Level,
                 WeeklyStreak = profile.WeeklyStreak.CurrentStreak,
                 GreenTestsCount = totalGreen,
-                IsCurrentUser = profile.UserId == currentUserId
+                IsCurrentUser = profile.UserId == effectiveTargetUserId,
+                Tier = tier,
+                TierName = tierMeta.Name,
+                TierIcon = tierMeta.Icon
             });
         }
 
-        return result;
+        return allEntries;
+    }
+
+    private static HallOfFameLeaderboardDto BuildStudentPerspectiveHallOfFame(
+        IReadOnlyList<LeaderboardEntryDto> allEntries,
+        IReadOnlyList<HallOfFameTierDto> allTiers,
+        IReadOnlyDictionary<HallOfFameTier, int> tierCounts,
+        IReadOnlyList<HallOfFameStudentOptionDto> studentOptions,
+        int targetUserId)
+    {
+        var targetEntry = allEntries.FirstOrDefault(e => e.UserId == targetUserId);
+        HallOfFameTier activeTier = targetEntry?.Tier ?? HallOfFameTier.Paper;
+
+        var visibleTiers = HallOfFameLeague.GetVisibleTierWindow(activeTier)
+            .Select(t => MapToTierDto(t, t == activeTier, tierCounts.GetValueOrDefault(t, 0)))
+            .ToList();
+
+        HallOfFameTargetStudentDto nextTarget = null;
+        if (targetEntry is { Rank: > 1 })
+        {
+            var aboveEntry = allEntries[targetEntry.Rank - 2];
+            nextTarget = new HallOfFameTargetStudentDto
+            {
+                UserId = aboveEntry.UserId,
+                DisplayName = aboveEntry.DisplayName,
+                Avatar = aboveEntry.Avatar,
+                Rank = aboveEntry.Rank,
+                Score = aboveEntry.Score,
+                XpNeededToOvertake = Math.Max(1, (aboveEntry.Score - targetEntry.Score) + 1),
+                TierName = aboveEntry.TierName,
+                TierIcon = aboveEntry.TierIcon
+            };
+        }
+
+        return new HallOfFameLeaderboardDto
+        {
+            CurrentTier = visibleTiers.First(t => t.IsCurrentTier),
+            VisibleTiers = visibleTiers,
+            AllTiers = allTiers,
+            NextTargetStudent = nextTarget,
+            CurrentUserRank = targetEntry?.Rank,
+            Entries = allEntries.Where(e => e.Tier == activeTier).ToList(),
+            StudentOptions = studentOptions
+        };
+    }
+
+    private static HallOfFameLeaderboardDto BuildLectorOverviewHallOfFame(
+        IReadOnlyList<LeaderboardEntryDto> allEntries,
+        IReadOnlyList<HallOfFameTierDto> allTiers,
+        IReadOnlyDictionary<HallOfFameTier, int> tierCounts,
+        IReadOnlyList<HallOfFameStudentOptionDto> studentOptions,
+        HallOfFameTier? selectedTier)
+    {
+        HallOfFameTier focusedTier = selectedTier ?? HallOfFameTier.Obsidian;
+        var visibleTiers = HallOfFameLeague.GetVisibleTierWindow(focusedTier)
+            .Select(t => MapToTierDto(t, t == focusedTier, tierCounts.GetValueOrDefault(t, 0)))
+            .ToList();
+
+        var updatedAllTiers = allTiers
+            .Select(t => MapToTierDto(t.Tier, selectedTier.HasValue && t.Tier == selectedTier.Value, t.StudentCount))
+            .ToList();
+
+        var entries = selectedTier.HasValue
+            ? allEntries.Where(e => e.Tier == selectedTier.Value).ToList()
+            : allEntries;
+
+        return new HallOfFameLeaderboardDto
+        {
+            CurrentTier = visibleTiers.First(t => t.IsCurrentTier),
+            VisibleTiers = visibleTiers,
+            AllTiers = updatedAllTiers,
+            NextTargetStudent = null,
+            CurrentUserRank = null,
+            Entries = entries,
+            StudentOptions = studentOptions
+        };
+    }
+
+    private static HallOfFameTierDto MapToTierDto(HallOfFameTier tier, bool isCurrentTier, int studentCount)
+    {
+        var meta = HallOfFameLeague.GetTierMetadata(tier);
+        return new HallOfFameTierDto
+        {
+            Tier = tier,
+            Name = meta.Name,
+            Icon = meta.Icon,
+            MinRank = meta.MinRank,
+            MaxRank = meta.MaxRank,
+            IsCurrentTier = isCurrentTier,
+            StudentCount = studentCount
+        };
+    }
+
+    private static string GetDisplayName(StudentCourseProfile profile)
+    {
+        string displayName = profile.UsePseudonym
+            ? profile.Pseudonym
+            : $"{profile.User?.FirstName} {profile.User?.LastName}".Trim();
+
+        return string.IsNullOrWhiteSpace(displayName) ? profile.Pseudonym : displayName;
     }
 
     public async Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(int courseId, int? periodId = null)
@@ -475,7 +694,7 @@ public class GamificationService(
             var groupStudents = optedInProfiles.Where(p => p.ClassGroupId == group.Id).ToList();
             int studentCount = groupStudents.Count;
             int totalXp = groupStudents.Sum(p => p.TotalXp);
-            int totalGreen = groupStudents.Sum(p => p.Events.Count(e => e.EventType == GamificationEventType.PassedTest));
+            int totalGreen = groupStudents.Sum(p => p.TotalGreenTests);
             double avgXp = studentCount > 0 ? Math.Round((double)totalXp / studentCount, 1) : 0;
 
             result.Add(new ClassGroupLeaderboardEntryDto
@@ -726,6 +945,7 @@ public class GamificationService(
 
         return modified;
     }
+
     public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()
     {
         return BadgeMetadata.Select(kvp => new BadgeMetadataDto

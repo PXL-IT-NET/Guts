@@ -23,8 +23,12 @@ public class StudentCourseProfile : AggregateRoot
     public CourseClassGroup ClassGroup { get; set; }
 
     public int TotalXp { get; private set; }
+    public int TotalGreenTests { get; private set; }
     public WeeklyStreak WeeklyStreak { get; private set; } = new WeeklyStreak();
     public DateTime? LastLeaderboardVisitDate { get; set; }
+    public DateTime? LastXpEarnedAt { get; private set; }
+    public int? BestHallOfFameRank { get; private set; }
+    public HallOfFameTier? BestHallOfFameTier { get; private set; }
 
     public virtual ICollection<StudentBadge> Badges { get; set; } = new HashSet<StudentBadge>();
     public virtual ICollection<GamificationEvent> Events { get; set; } = new HashSet<GamificationEvent>();
@@ -110,6 +114,8 @@ public class StudentCourseProfile : AggregateRoot
 
         const int xp = 10;
         TotalXp += xp;
+        TotalGreenTests++;
+        LastXpEarnedAt = timestamp;
         Events.Add(new GamificationEvent(Id, GamificationEventType.PassedTest, testId, xp, timestamp));
         if (isStreakEnabled)
         {
@@ -154,6 +160,7 @@ public class StudentCourseProfile : AggregateRoot
 
         const int xp = 50;
         TotalXp += xp;
+        LastXpEarnedAt = timestamp;
         Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompleted, assignmentId, xp, timestamp));
 
         if (previousCompletionsCount.HasValue && previousCompletionsCount.Value >= 0)
@@ -170,6 +177,7 @@ public class StudentCourseProfile : AggregateRoot
             if (quickBonusXp > 0)
             {
                 TotalXp += quickBonusXp;
+                LastXpEarnedAt = timestamp;
                 Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompletedQuickly, assignmentId, quickBonusXp, timestamp));
                 if (isBadgesEnabled)
                 {
@@ -191,6 +199,7 @@ public class StudentCourseProfile : AggregateRoot
 
         const int xp = 100;
         TotalXp += xp;
+        LastXpEarnedAt = timestamp;
         Events.Add(new GamificationEvent(Id, GamificationEventType.ChapterCompleted, chapterId, xp, timestamp));
         if (isBadgesEnabled)
         {
@@ -209,6 +218,7 @@ public class StudentCourseProfile : AggregateRoot
 
         const int xp = 30;
         TotalXp += xp;
+        LastXpEarnedAt = timestamp;
         Events.Add(new GamificationEvent(Id, GamificationEventType.TeamSynergy, componentId, xp, timestamp));
         if (isBadgesEnabled)
         {
@@ -268,6 +278,64 @@ public class StudentCourseProfile : AggregateRoot
 
         WeeklyStreak = WeeklyStreak.EvaluateStreak(timestamp, hasPassedAllAvailableTests);
         return true;
+    }
+
+    public bool EvaluateHallOfFameProgression(int previousRank, int newRank, DateTime timestamp)
+    {
+        Contracts.Require(previousRank > 0, "Previous rank must be positive.");
+        Contracts.Require(newRank > 0, "New rank must be positive.");
+
+        int originalXp = TotalXp;
+
+        int effectiveBestRank = BestHallOfFameRank.HasValue
+            ? Math.Min(BestHallOfFameRank.Value, previousRank)
+            : previousRank;
+
+        HallOfFameTier previousTier = HallOfFameLeague.GetTierForRank(previousRank);
+        HallOfFameTier effectiveBestTier = BestHallOfFameTier.HasValue
+            ? (HallOfFameTier)Math.Max((int)BestHallOfFameTier.Value, (int)previousTier)
+            : previousTier;
+
+        if (newRank < previousRank && newRank < effectiveBestRank)
+        {
+            BestHallOfFameRank = newRank;
+            const int overtakeXp = 4;
+            for (int r = effectiveBestRank - 1; r >= newRank; r--)
+            {
+                if (Events.All(e => !(e.EventType == GamificationEventType.HallOfFameOvertake && e.TargetId == r)))
+                {
+                    TotalXp += overtakeXp;
+                    LastXpEarnedAt = timestamp;
+                    Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp));
+                }
+            }
+        }
+        else if (!BestHallOfFameRank.HasValue || previousRank < BestHallOfFameRank.Value)
+        {
+            BestHallOfFameRank = effectiveBestRank;
+        }
+
+        HallOfFameTier newTier = HallOfFameLeague.GetTierForRank(newRank);
+        if ((int)newTier > (int)effectiveBestTier)
+        {
+            BestHallOfFameTier = newTier;
+            const int tierUpXp = 5;
+            for (int t = (int)effectiveBestTier + 1; t <= (int)newTier; t++)
+            {
+                if (Events.All(e => !(e.EventType == GamificationEventType.HallOfFameTierUp && e.TargetId == t)))
+                {
+                    TotalXp += tierUpXp;
+                    LastXpEarnedAt = timestamp;
+                    Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameTierUp, t, tierUpXp, timestamp));
+                }
+            }
+        }
+        else if (!BestHallOfFameTier.HasValue || (int)previousTier > (int)BestHallOfFameTier.Value)
+        {
+            BestHallOfFameTier = effectiveBestTier;
+        }
+
+        return TotalXp != originalXp;
     }
 
     public class Factory : IStudentCourseProfileFactory

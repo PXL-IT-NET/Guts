@@ -17,6 +17,7 @@ import {
   ICourseClassGroupModel,
   ICourseGamificationConfigModel,
   IEnrollStudentModel,
+  IHallOfFameStudentOptionModel,
 } from "../../viewmodels/gamification.model";
 import { UserProfile } from "../../viewmodels/user.model";
 import { CourseGamificationHeroComponent } from "./course-gamification-hero.component";
@@ -111,6 +112,22 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._userProfile.set(v);
   }
 
+  private readonly _perspectiveUserId = signal<number | null>(null);
+  public get perspectiveUserId(): number | null {
+    return this._perspectiveUserId();
+  }
+  public set perspectiveUserId(v: number | null) {
+    this._perspectiveUserId.set(v);
+  }
+
+  private readonly _studentOptions = signal<IHallOfFameStudentOptionModel[]>([]);
+  public get studentOptions(): IHallOfFameStudentOptionModel[] {
+    return this._studentOptions();
+  }
+  public set studentOptions(v: IHallOfFameStudentOptionModel[]) {
+    this._studentOptions.set(v);
+  }
+
   private userSub?: Subscription;
   private periodSub?: Subscription;
 
@@ -168,7 +185,28 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     if (this.courseId <= 0) return;
     this.loadConfig();
     this.loadClasses();
-    this.loadProfile();
+    if (this.userProfile.isTeacher()) {
+      this.loadTeacherStudentOptions();
+    } else {
+      this.loadProfile();
+    }
+  }
+
+  public loadTeacherStudentOptions(): void {
+    if (this.courseId <= 0 || !this.userProfile.isTeacher()) return;
+    this.gamificationService
+      .getHallOfFame(this.courseId, this.periodId)
+      .subscribe((res) => {
+        if (res.success && res.value?.studentOptions) {
+          this.studentOptions = res.value.studentOptions;
+        }
+      });
+  }
+
+  public onStudentOptionsLoaded(options: IHallOfFameStudentOptionModel[]): void {
+    if (options && options.length > 0) {
+      this.studentOptions = options;
+    }
   }
 
   public loadConfig(): void {
@@ -195,7 +233,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   }
 
   public loadProfile(): void {
-    if (this.courseId <= 0) return;
+    if (this.courseId <= 0 || this.userProfile.isTeacher()) return;
     this.gamificationService
       .getProfile(this.courseId, this.periodId)
       .subscribe((res) => {

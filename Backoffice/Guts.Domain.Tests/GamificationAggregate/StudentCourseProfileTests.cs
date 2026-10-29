@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Guts.Common;
 using Guts.Domain.GamificationAggregate;
 using NUnit.Framework;
 
@@ -390,5 +391,71 @@ public class StudentCourseProfileTests
         Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
         Assert.That(profile.WeeklyStreak.BestStreak, Is.EqualTo(2));
         Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+    }
+
+    [Test]
+    public void LastXpEarnedAt_ShouldReturnLatestPositiveXpTimestampOrNullWhenNoXpEarned()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.LastXpEarnedAt, Is.Null);
+
+        var firstTime = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+        var secondTime = firstTime.AddMinutes(30);
+
+        profile.AwardPassedTestXp(1, firstTime);
+        profile.AwardPassedTestXp(2, secondTime);
+
+        Assert.That(profile.LastXpEarnedAt, Is.EqualTo(secondTime));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenSurpassingStudentsAndRisingTier_ShouldAward4XpPerRankAnd5XpPerTier()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+
+        // Moves from Rank 37 (Gold, tier 6) to Rank 34 (Diamond, tier 7):
+        // Surpassed 3 rank positions (36, 35, 34) -> 3 * 4 = 12 XP
+        // Rose 1 tier (Gold -> Diamond) -> 1 * 5 = 5 XP
+        bool changed = profile.EvaluateHallOfFameProgression(37, 34, timestamp);
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(17));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(34));
+        Assert.That(profile.BestHallOfFameTier, Is.EqualTo(HallOfFameTier.Diamond));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(3));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameTierUp), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenTradingPlacesBackAndForth_ShouldNotReAwardAlreadyAchievedRanksOrTiers()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+
+        // First climb: Rank 16 (Diamond) -> Rank 15 (Obsidian): +4 XP (rank 15) + 5 XP (Obsidian) = 9 XP
+        profile.EvaluateHallOfFameProgression(16, 15, timestamp);
+        Assert.That(profile.TotalXp, Is.EqualTo(9));
+
+        // Later drops back to 16 and climbs to 15 again -> should NOT earn duplicate XP for rank 15 or Obsidian
+        bool secondClimb = profile.EvaluateHallOfFameProgression(16, 15, timestamp.AddHours(1));
+        Assert.That(secondClimb, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(9));
+
+        // Climbs from 15 to 14 -> only rank 14 is new (+4 XP)
+        bool thirdClimb = profile.EvaluateHallOfFameProgression(15, 14, timestamp.AddHours(2));
+        Assert.That(thirdClimb, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(13));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(14));
+    }
+
+    [TestCase(0, 5)]
+    [TestCase(5, 0)]
+    [TestCase(-1, 2)]
+    public void EvaluateHallOfFameProgression_WithNonPositiveRanks_ShouldThrowContractException(int previousRank, int newRank)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(() => profile.EvaluateHallOfFameProgression(previousRank, newRank, DateTime.UtcNow),
+            Throws.InstanceOf<ContractException>());
     }
 }

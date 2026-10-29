@@ -73,6 +73,54 @@ public class LeaderboardEntryDto
     public int WeeklyStreak { get; set; }
     public int GreenTestsCount { get; set; }
     public bool IsCurrentUser { get; set; }
+    public HallOfFameTier Tier { get; set; }
+    public string TierName { get; set; }
+    public string TierIcon { get; set; }
+}
+
+public class HallOfFameTierDto
+{
+    public HallOfFameTier Tier { get; set; }
+    public int TierId => (int)Tier;
+    public string Name { get; set; }
+    public string Icon { get; set; }
+    public int MinRank { get; set; }
+    public int? MaxRank { get; set; }
+    public bool IsCurrentTier { get; set; }
+    public int StudentCount { get; set; }
+}
+
+public class HallOfFameTargetStudentDto
+{
+    public int UserId { get; set; }
+    public string DisplayName { get; set; }
+    public string Avatar { get; set; }
+    public int Rank { get; set; }
+    public int Score { get; set; }
+    public int XpNeededToOvertake { get; set; }
+    public string TierName { get; set; }
+    public string TierIcon { get; set; }
+}
+
+public class HallOfFameStudentOptionDto
+{
+    public int UserId { get; set; }
+    public string DisplayName { get; set; }
+    public int Rank { get; set; }
+    public int Score { get; set; }
+    public string TierName { get; set; }
+    public string TierIcon { get; set; }
+}
+
+public class HallOfFameLeaderboardDto
+{
+    public HallOfFameTierDto CurrentTier { get; set; }
+    public IReadOnlyList<HallOfFameTierDto> VisibleTiers { get; set; } = new List<HallOfFameTierDto>();
+    public IReadOnlyList<HallOfFameTierDto> AllTiers { get; set; } = new List<HallOfFameTierDto>();
+    public HallOfFameTargetStudentDto NextTargetStudent { get; set; }
+    public int? CurrentUserRank { get; set; }
+    public IReadOnlyList<LeaderboardEntryDto> Entries { get; set; } = new List<LeaderboardEntryDto>();
+    public IReadOnlyList<HallOfFameStudentOptionDto> StudentOptions { get; set; } = new List<HallOfFameStudentOptionDto>();
 }
 
 public class ClassGroupLeaderboardEntryDto

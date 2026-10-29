@@ -21,6 +21,12 @@ public class AddGamificationMigrationTests
         public void ApplyDown(MigrationBuilder builder) => Down(builder);
     }
 
+    private class TestOptimizeStudentCourseProfileLeaderboardStats : OptimizeStudentCourseProfileLeaderboardStats
+    {
+        public void ApplyUp(MigrationBuilder builder) => Up(builder);
+        public void ApplyDown(MigrationBuilder builder) => Down(builder);
+    }
+
     private SqliteConnection _connection;
 
     [SetUp]
@@ -134,17 +140,23 @@ public class AddGamificationMigrationTests
             dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS CourseGamificationConfigs;");
         }
 
-        // 4. Run the AddGamification migration
+        // 4. Run the AddGamification and OptimizeStudentCourseProfileLeaderboardStats migrations
         using (var migrateContext = CreateDbContext())
         {
+            var sqlGenerator = migrateContext.GetService<IMigrationsSqlGenerator>();
+
             var builder = new MigrationBuilder(migrateContext.Database.ProviderName);
             var migration = new TestAddGamification();
             migration.ApplyUp(builder);
+            foreach (var command in sqlGenerator.Generate(builder.Operations))
+            {
+                migrateContext.Database.ExecuteSqlRaw(command.CommandText);
+            }
 
-            var sqlGenerator = migrateContext.GetService<IMigrationsSqlGenerator>();
-            var commands = sqlGenerator.Generate(builder.Operations);
-
-            foreach (var command in commands)
+            var builder2 = new MigrationBuilder(migrateContext.Database.ProviderName);
+            var migration2 = new TestOptimizeStudentCourseProfileLeaderboardStats();
+            migration2.ApplyUp(builder2);
+            foreach (var command in sqlGenerator.Generate(builder2.Operations))
             {
                 migrateContext.Database.ExecuteSqlRaw(command.CommandText);
             }
@@ -166,10 +178,13 @@ public class AddGamificationMigrationTests
         Assert.That(aliceProfile.UsePseudonym, Is.False);
         Assert.That(aliceProfile.Pseudonym, Is.EqualTo($"Student_{studentNormal.Id}"));
         Assert.That(aliceProfile.Avatar, Is.EqualTo("CodeCat"));
+        Assert.That(aliceProfile.TotalGreenTests, Is.EqualTo(2), "Alice has 2 passed tests");
+        Assert.That(aliceProfile.LastXpEarnedAt, Is.EqualTo(t2), "Alice earned last XP at t2");
 
         var bobProfile = profiles.FirstOrDefault(p => p.UserId == studentCentury.Id);
         Assert.That(bobProfile, Is.Not.Null);
         Assert.That(bobProfile.TotalXp, Is.EqualTo(1000), "100 unique passing tests * 10 XP = 1000 XP");
+        Assert.That(bobProfile.TotalGreenTests, Is.EqualTo(100), "Bob has 100 passed tests");
 
         // Assert no profiles for failing-only or exam-only students
         Assert.That(profiles.Any(p => p.UserId == studentFailing.Id), Is.False, "Failing-only student should not have a profile.");

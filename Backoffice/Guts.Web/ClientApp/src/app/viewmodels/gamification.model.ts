@@ -61,6 +61,50 @@ export interface ILeaderboardEntryModel {
   weeklyStreak: number;
   greenTestsCount: number;
   isCurrentUser: boolean;
+  tier?: number;
+  tierName?: string;
+  tierIcon?: string;
+}
+
+export interface IHallOfFameTierModel {
+  tier: number;
+  tierId?: number;
+  name: string;
+  icon: string;
+  minRank: number;
+  maxRank?: number | null;
+  isCurrentTier: boolean;
+  studentCount: number;
+}
+
+export interface IHallOfFameTargetStudentModel {
+  userId: number;
+  displayName: string;
+  avatar: string;
+  rank: number;
+  score: number;
+  xpNeededToOvertake: number;
+  tierName: string;
+  tierIcon: string;
+}
+
+export interface IHallOfFameStudentOptionModel {
+  userId: number;
+  displayName: string;
+  rank: number;
+  score: number;
+  tierName: string;
+  tierIcon: string;
+}
+
+export interface IHallOfFameLeaderboardModel {
+  currentTier?: IHallOfFameTierModel | null;
+  visibleTiers: IHallOfFameTierModel[];
+  allTiers: IHallOfFameTierModel[];
+  nextTargetStudent?: IHallOfFameTargetStudentModel | null;
+  currentUserRank?: number | null;
+  entries: ILeaderboardEntryModel[];
+  studentOptions: IHallOfFameStudentOptionModel[];
 }
 
 export interface IClassGroupLeaderboardEntryModel {

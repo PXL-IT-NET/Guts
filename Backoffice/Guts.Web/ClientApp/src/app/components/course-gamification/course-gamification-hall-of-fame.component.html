@@ -1,8 +1,103 @@
 <div class="card shadow-sm border-0">
   <div class="card-header bg-transparent py-3">
-    <h5 class="mb-0 fw-bold">🏆 Course Hall of Fame</h5>
-    <small class="text-body-secondary">All-time rankings accumulated across the entire academic period.</small>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h5 class="mb-0 fw-bold">🏆 Course Hall of Fame</h5>
+        <small class="text-body-secondary">
+          @if (!isTeacher || perspectiveUserId) {
+            League tier rankings — overtake the student above you (+4 XP) and rise a level (+5 XP)!
+          } @else {
+            All-time course rankings across all 8 Hall of Fame League Tiers.
+          }
+        </small>
+      </div>
+      @if (currentTier) {
+        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle px-3 py-2 fs-6">
+          {{ currentTier.icon }} {{ currentTier.name }} League
+        </span>
+      }
+    </div>
+
+    <!-- 4-Icon Progression Header (1 previous + current enlarged + next 2, with neighbors blurred) -->
+    @if (visibleTiers.length > 0) {
+      <div
+        class="d-flex justify-content-center align-items-center gap-3 gap-md-4 my-3 py-3 px-2 rounded-3 bg-body-tertiary"
+        id="hallOfFameTierProgression"
+      >
+        @for (tier of visibleTiers; track tier.tier) {
+          <div
+            class="d-flex flex-column align-items-center text-center px-3 py-2 rounded-3"
+            [class.hall-of-fame-tier-current]="tier.isCurrentTier"
+            [class.hall-of-fame-tier-neighbor]="!tier.isCurrentTier"
+            [class.bg-body]="tier.isCurrentTier"
+            [class.shadow-sm]="tier.isCurrentTier"
+            [class.border]="tier.isCurrentTier"
+            [class.border-primary]="tier.isCurrentTier"
+            [style.transform]="tier.isCurrentTier ? 'scale(1.18)' : 'scale(0.88)'"
+            [style.filter]="tier.isCurrentTier ? 'none' : 'blur(1.2px)'"
+            [style.opacity]="tier.isCurrentTier ? '1' : '0.65'"
+          >
+            <span [class]="tier.isCurrentTier ? 'fs-1' : 'fs-3'">{{ tier.icon }}</span>
+            <span class="fw-bold mt-1" [class.text-primary]="tier.isCurrentTier">
+              {{ tier.name }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Teacher All-Levels Filter Bar -->
+    @if (isTeacher && !perspectiveUserId && allTiers.length > 0) {
+      <div class="d-flex flex-wrap gap-2 mt-2" id="teacherAllTiersFilter">
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-primary]="selectedTierFilter === null"
+          [class.btn-outline-secondary]="selectedTierFilter !== null"
+          (click)="selectTierFilter(null)"
+        >
+          All Levels
+        </button>
+        @for (tier of allTiers; track tier.tier) {
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="selectedTierFilter === tier.tier"
+            [class.btn-outline-secondary]="selectedTierFilter !== tier.tier"
+            (click)="selectTierFilter(tier.tier)"
+          >
+            {{ tier.icon }} {{ tier.name }} ({{ tier.studentCount }})
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Overtake Motivation Banner (Student or Student Perspective) -->
+    @if ((!isTeacher || perspectiveUserId) && nextTargetStudent) {
+      <div
+        class="alert alert-info d-flex align-items-center justify-content-between mb-0 mt-3 py-2 px-3"
+        id="hallOfFameOvertakeCallout"
+      >
+        <div>
+          🎯 <strong>Next Overtake Target:</strong> Earn
+          <strong>{{ nextTargetStudent.xpNeededToOvertake }} XP</strong> to surpass
+          <strong>{{ nextTargetStudent.displayName }}</strong> (#{{ nextTargetStudent.rank }} in {{ nextTargetStudent.tierIcon }} {{ nextTargetStudent.tierName }})
+          and claim <strong>+4 bonus XP</strong>!
+        </div>
+        <span class="badge bg-primary">+4 XP Overtake</span>
+      </div>
+    } @else if ((!isTeacher || perspectiveUserId) && currentUserRank === 1) {
+      <div
+        class="alert alert-success d-flex align-items-center justify-content-between mb-0 mt-3 py-2 px-3"
+        id="hallOfFameTopRankBanner"
+      >
+        <div>
+          🌋 <strong>Apex Champion!</strong> You are currently <strong>#1</strong> in the Obsidian League!
+        </div>
+      </div>
+    }
   </div>
+
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
@@ -10,6 +105,7 @@
           <tr>
             <th style="width: 70px;">Rank</th>
             <th>Student</th>
+            <th>League</th>
             <th>Class</th>
             <th class="text-center">Level</th>
             <th class="text-center">Total Green Tests</th>
@@ -37,6 +133,11 @@
                 </div>
               </td>
               <td>
+                <span class="badge bg-dark-subtle text-body-emphasis border">
+                  {{ entry.tierIcon }} {{ entry.tierName }}
+                </span>
+              </td>
+              <td>
                 <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
                   {{ entry.classGroupName }}
                 </span>
@@ -55,7 +156,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="text-center py-4 text-body-secondary">
+              <td colspan="7" class="text-center py-4 text-body-secondary">
                 No students enrolled in the Hall of Fame yet.
               </td>
             </tr>
@@ -65,4 +166,3 @@
     </div>
   </div>
 </div>
-

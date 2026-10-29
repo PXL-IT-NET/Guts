@@ -6,6 +6,7 @@ import {
   IStudentGamificationProfileModel,
   IEnrollStudentModel,
   ILeaderboardEntryModel,
+  IHallOfFameLeaderboardModel,
   IClassGroupLeaderboardEntryModel,
   ICourseGamificationConfigModel,
   ICourseClassGroupModel,
@@ -23,12 +24,16 @@ export class GamificationService {
     private readonly periodProvider: PeriodProvider,
   ) {}
 
-  private appendPeriod(url: string, periodId?: number): string {
-    const pId = periodId ?? this.periodProvider.period?.id;
-    if (pId) {
-      return url.includes("?") ? `${url}&periodId=${pId}` : `${url}?periodId=${pId}`;
+  private appendQueryParam(url: string, key: string, value?: number | null): string {
+    if (value !== undefined && value !== null) {
+      return url.includes("?") ? `${url}&${key}=${value}` : `${url}?${key}=${value}`;
     }
     return url;
+  }
+
+  private appendPeriod(url: string, periodId?: number): string {
+    const pId = periodId ?? this.periodProvider.period?.id;
+    return this.appendQueryParam(url, "periodId", pId);
   }
 
   public getProfile(
@@ -65,8 +70,10 @@ export class GamificationService {
   public getWeeklySprint(
     courseId: number,
     periodId?: number,
+    perspectiveUserId?: number | null,
   ): Observable<GetResult<ILeaderboardEntryModel[]>> {
-    const url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/weekly`, periodId);
+    let url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/weekly`, periodId);
+    url = this.appendQueryParam(url, "perspectiveUserId", perspectiveUserId);
     return this.http
       .get<ILeaderboardEntryModel[]>(url)
       .pipe(
@@ -80,14 +87,18 @@ export class GamificationService {
   public getHallOfFame(
     courseId: number,
     periodId?: number,
-  ): Observable<GetResult<ILeaderboardEntryModel[]>> {
-    const url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/hall-of-fame`, periodId);
+    perspectiveUserId?: number | null,
+    tier?: number | null,
+  ): Observable<GetResult<IHallOfFameLeaderboardModel>> {
+    let url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/hall-of-fame`, periodId);
+    url = this.appendQueryParam(url, "perspectiveUserId", perspectiveUserId);
+    url = this.appendQueryParam(url, "tier", tier);
     return this.http
-      .get<ILeaderboardEntryModel[]>(url)
+      .get<IHallOfFameLeaderboardModel>(url)
       .pipe(
         map((model) => GetResult.success(model)),
         catchError((err: HttpErrorResponse) =>
-          of(GetResult.fromHttpErrorResponse<ILeaderboardEntryModel[]>(err)),
+          of(GetResult.fromHttpErrorResponse<IHallOfFameLeaderboardModel>(err)),
         ),
       );
   }

@@ -24,6 +24,24 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
   @Input() public courseId: number = 0;
   @Input() public periodId?: number;
 
+  private readonly _isTeacher = signal<boolean>(false);
+  @Input()
+  public get isTeacher(): boolean {
+    return this._isTeacher();
+  }
+  public set isTeacher(v: boolean) {
+    this._isTeacher.set(v);
+  }
+
+  private readonly _perspectiveUserId = signal<number | null | undefined>(undefined);
+  @Input()
+  public get perspectiveUserId(): number | null | undefined {
+    return this._perspectiveUserId();
+  }
+  public set perspectiveUserId(v: number | null | undefined) {
+    this._perspectiveUserId.set(v);
+  }
+
   private readonly _weeklySprint = signal<ILeaderboardEntryModel[]>([]);
   public get weeklySprint(): ILeaderboardEntryModel[] {
     return this._weeklySprint();
@@ -40,6 +58,18 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
     this._loading.set(v);
   }
 
+  public get isCurrentUserOnBoard(): boolean {
+    return this.weeklySprint.some((e) => e.isCurrentUser);
+  }
+
+  public get shouldShowGetOnBoardTrigger(): boolean {
+    return (
+      !this.loading &&
+      (!this.isTeacher || !!this.perspectiveUserId) &&
+      !this.isCurrentUserOnBoard
+    );
+  }
+
   public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
 
   constructor(private readonly gamificationService: GamificationService) {}
@@ -49,8 +79,11 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if ((changes["courseId"] && !changes["courseId"].firstChange) ||
-        (changes["periodId"] && !changes["periodId"].firstChange)) {
+    if (
+      (changes["courseId"] && !changes["courseId"].firstChange) ||
+      (changes["periodId"] && !changes["periodId"].firstChange) ||
+      (changes["perspectiveUserId"] && !changes["perspectiveUserId"].firstChange)
+    ) {
       this.loadSprint();
     }
   }
@@ -58,12 +91,14 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
   public loadSprint(): void {
     if (this.courseId <= 0) return;
     this.loading = true;
-    this.gamificationService.getWeeklySprint(this.courseId, this.periodId).subscribe((res) => {
-      this.loading = false;
-      if (res.success && res.value) {
-        this.weeklySprint = res.value;
-      }
-    });
+    this.gamificationService
+      .getWeeklySprint(this.courseId, this.periodId, this.perspectiveUserId)
+      .subscribe((res) => {
+        this.loading = false;
+        if (res.success && res.value) {
+          this.weeklySprint = res.value.filter((e) => e.score > 0);
+        }
+      });
   }
 
   public getAvatarIcon(avatarId?: string): string {
@@ -71,4 +106,3 @@ export class CourseGamificationSprintComponent implements OnInit, OnChanges {
     return found ? found.icon : "🐱";
   }
 }
-

@@ -13,11 +13,16 @@ internal class StudentCourseProfileConfiguration : IEntityTypeConfiguration<Stud
         builder.ToTable("StudentCourseProfiles");
 
         builder.HasIndex(sp => new { sp.UserId, sp.CourseId, sp.PeriodId }).IsUnique();
+        builder.HasIndex(sp => new { sp.CourseId, sp.PeriodId, sp.ShowInLeaderBoard });
 
         builder.Property(sp => sp.Pseudonym).HasMaxLength(50).IsRequired();
         builder.Property(sp => sp.Avatar).HasMaxLength(50).IsRequired();
         builder.Property(sp => sp.ShowInLeaderBoard).HasDefaultValue(true);
         builder.Property(sp => sp.LastLeaderboardVisitDate).IsRequired(false);
+        builder.Property(sp => sp.TotalGreenTests).HasDefaultValue(0);
+        builder.Property(sp => sp.LastXpEarnedAt).IsRequired(false);
+        builder.Property(sp => sp.BestHallOfFameRank).IsRequired(false);
+        builder.Property(sp => sp.BestHallOfFameTier).IsRequired(false);
 
         builder.OwnsOne(sp => sp.WeeklyStreak, streakBuilder =>
         {

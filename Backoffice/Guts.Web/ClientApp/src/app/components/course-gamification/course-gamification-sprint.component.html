@@ -2,6 +2,18 @@
   <div class="card-header bg-transparent py-3">
     <h5 class="mb-0 fw-bold">⚡ Weekly Sprint Leaderboard</h5>
     <small class="text-body-secondary">Resets every Monday. Scores reflect XP gained during this calendar week.</small>
+
+    @if (shouldShowGetOnBoardTrigger) {
+      <div
+        class="alert alert-warning d-flex align-items-center justify-content-between mb-0 mt-3 py-2 px-3"
+        id="weeklySprintGetOnBoardCallout"
+      >
+        <div>
+          🚀 <strong>You're not on the Weekly Sprint board yet!</strong> Earn XP by making a test green (<strong>+10 XP</strong>) this week to get on the leaderboard and boost your weekly streak!
+        </div>
+        <span class="badge bg-warning text-dark">Earn XP to Join</span>
+      </div>
+    }
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -64,4 +76,3 @@
     </div>
   </div>
 </div>
-
