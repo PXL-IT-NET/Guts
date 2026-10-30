@@ -39,8 +39,10 @@ export class GamificationService {
   public getProfile(
     courseId: number,
     periodId?: number,
+    perspectiveUserId?: number | null,
   ): Observable<GetResult<IStudentGamificationProfileModel>> {
-    const url = this.appendPeriod(`api/courses/${courseId}/gamification/profile`, periodId);
+    let url = this.appendPeriod(`api/courses/${courseId}/gamification/profile`, periodId);
+    url = this.appendQueryParam(url, "perspectiveUserId", perspectiveUserId);
     return this.http
       .get<IStudentGamificationProfileModel>(url)
       .pipe(

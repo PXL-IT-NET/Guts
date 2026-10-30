@@ -108,4 +108,28 @@ describe("CourseGamificationBadgesComponent", () => {
     expect(component.getBadgeEarnedDate(1)).toBe("2026-10-25T10:00:00Z");
     expect(component.getBadgeEarnedDate(2)).toBeNull();
   });
+
+  it("should update earned badges when profile input changes to another student", () => {
+    const studentTwoProfile: IStudentGamificationProfileModel = {
+      ...mockProfile,
+      userId: 2,
+      earnedBadges: [
+        {
+          badgeType: 2,
+          name: "Speed Demon",
+          description: "Completed fast",
+          icon: "⚡",
+          earnedAt: "2026-10-26T14:00:00Z",
+        },
+      ],
+    };
+
+    component.profile = studentTwoProfile;
+    fixture.detectChanges();
+
+    expect(component.isBadgeEarned(1)).toBe(false);
+    expect(component.isBadgeEarned(5)).toBe(false);
+    expect(component.isBadgeEarned(2)).toBe(true);
+    expect(component.getBadgeEarnedDate(2)).toBe("2026-10-26T14:00:00Z");
+  });
 });

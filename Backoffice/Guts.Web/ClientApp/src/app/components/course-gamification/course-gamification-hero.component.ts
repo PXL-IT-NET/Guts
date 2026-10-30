@@ -7,6 +7,7 @@ import {
   OnChanges,
   SimpleChanges,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   signal,
 } from "@angular/core";
 import { GamificationService } from "../../services/gamification.service";
@@ -32,6 +33,16 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   @Input() public periodId?: number;
   @Input() public classGroups: ICourseClassGroupModel[] = [];
 
+  private readonly _readOnly = signal<boolean>(false);
+  @Input()
+  public get readOnly(): boolean {
+    return this._readOnly();
+  }
+  public set readOnly(v: boolean) {
+    this._readOnly.set(v);
+    this.cdr.markForCheck();
+  }
+
   @Output() public profileLoaded = new EventEmitter<IStudentGamificationProfileModel>();
   @Output() public profileUpdated = new EventEmitter<IStudentGamificationProfileModel>();
 
@@ -42,6 +53,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   }
   public set profile(v: IStudentGamificationProfileModel | null) {
     this._profile.set(v);
+    this.cdr.markForCheck();
   }
 
   private readonly _userProfile = signal<UserProfile>(new UserProfile());
@@ -50,6 +62,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   }
   public set userProfile(v: UserProfile) {
     this._userProfile.set(v);
+    this.cdr.markForCheck();
   }
 
   private readonly _showSettingsModal = signal<boolean>(false);
@@ -58,6 +71,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   }
   public set showSettingsModal(v: boolean) {
     this._showSettingsModal.set(v);
+    this.cdr.markForCheck();
   }
 
   private readonly _editModel = signal<IEnrollStudentModel>({
@@ -72,6 +86,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   }
   public set editModel(v: IEnrollStudentModel) {
     this._editModel.set(v);
+    this.cdr.markForCheck();
   }
 
   public availableAvatars: IAvatarModel[] = AVAILABLE_AVATARS;
@@ -80,13 +95,15 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     private readonly gamificationService: GamificationService,
     private readonly authService: AuthService,
     private readonly toastr: ToastrService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   public ngOnInit(): void {
     this.authService.getUserProfile().subscribe((p) => {
       this.userProfile = p;
+      this.cdr.markForCheck();
     });
-    if (!this.profile) {
+    if (!this.profile && !this.readOnly) {
       this.loadProfile();
     }
   }
@@ -94,24 +111,25 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
   public ngOnChanges(changes: SimpleChanges): void {
     if ((changes["courseId"] && !changes["courseId"].firstChange) ||
         (changes["periodId"] && !changes["periodId"].firstChange)) {
-      if (!this.profile) {
+      if (!this.profile && !this.readOnly) {
         this.loadProfile();
       }
     }
   }
 
   public loadProfile(): void {
-    if (this.courseId <= 0) return;
+    if (this.courseId <= 0 || this.readOnly) return;
     this.gamificationService.getProfile(this.courseId, this.periodId).subscribe((res) => {
       if (res.success && res.value) {
         this.profile = res.value;
         this.profileLoaded.emit(res.value);
+        this.cdr.markForCheck();
       }
     });
   }
 
   public openSettings(): void {
-    if (!this.profile) return;
+    if (this.readOnly || !this.profile) return;
     this.editModel = {
       showInLeaderBoard: this.profile.showInLeaderBoard,
       usePseudonym: this.profile.usePseudonym,
@@ -120,6 +138,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
       classGroupId: this.profile.classGroupId,
     };
     this.showSettingsModal = true;
+    this.cdr.markForCheck();
   }
 
   public saveSettings(): void {
@@ -136,6 +155,7 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
         this.showSettingsModal = false;
         this.toastr.success("Gamer settings updated successfully!", "Success");
         this.profileUpdated.emit(res.value);
+        this.cdr.markForCheck();
       } else {
         this.toastr.error(res.message || "Failed to save settings.", "Error");
       }
@@ -156,7 +176,9 @@ export class CourseGamificationHeroComponent implements OnInit, OnChanges {
     if (fullName) {
       return fullName;
     }
+    if (this.readOnly) {
+      return this.profile.pseudonym || `Student_${this.profile.userId}`;
+    }
     return this.userProfile?.email || this.profile.pseudonym || "";
   }
 }
-

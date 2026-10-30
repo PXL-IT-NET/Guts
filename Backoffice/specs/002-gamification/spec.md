@@ -15,7 +15,7 @@ When enabled by a Lector for a course (`CourseGamificationConfig`), students ear
 
 To prevent demotivation among students with lower rankings on the **Hall of Fame Leaderboard**, the Hall of Fame is divided into **8 League Tiers** (**Obsidian**, **Diamond**, **Gold**, **Silver**, **Bronze**, **Iron**, **Wood**, and **Paper**). In the UI, rankings within every league tier **always start at 1** (awarding 🥇 gold, 🥈 silver, 🥉 bronze to the top 3 of that tier, followed by `#4`, `#5`, etc.), no matter the tier. Global rankings across the entire course are **never** displayed in the UI to students or teachers to avoid demotivating lower ranked students. Students only see the leaderboard slice for their own current tier, are visually guided by a 4-icon tier progression bar, and are actively incentivized to overtake the student directly above them (`+4 XP` per newly surpassed rank) and climb to higher tiers (`+5 XP` per newly reached tier).
 
-Teachers (`Lector`) are completely excluded from all rankings and do not have a personal Hero Summary card. Instead, teachers can view all Hall of Fame levels or select a specific student to inspect the leaderboards from that student's exact perspective.
+Teachers (`Lector`) are completely excluded from all rankings and do not have a personal Hero Summary card. Instead, teachers can view all Hall of Fame levels (teacher overview) or select a specific student to inspect that student's Hero Summary card, earned badges, and the leaderboards from that student's exact perspective.
 
 ---
 
@@ -27,9 +27,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 - **US-2 (Manage Student Profile & Privacy)**: As a **Student**, I want to customize my avatar, pseudonym, class group membership, and leaderboard visibility (`ShowInLeaderBoard`, `UsePseudonym`) so I can participate comfortably.
 - **US-3 (Earn XP, Levels, Streaks, Badges, and Ranking Bonuses from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, badges, and Hall of Fame overtake (`+4 XP`) and tier-promotion (`+5 XP`) bonuses when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
 - **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events (including overtake and tier-up bonuses) are listed individually.
-- **US-5 (Compete on Tiered Hall of Fame & Other Leaderboards)**:
+- **US-5 (Compete on Tiered Hall of Fame, View Leaderboards & Teacher Inspection of Student Perspective)**:
   - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a 4-icon tier progression header (1 previous, current enlarged, 2 next) and a motivational callout to overtake the student directly above me.
-  - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary; instead, I want to be able to see **all Hall of Fame levels** with tier-relative ranks (no global ranks) AND **select a student** to view the leaderboards from that student's perspective.
+  - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary card; instead, I want to browse **all Hall of Fame levels** (teacher overview) with tier-relative ranks (no global ranks) AND **select a student** to inspect the **Hero Summary card** and **earned badges** of that student and see the **leaderboards** (Weekly Sprint and Hall of Fame tier) from that student's perspective (in read-only mode).
 - **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`) to eligible students.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
 
@@ -102,10 +102,18 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
       - `VisibleTiers`: the 4-tier progression window around the student's current tier (normally `[PreviousTier, CurrentTier, NextTier1, NextTier2]`; clamped to a 4-tier window at the boundaries: `[Paper, Wood, Iron, Bronze]` when at `Paper`, and `[Silver, Gold, Diamond, Obsidian]` when at `Diamond` or `Obsidian`), flagging which tier is active so the UI renders the current tier icon larger and the other 3 icons smaller and slightly blurred.
       - `NextTargetStudent`: information about the student immediately above the target student in overall course order (even if that student is at the bottom of the next tier above), with `Rank` expressing their relative rank within their own tier (e.g., `#15 in 🌋 Obsidian`), including their `DisplayName`, `Avatar`, `Score`, and `XpNeededToOvertake` (`(targetScore - currentScore) + 1`, or `1` when tied on XP), to trigger and motivate the student to overtake them.
     - **Lector (Teacher) Overview & Student Perspective Selector**:
-      - Teachers do **not** have a personal Hero Summary card (`app-course-gamification-hero` is hidden for teachers).
-      - Instead, at the top of the Gamification page, teachers see a **"Student Perspective" selector** allowing them to:
-        1. **View All Levels (Default Teacher Mode)**: Browse and switch between all 8 Hall of Fame tiers (or view all ranked students across all tiers), with each tier displaying tier-relative ranks (starting at 1) without global ranks.
-        2. **Select a Specific Student**: View the leaderboards (Hall of Fame tier slice with tier-relative ranks, 4-icon progression header, overtake target callout, and Weekly Sprint highlight) from that selected student's exact perspective.
+      - Teachers do **not** have a personal Hero Summary card.
+      - At the top of the Gamification page, teachers see a **"Student Perspective" selector** allowing them to choose between:
+        1. **View All Levels (Default Teacher Mode / No Student Selected)**:
+           - Browse and switch between all 8 Hall of Fame tiers (or view all ranked students across all tiers), with each tier displaying tier-relative ranks (starting at 1) without global ranks.
+           - Personal Hero Summary card is hidden.
+           - The Badges tab displays the general badge catalogue without earned highlights.
+        2. **Select a Specific Student**:
+           - **Hero Summary Card**: Displays the selected student's Hero Summary card (`app-course-gamification-hero`) showing their level, level title, total XP, streak progress, green tests count, avatar, and pseudonym/name in **read-only mode** (profile customization / settings button is hidden).
+           - **Badges**: The Badges tab (`app-course-gamification-badges`) displays that student's earned badges with their unlock dates, and the tab label indicates their earned count (`Badges ({count})`).
+           - **Leaderboards**:
+             - **Hall of Fame**: Displays only the league tier slice of the selected student with tier-relative ranks (starting at 1), the 4-icon progression header centered on their tier, and the overtake target callout relative to them.
+             - **Weekly Sprint**: Highlights the selected student (`IsCurrentUser == true`) and reflects their weekly sprint status (or callout banner if not on the board).
       - `StudentOptions`: populates the teacher dropdown with ranked students showing their tier-relative rank and tier (e.g., `#1 Alice (💎 Diamond — 180 XP)`), completely avoiding global ranks.
     - Returns empty if `IsGamificationEnabled` or `IsLeaderboardEnabled` is `false`.
   - **Class Championship (`leaderboard/classes`)**: Aggregates opted-in students (excluding Lectors) per `CourseClassGroup` and ranks class groups by `AverageXp` (rounded to 1 decimal place) descending, tie-breaking by `TotalGreenTests` descending. Returns empty if `IsGamificationEnabled` or `IsClassCompetitionEnabled` is `false`.
@@ -123,6 +131,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - All other non-`PassedTest` bonus events (`AssignmentCompleted`, `AssignmentCompletedQuickly`, `ChapterCompleted`, `TeamSynergy`) remain individual `RecentXpEventDto` items.
   - The resulting `RecentGains.Events` list is ordered by `CreatedAt` descending.
 - **And** `LastLeaderboardVisitDate` is updated to `DateTime.UtcNow` if more than 10 minutes have elapsed since the previous recorded visit.
+- **And** when a profile is requested with `perspectiveUserId` (`GET /api/courses/{courseId}/gamification/profile?perspectiveUserId={studentUserId}`):
+  - If requested by a teacher (`Lector` role): returns the specified student's `StudentGamificationProfileDto` (including `TotalXp`, `Level`, `LevelTitle`, `CurrentWeeklyStreak`, `TotalGreenTests`, and `EarnedBadges`) for read-only inspection, and does **not** update `LastLeaderboardVisitDate` (preserving the student's recent gains window).
+  - If requested by a student (`Student` role): `perspectiveUserId` is ignored and the authenticated student's own profile is returned.
 
 ### AC-6: Weekly Streak Loss & All-Tests-Passed Protection
 - **Given** a student with an active `WeeklyStreak` (`CurrentStreak > 0`) in a course where `IsGamificationEnabled == true` and `IsWeeklyStreakEnabled == true`
@@ -181,7 +192,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - On `GET leaderboard/hall-of-fame`, students only receive the entries for their own current Hall of Fame tier (plus `NextTargetStudent` summary and the 4-tier progression header); any `perspectiveUserId` or `tier` query parameters passed by a non-Lector are ignored.
 - **Lectors (`[Authorize(Roles = Role.Constants.Lector)]`)**:
   - Excluded from having a personal Hero Summary card and from appearing in any leaderboard rankings.
-  - Can view **all** Hall of Fame tiers (either all entries across all tiers or filtered by a selected tier) OR pass `perspectiveUserId` on `GET leaderboard/hall-of-fame` and `GET leaderboard/weekly` to view the leaderboard from a specific student's perspective.
+  - Can view **all** Hall of Fame tiers (either all entries across all tiers or filtered by a selected tier).
+  - Can pass `perspectiveUserId` on `GET profile`, `GET leaderboard/hall-of-fame`, and `GET leaderboard/weekly` to inspect that student's Hero Summary card, earned badges, and leaderboard perspective in read-only mode.
+  - Cannot modify a student's profile or privacy preferences (profile customization is disabled/hidden in student perspective mode).
   - Exclusive permission to update course gamification configuration (`PUT config`).
   - Exclusive permission to create (`POST classes`) and delete (`DELETE classes/{classGroupId}`) course class groups.
 
@@ -197,7 +210,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 | Student is global Rank #1 (Apex Champion in Obsidian League) | `NextTargetStudent` is `null`; UI displays congratulatory "Apex Champion! You are currently #1 in the Obsidian League!" message instead of an overtake prompt | `200 OK` |
 | Student is opted out of leaderboard (`ShowInLeaderBoard == false`) | Student does not appear in Hall of Fame rankings and does not earn overtake/tier-up bonuses while opted out | `200 OK` |
 | Teacher submits passing test run from IDE | Ignored by `GamificationService.ProcessTestRunAsync`; no `StudentCourseProfile` created or updated | `200 OK` |
-| Student passes `perspectiveUserId` of another student to `GET leaderboard/hall-of-fame` | Parameter is ignored for non-Lectors; endpoint always scopes to the authenticated student's own `userId` | `200 OK` |
+| Teacher inspects student profile via `GET profile?perspectiveUserId=X` | Profile is returned without updating `LastLeaderboardVisitDate` so student's recent gains notification is preserved | `200 OK` |
+| Student passes `perspectiveUserId` of another student to `GET leaderboard/hall-of-fame` or `GET profile` | Parameter is ignored for non-Lectors; endpoint always scopes to the authenticated student's own `userId` | `200 OK` |
+| Teacher selects student in perspective dropdown | Hero Summary card and Badges tab display the selected student's data in read-only mode (settings modal hidden) | `200 OK` |
 | Rapidly refreshing profile within 10 minutes | `RecordLeaderboardVisit` returns `false`; `LastLeaderboardVisitDate` is not overwritten so recent XP banner stays visible for 10 minutes | `200 OK` |
 | Exception thrown during `ProcessTestRunAsync` | Logged via `ILogger<GamificationService>`; `TestRun` registration still succeeds | `200 OK` |
 

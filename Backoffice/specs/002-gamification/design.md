@@ -111,6 +111,12 @@ flowchart TD
 
 ### Application Services (`Guts.Business/Services/`)
 - **`IGamificationService` / `GamificationService`** (`GamificationService.cs`):
+  - `GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null, bool isLector = false, int? perspectiveUserId = null)`:
+    - Resolves target user: `int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;`
+    - Loads or creates the profile for `targetUserId` in `(courseId, period.Id)`.
+    - Evaluates weekly streak expiration if needed.
+    - If `isLector && perspectiveUserId.HasValue`, does **not** call `profile.RecordLeaderboardVisit()` so teacher inspection does not overwrite `LastLeaderboardVisitDate` or clear the student's recent gains banner.
+    - Returns `StudentGamificationProfileDto` including level, streak, XP, and `EarnedBadges`.
   - `ProcessTestRunAsync(TestRun testRun)`:
     1. Short-circuits immediately if `await studentCourseProfileRepository.IsUserLectorAsync(testRun.UserId)` is `true` (`[AC-2]`, `[DR-9]`).
     2. Captures `int xpBefore = profile.TotalXp;` and `DateTime lastXpBefore = profile.LastXpEarnedAt;` prior to awarding test, assignment, chapter, and team synergy XP.
@@ -184,6 +190,10 @@ flowchart TD
 ## 5. API Layer (`Guts.Api`)
 
 ### REST Endpoints (`Guts.Api/Controllers/GamificationController.cs`)
+- `GET api/courses/{courseId}/gamification/profile`:
+  - Accepts `[FromQuery] int? periodId = null, [FromQuery] int? perspectiveUserId = null`.
+  - Invokes `gamificationService.GetStudentCourseProfileAsync(GetUserId(), courseId, periodId, IsLector(), IsLector() ? perspectiveUserId : null)`.
+  - Returns `StudentGamificationProfileDto`.
 - `GET api/courses/{courseId}/gamification/leaderboard/weekly`:
   - Accepts `[FromQuery] int? periodId = null, [FromQuery] int? perspectiveUserId = null`.
   - Resolves `int effectiveUserId = IsLector() && perspectiveUserId.HasValue ? perspectiveUserId.Value : GetUserId();`
@@ -201,12 +211,17 @@ flowchart TD
 - `gamification.model.ts`:
   - Add `HallOfFameTier` enum and interfaces `IHallOfFameTierModel`, `IHallOfFameTargetStudentModel`, `IHallOfFameStudentOptionModel`, `IHallOfFameLeaderboardModel`.
 - `gamification.service.ts`:
+  - `getProfile(courseId: number, periodId?: number, perspectiveUserId?: number): Observable<GetResult<IStudentGamificationProfileModel>>`
   - `getWeeklySprint(courseId: number, periodId?: number, perspectiveUserId?: number): Observable<GetResult<ILeaderboardEntryModel[]>>`
   - `getHallOfFame(courseId: number, periodId?: number, perspectiveUserId?: number, tier?: number): Observable<GetResult<IHallOfFameLeaderboardModel>>`
 
 ### Components (`src/app/components/course-gamification/`)
 1. **`CourseGamificationComponent` (`course-gamification.component.ts` & `.html`)**:
-   - **Teacher Hero Exclusion**: Only loads `getProfile()` and renders `<app-course-gamification-hero>` when `!userProfile.isTeacher()`.
+   - **Teacher Overview vs. Student Perspective**:
+     - When `!userProfile.isTeacher()`, loads student profile via `getProfile(courseId, periodId)` and renders `<app-course-gamification-hero>` (editable mode).
+     - When `userProfile.isTeacher()`:
+       - Default ("All Levels", `perspectiveUserId = null`): `profile` is `null`, hero card is hidden, and Badges tab shows badge catalogue with 0 earned badges.
+       - Selected student (`perspectiveUserId != null`): loads that student's profile via `getProfile(courseId, periodId, perspectiveUserId)` and renders `<app-course-gamification-hero [profile]="profile" [readOnly]="true">`, updates Badges tab badge counter `Badges ({{ profile?.earnedBadges?.length || 0 }})`, and passes `[profile]="profile"` to `<app-course-gamification-badges>`.
    - **Teacher Student Perspective Selector**:
      - When `userProfile.isTeacher()`, renders a selector bar at the top of the Gamification page allowing the teacher to pick between `"All Levels (Teacher Overview)"` (`perspectiveUserId = null`) or any student from `studentOptions` (`perspectiveUserId = student.userId`).
      - Passes `[perspectiveUserId]="perspectiveUserId"` and `[isTeacher]="userProfile.isTeacher()"` to `<app-course-gamification-hall-of-fame>` and `<app-course-gamification-sprint>`.
@@ -226,6 +241,9 @@ flowchart TD
 3. **`CourseGamificationSprintComponent` (`course-gamification-sprint.component.ts` & `.html`)**:
    - Accepts `@Input() public isTeacher: boolean = false;` and `@Input() public perspectiveUserId?: number | null;` and passes `perspectiveUserId` to `gamificationService.getWeeklySprint(courseId, periodId, perspectiveUserId)` so the selected student is highlighted (`isCurrentUser`) when a teacher views the Weekly Sprint from a student's perspective.
    - Displays a motivational callout banner (`#weeklySprintGetOnBoardCallout`) when viewing from a student's perspective (`!isTeacher || !!perspectiveUserId`) and the student is not yet on the Weekly Sprint Leaderboard (`!isCurrentUserOnBoard`), triggering the student to earn XP to get on the board.
+4. **`CourseGamificationHeroComponent` (`course-gamification-hero.component.ts` & `.html`)**:
+   - Accepts `@Input() public readOnly: boolean = false;`.
+   - When `readOnly` is `true`, the "Customize Profile" / settings button is hidden and `openSettings()` is disabled so teachers cannot alter a student's profile settings.
 
 ---
 

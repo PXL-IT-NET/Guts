@@ -261,20 +261,26 @@ public class GamificationService(
         }
     }
 
-    public async Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null)
+    public async Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(
+        int userId,
+        int courseId,
+        int? periodId = null,
+        bool isLector = false,
+        int? perspectiveUserId = null)
     {
+        int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;
         var period = await periodRepository.GetPeriodAsync(periodId);
-        var profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id);
+        var profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(targetUserId, courseId, period.Id);
 
         if (profile == null)
         {
-            profile = studentCourseProfileFactory.CreateNew(userId, courseId, period.Id);
+            profile = studentCourseProfileFactory.CreateNew(targetUserId, courseId, period.Id);
             profile = await studentCourseProfileRepository.AddAsync(profile);
         }
 
         if (profile.User == null)
         {
-            profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(userId, courseId, period.Id) ?? profile;
+            profile = await studentCourseProfileRepository.GetByUserCourseAndPeriodAsync(targetUserId, courseId, period.Id) ?? profile;
         }
 
         var previousVisit = profile.LastLeaderboardVisitDate;
@@ -294,7 +300,7 @@ public class GamificationService(
 
         DateTime now = DateTime.UtcNow;
         bool streakUpdated = await EvaluateSingleProfileWeeklyStreakIfNeededAsync(profile, courseId, period.Id, now);
-        bool visitUpdated = profile.RecordLeaderboardVisit(now);
+        bool visitUpdated = (!isLector || !perspectiveUserId.HasValue) && profile.RecordLeaderboardVisit(now);
 
         if (streakUpdated || visitUpdated)
         {
