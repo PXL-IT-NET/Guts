@@ -161,3 +161,25 @@ public class EnrollStudentDto
     public string Avatar { get; set; }
     public int? ClassGroupId { get; set; }
 }
+
+public class StreakReminderAssignmentDto
+{
+    public int AssignmentId { get; set; }
+    public string AssignmentDescription { get; set; }
+    public string TopicDescription { get; set; }
+    public string TopicCode { get; set; }
+    public int GreenTestsCount { get; set; }
+    public int TotalTestsCount { get; set; }
+    public string WebUrl { get; set; }
+}
+
+public class StreakReminderEmailMessage
+{
+    public Guts.Domain.UserAggregate.User Recipient { get; set; }
+    public string CourseName { get; set; }
+    public int CourseId { get; set; }
+    public int CurrentStreak { get; set; }
+    public string TargetStudentName { get; set; }
+    public IReadOnlyList<StreakReminderAssignmentDto> RecommendedAssignments { get; set; } = new List<StreakReminderAssignmentDto>();
+}
+

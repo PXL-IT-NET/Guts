@@ -21,7 +21,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 
 ## 2. User Stories & Actors
 
-- **Actors**: `Student`, `Lector (Teacher)`, `Background Scheduler (SprintLeaderboardBackgroundService)`
+- **Actors**: `Student`, `Lector (Teacher)`, `Background Scheduler (SprintLeaderboardBackgroundService, StreakReminderBackgroundService)`
 
 - **US-1 (Configure Course Gamification & Class Groups)**: As a **Lector**, I want to toggle gamification and its individual sub-features (Weekly Streaks, Leaderboards, Class Competition, Team Synergy, Badges) per course, and manage `CourseClassGroup` entities so I can tailor the experience to my course structure.
 - **US-2 (Manage Student Profile & Privacy)**: As a **Student**, I want to customize my avatar, pseudonym, class group membership, and leaderboard visibility (`ShowInLeaderBoard`, `UsePseudonym`) so I can participate comfortably.
@@ -32,6 +32,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary card; instead, I want to browse **all Hall of Fame levels** (teacher overview) with tier-relative ranks (no global ranks) AND **select a student** to inspect the **Hero Summary card** and **earned badges** of that student and see the **leaderboards** (Weekly Sprint and Hall of Fame tier) from that student's perspective (in read-only mode).
 - **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`) to eligible students.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
+- **US-8 (Thursday Midday Streak Reminder Notification & Throttled Queue)**:
+  - As a **Student** with an active streak (`CurrentStreak > 0`), I want to receive an encouraging and supportive reminder email every Thursday around midday if I haven't earned any XP yet in the current week, highlighting my current streak, my next Hall of Fame target to beat, and smart assignment suggestions (focusing on exercises I've started but not yet completed), so that I am motivated to practice and keep my streak alive before the week ends.
+  - As the **Background Scheduler**, I want to periodically check courses with gamification and streaks enabled every Thursday around midday, queue personalized reminder emails for eligible students who still have incomplete tests in the course, and dispatch them through `IMailSender` using a throttled queue to prevent SMTP servers from classifying the emails as spam.
 
 ---
 
@@ -141,6 +144,28 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - **If** the student has **not** yet passed all available tests in the course (across all topics/assignments in the active period, or when no tests exist yet), **Then** the student loses their weekly streak (`CurrentStreak` is reset to `0`, while `BestStreak` is preserved).
   - **If** the student has already passed **all** available tests in the course (and the course has at least 1 test), **Then** the student's `CurrentStreak` is kept (preserved without resetting) so they can continue their streak once new tests are provisioned.
 
+### AC-7: Thursday Streak Reminder Notifications & Throttled Queue
+- **Given** active courses in the current academic period where `IsGamificationEnabled == true` and `IsWeeklyStreakEnabled == true`
+- **When** the scheduled execution occurs each **Thursday around midday** (`12:00 UTC`):
+  - **Eligibility Filter**: Evaluates each student profile (`StudentCourseProfile`) in the course. A student is eligible to receive a streak reminder email **if and only if**:
+    1. The user has the `Student` role (lectors are strictly excluded).
+    2. The student has an active streak (`CurrentStreak > 0`).
+    3. The student has earned `0 XP` in the current ISO week (from Monday `00:00:00 UTC` up to the execution time).
+    4. The student has **not** completed 100% of all currently available tests in the course (i.e. course has tests and student has at least one unpassed test remaining; students who have passed all tests are protected under `AC-6` and do not receive reminders).
+- **Then** for each eligible student, a personalized reminder email is prepared and enqueued:
+  - **Subject**: `Keep your momentum going in {CourseName}!` (Encouraging and supportive).
+  - **Greeting**: Personalized with student's first name (`user.FirstName`), falling back to `Pseudonym` (or `"Student"` if both are empty).
+  - **Streak Highlight**: Reminds the student of their current streak (e.g., `"You're currently on a {CurrentStreak}-week coding streak! Don't lose your momentum — earn XP before Sunday 23:59 UTC to keep it going."`).
+  - **Next Target to Beat**: If the student is opted into the leaderboard (`ShowInLeaderBoard == true`) and has a target student immediately above them in the course Hall of Fame (`NextTargetStudent != null`), highlights that student (e.g., `"You're close to overtaking {TargetStudentName} in the Hall of Fame! Passing a few more tests could boost your standing."`). If the student is #1 (Apex Champion) or opted out, this section is omitted.
+  - **Smart Assignment Recommendations**: Recommends up to 2 specific assignments to help the student earn XP quickly:
+    1. **In-Progress Assignments**: Assignments where the student has passed at least 1 test but has remaining unpassed tests, ordered by assignment sequence.
+    2. **Untouched Fallbacks**: If fewer than 2 in-progress assignments exist, recommends the earliest unattempted assignment(s) in the course (0 passing tests).
+    3. Each recommended assignment includes its title and a direct link to the assignment in the GUTS web application.
+  - **Language**: English (matching existing GUTS email templates).
+- **And** the emails are dispatched using an asynchronous background queue via `IMailSender`:
+  - **Throttling / Anti-Spam Rate Limiting**: The queue dispatches emails sequentially with an enforced throttle delay (e.g. 1 second between consecutive emails) to ensure the SMTP server does not flag or throttle the messages as bulk spam.
+  - **Resilience**: An exception when sending an email to a single recipient is logged via `ILogger` and does not terminate the background processing for the remaining queue items.
+
 ---
 
 ## 4. Domain Rules & Invariants
@@ -180,6 +205,19 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - Because `BestHallOfFameRank` and `BestHallOfFameTier` only move upward (toward Rank 1 / `Obsidian`), two students trading places back and forth cannot farm infinite XP, and overtake/tier bonuses do not trigger cascading re-evaluations.
 - **DR-9 (Teacher Exclusion from Gamification)**:
   - Users in the `Lector` role are never enrolled in `StudentCourseProfile` via test runs and are filtered out of all leaderboard queries (`GetForLeaderboardByCourseAndPeriodAsync`, `GetByCourseAndPeriodAsync`, Weekly Sprint badge evaluation, and assignment completion counts).
+- **DR-10 (Streak Reminder Eligibility & All-Tests Protection Alignment)**:
+  - A student is eligible for a Thursday streak reminder in a course if and only if:
+    1. `User` is in the `Student` role (lectors are excluded).
+    2. `WeeklyStreak.CurrentStreak > 0`.
+    3. The student has earned `0 XP` in the course during the current ISO week.
+    4. Total passed tests for the student in the course is strictly less than the total available tests in the course. (If the student has already passed 100% of tests, their streak is protected per `DR-3` and no reminder email is sent).
+- **DR-11 (Smart Assignment Recommendation Strategy)**:
+  - Up to 2 assignments are selected to motivate the student:
+    1. Primary candidates: Assignments in which the student has passed $\ge 1$ test but $< 100\%$ of tests (in-progress), ordered by topic/assignment sequence.
+    2. Secondary candidates: If fewer than 2 in-progress assignments exist, the earliest unattempted assignments (0 tests passed) in the course, ordered by sequence.
+    3. Fully completed assignments are excluded.
+- **DR-12 (SMTP Throttled Delivery Invariant)**:
+  - Bulk email notifications generated by the reminder service must be dispatched through an asynchronous queue with an enforced sequential rate limit (e.g. 1 second per message) to prevent overwhelming the SMTP server and avoid spam categorization.
 
 ---
 
@@ -215,6 +253,11 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 | Teacher selects student in perspective dropdown | Hero Summary card and Badges tab display the selected student's data in read-only mode (settings modal hidden) | `200 OK` |
 | Rapidly refreshing profile within 10 minutes | `RecordLeaderboardVisit` returns `false`; `LastLeaderboardVisitDate` is not overwritten so recent XP banner stays visible for 10 minutes | `200 OK` |
 | Exception thrown during `ProcessTestRunAsync` | Logged via `ILogger<GamificationService>`; `TestRun` registration still succeeds | `200 OK` |
+| Student has passed 100% of available tests in course | Streak is protected; no Thursday streak reminder email is sent | N/A (Background) |
+| Student is #1 in Hall of Fame (Apex Champion) or opted out | Email is sent without the overtake target section, focusing on streak status and recommended exercises | N/A (Background) |
+| Student user record has no first name | Salutation in email greeting falls back to `Pseudonym` or `"Student"` | N/A (Background) |
+| SMTP failure sending email to a single recipient | Error logged via `ILogger`; background worker continues processing remaining students in queue | N/A (Background) |
+| Student has streaks at risk in multiple courses | Queues a distinct personalized reminder email for each eligible course | N/A (Background) |
 
 ---
 

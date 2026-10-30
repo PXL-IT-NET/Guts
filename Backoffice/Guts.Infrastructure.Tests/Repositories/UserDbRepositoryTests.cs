@@ -31,5 +31,20 @@ internal class UserDbRepositoryTests : RepositoryTestsBase
         var courseUsers = await repo.GetUsersOfCourseForCurrentPeriodAsync(course.Id);
         Assert.That(courseUsers.Select(u => u.FirstName), Is.EqualTo(new[] { "Alice", "Bob" }));
     }
-}
 
+    [Test]
+    public async Task GetByIdAsync_WhenUserExists_ShouldReturnUser()
+    {
+        var user = await Seeder.SeedUserAsync("Charlie", "Brown");
+
+        await using var context = CreateDbContext();
+        var repo = new UserDbRepository(context);
+
+        var result = await repo.GetByIdAsync(user.Id);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Id, Is.EqualTo(user.Id));
+        Assert.That(result.FirstName, Is.EqualTo("Charlie"));
+        Assert.That(result.LastName, Is.EqualTo("Brown"));
+    }
+}
