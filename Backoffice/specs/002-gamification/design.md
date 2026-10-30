@@ -128,18 +128,20 @@ flowchart TD
   - `GetHallOfFameLeaderboardAsync(int courseId, int currentUserId, int? periodId = null, bool isLector = false, int? perspectiveUserId = null, HallOfFameTier? selectedTier = null)`:
     - Returns `HallOfFameLeaderboardDto`:
       - Orders opted-in student profiles by `TotalXp` descending, then `LastXpEarnedAt` ascending, then `Id` ascending (`[DR-7]`).
-      - Assigns 1-based `Rank` and `HallOfFameTier` (`HallOfFameLeague.GetTierForRank(rank)`) to each entry.
+      - Determines global rank and assigns each student to their `HallOfFameTier` (`HallOfFameLeague.GetTierForRank(globalRank)`).
+      - Assigns 1-based tier-relative `Rank` (`tierRank` starting at `1` for every tier) to each entry so global rank is never exposed in the UI.
       - **When viewing from a Student's perspective (`!isLector || perspectiveUserId.HasValue`)**:
         - Determines `targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : currentUserId`.
-        - Finds the target student's entry in the full ordered list.
+        - Finds the target student's entry and index in the full ordered list.
         - Determines `activeTier = targetStudentEntry?.Tier ?? HallOfFameTier.Paper`.
-        - Filters `Entries` to only those in `activeTier`.
+        - Sets `CurrentUserRank = targetStudentEntry?.Rank` (tier-relative rank).
+        - Filters `Entries` to only those in `activeTier` (starting at rank 1 with 🥇, 🥈, 🥉).
         - Populates `VisibleTiers` using `HallOfFameLeague.GetVisibleTierWindow(activeTier)` with `IsCurrentTier = (tier == activeTier)`.
-        - If `targetStudentEntry != null && targetStudentEntry.Rank > 1`, populates `NextTargetStudent` from the entry at `Rank == targetStudentEntry.Rank - 1` with `XpNeededToOvertake = (aboveEntry.Score - targetStudentEntry.Score) + 1`.
+        - If `targetIndex > 0`, populates `NextTargetStudent` from the immediately preceding entry in course order (`allEntries[targetIndex - 1]`), carrying their tier-relative `Rank`, `TierName`, and `TierIcon`, with `XpNeededToOvertake = (aboveEntry.Score - targetStudentEntry.Score) + 1`.
       - **When viewing in Teacher All-Levels Mode (`isLector && !perspectiveUserId.HasValue`)**:
         - Populates `AllTiers` with metadata and student counts for all 8 tiers (`Obsidian` down to `Paper`).
-        - If `selectedTier.HasValue`, filters `Entries` to `selectedTier.Value` and sets `CurrentTier` and `VisibleTiers` around `selectedTier.Value`; if `selectedTier == null`, returns all ranked entries across all tiers and defaults `CurrentTier` to `Obsidian`.
-        - Always populates `StudentOptions` (for `isLector == true`) with the list of ranked students (`UserId`, `DisplayName`, `Rank`, `Score`, `TierName`) so the teacher can select any student to switch into Student Perspective mode.
+        - If `selectedTier.HasValue`, filters `Entries` to `selectedTier.Value` and sets `CurrentTier` and `VisibleTiers` around `selectedTier.Value`; if `selectedTier == null`, returns all ranked entries across all tiers (each with their tier-relative rank starting at 1) and defaults `CurrentTier` to `Obsidian`.
+        - Always populates `StudentOptions` (for `isLector == true`) with the list of ranked students displaying their tier-relative rank (`#{{ student.rank }} {{ student.displayName }} ({{ student.tierIcon }} {{ student.tierName }} — {{ student.score }} XP)`), completely avoiding global ranks.
 
 ### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
 - Updated `LeaderboardEntryDto`:

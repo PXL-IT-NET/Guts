@@ -287,14 +287,17 @@ public class StudentCourseProfile : AggregateRoot
 
         int originalXp = TotalXp;
 
+        ApplyOvertakeProgression(previousRank, newRank, timestamp);
+        ApplyTierProgression(previousRank, newRank, timestamp);
+
+        return TotalXp != originalXp;
+    }
+
+    private void ApplyOvertakeProgression(int previousRank, int newRank, DateTime timestamp)
+    {
         int effectiveBestRank = BestHallOfFameRank.HasValue
             ? Math.Min(BestHallOfFameRank.Value, previousRank)
             : previousRank;
-
-        HallOfFameTier previousTier = HallOfFameLeague.GetTierForRank(previousRank);
-        HallOfFameTier effectiveBestTier = BestHallOfFameTier.HasValue
-            ? (HallOfFameTier)Math.Max((int)BestHallOfFameTier.Value, (int)previousTier)
-            : previousTier;
 
         if (newRank < previousRank && newRank < effectiveBestRank)
         {
@@ -314,6 +317,14 @@ public class StudentCourseProfile : AggregateRoot
         {
             BestHallOfFameRank = effectiveBestRank;
         }
+    }
+
+    private void ApplyTierProgression(int previousRank, int newRank, DateTime timestamp)
+    {
+        HallOfFameTier previousTier = HallOfFameLeague.GetTierForRank(previousRank);
+        HallOfFameTier effectiveBestTier = BestHallOfFameTier.HasValue
+            ? (HallOfFameTier)Math.Max((int)BestHallOfFameTier.Value, (int)previousTier)
+            : previousTier;
 
         HallOfFameTier newTier = HallOfFameLeague.GetTierForRank(newRank);
         if ((int)newTier > (int)effectiveBestTier)
@@ -334,8 +345,6 @@ public class StudentCourseProfile : AggregateRoot
         {
             BestHallOfFameTier = effectiveBestTier;
         }
-
-        return TotalXp != originalXp;
     }
 
     public class Factory : IStudentCourseProfileFactory

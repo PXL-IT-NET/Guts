@@ -3,7 +3,7 @@
 - **Feature ID**: `002-gamification`
 - **Status**: `Implemented`
 - **Created**: `2026-10-27`
-- **Updated**: `2026-10-29`
+- **Updated**: `2026-10-30`
 
 ---
 
@@ -13,7 +13,7 @@ To motivate consistent practice, early assignment completion, and collaboration 
 
 When enabled by a Lector for a course (`CourseGamificationConfig`), students earn Experience Points (**XP**), level up through programming ranks, maintain ISO-week coding streaks (`WeeklyStreak`), unlock achievements (`BadgeType`), and compete on individual and class-group leaderboards (**Weekly Sprint**, **Hall of Fame**, and **Class Championship**), while retaining privacy controls (opt-out of leaderboards or display a pseudonym/avatar).
 
-To prevent demotivation among students with lower rankings on the **Hall of Fame Leaderboard**, the Hall of Fame is divided into **8 League Tiers** (**Obsidian**, **Diamond**, **Gold**, **Silver**, **Bronze**, **Iron**, **Wood**, and **Paper**). Students only see the leaderboard slice for their own current tier, are visually guided by a 4-icon tier progression bar, and are actively incentivized to overtake the student directly above them (`+4 XP` per newly surpassed rank) and climb to higher tiers (`+5 XP` per newly reached tier).
+To prevent demotivation among students with lower rankings on the **Hall of Fame Leaderboard**, the Hall of Fame is divided into **8 League Tiers** (**Obsidian**, **Diamond**, **Gold**, **Silver**, **Bronze**, **Iron**, **Wood**, and **Paper**). In the UI, rankings within every league tier **always start at 1** (awarding 🥇 gold, 🥈 silver, 🥉 bronze to the top 3 of that tier, followed by `#4`, `#5`, etc.), no matter the tier. Global rankings across the entire course are **never** displayed in the UI to students or teachers to avoid demotivating lower ranked students. Students only see the leaderboard slice for their own current tier, are visually guided by a 4-icon tier progression bar, and are actively incentivized to overtake the student directly above them (`+4 XP` per newly surpassed rank) and climb to higher tiers (`+5 XP` per newly reached tier).
 
 Teachers (`Lector`) are completely excluded from all rankings and do not have a personal Hero Summary card. Instead, teachers can view all Hall of Fame levels or select a specific student to inspect the leaderboards from that student's exact perspective.
 
@@ -28,8 +28,8 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 - **US-3 (Earn XP, Levels, Streaks, Badges, and Ranking Bonuses from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, badges, and Hall of Fame overtake (`+4 XP`) and tier-promotion (`+5 XP`) bonuses when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
 - **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events (including overtake and tier-up bonuses) are listed individually.
 - **US-5 (Compete on Tiered Hall of Fame & Other Leaderboards)**:
-  - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard**, alongside a 4-icon tier progression header (1 previous, current enlarged, 2 next) and a motivational callout to overtake the student directly above me.
-  - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary; instead, I want to be able to see **all Hall of Fame levels** AND **select a student** to view the leaderboards from that student's perspective.
+  - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a 4-icon tier progression header (1 previous, current enlarged, 2 next) and a motivational callout to overtake the student directly above me.
+  - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary; instead, I want to be able to see **all Hall of Fame levels** with tier-relative ranks (no global ranks) AND **select a student** to view the leaderboards from that student's perspective.
 - **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`) to eligible students.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
 
@@ -94,16 +94,19 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - **Hall of Fame (`leaderboard/hall-of-fame`)**:
     - Ranks opted-in students by all-time `TotalXp` descending.
     - **Tie-Breaking Rule**: When two or more students have equal `TotalXp`, the student who reached that XP level **first** (earliest timestamp of their most recent XP-earning `GamificationEvent`, or earliest `Id` if `TotalXp == 0`) is ranked higher.
-    - Assigns each student to one of the **8 Hall of Fame League Tiers** based on their 1-based `Rank` (see `DR-7`).
+    - Assigns each student to one of the **8 Hall of Fame League Tiers** based on their global standing (see `DR-7`).
+    - **Tier-Relative Ranks (Starts at 1, No Global Rank Displayed)**: In the UI and returned entries, ranking in a league tier **always starts at 1** (`🥇 1`, `🥈 2`, `🥉 3`, `#4`, ...) for every tier. Global ranks across the whole course are **never** displayed in the UI for students or teachers to avoid demotivating students in lower tiers.
     - **Student View (or Lector with a selected student `perspectiveUserId`)**: Returns only the leaderboard entries belonging to the target student's current Hall of Fame tier (if opted out or unranked, defaults to the lowest active tier / `Paper`), along with:
       - `CurrentTier`: metadata (tier enum/id, name, icon) of the displayed tier. Note: Tier position/rank ranges (e.g., `(#1–#15)`) must **not** be displayed in the UI (e.g., display `"Obsidian League"` rather than `"Obsidian League (#1–#15)"`).
+      - `CurrentUserRank`: the student's 1-based relative rank within their tier (`1` for the top student in their tier).
       - `VisibleTiers`: the 4-tier progression window around the student's current tier (normally `[PreviousTier, CurrentTier, NextTier1, NextTier2]`; clamped to a 4-tier window at the boundaries: `[Paper, Wood, Iron, Bronze]` when at `Paper`, and `[Silver, Gold, Diamond, Obsidian]` when at `Diamond` or `Obsidian`), flagging which tier is active so the UI renders the current tier icon larger and the other 3 icons smaller and slightly blurred.
-      - `NextTargetStudent`: information about the student immediately above the target student (`Rank == targetStudentRank - 1`, even if that student is at the bottom of the next tier above), including their `DisplayName`, `Rank`, `Score`, and `XpNeededToOvertake` (`(targetScore - currentScore) + 1`, or `1` when tied on XP), to trigger and motivate the student to overtake them.
+      - `NextTargetStudent`: information about the student immediately above the target student in overall course order (even if that student is at the bottom of the next tier above), with `Rank` expressing their relative rank within their own tier (e.g., `#15 in 🌋 Obsidian`), including their `DisplayName`, `Avatar`, `Score`, and `XpNeededToOvertake` (`(targetScore - currentScore) + 1`, or `1` when tied on XP), to trigger and motivate the student to overtake them.
     - **Lector (Teacher) Overview & Student Perspective Selector**:
       - Teachers do **not** have a personal Hero Summary card (`app-course-gamification-hero` is hidden for teachers).
       - Instead, at the top of the Gamification page, teachers see a **"Student Perspective" selector** allowing them to:
-        1. **View All Levels (Default Teacher Mode)**: Browse and switch between all 8 Hall of Fame tiers (or view all ranked students across all tiers).
-        2. **Select a Specific Student**: View the leaderboards (Hall of Fame tier slice, 4-icon progression header, overtake target callout, and Weekly Sprint highlight) from that selected student's exact perspective.
+        1. **View All Levels (Default Teacher Mode)**: Browse and switch between all 8 Hall of Fame tiers (or view all ranked students across all tiers), with each tier displaying tier-relative ranks (starting at 1) without global ranks.
+        2. **Select a Specific Student**: View the leaderboards (Hall of Fame tier slice with tier-relative ranks, 4-icon progression header, overtake target callout, and Weekly Sprint highlight) from that selected student's exact perspective.
+      - `StudentOptions`: populates the teacher dropdown with ranked students showing their tier-relative rank and tier (e.g., `#1 Alice (💎 Diamond — 180 XP)`), completely avoiding global ranks.
     - Returns empty if `IsGamificationEnabled` or `IsLeaderboardEnabled` is `false`.
   - **Class Championship (`leaderboard/classes`)**: Aggregates opted-in students (excluding Lectors) per `CourseClassGroup` and ranks class groups by `AverageXp` (rounded to 1 decimal place) descending, tie-breaking by `TotalGreenTests` descending. Returns empty if `IsGamificationEnabled` or `IsClassCompetitionEnabled` is `false`.
 - **And** for each student entry, `DisplayName` uses `Pseudonym` when `UsePseudonym == true` (or when full name is blank), and `"FirstName LastName"` otherwise. (For Lectors populating the Student Selector, students are listed so the teacher can easily select any ranked student).
@@ -158,6 +161,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     | `Iron` (`3`) | **Iron** | Rank `101 – 150` | `⚒️` (Iron Anvil & Hammers) |
     | `Wood` (`2`) | **Wood** | Rank `151 – 200` | `🪵` (Carved Timber) |
     | `Paper` (`1`) | **Paper** | Rank `201+` | `📜` (Ancient Scroll) |
+  - **Tier-Relative Display Rank Invariant**: Within each league tier, student ranking in `LeaderboardEntryDto.Rank`, `CurrentUserRank`, and `HallOfFameStudentOptionDto.Rank` **always starts at 1** (e.g., student at global rank 16 is `#1` in Diamond). Global ranks across the whole course are never exposed in the UI.
 - **DR-8 (Overtake & Tier-Up Anti-Farming Invariant)**:
   - Each `StudentCourseProfile` tracks `BestHallOfFameRank` (`int?`) and `BestHallOfFameTier` (`HallOfFameTier?`).
   - Surpassing a student in the Hall of Fame ranking awards `+4 XP` per newly surpassed rank position (`previousEffectiveBestRank - newRank`, provided the student actually overtook at least one student above them and improved upon `BestHallOfFameRank`).
@@ -190,7 +194,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 | Duplicate or empty `CourseClassGroup` name | Throws `ContractException` | `400 Bad Request` |
 | Deleting a `CourseClassGroup` belonging to a different `courseId` | Throws `DataNotFoundException` | `404 Not Found` |
 | Two students have identical `TotalXp` on Hall of Fame | Student with the earlier `Max(CreatedAt)` among positive-XP events is ranked higher | `200 OK` |
-| Student is Rank #1 on Hall of Fame | `NextTargetStudent` is `null`; UI displays a congratulatory "#1 in the course" message instead of an overtake prompt | `200 OK` |
+| Student is global Rank #1 (Apex Champion in Obsidian League) | `NextTargetStudent` is `null`; UI displays congratulatory "Apex Champion! You are currently #1 in the Obsidian League!" message instead of an overtake prompt | `200 OK` |
 | Student is opted out of leaderboard (`ShowInLeaderBoard == false`) | Student does not appear in Hall of Fame rankings and does not earn overtake/tier-up bonuses while opted out | `200 OK` |
 | Teacher submits passing test run from IDE | Ignored by `GamificationService.ProcessTestRunAsync`; no `StudentCourseProfile` created or updated | `200 OK` |
 | Student passes `perspectiveUserId` of another student to `GET leaderboard/hall-of-fame` | Parameter is ignored for non-Lectors; endpoint always scopes to the authenticated student's own `userId` | `200 OK` |
