@@ -74,18 +74,6 @@
         </div>
       </div>
     } @else {
-      <!-- Student Hero Card & Profile Overview (Students only; teachers do not have a hero summary) -->
-      @if (!userProfile.isTeacher() && config?.isGamificationEnabled && profile) {
-        <app-course-gamification-hero
-          [courseId]="courseId"
-          [periodId]="periodId"
-          [classGroups]="classGroups"
-          [profile]="profile"
-          (profileLoaded)="onProfileLoaded($event)"
-          (profileUpdated)="onProfileUpdated($event)"
-        ></app-course-gamification-hero>
-      }
-
       <!-- Teacher Student Perspective Selector (Teachers only) -->
       @if (userProfile.isTeacher()) {
         <div
@@ -111,6 +99,7 @@
                 class="form-select form-select-sm"
                 style="min-width: 260px;"
                 [(ngModel)]="perspectiveUserId"
+                (ngModelChange)="onPerspectiveChanged($event)"
               >
                 <option [ngValue]="null">
                   🌐 All Levels (Teacher Overview)
@@ -124,6 +113,19 @@
             </div>
           </div>
         </div>
+      }
+
+      <!-- Student Hero Card & Profile Overview (Students or Teachers viewing a selected student) -->
+      @if (config?.isGamificationEnabled && profile && (!userProfile.isTeacher() || perspectiveUserId)) {
+        <app-course-gamification-hero
+          [courseId]="courseId"
+          [periodId]="periodId"
+          [classGroups]="classGroups"
+          [profile]="profile"
+          [readOnly]="userProfile.isTeacher()"
+          (profileLoaded)="onProfileLoaded($event)"
+          (profileUpdated)="onProfileUpdated($event)"
+        ></app-course-gamification-hero>
       }
 
       <!-- Tab Navigation -->

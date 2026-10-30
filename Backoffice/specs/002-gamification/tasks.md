@@ -8,7 +8,7 @@
 
 ---
 
-## Increment 1: Summarize Passed Test Events in Recent XP Gains (US-4 / AC-5) — *Completed*
+## Increment 1: Summarize Passed Test Events in Recent XP Gains (US-4 / AC-5) — _Completed_
 
 - [x] **[T0.1]** `[US-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs` (`GetStudentCourseProfileAsync_WithMultiplePassedTests_ShouldSummarizePassedTestsIntoSingleEvent`, `GetStudentCourseProfileAsync_WithSinglePassedTest_ShouldUseSingularDescription`).
 - [x] **[T0.2]** `[US-4, AC-5]` Update `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs` to aggregate `GamificationEventType.PassedTest` events in `RecentGains.Events`.
@@ -16,7 +16,7 @@
 
 ---
 
-## Increment 2: Weekly Streak Loss & All-Tests-Passed Protection (US-7 / AC-6 / DR-3) — *Completed*
+## Increment 2: Weekly Streak Loss & All-Tests-Passed Protection (US-7 / AC-6 / DR-3) — _Completed_
 
 - [x] **[T1.1]** `[US-7, AC-6, DR-3]` Write and pass unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/WeeklyStreakTests.cs` for `NeedsEvaluation` and `EvaluateStreak`.
 - [x] **[T1.2]** `[US-7, AC-6, DR-3]` Write and pass unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/StudentCourseProfileTests.cs` for `NeedsWeeklyStreakEvaluation` and `EvaluateWeeklyStreak`.
@@ -27,7 +27,7 @@
 
 ---
 
-## Increment 3: Tiered Hall of Fame, Overtake/Tier-Up Bonuses, Teacher Exclusion & Student Perspective (US-3 / US-4 / US-5 / AC-2 / AC-4 / AC-5 / DR-7 / DR-8 / DR-9) — *Completed*
+## Increment 3: Tiered Hall of Fame, Overtake/Tier-Up Bonuses, Teacher Exclusion & Student Perspective (US-3 / US-4 / US-5 / AC-2 / AC-4 / AC-5 / DR-7 / DR-8 / DR-9) — _Completed_
 
 ### Phase 1: Domain Layer (`Guts.Domain.Tests` ➔ `Guts.Domain`)
 
@@ -106,3 +106,56 @@
 - [x] **[T3.19]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
 - [x] **[T3.20]** Run frontend production build: `npm run build` in `Backoffice/Guts.Web/ClientApp`
 - [x] **[T3.21]** Update `spec.md` and `design.md` status to `Implemented`.
+
+---
+
+## Increment 4: Teacher Student Perspective Inspection — Hero Summary, Badges & Leaderboards (US-5 / AC-4 / AC-5)
+
+### Phase 1: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+
+- [x] **[T4.1]** `[US-5, AC-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+  - `GetStudentCourseProfileAsync_WhenUserIsLectorWithPerspectiveUserId_ShouldReturnTargetStudentProfileWithoutUpdatingLastVisitDate`
+  - `GetStudentCourseProfileAsync_WhenUserIsStudentWithPerspectiveUserId_ShouldIgnorePerspectiveUserIdAndReturnOwnProfile`
+- [x] **[T4.2]** `[US-5, AC-4, AC-5]` Update `IGamificationService` and `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs`:
+  - Accept `bool isLector = false` and `int? perspectiveUserId = null`.
+  - Resolve target user ID: `int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;`.
+  - When `isLector && perspectiveUserId.HasValue`, do not invoke `profile.RecordLeaderboardVisit()` (preserving the student's `LastLeaderboardVisitDate`).
+- [x] **[T4.3]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 2: API Layer (`Guts.Api.Tests` ➔ `Guts.Api`)
+
+- [x] **[T4.4]** `[US-5, AC-4, AC-5]` Write failing controller unit tests in `Backoffice/Guts.Api.Tests/Controllers/GamificationControllerTests.cs`:
+  - `GetProfile_WhenCalledByLectorWithPerspectiveUserId_ShouldPassPerspectiveUserIdAndLectorFlagToService`
+  - `GetProfile_WhenCalledByStudentWithPerspectiveUserId_ShouldPassNullPerspectiveUserIdToService`
+- [x] **[T4.5]** `[US-5, AC-4, AC-5]` Update `GamificationController.GetProfile` in `Backoffice/Guts.Api/Controllers/GamificationController.cs` to accept `[FromQuery] int? perspectiveUserId = null` and pass `IsLector()` and `perspectiveUserId` to `gamificationService.GetStudentCourseProfileAsync`.
+- [x] **[T4.6]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 3: Frontend SPA (`Guts.Web/ClientApp`)
+
+- [x] **[T4.7]** `[US-5, AC-4, AC-5]` Update Jasmine unit tests (`*.spec.ts`):
+  - In `gamification.service.spec.ts`: verify `getProfile` appends `perspectiveUserId` query parameter when provided.
+  - In `course-gamification-hero.component.spec.ts`: verify that when `readOnly = true`, the "Customize Profile" / settings button is hidden and `openSettings()` is disabled.
+  - In `course-gamification.component.spec.ts`:
+    - When teacher selects a student (`perspectiveUserId = 42`), invokes `gamificationService.getProfile(courseId, periodId, 42)`, renders `<app-course-gamification-hero>` with `[profile]="profile"` and `[readOnly]="true"`, and passes `[profile]="profile"` to `<app-course-gamification-badges>`.
+    - When teacher selects "All Levels" (`perspectiveUserId = null`), clears `profile` to `null` and hides the hero summary card.
+- [x] **[T4.8]** `[US-5, AC-4, AC-5]` Implement frontend updates:
+  - In `gamification.service.ts`: update `getProfile` signature to `(courseId: number, periodId?: number, perspectiveUserId?: number)` and append `perspectiveUserId` when defined.
+  - In `course-gamification-hero.component.ts` & `.html`: add `@Input() public readOnly: boolean = false;`, hide the customize button when `readOnly`, and prevent opening settings.
+  - In `course-gamification.component.ts` & `.html`:
+    - Listen to `perspectiveUserId` changes to call `loadProfile(perspectiveUserId)` when set, or clear `profile` when null.
+    - Render `<app-course-gamification-hero [profile]="profile" [readOnly]="userProfile.isTeacher()">` when `config?.isGamificationEnabled && profile && (!userProfile.isTeacher() || perspectiveUserId)`.
+    - Pass `[profile]="profile"` to `<app-course-gamification-badges>` and display `profile?.earnedBadges?.length || 0` in the Badges tab header.
+- [x] **[T4.9]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all Karma/Jasmine tests pass.
+
+---
+
+### Phase 4: Final Verification & Quality Gate
+
+- [x] **[T4.10]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
+- [x] **[T4.11]** Run frontend production build: `npm run build` in `Backoffice/Guts.Web/ClientApp`
+- [x] **[T4.12]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
+- [x] **[T4.13]** Update `spec.md`, `design.md`, and `tasks.md` status.

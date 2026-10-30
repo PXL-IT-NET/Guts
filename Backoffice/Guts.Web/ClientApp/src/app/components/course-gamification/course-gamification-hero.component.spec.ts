@@ -94,6 +94,25 @@ describe("CourseGamificationHeroComponent", () => {
     expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
   });
 
+  it("should never call getProfile or emit profileLoaded when readOnly is true", () => {
+    gamificationServiceSpy.getProfile.calls.reset();
+    const testFixture = TestBed.createComponent(CourseGamificationHeroComponent);
+    const testComp = testFixture.componentInstance;
+    testComp.courseId = 10;
+    testComp.readOnly = true;
+    testComp.profile = null;
+    spyOn(testComp.profileLoaded, "emit");
+
+    testFixture.detectChanges();
+
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+    expect(testComp.profileLoaded.emit).not.toHaveBeenCalled();
+
+    testComp.loadProfile();
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+    expect(testComp.profileLoaded.emit).not.toHaveBeenCalled();
+  });
+
   it("should reload profile on ngOnChanges when profile is null and courseId/periodId change", () => {
     gamificationServiceSpy.getProfile.calls.reset();
     component.profile = null;
@@ -240,7 +259,33 @@ describe("CourseGamificationHeroComponent", () => {
     };
     expect(component.getDisplayName()).toBe("student@pxl.be");
 
+    component.readOnly = true;
+    component.profile = {
+      ...mockProfile,
+      userId: 42,
+      usePseudonym: false,
+      firstName: "",
+      lastName: "",
+      pseudonym: "",
+    };
+    expect(component.getDisplayName()).toBe("Student_42");
+
     component.profile = null;
     expect(component.getDisplayName()).toBe("");
+  });
+
+  it("should hide settings button and prevent opening settings when readOnly is true", () => {
+    component.profile = mockProfile;
+    component.readOnly = true;
+    fixture.detectChanges();
+
+    const settingsBtn = fixture.nativeElement.querySelector("#openSettingsBtn");
+    expect(settingsBtn).toBeNull();
+
+    const badge = fixture.nativeElement.querySelector("#teacherPerspectiveBadge");
+    expect(badge).toBeTruthy();
+
+    component.openSettings();
+    expect(component.showSettingsModal).toBeFalse();
   });
 });

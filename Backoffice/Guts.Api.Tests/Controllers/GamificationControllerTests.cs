@@ -42,9 +42,56 @@ public class GamificationControllerTests
             TotalXp = 150,
             ShowInLeaderBoard = true
         };
-        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId)).ReturnsAsync(profileDto);
+        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null)).ReturnsAsync(profileDto);
 
         var actionResult = await _controller.GetProfile(CourseId, PeriodId);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(profileDto));
+    }
+
+    [Test]
+    public async Task GetProfile_WhenCalledByLectorWithPerspectiveUserId_ShouldPassPerspectiveUserIdAndLectorFlagToService()
+    {
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(UserId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
+
+        const int perspectiveUserId = 77;
+        var profileDto = new StudentGamificationProfileDto
+        {
+            UserId = perspectiveUserId,
+            CourseId = CourseId,
+            PeriodId = PeriodId,
+            TotalXp = 300
+        };
+        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, true, perspectiveUserId))
+            .ReturnsAsync(profileDto);
+
+        var actionResult = await _controller.GetProfile(CourseId, PeriodId, perspectiveUserId);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(profileDto));
+    }
+
+    [Test]
+    public async Task GetProfile_WhenCalledByStudentWithPerspectiveUserId_ShouldPassNullPerspectiveUserIdToService()
+    {
+        const int attemptedPerspectiveUserId = 88;
+        var profileDto = new StudentGamificationProfileDto
+        {
+            UserId = UserId,
+            CourseId = CourseId,
+            PeriodId = PeriodId,
+            TotalXp = 100
+        };
+        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null))
+            .ReturnsAsync(profileDto);
+
+        var actionResult = await _controller.GetProfile(CourseId, PeriodId, attemptedPerspectiveUserId);
 
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);

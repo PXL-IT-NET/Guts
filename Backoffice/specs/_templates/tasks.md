@@ -43,7 +43,7 @@
 
 ---
 
-## Phase 5: Frontend SPA (`Guts.Web/ClientApp`) *(if applicable)*
+## Phase 5: Frontend SPA (`Guts.Web/ClientApp`) _(if applicable)_
 
 - [ ] **[T5.1]** `[AC-1]` Write failing Jasmine unit tests (`*.spec.ts`) for the Angular service and component(s).
 - [ ] **[T5.2]** `[AC-1]` Implement Angular service methods, viewmodels, and component template/logic in `Guts.Web/ClientApp/src/app/`.
@@ -55,6 +55,5 @@
 
 - [ ] **[T6.1]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
 - [ ] **[T6.2]** Run frontend production build & test check (if frontend was modified): `npm run build`
-- [ ] **[T6.3]** Run SonarQube analysis (`.\run-sonarqube.ps1 -StartServer` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
+- [ ] **[T6.3]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
 - [ ] **[T6.4]** Update `spec.md` and `design.md` status to `Implemented`.
-

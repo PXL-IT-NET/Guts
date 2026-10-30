@@ -9,7 +9,12 @@ namespace Guts.Business.Services;
 public interface IGamificationService
 {
     Task ProcessTestRunAsync(TestRun testRun);
-    Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null);
+    Task<StudentGamificationProfileDto> GetStudentCourseProfileAsync(
+        int userId,
+        int courseId,
+        int? periodId = null,
+        bool isLector = false,
+        int? perspectiveUserId = null);
     Task<StudentGamificationProfileDto> EnrollStudentAsync(int userId, int courseId, EnrollStudentDto enrollDto, int? periodId = null);
     Task<IReadOnlyList<LeaderboardEntryDto>> GetWeeklySprintLeaderboardAsync(int courseId, int currentUserId, int? periodId = null);
     Task<HallOfFameLeaderboardDto> GetHallOfFameLeaderboardAsync(

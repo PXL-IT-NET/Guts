@@ -17,10 +17,19 @@ public class GamificationController(IGamificationService gamificationService) : 
 {
     [HttpGet("profile")]
     [ProducesResponseType(typeof(StudentGamificationProfileDto), (int)HttpStatusCode.OK)]
-    public async Task<IActionResult> GetProfile(int courseId, [FromQuery] int? periodId = null)
+    public async Task<IActionResult> GetProfile(
+        int courseId,
+        [FromQuery] int? periodId = null,
+        [FromQuery] int? perspectiveUserId = null)
     {
         int userId = GetUserId();
-        var profile = await gamificationService.GetStudentCourseProfileAsync(userId, courseId, periodId);
+        bool isLector = IsLector();
+        var profile = await gamificationService.GetStudentCourseProfileAsync(
+            userId,
+            courseId,
+            periodId,
+            isLector,
+            isLector ? perspectiveUserId : null);
         return Ok(profile);
     }
 

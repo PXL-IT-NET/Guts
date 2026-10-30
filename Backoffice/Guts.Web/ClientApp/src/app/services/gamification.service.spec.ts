@@ -60,6 +60,18 @@ describe("GamificationService", () => {
     expect(res.success).toBeTrue();
   });
 
+  it("getProfile with perspectiveUserId should append perspectiveUserId query param", () => {
+    let res: any;
+    service.getProfile(10, 5, 42).subscribe((r) => (res = r));
+
+    httpMock
+      .expectOne("api/courses/10/gamification/profile?periodId=5&perspectiveUserId=42")
+      .flush({ userId: 42, courseId: 10, totalXp: 200 });
+
+    expect(res.success).toBeTrue();
+    expect(res.value.userId).toBe(42);
+  });
+
   it("enroll should post enrollment data and handle error", () => {
     let res: any;
     const dto: IEnrollStudentModel = {

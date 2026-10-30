@@ -4,6 +4,7 @@ import {
   OnDestroy,
   ViewChild,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   signal,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
@@ -128,6 +129,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this._studentOptions.set(v);
   }
 
+  private userLoaded: boolean = false;
   private userSub?: Subscription;
   private periodSub?: Subscription;
 
@@ -137,38 +139,51 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly periodProvider: PeriodProvider,
     private readonly toastr: ToastrService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   public ngOnInit(): void {
-    this.userSub = this.authService.getUserProfile().subscribe((p) => {
-      this.userProfile = p;
-      this.checkClassSelectionRequirement();
-      this.adjustActiveTabForConfig();
-    });
+    let initialLoadDone = false;
 
     const parentId = this.route.parent?.snapshot.params["courseId"];
     const ownId = this.route.snapshot.params["courseId"];
     this.courseId = +(parentId ?? ownId ?? 0);
+    this.periodId = this.periodProvider.period?.id;
 
-    let initialLoadDone = false;
+    this.userSub = this.authService.getUserProfile().subscribe((p) => {
+      const wasTeacher = this.userProfile.isTeacher();
+      this.userProfile = p;
+      this.userLoaded = true;
+      if (this.userProfile.isTeacher()) {
+        if (!wasTeacher) {
+          this.profile = null;
+          this.loadTeacherStudentOptions();
+        }
+      }
+      this.checkClassSelectionRequirement();
+      this.adjustActiveTabForConfig();
+      if (!initialLoadDone && this.courseId > 0) {
+        initialLoadDone = true;
+        this.loadData();
+      }
+      this.cdr.markForCheck();
+    });
+
     this.periodSub = this.periodProvider.period$.subscribe((period) => {
       if (period) {
         const periodChanged = this.periodId !== period.id;
         this.periodId = period.id;
-        if (this.courseId > 0 && (periodChanged || !initialLoadDone)) {
+        if (this.courseId > 0 && this.userLoaded && (periodChanged || !initialLoadDone)) {
           initialLoadDone = true;
           this.loadData();
         }
       }
     });
 
-    if (!initialLoadDone && this.courseId > 0) {
-      initialLoadDone = true;
-      this.loadData();
-    } else if (this.courseId <= 0) {
+    if (this.courseId <= 0) {
       this.route.params.subscribe((params) => {
         this.courseId = +params["courseId"] || 0;
-        if (this.courseId > 0 && !initialLoadDone) {
+        if (this.courseId > 0 && this.userLoaded && !initialLoadDone) {
           initialLoadDone = true;
           this.loadData();
         }
@@ -199,6 +214,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       .subscribe((res) => {
         if (res.success && res.value?.studentOptions) {
           this.studentOptions = res.value.studentOptions;
+          this.cdr.markForCheck();
         }
       });
   }
@@ -206,6 +222,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
   public onStudentOptionsLoaded(options: IHallOfFameStudentOptionModel[]): void {
     if (options && options.length > 0) {
       this.studentOptions = options;
+      this.cdr.markForCheck();
     }
   }
 
@@ -215,6 +232,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       if (res.success && res.value) {
         this.config = res.value;
         this.adjustActiveTabForConfig();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -228,25 +246,58 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
           this.classGroups = res.value;
           this.checkClassSelectionRequirement();
           this.adjustActiveTabForConfig();
+          this.cdr.markForCheck();
         }
       });
   }
 
+  public onPerspectiveChanged(userId: number | string | null): void {
+    const parsed =
+      userId !== null && userId !== undefined && userId !== "" && userId !== "null"
+        ? Number(userId)
+        : null;
+    this.perspectiveUserId = parsed !== null && !isNaN(parsed) ? parsed : null;
+    if (this.userProfile.isTeacher()) {
+      this.profile = null;
+    }
+    this.loadProfile();
+    this.cdr.markForCheck();
+  }
+
   public loadProfile(): void {
-    if (this.courseId <= 0 || this.userProfile.isTeacher()) return;
+    if (this.courseId <= 0 || !this.userLoaded) return;
+    if (this.userProfile.isTeacher()) {
+      if (this.perspectiveUserId) {
+        this.gamificationService
+          .getProfile(this.courseId, this.periodId, this.perspectiveUserId)
+          .subscribe((res) => {
+            if (res.success && res.value) {
+              this.profile = res.value;
+              this.cdr.markForCheck();
+            }
+          });
+      } else {
+        this.profile = null;
+        this.cdr.markForCheck();
+      }
+      return;
+    }
     this.gamificationService
       .getProfile(this.courseId, this.periodId)
       .subscribe((res) => {
         if (res.success && res.value) {
           this.profile = res.value;
           this.checkClassSelectionRequirement();
+          this.cdr.markForCheck();
         }
       });
   }
 
   public onProfileLoaded(profile: IStudentGamificationProfileModel): void {
+    if (this.userProfile.isTeacher()) return;
     this.profile = profile;
     this.checkClassSelectionRequirement();
+    this.cdr.markForCheck();
   }
 
   public onProfileUpdated(profile: IStudentGamificationProfileModel): void {
@@ -258,6 +309,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     }
     this.profile = profile;
     this.checkClassSelectionRequirement();
+    this.cdr.markForCheck();
   }
 
   public onClassesChanged(): void {
@@ -268,6 +320,7 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     if (newConfig) {
       this.config = newConfig;
       this.adjustActiveTabForConfig();
+      this.cdr.markForCheck();
     } else {
       this.loadConfig();
     }
@@ -281,6 +334,40 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
     this.needsClassSelection = isStudent && hasClasses && notInClass;
   }
 
+  public confirmClassSelection(): void {
+    if (!this.selectedClassGroupId || !this.courseId) return;
+
+    const enrollDto: IEnrollStudentModel = {
+      showInLeaderBoard: this.profile?.showInLeaderBoard ?? true,
+      usePseudonym: this.profile?.usePseudonym ?? true,
+      pseudonym: this.profile?.pseudonym ?? "",
+      avatar: this.profile?.avatar ?? "CodeCat",
+      classGroupId: this.selectedClassGroupId,
+    };
+
+    this.gamificationService
+      .enroll(this.courseId, enrollDto, this.periodId)
+      .subscribe((res) => {
+        if (res.success && res.value) {
+          this.toastr.success(
+            "You have joined your class! Welcome to the arena.",
+            "Class Selected",
+          );
+          this.profile = res.value;
+          this.needsClassSelection = false;
+          if (this.heroComponent) {
+            this.heroComponent.loadProfile();
+          }
+          this.cdr.markForCheck();
+        } else {
+          this.toastr.error(
+            res.message || "Failed to save class group.",
+            "Error",
+          );
+        }
+      });
+  }
+
   public adjustActiveTabForConfig(): void {
     if (!this.config) return;
 
@@ -291,57 +378,41 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const isSprintDisabled = this.activeTab === "sprint" && !this.config.isWeeklyStreakEnabled;
-    const isHallOfFameDisabled = this.activeTab === "hallOfFame" && !this.config.isLeaderboardEnabled;
-    const isClassesDisabled = this.activeTab === "classes" && (!this.config.isClassCompetitionEnabled || !this.hasClasses);
-    const isBadgesDisabled = this.activeTab === "badges" && !this.config.isBadgesEnabled;
-
-    if (isSprintDisabled || isHallOfFameDisabled || isClassesDisabled || isBadgesDisabled) {
+    const currentTabValid = this.isTabEnabled(this.activeTab);
+    if (!currentTabValid) {
       this.activeTab = this.getFirstEnabledTab();
     }
   }
 
-  public getFirstEnabledTab(): string {
-    if (this.config?.isWeeklyStreakEnabled) return "sprint";
-    if (this.config?.isLeaderboardEnabled) return "hallOfFame";
-    if (this.config?.isClassCompetitionEnabled && this.hasClasses)
-      return "classes";
-    if (this.config?.isBadgesEnabled) return "badges";
+  private isTabEnabled(tab: string): boolean {
+    if (!this.config) return false;
+    switch (tab) {
+      case "sprint":
+        return this.config.isWeeklyStreakEnabled;
+      case "hallOfFame":
+        return this.config.isLeaderboardEnabled;
+      case "classes":
+        return this.config.isClassCompetitionEnabled && this.hasClasses;
+      case "badges":
+        return this.config.isBadgesEnabled;
+      case "admin":
+        return this.userProfile.isTeacher();
+      default:
+        return false;
+    }
+  }
+
+  private getFirstEnabledTab(): string {
+    if (!this.config) return "sprint";
+    if (this.config.isWeeklyStreakEnabled) return "sprint";
+    if (this.config.isLeaderboardEnabled) return "hallOfFame";
+    if (this.config.isClassCompetitionEnabled && this.hasClasses) return "classes";
+    if (this.config.isBadgesEnabled) return "badges";
     if (this.userProfile.isTeacher()) return "admin";
     return "sprint";
   }
 
-  public confirmClassSelection(): void {
-    if (!this.selectedClassGroupId || this.courseId <= 0) return;
-
-    const enrollDto: IEnrollStudentModel = {
-      showInLeaderBoard: this.profile ? this.profile.showInLeaderBoard : true,
-      usePseudonym: this.profile ? this.profile.usePseudonym : true,
-      pseudonym: this.profile
-        ? this.profile.pseudonym
-        : `Student_${this.userProfile.id || ""}`,
-      avatar: this.profile ? this.profile.avatar : "CodeCat",
-      classGroupId: this.selectedClassGroupId,
-    };
-
-    this.gamificationService
-      .enroll(this.courseId, enrollDto, this.periodId)
-      .subscribe((res) => {
-        if (res.success && res.value) {
-          this.profile = res.value;
-          this.needsClassSelection = false;
-          this.toastr.success(
-            "Class selected! Welcome to the leaderboard.",
-            "Success",
-          );
-          this.heroComponent?.loadProfile?.();
-        } else {
-          this.toastr.error(res.message || "Failed to assign class.", "Error");
-        }
-      });
-  }
-
   public get hasClasses(): boolean {
-    return this.classGroups.length > 0;
+    return this.classGroups && this.classGroups.length > 0;
   }
 }

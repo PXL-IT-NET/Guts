@@ -20,18 +20,16 @@ For a high-level overview of the entire GUTS repository and client libraries, se
 3. **Use Test-Driven Development (TDD)**:
    - Write unit tests before implementing new functionality or fixing bugs.
    - Ensure that all new code is covered by unit tests, and that existing tests pass after changes.
-4. **Verify Changes by Running Tests**:
+4. **Verify Changes by running tests and checking code quality**:
    - Always verify backend changes by running `dotnet test` across `Guts.slnx` and ensuring all tests pass.
-   - Add or update unit tests in the corresponding `*.Tests` project whenever introducing or modifying backend functionality.
-5. **Write Tests for Frontend Functionality**:
+   - Finally, run SonarQube quality analysis locally using `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported bugs, vulnerabilities, security hotspots, or code smells before committing changes.
+5. **Write tests for backend functionality**:
+   - Changes to the backend must include unit tests covering service logic, domain behavior, and repository interactions.
+6. **Write tests for Frontend Functionality**:
    - Changes to the Angular SPA (`Guts.Web/ClientApp`) must include unit tests (`*.spec.ts`) covering component behavior, user interactions, and service logic.
    - Verify frontend changes by running `npm test -- --watch=false` inside `Guts.Web/ClientApp`.
-6. **Fix bugs by writing a failing test first**:
+7. **Fix bugs by writing a failing test first**:
    - When fixing a bug, first write a unit test that reproduces the bug, then implement the fix and verify that the test passes.
-7. **Build, Test, and SonarQube Quality Checks**:
-   - First, the solution must build cleanly, and all tests must pass.
-   - Secondly, run the SonarQube quality analysis locally using `.\run-sonarqube.ps1 -StartServer` and resolve any reported bugs, vulnerabilities, security hotspots, or code smells before committing changes.
-   - Finally, run SonarQube quality analysis locally using `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported bugs, vulnerabilities, security hotspots, or code smells before committing changes.
 8. **Spec-Driven Development (SDD)**:
    - Feature specifications, technical designs, and TDD implementation plans live in [`specs/`](specs/README.md).
    - For new features or significant changes, follow the 4-phase workflow (`spec.md` ➔ `design.md` ➔ `tasks.md` ➔ inside-out TDD implementation) using the templates in [`specs/_templates/`](specs/_templates/).

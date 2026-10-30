@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { CourseGamificationComponent } from "./course-gamification.component";
 import { GamificationService } from "../../services/gamification.service";
 import { AuthService } from "../../services/auth.service";
@@ -191,11 +191,101 @@ describe("CourseGamificationComponent", () => {
     const perspectiveBar = teacherFixture.nativeElement.querySelector("#teacherStudentPerspectiveBar");
     expect(perspectiveBar).toBeTruthy();
 
-    teacherComp.perspectiveUserId = 5;
-    expect(teacherComp.perspectiveUserId).toBe(5);
+    const targetStudentProfile: IStudentGamificationProfileModel = {
+      userId: 5,
+      firstName: "Bob",
+      lastName: "Target",
+      courseId: 10,
+      periodId: 1,
+      showInLeaderBoard: true,
+      usePseudonym: false,
+      pseudonym: "",
+      avatar: "CodeCat",
+      classGroupId: null,
+      classGroupName: "",
+      totalXp: 350,
+      level: 4,
+      levelTitle: "Code Crafter",
+      currentWeeklyStreak: 3,
+      bestWeeklyStreak: 5,
+      isActiveThisWeek: true,
+      totalGreenTests: 25,
+      earnedBadges: [
+        {
+          badgeType: 1,
+          name: "First Spark",
+          description: "Earned first test",
+          icon: "Spark",
+          earnedAt: "2026-10-28T10:00:00Z",
+        },
+      ],
+    };
+    gamificationServiceSpy.getProfile.and.returnValue(of(GetResult.success(targetStudentProfile)));
 
-    teacherComp.perspectiveUserId = null;
+    teacherComp.onPerspectiveChanged("5" as any);
+    teacherFixture.detectChanges();
+
+    expect(gamificationServiceSpy.getProfile).toHaveBeenCalledWith(10, undefined, 5);
+    expect(teacherComp.perspectiveUserId).toBe(5);
+    expect(teacherComp.profile).toEqual(targetStudentProfile);
+    expect(teacherFixture.nativeElement.querySelector("app-course-gamification-hero")).toBeTruthy();
+
+    teacherComp.onPerspectiveChanged(null);
+    teacherFixture.detectChanges();
+
     expect(teacherComp.perspectiveUserId).toBeNull();
+    expect(teacherComp.profile).toBeNull();
+    expect(teacherFixture.nativeElement.querySelector("app-course-gamification-hero")).toBeNull();
+
+    teacherComp.ngOnDestroy();
+  });
+
+  it("should wait for userProfile before loading profile and should not fetch personal profile for teacher", () => {
+    const userSubject = new Subject<UserProfile>();
+    authServiceSpy.getUserProfile.and.returnValue(userSubject);
+    gamificationServiceSpy.getProfile.calls.reset();
+
+    const teacherFixture = TestBed.createComponent(CourseGamificationComponent);
+    const teacherComp = teacherFixture.componentInstance;
+    teacherFixture.detectChanges();
+
+    // Since userProfile is still pending, loadProfile should NOT have been called
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+
+    // Now emit teacher user profile
+    const teacherProfile = new UserProfile();
+    teacherProfile.id = 1;
+    teacherProfile.roles = ["lector"];
+    userSubject.next(teacherProfile);
+    teacherFixture.detectChanges();
+
+    // Should still NOT call personal getProfile for teacher
+    expect(gamificationServiceSpy.getProfile).not.toHaveBeenCalled();
+    expect(teacherComp.profile).toBeNull();
+
+    teacherComp.ngOnDestroy();
+  });
+
+  it("should ignore child profileLoaded emissions when user is a teacher", () => {
+    const teacherProfile = new UserProfile();
+    teacherProfile.id = 1;
+    teacherProfile.roles = ["lector"];
+    authServiceSpy.getUserProfile.and.returnValue(of(teacherProfile));
+
+    const teacherFixture = TestBed.createComponent(CourseGamificationComponent);
+    const teacherComp = teacherFixture.componentInstance;
+    teacherFixture.detectChanges();
+
+    teacherComp.perspectiveUserId = 42;
+    teacherComp.profile = { userId: 42, totalXp: 500 } as any;
+
+    const teacherOwnProfile = { userId: 1, totalXp: 0 } as any;
+    teacherComp.onProfileLoaded(teacherOwnProfile);
+
+    // Profile must NOT be overwritten by teacher's personal profile
+    expect(teacherComp.profile?.userId).toBe(42);
+    expect(teacherComp.profile?.totalXp).toBe(500);
+
     teacherComp.ngOnDestroy();
   });
 

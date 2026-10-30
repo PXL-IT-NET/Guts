@@ -1599,14 +1599,15 @@ public class GamificationServiceTests
         var result = await _service.GetHallOfFameLeaderboardAsync(courseId, 16, periodId);
 
         Assert.That(result.CurrentTier.Tier, Is.EqualTo(HallOfFameTier.Diamond));
-        Assert.That(result.CurrentUserRank, Is.EqualTo(16));
-        // Student 16 only sees the 5 students in Diamond (ranks 16..20)
+        Assert.That(result.CurrentUserRank, Is.EqualTo(1));
+        // Student 16 only sees the 5 students in Diamond (tier ranks 1..5)
         Assert.That(result.Entries.Count, Is.EqualTo(5));
         Assert.That(result.Entries.All(e => e.Tier == HallOfFameTier.Diamond), Is.True);
+        Assert.That(result.Entries.Select(e => e.Rank), Is.EqualTo(new[] { 1, 2, 3, 4, 5 }));
         // 4 visible tiers: Silver, Gold, Diamond (current), Obsidian
         Assert.That(result.VisibleTiers.Count, Is.EqualTo(4));
         Assert.That(result.VisibleTiers.Single(t => t.IsCurrentTier).Tier, Is.EqualTo(HallOfFameTier.Diamond));
-        // Next target student is Rank #15 (in Obsidian)
+        // Next target student is Rank #15 in Obsidian
         Assert.That(result.NextTargetStudent, Is.Not.Null);
         Assert.That(result.NextTargetStudent.Rank, Is.EqualTo(15));
         Assert.That(result.NextTargetStudent.UserId, Is.EqualTo(15));
@@ -1645,20 +1646,26 @@ public class GamificationServiceTests
         Assert.That(lectorOverview.Entries.Count, Is.EqualTo(20));
         Assert.That(lectorOverview.AllTiers.Count, Is.EqualTo(8));
         Assert.That(lectorOverview.StudentOptions.Count, Is.EqualTo(20));
+        // Student options should have tier-relative rank
+        Assert.That(lectorOverview.StudentOptions[0].Rank, Is.EqualTo(1)); // #1 in Obsidian
+        Assert.That(lectorOverview.StudentOptions[14].Rank, Is.EqualTo(15)); // #15 in Obsidian
+        Assert.That(lectorOverview.StudentOptions[15].Rank, Is.EqualTo(1)); // #1 in Diamond
 
         // 2. Lector filtered by Diamond tier
         var lectorDiamond = await _service.GetHallOfFameLeaderboardAsync(
             courseId, 999, periodId, isLector: true, selectedTier: HallOfFameTier.Diamond);
         Assert.That(lectorDiamond.Entries.Count, Is.EqualTo(5));
         Assert.That(lectorDiamond.CurrentTier.Tier, Is.EqualTo(HallOfFameTier.Diamond));
+        Assert.That(lectorDiamond.Entries.Select(e => e.Rank), Is.EqualTo(new[] { 1, 2, 3, 4, 5 }));
 
         // 3. Lector viewing from Student #17's perspective
         var lectorStudentPerspective = await _service.GetHallOfFameLeaderboardAsync(
             courseId, 999, periodId, isLector: true, perspectiveUserId: 17);
-        Assert.That(lectorStudentPerspective.CurrentUserRank, Is.EqualTo(17));
+        Assert.That(lectorStudentPerspective.CurrentUserRank, Is.EqualTo(2));
         Assert.That(lectorStudentPerspective.CurrentTier.Tier, Is.EqualTo(HallOfFameTier.Diamond));
         Assert.That(lectorStudentPerspective.Entries.Single(e => e.IsCurrentUser).UserId, Is.EqualTo(17));
         Assert.That(lectorStudentPerspective.NextTargetStudent.UserId, Is.EqualTo(16));
+        Assert.That(lectorStudentPerspective.NextTargetStudent.Rank, Is.EqualTo(1));
     }
 
     [Test]
@@ -1687,5 +1694,65 @@ public class GamificationServiceTests
             e.Description == "Overtake bonus (surpassed 2 students in Hall of Fame)" && e.XpEarned == 8), Is.True);
         Assert.That(result.RecentGains.Events.Any(e =>
             e.Description == "Hall of Fame level up bonus (Obsidian)" && e.XpEarned == 5), Is.True);
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenUserIsLectorWithPerspectiveUserId_ShouldReturnTargetStudentProfileWithoutUpdatingLastVisitDate()
+    {
+        const int lectorUserId = 999;
+        const int targetStudentUserId = 42;
+        const int courseId = 10;
+        const int periodId = 1;
+        var originalVisit = DateTime.UtcNow.AddHours(-5);
+
+        var targetProfile = new StudentCourseProfile(targetStudentUserId, courseId, periodId)
+        {
+            User = new User { FirstName = "Student", LastName = "Target" }
+        };
+        targetProfile.RecordLeaderboardVisit(originalVisit);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(targetStudentUserId, courseId, periodId))
+            .ReturnsAsync(targetProfile);
+
+        var result = await _service.GetStudentCourseProfileAsync(
+            lectorUserId,
+            courseId,
+            periodId,
+            isLector: true,
+            perspectiveUserId: targetStudentUserId);
+
+        Assert.That(result.UserId, Is.EqualTo(targetStudentUserId));
+        Assert.That(targetProfile.LastLeaderboardVisitDate, Is.EqualTo(originalVisit));
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenUserIsStudentWithPerspectiveUserId_ShouldIgnorePerspectiveUserIdAndReturnOwnProfile()
+    {
+        const int studentUserId = 10;
+        const int attemptedPerspectiveUserId = 42;
+        const int courseId = 10;
+        const int periodId = 1;
+
+        var ownProfile = new StudentCourseProfile(studentUserId, courseId, periodId)
+        {
+            User = new User { FirstName = "Own", LastName = "Student" }
+        };
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(studentUserId, courseId, periodId))
+            .ReturnsAsync(ownProfile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(
+            studentUserId,
+            courseId,
+            periodId,
+            isLector: false,
+            perspectiveUserId: attemptedPerspectiveUserId);
+
+        Assert.That(result.UserId, Is.EqualTo(studentUserId));
+        _studentCourseProfileRepositoryMock.Verify(r => r.GetByUserCourseAndPeriodAsync(attemptedPerspectiveUserId, It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+
     }
 }
