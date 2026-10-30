@@ -2,13 +2,13 @@
 
 - **Feature ID**: `002-gamification`
 - **Specification**: [`spec.md`](./spec.md)
-- **Status**: `Implemented`
+- **Status**: `In Progress`
 
 ---
 
 ## 1. Architectural Overview
 
-The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs a hosted background worker (`SprintLeaderboardBackgroundService`) to award weekly sprint medals and evaluate weekly streak expiration/protection.
+The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs hosted background workers: `SprintLeaderboardBackgroundService` (to award weekly sprint medals and evaluate weekly streak resets) and `StreakReminderBackgroundService` (to queue and dispatch throttled Thursday midday streak reminder emails via `IMailSender`).
 
 ```mermaid
 flowchart TD
@@ -17,7 +17,11 @@ flowchart TD
     SPA["Angular SPA (course-gamification)"] --> GC["GamificationController"]
     GC --> GS
     BG["SprintLeaderboardBackgroundService"] -->|AwardWeeklySprintBadgesAsync| GS
-    GS --> SCPR["IStudentCourseProfileRepository"]
+    SRBG["StreakReminderBackgroundService"] -->|SendStreakRemindersAsync| SRS["StreakReminderService"]
+    SRS --> SCPR["IStudentCourseProfileRepository"]
+    SRS --> TR["ITopicRepository"]
+    SRS --> MS["IMailSender"]
+    GS --> SCPR
     GS --> CGCR["ICourseGamificationConfigRepository"]
     GS --> CCGR["ICourseClassGroupRepository"]
     GS --> AR["IAssignmentRepository"]
@@ -109,6 +113,58 @@ flowchart TD
   - **New method**:
     - `Task<bool> IsUserLectorAsync(int userId);` — Returns `true` if the user has the `Lector` role (`[DR-9]`).
 
+### Application Services (`Guts.Business/Services/` & `Guts.Business/Communication/`)
+- **`IMailSender` / `MailSender` (`Guts.Business/Communication/MailSender.cs`)** (`[US-8]`, `[AC-7]`):
+  - Adds method:
+    ```csharp
+    Task SendStreakReminderEmailAsync(
+        User user,
+        string courseName,
+        int currentStreak,
+        string? targetStudentName,
+        IReadOnlyList<StreakReminderAssignmentDto> recommendedAssignments);
+    ```
+  - Composes an encouraging HTML email message (`[AC-7]`):
+    - **Subject**: `"Keep your momentum going in " + courseName + "!"`
+    - **Salutation**: `"Dear " + (string.IsNullOrWhiteSpace(user.FirstName) ? "student" : user.FirstName) + ","`
+    - **Streak status**: Highlights that the student is on an active `{currentStreak}`-week streak and reminds them to practice before Sunday 23:59 UTC to keep it alive.
+    - **Target to beat**: If `targetStudentName` is provided, includes a motivational callout: `"🎯 Target to beat: You're close to overtaking " + targetStudentName + " in the Hall of Fame!"`
+    - **Recommended assignments**: Renders an unordered list of suggested assignments with their topic name, assignment description, green/total test progress, and direct HTML links into the GUTS web app.
+    - **Call-to-Action**: Direct button/link to the course gamification dashboard (`"{webAppBaseUrl}/courses/{courseId}/gamification"`).
+  - Sends email via `ISmtpClient.SendMailAsync(message)`.
+
+- **`IStreakReminderService` / `StreakReminderService` (`Guts.Business/Services/StreakReminderService.cs`)** (`[US-8]`, `[AC-7]`, `[DR-10]`, `[DR-11]`, `[DR-12]`):
+  - Interface:
+    ```csharp
+    public interface IStreakReminderService
+    {
+        Task<int> SendStreakRemindersAsync(DateTime executionTime, CancellationToken cancellationToken = default);
+    }
+    ```
+  - Orchestration:
+    1. Loads current academic period via `IPeriodRepository.GetPeriodAsync()`.
+    2. Loads all courses and their gamification configs via `ICourseRepository` and `ICourseGamificationConfigRepository`. Filters to courses where `IsGamificationEnabled == true` and `IsWeeklyStreakEnabled == true`.
+    3. For each active course:
+       - Loads all topics with assignments and tests via `ITopicRepository.GetByCourseWithAssignmentsAndTestsAsync(courseId, periodId)`. Collects all course test IDs. If 0 tests exist, skips course.
+       - Loads all student profiles via `IStudentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, periodId)`.
+       - Filters eligible students per `[DR-10]`:
+         - User is not a lector (`!await studentCourseProfileRepository.IsUserLectorAsync(profile.UserId)`).
+         - `profile.WeeklyStreak.CurrentStreak > 0`.
+         - Student earned `0 XP` in current ISO week (`profile.Events.Where(e => ISOWeek.GetYear(e.CreatedAt) == year && ISOWeek.GetWeekOfYear(e.CreatedAt) == week).Sum(e => e.XpEarned) == 0`).
+         - Passed tests count is strictly less than total course tests count (`!allCourseTestIds.All(passedTestIds.Contains)`).
+       - For each eligible student:
+         - Resolves recipient `User` via `IUserRepository.GetByIdAsync(profile.UserId)`.
+         - Resolves `targetStudentName`: If `profile.ShowInLeaderBoard`, finds the student immediately preceding them in the course Hall of Fame ranking (`[DR-7]`).
+         - Resolves up to 2 `recommendedAssignments` per `[DR-11]`:
+           - Primary: In-progress assignments where student has passed $\ge 1$ test but $< 100\%$ tests.
+           - Secondary: Earliest unattempted assignments (0 tests passed).
+         - Enqueues `StreakReminderEmailMessage` into a send queue.
+    4. Throttled Queue Processing (`[DR-12]`):
+       - Sequentially dequeues each message and calls `_mailSender.SendStreakReminderEmailAsync(...)`.
+       - Enforces an asynchronous throttle delay between consecutive dispatches (`Task.Delay(throttleDelay, cancellationToken)`, defaulting to 1 second; configurable/zeroable in unit tests) to protect SMTP reputation and avoid spam categorization.
+       - Wraps each individual send in a `try/catch` block: logs errors with `ILogger<StreakReminderService>` and continues draining the queue for subsequent students.
+       - Returns total count of successfully sent reminder emails.
+
 ### Application Services (`Guts.Business/Services/`)
 - **`IGamificationService` / `GamificationService`** (`GamificationService.cs`):
   - `GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null, bool isLector = false, int? perspectiveUserId = null)`:
@@ -150,6 +206,24 @@ flowchart TD
         - Always populates `StudentOptions` (for `isLector == true`) with the list of ranked students displaying their tier-relative rank (`#{{ student.rank }} {{ student.displayName }} ({{ student.tierIcon }} {{ student.tierName }} — {{ student.score }} XP)`), completely avoiding global ranks.
 
 ### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
+- New Streak Reminder DTOs (`[US-8]`, `[AC-7]`):
+  - `StreakReminderAssignmentDto`:
+    - `int AssignmentId { get; set; }`
+    - `string AssignmentDescription { get; set; }`
+    - `string TopicDescription { get; set; }`
+    - `string TopicCode { get; set; }`
+    - `int GreenTestsCount { get; set; }`
+    - `int TotalTestsCount { get; set; }`
+    - `string WebUrl { get; set; }`
+  - `StreakReminderEmailMessage`:
+    - `User Recipient { get; set; }`
+    - `string CourseName { get; set; }`
+    - `int CourseId { get; set; }`
+    - `int CurrentStreak { get; set; }`
+    - `string? TargetStudentName { get; set; }`
+    - `IReadOnlyList<StreakReminderAssignmentDto> RecommendedAssignments { get; set; }`
+
+### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
 - Updated `LeaderboardEntryDto`:
   - Adds `HallOfFameTier Tier { get; set; }`, `string TierName { get; set; }`, and `string TierIcon { get; set; }`.
 - New DTOs:
@@ -188,6 +262,24 @@ flowchart TD
 ---
 
 ## 5. API Layer (`Guts.Api`)
+
+### Hosted Background Services (`Guts.Api/BackgroundServices/`)
+- **`StreakReminderBackgroundService` (`StreakReminderBackgroundService.cs`)** (`[US-8]`, `[AC-7]`):
+  - Inherits from `Microsoft.Extensions.Hosting.BackgroundService`.
+  - Injected with `IServiceScopeFactory` and `ILogger<StreakReminderBackgroundService>`.
+  - Static schedule helper:
+    ```csharp
+    public static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
+    ```
+    - Calculates the next Thursday at `12:00:00 UTC`. If `fromUtc` is already past Thursday 12:00 UTC, targets Thursday of next week.
+  - Periodic execution loop:
+    - Calculates `delay = GetNextThursdayMiddayTrigger(now) - now`.
+    - Awaits `Task.Delay(delay, stoppingToken)`.
+    - Creates DI scope via `IServiceScopeFactory.CreateScope()`.
+    - Resolves `IStreakReminderService` and executes `await streakReminderService.SendStreakRemindersAsync(DateTime.UtcNow, stoppingToken)`.
+    - Logs errors without terminating the background worker loop.
+  - Registered in `Guts.Api/Startup.cs`:
+    `services.AddHostedService<StreakReminderBackgroundService>();`
 
 ### REST Endpoints (`Guts.Api/Controllers/GamificationController.cs`)
 - `GET api/courses/{courseId}/gamification/profile`:
@@ -249,4 +341,6 @@ flowchart TD
 
 ## 7. Dependency Injection (`Guts.Bootstrapper`)
 
-- No new DI registrations required: `StudentCourseProfile.Factory`, `GamificationService`, and `StudentCourseProfileDbRepository` already follow the naming conventions in `StartUpExtensions.cs`.
+- `IStreakReminderService` / `StreakReminderService` automatically registered via standard convention (`services.AddScoped<IStreakReminderService, StreakReminderService>()` or `RegisterTypesWhoseNameEndsWith("Service")` in `StartUpExtensions.cs`).
+- `StreakReminderBackgroundService` registered as hosted service in `Guts.Api/Startup.cs` (`services.AddHostedService<StreakReminderBackgroundService>()`).
+- `IMailSender` / `MailSender` already registered in `StartUpExtensions.cs` with `ISmtpClient` and `webappbaseurl` configuration.

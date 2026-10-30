@@ -1,3 +1,7 @@
+using Guts.Business.Communication;
+using Guts.Business.Repositories;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.UserAggregate;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
@@ -17,6 +21,8 @@ public class GamificationControllerTests
 {
     private GamificationController _controller;
     private Mock<IGamificationService> _gamificationServiceMock;
+    private Mock<IMailSender> _mailSenderMock;
+    private Mock<ICourseRepository> _courseRepositoryMock;
     private const int UserId = 123;
     private const int CourseId = 456;
     private const int PeriodId = 789;
@@ -25,7 +31,12 @@ public class GamificationControllerTests
     public void Setup()
     {
         _gamificationServiceMock = new Mock<IGamificationService>();
-        _controller = new GamificationController(_gamificationServiceMock.Object)
+        _mailSenderMock = new Mock<IMailSender>();
+        _courseRepositoryMock = new Mock<ICourseRepository>();
+        _controller = new GamificationController(
+            _gamificationServiceMock.Object,
+            _mailSenderMock.Object,
+            _courseRepositoryMock.Object)
         {
             ControllerContext = new ControllerContextBuilder().WithUser(UserId.ToString()).Build()
         };
@@ -319,5 +330,38 @@ public class GamificationControllerTests
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);
         Assert.That(okResult.Value, Is.EqualTo(classes));
+    }
+
+    [Test]
+    public async Task SendTestStreakReminderEmail_WhenCalledWithRecipientEmail_ShouldSendMailAndReturnOk()
+    {
+        // Arrange
+        _courseRepositoryMock.Setup(r => r.GetByIdAsync(CourseId))
+            .ReturnsAsync(new Course { Id = CourseId, Name = "Web Advanced" });
+
+        // Act
+        var result = await _controller.SendTestStreakReminderEmail(CourseId, "teacher@pxl.be") as OkObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        _mailSenderMock.Verify(m => m.SendStreakReminderEmailAsync(
+            It.Is<User>(u => u.Email == "teacher@pxl.be"),
+            "Web Advanced",
+            CourseId,
+            3,
+            "CodeMaster99",
+            It.Is<IReadOnlyList<StreakReminderAssignmentDto>>(list => list.Count == 2)), Times.Once);
+    }
+
+    [Test]
+    public async Task SendTestStreakReminderEmail_WhenNoRecipientEmailProvidedAndNoEmailClaim_ShouldReturnBadRequest()
+    {
+        // Act
+        var result = await _controller.SendTestStreakReminderEmail(CourseId, null) as BadRequestObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        _mailSenderMock.Verify(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()), Times.Never);
     }
 }

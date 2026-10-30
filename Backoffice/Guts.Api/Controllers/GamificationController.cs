@@ -1,3 +1,6 @@
+using Guts.Business.Communication;
+using Guts.Business.Repositories;
+using Guts.Domain.UserAggregate;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -13,7 +16,10 @@ namespace Guts.Api.Controllers;
 [Authorize]
 [Produces("application/json")]
 [Route("api/courses/{courseId}/gamification")]
-public class GamificationController(IGamificationService gamificationService) : ControllerBase
+public class GamificationController(
+    IGamificationService gamificationService,
+    IMailSender mailSender,
+    ICourseRepository courseRepository) : ControllerBase
 {
     [HttpGet("profile")]
     [ProducesResponseType(typeof(StudentGamificationProfileDto), (int)HttpStatusCode.OK)]
@@ -134,5 +140,77 @@ public class GamificationController(IGamificationService gamificationService) : 
     {
         var badges = gamificationService.GetBadgeMetadata();
         return Ok(badges);
+    }
+
+    [HttpPost("streak-reminders/test-email")]
+    [Authorize(Roles = Role.Constants.Lector)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SendTestStreakReminderEmail(
+        int courseId,
+        [FromQuery] string recipientEmail = null)
+    {
+        string targetEmail = !string.IsNullOrWhiteSpace(recipientEmail)
+            ? recipientEmail.Trim()
+            : GetUserEmail();
+
+        if (string.IsNullOrWhiteSpace(targetEmail))
+        {
+            return BadRequest("A recipient email address must be provided or present in the authenticated user claims.");
+        }
+
+        string courseName = $"Course #{courseId}";
+        try
+        {
+            var course = await courseRepository.GetByIdAsync(courseId);
+            if (course != null && !string.IsNullOrWhiteSpace(course.Name))
+            {
+                courseName = course.Name;
+            }
+        }
+        catch
+        {
+            // Fallback to generic course name if course cannot be retrieved
+        }
+
+        var sampleUser = new User
+        {
+            Id = GetUserId(),
+            FirstName = "Teacher",
+            LastName = "Test",
+            Email = targetEmail
+        };
+
+        var sampleRecommendations = new List<StreakReminderAssignmentDto>
+        {
+            new()
+            {
+                AssignmentId = 1,
+                TopicDescription = "Chapter 1: Getting Started",
+                AssignmentDescription = "Exercise 1.1 First Steps",
+                TopicCode = "Ch1",
+                GreenTestsCount = 2,
+                TotalTestsCount = 5
+            },
+            new()
+            {
+                AssignmentId = 2,
+                TopicDescription = "Chapter 1: Getting Started",
+                AssignmentDescription = "Exercise 1.2 Control Structures",
+                TopicCode = "Ch1",
+                GreenTestsCount = 0,
+                TotalTestsCount = 4
+            }
+        };
+
+        await mailSender.SendStreakReminderEmailAsync(
+            sampleUser,
+            courseName,
+            courseId,
+            currentStreak: 3,
+            targetStudentName: "CodeMaster99",
+            sampleRecommendations);
+
+        return Ok(new { message = $"Test streak reminder email sent to {targetEmail}", recipientEmail = targetEmail, courseName });
     }
 }

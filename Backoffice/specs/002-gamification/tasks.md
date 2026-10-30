@@ -159,3 +159,38 @@
 - [x] **[T4.11]** Run frontend production build: `npm run build` in `Backoffice/Guts.Web/ClientApp`
 - [x] **[T4.12]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
 - [x] **[T4.13]** Update `spec.md`, `design.md`, and `tasks.md` status.
+
+---
+
+## Increment 5: Thursday Midday Streak Reminder Notifications & Throttled Queue (US-8 / AC-7 / DR-10 / DR-11 / DR-12)
+
+### Phase 1: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+
+- [x] **[T5.1]** `[US-8, AC-7]` Create `StreakReminderAssignmentDto` and `StreakReminderEmailMessage` in `Backoffice/Guts.Business/Dtos/Gamification/GamificationDtos.cs`.
+- [x] **[T5.2]** `[US-8, AC-7]` Add `SendStreakReminderEmailAsync` to `IMailSender` and write unit tests in `Backoffice/Guts.Business.Tests/Communication/MailSenderTests.cs` (verifying subject, greeting, streak count, next target to beat, recommended assignment links). Implement in `Backoffice/Guts.Business/Communication/MailSender.cs`.
+- [x] **[T5.3]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/StreakReminderServiceTests.cs`:
+  - `SendStreakRemindersAsync_WhenStudentHasStreakAndNoXpThisWeek_ShouldQueueReminder` (`[US-8, AC-7, DR-10]`).
+  - `SendStreakRemindersAsync_WhenStudentEarnedXpThisWeek_ShouldNotQueueReminder` (`[DR-10]`).
+  - `SendStreakRemindersAsync_WhenStudentCompletedAllTests_ShouldNotQueueReminder` (`[DR-10]`).
+  - `SendStreakRemindersAsync_WhenUserIsLector_ShouldNotQueueReminder` (`[DR-10]`).
+  - `SendStreakRemindersAsync_ShouldRecommendInProgressAssignmentsBeforeUntouchedAssignments` (`[DR-11]`).
+  - `SendStreakRemindersAsync_WhenStudentOptedIn_ShouldIncludeNextTargetStudent` (`[AC-7]`).
+  - `SendStreakRemindersAsync_WhenEmailFailsForOneStudent_ShouldLogAndContinueQueue` (`[AC-7, DR-12]`).
+- [x] **[T5.4]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Implement `IStreakReminderService` and `StreakReminderService` in `Backoffice/Guts.Business/Services/StreakReminderService.cs`.
+- [x] **[T5.5]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 2: API Layer (`Guts.Api.Tests` ➔ `Guts.Api`)
+
+- [x] **[T5.6]** `[US-8, AC-7]` Write unit tests in `Backoffice/Guts.Api.Tests/BackgroundServices/StreakReminderBackgroundServiceTests.cs` verifying `GetNextThursdayMiddayTrigger` and execution loop.
+- [x] **[T5.7]** `[US-8, AC-7]` Implement `StreakReminderBackgroundService` in `Backoffice/Guts.Api/BackgroundServices/StreakReminderBackgroundService.cs` and register it in `Backoffice/Guts.Api/Startup.cs`.
+- [x] **[T5.8]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 3: Final Verification & Quality Gate
+
+- [x] **[T5.9]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
+- [x] **[T5.10]** Run SonarQube analysis or quality checks.
+- [x] **[T5.11]** Update `spec.md`, `design.md`, and `tasks.md` status to `Implemented`.

@@ -17,6 +17,11 @@ internal class UserDbRepository : IUserRepository
         _context = context;
     }
 
+    public async Task<User> GetByIdAsync(int userId)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    }
+
     public async Task<IList<User>> GetUsersOfTopicAsync(int topicId)
     {
         var userIds = await (from testrun in _context.TestRuns
