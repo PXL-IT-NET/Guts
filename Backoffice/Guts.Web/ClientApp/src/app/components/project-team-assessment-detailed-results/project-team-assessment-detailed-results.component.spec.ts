@@ -7,7 +7,7 @@ import {
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { GetResult } from "src/app/util/result";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 import {
   ActivatedRouteStub,
   createToastrSpy,
@@ -277,5 +277,64 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
 
     expect(yScale.grid.lineWidth({ tick: { value: 3 } }, {})).toBe(3);
     expect(yScale.grid.lineWidth({ tick: { value: 2 } }, {})).toBe(1);
+  });
+
+  it("should reset activeResultTeamName on ngOnDestroy", () => {
+    teamAssessmentServiceSpy.activeResultTeamName.set("Team Alpha");
+    component.ngOnDestroy();
+    expect(teamAssessmentServiceSpy.activeResultTeamName()).toBe("");
+  });
+
+  it("should handle empty allTeams in loadCompletedTeams", () => {
+    component.allTeams = [];
+    component.loadCompletedTeams(5, 10);
+    expect(component.completedTeams).toEqual([]);
+    expect(component.currentTeam.id).toBe(0);
+  });
+
+  it("should handle error in getStatusOfProjectTeamAssessment gracefully in loadCompletedTeams", () => {
+    component.allTeams = [
+      { id: 10, name: "Team 1" },
+      { id: 20, name: "Team 2" },
+    ];
+    teamAssessmentServiceSpy.getStatusOfProjectTeamAssessment.and.returnValue(
+      throwError(() => new Error("Network error")),
+    );
+    component.loadCompletedTeams(5, 10);
+    expect(component.completedTeams).toEqual([]);
+    expect(component.currentTeam.id).toBe(10);
+  });
+
+  it("should use fallback index navigation when completedTeams is empty", () => {
+    component.allTeams = [
+      { id: 10, name: "Team 1" },
+      { id: 20, name: "Team 2" },
+      { id: 30, name: "Team 3" },
+    ];
+    component.completedTeams = [];
+
+    // First team
+    component.setTeams(10);
+    expect(component.currentTeam.id).toBe(10);
+    expect(component.previousTeam).toBeNull();
+    expect(component.nextTeam?.id).toBe(20);
+
+    // Middle team
+    component.setTeams(20);
+    expect(component.currentTeam.id).toBe(20);
+    expect(component.previousTeam?.id).toBe(10);
+    expect(component.nextTeam?.id).toBe(30);
+
+    // Last team
+    component.setTeams(30);
+    expect(component.currentTeam.id).toBe(30);
+    expect(component.previousTeam?.id).toBe(20);
+    expect(component.nextTeam).toBeNull();
+
+    // Unknown team
+    component.setTeams(999);
+    expect(component.currentTeam.id).toBe(0);
+    expect(component.previousTeam).toBeNull();
+    expect(component.nextTeam).toBeNull();
   });
 });

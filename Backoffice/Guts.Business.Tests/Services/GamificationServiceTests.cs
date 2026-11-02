@@ -1895,6 +1895,264 @@ public class GamificationServiceTests
 
         Assert.That(result.UserId, Is.EqualTo(studentUserId));
         _studentCourseProfileRepositoryMock.Verify(r => r.GetByUserCourseAndPeriodAsync(attemptedPerspectiveUserId, It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
 
+    [Test]
+    public async Task BuildRecentEventDtos_WithSpecialEventTypesAndMultipleOvertakes_ShouldFormatCorrectly()
+    {
+        int studentUserId = 42;
+        int courseId = 10;
+        int periodId = 1;
+
+        var profile = new StudentCourseProfile(studentUserId, courseId, periodId);
+        profile.AwardPassedTestXp(1001, DateTime.UtcNow.AddMinutes(-10));
+        // Add AssignmentCompletedQuickly
+        profile.Events.Add(new GamificationEvent
+        {
+            StudentCourseProfileId = profile.Id,
+            EventType = GamificationEventType.AssignmentCompletedQuickly,
+            TargetId = 200,
+            XpEarned = 15,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+        });
+        // Add other event type (e.g. unknown/unmapped)
+        profile.Events.Add(new GamificationEvent
+        {
+            StudentCourseProfileId = profile.Id,
+            EventType = (GamificationEventType)99,
+            TargetId = 1,
+            XpEarned = 25,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-4)
+        });
+        // Add 2 overtake events
+        profile.Events.Add(new GamificationEvent
+        {
+            StudentCourseProfileId = profile.Id,
+            EventType = GamificationEventType.HallOfFameOvertake,
+            TargetId = 1,
+            XpEarned = 5,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-3)
+        });
+        profile.Events.Add(new GamificationEvent
+        {
+            StudentCourseProfileId = profile.Id,
+            EventType = GamificationEventType.HallOfFameOvertake,
+            TargetId = 2,
+            XpEarned = 5,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-2)
+        });
+
+        profile.User = new User { FirstName = "Alice", LastName = "Smith" };
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(studentUserId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync(profile);
+
+        var result = await _service.GetStudentCourseProfileAsync(studentUserId, courseId, periodId);
+
+        Assert.That(result.RecentGains.Events.Any(e => e.Description.Contains("Quick assignment completion bonus (Top 10)")), Is.True);
+        Assert.That(result.RecentGains.Events.Any(e => e.Description.Contains("Gamification bonus")), Is.True);
+        Assert.That(result.RecentGains.Events.Any(e => e.Description.Contains("surpassed 2 students in Hall of Fame")), Is.True);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenRequiredSubFeaturesDisabled_ShouldLogAndReturnZero()
+    {
+        var course = new Course { Id = 10, Code = "OOP", Name = "Object-Oriented Programming" };
+        var period = Mock.Of<IPeriod>(p => p.Id == 1);
+        _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(period);
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+
+        // Gamification enabled, but WeeklyStreak disabled
+        var config1 = new CourseGamificationConfig(10)
+        {
+            IsGamificationEnabled = true,
+            IsWeeklyStreakEnabled = false,
+            IsLeaderboardEnabled = true,
+            IsBadgesEnabled = true
+        };
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(10)).ReturnsAsync(config1);
+
+        await _service.AwardWeeklySprintBadgesAsync(2026, 44);
+
+        // Gamification enabled, but Leaderboard disabled
+        config1.IsWeeklyStreakEnabled = true;
+        config1.IsLeaderboardEnabled = false;
+        await _service.AwardWeeklySprintBadgesAsync(2026, 44);
+
+        // Gamification enabled, but Badges disabled
+        config1.IsLeaderboardEnabled = true;
+        config1.IsBadgesEnabled = false;
+        await _service.AwardWeeklySprintBadgesAsync(2026, 44);
+
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
+    }
+
+    [Test]
+    public async Task EvaluateHallOfFameRankingAfterTestRunAsync_WhenSingleOptedInProfile_ShouldRankFirst()
+    {
+        int userId = 42;
+        int courseId = 10;
+        int periodId = 1;
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId);
+        profile.Enroll(true, null, "CodeCat", null, false);
+
+        var assignment = new Assignment
+        {
+            Id = 5,
+            TopicId = 2,
+            Topic = new Chapter { Id = 2, CourseId = courseId, PeriodId = periodId },
+            Tests = new List<Test> { new() { Id = 1001 } }
+        };
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(5)).ReturnsAsync(assignment);
+        _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(2)).ReturnsAsync(new List<Assignment> { assignment });
+
+        var config = new CourseGamificationConfig(courseId)
+        {
+            IsGamificationEnabled = true,
+            IsLeaderboardEnabled = true
+        };
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId)).ReturnsAsync(config);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(new List<StudentCourseProfile> { profile }); // only this student opted in (competitors.Count == 0)
+
+        var testRun = new TestRun
+        {
+            UserId = userId,
+            AssignmentId = 5,
+            CreateDateTime = DateTime.UtcNow,
+            TestResults = new List<TestResult> { new() { TestId = 1001, Passed = true } }
+        };
+
+        await _service.ProcessTestRunAsync(testRun);
+
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenNoCandidatesNeedStreakEvaluation_ShouldEarlyReturnFromStreaks()
+    {
+        int courseId = 10;
+        int periodId = 1;
+
+        var course = new Course { Id = courseId, Code = "OOP", Name = "Object-Oriented Programming" };
+        var period = Mock.Of<IPeriod>(p => p.Id == periodId);
+        _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(period);
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+
+        var config = new CourseGamificationConfig(courseId)
+        {
+            IsGamificationEnabled = true,
+            IsWeeklyStreakEnabled = true,
+            IsLeaderboardEnabled = true,
+            IsBadgesEnabled = true
+        };
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId)).ReturnsAsync(config);
+
+        var profile = new StudentCourseProfile(42, courseId, periodId); // CurrentStreak = 0 => NeedsEvaluation returns false
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<StudentCourseProfile>());
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(new List<StudentCourseProfile> { profile });
+
+        await _service.AwardWeeklySprintBadgesAsync(2026, 44);
+
+        _assignmentRepositoryMock.Verify(r => r.GetCourseTestIdsAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetStudentCourseProfileAsync_WhenProfileUserIsNull_ShouldReloadFromRepository()
+    {
+        int userId = 42;
+        int courseId = 10;
+        int periodId = 1;
+
+        var profileNoUser = new StudentCourseProfile(userId, courseId, periodId);
+        var profileWithUser = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Reloaded", LastName = "User" }
+        };
+
+        int callCount = 0;
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                return callCount == 1 ? profileNoUser : profileWithUser;
+            });
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
+
+        Assert.That(result.FirstName, Is.EqualTo("Reloaded"));
+        Assert.That(result.LastName, Is.EqualTo("User"));
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(2));
+    }
+
+    [Test]
+    public async Task ProcessTestRunAsync_EarlyReturnScenarios_ShouldNotThrowOrProcess()
+    {
+        // 1. null testRun
+        await _service.ProcessTestRunAsync(null);
+
+        // 2. testRun with null results
+        await _service.ProcessTestRunAsync(new TestRun { TestResults = null });
+
+        // 3. testRun with no passed tests
+        await _service.ProcessTestRunAsync(new TestRun
+        {
+            TestResults = new List<TestResult> { new() { Passed = false } }
+        });
+
+        // 4. assignment null
+        var testRun = new TestRun
+        {
+            UserId = 42,
+            AssignmentId = 999,
+            TestResults = new List<TestResult> { new() { Passed = true } }
+        };
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(999)).ReturnsAsync((Assignment)null);
+        await _service.ProcessTestRunAsync(testRun);
+
+        // 5. assignment.Topic null
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(999))
+            .ReturnsAsync(new Assignment { Id = 999, Topic = null });
+        await _service.ProcessTestRunAsync(testRun);
+
+        // 6. config null
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(999))
+            .ReturnsAsync(new Assignment { Id = 999, Topic = new Chapter { CourseId = 10, PeriodId = 1 } });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(10)).ReturnsAsync((CourseGamificationConfig)null);
+        await _service.ProcessTestRunAsync(testRun);
+
+        // 7. gamification disabled
+        var disabledConfig = new CourseGamificationConfig(10) { IsGamificationEnabled = false };
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(10)).ReturnsAsync(disabledConfig);
+        await _service.ProcessTestRunAsync(testRun);
+
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetHallOfFameLeaderboardAsync_WhenCurrentUserNotInLeaderboard_ShouldDefaultToPaperTier()
+    {
+        int courseId = 10;
+        int periodId = 1;
+        int nonEnrolledUserId = 999;
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(new List<StudentCourseProfile>());
+
+        var result = await _service.GetHallOfFameLeaderboardAsync(courseId, nonEnrolledUserId, periodId);
+
+        Assert.That(result.CurrentUserRank, Is.Null);
+        Assert.That(result.CurrentTier.Tier, Is.EqualTo(HallOfFameTier.Paper));
     }
 }

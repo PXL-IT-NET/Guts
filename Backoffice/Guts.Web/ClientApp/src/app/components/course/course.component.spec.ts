@@ -1,10 +1,10 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { NO_ERRORS_SCHEMA, signal } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { NavigationEnd, Router } from "@angular/router";
 import { BsModalService } from "ngx-bootstrap/modal";
 import { ToastrService } from "ngx-toastr";
 import { of, Subject } from "rxjs";
-import { PeriodProvider } from "src/app/services";
+import { PeriodProvider, ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { AuthService } from "../../services/auth.service";
 import { CourseService } from "../../services/course.service";
 import { GamificationService } from "../../services/gamification.service";
@@ -28,9 +28,37 @@ describe("CourseComponent", () => {
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let modalServiceSpy: jasmine.SpyObj<BsModalService>;
   let gamificationServiceSpy: jasmine.SpyObj<GamificationService>;
+  let projectServiceSpy: jasmine.SpyObj<ProjectService>;
+  let projectTeamAssessmentServiceSpy: jasmine.SpyObj<ProjectTeamAssessmentService>;
 
   beforeEach(() => {
     routerSpy = createRouterSpy("/courses/1/chapters/Ch1/testresults");
+    projectServiceSpy = jasmine.createSpyObj<ProjectService>("ProjectService", [
+      "getProjectDetails",
+    ]);
+    projectServiceSpy.getProjectDetails.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "P1",
+          description: "Project 1",
+          assignments: [],
+          components: [],
+          teams: [
+            { id: 10, name: "Team 1", members: [] },
+            { id: 20, name: "Team 2", members: [] },
+          ],
+        }),
+      ),
+    );
+    projectTeamAssessmentServiceSpy = jasmine.createSpyObj<ProjectTeamAssessmentService>(
+      "ProjectTeamAssessmentService",
+      [
+        "getDetailedResultsOfProjectTeamAssessment",
+        "getStatusOfProjectTeamAssessment",
+      ],
+      { activeResultTeamName: signal<string>("") },
+    );
     gamificationServiceSpy = jasmine.createSpyObj<GamificationService>("GamificationService", ["getConfig"]);
     gamificationServiceSpy.getConfig.and.returnValue(
       of(
@@ -86,6 +114,8 @@ describe("CourseComponent", () => {
         { provide: ToastrService, useValue: toastrSpy },
         { provide: BsModalService, useValue: modalServiceSpy },
         { provide: GamificationService, useValue: gamificationServiceSpy },
+        { provide: ProjectService, useValue: projectServiceSpy },
+        { provide: ProjectTeamAssessmentService, useValue: projectTeamAssessmentServiceSpy },
       ],
     });
     fixture = TestBed.createComponent(CourseComponent);
@@ -364,6 +394,88 @@ describe("CourseComponent", () => {
       };
 
       expect(component.canShowCourseStatistics).toBeFalse();
+    });
+  });
+
+  describe("peer assessment tabs and routes", () => {
+    const sampleProject = {
+      id: 20,
+      code: "P1",
+      description: "Project 1",
+      assignments: [],
+    };
+
+    it("assessmentResultsActive should return false when no project is selected", () => {
+      component.selectedProject = null;
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/detailed-results";
+      expect(component.assessmentResultsActive).toBeFalse();
+    });
+
+    it("assessmentResultsActive should return true for detailed-results and my-result URLs when project is selected", () => {
+      component.selectedProject = sampleProject;
+
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/detailed-results";
+      expect(component.assessmentResultsActive).toBeTrue();
+
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/my-result";
+      expect(component.assessmentResultsActive).toBeTrue();
+
+      routerSpy.url = "/courses/1/projects/P1/assessments";
+      expect(component.assessmentResultsActive).toBeFalse();
+    });
+
+    it("assessmentResultsUrl should return current router url", () => {
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/detailed-results";
+      expect(component.assessmentResultsUrl).toBe(routerSpy.url);
+    });
+
+    it("isPeerAssessmentsOverviewActive should return correct state", () => {
+      component.selectedProject = null;
+      routerSpy.url = "/courses/1/projects/P1/assessments";
+      expect(component.isPeerAssessmentsOverviewActive()).toBeFalse();
+
+      component.selectedProject = sampleProject;
+      routerSpy.url = "/courses/1/projects/P1/assessments";
+      expect(component.isPeerAssessmentsOverviewActive()).toBeTrue();
+
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/detailed-results";
+      expect(component.isPeerAssessmentsOverviewActive()).toBeFalse();
+    });
+
+    it("assessmentResultsTeamName should return name from service if set, or fallback to internal signal", () => {
+      // From service
+      projectTeamAssessmentServiceSpy.activeResultTeamName.set("Alpha Team");
+      expect(component.assessmentResultsTeamName).toBe("Alpha Team");
+
+      // Fallback
+      projectTeamAssessmentServiceSpy.activeResultTeamName.set("");
+      expect(component.assessmentResultsTeamName).toBe("");
+    });
+
+    it("handleNavigationEvent should update assessmentResultsTeamName from project details on detailed-results route", () => {
+      routerSpy.url = "/courses/1/projects/P1/assessments/5/teams/10/detailed-results";
+      courseServiceSpy.getCourseContentsById.and.returnValue(
+        of(
+          GetResult.success({
+            id: 1,
+            code: "C1",
+            name: "Course 1",
+            chapters: [],
+            projects: [sampleProject],
+          }),
+        ),
+      );
+
+      projectTeamAssessmentServiceSpy.activeResultTeamName.set("");
+      component.ngOnInit();
+
+      expect(projectServiceSpy.getProjectDetails).toHaveBeenCalledWith(1, "P1");
+      expect(component.assessmentResultsTeamName).toBe("Team 1");
+
+      // Navigate away to non-results route resets assessmentResultsTeamName
+      routerSpy.url = "/courses/1/projects/P1/assessments";
+      routerSpy.events$.next(new NavigationEnd(2, routerSpy.url, routerSpy.url));
+      expect(component.assessmentResultsTeamName).toBe("");
     });
   });
 });
