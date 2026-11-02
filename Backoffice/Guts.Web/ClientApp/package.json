@@ -13,6 +13,10 @@
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",
     "test:coverage": "ng test --watch=false --code-coverage --browsers=ChromeHeadlessCI",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
     "sonar": "npx --yes @sonar/scan"
   },
   "private": true,
@@ -47,6 +51,7 @@
     "@angular/cli": "^22.2.3",
     "@angular/compiler-cli": "^22.2.3",
     "@angular/language-service": "^22.2.3",
+    "@playwright/test": "^1.58.2",
     "@types/jasmine": "^6.0.0",
     "eslint": "8.48.0",
     "istanbul-lib-instrument": "^6.0.3",
