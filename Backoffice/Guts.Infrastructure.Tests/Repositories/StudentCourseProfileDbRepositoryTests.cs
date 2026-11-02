@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
@@ -94,6 +95,74 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
         var leaderboardProfiles = await repo.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
         Assert.That(leaderboardProfiles.Count, Is.EqualTo(1));
         Assert.That(leaderboardProfiles[0].UserId, Is.EqualTo(user1.Id));
+    }
+
+    [Test]
+    public async Task GetForWeeklySprintLeaderboardAsync_ShouldIncludeBadgesEventsUserAndClassGroup()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user = await Seeder.SeedUserAsync("Sprint", "Master");
+        var startOfWeek = new DateTime(2026, 10, 26, 0, 0, 0, DateTimeKind.Utc);
+        var midWeek = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc);
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var classGroup = new CourseClassGroup("1TIN-B", course.Id, period.Id);
+            seedContext.CourseClassGroups.Add(classGroup);
+            await seedContext.SaveChangesAsync();
+
+            var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
+            profile.Enroll(true, "SprintMaster", "Lightning", classGroup.Id, false);
+            profile.AwardPassedTestXp(101, midWeek);
+            profile.AwardBadge(BadgeType.SprintBronze, midWeek);
+
+            seedContext.StudentCourseProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new StudentCourseProfileDbRepository(context);
+
+        var sprintProfiles = await repo.GetForWeeklySprintLeaderboardAsync(course.Id, period.Id, startOfWeek);
+        Assert.That(sprintProfiles.Count, Is.EqualTo(1));
+
+        var loadedProfile = sprintProfiles[0];
+        Assert.That(loadedProfile.Badges, Is.Not.Null);
+        Assert.That(loadedProfile.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
+        Assert.That(loadedProfile.Events, Is.Not.Null);
+        Assert.That(loadedProfile.Events.Count, Is.EqualTo(1));
+        Assert.That(loadedProfile.User, Is.Not.Null);
+        Assert.That(loadedProfile.ClassGroup, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task GetForLeaderboardByCourseAndPeriodAsync_DoesNotIncludeEventsOrBadges_ReproducingWhyProductionFailed()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user = await Seeder.SeedUserAsync("Sprint", "Candidate");
+        var midWeek = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc);
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
+            profile.Enroll(true, "SprintCandidate", "Wizard", null, false);
+            profile.AwardPassedTestXp(101, midWeek);
+            profile.AwardBadge(BadgeType.SprintGold, midWeek);
+
+            seedContext.StudentCourseProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new StudentCourseProfileDbRepository(context);
+
+        // This was the method previously called by AwardWeeklySprintBadgesAsync:
+        var leaderboardProfiles = await repo.GetForLeaderboardByCourseAndPeriodAsync(course.Id, period.Id);
+        Assert.That(leaderboardProfiles.Count, Is.EqualTo(1));
+        Assert.That(leaderboardProfiles[0].Events.Count, Is.EqualTo(0),
+            "Demonstrates the bug: GetForLeaderboardByCourseAndPeriodAsync does NOT include Events, leading to 0 weekly XP");
+        Assert.That(leaderboardProfiles[0].Badges.Count, Is.EqualTo(0),
+            "Demonstrates the bug: GetForLeaderboardByCourseAndPeriodAsync does NOT include Badges, breaking badge deduplication");
     }
 
     [Test]

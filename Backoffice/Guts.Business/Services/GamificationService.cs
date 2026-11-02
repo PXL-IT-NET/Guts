@@ -1,4 +1,5 @@
 using Guts.Domain.AssignmentAggregate;
+using Guts.Domain.CourseAggregate;
 using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -847,49 +848,69 @@ public class GamificationService(
 
     public async Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)
     {
+        DateTime startOfWeek = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday);
         DateTime friday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Friday);
         DateTime fridayCutoff = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59, DateTimeKind.Utc);
-        DateTime nextMonday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday).AddDays(7);
+        DateTime nextMonday = startOfWeek.AddDays(7);
 
         var period = await periodRepository.GetPeriodAsync(periodId);
         if (period == null) return;
 
         var courses = await courseRepository.GetAllAsync();
 
-        foreach (int courseId in courses.Select(course => course.Id))
+        foreach (var course in courses)
         {
-            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
-            await AwardWeeklySprintBadgesForCourseAsync(courseId, period.Id, fridayCutoff, config);
-            await EvaluateWeeklyStreaksForCourseAsync(courseId, period.Id, nextMonday, config);
+            var config = await courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
+            await AwardWeeklySprintBadgesForCourseAsync(course, period.Id, startOfWeek, fridayCutoff, config);
+            await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config);
         }
     }
 
     private async Task AwardWeeklySprintBadgesForCourseAsync(
-        int courseId,
+        Course course,
         int periodId,
+        DateTime startOfWeek,
         DateTime fridayCutoff,
         CourseGamificationConfig config)
     {
-        if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled))
+        if (config == null || !config.IsGamificationEnabled)
         {
             return;
         }
 
-        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId);
+        if (!config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled)
+        {
+            logger.LogInformation("Course {CourseCode} (Id: {CourseId}): 0 weekly sprint badges awarded (gamification enabled, but required sub-feature is disabled).",
+                course.Code, course.Id);
+            return;
+        }
+
+        var optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(course.Id, periodId, startOfWeek);
         var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
         var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
-        if (topEntries.Count == 0) return;
 
-        var topEntry = topEntries[0];
-
-        foreach (var entry in topEntries)
+        int badgesAwarded = 0;
+        if (topEntries.Count > 0)
         {
-            var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
-            if (profile != null && AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff))
+            var topEntry = topEntries[0];
+
+            foreach (var entry in topEntries)
             {
-                await studentCourseProfileRepository.UpdateAsync(profile);
+                var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
+                if (profile != null)
+                {
+                    int newlyAwarded = AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff);
+                    if (newlyAwarded > 0)
+                    {
+                        badgesAwarded += newlyAwarded;
+                        await studentCourseProfileRepository.UpdateAsync(profile);
+                    }
+                }
             }
         }
+
+        logger.LogInformation("Course {CourseCode} (Id: {CourseId}): {BadgeCount} weekly sprint badges awarded.",
+            course.Code, course.Id, badgesAwarded);
     }
 
     private async Task EvaluateWeeklyStreaksForCourseAsync(
@@ -898,7 +919,7 @@ public class GamificationService(
         DateTime evaluationTimestamp,
         CourseGamificationConfig config)
     {
-        if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled))
+        if (config == null || !config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled)
         {
             return;
         }
@@ -930,42 +951,42 @@ public class GamificationService(
         }
     }
 
-    private static bool AwardSprintBadgesForEntry(
+    private static int AwardSprintBadgesForEntry(
         StudentCourseProfile profile,
         LeaderboardEntryDto entry,
         LeaderboardEntryDto topEntry,
         DateTime fridayCutoff)
     {
-        bool modified = false;
+        int count = 0;
         int rank = entry.Rank;
 
         if ((rank == 1 || (entry.Score == topEntry.Score && entry.GreenTestsCount == topEntry.GreenTestsCount)) &&
             profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
         {
-            modified = true;
+            count++;
         }
 
         if (rank <= 2 && profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
         {
-            modified = true;
+            count++;
         }
 
         if (rank <= 3 && profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
         {
-            modified = true;
+            count++;
         }
 
         if (rank <= 4 && profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
         {
-            modified = true;
+            count++;
         }
 
         if (rank <= 5 && profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
         {
-            modified = true;
+            count++;
         }
 
-        return modified;
+        return count;
     }
 
     public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()

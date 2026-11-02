@@ -784,7 +784,7 @@ public class GamificationServiceTests
         var s7WeekendXp = new StudentCourseProfile(7, courseId, periodId);
         s7WeekendXp.AwardAssignmentBonus(207, weekendEventTime);
 
-        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
             .ReturnsAsync(new List<StudentCourseProfile> { s1, s2, s3, s4, s5, s6ZeroXp, s7WeekendXp });
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
@@ -830,7 +830,7 @@ public class GamificationServiceTests
         Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
         Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.False);
 
-        _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId), Times.Once);
+        _studentCourseProfileRepositoryMock.Verify(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()), Times.Once);
     }
 
     [Test]
@@ -854,7 +854,148 @@ public class GamificationServiceTests
 
         await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
 
-        _studentCourseProfileRepositoryMock.Verify(r => r.GetForLeaderboardByCourseAndPeriodAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        _studentCourseProfileRepositoryMock.Verify(r => r.GetForWeeklySprintLeaderboardAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenCourseConfigIsNull_ShouldNotAwardBadgesAndNotQueryProfiles()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43;
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync((CourseGamificationConfig)null);
+
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+        _studentCourseProfileRepositoryMock.Verify(r => r.GetForWeeklySprintLeaderboardAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenLoadedProfilesHaveEmptyEvents_ReproducingProductionZeroBadgesAwarded()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43;
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsBadgesEnabled = true
+            });
+
+        // Profiles with TotalXp in DB but NO Events loaded (exactly what GetForLeaderboardByCourseAndPeriodAsync returned in production)
+        var s1WithoutEvents = new StudentCourseProfile(1, courseId, periodId);
+        s1WithoutEvents.Enroll(true, "Hero", "Wizard", null, false);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<StudentCourseProfile> { s1WithoutEvents });
+
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+        // No badges awarded because weekly XP was evaluated to 0 due to missing Events navigation property
+        Assert.That(s1WithoutEvents.Badges.Count, Is.Zero);
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("0 weekly sprint badges awarded")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenGamificationEnabled_ShouldLogBadgeCountPerCourse()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43;
+        var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsBadgesEnabled = true
+            });
+
+        var s1 = new StudentCourseProfile(1, courseId, periodId);
+        s1.AwardPassedTestXp(101, eventTime);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<StudentCourseProfile> { s1 });
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("weekly sprint badges awarded")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_WhenRunTwice_ShouldBeIdempotentAndNotAwardDuplicateBadges()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43;
+        var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsBadgesEnabled = true
+            });
+
+        var s1 = new StudentCourseProfile(1, courseId, periodId);
+        s1.AwardPassedTestXp(101, eventTime);
+        int initialBadges = s1.Badges.Count;
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<StudentCourseProfile> { s1 });
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+
+        // First run: awards 5 badges to s1
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+        int badgeCountAfterFirstRun = s1.Badges.Count;
+        Assert.That(badgeCountAfterFirstRun - initialBadges, Is.EqualTo(5));
+
+        _studentCourseProfileRepositoryMock.Invocations.Clear();
+
+        // Second run: idempotent, no duplicate badges awarded, no unnecessary DB update
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+        Assert.That(s1.Badges.Count, Is.EqualTo(badgeCountAfterFirstRun));
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
     }
 
     [Test]
@@ -1400,7 +1541,7 @@ public class GamificationServiceTests
         var s3Active = new StudentCourseProfile(3, courseId, periodId);
         s3Active.AwardPassedTestXp(101, week43);
 
-        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
             .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
             .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });

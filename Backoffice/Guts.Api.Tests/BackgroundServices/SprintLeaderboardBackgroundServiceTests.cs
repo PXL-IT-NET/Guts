@@ -69,6 +69,34 @@ public class SprintLeaderboardBackgroundServiceTests
     }
 
     [Test]
+    public void GetPreviousCompletedWeek_FromAnyDayOfWeek_ShouldReturnPrecedingCompletedIsoWeek()
+    {
+        // Monday Nov 2, 2026 (Week 45) -> Previous completed week is Week 44 of 2026
+        var monday = new DateTime(2026, 11, 2, 9, 0, 0, DateTimeKind.Utc);
+        var (year1, week1) = SprintLeaderboardBackgroundService.GetPreviousCompletedWeek(monday);
+        Assert.That(year1, Is.EqualTo(2026));
+        Assert.That(week1, Is.EqualTo(44));
+
+        // Wednesday Nov 4, 2026 (Week 45) -> Still Week 44
+        var wednesday = new DateTime(2026, 11, 4, 15, 0, 0, DateTimeKind.Utc);
+        var (year2, week2) = SprintLeaderboardBackgroundService.GetPreviousCompletedWeek(wednesday);
+        Assert.That(year2, Is.EqualTo(2026));
+        Assert.That(week2, Is.EqualTo(44));
+
+        // Sunday Nov 8, 2026 (Week 45) -> Still Week 44
+        var sunday = new DateTime(2026, 11, 8, 23, 59, 0, DateTimeKind.Utc);
+        var (year3, week3) = SprintLeaderboardBackgroundService.GetPreviousCompletedWeek(sunday);
+        Assert.That(year3, Is.EqualTo(2026));
+        Assert.That(week3, Is.EqualTo(44));
+
+        // Monday Nov 9, 2026 (Week 46) -> Week 45
+        var nextMonday = new DateTime(2026, 11, 9, 0, 1, 0, DateTimeKind.Utc);
+        var (year4, week4) = SprintLeaderboardBackgroundService.GetPreviousCompletedWeek(nextMonday);
+        Assert.That(year4, Is.EqualTo(2026));
+        Assert.That(week4, Is.EqualTo(45));
+    }
+
+    [Test]
     public async Task ExecuteSprintAwardingAsync_ShouldCallGamificationServiceWithPreviousWeekYearAndWeekNumber()
     {
         // Monday Oct 26, 2026 is week 44; previous week was week 43 of 2026
@@ -78,6 +106,8 @@ public class SprintLeaderboardBackgroundServiceTests
 
         _scopeFactoryMock.Verify(f => f.CreateScope(), Times.Once);
         _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 43, null), Times.Once);
+        Assert.That(_service.LastSuccessfulWeek, Is.EqualTo((2026, 43)));
+        Assert.That(_service.LastRunFailed, Is.False);
     }
 
     [Test]
@@ -89,6 +119,35 @@ public class SprintLeaderboardBackgroundServiceTests
         await _service.ExecuteSprintAwardingAsync(executionTime, CancellationToken.None);
 
         _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 43, null), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAwardingSafelyAsync_WhenAlreadyCompletedForSameWeek_ShouldSkipExecution()
+    {
+        var executionTime = new DateTime(2026, 11, 2, 9, 0, 0, DateTimeKind.Utc);
+
+        bool firstRunResult = await _service.RunAwardingSafelyAsync(executionTime, CancellationToken.None);
+        Assert.That(firstRunResult, Is.True);
+        _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 44, null), Times.Once);
+
+        bool secondRunResult = await _service.RunAwardingSafelyAsync(executionTime, CancellationToken.None);
+        Assert.That(secondRunResult, Is.True);
+        // Should not call service again for the same completed week
+        _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(2026, 44, null), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAwardingSafelyAsync_WhenAwardingThrows_ShouldSetLastRunFailedAndReturnFalse()
+    {
+        var executionTime = new DateTime(2026, 11, 2, 9, 0, 0, DateTimeKind.Utc);
+        _gamificationServiceMock.Setup(s => s.AwardWeeklySprintBadgesAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int?>()))
+            .ThrowsAsync(new InvalidOperationException("DB connection error"));
+
+        bool result = await _service.RunAwardingSafelyAsync(executionTime, CancellationToken.None);
+
+        Assert.That(result, Is.False);
+        Assert.That(_service.LastRunFailed, Is.True);
+        Assert.That(_service.LastSuccessfulWeek, Is.Null);
     }
 
     [Test]
@@ -104,7 +163,7 @@ public class SprintLeaderboardBackgroundServiceTests
     }
 
     [Test]
-    public async Task StartAsync_WhenRunningAndThenStopped_ShouldEnterLoopAndCancelDelayGracefully()
+    public async Task StartAsync_WhenRunning_ShouldRunOnStartupAndThenCancelDelayGracefully()
     {
         using var cts = new CancellationTokenSource();
 
@@ -112,6 +171,40 @@ public class SprintLeaderboardBackgroundServiceTests
         await Task.Delay(50);
         await _service.StopAsync(CancellationToken.None);
 
-        Assert.Pass();
+        // Should have run on startup
+        _gamificationServiceMock.Verify(s => s.AwardWeeklySprintBadgesAsync(It.IsAny<int>(), It.IsAny<int>(), null), Times.Once);
+        Assert.That(_service.LastSuccessfulWeek, Is.Not.Null);
+        Assert.That(_service.LastRunFailed, Is.False);
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WhenStartupAwardingFails_ShouldRetryAfterRetryInterval()
+    {
+        _service.RetryInterval = TimeSpan.FromMilliseconds(50);
+
+        int callCount = 0;
+        _gamificationServiceMock.Setup(s => s.AwardWeeklySprintBadgesAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int?>()))
+            .Returns(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    throw new InvalidOperationException("Transient startup failure");
+                }
+                return Task.CompletedTask;
+            });
+
+        using var cts = new CancellationTokenSource();
+
+        await _service.StartAsync(cts.Token);
+
+        // Wait enough time for the retry to fire
+        await Task.Delay(150);
+
+        await _service.StopAsync(CancellationToken.None);
+
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(2));
+        Assert.That(_service.LastRunFailed, Is.False);
+        Assert.That(_service.LastSuccessfulWeek, Is.Not.Null);
     }
 }

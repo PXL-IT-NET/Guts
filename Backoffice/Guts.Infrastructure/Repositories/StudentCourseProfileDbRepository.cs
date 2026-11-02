@@ -71,6 +71,7 @@ internal class StudentCourseProfileDbRepository : BaseDbRepository<StudentCourse
 
         return await _context.StudentCourseProfiles
             .AsSplitQuery()
+            .Include(sp => sp.Badges)
             .Include(sp => sp.ClassGroup)
             .Include(sp => sp.User)
             .Include(sp => sp.Events.Where(e => e.CreatedAt >= startOfWeek))
