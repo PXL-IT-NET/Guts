@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -7,6 +7,7 @@ namespace Guts.Domain.AssessmentResultAggregate;
 public interface IAssessmentResult
 {
     User Subject { get; }
+    string AssessmentDescription { get; }
 
     IPeerAssessment SelfAssessment { get; }
     IReadOnlyList<IPeerAssessment> PeerAssessments { get; }

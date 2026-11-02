@@ -24,7 +24,7 @@ The **Project Team Peer Assessments** feature enables:
 - **US-2 (Evaluate Self & Peers)**: As a **Student**, I want to submit scores for **Cooperation**, **Contribution**, and **Effort** (plus a mandatory explanation when deviating from average) for myself and every member of my `ProjectTeam` so that our individual contributions are fairly recorded.
 - **US-3 (Track Team Completion Status)**: As a **Student** or **Lector**, I want to see whether a team's assessment is complete and which team members still need to submit evaluations.
 - **US-4 (View Student Summary Result)**: As a **Student**, I want to view my own aggregated assessment result (comparing my self-assessment against my peers' average scores and the team averages, without revealing individual peer identities/explanations) so I can reflect on my performance.
-- **US-5 (Inspect Detailed Lector Results)**: As a **Lector**, I want to view the complete assessment results for a project team—including every individual peer evaluation and written explanation—so I can grade or moderate team members fairly.
+- **US-5 (Inspect Detailed Lector Results & Navigate Completed Teams)**: As a **Lector**, I want to view the complete assessment results for a project team—including every individual peer evaluation and written explanation—and navigate seamlessly between completed teams via "Previous" and "Next" controls showing the current team name between them, skipping any incomplete teams, with a dedicated "Assessment results '[Teamname]'" tab in the course navigation, so I can grade or moderate team members fairly and efficiently.
 
 ---
 
@@ -67,6 +67,15 @@ The **Project Team Peer Assessments** feature enables:
   - `Value` / `Score` (mean of all evaluations of the subject, including self)
   - `AverageValue`, `AverageSelfValue`, and `AveragePeerValue` across the entire team
 - **And** individual `PeerAssessments` (with evaluator identity and explanation) are included **only** for Lectors (`includePeerAssessments = true`) and omitted for Students (`includePeerAssessments = false`).
+- **And** on the student's personal results view (`/my-result`), the page title displays "[Description] - Your results".
+
+### AC-7: Navigating Detailed Results Between Completed Teams (Lector)
+- **Given** an open or completed project assessment with multiple project teams
+- **When** a Lector navigates to the detailed results view for a team (`/detailed-results`)
+- **Then** the course navigation shows "Peer assessments" as the main topic tab and displays a new active tab labeled "Assessment results '[Teamname]'" containing the current team's name.
+- **And** on the detailed results view, the assessment description is displayed in the page title (e.g., "[Description] - Results"), and the current team name is clearly displayed between "Previous" and "Next" navigation controls.
+- **And** the "Previous" and "Next" links navigate exclusively to adjacent teams that have completed the assessment (`IsComplete == true`), skipping any teams with incomplete assessments.
+- **And** the "Previous" link is disabled when there are no prior completed teams, and the "Next" link is disabled when there are no subsequent completed teams.
 
 ---
 

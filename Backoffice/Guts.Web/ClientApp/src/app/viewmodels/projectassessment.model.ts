@@ -140,6 +140,7 @@ export class PeerAssessmentModel implements IPeerAssessmentModel {
 }
 
 export interface IAssessmentResultModel {
+  assessmentDescription?: string;
   subject: IUserModel;
   selfAssessment: IPeerAssessmentModel;
   peerAssessments: IPeerAssessmentModel[];

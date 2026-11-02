@@ -117,9 +117,23 @@
           <a
             class="nav-link"
             [routerLink]="['projects', selectedProject.code, 'assessments']"
-            routerLinkActive="active"
+            [class.active]="isPeerAssessmentsOverviewActive()"
           >
-            <span>Peer assessment</span>
+            <span>Peer assessments</span>
+          </a>
+        </li>
+      }
+      @if (assessmentResultsActive) {
+        <li class="nav-item">
+          <a
+            class="nav-link active"
+            [routerLink]="assessmentResultsUrl"
+          >
+            @if (assessmentResultsTeamName) {
+              <span>Assessment results &apos;{{ assessmentResultsTeamName }}&apos;</span>
+            } @else {
+              <span>Assessment results</span>
+            }
           </a>
         </li>
       }

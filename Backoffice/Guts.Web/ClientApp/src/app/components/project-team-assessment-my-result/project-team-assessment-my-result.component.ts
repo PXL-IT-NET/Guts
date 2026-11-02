@@ -17,6 +17,14 @@ export class ProjectTeamAssessmentMyResultComponent
 {
   private readonly destroyRef = inject(DestroyRef);
 
+  private readonly _assessmentDescription = signal<string>("");
+  public get assessmentDescription(): string {
+    return this._assessmentDescription();
+  }
+  public set assessmentDescription(v: string) {
+    this._assessmentDescription.set(v);
+  }
+
   private readonly _result = signal<IAssessmentResultModel | null>(null);
   public get result(): IAssessmentResultModel {
     return this._result();
@@ -52,7 +60,7 @@ export class ProjectTeamAssessmentMyResultComponent
   }
 
   ngOnInit(): void {
-    let assessmentId = this.route.snapshot.params["assessmentId"];
+    let assessmentId = +this.route.snapshot.params["assessmentId"];
 
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       let teamId = params["teamId"];
@@ -63,6 +71,9 @@ export class ProjectTeamAssessmentMyResultComponent
         .subscribe((result) => {
           if (result.success) {
             this.result = result.value;
+            if (this.result.assessmentDescription) {
+              this.assessmentDescription = this.result.assessmentDescription;
+            }
 
             this.chartData.datasets.push(
               {

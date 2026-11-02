@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Guts.Api.Models.ProjectModels;
 
 public class AssessmentResultModel
 {
     public UserModel Subject { get; set; }
+
+    public string AssessmentDescription { get; set; }
 
     public PeerAssessmentModel SelfAssessment { get; set; }
 

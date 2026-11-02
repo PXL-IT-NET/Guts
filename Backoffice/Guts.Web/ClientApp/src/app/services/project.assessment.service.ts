@@ -39,6 +39,23 @@ export class ProjectAssessmentService {
       );
   }
 
+  public getProjectAssessment(
+    id: number,
+  ): Observable<GetResult<ProjectAssessmentModel>> {
+    return this.http
+      .get<IProjectAssessmentModel>("api/project-assessments/" + id)
+      .pipe(
+        map((model) => GetResult.success(new ProjectAssessmentModel(model))),
+        catchError((errorResponse: HttpErrorResponse) => {
+          return of(
+            GetResult.fromHttpErrorResponse<ProjectAssessmentModel>(
+              errorResponse,
+            ),
+          );
+        }),
+      );
+  }
+
   public addProjectAssessment(
     model: ProjectAssessmentCreateModel,
   ): Observable<CreateResult<ProjectAssessmentModel>> {

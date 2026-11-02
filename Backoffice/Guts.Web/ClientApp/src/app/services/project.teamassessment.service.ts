@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
-import { Injectable } from "@angular/core";
+import { Injectable, signal } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { GetResult, PostResult } from "../util/result";
@@ -15,6 +15,8 @@ import {
   providedIn: "root",
 })
 export class ProjectTeamAssessmentService {
+  public readonly activeResultTeamName = signal<string>("");
+
   constructor(private readonly http: HttpClient) {}
 
   public getStatusOfProjectTeamAssessment(

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject } from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -13,7 +13,7 @@ import { GetResult } from "src/app/util/result";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ProjectAddComponent } from "../project-add/project-add.component";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
-import { PeriodProvider } from "src/app/services";
+import { PeriodProvider, ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { GamificationService } from "../../services/gamification.service";
 
 @Component({
@@ -111,6 +111,37 @@ export class CourseComponent implements OnInit, OnDestroy {
 
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
+
+  private readonly projectService = inject(ProjectService, { optional: true });
+  private readonly projectTeamAssessmentService = inject(ProjectTeamAssessmentService, { optional: true });
+
+  private readonly _assessmentResultsTeamName = signal<string>("");
+  public get assessmentResultsTeamName(): string {
+    const fromService = this.projectTeamAssessmentService?.activeResultTeamName();
+    if (fromService) {
+      return fromService;
+    }
+    return this._assessmentResultsTeamName();
+  }
+
+  public get assessmentResultsActive(): boolean {
+    if (!this.selectedProject) return false;
+    return (
+      this.router.url.includes("/detailed-results") ||
+      this.router.url.includes("/my-result")
+    );
+  }
+
+  public get assessmentResultsUrl(): string {
+    return this.router.url;
+  }
+
+  public isPeerAssessmentsOverviewActive(): boolean {
+    if (!this.selectedProject) return false;
+    return (
+      this.router.url.includes("/assessments") && !this.assessmentResultsActive
+    );
+  }
 
   public modalRef: BsModalRef;
 
@@ -237,6 +268,26 @@ export class CourseComponent implements OnInit, OnDestroy {
     const assignmentId = assignmentIdMatch
       ? +assignmentIdMatch.groups.assignmentId
       : 0;
+
+    const detailedResultsMatch =
+      /assessments\/\d+\/teams\/(?<teamId>\d+)\/(detailed-results|my-result)/.exec(
+        url,
+      );
+    if (detailedResultsMatch && projectCode && this.projectService) {
+      const teamId = +detailedResultsMatch.groups.teamId;
+      this.projectService
+        .getProjectDetails(courseId, projectCode)
+        .subscribe((res) => {
+          if (res.success && res.value?.teams) {
+            const team = res.value.teams.find((t) => t.id === teamId);
+            if (team) {
+              this._assessmentResultsTeamName.set(team.name);
+            }
+          }
+        });
+    } else if (!this.assessmentResultsActive) {
+      this._assessmentResultsTeamName.set("");
+    }
 
     this.loadCourseContents(courseId, topicCode, assignmentId, forceReload);
   }

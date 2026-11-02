@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
@@ -9,6 +9,7 @@ namespace Guts.Domain.AssessmentResultAggregate;
 internal class AssessmentResult : IAssessmentResult
 {
     public User Subject { get; private set; }
+    public string AssessmentDescription { get; private set; }
     public IPeerAssessment SelfAssessment { get; private set; }
     public IReadOnlyList<IPeerAssessment> PeerAssessments { get; private set; }
     public IAssessmentSubResult AverageResult { get; private set; }
@@ -35,6 +36,7 @@ internal class AssessmentResult : IAssessmentResult
 
             User subject = projectTeamAssessment.Team.GetTeamUser(subjectId);
             result.Subject = subject;
+            result.AssessmentDescription = projectTeamAssessment.ProjectAssessment?.Description ?? string.Empty;
 
             IReadOnlyCollection<IPeerAssessment> allPeerAssessments = projectTeamAssessment.PeerAssessments;
             result.SelfAssessment = allPeerAssessments.FirstOrDefault(pa => pa.IsSelfAssessment && pa.Subject.Id == subject.Id);

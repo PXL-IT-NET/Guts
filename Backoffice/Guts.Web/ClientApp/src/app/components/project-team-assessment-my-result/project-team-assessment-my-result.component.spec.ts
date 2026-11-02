@@ -17,6 +17,7 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
   let routeStub: ActivatedRouteStub;
 
   const sampleResult: IAssessmentResultModel = {
+    assessmentDescription: "Sprint 1 Assessment",
     subject: { id: 1, fullName: "Alice A" },
     selfAssessment: null,
     peerAssessments: [],
@@ -102,6 +103,8 @@ describe("ProjectTeamAssessmentMyResultComponent", () => {
     expect(
       teamAssessmentServiceSpy.getMyResultOfProjectTeamAssessment,
     ).toHaveBeenCalledWith(5, 20);
+    expect(component.assessmentDescription).toBe("Sprint 1 Assessment");
+    expect(component.assessmentDescription).toBe("Sprint 1 Assessment");
     expect(component.result).toEqual(sampleResult);
     expect(component.chartData.datasets).toHaveSize(2);
     expect(component.chartData.datasets[0].label).toBe("Peers");
