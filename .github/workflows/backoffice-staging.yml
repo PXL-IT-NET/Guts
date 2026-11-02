@@ -100,6 +100,32 @@ jobs:
             Set-Content -Path $lcovPath -Value $lines -Encoding UTF8
           }
 
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~\AppData\Local\ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('Backoffice/Guts.Web/ClientApp/package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: Backoffice/Guts.Web/ClientApp
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E Tests
+        working-directory: Backoffice/Guts.Web/ClientApp
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-staging
+          path: Backoffice/Guts.Web/ClientApp/playwright-report/
+          retention-days: 7
+
       # ---------------------------------------------------------------------
       # Backend CI: Restore, SonarCloud Begin, Build & Run Tests with Coverage
       # ---------------------------------------------------------------------
