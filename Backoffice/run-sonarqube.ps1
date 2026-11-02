@@ -52,7 +52,10 @@ param(
     [switch]$UseSonarCloud,
     [switch]$StartServer,
     [switch]$SkipFrontendTests,
-    [switch]$SkipBackendTests
+    [switch]$SkipBackendTests,
+    [string]$PullRequestKey = "",
+    [string]$PullRequestBranch = "",
+    [string]$PullRequestBase = ""
 )
 
 # Use Continue so Windows PowerShell 5.1 does not abort when native CLI tools (node/npm/dotnet) write warnings to stderr
@@ -217,7 +220,9 @@ try {
     $coverageExclusions = @(
         "**/Guts.Bootstrapper/**",
         "**/*.ps1",
-        "**/deploy/**"
+        "**/deploy/**",
+        "**/Guts.Web/ClientApp/e2e/**",
+        "**/Guts.Web/ClientApp/playwright.config.ts"
     ) -join ","
 
     Write-Host "==> Starting SonarScanner analysis for '$ProjectKey' ($SonarUrl)..." -ForegroundColor Cyan
@@ -235,6 +240,11 @@ try {
     )
     if ($UseSonarCloud) {
         $beginArgs += "/o:$Organization"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($PullRequestKey)) {
+        $beginArgs += "/d:sonar.pullrequest.key=$PullRequestKey"
+        if (-not [string]::IsNullOrWhiteSpace($PullRequestBranch)) { $beginArgs += "/d:sonar.pullrequest.branch=$PullRequestBranch" }
+        if (-not [string]::IsNullOrWhiteSpace($PullRequestBase)) { $beginArgs += "/d:sonar.pullrequest.base=$PullRequestBase" }
     }
     else {
         $beginArgs += "/n:$ProjectName"

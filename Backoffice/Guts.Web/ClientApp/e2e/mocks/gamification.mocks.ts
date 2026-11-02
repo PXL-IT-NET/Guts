@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, Route } from "@playwright/test";
 import { mockActivePeriod, mockCourseContents, mockCourseList } from "./course.mocks";
 import {
   ICourseGamificationConfigModel,
@@ -280,12 +280,102 @@ export interface SetupGamificationOptions {
   isTeacher?: boolean;
 }
 
+const defaultGamificationOptions: SetupGamificationOptions = Object.freeze({
+  enabled: true,
+  isTeacher: false,
+});
+
+async function handleGamificationConfigRoute(
+  route: Route,
+  config: ICourseGamificationConfigModel,
+): Promise<void> {
+  if (route.request().method() === "PUT") {
+    const updatedConfig = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(updatedConfig),
+    });
+    return;
+  }
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(config),
+  });
+}
+
+async function handleGamificationClassesRoute(route: Route): Promise<void> {
+  if (route.request().method() === "POST") {
+    const data = route.request().postDataJSON();
+    const name = typeof data === "string" ? data : (data?.name || "1TIN-C");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: 99, name, courseId: 1, periodId: 1 }),
+    });
+    return;
+  }
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(mockClassGroups),
+  });
+}
+
+async function handleGamificationProfileRoute(route: Route, url: string): Promise<void> {
+  if (url.includes("perspectiveUserId=303")) {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockInspectedStudentProfile),
+    });
+    return;
+  }
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(mockStudentGamificationProfile),
+  });
+}
+
+async function handleGamificationLeaderboardRoute(
+  route: Route,
+  url: string,
+  isTeacher: boolean,
+): Promise<void> {
+  if (url.includes("/gamification/leaderboard/hall-of-fame")) {
+    if (url.includes("perspectiveUserId=303")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockHallOfFameStudentView),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(isTeacher ? mockHallOfFameTeacherView : mockHallOfFameStudentView),
+    });
+    return;
+  }
+
+  if (url.includes("/gamification/leaderboard/weekly")) {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockWeeklySprintEntries),
+    });
+  }
+}
+
 /**
  * Intercepts all gamification endpoints for course 1.
  */
 export async function setupGamificationApiMocks(
   page: Page,
-  options: SetupGamificationOptions = { enabled: true, isTeacher: false },
+  options: SetupGamificationOptions = defaultGamificationOptions,
 ) {
   const isEnabled = options.enabled ?? true;
   const isTeacher = options.isTeacher ?? false;
@@ -317,82 +407,22 @@ export async function setupGamificationApiMocks(
     const url = route.request().url();
 
     if (url.includes("/gamification/config")) {
-      if (route.request().method() === "PUT") {
-        const updatedConfig = route.request().postDataJSON();
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(updatedConfig),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(config),
-      });
+      await handleGamificationConfigRoute(route, config);
       return;
     }
 
     if (url.includes("/gamification/classes")) {
-      if (route.request().method() === "POST") {
-        const data = route.request().postDataJSON();
-        const name = typeof data === "string" ? data : (data?.name || "1TIN-C");
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ id: 99, name, courseId: 1, periodId: 1 }),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockClassGroups),
-      });
+      await handleGamificationClassesRoute(route);
       return;
     }
 
     if (url.includes("/gamification/profile")) {
-      if (url.includes("perspectiveUserId=303")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockInspectedStudentProfile),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockStudentGamificationProfile),
-      });
+      await handleGamificationProfileRoute(route, url);
       return;
     }
 
-    if (url.includes("/gamification/leaderboard/hall-of-fame")) {
-      if (url.includes("perspectiveUserId=303")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockHallOfFameStudentView),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(isTeacher ? mockHallOfFameTeacherView : mockHallOfFameStudentView),
-      });
-      return;
-    }
-
-    if (url.includes("/gamification/leaderboard/weekly")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockWeeklySprintEntries),
-      });
+    if (url.includes("/gamification/leaderboard")) {
+      await handleGamificationLeaderboardRoute(route, url, isTeacher);
       return;
     }
 

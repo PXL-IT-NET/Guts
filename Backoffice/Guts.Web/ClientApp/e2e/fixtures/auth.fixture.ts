@@ -1,4 +1,4 @@
-import { test as base, expect, Page } from "@playwright/test";
+import { test as base, Page } from "@playwright/test";
 import {
   MockUserProfile,
   mockTeacherProfile,
@@ -81,5 +81,5 @@ export const test = base.extend<AuthFixtures>({
   },
 });
 
-export { expect };
+export { expect } from "@playwright/test";
 

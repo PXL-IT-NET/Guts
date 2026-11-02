@@ -169,7 +169,7 @@ jobs:
             /d:sonar.cs.vstest.reportsPaths="$trxPaths" `
             /d:sonar.javascript.lcov.reportPaths="$lcovPath" `
             /d:sonar.exclusions="$exclusions" `
-            /d:sonar.coverage.exclusions="**/Guts.Bootstrapper/**,**/*.ps1,**/deploy/**" `
+            /d:sonar.coverage.exclusions="**/Guts.Bootstrapper/**,**/*.ps1,**/deploy/**,**/Guts.Web/ClientApp/e2e/**,**/Guts.Web/ClientApp/playwright.config.ts" `
             /d:sonar.qualitygate.wait=true `
             /d:sonar.test.inclusions="**/*.spec.ts"
 

@@ -80,13 +80,16 @@ public class StreakReminderBackgroundServiceTests
     }
 
     [Test]
-    public async Task StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
+    public void StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
     {
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        await _service.StartAsync(cts.Token);
-        await _service.StopAsync(CancellationToken.None);
+        Assert.DoesNotThrowAsync(async () =>
+        {
+            await _service.StartAsync(cts.Token);
+            await _service.StopAsync(CancellationToken.None);
+        });
     }
 }
 

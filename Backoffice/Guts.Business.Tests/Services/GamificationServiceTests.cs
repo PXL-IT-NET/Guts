@@ -55,6 +55,7 @@ public class GamificationServiceTests
         _studentCourseProfileFactoryMock = new Mock<IStudentCourseProfileFactory>();
         _courseClassGroupFactoryMock = new Mock<ICourseClassGroupFactory>();
         _loggerMock = new Mock<ILogger<GamificationService>>();
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         _periodMock = new Mock<IPeriod>();
         _periodMock.SetupGet(p => p.Id).Returns(1);

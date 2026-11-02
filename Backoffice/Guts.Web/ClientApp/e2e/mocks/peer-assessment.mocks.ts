@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, Route } from "@playwright/test";
 import { mockActivePeriod } from "./course.mocks";
 import { IProjectDetailsModel } from "../../src/app/viewmodels/project.model";
 import {
@@ -325,6 +325,53 @@ export interface SetupPeerAssessmentOptions {
   emptyAssessments?: boolean;
 }
 
+async function handleStatusRoute(route: Route, url: string): Promise<void> {
+  if (url.includes("/of-team/2/")) {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockStatusAssessment102Team2),
+    });
+    return;
+  }
+  if (url.includes("/of-team/3/")) {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockStatusAssessment102Team3),
+    });
+    return;
+  }
+  const statusBody = url.includes("/of-project-assessment/102/")
+    ? mockStatusAssessment102Team1
+    : mockStatusAssessment101Team1;
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(statusBody),
+  });
+}
+
+async function handleDetailedResultsRoute(route: Route, url: string): Promise<void> {
+  if (url.includes("/of-team/3/")) {
+    const team3Results = mockDetailedResults102.map((r) => ({
+      ...r,
+      subject: { ...r.subject, fullName: r.subject.fullName + " (Team 3)" },
+    }));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(team3Results),
+    });
+    return;
+  }
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(mockDetailedResults102),
+  });
+}
+
 /**
  * Registers network route mocks for peer assessments, projects, and related evaluation APIs.
  */
@@ -332,11 +379,14 @@ export async function setupPeerAssessmentApiMocks(
   page: Page,
   options: SetupPeerAssessmentOptions = {},
 ) {
-  let assessments = options.emptyAssessments
-    ? []
-    : options.assessments
-      ? [...options.assessments]
-      : [...mockAssessmentList];
+  let assessments: IProjectAssessmentModel[];
+  if (options.emptyAssessments) {
+    assessments = [];
+  } else if (options.assessments) {
+    assessments = [...options.assessments];
+  } else {
+    assessments = [...mockAssessmentList];
+  }
 
   // 1. Periods endpoint
   await page.route("**/api/periods", async (route) => {
@@ -390,7 +440,7 @@ export async function setupPeerAssessmentApiMocks(
         });
         return;
       }
-      const singleMatch = url.match(/\/api\/project-assessments\/(\d+)$/);
+      const singleMatch = /\/api\/project-assessments\/(\d+)$/.exec(url);
       if (singleMatch) {
         const assessmentId = Number(singleMatch[1]);
         const found = assessments.find((a) => a.id === assessmentId);
@@ -432,7 +482,7 @@ export async function setupPeerAssessmentApiMocks(
     }
 
     if (method === "DELETE") {
-      const idMatch = url.match(/\/api\/project-assessments\/(\d+)/);
+      const idMatch = /\/api\/project-assessments\/(\d+)/.exec(url);
       if (idMatch) {
         const idToDelete = Number(idMatch[1]);
         assessments = assessments.filter((a) => a.id !== idToDelete);
@@ -463,35 +513,7 @@ export async function setupPeerAssessmentApiMocks(
     const method = route.request().method();
 
     if (url.includes("/status")) {
-      if (url.includes("/of-team/2/")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockStatusAssessment102Team2),
-        });
-        return;
-      }
-      if (url.includes("/of-team/3/")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockStatusAssessment102Team3),
-        });
-        return;
-      }
-      if (url.includes("/of-project-assessment/102/")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockStatusAssessment102Team1),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockStatusAssessment101Team1),
-        });
-      }
+      await handleStatusRoute(route, url);
       return;
     }
 
@@ -524,23 +546,7 @@ export async function setupPeerAssessmentApiMocks(
     }
 
     if (url.includes("/detailed-results")) {
-      if (url.includes("/of-team/3/")) {
-        const team3Results = mockDetailedResults102.map((r) => ({
-          ...r,
-          subject: { ...r.subject, fullName: r.subject.fullName + " (Team 3)" },
-        }));
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(team3Results),
-        });
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(mockDetailedResults102),
-      });
+      await handleDetailedResultsRoute(route, url);
       return;
     }
 
