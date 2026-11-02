@@ -53,6 +53,27 @@ describe("ProjectAssessmentService", () => {
     expect(res.success).toBeFalse();
   });
 
+  it("getProjectAssessment should map ProjectAssessmentModel and handle error", () => {
+    let res: any;
+    service.getProjectAssessment(42).subscribe((r) => (res = r));
+    httpMock.expectOne("api/project-assessments/42").flush({
+      id: 42,
+      description: "Single PA",
+      openOnUtc: new Date().toISOString(),
+      deadlineUtc: new Date().toISOString(),
+      teamStatus: null,
+    });
+    expect(res.success).toBeTrue();
+    expect(res.value instanceof ProjectAssessmentModel).toBeTrue();
+    expect(res.value.id).toBe(42);
+
+    service.getProjectAssessment(42).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/project-assessments/42")
+      .flush("Err", { status: 404, statusText: "Not Found" });
+    expect(res.success).toBeFalse();
+  });
+
   it("addProjectAssessment, updateProjectAssessment, and deleteProjectAssessment should handle success and error", () => {
     let createRes: any;
     service

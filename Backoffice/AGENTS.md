@@ -1,106 +1,121 @@
 # GUTS Backoffice — Agent Guide
 
 This directory contains the central GUTS Backoffice backend (.NET REST API + MCP server) and frontend (Angular SPA).
-For a high-level overview of the entire GUTS repository and client libraries, see the root [`../Agents.md`](../Agents.md).
+For a high-level overview of the entire GUTS repository, see the root [`../AGENTS.md`](../AGENTS.md).
 
 ---
 
 ## Guiding Principles
 
 1. **Code Quality & SOLID Principles**:
-   - Produce **modular, testable, and expandable** code that respects the **SOLID** principles:
-     - **Single Responsibility**: Keep controllers thin, application services focused on use-case orchestration, and domain classes focused on business logic and invariants.
-     - **Open/Closed & Liskov Substitution**: Program against interfaces so behavior can be extended or substituted cleanly.
-     - **Interface Segregation & Dependency Inversion**: Inject narrow abstractions via constructor injection rather than instantiating concrete dependencies directly.
+   - Produce **modular, testable, and expandable** code.
+   - Keep controllers thin, application services focused on use-case orchestration, and domain models focused on invariants and business rules.
+   - Inject narrow abstractions via constructor injection rather than instantiating dependencies directly.
 2. **Domain-Driven Design (DDD)**:
-   - Strive to apply **DDD principles** throughout the Backoffice backend.
-   - Encapsulate business rules, calculations, state transitions, and invariant checks inside **Aggregates, Entities, Value Objects, and Domain Factories** in `Guts.Domain`—not in API controllers or application services.
-   - Enforce preconditions and domain invariants using `Contracts.Require(...)` from `Guts.Common`.
-   - It is acceptable to use properties that serve as a Foreign Key (FK) property for EF Core. Avoid using navigation properties in domain classes if they are not used in the domain logic.
-3. **Use Test-Driven Development (TDD)**:
-   - Write unit tests before implementing new functionality or fixing bugs.
-   - Ensure that all new code is covered by unit tests, and that existing tests pass after changes.
-4. **Verify Changes by running tests and checking code quality**:
-   - Always verify backend changes by running `dotnet test` across `Guts.slnx` and ensuring all tests pass.
-   - Finally, run SonarQube quality analysis locally using `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported bugs, vulnerabilities, security hotspots, or code smells before committing changes.
-5. **Write tests for backend functionality**:
-   - Changes to the backend must include unit tests covering service logic, domain behavior, and repository interactions.
-6. **Write tests for Frontend Functionality**:
-   - Changes to the Angular SPA (`Guts.Web/ClientApp`) must include unit tests (`*.spec.ts`) covering component behavior, user interactions, and service logic.
-   - Verify frontend changes by running `npm test -- --watch=false` inside `Guts.Web/ClientApp`.
-7. **Fix bugs by writing a failing test first**:
-   - When fixing a bug, first write a unit test that reproduces the bug, then implement the fix and verify that the test passes.
-8. **Spec-Driven Development (SDD)**:
-   - Feature specifications, technical designs, and TDD implementation plans live in [`specs/`](specs/README.md).
-   - For new features or significant changes, follow the 4-phase workflow (`spec.md` ➔ `design.md` ➔ `tasks.md` ➔ inside-out TDD implementation) using the templates in [`specs/_templates/`](specs/_templates/).
+   - Encapsulate business rules, calculations, state transitions, and invariant checks inside **Aggregates, Entities, Value Objects, and Domain Factories** in `Guts.Domain`—never in API controllers or application services.
+   - Enforce domain preconditions and invariants using `Contracts.Require(...)` from `Guts.Common`.
+   - Protect aggregate roots by exposing read-only collections (`IReadOnlyCollection<T>`) and mutating state strictly through domain methods.
+   - Use explicit Foreign Key (FK) properties for EF Core; avoid navigation properties in domain classes unless directly required by domain logic.
+3. **Spec-Driven Development (SDD)**:
+   - For new features or significant changes, follow the 4-phase SDD workflow (`spec.md` ➔ `design.md` ➔ `tasks.md` ➔ inside-out TDD implementation) using templates in [`specs/_templates/`](specs/_templates/).
+   - Detailed SDD instructions are located in the `backoffice-sdd` skill (`.agent/skills/backoffice-sdd/SKILL.md`).
+4. **Test-Driven Development (TDD) & Quality Gate**:
+   - Write unit tests before implementing new functionality or fixing bugs (write a failing reproduction test first).
+   - Ensure all tests pass across `Guts.slnx` before considering tasks complete.
+   - Verify code quality locally with `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported issues.
 
 ---
 
 ## Solution Architecture (`Guts.slnx`)
 
-The Backoffice backend follows a layered architecture:
+The Backoffice backend follows a layered DDD architecture:
 
 ```
 Guts.Api / Guts.Web
        │
-Guts.Bootstrapper   ──► Wires dependency injection across layers
+Guts.Bootstrapper   ──► Auto-registers dependency injection by convention
        │
-Guts.Business       ──► Application services, repository contracts, DTOs, converters
+Guts.Business       ──► Application services, repository interfaces, DTOs, mappers
        │
-Guts.Infrastructure ──► EF Core DbContext, migrations, repository implementations, external adapters
+Guts.Infrastructure ──► EF Core DbContext, migrations, repository implementations
        │
 Guts.Domain         ──► Aggregates, Entities, Value Objects, Domain Factories (pure domain)
        │
-Guts.Common         ──► Design-by-Contract utilities & shared extensions
+Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) & extensions
 ```
 
 ### Layer Responsibilities
 
-- **`Guts.Common` (`Guts.Common.Tests`)**: Cross-cutting utilities, shared extensions, and Design-by-Contract primitives (`Contracts.Require`, `ContractException`).
-- **`Guts.Domain` (`Guts.Domain.Tests`)**: Core domain model organized by aggregate folders.
+- **`Guts.Common` (`Guts.Common.Tests`)**: Design-by-Contract primitives (`Contracts.Require`, `ContractException`), common extensions, and utilities.
+- **`Guts.Domain` (`Guts.Domain.Tests`)**: Core business domain organized by aggregate folders.
   - Inherit from `AggregateRoot`, `Entity`, or `ValueObject<T>`.
-  - Protect domain state by exposing read-only collections and mutating state through explicit domain methods.
-  - Enforce valid object creation via domain factories (`I*Factory`) and restricted constructors.
-- **`Guts.Business` (`Guts.Business.Tests`)**: Application and business orchestration layer.
+  - Restrict construction to domain factories (`I*Factory`) to enforce valid initial states.
+- **`Guts.Business` (`Guts.Business.Tests`)**: Application orchestration layer.
   - Coordinates repositories, domain factories, and domain entities to fulfill use cases.
-  - Defines repository interfaces (`Repositories/`), application services (`Services/`), DTOs, converters, and external communication abstractions.
-- **`Guts.Infrastructure`**: Data persistence and infrastructure concerns.
-  - Contains the EF Core `DbContext`, entity configurations, migrations, and concrete database repositories (`Repositories/`).
-- **`Guts.Bootstrapper`**: Dependency injection setup (`StartUpExtensions.cs`).
-  - Uses naming conventions to auto-register services, repositories, factories, converters, and loaders across layers. Follow the existing naming and interface conventions when introducing new components so they are registered automatically.
-- **`Guts.Api` (`Guts.Api.Tests`)**: REST API and MCP server.
-  - Contains Web API controllers, request/response models, model mappers/converters, and Model Context Protocol (`Mcp/`) resources and prompts.
+  - Houses repository contracts (`Repositories/`), application services (`Services/`), and DTOs.
+- **`Guts.Infrastructure`**: Persistence and external adapters.
+  - EF Core `DbContext`, entity type configurations, and concrete repositories (`Repositories/`).
+- **`Guts.Bootstrapper`**: Auto-registers services, repositories, and factories into DI using naming conventions (`StartUpExtensions.cs`).
+- **`Guts.Api` (`Guts.Api.Tests`)**: Web API controllers, request/response models, and Model Context Protocol (`Mcp/`) resources and tools.
 - **`Guts.Web` (`Guts.Web/ClientApp`)**: Frontend host and Angular SPA.
-  - Organizes frontend code under `src/app/` into `components/`, `services/`, `viewmodels/`, `guards/`, `interceptors/`, `directives/`, and `util/`.
+  - Code under `src/app/` is partitioned into `components/`, `services/`, `viewmodels/`, `guards/`, `interceptors/`, and `util/`.
+  - E2E testing framework lives under `e2e/`.
 
 ---
 
-## Testing Guidelines
+## Testing Guidelines & Commands
 
 ### Backend Unit Tests
 
-- Keep unit tests fast and isolated by mocking external dependencies and repositories.
-- Reuse or extend the test builder pattern (`Builders/`) and random value generators (`RandomExtensions`) to construct test data without brittle hardcoded values.
-- Name test methods clearly to express the scenario and expected outcome.
-- Run all backend tests from the repository root:
+- Keep unit tests fast and isolated by mocking dependencies and repositories.
+- Reuse or extend the test builder pattern (`Builders/`) and random test generators.
+- Execute all backend tests:
   ```powershell
   dotnet test Backoffice/Guts.slnx
   ```
+- Run a single backend test project:
+  ```powershell
+  dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj
+  dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
+  dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
+  dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
+  ```
 
-### Frontend Unit Tests
+### Frontend Unit Tests (Karma / Jasmine)
 
-- Place unit tests (`*.spec.ts`) alongside the Angular components, services, guards, or pipes they test.
-- Mock service dependencies using Angular's `TestBed` so components and services are tested in isolation.
-- Run all frontend tests from `Backoffice/Guts.Web/ClientApp`:
+- Unit tests (`*.spec.ts`) live alongside the components, services, or guards they test.
+- Mock dependencies via Angular `TestBed`.
+- Run tests from `Backoffice/Guts.Web/ClientApp`:
   ```powershell
   npm test -- --watch=false
   ```
 
-### SonarQube Quality Analysis
+### Frontend E2E Tests (Playwright)
 
-- Start the SonarQube container (if not already running) and execute code quality & coverage analysis from `Backoffice/`:
+- End-to-end user journeys live under `Backoffice/Guts.Web/ClientApp/e2e/tests/`.
+- Page Object Models live under `e2e/pages/`.
+- Mock data and network intercept helpers live under `e2e/mocks/`.
+- Use the authenticated role fixtures in `e2e/fixtures/auth.fixture.ts` (`teacherPage`, `studentPage`, `loginAs`) to test protected routes without manual UI login flows.
+- Commands (from `Backoffice/Guts.Web/ClientApp`):
+  ```powershell
+  npm run test:e2e                       # Run all E2E tests headless
+  npm run test:e2e:ui                    # Interactive UI mode with time-travel debugger
+  npm run test:e2e:headed                # Run headed with visible browser window
+  npm run test:e2e -- e2e/tests/file.ts  # Run a specific spec file
+  npm run test:e2e:report                # View HTML test report
+  ```
+- If the frontend dev server is already running (e.g. on port 44400 or 4200), supply `PLAYWRIGHT_BASE_URL`:
+  ```powershell
+  $env:PLAYWRIGHT_BASE_URL="https://localhost:44400"; npm run test:e2e
+  ```
+
+### SonarQube / SonarCloud Analysis
+
+- Run quality & security analysis from `Backoffice/`:
+  ```powershell
+  .\run-sonarqube.ps1 -UseSonarCloud
+  ```
+- Or run against a local SonarQube container:
   ```powershell
   .\run-sonarqube.ps1 -StartServer
   ```
-- Review the analysis results and resolve any reported bugs, vulnerabilities, security hotspots, or code smells.
-- You can also review the public report on https://sonarcloud.io/. The project key is `PXL-IT-NET_Guts`.

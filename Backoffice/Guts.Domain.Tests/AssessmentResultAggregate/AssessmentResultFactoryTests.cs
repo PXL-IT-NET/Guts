@@ -72,6 +72,7 @@ public class AssessmentResultFactoryTests
         //Assert
         Assert.That(result.PeerAssessments, Is.EquivalentTo(expectedPeerAssessments));
         Assert.That(result.Subject, Is.SameAs(subject));
+        Assert.That(result.AssessmentDescription, Is.EqualTo(projectTeamAssessment.ProjectAssessment.Description));
         Assert.That(result.SelfAssessment, Is.SameAs(expectedSelfAssessment));
         Assert.That(result.ContributionResult, Is.SameAs(contributionResultMock.Object));
         Assert.That(result.EffortResult, Is.SameAs(effortResultMock.Object));

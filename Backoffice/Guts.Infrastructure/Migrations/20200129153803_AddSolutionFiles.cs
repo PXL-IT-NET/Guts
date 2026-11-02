@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -44,7 +44,7 @@ namespace Guts.Infrastructure.Migrations
            // MigrateOldSourceCodeData(migrationBuilder); //Not needed anymore. All sources have been migrated on all environments
         }
 
-        private void MigrateOldSourceCodeData(MigrationBuilder migrationBuilder)
+        private static void MigrateOldSourceCodeData(MigrationBuilder migrationBuilder)
         {
             var assembly = Assembly.GetExecutingAssembly();
             string resourceName = typeof(AddSolutionFiles).Namespace + ".20200129153803_AddSolutionFiles.MoveDataScript.sql";

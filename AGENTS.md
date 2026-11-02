@@ -2,62 +2,62 @@
 
 **GUTS** (**G**rowing towards a **U**nit **T**esting **S**trategy) is an educational platform developed at PXL University of Applied Sciences and Arts. It integrates automated testing into programming courses by collecting student and team test results from IDEs (Visual Studio, Rider, IntelliJ) and centralizing progress tracking, anti-tampering validation, exam scoring, and peer assessments in a central web portal and REST API.
 
-For functional background, see the [GUTS Teacher Concepts Documentation](https://guts-web.pxl.be/teacher-docs/concepts) (source located in `Backoffice/Guts.Web/ClientApp/src/app/components/teacher-docs-concepts/`).
+For functional background, see the [GUTS Teacher Concepts Documentation](https://guts-web.pxl.be/teacher-docs/concepts) (source in `Backoffice/Guts.Web/ClientApp/src/app/components/teacher-docs-concepts/`).
 
 ---
 
 ## Core Domain Concepts
 
-- **Courses & Periods**: Courses are organized across academic periods (`PeriodAggregate`, `CourseAggregate`).
+- **Courses & Periods**: Courses belong to academic periods (`PeriodAggregate`, `CourseAggregate`).
 - **Topics & Assignments**:
   - **Individual Work (Chapters & Exercises)**: Courses contain _Chapters_ (`Chapter`), each containing one or more _Exercises_ (`Assignment`). Test results are accumulated per student per exercise.
   - **Team Work (Projects & Components)**: Courses can also contain _Projects_ (`Project`) split into _Components_ (`Assignment`). Students work in _Project Teams_ (`ProjectTeamAggregate`), and test results are accumulated per team per component.
 - **Automatic Provisioning & Anti-Tampering**:
-  - When a **teacher** runs monitored tests, missing chapters/projects, exercises/components, and tests (`TestAggregate`) are automatically created in the Backoffice, and a hash of the test code is registered.
-  - When a **student** runs monitored tests, their test results (`TestRunAggregate`) and solution source files (`SolutionFile`) are sent to the Backoffice API and accepted if the test code hash matches a valid teacher hash.
+  - When a **teacher** runs monitored tests, missing chapters/projects, exercises/components, and tests (`TestAggregate`) are automatically provisioned in the Backoffice, and a cryptographic hash of the test code is registered.
+  - When a **student** runs monitored tests, their test results (`TestRunAggregate`) and solution source files (`SolutionFile`) are sent to the Backoffice API and accepted only if the test code hash matches a valid teacher hash.
 - **Peer Assessments & Exams**:
-  - Teams evaluate each other via **Project Team Assessments** (`ProjectTeamAssessmentAggregate`, `AssessmentResultAggregate`), yielding peer scores alongside self-evaluation.
+  - Teams evaluate peers via **Project Team Assessments** (`ProjectTeamAssessmentAggregate`, `AssessmentResultAggregate`), generating individual contribution factors and peer scores.
 
 ---
 
 ## Repository Structure
 
-This repository is split into three top-level areas:
+The repository is organized into three main areas:
 
-1. **[`Backoffice/`](Backoffice/Agents.md)** — Central web application and REST API (see [`Backoffice/Agents.md`](Backoffice/Agents.md) for detailed architecture and rules).
-   - **Backend (ASP.NET, EF Core)**: Layered DDD architecture (`Guts.Domain`, `Guts.Business`, `Guts.Infrastructure`, `Guts.Bootstrapper`, `Guts.Api`, `Guts.Common`) + MCP server resources/prompts in `Guts.Api/Mcp`.
-   - **Frontend (`Guts.Web/ClientApp`)**: Angular Single-Page Application.
-2. **`DotNetClient/`** — .NET NuGet client libraries (`DotNetClient/Guts.sln`) used inside student and teacher C# test projects (e.g., from Visual Studio):
-   - `Guts.Client.Core`: Core HTTP communication (`HttpClient`), authentication token retrieval/caching, solution source code extraction (`Solution`), code stripping (`CodeCleaner`), and test result reporting.
-   - `Guts.Client.NUnit`: NUnit extensions (`[ExerciseTestFixture]`, `[ProjectComponentTestFixture]`, `[MonitoredTest]`).
-   - `Guts.Client.XUnit`: xUnit extensions (`[ExerciseTestClass]`, `[ProjectComponentTestClass]`, `[MonitoredFact]`, `[MonitoredTheory]`).
-   - `Guts.Client.WPF`: Helpers and visual-tree extension methods (`FindVisualChildren<T>()`, `FireClickEvent()`) for testing WPF exercises.
-   - Unit and integration test projects: `Guts.Client.Core.Tests`, `Guts.Client.NUnit.Tests`, `Guts.Client.IntegrationTests`, `Guts.Client.NUnit.IntegrationTests`, `Guts.Client.XUnit.IntegrationTests`.
-3. **`JavaClients/`** — Gradle multi-project build (`JavaClients/settings.gradle`) for accumulating and sending test results from IntelliJ / Maven / Gradle projects:
-   - `guts-client-core`: Test-engine-independent core library for collecting results, hashing test code, reading `guts.json`, and communicating with the GUTS API.
-   - `guts-client-junit-5`: JUnit 5 (Jupiter) extension (`@GutsFixture` annotation and test execution listener).
-   - `guts-client-junit-5-example`: Sample JUnit 5 exercise test project demonstrating usage.
+1. **[`Backoffice/`](Backoffice/AGENTS.md)** — Central web application, REST API, and MCP server (see [`Backoffice/AGENTS.md`](Backoffice/AGENTS.md) for architecture and rules).
+   - **Backend (.NET 10, EF Core)**: Layered DDD architecture (`Guts.Domain`, `Guts.Business`, `Guts.Infrastructure`, `Guts.Bootstrapper`, `Guts.Api`, `Guts.Common`) + MCP server in `Guts.Api/Mcp`.
+   - **Frontend (`Guts.Web/ClientApp`)**: Angular SPA with Karma/Jasmine unit tests and Playwright E2E suites.
+2. **`DotNetClient/`** — .NET client libraries (`DotNetClient/Guts.sln`) used in C# test projects:
+   - `Guts.Client.Core`: HTTP communication, auth caching, code extraction (`Solution`), and code stripping (`CodeCleaner`).
+   - `Guts.Client.NUnit` / `Guts.Client.XUnit`: Test framework extensions (`[ExerciseTestFixture]`, `[MonitoredTest]`, `[MonitoredFact]`).
+   - `Guts.Client.WPF`: Helpers for testing WPF exercises (`FindVisualChildren<T>()`, `FireClickEvent()`).
+   - Test projects: `Guts.Client.Core.Tests`, `Guts.Client.NUnit.Tests`, `Guts.Client.IntegrationTests`, etc.
+3. **`JavaClients/`** — Gradle multi-project build (`JavaClients/settings.gradle`) for JVM test runners:
+   - `guts-client-core`: Core engine for test result accumulation and hashing.
+   - `guts-client-junit-5`: JUnit 5 Jupiter extension (`@GutsFixture` and test execution listener).
+   - `guts-client-junit-5-example`: Sample exercise project demonstrating usage.
 
 ---
 
 ## Core Engineering Guidelines
 
 1. **Code Quality & SOLID Principles**:
-   - Produce modular, testable, and expandable code that respects the **SOLID** principles.
-   - Favor dependency injection (via constructor injection and narrow interfaces) over static state or tight coupling.
-   - Keep classes focused on a single responsibility and design abstractions so new test runners, domain rules, or UI features can be added without modifying unrelated components.
-2. **Keep code DRY**:
-   - Avoid duplicating logic. If a new feature requires changes in multiple areas, consider encapsulating the common behavior.
-3. **Domain-Driven Design (DDD) in the Backoffice**:
-   - Strive to apply DDD principles in the Backoffice API and domain model. Encapsulate business rules and invariants inside Aggregates, Entities, Value Objects, and Domain Factories in `Guts.Domain` rather than leaking domain logic into controllers or data repositories.
-   - Read [`Backoffice/Agents.md`](Backoffice/Agents.md) before making any changes to `Backoffice/`.
-4. **Verify Changes by Running Tests**:
-   - Always run the relevant automated test suite(s) after making changes and ensure all tests pass before considering a task complete.
-   - Add or update unit tests whenever introducing new features, fixing bugs, or changing domain/business behavior.
-5. **Run SonarQube Analysis**:
-   - Run SonarQube analysis on the Backoffice and client libraries to ensure code quality, maintainability, and security standards are met. Use the provided SonarQube configuration files in the respective directories.
-6. **Test Frontend Functionality**:
-   - Every new or modified Angular component, service, guard, or pipe in `Backoffice/Guts.Web/ClientApp` must include corresponding unit tests (`*.spec.ts`) verified via Karma/Jasmine.
+   - Produce modular, testable, and expandable code.
+   - Favor dependency injection (constructor injection and narrow interfaces) over static state or tight coupling.
+   - Design abstractions so new test runners, domain rules, or UI features can be added without modifying unrelated components.
+2. **Keep Code DRY**:
+   - Encapsulate shared behavior; avoid duplicating validation, DTO mapping, or assertions.
+3. **Domain-Driven Design (DDD)**:
+   - Encapsulate business rules, calculations, and state invariants inside **Aggregates, Entities, Value Objects, and Domain Factories** in `Guts.Domain`—never leak domain rules into controllers or repositories.
+   - Enforce preconditions using `Contracts.Require(...)` from `Guts.Common`.
+4. **Test-Driven Verification (TDD)**:
+   - Always run relevant automated test suites after making changes and ensure all tests pass before completing a task.
+   - When fixing a bug, write a failing reproduction test first.
+5. **Frontend Testing Standards**:
+   - Every Angular component, service, guard, or pipe must include unit tests (`*.spec.ts`) verified via Karma/Jasmine.
+   - Integration journeys and user flows are verified with Playwright E2E tests (`e2e/tests/`).
+6. **Code Quality & Security (SonarQube/SonarCloud)**:
+   - Run quality analysis locally or via SonarCloud (`PXL-IT-NET_Guts`) and resolve all reported bugs, vulnerabilities, and code smells.
 
 ---
 
@@ -65,33 +65,43 @@ This repository is split into three top-level areas:
 
 ### Backoffice (.NET & Angular)
 
-- **Build & run all backend unit tests**:
+- **Backend tests (all)**:
   ```powershell
   dotnet test Backoffice/Guts.slnx
   ```
-- **Run a single backend test project**:
+- **Backend tests (single project)**:
   ```powershell
   dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj
   dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
   dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
   dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
   ```
-- **Run Angular frontend tests** (from `Backoffice/Guts.Web/ClientApp`):
+- **Frontend unit tests** (from `Backoffice/Guts.Web/ClientApp`):
   ```powershell
   npm test -- --watch=false
   ```
-- **Build Angular frontend** (from `Backoffice/Guts.Web/ClientApp`):
+- **Frontend E2E tests (Playwright)** (from `Backoffice/Guts.Web/ClientApp`):
+  ```powershell
+  npm run test:e2e          # Headless run
+  npm run test:e2e:ui       # Interactive UI mode
+  npm run test:e2e:headed   # Headed run with visible browser
+  ```
+- **Frontend production build** (from `Backoffice/Guts.Web/ClientApp`):
   ```powershell
   npm run build
+  ```
+- **SonarQube local analysis** (from `Backoffice/`):
+  ```powershell
+  .\run-sonarqube.ps1 -UseSonarCloud
   ```
 
 ### .NET Client (`DotNetClient/`)
 
-- **Build the solution**:
+- **Build solution**:
   ```powershell
   dotnet build DotNetClient/Guts.sln
   ```
-- **Run unit tests** (avoid integration test projects that require a live local backend unless testing full end-to-end flows):
+- **Run unit tests**:
   ```powershell
   dotnet test DotNetClient/Guts.Client.Core.Tests/Guts.Client.Core.Tests.csproj
   dotnet test DotNetClient/Guts.Client.NUnit.Tests/Guts.Client.NUnit.Tests.csproj
@@ -99,7 +109,7 @@ This repository is split into three top-level areas:
 
 ### Java Clients (`JavaClients/`)
 
-- **Build & test with Gradle** (from `JavaClients/`):
+- **Build & test** (from `JavaClients/`):
   ```powershell
   ./gradlew test
   ```

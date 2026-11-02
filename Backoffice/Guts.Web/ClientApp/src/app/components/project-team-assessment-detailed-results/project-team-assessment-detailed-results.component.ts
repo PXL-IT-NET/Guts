@@ -1,8 +1,18 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+  signal,
+} from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ChartData, ChartOptions } from "chart.js";
 import { ToastrService } from "ngx-toastr";
+import { forkJoin, of } from "rxjs";
+import { catchError, map } from "rxjs/operators";
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
 import { ITeamModel } from "src/app/viewmodels/team.model";
@@ -14,9 +24,17 @@ import { ITeamModel } from "src/app/viewmodels/team.model";
   templateUrl: "./project-team-assessment-detailed-results.component.html",
 })
 export class ProjectTeamAssessmentDetailedResultsComponent
-  implements OnInit
+  implements OnInit, OnDestroy
 {
   private readonly destroyRef = inject(DestroyRef);
+
+  private readonly _assessmentDescription = signal<string>("");
+  public get assessmentDescription(): string {
+    return this._assessmentDescription();
+  }
+  public set assessmentDescription(v: string) {
+    this._assessmentDescription.set(v);
+  }
 
   private readonly _allTeams = signal<ITeamModel[]>([]);
   public get allTeams(): ITeamModel[] {
@@ -24,6 +42,14 @@ export class ProjectTeamAssessmentDetailedResultsComponent
   }
   public set allTeams(v: ITeamModel[]) {
     this._allTeams.set(v);
+  }
+
+  private readonly _completedTeams = signal<ITeamModel[]>([]);
+  public get completedTeams(): ITeamModel[] {
+    return this._completedTeams();
+  }
+  public set completedTeams(v: ITeamModel[]) {
+    this._completedTeams.set(v);
   }
 
   private readonly _currentTeam = signal<ITeamModel>({ id: 0, name: "" });
@@ -66,7 +92,9 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._teamGrade.set(v);
   }
 
-  private readonly _gradeCorrectionType = signal<GradeCorrectionType>(GradeCorrectionType.Peers);
+  private readonly _gradeCorrectionType = signal<GradeCorrectionType>(
+    GradeCorrectionType.Peers,
+  );
   public get gradeCorrectionType(): GradeCorrectionType {
     return this._gradeCorrectionType();
   }
@@ -74,7 +102,10 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._gradeCorrectionType.set(v);
   }
 
-  private readonly _selfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _selfChartData = signal<ChartData<"bar", number[]>>({
+    datasets: [],
+    labels: [],
+  });
   public get selfChartData(): ChartData<"bar", number[]> {
     return this._selfChartData();
   }
@@ -82,7 +113,10 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._selfChartData.set(v);
   }
 
-  private readonly _peerChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peerChartData = signal<ChartData<"bar", number[]>>({
+    datasets: [],
+    labels: [],
+  });
   public get peerChartData(): ChartData<"bar", number[]> {
     return this._peerChartData();
   }
@@ -90,7 +124,10 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._peerChartData.set(v);
   }
 
-  private readonly _peerAndSelfChartData = signal<ChartData<"bar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peerAndSelfChartData = signal<ChartData<"bar", number[]>>({
+    datasets: [],
+    labels: [],
+  });
   public get peerAndSelfChartData(): ChartData<"bar", number[]> {
     return this._peerAndSelfChartData();
   }
@@ -98,7 +135,9 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     this._peerAndSelfChartData.set(v);
   }
 
-  private readonly _peersVersusSelfChartData = signal<ChartData<"radar", number[]>>({ datasets: [], labels: [] });
+  private readonly _peersVersusSelfChartData = signal<
+    ChartData<"radar", number[]>
+  >({ datasets: [], labels: [] });
   public get peersVersusSelfChartData(): ChartData<"radar", number[]> {
     return this._peersVersusSelfChartData();
   }
@@ -154,6 +193,7 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     private readonly route: ActivatedRoute,
   ) {
     this.allTeams = [];
+    this.completedTeams = [];
     this.currentTeam = {
       id: 0,
       name: "",
@@ -167,92 +207,132 @@ export class ProjectTeamAssessmentDetailedResultsComponent
   ngOnInit(): void {
     let courseId = +this.route.parent.snapshot.params["courseId"];
     let projectCode = this.route.snapshot.params["code"];
-    let assessmentId = this.route.snapshot.params["assessmentId"];
+    let assessmentId = +this.route.snapshot.params["assessmentId"];
 
-    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      let teamId = params["teamId"];
+    this.route.params
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        let teamId = +params["teamId"];
 
-      if (this.allTeams.length <= 0) {
-        this.projectService
-          .getProjectDetails(courseId, projectCode)
+        if (this.allTeams.length <= 0) {
+          this.projectService
+            .getProjectDetails(courseId, projectCode)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((result) => {
+              if (result.success) {
+                this.allTeams = result.value.teams;
+                this.loadCompletedTeams(assessmentId, teamId);
+              } else {
+                this.toastr.error(
+                  "Could not load project from API. Message: " +
+                    (result.message || "unknown error"),
+                  "System error",
+                );
+              }
+            });
+        } else {
+          this.setTeams(teamId);
+        }
+
+        this.resetResults();
+        this.projectTeamAssessmentService
+          .getDetailedResultsOfProjectTeamAssessment(assessmentId, teamId)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((result) => {
             if (result.success) {
-              this.allTeams = result.value.teams;
-              this.setTeams(teamId);
-            } else {
-              this.toastr.error(
-                "Could not load project from API. Message: " +
-                  (result.message || "unknown error"),
-                "System error",
+              this.results = result.value;
+              if (this.results.length > 0 && this.results[0].assessmentDescription) {
+                this.assessmentDescription = this.results[0].assessmentDescription;
+              }
+              this.calculateIndividualGrades();
+
+              this.setChartData(
+                this.peerAndSelfChartData,
+                (result) => result.averageResult.value,
+                (result) => result.effortResult.value,
+                (result) => result.contributionResult.value,
+                (result) => result.cooperationResult.value,
               );
+
+              this.setChartData(
+                this.selfChartData,
+                (result) => result.averageResult.selfValue,
+                (result) => result.effortResult.selfValue,
+                (result) => result.contributionResult.selfValue,
+                (result) => result.cooperationResult.selfValue,
+              );
+
+              this.setChartData(
+                this.peerChartData,
+                (result) => result.averageResult.peerValue,
+                (result) => result.effortResult.peerValue,
+                (result) => result.contributionResult.peerValue,
+                (result) => result.cooperationResult.peerValue,
+              );
+
+              this.peersVersusSelfChartData.datasets.push(
+                {
+                  label: "Peers",
+                  data: this.results.map(
+                    (result) => result.averageResult.peerValue,
+                  ),
+                },
+                {
+                  label: "Self",
+                  data: this.results.map(
+                    (result) => result.averageResult.selfValue,
+                  ),
+                },
+              );
+              this.peersVersusSelfChartData.labels = this.results.map(
+                (result) => result.subject.fullName,
+              );
+              this.peersVersusSelfChartData = {
+                ...this.peersVersusSelfChartData,
+              };
+            } else {
+              this.toastr.warning(
+                "Could not retrieve project team assment results. Message: " +
+                  (result.message || "unknown error"),
+                "Warning",
+              );
+              this.resetResults();
             }
           });
-      } else {
-        this.setTeams(teamId);
-      }
+      });
+  }
 
-      this.resetResults();
+  ngOnDestroy(): void {
+    this.projectTeamAssessmentService.activeResultTeamName.set("");
+  }
+
+  public loadCompletedTeams(assessmentId: number, currentTeamId: number) {
+    if (this.allTeams.length === 0) {
+      this.completedTeams = [];
+      this.setTeams(currentTeamId);
+      return;
+    }
+
+    const statusObservables = this.allTeams.map((team) =>
       this.projectTeamAssessmentService
-        .getDetailedResultsOfProjectTeamAssessment(assessmentId, teamId)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((result) => {
-          if (result.success) {
-            this.results = result.value;
-            this.calculateIndividualGrades();
+        .getStatusOfProjectTeamAssessment(assessmentId, team.id)
+        .pipe(
+          map((res) => ({
+            team,
+            isComplete: res.success && res.value?.isComplete === true,
+          })),
+          catchError(() => of({ team, isComplete: false })),
+        ),
+    );
 
-            this.setChartData(
-              this.peerAndSelfChartData,
-              (result) => result.averageResult.value,
-              (result) => result.effortResult.value,
-              (result) => result.contributionResult.value,
-              (result) => result.cooperationResult.value,
-            );
-
-            this.setChartData(
-              this.selfChartData,
-              (result) => result.averageResult.selfValue,
-              (result) => result.effortResult.selfValue,
-              (result) => result.contributionResult.selfValue,
-              (result) => result.cooperationResult.selfValue,
-            );
-
-            this.setChartData(
-              this.peerChartData,
-              (result) => result.averageResult.peerValue,
-              (result) => result.effortResult.peerValue,
-              (result) => result.contributionResult.peerValue,
-              (result) => result.cooperationResult.peerValue,
-            );
-
-            this.peersVersusSelfChartData.datasets.push(
-              {
-                label: "Peers",
-                data: this.results.map(
-                  (result) => result.averageResult.peerValue,
-                ),
-              },
-              {
-                label: "Self",
-                data: this.results.map(
-                  (result) => result.averageResult.selfValue,
-                ),
-              },
-            );
-            this.peersVersusSelfChartData.labels = this.results.map(
-              (result) => result.subject.fullName,
-            );
-            this.peersVersusSelfChartData = { ...this.peersVersusSelfChartData };
-          } else {
-            this.toastr.warning(
-              "Could not retrieve project team assment results. Message: " +
-                (result.message || "unknown error"),
-              "Warning",
-            );
-            this.resetResults();
-          }
-        });
-    });
+    forkJoin(statusObservables)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((statuses) => {
+        this.completedTeams = statuses
+          .filter((s) => s.isComplete)
+          .map((s) => s.team);
+        this.setTeams(currentTeamId);
+      });
   }
 
   private resetResults() {
@@ -280,20 +360,47 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     };
   }
 
-  private setTeams(currentTeamId: number) {
-    this.currentTeam = this.allTeams.find((team) => team.id === currentTeamId);
-    let currentIndex = this.allTeams.indexOf(this.currentTeam);
+  public setTeams(currentTeamId: number) {
+    this.currentTeam =
+      this.allTeams.find((team) => team.id === currentTeamId) ?? {
+        id: 0,
+        name: "",
+      };
 
-    if (currentIndex > 0) {
-      this.previousTeam = this.allTeams[currentIndex - 1];
-    } else {
-      this.previousTeam = null;
+    if (this.currentTeam?.name) {
+      this.projectTeamAssessmentService.activeResultTeamName.set(
+        this.currentTeam.name,
+      );
     }
 
-    if (currentIndex < this.allTeams.length - 1) {
-      this.nextTeam = this.allTeams[currentIndex + 1];
+    const currentAllTeamsIndex = this.allTeams.findIndex(
+      (team) => team.id === currentTeamId,
+    );
+
+    if (this.completedTeams.length > 0 && currentAllTeamsIndex !== -1) {
+      const completedBefore = this.completedTeams.filter((t) => {
+        const idx = this.allTeams.findIndex((team) => team.id === t.id);
+        return idx !== -1 && idx < currentAllTeamsIndex;
+      });
+      this.previousTeam =
+        completedBefore.length > 0
+          ? (completedBefore.at(-1) ?? null)
+          : null;
+
+      const completedAfter = this.completedTeams.filter((t) => {
+        const idx = this.allTeams.findIndex((team) => team.id === t.id);
+        return idx !== -1 && idx > currentAllTeamsIndex;
+      });
+      this.nextTeam =
+        completedAfter.length > 0 ? completedAfter[0] : null;
     } else {
-      this.nextTeam = null;
+      let currentIndex = this.allTeams.indexOf(this.currentTeam);
+      this.previousTeam =
+        currentIndex > 0 ? this.allTeams[currentIndex - 1] : null;
+      this.nextTeam =
+        currentIndex < this.allTeams.length - 1 && currentIndex >= 0
+          ? this.allTeams[currentIndex + 1]
+          : null;
     }
   }
 
@@ -360,8 +467,6 @@ export class ProjectTeamAssessmentDetailedResultsComponent
     });
     this._results.update((list) => [...list]);
   }
-
-
 }
 
 export enum GradeCorrectionType {

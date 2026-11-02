@@ -1,22 +1,26 @@
 <div class="row">
   <div class="col-12">
-    <h5>Peer evaluation results</h5>
+    <h5>{{ assessmentDescription ? assessmentDescription + " - Results" : "Results" }}</h5>
   </div>
 </div>
 
 <div class="row">
   <div class="col-12">
-    <ul class="nav">
+    <ul class="nav align-items-center">
       <li class="nav-item">
         <a
           class="nav-link"
           [ngClass]="{ disabled: !previousTeam }"
-          [routerLink]="['../../', $safeNavigationMigration(previousTeam?.id), 'detailed-results']"
-          >Vorige</a
+          [routerLink]="
+            previousTeam
+              ? ['../../', previousTeam.id, 'detailed-results']
+              : null
+          "
+          >Previous</a
         >
       </li>
       <li class="nav-item">
-        <h5>
+        <h5 class="mb-0">
           <span class="nav-link active">{{ currentTeam?.name }}</span>
         </h5>
       </li>
@@ -24,8 +28,10 @@
         <a
           class="nav-link"
           [ngClass]="{ disabled: !nextTeam }"
-          [routerLink]="['../../', $safeNavigationMigration(nextTeam?.id), 'detailed-results']"
-          >Volgende</a
+          [routerLink]="
+            nextTeam ? ['../../', nextTeam.id, 'detailed-results'] : null
+          "
+          >Next</a
         >
       </li>
     </ul>

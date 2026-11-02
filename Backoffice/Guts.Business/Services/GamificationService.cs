@@ -880,8 +880,11 @@ public class GamificationService(
 
         if (!config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled)
         {
-            logger.LogInformation("Course {CourseCode} (Id: {CourseId}): 0 weekly sprint badges awarded (gamification enabled, but required sub-feature is disabled).",
-                course.Code, course.Id);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Course {CourseCode} (Id: {CourseId}): 0 weekly sprint badges awarded (gamification enabled, but required sub-feature is disabled).",
+                    course.Code, course.Id);
+            }
             return;
         }
 
@@ -889,28 +892,43 @@ public class GamificationService(
         var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
         var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
 
-        int badgesAwarded = 0;
-        if (topEntries.Count > 0)
-        {
-            var topEntry = topEntries[0];
+        int badgesAwarded = await AwardBadgesToTopEntriesAsync(topEntries, optedInProfiles, fridayCutoff);
 
-            foreach (var entry in topEntries)
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Course {CourseCode} (Id: {CourseId}): {BadgeCount} weekly sprint badges awarded.",
+                course.Code, course.Id, badgesAwarded);
+        }
+    }
+
+    private async Task<int> AwardBadgesToTopEntriesAsync(
+        List<LeaderboardEntryDto> topEntries,
+        IReadOnlyList<StudentCourseProfile> optedInProfiles,
+        DateTime fridayCutoff)
+    {
+        if (topEntries.Count == 0)
+        {
+            return 0;
+        }
+
+        int badgesAwarded = 0;
+        var topEntry = topEntries[0];
+
+        foreach (var entry in topEntries)
+        {
+            var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
+            if (profile != null)
             {
-                var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
-                if (profile != null)
+                int newlyAwarded = AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff);
+                if (newlyAwarded > 0)
                 {
-                    int newlyAwarded = AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff);
-                    if (newlyAwarded > 0)
-                    {
-                        badgesAwarded += newlyAwarded;
-                        await studentCourseProfileRepository.UpdateAsync(profile);
-                    }
+                    badgesAwarded += newlyAwarded;
+                    await studentCourseProfileRepository.UpdateAsync(profile);
                 }
             }
         }
 
-        logger.LogInformation("Course {CourseCode} (Id: {CourseId}): {BadgeCount} weekly sprint badges awarded.",
-            course.Code, course.Id, badgesAwarded);
+        return badgesAwarded;
     }
 
     private async Task EvaluateWeeklyStreaksForCourseAsync(

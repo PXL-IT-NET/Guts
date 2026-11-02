@@ -256,7 +256,8 @@ export class CourseGamificationComponent implements OnInit, OnDestroy {
       userId !== null && userId !== undefined && userId !== "" && userId !== "null"
         ? Number(userId)
         : null;
-    this.perspectiveUserId = parsed !== null && !isNaN(parsed) ? parsed : null;
+    this.perspectiveUserId =
+      parsed !== null && !Number.isNaN(parsed) ? parsed : null;
     if (this.userProfile.isTeacher()) {
       this.profile = null;
     }

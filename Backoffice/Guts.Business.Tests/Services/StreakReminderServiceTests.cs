@@ -330,5 +330,325 @@ public class StreakReminderServiceTests
         _mailSenderMock.Verify(m => m.SendStreakReminderEmailAsync(
             It.Is<User>(u => u.Id == 2), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()), Times.Once);
     }
+
+    [Test]
+    public void Constructors_ShouldInitializeThrottleDelay()
+    {
+        var serviceDefault = new StreakReminderService(
+            _periodRepositoryMock.Object,
+            _courseRepositoryMock.Object,
+            _configRepositoryMock.Object,
+            _topicRepositoryMock.Object,
+            _profileRepositoryMock.Object,
+            _userRepositoryMock.Object,
+            _mailSenderMock.Object,
+            _loggerMock.Object);
+
+        Assert.That(serviceDefault.ThrottleDelay, Is.EqualTo(TimeSpan.FromSeconds(1)));
+
+        serviceDefault.ThrottleDelay = TimeSpan.FromSeconds(5);
+        Assert.That(serviceDefault.ThrottleDelay, Is.EqualTo(TimeSpan.FromSeconds(5)));
+    }
+
+    [Test]
+    [TestCase(false, true, "Config null")]
+    [TestCase(true, false, "Gamification disabled")]
+    [TestCase(true, true, "Weekly streak disabled")]
+    public async Task SendStreakRemindersAsync_WhenGamificationOrStreakDisabled_ShouldReturnZero(
+        bool hasConfig, bool isGamificationEnabled, string scenario)
+    {
+        if (!hasConfig)
+        {
+            _configRepositoryMock.Setup(r => r.GetByCourseIdAsync(10)).ReturnsAsync((CourseGamificationConfig)null);
+        }
+        else if (!isGamificationEnabled)
+        {
+            _config.IsGamificationEnabled = false;
+        }
+        else
+        {
+            _config.IsWeeklyStreakEnabled = false;
+        }
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenTopicsNullOrEmptyOrNoTests_ShouldReturnZero()
+    {
+        // Topics null
+        _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
+            .ReturnsAsync((List<ITopic>)null);
+        Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
+
+        // Topics empty
+        _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
+            .ReturnsAsync(new List<ITopic>());
+        Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
+
+        // Topic with no tests
+        var emptyTopic = Mock.Of<ITopic>(t => t.Assignments == new List<Assignment> { new() { Tests = new List<Test>() } });
+        _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
+            .ReturnsAsync(new List<ITopic> { emptyTopic });
+        Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
+
+        // Topic with null assignments
+        var nullAssignmentsTopic = Mock.Of<ITopic>(t => t.Assignments == null);
+        _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
+            .ReturnsAsync(new List<ITopic> { nullAssignmentsTopic });
+        Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenUserHasNoEmailOrUserNull_ShouldSkipProfile()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student1 = new StudentCourseProfile(1, 10, 1);
+        student1.RecordWeeklyActivity(previousWeekDate);
+        var userNoEmail = new User { Id = 1, Email = "   " };
+
+        var student2 = new StudentCourseProfile(2, 10, 1);
+        student2.RecordWeeklyActivity(previousWeekDate);
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2 });
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(userNoEmail);
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync((User)null);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenCourseNameNull_ShouldFallbackToCourseCode()
+    {
+        _course.Name = null;
+        _course.Code = "CS101";
+
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(42, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        var user = new User { Id = 42, Email = "test@test.com" };
+        student.User = user; // profile.User already populated
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { student });
+
+        string capturedCourseName = null;
+        _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()))
+            .Callback<User, string, int, int, string, IReadOnlyList<StreakReminderAssignmentDto>>((u, cName, cId, s, target, recs) => capturedCourseName = cName)
+            .Returns(Task.CompletedTask);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(1));
+        Assert.That(capturedCourseName, Is.EqualTo("CS101"));
+        _userRepositoryMock.Verify(r => r.GetByIdAsync(42), Times.Never);
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_TargetStudentNameResolution_ShouldCoverAllBranches()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+
+        // Leaderboard:
+        // Rank 1: Bob (Pseudonym "ShadowBob", UsePseudonym = true, 30 XP)
+        var bob = new StudentCourseProfile(1, 10, 1);
+        bob.Enroll(true, "ShadowBob", "CodeCat", null, true);
+        bob.AwardPassedTestXp(1001, previousWeekDate.AddMinutes(1));
+        bob.AwardPassedTestXp(1002, previousWeekDate.AddMinutes(2));
+        bob.AwardPassedTestXp(1003, previousWeekDate.AddMinutes(3));
+
+        // Rank 2: Charlie (UsePseudonym = false, User with names, 20 XP)
+        var charlie = new StudentCourseProfile(2, 10, 1);
+        charlie.Enroll(true, null, "CodeCat", null, false);
+        charlie.User = new User { Id = 2, FirstName = "Charlie", LastName = "Chaplin" };
+        charlie.AwardPassedTestXp(1001, previousWeekDate.AddMinutes(4));
+        charlie.AwardPassedTestXp(1002, previousWeekDate.AddMinutes(5));
+
+        // Rank 3: Diana (UsePseudonym = false, User loaded via repo with empty names, fallback to pseudonym, 15 XP)
+        var diana = new StudentCourseProfile(3, 10, 1);
+        diana.Enroll(true, "DianaSecret", "CodeCat", null, false);
+        diana.AwardPassedTestXp(1001, previousWeekDate.AddMinutes(6));
+
+        // Rank 4: Alice (needs reminder, ShowInLeaderBoard = true, 10 XP)
+        var alice = new StudentCourseProfile(4, 10, 1);
+        alice.RecordWeeklyActivity(previousWeekDate);
+        alice.User = new User { Id = 4, Email = "alice@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { bob, charlie, diana, alice });
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(new User { Id = 3, FirstName = " ", LastName = " " });
+
+        string capturedTarget = null;
+        _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()))
+            .Callback<User, string, int, int, string, IReadOnlyList<StreakReminderAssignmentDto>>((u, cName, cId, s, target, recs) => capturedTarget = target)
+            .Returns(Task.CompletedTask);
+
+        await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        // Diana is rank 3 directly above Alice (rank 4). Since Diana's user names are whitespace, falls back to Pseudonym "DianaSecret"
+        Assert.That(capturedTarget, Is.EqualTo("DianaSecret"));
+
+        // Case: student opted out of leaderboard
+        alice.HideFromLeaderboard();
+        capturedTarget = "initial";
+        await _service.SendStreakRemindersAsync(_thursdayExecution);
+        Assert.That(capturedTarget, Is.Null);
+
+        // Case: student is #1 on leaderboard
+        bob.RecordWeeklyActivity(previousWeekDate);
+        bob.User = new User { Id = 1, Email = "bob@test.com" };
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { bob });
+        capturedTarget = "initial";
+        await _service.SendStreakRemindersAsync(_thursdayExecution);
+        Assert.That(capturedTarget, Is.Null);
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WithMultipleMessagesAndThrottleDelay_ShouldDelayBetweenMessages()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student1 = new StudentCourseProfile(1, 10, 1);
+        student1.RecordWeeklyActivity(previousWeekDate);
+        student1.User = new User { Id = 1, Email = "s1@test.com" };
+
+        var student2 = new StudentCourseProfile(2, 10, 1);
+        student2.RecordWeeklyActivity(previousWeekDate);
+        student2.User = new User { Id = 2, Email = "s2@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2 });
+
+        _service.ThrottleDelay = TimeSpan.FromMilliseconds(5);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void SendStreakRemindersAsync_WhenCancellationTokenCancelled_ShouldThrow()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(1, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        student.User = new User { Id = 1, Email = "s1@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { student });
+
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await _service.SendStreakRemindersAsync(_thursdayExecution, cts.Token));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenAssignmentHasNoTestsOrAllTestsPassed_ShouldHandleInRecommendations()
+    {
+        var assignmentEmptyTests = new Assignment
+        {
+            Id = 103,
+            Code = "Ex3",
+            Description = "Empty Tests",
+            Tests = new List<Test>()
+        };
+        var assignmentNullTests = new Assignment
+        {
+            Id = 104,
+            Code = "Ex4",
+            Description = "Null Tests",
+            Tests = null
+        };
+        var assignmentCompleted = new Assignment
+        {
+            Id = 105,
+            Code = "Ex5",
+            Description = "Completed",
+            Tests = new List<Test> { new() { Id = 1005 } }
+        };
+
+        var topicMockWithNullAssignments = new Mock<ITopic>();
+        topicMockWithNullAssignments.SetupGet(t => t.Id).Returns(3);
+        topicMockWithNullAssignments.SetupGet(t => t.Assignments).Returns((ICollection<Assignment>)null);
+
+        var topicMock = new Mock<ITopic>();
+        topicMock.SetupGet(t => t.Id).Returns(2);
+        topicMock.SetupGet(t => t.Assignments).Returns(new List<Assignment> { assignmentEmptyTests, assignmentNullTests, assignmentCompleted, _topics[0].Assignments.First() });
+        _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
+            .ReturnsAsync(new List<ITopic> { topicMockWithNullAssignments.Object, topicMock.Object });
+
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(1, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        // Add an event from a different year to test the ISOWeek.GetYear false branch
+        student.AwardPassedTestXp(1001, new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        student.AwardPassedTestXp(1005, previousWeekDate); // completed assignment 105
+        student.User = new User { Id = 1, Email = "s@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { student });
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_TargetStudentNameWithWhitespacePseudonymOrTargetUserResolution()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+
+        // Target with UsePseudonym = false -> uses user names
+        var target1 = new StudentCourseProfile(10, 10, 1);
+        target1.Enroll(true, null, "CodeCat", null, false);
+        target1.User = new User { Id = 10, FirstName = "Real", LastName = "User" };
+        target1.AwardPassedTestXp(1001, previousWeekDate.AddMinutes(1));
+        target1.AwardPassedTestXp(1002, previousWeekDate.AddMinutes(2));
+
+        var student1 = new StudentCourseProfile(11, 10, 1);
+        student1.RecordWeeklyActivity(previousWeekDate);
+        student1.User = new User { Id = 11, Email = "s1@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { target1, student1 });
+
+        string capturedTarget = null;
+        _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()))
+            .Callback<User, string, int, int, string, IReadOnlyList<StreakReminderAssignmentDto>>((u, cName, cId, s, target, recs) => capturedTarget = target)
+            .Returns(Task.CompletedTask);
+
+        await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(capturedTarget, Is.EqualTo("Real User"));
+
+        // Target user retrieved from repository has real name
+        var target2 = new StudentCourseProfile(20, 10, 1);
+        target2.Enroll(true, null, "CodeCat", null, false);
+        target2.AwardPassedTestXp(1001, previousWeekDate.AddMinutes(1));
+        target2.AwardPassedTestXp(1002, previousWeekDate.AddMinutes(2));
+
+        var student2 = new StudentCourseProfile(21, 10, 1);
+        student2.RecordWeeklyActivity(previousWeekDate);
+        student2.User = new User { Id = 21, Email = "s2@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync(new List<StudentCourseProfile> { target2, student2 });
+        _userRepositoryMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(new User { Id = 20, FirstName = "Repo", LastName = "User" });
+
+        capturedTarget = null;
+        await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(capturedTarget, Is.EqualTo("Repo User"));
+    }
 }
 

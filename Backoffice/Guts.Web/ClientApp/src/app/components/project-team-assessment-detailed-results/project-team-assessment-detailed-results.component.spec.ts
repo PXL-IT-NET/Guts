@@ -1,3 +1,4 @@
+import { signal } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import {
   GradeCorrectionType,
@@ -6,7 +7,7 @@ import {
 import { ProjectService, ProjectTeamAssessmentService } from "src/app/services";
 import { GetResult } from "src/app/util/result";
 import { IAssessmentResultModel } from "src/app/viewmodels/projectassessment.model";
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 import {
   ActivatedRouteStub,
   createToastrSpy,
@@ -21,6 +22,7 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
 
   const sampleResults: IAssessmentResultModel[] = [
     {
+      assessmentDescription: "Sprint 1 Assessment",
       subject: { id: 1, fullName: "Alice A" },
       selfAssessment: null,
       peerAssessments: [],
@@ -76,8 +78,15 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     teamAssessmentServiceSpy =
       jasmine.createSpyObj<ProjectTeamAssessmentService>(
         "ProjectTeamAssessmentService",
-        ["getDetailedResultsOfProjectTeamAssessment"],
+        [
+          "getDetailedResultsOfProjectTeamAssessment",
+          "getStatusOfProjectTeamAssessment",
+        ],
+        { activeResultTeamName: signal<string>("") },
       );
+    teamAssessmentServiceSpy.getStatusOfProjectTeamAssessment.and.returnValue(
+      of(GetResult.success({ isComplete: true } as any)),
+    );
     projectServiceSpy = jasmine.createSpyObj<ProjectService>("ProjectService", [
       "getProjectDetails",
     ]);
@@ -90,12 +99,15 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
       parentRoute,
     );
 
-    component = TestBed.runInInjectionContext(() => new ProjectTeamAssessmentDetailedResultsComponent(
-      teamAssessmentServiceSpy,
-      projectServiceSpy,
-      toastrSpy,
-      routeStub as any,
-    ));
+    component = TestBed.runInInjectionContext(
+      () =>
+        new ProjectTeamAssessmentDetailedResultsComponent(
+          teamAssessmentServiceSpy,
+          projectServiceSpy,
+          toastrSpy,
+          routeStub as any,
+        ),
+    );
   });
 
   it("should load project details, set teams, and populate chart data on ngOnInit", () => {
@@ -125,6 +137,8 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
       1,
       "PROJ1",
     );
+    expect(component.assessmentDescription).toBe("Sprint 1 Assessment");
+    expect(component.assessmentDescription).toBe("Sprint 1 Assessment");
     expect(component.currentTeam.id).toBe(20);
     expect(component.previousTeam?.id).toBe(10);
     expect(component.nextTeam?.id).toBe(30);
@@ -146,6 +160,50 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     routeStub.setParams({ code: "PROJ1", assessmentId: 5, teamId: 30 });
     expect(component.currentTeam.id).toBe(30);
     expect(component.previousTeam?.id).toBe(20);
+    expect(component.nextTeam).toBeNull();
+  });
+
+  it("should skip incomplete teams when navigating previous and next", () => {
+    projectServiceSpy.getProjectDetails.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "PROJ1",
+          description: "Project 1",
+          assignments: [],
+          components: [],
+          teams: [
+            { id: 10, name: "Team 1", members: [] },
+            { id: 20, name: "Team 2", members: [] },
+            { id: 30, name: "Team 3", members: [] },
+          ],
+        }),
+      ),
+    );
+    // Team 1 (id: 10) and Team 3 (id: 30) are complete, Team 2 (id: 20) is incomplete
+    teamAssessmentServiceSpy.getStatusOfProjectTeamAssessment.and.callFake(
+      (_assessmentId, teamId) => {
+        return of(GetResult.success({ isComplete: teamId !== 20 } as any));
+      },
+    );
+    teamAssessmentServiceSpy.getDetailedResultsOfProjectTeamAssessment.and.returnValue(
+      of(GetResult.success(sampleResults)),
+    );
+
+    component.ngOnInit();
+
+    // Currently viewing Team 1 (id: 10)
+    routeStub.setParams({ code: "PROJ1", assessmentId: 5, teamId: 10 });
+    expect(component.currentTeam.id).toBe(10);
+    expect(component.previousTeam).toBeNull();
+    // Next team skips incomplete Team 2 (id: 20) and points to Team 3 (id: 30)
+    expect(component.nextTeam?.id).toBe(30);
+
+    // Navigate to Team 3 (id: 30)
+    routeStub.setParams({ code: "PROJ1", assessmentId: 5, teamId: 30 });
+    expect(component.currentTeam.id).toBe(30);
+    // Previous team skips incomplete Team 2 (id: 20) and points to Team 1 (id: 10)
+    expect(component.previousTeam?.id).toBe(10);
     expect(component.nextTeam).toBeNull();
   });
 
@@ -220,5 +278,63 @@ describe("ProjectTeamAssessmentDetailedResultsComponent", () => {
     expect(yScale.grid.lineWidth({ tick: { value: 3 } }, {})).toBe(3);
     expect(yScale.grid.lineWidth({ tick: { value: 2 } }, {})).toBe(1);
   });
-});
 
+  it("should reset activeResultTeamName on ngOnDestroy", () => {
+    teamAssessmentServiceSpy.activeResultTeamName.set("Team Alpha");
+    component.ngOnDestroy();
+    expect(teamAssessmentServiceSpy.activeResultTeamName()).toBe("");
+  });
+
+  it("should handle empty allTeams in loadCompletedTeams", () => {
+    component.allTeams = [];
+    component.loadCompletedTeams(5, 10);
+    expect(component.completedTeams).toEqual([]);
+    expect(component.currentTeam.id).toBe(0);
+  });
+
+  it("should handle error in getStatusOfProjectTeamAssessment gracefully in loadCompletedTeams", () => {
+    component.allTeams = [
+      { id: 10, name: "Team 1" },
+      { id: 20, name: "Team 2" },
+    ];
+    teamAssessmentServiceSpy.getStatusOfProjectTeamAssessment.and.returnValue(
+      throwError(() => new Error("Network error")),
+    );
+    component.loadCompletedTeams(5, 10);
+    expect(component.completedTeams).toEqual([]);
+    expect(component.currentTeam.id).toBe(10);
+  });
+
+  it("should use fallback index navigation when completedTeams is empty", () => {
+    component.allTeams = [
+      { id: 10, name: "Team 1" },
+      { id: 20, name: "Team 2" },
+      { id: 30, name: "Team 3" },
+    ];
+    component.completedTeams = [];
+
+    // First team
+    component.setTeams(10);
+    expect(component.currentTeam.id).toBe(10);
+    expect(component.previousTeam).toBeNull();
+    expect(component.nextTeam?.id).toBe(20);
+
+    // Middle team
+    component.setTeams(20);
+    expect(component.currentTeam.id).toBe(20);
+    expect(component.previousTeam?.id).toBe(10);
+    expect(component.nextTeam?.id).toBe(30);
+
+    // Last team
+    component.setTeams(30);
+    expect(component.currentTeam.id).toBe(30);
+    expect(component.previousTeam?.id).toBe(20);
+    expect(component.nextTeam).toBeNull();
+
+    // Unknown team
+    component.setTeams(999);
+    expect(component.currentTeam.id).toBe(0);
+    expect(component.previousTeam).toBeNull();
+    expect(component.nextTeam).toBeNull();
+  });
+});
