@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+} from "@angular/core";
 import { CourseService } from "../../services/course.service";
 import { AuthService } from "../../services/auth.service";
 import { ICourseContentsModel } from "../../viewmodels/course.model";
@@ -13,7 +20,11 @@ import { GetResult } from "src/app/util/result";
 import { BsModalRef, BsModalService, ModalOptions } from "ngx-bootstrap/modal";
 import { ProjectAddComponent } from "../project-add/project-add.component";
 import { IProjectDetailsModel } from "src/app/viewmodels/project.model";
-import { PeriodProvider, ProjectService, ProjectTeamAssessmentService } from "src/app/services";
+import {
+  PeriodProvider,
+  ProjectService,
+  ProjectTeamAssessmentService,
+} from "src/app/services";
 import { GamificationService } from "../../services/gamification.service";
 
 @Component({
@@ -108,16 +119,19 @@ export class CourseComponent implements OnInit, OnDestroy {
     this._isGamificationEnabled.set(v);
   }
 
-
   private userProfileSubscription: Subscription;
   private navigationSubscription: Subscription;
 
   private readonly projectService = inject(ProjectService, { optional: true });
-  private readonly projectTeamAssessmentService = inject(ProjectTeamAssessmentService, { optional: true });
+  private readonly projectTeamAssessmentService = inject(
+    ProjectTeamAssessmentService,
+    { optional: true },
+  );
 
   private readonly _assessmentResultsTeamName = signal<string>("");
   public get assessmentResultsTeamName(): string {
-    const fromService = this.projectTeamAssessmentService?.activeResultTeamName();
+    const fromService =
+      this.projectTeamAssessmentService?.activeResultTeamName();
     if (fromService) {
       return fromService;
     }
@@ -317,7 +331,9 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   public get canShowCourseStatistics(): boolean {
-    return this.userProfile.isLector() && (this.course.chapters?.length ?? 0) > 0;
+    return (
+      this.userProfile.isLector() && (this.course.chapters?.length ?? 0) > 0
+    );
   }
 
   public get projectTestResultsOverviewActive(): boolean {
@@ -401,7 +417,9 @@ export class CourseComponent implements OnInit, OnDestroy {
           return;
         }
         if (this.course.chapters.length > 0) {
-          if (!this.handleCourseChapters(selectedTopicCode, selectedAssignmentId)) {
+          if (
+            !this.handleCourseChapters(selectedTopicCode, selectedAssignmentId)
+          ) {
             return;
           }
         } else if (this.course.projects.length > 0) {
@@ -420,8 +438,15 @@ export class CourseComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleCourseChapters(selectedTopicCode: string, selectedAssignmentId: number): boolean {
-    const selectedChapter = this.course.chapters.find((ch) => ch.code === selectedTopicCode);
+  private handleCourseChapters(
+    selectedTopicCode: string,
+    selectedAssignmentId: number,
+  ): boolean {
+    this.course.chapters = this.sortTopics(this.course.chapters);
+
+    const selectedChapter = this.course.chapters.find(
+      (ch) => ch.code === selectedTopicCode,
+    );
     if (!selectedChapter) {
       this.navigateToChapter(this.course.chapters[0]);
       return false;
@@ -429,7 +454,9 @@ export class CourseComponent implements OnInit, OnDestroy {
     this.selectChapter(selectedChapter);
 
     if (selectedAssignmentId > 0) {
-      const selectedAssignment = selectedChapter.assignments.find((a) => a.assignmentId === selectedAssignmentId);
+      const selectedAssignment = selectedChapter.assignments.find(
+        (a) => a.assignmentId === selectedAssignmentId,
+      );
       if (selectedAssignment) {
         this.selectedExercise = selectedAssignment;
         this.selectedComponent = null;
@@ -438,8 +465,15 @@ export class CourseComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private handleCourseProjects(selectedTopicCode: string, selectedAssignmentId: number): void {
-    const selectedProject = this.course.projects.find((p) => p.code === selectedTopicCode);
+  private handleCourseProjects(
+    selectedTopicCode: string,
+    selectedAssignmentId: number,
+  ): void {
+    this.course.projects = this.sortTopics(this.course.projects);
+
+    const selectedProject = this.course.projects.find(
+      (p) => p.code === selectedTopicCode,
+    );
     if (selectedProject) {
       this.selectProject(selectedProject);
     } else {
@@ -447,13 +481,21 @@ export class CourseComponent implements OnInit, OnDestroy {
     }
 
     if (selectedAssignmentId > 0 && selectedProject) {
-      const selectedAssignment = selectedProject.assignments.find((a) => a.assignmentId === selectedAssignmentId);
+      const selectedAssignment = selectedProject.assignments.find(
+        (a) => a.assignmentId === selectedAssignmentId,
+      );
       if (selectedAssignment) {
         this.selectedComponent = selectedAssignment;
         this.selectedExercise = null;
       }
     }
   }
+  private sortTopics(topics: ITopicModel[]): ITopicModel[] {
+    return [...topics].sort((a, b) =>
+      (a.description || a.code).localeCompare(b.description || b.code),
+    );
+  }
+
   public showAddProjectModal() {
     let modalState: ModalOptions = {
       initialState: {

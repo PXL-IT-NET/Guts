@@ -155,6 +155,94 @@ describe("CourseComponent", () => {
     expect(component.isChapterTestResultDetailRouteActive()).toBeTrue();
   });
 
+  it("should sort course chapters by description with fallback to code", () => {
+    routerSpy.url = "/courses/1/chapters/Unknown/testresults";
+    const chapterC = {
+      id: 3,
+      code: "03 - Loops",
+      description: "",
+      assignments: [],
+    };
+    const chapterB = {
+      id: 1,
+      code: "Ch1",
+      description: "02 - Variables",
+      assignments: [],
+    };
+    const chapterA = {
+      id: 2,
+      code: "Ch2",
+      description: "01 - Intro",
+      assignments: [],
+    };
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [chapterC, chapterB, chapterA],
+          projects: [],
+        }),
+      ),
+    );
+
+    component.ngOnInit();
+
+    expect(component.course.chapters).toEqual([chapterA, chapterB, chapterC]);
+    expect(routerSpy.navigate).toHaveBeenCalledWith([
+      "courses",
+      1,
+      "chapters",
+      "Ch2",
+      "testresults",
+    ]);
+  });
+
+  it("should sort course projects by description with fallback to code", () => {
+    routerSpy.url = "/courses/1/projects/Unknown/assessments";
+    const projectC = {
+      id: 3,
+      code: "03 - Final",
+      description: "",
+      assignments: [],
+    };
+    const projectB = {
+      id: 1,
+      code: "P1",
+      description: "02 - Beta",
+      assignments: [],
+    };
+    const projectA = {
+      id: 2,
+      code: "P2",
+      description: "01 - Alpha",
+      assignments: [],
+    };
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [],
+          projects: [projectC, projectB, projectA],
+        }),
+      ),
+    );
+
+    component.ngOnInit();
+
+    expect(component.course.projects).toEqual([projectA, projectB, projectC]);
+    expect(routerSpy.navigate).toHaveBeenCalledWith([
+      "courses",
+      1,
+      "projects",
+      "P2",
+      "assessments",
+    ]);
+  });
+
   it("should navigate to first chapter or project when topicCode is not found", () => {
     routerSpy.url = "/courses/1/chapters/Unknown/testresults";
     const chapter = {
