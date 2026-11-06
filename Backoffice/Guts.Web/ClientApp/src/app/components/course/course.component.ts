@@ -13,7 +13,7 @@ import { ITopicModel } from "../../viewmodels/topic.model";
 import { NavigationEnd, Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { UserProfile } from "../../viewmodels/user.model";
-import { of, Subscription } from "rxjs";
+import { forkJoin, of, Subscription } from "rxjs";
 import { IAssignmentModel } from "src/app/viewmodels/assignment.model";
 import { filter, map } from "rxjs/operators";
 import { GetResult } from "src/app/util/result";
@@ -183,6 +183,13 @@ export class CourseComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.userProfile = new UserProfile();
+    this.userProfileSubscription = this.authService
+      .getUserProfile()
+      .subscribe((profile) => {
+        this.userProfile = profile;
+      });
+
     this.navigationSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
@@ -195,16 +202,6 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.handleNavigationEvent(true);
       }
     });
-
-    // Manually trigger the event handler on initial load
-    //this.handleNavigationEvent();
-
-    this.userProfile = new UserProfile();
-    this.userProfileSubscription = this.authService
-      .getUserProfile()
-      .subscribe((profile) => {
-        this.userProfile = profile;
-      });
   }
 
   ngOnDestroy() {
@@ -221,10 +218,12 @@ export class CourseComponent implements OnInit, OnDestroy {
     return this.router.url.includes("/gamification");
   }
 
+  public isCourseStatisticsRouteActive(): boolean {
+    return this.router.url.includes("/statistics");
+  }
+
   public navigateToGamification() {
-    this.selectedChapter = null;
     this.selectedExercise = null;
-    this.selectedProject = null;
     this.selectedComponent = null;
     void this.router.navigate(["courses", this.course.id, "gamification"]);
   }
@@ -306,8 +305,24 @@ export class CourseComponent implements OnInit, OnDestroy {
     this.loadCourseContents(courseId, topicCode, assignmentId, forceReload);
   }
 
+  public isChapterSectionActive(): boolean {
+    return (
+      this.selectedChapter != null &&
+      !this.isGamificationRouteActive() &&
+      !this.isCourseStatisticsRouteActive()
+    );
+  }
+
+  public isProjectSectionActive(): boolean {
+    return (
+      this.selectedProject != null &&
+      !this.isGamificationRouteActive() &&
+      !this.isCourseStatisticsRouteActive()
+    );
+  }
+
   private isChapterRouteActive() {
-    return this.selectedChapter != null;
+    return this.isChapterSectionActive();
   }
 
   private selectChapter(chapter: ITopicModel) {
@@ -330,10 +345,25 @@ export class CourseComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  public get canShowCourseStatistics(): boolean {
+  public get hasAssignments(): boolean {
+    const hasChapterWithAssignment =
+      this.course.chapters?.some((c) => (c.assignments?.length ?? 0) > 0) ??
+      false;
+    const hasProjectWithComponent =
+      this.course.projects?.some((p) => (p.assignments?.length ?? 0) > 0) ??
+      false;
+    return hasChapterWithAssignment || hasProjectWithComponent;
+  }
+
+  public get canShowLeaderboard(): boolean {
     return (
-      this.userProfile.isLector() && (this.course.chapters?.length ?? 0) > 0
+      (this.userProfile.isTeacher() || this.isGamificationEnabled) &&
+      this.hasAssignments
     );
+  }
+
+  public get canShowCourseStatistics(): boolean {
+    return this.userProfile.isLector() && this.hasAssignments;
   }
 
   public get projectTestResultsOverviewActive(): boolean {
@@ -378,64 +408,93 @@ export class CourseComponent implements OnInit, OnDestroy {
   ) {
     this.loading = true;
     this.hasContent = true;
-    this.selectedChapter = null;
-    this.selectedProject = null;
 
     if (courseId <= 0) {
+      this.selectedChapter = null;
+      this.selectedProject = null;
       return;
     }
 
-    if (this.course.id !== courseId || forceReload) {
-      this.gamificationService.getConfig(courseId).subscribe((configRes) => {
-        if (configRes.success && configRes.value) {
-          this.isGamificationEnabled = configRes.value.isGamificationEnabled;
-        } else {
-          this.isGamificationEnabled = false;
-        }
-      });
-    }
-
+    let config$ = of(this.isGamificationEnabled);
     let courseContents$ = of(this.course).pipe(
       map((c) => GetResult.success<ICourseContentsModel>(c)),
     );
     if (this.course.id !== courseId || forceReload) {
+      this.selectedChapter = null;
+      this.selectedProject = null;
+      config$ = this.gamificationService.getConfig(courseId).pipe(
+        map((configRes) =>
+          configRes.success && configRes.value
+            ? configRes.value.isGamificationEnabled
+            : false,
+        ),
+      );
       courseContents$ = this.courseService.getCourseContentsById(
         courseId,
         this.periodProvider.period.id,
       );
     }
 
-    courseContents$.subscribe((result) => {
-      this.loading = false;
-      if (result.success) {
-        this.course = result.value;
-        if (this.isGamificationRouteActive()) {
-          this.selectedChapter = null;
-          this.selectedExercise = null;
-          this.selectedProject = null;
-          this.selectedComponent = null;
+    forkJoin([config$, courseContents$]).subscribe(
+      ([isGamificationEnabled, result]) => {
+        this.isGamificationEnabled = isGamificationEnabled;
+        this.loading = false;
+        if (!result.success) {
+          this.toastr.error(
+            "Could not course details from API. Message: " +
+              (result.message || "unknown error"),
+            "System error",
+          );
           return;
         }
-        if (this.course.chapters.length > 0) {
-          if (
-            !this.handleCourseChapters(selectedTopicCode, selectedAssignmentId)
-          ) {
-            return;
-          }
-        } else if (this.course.projects.length > 0) {
-          this.handleCourseProjects(selectedTopicCode, selectedAssignmentId);
-        } else {
-          this.hasContent = false;
-          void this.router.navigate(["courses", this.course.id]);
-        }
-      } else {
-        this.toastr.error(
-          "Could not course details from API. Message: " +
-            (result.message || "unknown error"),
-          "System error",
+        this.onCourseContentsLoaded(
+          result.value,
+          selectedTopicCode,
+          selectedAssignmentId,
         );
-      }
-    });
+      },
+    );
+  }
+
+  private onCourseContentsLoaded(
+    course: ICourseContentsModel,
+    selectedTopicCode: string,
+    selectedAssignmentId: number,
+  ): void {
+    this.course = course;
+    this.course.chapters = this.sortTopics(this.course.chapters);
+    this.course.projects = this.sortTopics(this.course.projects);
+    if (
+      this.isGamificationRouteActive() ||
+      this.isCourseStatisticsRouteActive()
+    ) {
+      this.ensureDefaultTopicSelected();
+      return;
+    }
+    this.selectedChapter = null;
+    this.selectedProject = null;
+    if (this.course.chapters.length > 0) {
+      this.handleCourseChapters(selectedTopicCode, selectedAssignmentId);
+    } else if (this.course.projects.length > 0) {
+      this.handleCourseProjects(selectedTopicCode, selectedAssignmentId);
+    } else {
+      this.hasContent = false;
+      void this.router.navigate(["courses", this.course.id]);
+    }
+  }
+
+  private ensureDefaultTopicSelected(): void {
+    this.selectedExercise = null;
+    this.selectedComponent = null;
+    if (this.course.chapters.length > 0 && !this.selectedChapter) {
+      this.selectChapter(this.course.chapters[0]);
+    } else if (
+      this.course.chapters.length === 0 &&
+      this.course.projects.length > 0 &&
+      !this.selectedProject
+    ) {
+      this.selectProject(this.course.projects[0]);
+    }
   }
 
   private handleCourseChapters(
@@ -448,7 +507,12 @@ export class CourseComponent implements OnInit, OnDestroy {
       (ch) => ch.code === selectedTopicCode,
     );
     if (!selectedChapter) {
-      this.navigateToChapter(this.course.chapters[0]);
+      if (this.canShowLeaderboard) {
+        this.selectChapter(this.course.chapters[0]);
+        this.navigateToGamification();
+      } else {
+        this.navigateToChapter(this.course.chapters[0]);
+      }
       return false;
     }
     this.selectChapter(selectedChapter);
@@ -476,8 +540,13 @@ export class CourseComponent implements OnInit, OnDestroy {
     );
     if (selectedProject) {
       this.selectProject(selectedProject);
+    } else if (this.canShowLeaderboard) {
+      this.selectProject(this.course.projects[0]);
+      this.navigateToGamification();
+      return;
     } else {
       this.navigateToProject(this.course.projects[0]);
+      return;
     }
 
     if (selectedAssignmentId > 0 && selectedProject) {

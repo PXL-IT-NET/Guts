@@ -10,10 +10,13 @@ namespace Guts.Api.BackgroundServices;
 
 public class StreakReminderBackgroundService(
     IServiceScopeFactory serviceScopeFactory,
-    ILogger<StreakReminderBackgroundService> logger)
+    ILogger<StreakReminderBackgroundService> logger,
+    TimeProvider timeProvider = null)
     : BackgroundService
 {
-    public static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
+    private static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
     {
         int daysUntilThursday = ((int)DayOfWeek.Thursday - (int)fromUtc.DayOfWeek + 7) % 7;
         DateTime target = fromUtc.Date.AddDays(daysUntilThursday).AddHours(12);
@@ -26,7 +29,7 @@ public class StreakReminderBackgroundService(
         return target;
     }
 
-    public async Task ExecuteStreakRemindersAsync(DateTime executionTime, CancellationToken cancellationToken = default)
+    private async Task ExecuteStreakRemindersAsync(DateTime executionTime, CancellationToken cancellationToken)
     {
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -51,30 +54,27 @@ public class StreakReminderBackgroundService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            DateTime now = DateTime.UtcNow;
+            DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
             DateTime nextRun = GetNextThursdayMiddayTrigger(now);
             TimeSpan delay = nextRun - now;
 
-            if (delay > TimeSpan.Zero)
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("Next streak reminder dispatch scheduled for {NextRun} (in {Delay})", nextRun, delay);
-                }
-
-                try
-                {
-                    await Task.Delay(delay, stoppingToken);
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                logger.LogInformation("Next streak reminder dispatch scheduled for {NextRun} (in {Delay})", nextRun, delay);
             }
 
             try
             {
-                await ExecuteStreakRemindersAsync(DateTime.UtcNow, stoppingToken);
+                await Task.Delay(delay, _timeProvider, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            try
+            {
+                await ExecuteStreakRemindersAsync(_timeProvider.GetUtcNow().UtcDateTime, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -85,4 +85,3 @@ public class StreakReminderBackgroundService(
         logger.LogInformation("StreakReminderBackgroundService stopped.");
     }
 }
-

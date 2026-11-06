@@ -101,7 +101,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
   public ngOnInit(): void {
     if (!this.courseId || this.courseId <= 0) {
-      const idFromRoute = this.route.snapshot.paramMap.get("courseId");
+      const idFromRoute =
+        this.route.snapshot?.paramMap?.get("courseId") ??
+        this.route.parent?.snapshot?.paramMap?.get("courseId") ??
+        this.route.parent?.snapshot?.params?.["courseId"];
       if (idFromRoute) {
         this.courseId = +idFromRoute;
       }

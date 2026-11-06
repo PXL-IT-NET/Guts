@@ -129,7 +129,7 @@
       }
 
       <!-- Tab Navigation -->
-      <ul class="nav nav-pills mb-4 gap-2">
+      <ul class="nav nav-pills nav-sub-pills mb-3 gap-2">
         @if (config?.isWeeklyStreakEnabled) {
           <li class="nav-item">
             <button
@@ -137,7 +137,7 @@
               [class.active]="activeTab === 'sprint'"
               (click)="activeTab = 'sprint'"
             >
-              <i class="bi bi-lightning-charge-fill me-1 text-warning"></i>
+              <i class="bi bi-lightning-charge-fill me-1"></i>
               Weekly Sprint
             </button>
           </li>
@@ -149,7 +149,7 @@
               [class.active]="activeTab === 'hallOfFame'"
               (click)="activeTab = 'hallOfFame'"
             >
-              <i class="bi bi-trophy-fill me-1 text-primary"></i> Course Hall of
+              <i class="bi bi-trophy-fill me-1"></i> Course Hall of
               Fame
             </button>
           </li>
@@ -162,7 +162,7 @@
               [class.active]="activeTab === 'classes'"
               (click)="activeTab = 'classes'"
             >
-              <i class="bi bi-people-fill me-1 text-success"></i> Class
+              <i class="bi bi-people-fill me-1"></i> Class
               Championship
             </button>
           </li>
@@ -174,7 +174,7 @@
               [class.active]="activeTab === 'badges'"
               (click)="activeTab = 'badges'"
             >
-              <i class="bi bi-award-fill me-1 text-danger"></i> Badges ({{
+              <i class="bi bi-award-fill me-1"></i> Badges ({{
                 profile?.earnedBadges?.length || 0
               }})
             </button>

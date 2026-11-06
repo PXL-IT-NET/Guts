@@ -24,7 +24,7 @@ export class ProjectAssessmentOverviewPage {
     this.page = page;
     this.pageTitle = page.locator("h5", { hasText: "Peer assessments" });
     this.peerAssessmentsTab = page
-      .locator(".nav-tabs")
+      .locator(".nav-sub-pills")
       .getByRole("link", { name: "Peer assessments" });
     this.emptyMessage = page.getByText(
       "This project has no peer assessment configured yet.",
@@ -177,10 +177,10 @@ export class LectorDetailedResultsPage {
       hasText: /Results/,
     });
     this.peerAssessmentsTab = page
-      .locator(".nav-tabs")
+      .locator(".nav-sub-pills")
       .getByRole("link", { name: "Peer assessments" });
     this.assessmentResultsTab = page
-      .locator(".nav-tabs")
+      .locator(".nav-sub-pills")
       .getByRole("link", { name: /Assessment results/ });
     this.previousLink = page.locator("a.nav-link", { hasText: "Previous" });
     this.nextLink = page.locator("a.nav-link", { hasText: "Next" });

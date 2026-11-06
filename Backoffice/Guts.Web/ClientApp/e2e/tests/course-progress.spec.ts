@@ -44,6 +44,9 @@ test.describe("Course & Exercise Progress Dashboard", () => {
     // Teacher has access to Course statistics button
     await expect(coursePage.courseStatisticsButton).toBeVisible();
 
+    // Navigate to chapter to see chapter sub-tabs including Chapter settings
+    await teacherPage.goto("/courses/1/chapters/ch1/testresults");
+
     // Teacher has access to Chapter settings tab
     await expect(coursePage.chapterSettingsTab).toBeVisible();
   });

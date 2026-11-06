@@ -1,26 +1,4 @@
-<div class="row align-items-center mb-3">
-  <div class="col">
-    @if (model) {
-      <h4 class="mb-0">
-        <span>{{ model.courseName }}</span>
-        <small class="text-body-secondary"> ({{ model.courseCode }})</small>
-      </h4>
-    }
-    <h5 class="text-secondary mt-1 mb-0">Statistics</h5>
-  </div>
-  <div class="col-auto">
-    <a
-      [routerLink]="['/courses', courseId]"
-      class="btn btn-outline-secondary"
-      title="Back to course"
-    >
-      <span class="bi bi-arrow-left me-1"></span>
-      <span>Back to course</span>
-    </a>
-  </div>
-</div>
-
-<div class="position-relative">
+<div class="position-relative mt-3">
   <app-loading-overlay [show]="loading"></app-loading-overlay>
 
   @if (model) {

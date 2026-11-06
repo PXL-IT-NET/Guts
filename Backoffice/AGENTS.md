@@ -111,7 +111,7 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
 
 ### SonarQube / SonarCloud Analysis
 
-- Run quality & security analysis from `Backoffice/`:
+- Run quality & security analysis from `Backoffice/` and resolve all reported bugs, vulnerabilities, and code smells. Also aim for 100% code coverage on new features and critical bug fixes:
   ```powershell
   .\run-sonarqube.ps1 -UseSonarCloud
   ```

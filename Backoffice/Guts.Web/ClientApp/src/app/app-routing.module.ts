@@ -55,6 +55,11 @@ const routes: Routes = [
         canActivate: [authGuard],
       },
       {
+        path: "statistics",
+        component: c.CourseStatisticsComponent,
+        canActivate: [authGuard],
+      },
+      {
         path: "chapters/:chapterCode",
         redirectTo: "chapters/:chapterCode/testresults",
         pathMatch: "full",
@@ -114,11 +119,6 @@ const routes: Routes = [
   {
     path: "courses/:courseId/config",
     component: c.CourseConfigComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: "courses/:courseId/statistics",
-    component: c.CourseStatisticsComponent,
     canActivate: [authGuard],
   },
   { path: "**", redirectTo: "home" },

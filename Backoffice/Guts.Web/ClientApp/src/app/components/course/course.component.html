@@ -5,26 +5,38 @@
       <small class="text-body-secondary"> ({{ course.code }})</small>
     </h4>
   </div>
-  @if (canShowCourseStatistics) {
-    <div class="col-auto">
-      <a
-        [routerLink]="['/courses', course.id, 'statistics']"
-        class="btn btn-outline-primary"
-      >
-        <span class="bi bi-bar-chart me-1"></span>
-        <span>Course statistics</span>
-      </a>
-    </div>
-  }
 </div>
 
 <div class="row">
   <div class="col-12">
+    <!-- Top-level course tabs -->
     <ul class="nav nav-tabs" role="tablist">
-      <!-- Chapters -->
+      <!-- Gamification -->
+      @if (canShowLeaderboard) {
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            (click)="navigateToGamification()"
+            [class.active]="isGamificationRouteActive()"
+            style="cursor: pointer"
+          >
+            <span class="bi bi-trophy me-1"></span>
+            <span>Leaderboard</span>
+          </a>
+        </li>
+      }
+
+      <!-- Chapters selector -->
       @if (course.chapters.length > 0) {
         <li class="nav-item dropdown nav-item-main">
-          <button type="button" class="nav-link dropdown-toggle border-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <button
+            type="button"
+            class="nav-link dropdown-toggle"
+            [class.active]="isChapterSectionActive()"
+            data-bs-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
             <span>Chapter&nbsp;</span>
             @if (selectedChapter) {
               <span class="fw-bold"
@@ -41,55 +53,18 @@
           </div>
         </li>
       }
-      @if (selectedChapter) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            (click)="navigateToChapter(selectedChapter)"
-            [ngClass]="{ active: isChapterTestResultOverviewRouteActive() }"
-          >
-            <span>Test results - Overview</span>
-          </a>
-        </li>
-      }
-      @if (selectedChapter && selectedChapter.assignments.length > 0) {
-        <li class="nav-item dropdown">
-          <button type="button" class="nav-link dropdown-toggle border-0" [ngClass]="{ active: isChapterTestResultDetailRouteActive() }" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <span>Test results - Detail&nbsp;</span>
-            @if (selectedExercise) {
-              <span class="fw-bold"
-                >&apos;{{ selectedExercise.description }}&apos;</span
-              >
-            }
-          </button>
-          <div class="dropdown-menu">
-            @for (exercise of selectedChapter.assignments; track exercise) {
-              <a class="dropdown-item" (click)="navigateToExercise(exercise)">{{
-                exercise.description
-              }}</a>
-            }
-          </div>
-        </li>
-      }
 
-      <!-- Manage chapter -->
-      @if (userProfile.isLector() && selectedChapter && activePeriod) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            [routerLink]="['chapters', selectedChapter.code, 'settings']"
-            routerLinkActive="active"
-          >
-            <span class="bi-gear me-1"></span>
-            <span>Chapter settings</span>
-          </a>
-        </li>
-      }
-
-      <!-- Projects -->
+      <!-- Projects selector -->
       @if (course.projects.length > 0) {
         <li class="nav-item dropdown nav-item-main">
-          <button type="button" class="nav-link dropdown-toggle border-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <button
+            type="button"
+            class="nav-link dropdown-toggle"
+            [class.active]="isProjectSectionActive()"
+            data-bs-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
             <span>Project&nbsp;</span>
             @if (selectedProject) {
               <span class="fw-bold"
@@ -112,104 +87,178 @@
           </div>
         </li>
       }
-      @if (selectedProject) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            [routerLink]="['projects', selectedProject.code, 'assessments']"
-            [class.active]="isPeerAssessmentsOverviewActive()"
-          >
-            <span>Peer assessments</span>
-          </a>
-        </li>
-      }
-      @if (assessmentResultsActive) {
-        <li class="nav-item">
-          <a
-            class="nav-link active"
-            [routerLink]="assessmentResultsUrl"
-          >
-            @if (assessmentResultsTeamName) {
-              <span>Assessment results &apos;{{ assessmentResultsTeamName }}&apos;</span>
-            } @else {
-              <span>Assessment results</span>
-            }
-          </a>
-        </li>
-      }
-      @if (selectedProject && selectedProject.assignments.length > 0) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            (click)="navigateToProject(selectedProject, true)"
-            [ngClass]="{ active: projectTestResultsOverviewActive }"
-          >
-            <span>Test results - Overview</span>
-          </a>
-        </li>
-      }
-      @if (selectedProject && selectedProject.assignments.length > 0) {
-        <li class="nav-item dropdown">
-          <button type="button" class="nav-link dropdown-toggle border-0" [ngClass]="{ active: projectTestResultsDetailActive }" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <span>Test results - Detail&nbsp;</span>
-            @if (projectTestResultsDetailActive) {
-              <span class="fw-bold"
-                >&apos;{{ selectedComponent.description }}&apos;</span
-              >
-            }
-          </button>
-          <div class="dropdown-menu">
-            @for (component of selectedProject.assignments; track component) {
-              <a
-                class="dropdown-item"
-                (click)="navigateToComponent(component)"
-                >{{ component.description }}</a
-              >
-            }
-          </div>
-        </li>
-      }
-      @if (selectedProject) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            [routerLink]="['projects', selectedProject.code, 'teams']"
-            routerLinkActive="active"
-          >
-            <span>Team</span>
-          </a>
-        </li>
-      }
 
-      <!-- Manage project -->
-      @if (userProfile.isLector() && selectedProject && activePeriod) {
+      <!-- Course statistics -->
+      @if (canShowCourseStatistics) {
         <li class="nav-item">
           <a
             class="nav-link"
-            [routerLink]="['projects', selectedProject.code, 'settings']"
+            [routerLink]="['/courses', course.id, 'statistics']"
             routerLinkActive="active"
           >
-            <span class="bi-gear me-1"></span>
-            <span>Project settings</span>
-          </a>
-        </li>
-      }
-      <!-- Gamification -->
-      @if (userProfile.isTeacher() || isGamificationEnabled) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            (click)="navigateToGamification()"
-            [class.active]="isGamificationRouteActive()"
-            style="cursor: pointer"
-          >
-            <span class="bi bi-trophy me-1"></span>
-            <span>Leaderboard</span>
+            <span class="bi bi-bar-chart me-1"></span>
+            <span>Course statistics</span>
           </a>
         </li>
       }
     </ul>
+
     <div class="tab-content">
+      <!-- Second-tier pill navigation for selected Chapter -->
+      @if (isChapterSectionActive()) {
+        <ul class="nav nav-pills nav-sub-pills mb-3 gap-2" role="tablist">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              (click)="navigateToChapter(selectedChapter)"
+              [ngClass]="{ active: isChapterTestResultOverviewRouteActive() }"
+              style="cursor: pointer"
+            >
+              <span class="bi bi-card-checklist me-1"></span>
+              <span>Test results - Overview</span>
+            </a>
+          </li>
+          @if (selectedChapter.assignments.length > 0) {
+            <li class="nav-item dropdown">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle"
+                [ngClass]="{ active: isChapterTestResultDetailRouteActive() }"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <span class="bi bi-list-check me-1"></span>
+                <span>Test results - Detail&nbsp;</span>
+                @if (selectedExercise) {
+                  <span class="fw-bold"
+                    >&apos;{{ selectedExercise.description }}&apos;</span
+                  >
+                }
+              </button>
+              <div class="dropdown-menu">
+                @for (exercise of selectedChapter.assignments; track exercise) {
+                  <a
+                    class="dropdown-item"
+                    (click)="navigateToExercise(exercise)"
+                    >{{ exercise.description }}</a
+                  >
+                }
+              </div>
+            </li>
+          }
+          @if (userProfile.isLector() && activePeriod) {
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['chapters', selectedChapter.code, 'settings']"
+                routerLinkActive="active"
+              >
+                <span class="bi bi-gear me-1"></span>
+                <span>Chapter settings</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Second-tier pill navigation for selected Project -->
+      @if (isProjectSectionActive()) {
+        <ul class="nav nav-pills nav-sub-pills mb-3 gap-2" role="tablist">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              [routerLink]="['projects', selectedProject.code, 'assessments']"
+              [class.active]="isPeerAssessmentsOverviewActive()"
+            >
+              <span class="bi bi-clipboard-check me-1"></span>
+              <span>Peer assessments</span>
+            </a>
+          </li>
+          @if (assessmentResultsActive) {
+            <li class="nav-item">
+              <a class="nav-link active" [routerLink]="assessmentResultsUrl">
+                <span class="bi bi-clipboard-data me-1"></span>
+                @if (assessmentResultsTeamName) {
+                  <span
+                    >Assessment results &apos;{{
+                      assessmentResultsTeamName
+                    }}&apos;</span
+                  >
+                } @else {
+                  <span>Assessment results</span>
+                }
+              </a>
+            </li>
+          }
+          @if (selectedProject.assignments.length > 0) {
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                (click)="navigateToProject(selectedProject, true)"
+                [ngClass]="{ active: projectTestResultsOverviewActive }"
+                style="cursor: pointer"
+              >
+                <span class="bi bi-card-checklist me-1"></span>
+                <span>Test results - Overview</span>
+              </a>
+            </li>
+            <li class="nav-item dropdown">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle"
+                [ngClass]="{ active: projectTestResultsDetailActive }"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <span class="bi bi-list-check me-1"></span>
+                <span>Test results - Detail&nbsp;</span>
+                @if (projectTestResultsDetailActive) {
+                  <span class="fw-bold"
+                    >&apos;{{ selectedComponent.description }}&apos;</span
+                  >
+                }
+              </button>
+              <div class="dropdown-menu">
+                @for (
+                  component of selectedProject.assignments;
+                  track component
+                ) {
+                  <a
+                    class="dropdown-item"
+                    (click)="navigateToComponent(component)"
+                    >{{ component.description }}</a
+                  >
+                }
+              </div>
+            </li>
+          }
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              [routerLink]="['projects', selectedProject.code, 'teams']"
+              routerLinkActive="active"
+            >
+              <span class="bi bi-people me-1"></span>
+              <span>Team</span>
+            </a>
+          </li>
+          @if (userProfile.isLector() && activePeriod) {
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['projects', selectedProject.code, 'settings']"
+                routerLinkActive="active"
+              >
+                <span class="bi bi-gear me-1"></span>
+                <span>Project settings</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
       <app-loading-overlay [show]="loading"></app-loading-overlay>
       @if (!hasContent) {
         <div class="row">

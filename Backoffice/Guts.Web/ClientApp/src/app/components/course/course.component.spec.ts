@@ -243,6 +243,56 @@ describe("CourseComponent", () => {
     ]);
   });
 
+  it("should navigate to gamification by default when leaderboard is visible, and to first chapter when leaderboard is not available", () => {
+    routerSpy.url = "/courses/1";
+    const chapter = {
+      id: 5,
+      code: "Ch1",
+      description: "Chapter 1",
+      assignments: [{ assignmentId: 10, code: "Ex1", description: "Ex 1", tests: [] }],
+    };
+    courseServiceSpy.getCourseContentsById.and.returnValue(
+      of(
+        GetResult.success({
+          id: 1,
+          code: "C1",
+          name: "Course 1",
+          chapters: [chapter],
+          projects: [],
+        }),
+      ),
+    );
+
+    component.ngOnInit();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(["courses", 1, "gamification"]);
+    expect(component.selectedChapter).toEqual(chapter);
+
+    // When gamification is disabled for a student, navigate to first chapter overview
+    routerSpy.navigate.calls.reset();
+    gamificationServiceSpy.getConfig.and.returnValue(
+      of(
+        GetResult.success({
+          courseId: 1,
+          isGamificationEnabled: false,
+          isWeeklyStreakEnabled: false,
+          isLeaderboardEnabled: false,
+          isClassCompetitionEnabled: false,
+          isTeamSynergyEnabled: false,
+          isBadgesEnabled: false,
+        }),
+      ),
+    );
+    component.course = { ...component.course, id: 0 };
+    routerSpy.events$.next(new NavigationEnd(1, "/courses/1", "/courses/1"));
+    expect(routerSpy.navigate).toHaveBeenCalledWith([
+      "courses",
+      1,
+      "chapters",
+      "Ch1",
+      "testresults",
+    ]);
+  });
+
   it("should navigate to first chapter or project when topicCode is not found", () => {
     routerSpy.url = "/courses/1/chapters/Unknown/testresults";
     const chapter = {
@@ -319,7 +369,15 @@ describe("CourseComponent", () => {
     component.ngOnInit();
     expect(component.isGamificationRouteActive()).toBeTrue();
     expect(component.isGamificationEnabled).toBeFalse();
-    expect(component.selectedChapter).toBeNull();
+    expect(component.selectedChapter?.code).toBe("Ch1");
+    expect(component.isChapterSectionActive()).toBeFalse();
+
+    routerSpy.url = "/courses/1/statistics";
+    expect(component.isCourseStatisticsRouteActive()).toBeTrue();
+    expect(component.isChapterSectionActive()).toBeFalse();
+
+    routerSpy.url = "/courses/1/chapters/Ch1/testresults";
+    expect(component.isChapterSectionActive()).toBeTrue();
 
     component.navigateToGamification();
     expect(routerSpy.navigate).toHaveBeenCalledWith(["courses", 1, "gamification"]);
@@ -447,14 +505,29 @@ describe("CourseComponent", () => {
         id: 1,
         code: "C1",
         name: "Course 1",
-        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [] }],
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [{ assignmentId: 1, code: "Ex1", description: "Ex 1", tests: [] }] }],
         projects: [],
       };
 
       expect(component.canShowCourseStatistics).toBeTrue();
     });
 
-    it("should return false when user is lector but course has no chapters", () => {
+    it("should return true when user is lector and course has a project with a component", () => {
+      const profile = new UserProfile();
+      profile.roles = ["lector"];
+      component.userProfile = profile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [],
+        projects: [{ id: 20, code: "P1", description: "Project 1", assignments: [{ assignmentId: 2, code: "Comp1", description: "Comp 1", tests: [] }] }],
+      };
+
+      expect(component.canShowCourseStatistics).toBeTrue();
+    });
+
+    it("should return false when user is lector but course has no assignments or components", () => {
       const profile = new UserProfile();
       profile.roles = ["lector"];
       component.userProfile = profile;
@@ -477,11 +550,55 @@ describe("CourseComponent", () => {
         id: 1,
         code: "C1",
         name: "Course 1",
-        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [] }],
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [{ assignmentId: 1, code: "Ex1", description: "Ex 1", tests: [] }] }],
         projects: [],
       };
 
       expect(component.canShowCourseStatistics).toBeFalse();
+    });
+  });
+
+  describe("canShowLeaderboard", () => {
+    const sampleAssignment = { assignmentId: 1, code: "A1", description: "A1", tests: [] };
+
+    it("should return true when gamification is enabled or user is teacher, and course has at least one chapter assignment or project component", () => {
+      component.isGamificationEnabled = true;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [sampleAssignment] }],
+        projects: [],
+      };
+      expect(component.canShowLeaderboard).toBeTrue();
+
+      component.isGamificationEnabled = false;
+      const teacherProfile = new UserProfile();
+      teacherProfile.roles = ["lector"];
+      component.userProfile = teacherProfile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [],
+        projects: [{ id: 20, code: "P1", description: "Project 1", assignments: [sampleAssignment] }],
+      };
+      expect(component.canShowLeaderboard).toBeTrue();
+    });
+
+    it("should return false when chapters and projects have no assignments/components", () => {
+      component.isGamificationEnabled = true;
+      const teacherProfile = new UserProfile();
+      teacherProfile.roles = ["lector"];
+      component.userProfile = teacherProfile;
+      component.course = {
+        id: 1,
+        code: "C1",
+        name: "Course 1",
+        chapters: [{ id: 10, code: "Ch1", description: "Chapter 1", assignments: [] }],
+        projects: [{ id: 20, code: "P1", description: "Project 1", assignments: [] }],
+      };
+      expect(component.canShowLeaderboard).toBeFalse();
     });
   });
 
