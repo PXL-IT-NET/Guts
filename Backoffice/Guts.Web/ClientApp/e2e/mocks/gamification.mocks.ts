@@ -278,6 +278,8 @@ export const mockWeeklySprintEntries: ILeaderboardEntryModel[] = [
 export interface SetupGamificationOptions {
   enabled?: boolean;
   isTeacher?: boolean;
+  isClassCompetitionEnabled?: boolean;
+  classGroups?: ICourseClassGroupModel[];
 }
 
 const defaultGamificationOptions: SetupGamificationOptions = Object.freeze({
@@ -305,7 +307,10 @@ async function handleGamificationConfigRoute(
   });
 }
 
-async function handleGamificationClassesRoute(route: Route): Promise<void> {
+async function handleGamificationClassesRoute(
+  route: Route,
+  classGroups: ICourseClassGroupModel[] = mockClassGroups,
+): Promise<void> {
   if (route.request().method() === "POST") {
     const data = route.request().postDataJSON();
     const name = typeof data === "string" ? data : (data?.name || "1TIN-C");
@@ -319,7 +324,7 @@ async function handleGamificationClassesRoute(route: Route): Promise<void> {
   await route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify(mockClassGroups),
+    body: JSON.stringify(classGroups),
   });
 }
 
@@ -379,9 +384,15 @@ export async function setupGamificationApiMocks(
 ) {
   const isEnabled = options.enabled ?? true;
   const isTeacher = options.isTeacher ?? false;
-  const config = isEnabled
+  const baseConfig = isEnabled
     ? mockGamificationConfigEnabled
     : mockGamificationConfigDisabled;
+  const config: ICourseGamificationConfigModel = {
+    ...baseConfig,
+    isClassCompetitionEnabled:
+      options.isClassCompetitionEnabled ?? baseConfig.isClassCompetitionEnabled,
+  };
+  const classGroups = options.classGroups ?? mockClassGroups;
 
   await page.route("**/api/periods", async (route) => {
     await route.fulfill({
@@ -412,7 +423,7 @@ export async function setupGamificationApiMocks(
     }
 
     if (url.includes("/gamification/classes")) {
-      await handleGamificationClassesRoute(route);
+      await handleGamificationClassesRoute(route, classGroups);
       return;
     }
 

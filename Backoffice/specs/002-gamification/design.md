@@ -2,7 +2,7 @@
 
 - **Feature ID**: `002-gamification`
 - **Specification**: [`spec.md`](./spec.md)
-- **Status**: `In Progress`
+- **Status**: `Implemented`
 
 ---
 
@@ -266,17 +266,17 @@ flowchart TD
 ### Hosted Background Services (`Guts.Api/BackgroundServices/`)
 - **`StreakReminderBackgroundService` (`StreakReminderBackgroundService.cs`)** (`[US-8]`, `[AC-7]`):
   - Inherits from `Microsoft.Extensions.Hosting.BackgroundService`.
-  - Injected with `IServiceScopeFactory` and `ILogger<StreakReminderBackgroundService>`.
-  - Static schedule helper:
+  - Injected with `IServiceScopeFactory`, `ILogger<StreakReminderBackgroundService>`, and an optional `TimeProvider` (defaulting to `TimeProvider.System`).
+  - Private schedule helper:
     ```csharp
-    public static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
+    private static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
     ```
     - Calculates the next Thursday at `12:00:00 UTC`. If `fromUtc` is already past Thursday 12:00 UTC, targets Thursday of next week.
   - Periodic execution loop:
-    - Calculates `delay = GetNextThursdayMiddayTrigger(now) - now`.
-    - Awaits `Task.Delay(delay, stoppingToken)`.
+    - Calculates `delay = GetNextThursdayMiddayTrigger(now) - now` using `_timeProvider.GetUtcNow().UtcDateTime`.
+    - Awaits `Task.Delay(delay, _timeProvider, stoppingToken)`.
     - Creates DI scope via `IServiceScopeFactory.CreateScope()`.
-    - Resolves `IStreakReminderService` and executes `await streakReminderService.SendStreakRemindersAsync(DateTime.UtcNow, stoppingToken)`.
+    - Resolves `IStreakReminderService` and executes `await streakReminderService.SendStreakRemindersAsync(_timeProvider.GetUtcNow().UtcDateTime, stoppingToken)`.
     - Logs errors without terminating the background worker loop.
   - Registered in `Guts.Api/Startup.cs`:
     `services.AddHostedService<StreakReminderBackgroundService>();`
@@ -318,8 +318,9 @@ flowchart TD
      - When `userProfile.isTeacher()`, renders a selector bar at the top of the Gamification page allowing the teacher to pick between `"All Levels (Teacher Overview)"` (`perspectiveUserId = null`) or any student from `studentOptions` (`perspectiveUserId = student.userId`).
      - Passes `[perspectiveUserId]="perspectiveUserId"` and `[isTeacher]="userProfile.isTeacher()"` to `<app-course-gamification-hall-of-fame>` and `<app-course-gamification-sprint>`.
 2. **`CourseGamificationHallOfFameComponent` (`course-gamification-hall-of-fame.component.ts`, `.html`, `.scss`)**:
-   - Inputs: `courseId`, `periodId`, `isTeacher`, `perspectiveUserId`.
+   - Inputs: `courseId`, `periodId`, `isTeacher`, `perspectiveUserId`, `isClassCompetitionEnabled`, `hasClasses`.
    - Output: `studentOptionsLoaded` (emits `IHallOfFameStudentOptionModel[]` to parent so the teacher student selector is populated).
+   - **Conditional Class Column**: Only renders the `Class` header (`<th>Class</th>`) and student class group badge (`<td>`) when `isClassCompetitionEnabled && hasClasses` is `true`.
    - **4-Icon Tier Progression Bar**:
      - Displays the 4 `visibleTiers` icons (`🌋`, `💎`, `👑`, `⚔️`, `🛡️`, `⚒️`, `🪵`, `📜`).
      - Active tier (`tier.isCurrentTier`) is rendered larger (`hall-of-fame-tier-current`: enlarged icon, bold title, rank range badge, no blur).

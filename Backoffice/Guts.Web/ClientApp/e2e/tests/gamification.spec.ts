@@ -68,13 +68,33 @@ test.describe("Course Gamification (Feature 002)", () => {
     await expect(gamificationPage.hallOfFameOvertakeCallout).toContainText("AliceDev");
     await expect(gamificationPage.hallOfFameOvertakeCallout).toContainText("+4 bonus XP");
 
-    // Tier rankings always start at #1 (🥇)
+    // Tier rankings always start at #1 (🥇) and show Class column when class competition is enabled and classes exist
+    await expect(gamificationPage.hallOfFameTableHeaders.filter({ hasText: "Class" })).toHaveCount(1);
     const rows = gamificationPage.hallOfFameTableRows;
     await expect(rows).toHaveCount(2);
     await expect(rows.first()).toContainText("AliceDev");
+    await expect(rows.first()).toContainText("1TIN-A");
     await expect(rows.first()).toContainText("🥇");
     await expect(rows.nth(1)).toContainText("SyntaxSlayer");
     await expect(rows.nth(1)).toContainText("🥈");
+  });
+
+  test("Hall of Fame hides Class column when class competition is disabled or no classes exist", async ({
+    studentPage,
+  }) => {
+    await setupGamificationApiMocks(studentPage, {
+      enabled: true,
+      isTeacher: false,
+      isClassCompetitionEnabled: false,
+    });
+
+    const gamificationPage = new CourseGamificationPage(studentPage);
+    await gamificationPage.goto(1);
+    await gamificationPage.tabHallOfFame.click();
+
+    await expect(gamificationPage.hallOfFameTableHeaders.filter({ hasText: "Class" })).toHaveCount(0);
+    await expect(gamificationPage.hallOfFameTableRows.first()).toContainText("AliceDev");
+    await expect(gamificationPage.hallOfFameTableRows.first()).not.toContainText("1TIN-A");
   });
 
   test("student views Weekly Sprint leaderboard with weekly scores and highlights", async ({

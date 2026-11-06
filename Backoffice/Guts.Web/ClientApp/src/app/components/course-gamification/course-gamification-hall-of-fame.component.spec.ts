@@ -181,4 +181,38 @@ describe("CourseGamificationHallOfFameComponent", () => {
 
     expect(asyncFixture.nativeElement.textContent).toContain("PixelMage");
   });
+
+  it("should only show the Class column when isClassCompetitionEnabled and hasClasses are both true", () => {
+    const getHeaderTexts = (): string[] =>
+      Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll("thead th")).map(
+        (th) => th.textContent?.trim() ?? "",
+      );
+
+    // Default: both false
+    expect(component.isClassCompetitionEnabled).toBeFalse();
+    expect(component.hasClasses).toBeFalse();
+    expect(getHeaderTexts()).not.toContain("Class");
+    expect(fixture.nativeElement.querySelector("tbody").textContent).not.toContain("1TIN-A");
+
+    // Only isClassCompetitionEnabled true, hasClasses false
+    component.isClassCompetitionEnabled = true;
+    component.hasClasses = false;
+    fixture.detectChanges();
+    expect(getHeaderTexts()).not.toContain("Class");
+    expect(fixture.nativeElement.querySelector("tbody").textContent).not.toContain("1TIN-A");
+
+    // Only hasClasses true, isClassCompetitionEnabled false
+    component.isClassCompetitionEnabled = false;
+    component.hasClasses = true;
+    fixture.detectChanges();
+    expect(getHeaderTexts()).not.toContain("Class");
+    expect(fixture.nativeElement.querySelector("tbody").textContent).not.toContain("1TIN-A");
+
+    // Both true
+    component.isClassCompetitionEnabled = true;
+    component.hasClasses = true;
+    fixture.detectChanges();
+    expect(getHeaderTexts()).toContain("Class");
+    expect(fixture.nativeElement.querySelector("tbody").textContent).toContain("1TIN-A");
+  });
 });

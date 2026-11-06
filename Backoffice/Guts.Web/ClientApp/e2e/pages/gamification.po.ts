@@ -14,6 +14,7 @@ export class CourseGamificationPage {
   readonly tabTeacherControls: Locator;
   readonly hallOfFameProgression: Locator;
   readonly hallOfFameOvertakeCallout: Locator;
+  readonly hallOfFameTableHeaders: Locator;
   readonly hallOfFameTableRows: Locator;
   readonly weeklySprintTableRows: Locator;
   readonly adminNewClassNameInput: Locator;
@@ -34,6 +35,7 @@ export class CourseGamificationPage {
     this.tabTeacherControls = page.getByRole("button", { name: /Teacher Controls/i });
     this.hallOfFameProgression = page.locator("#hallOfFameTierProgression");
     this.hallOfFameOvertakeCallout = page.locator("#hallOfFameOvertakeCallout");
+    this.hallOfFameTableHeaders = page.locator("app-course-gamification-hall-of-fame thead th");
     this.hallOfFameTableRows = page.locator("app-course-gamification-hall-of-fame tbody tr");
     this.weeklySprintTableRows = page.locator("app-course-gamification-sprint tbody tr");
     this.adminNewClassNameInput = page.locator("#adminNewClassNameInput");

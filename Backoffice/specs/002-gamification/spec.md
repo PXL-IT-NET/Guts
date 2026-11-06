@@ -3,7 +3,7 @@
 - **Feature ID**: `002-gamification`
 - **Status**: `Implemented`
 - **Created**: `2026-10-27`
-- **Updated**: `2026-10-30`
+- **Updated**: `2026-11-06`
 
 ---
 
@@ -99,6 +99,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     - **Tie-Breaking Rule**: When two or more students have equal `TotalXp`, the student who reached that XP level **first** (earliest timestamp of their most recent XP-earning `GamificationEvent`, or earliest `Id` if `TotalXp == 0`) is ranked higher.
     - Assigns each student to one of the **8 Hall of Fame League Tiers** based on their global standing (see `DR-7`).
     - **Tier-Relative Ranks (Starts at 1, No Global Rank Displayed)**: In the UI and returned entries, ranking in a league tier **always starts at 1** (`🥇 1`, `🥈 2`, `🥉 3`, `#4`, ...) for every tier. Global ranks across the whole course are **never** displayed in the UI for students or teachers to avoid demotivating students in lower tiers.
+    - **Conditional Class Column**: In the Hall of Fame leaderboard table, the `Class` column (`classGroupName`) is only displayed when `IsClassCompetitionEnabled == true` and at least one class group (`CourseClassGroup`) has been configured for the course (`hasClasses`).
     - **Student View (or Lector with a selected student `perspectiveUserId`)**: Returns only the leaderboard entries belonging to the target student's current Hall of Fame tier (if opted out or unranked, defaults to the lowest active tier / `Paper`), along with:
       - `CurrentTier`: metadata (tier enum/id, name, icon) of the displayed tier. Note: Tier position/rank ranges (e.g., `(#1–#15)`) must **not** be displayed in the UI (e.g., display `"Obsidian League"` rather than `"Obsidian League (#1–#15)"`).
       - `CurrentUserRank`: the student's 1-based relative rank within their tier (`1` for the top student in their tier).

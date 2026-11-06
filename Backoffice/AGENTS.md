@@ -19,6 +19,7 @@ For a high-level overview of the entire GUTS repository, see the root [`../AGENT
 3. **Spec-Driven Development (SDD)**:
    - For new features or significant changes, follow the 4-phase SDD workflow (`spec.md` ➔ `design.md` ➔ `tasks.md` ➔ inside-out TDD implementation) using templates in [`specs/_templates/`](specs/_templates/).
    - Detailed SDD instructions are located in the `backoffice-sdd` skill (`.agent/skills/backoffice-sdd/SKILL.md`).
+   - When changes are made to existing features, update the corresponding `spec.md` and `design.md` files to reflect the new behavior and design decisions.
 4. **Test-Driven Development (TDD) & Quality Gate**:
    - Write unit tests before implementing new functionality or fixing bugs (write a failing reproduction test first).
    - Ensure all tests pass across `Guts.slnx` before considering tasks complete.

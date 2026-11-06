@@ -47,6 +47,24 @@ export class CourseGamificationHallOfFameComponent implements OnInit, OnChanges 
     this._perspectiveUserId.set(v);
   }
 
+  private readonly _isClassCompetitionEnabled = signal<boolean>(false);
+  @Input()
+  public get isClassCompetitionEnabled(): boolean {
+    return this._isClassCompetitionEnabled();
+  }
+  public set isClassCompetitionEnabled(v: boolean) {
+    this._isClassCompetitionEnabled.set(v);
+  }
+
+  private readonly _hasClasses = signal<boolean>(false);
+  @Input()
+  public get hasClasses(): boolean {
+    return this._hasClasses();
+  }
+  public set hasClasses(v: boolean) {
+    this._hasClasses.set(v);
+  }
+
   @Output() public readonly studentOptionsLoaded =
     new EventEmitter<IHallOfFameStudentOptionModel[]>();
 

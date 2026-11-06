@@ -210,6 +210,8 @@
           [periodId]="periodId"
           [isTeacher]="userProfile.isTeacher()"
           [perspectiveUserId]="perspectiveUserId"
+          [isClassCompetitionEnabled]="!!config?.isClassCompetitionEnabled"
+          [hasClasses]="hasClasses"
           (studentOptionsLoaded)="onStudentOptionsLoaded($event)"
         ></app-course-gamification-hall-of-fame>
       }
