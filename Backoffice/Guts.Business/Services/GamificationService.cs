@@ -33,13 +33,19 @@ public class GamificationService(
     private static readonly Dictionary<BadgeType, (string Name, string Description, string Icon)> BadgeMetadata = new()
     {
         { BadgeType.FirstSpark, ("First Spark", "Passed your first test in the course", "🌱") },
+        { BadgeType.QuarterCentury, ("Quarter Century", "Achieved 25 unique passing tests in the course", "🎯") },
+        { BadgeType.HalfCentury, ("Half Century", "Achieved 50 unique passing tests in the course", "🏅") },
+        { BadgeType.CenturyClub, ("Century Club", "Achieved 100 unique passing tests in the course", "💯") },
+        { BadgeType.FirstVictory, ("First Victory", "Completed all tests of your first assignment", "🏁") },
+        { BadgeType.HighFive, ("High Five", "Completed all tests of 5 assignments in the course", "🖐️") },
         { BadgeType.SpeedDemon, ("Speed Demon", "Completed all tests of an assignment within 24 hours", "⚡") },
         { BadgeType.CleanSweep, ("Clean Sweep", "Solved 100% of all exercises in a chapter", "🧹") },
         { BadgeType.NightOwl, ("Night Owl", "Submitted a passing test between 00:00 and 05:00", "🦉") },
         { BadgeType.EarlyBird, ("Early Bird", "Submitted a passing test between 05:00 and 08:00", "🌅") },
         { BadgeType.WeekendWarrior, ("Weekend Warrior", "Passed a test during the weekend", "⚔️") },
-        { BadgeType.CenturyClub, ("Century Club", "Achieved 100 unique passing tests in the course", "💯") },
+        { BadgeType.WarmingUp, ("Warming Up", "Maintained a 2-week coding streak", "🕯️") },
         { BadgeType.OnFire, ("On Fire", "Maintained a 4-week coding streak", "🔥") },
+        { BadgeType.Unstoppable, ("Unstoppable", "Maintained a 6-week coding streak", "☄️") },
         { BadgeType.IronWill, ("Iron Will", "Maintained an 8-week coding streak", "🛡️") },
         { BadgeType.SprintGold, ("Sprint Gold", "Finished #1 on the Weekly Sprint Leaderboard", "🥇") },
         { BadgeType.SprintSilver, ("Sprint Silver", "Finished in the top 2 of the Weekly Sprint Leaderboard", "🥈") },
@@ -591,7 +597,7 @@ public class GamificationService(
     private static HallOfFameLeaderboardDto BuildStudentPerspectiveHallOfFame(
         List<LeaderboardEntryDto> allEntries,
         IReadOnlyList<HallOfFameTierDto> allTiers,
-        IReadOnlyDictionary<HallOfFameTier, int> tierCounts,
+        Dictionary<HallOfFameTier, int> tierCounts,
         IReadOnlyList<HallOfFameStudentOptionDto> studentOptions,
         int targetUserId)
     {
@@ -608,9 +614,11 @@ public class GamificationService(
         }
 
         HallOfFameTier activeTier = targetEntry?.Tier ?? HallOfFameTier.Paper;
+        var currentTierDto = MapToTierDto(activeTier, true, tierCounts.GetValueOrDefault(activeTier, 0));
 
         var visibleTiers = HallOfFameLeague.GetVisibleTierWindow(activeTier)
-            .Select(t => MapToTierDto(t, t == activeTier, tierCounts.GetValueOrDefault(t, 0)))
+            .Where(t => tierCounts.GetValueOrDefault(t, 0) > 0)
+            .Select(t => MapToTierDto(t, t == activeTier, tierCounts[t]))
             .ToList();
 
         HallOfFameTargetStudentDto nextTarget = null;
@@ -632,7 +640,7 @@ public class GamificationService(
 
         return new HallOfFameLeaderboardDto
         {
-            CurrentTier = visibleTiers.First(t => t.IsCurrentTier),
+            CurrentTier = currentTierDto,
             VisibleTiers = visibleTiers,
             AllTiers = allTiers,
             NextTargetStudent = nextTarget,
@@ -645,13 +653,15 @@ public class GamificationService(
     private static HallOfFameLeaderboardDto BuildLectorOverviewHallOfFame(
         List<LeaderboardEntryDto> allEntries,
         IReadOnlyList<HallOfFameTierDto> allTiers,
-        IReadOnlyDictionary<HallOfFameTier, int> tierCounts,
+        Dictionary<HallOfFameTier, int> tierCounts,
         IReadOnlyList<HallOfFameStudentOptionDto> studentOptions,
         HallOfFameTier? selectedTier)
     {
         HallOfFameTier focusedTier = selectedTier ?? HallOfFameTier.Obsidian;
+        var currentTierDto = MapToTierDto(focusedTier, true, tierCounts.GetValueOrDefault(focusedTier, 0));
         var visibleTiers = HallOfFameLeague.GetVisibleTierWindow(focusedTier)
-            .Select(t => MapToTierDto(t, t == focusedTier, tierCounts.GetValueOrDefault(t, 0)))
+            .Where(t => tierCounts.GetValueOrDefault(t, 0) > 0)
+            .Select(t => MapToTierDto(t, t == focusedTier, tierCounts[t]))
             .ToList();
 
         var updatedAllTiers = allTiers
@@ -664,7 +674,7 @@ public class GamificationService(
 
         return new HallOfFameLeaderboardDto
         {
-            CurrentTier = visibleTiers.First(t => t.IsCurrentTier),
+            CurrentTier = currentTierDto,
             VisibleTiers = visibleTiers,
             AllTiers = updatedAllTiers,
             NextTargetStudent = null,

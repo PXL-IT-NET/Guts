@@ -55,7 +55,7 @@ public static class HallOfFameLeague
     public static IReadOnlyList<HallOfFameTier> GetVisibleTierWindow(HallOfFameTier currentTier)
     {
         int current = (int)currentTier;
-        int start = Math.Clamp(current - 1, (int)HallOfFameTier.Paper, (int)HallOfFameTier.Obsidian - 3);
+        int start = Math.Clamp(current - 2, (int)HallOfFameTier.Paper, (int)HallOfFameTier.Obsidian - 3);
 
         return
         [

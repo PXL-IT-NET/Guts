@@ -55,10 +55,10 @@ flowchart TD
      - `(HallOfFameTier Tier, string Name, int MinRank, int? MaxRank, string Icon) GetTierMetadata(HallOfFameTier tier)`: returns display metadata for a tier.
      - `IReadOnlyList<HallOfFameTier> GetAllTiersDescending()`: returns `[Obsidian, Diamond, Gold, Silver, Bronze, Iron, Wood, Paper]`.
      - `IReadOnlyList<HallOfFameTier> GetVisibleTierWindow(HallOfFameTier currentTier)`:
-       - Returns the 4-tier progression window `[Previous, Current, Next1, Next2]` (ordered from lowest to highest tier in the 4-tier slice, or clamped to 4 tiers at the boundaries):
-         - When `currentTier == Paper (1)`: `[Paper, Wood, Iron, Bronze]` (`1, 2, 3, 4`).
-         - When `currentTier >= Diamond (7)`: `[Silver, Gold, Diamond, Obsidian]` (`5, 6, 7, 8`).
-         - Otherwise (`Wood` through `Gold`): `[currentTier - 1, currentTier, currentTier + 1, currentTier + 2]`.
+       - Returns the 4-tier progression window `[Previous2, Previous1, Current, Next1]` showing only the next tier to reach (unless in the two lowest levels `Paper` or `Wood`), ordered from lowest to highest tier in the 4-tier slice:
+         - When `currentTier <= Iron (3)` (`Paper`, `Wood`, `Iron`): `[Paper, Wood, Iron, Bronze]` (`1, 2, 3, 4`).
+         - When `currentTier >= Diamond (7)` (`Diamond`, `Obsidian`): `[Silver, Gold, Diamond, Obsidian]` (`5, 6, 7, 8`).
+         - Otherwise (`Bronze` through `Gold`): `[currentTier - 2, currentTier - 1, currentTier, currentTier + 1]`.
 
 2. **`StudentCourseProfile` (`StudentCourseProfile.cs`)**
    - `AggregateRoot` scoped to `(UserId, CourseId, PeriodId)`.
@@ -72,7 +72,10 @@ flowchart TD
      - `public DateTime LastXpEarnedAt`: returns the maximum `CreatedAt` timestamp among `Events.Where(e => e.XpEarned > 0)`, or `DateTime.MaxValue` if none exist (`[DR-7]` tie-breaking: the student who reached their `TotalXp` earlier has a smaller `LastXpEarnedAt` and ranks higher).
    - Domain methods:
      - `Enroll`, `HideFromLeaderboard`, `ShowOnLeaderboard`, `RecordLeaderboardVisit`
-     - `AwardPassedTestXp`, `AwardAssignmentBonus`, `AwardChapterBonus`, `AwardTeamSynergyBonus`, `AwardBadge`, `RecordWeeklyActivity`, `NeedsWeeklyStreakEvaluation`, `EvaluateWeeklyStreak`
+     - `AwardPassedTestXp`: awards `10 XP` per unique passing test; when `isBadgesEnabled == true`, awards `FirstSpark` ($\ge 1$ passed test), `QuarterCentury` ($\ge 25$ passed tests), `HalfCentury` ($\ge 50$ passed tests), `CenturyClub` ($\ge 100$ passed tests), time-of-day badges (`NightOwl`, `EarlyBird`), and `WeekendWarrior`.
+     - `AwardAssignmentBonus`: awards `50 XP` (+ quick completion speed bonus); when `isBadgesEnabled == true`, awards `FirstVictory` ($\ge 1$ completed assignment in the course), `HighFive` ($\ge 5$ completed assignments in the course), and `SpeedDemon` (if top-10 fastest).
+     - `RecordWeeklyActivity`: updates `WeeklyStreak`; when `isBadgesEnabled == true`, awards `WarmingUp` (`CurrentStreak >= 2`), `OnFire` (`CurrentStreak >= 4`), `Unstoppable` (`CurrentStreak >= 6`), and `IronWill` (`CurrentStreak >= 8`).
+     - `AwardChapterBonus`, `AwardTeamSynergyBonus`, `AwardBadge`, `NeedsWeeklyStreakEvaluation`, `EvaluateWeeklyStreak`
      - **New**: `public bool EvaluateHallOfFameProgression(int previousRank, int newRank, DateTime timestamp)` (`[AC-2]`, `[DR-8]`):
        - Enforces `Contracts.Require(previousRank > 0, "Previous rank must be positive.")` and `Contracts.Require(newRank > 0, "New rank must be positive.")`.
        - Computes effective prior best rank: `int effectiveBestRank = BestHallOfFameRank.HasValue ? Math.Min(BestHallOfFameRank.Value, previousRank) : previousRank;`
@@ -93,8 +96,30 @@ flowchart TD
        - Updates `BestHallOfFameRank = Math.Min(effectiveBestRank, newRank)` and `BestHallOfFameTier = (HallOfFameTier)Math.Max((int)effectiveBestTier, (int)newTier)`.
        - Returns `true` if `BestHallOfFameRank`, `BestHallOfFameTier`, or `TotalXp` changed.
 
-3. **`GamificationEvent` (`GamificationEvent.cs`) & `GamificationEventType` (`GamificationEventType.cs`)**
-   - Enum values:
+3. **`GamificationEvent` (`GamificationEvent.cs`) & `GamificationEventType` (`GamificationEventType.cs`) & `BadgeType` (`BadgeType.cs`)**
+   - `BadgeType` enum values (`1..22`, excluding `3`):
+     - `FirstSpark = 1` (`"First Spark"`, `🌱`)
+     - `SpeedDemon = 2` (`"Speed Demon"`, `⚡`)
+     - `CleanSweep = 4` (`"Clean Sweep"`, `🧹`)
+     - `NightOwl = 5` (`"Night Owl"`, `🦉`)
+     - `EarlyBird = 6` (`"Early Bird"`, `🌅`)
+     - `WeekendWarrior = 7` (`"Weekend Warrior"`, `⚔️`)
+     - `CenturyClub = 8` (`"Century Club"`, `💯`)
+     - `OnFire = 9` (`"On Fire"`, `🔥`)
+     - `IronWill = 10` (`"Iron Will"`, `🛡️`)
+     - `SprintGold = 11` (`"Sprint Gold"`, `🥇`)
+     - `TeamPowerhouse = 12` (`"Team Powerhouse"`, `🤝`)
+     - `SprintSilver = 13` (`"Sprint Silver"`, `🥈`)
+     - `SprintBronze = 14` (`"Sprint Bronze"`, `🥉`)
+     - `SprintTop4 = 15` (`"Sprint Top 4"`, `🎖️`)
+     - `SprintTop5 = 16` (`"Sprint Top 5"`, `⭐`)
+     - `WarmingUp = 17` (`"Warming Up"`, `🕯️` — `"Maintained a 2-week coding streak"`)
+     - `Unstoppable = 18` (`"Unstoppable"`, `☄️` — `"Maintained a 6-week coding streak"`)
+     - `QuarterCentury = 19` (`"Quarter Century"`, `🎯` — `"Achieved 25 unique passing tests in the course"`)
+     - `HalfCentury = 20` (`"Half Century"`, `🏅` — `"Achieved 50 unique passing tests in the course"`)
+     - `FirstVictory = 21` (`"First Victory"`, `🏁` — `"Completed all tests of your first assignment"`)
+     - `HighFive = 22` (`"High Five"`, `🖐️` — `"Completed all tests of 5 assignments in the course"`)
+   - `GamificationEventType` enum values:
      - `PassedTest = 1`
      - `AssignmentCompleted = 2`
      - `ChapterCompleted = 3`
@@ -198,7 +223,7 @@ flowchart TD
         - Determines `activeTier = targetStudentEntry?.Tier ?? HallOfFameTier.Paper`.
         - Sets `CurrentUserRank = targetStudentEntry?.Rank` (tier-relative rank).
         - Filters `Entries` to only those in `activeTier` (starting at rank 1 with 🥇, 🥈, 🥉).
-        - Populates `VisibleTiers` using `HallOfFameLeague.GetVisibleTierWindow(activeTier)` with `IsCurrentTier = (tier == activeTier)`.
+        - Populates `VisibleTiers` using `HallOfFameLeague.GetVisibleTierWindow(activeTier)` filtered to tiers with `StudentCount > 0` (`tierCounts.GetValueOrDefault(t, 0) > 0`), with `IsCurrentTier = (tier == activeTier)`.
         - If `targetIndex > 0`, populates `NextTargetStudent` from the immediately preceding entry in course order (`allEntries[targetIndex - 1]`), carrying their tier-relative `Rank`, `TierName`, and `TierIcon`, with `XpNeededToOvertake = (aboveEntry.Score - targetStudentEntry.Score) + 1`.
       - **When viewing in Teacher All-Levels Mode (`isLector && !perspectiveUserId.HasValue`)**:
         - Populates `AllTiers` with metadata and student counts for all 8 tiers (`Obsidian` down to `Paper`).
@@ -321,10 +346,10 @@ flowchart TD
    - Inputs: `courseId`, `periodId`, `isTeacher`, `perspectiveUserId`, `isClassCompetitionEnabled`, `hasClasses`.
    - Output: `studentOptionsLoaded` (emits `IHallOfFameStudentOptionModel[]` to parent so the teacher student selector is populated).
    - **Conditional Class Column**: Only renders the `Class` header (`<th>Class</th>`) and student class group badge (`<td>`) when `isClassCompetitionEnabled && hasClasses` is `true`.
-   - **4-Icon Tier Progression Bar**:
-     - Displays the 4 `visibleTiers` icons (`🌋`, `💎`, `👑`, `⚔️`, `🛡️`, `⚒️`, `🪵`, `📜`).
-     - Active tier (`tier.isCurrentTier`) is rendered larger (`hall-of-fame-tier-current`: enlarged icon, bold title, rank range badge, no blur).
-     - The other 3 tiers (`!tier.isCurrentTier`) are rendered smaller and slightly blurred (`hall-of-fame-tier-neighbor`: `filter: blur(1.2px); opacity: 0.65; transform: scale(0.9)`).
+   - **Tier Progression Bar**:
+     - Displays `visibleTiers` (filtered to tiers with `studentCount > 0`, showing up to 2 previous tiers, the current tier enlarged, and only the next tier to reach unless in the two lowest levels) with icons (`🌋`, `💎`, `👑`, `⚔️`, `🛡️`, `⚒️`, `🪵`, `📜`).
+     - Active tier (`tier.isCurrentTier`) is rendered larger (`hall-of-fame-tier-current`: enlarged icon, bold title, no blur).
+     - The neighbor tiers (`!tier.isCurrentTier`) are rendered smaller and slightly blurred (`hall-of-fame-tier-neighbor`: `filter: blur(1.2px); opacity: 0.65; transform: scale(0.88)`).
    - **Overtake Motivation Banner (`nextTargetStudent`)**:
      - Displays a motivational callout above the table when viewing from a student's perspective:
        - If `nextTargetStudent` exists: *"🎯 **Target to Overtake:** Earn **{{ nextTargetStudent.xpNeededToOvertake }} XP** to surpass **{{ nextTargetStudent.displayName }}** (#{{ nextTargetStudent.rank }}) and earn **+4 bonus XP**!"*
@@ -332,7 +357,8 @@ flowchart TD
    - **Teacher All-Levels Switcher**:
      - When `isTeacher && !perspectiveUserId`, renders tier filter pills for all 8 tiers (`allTiers`) plus an `"All Levels"` button so the teacher can inspect any individual tier or view all tiers at once.
 3. **`CourseGamificationSprintComponent` (`course-gamification-sprint.component.ts` & `.html`)**:
-   - Accepts `@Input() public isTeacher: boolean = false;` and `@Input() public perspectiveUserId?: number | null;` and passes `perspectiveUserId` to `gamificationService.getWeeklySprint(courseId, periodId, perspectiveUserId)` so the selected student is highlighted (`isCurrentUser`) when a teacher views the Weekly Sprint from a student's perspective.
+   - Accepts `@Input() public isTeacher: boolean = false;`, `@Input() public perspectiveUserId?: number | null;`, `@Input() public isClassCompetitionEnabled: boolean = false;`, and `@Input() public hasClasses: boolean = false;`, and passes `perspectiveUserId` to `gamificationService.getWeeklySprint(courseId, periodId, perspectiveUserId)` so the selected student is highlighted (`isCurrentUser`) when a teacher views the Weekly Sprint from a student's perspective.
+   - **Conditional Class Column**: Only renders the `Class` header (`<th>Class</th>`) and student class group badge (`<td>`) when `isClassCompetitionEnabled && hasClasses` is `true`.
    - Displays a motivational callout banner (`#weeklySprintGetOnBoardCallout`) when viewing from a student's perspective (`!isTeacher || !!perspectiveUserId`) and the student is not yet on the Weekly Sprint Leaderboard (`!isCurrentUserOnBoard`), triggering the student to earn XP to get on the board.
 4. **`CourseGamificationHeroComponent` (`course-gamification-hero.component.ts` & `.html`)**:
    - Accepts `@Input() public readOnly: boolean = false;`.

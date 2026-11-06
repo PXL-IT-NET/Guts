@@ -119,35 +119,50 @@ public class StudentCourseProfile : AggregateRoot
         Events.Add(new GamificationEvent(Id, GamificationEventType.PassedTest, testId, xp, timestamp));
         if (isStreakEnabled)
         {
-            RecordWeeklyActivity(timestamp);
+            RecordWeeklyActivity(timestamp, isBadgesEnabled);
         }
 
         if (isBadgesEnabled)
         {
-            AwardBadge(BadgeType.FirstSpark, timestamp);
-
-            int totalPassedTests = Events.Count(e => e.EventType == GamificationEventType.PassedTest);
-            if (totalPassedTests >= 100)
-            {
-                AwardBadge(BadgeType.CenturyClub, timestamp);
-            }
-
-            if (timestamp.Hour >= 0 && timestamp.Hour < 5)
-            {
-                AwardBadge(BadgeType.NightOwl, timestamp);
-            }
-            else if (timestamp.Hour >= 5 && timestamp.Hour < 8)
-            {
-                AwardBadge(BadgeType.EarlyBird, timestamp);
-            }
-
-            if (timestamp.DayOfWeek == DayOfWeek.Saturday || timestamp.DayOfWeek == DayOfWeek.Sunday)
-            {
-                AwardBadge(BadgeType.WeekendWarrior, timestamp);
-            }
+            EvaluatePassedTestBadges(timestamp);
         }
 
         return true;
+    }
+
+    private void EvaluatePassedTestBadges(DateTime timestamp)
+    {
+        AwardBadge(BadgeType.FirstSpark, timestamp);
+
+        int totalPassedTests = Events.Count(e => e.EventType == GamificationEventType.PassedTest);
+        if (totalPassedTests >= 25)
+        {
+            AwardBadge(BadgeType.QuarterCentury, timestamp);
+        }
+
+        if (totalPassedTests >= 50)
+        {
+            AwardBadge(BadgeType.HalfCentury, timestamp);
+        }
+
+        if (totalPassedTests >= 100)
+        {
+            AwardBadge(BadgeType.CenturyClub, timestamp);
+        }
+
+        if (timestamp.Hour is >= 0 and < 5)
+        {
+            AwardBadge(BadgeType.NightOwl, timestamp);
+        }
+        else if (timestamp.Hour is >= 5 and < 8)
+        {
+            AwardBadge(BadgeType.EarlyBird, timestamp);
+        }
+
+        if (timestamp.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        {
+            AwardBadge(BadgeType.WeekendWarrior, timestamp);
+        }
     }
 
     public bool AwardAssignmentBonus(int assignmentId, DateTime timestamp, int? previousCompletionsCount = null, bool isBadgesEnabled = true)
@@ -162,6 +177,17 @@ public class StudentCourseProfile : AggregateRoot
         TotalXp += xp;
         LastXpEarnedAt = timestamp;
         Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompleted, assignmentId, xp, timestamp));
+
+        if (isBadgesEnabled)
+        {
+            AwardBadge(BadgeType.FirstVictory, timestamp);
+
+            int completedAssignmentsCount = Events.Count(e => e.EventType == GamificationEventType.AssignmentCompleted);
+            if (completedAssignmentsCount >= 5)
+            {
+                AwardBadge(BadgeType.HighFive, timestamp);
+            }
+        }
 
         if (previousCompletionsCount.HasValue && previousCompletionsCount.Value >= 0)
         {
@@ -238,13 +264,28 @@ public class StudentCourseProfile : AggregateRoot
         return true;
     }
 
-    public void RecordWeeklyActivity(DateTime timestamp)
+    public void RecordWeeklyActivity(DateTime timestamp, bool isBadgesEnabled = true)
     {
         WeeklyStreak = WeeklyStreak.RecordActivity(timestamp);
+
+        if (!isBadgesEnabled)
+        {
+            return;
+        }
+
+        if (WeeklyStreak.CurrentStreak >= 2)
+        {
+            AwardBadge(BadgeType.WarmingUp, timestamp);
+        }
 
         if (WeeklyStreak.CurrentStreak >= 4)
         {
             AwardBadge(BadgeType.OnFire, timestamp);
+        }
+
+        if (WeeklyStreak.CurrentStreak >= 6)
+        {
+            AwardBadge(BadgeType.Unstoppable, timestamp);
         }
 
         if (WeeklyStreak.CurrentStreak >= 8)

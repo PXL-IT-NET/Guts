@@ -8,7 +8,6 @@ using Guts.Business.Services;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
@@ -34,7 +33,6 @@ public class GamificationServiceTests
     private Mock<IProjectTeamRepository> _projectTeamRepositoryMock;
     private Mock<IAssignmentRepository> _assignmentRepositoryMock;
     private Mock<IPeriodRepository> _periodRepositoryMock;
-    private Mock<IExamRepository> _examRepositoryMock;
     private Mock<IStudentCourseProfileFactory> _studentCourseProfileFactoryMock;
     private Mock<ICourseClassGroupFactory> _courseClassGroupFactoryMock;
     private Mock<ILogger<GamificationService>> _loggerMock;
@@ -51,7 +49,6 @@ public class GamificationServiceTests
         _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
         _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
         _periodRepositoryMock = new Mock<IPeriodRepository>();
-        _examRepositoryMock = new Mock<IExamRepository>();
         _studentCourseProfileFactoryMock = new Mock<IStudentCourseProfileFactory>();
         _courseClassGroupFactoryMock = new Mock<ICourseClassGroupFactory>();
         _loggerMock = new Mock<ILogger<GamificationService>>();
@@ -1000,13 +997,19 @@ public class GamificationServiceTests
     }
 
     [Test]
-    public void GetBadgeMetadata_ShouldReturnAll15BadgeMetadataEntries()
+    public void GetBadgeMetadata_ShouldReturnAll21BadgeMetadataEntries()
     {
         var badges = _service.GetBadgeMetadata();
 
         Assert.That(badges, Is.Not.Null);
-        Assert.That(badges.Count, Is.EqualTo(15));
+        Assert.That(badges.Count, Is.EqualTo(21));
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstSpark && b.Icon == "🌱"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.QuarterCentury && b.Name == "Quarter Century" && b.Icon == "🎯"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.HalfCentury && b.Name == "Half Century" && b.Icon == "🏅"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstVictory && b.Name == "First Victory" && b.Icon == "🏁"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.HighFive && b.Name == "High Five" && b.Icon == "🖐️"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.WarmingUp && b.Name == "Warming Up" && b.Icon == "🕯️"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.Unstoppable && b.Name == "Unstoppable" && b.Icon == "☄️"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintGold && b.Icon == "🥇"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintSilver && b.Icon == "🥈"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintBronze && b.Icon == "🥉"), Is.True);
@@ -1746,14 +1749,57 @@ public class GamificationServiceTests
         Assert.That(result.Entries.Count, Is.EqualTo(5));
         Assert.That(result.Entries.All(e => e.Tier == HallOfFameTier.Diamond), Is.True);
         Assert.That(result.Entries.Select(e => e.Rank), Is.EqualTo(new[] { 1, 2, 3, 4, 5 }));
-        // 4 visible tiers: Silver, Gold, Diamond (current), Obsidian
-        Assert.That(result.VisibleTiers.Count, Is.EqualTo(4));
+        // Visible tiers only includes tiers with actual students: Diamond (current) and Obsidian (next tier to reach)
+        Assert.That(result.VisibleTiers.Select(t => t.Tier), Is.EqualTo(new[]
+        {
+            HallOfFameTier.Diamond,
+            HallOfFameTier.Obsidian
+        }));
+        Assert.That(result.VisibleTiers.All(t => t.StudentCount > 0), Is.True);
         Assert.That(result.VisibleTiers.Single(t => t.IsCurrentTier).Tier, Is.EqualTo(HallOfFameTier.Diamond));
         // Next target student is Rank #15 in Obsidian
         Assert.That(result.NextTargetStudent, Is.Not.Null);
         Assert.That(result.NextTargetStudent.Rank, Is.EqualTo(15));
         Assert.That(result.NextTargetStudent.UserId, Is.EqualTo(15));
         Assert.That(result.NextTargetStudent.XpNeededToOvertake, Is.EqualTo(11)); // 10 XP difference + 1
+    }
+
+    [Test]
+    public async Task GetHallOfFameLeaderboardAsync_ForStudentInGoldTier_ShouldShowOnlyNextTierToReachAndNonEmptyPreviousTiers()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        var baseTime = new DateTime(2026, 10, 20, 9, 0, 0, DateTimeKind.Utc);
+
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsLeaderboardEnabled = true });
+
+        // Create 80 students spanning Obsidian (1..15), Diamond (16..35), Gold (36..55), Silver (56..75), Bronze (76..80)
+        var profiles = new List<StudentCourseProfile>();
+        for (int rank = 1; rank <= 80; rank++)
+        {
+            var p = new StudentCourseProfile(rank, courseId, periodId)
+            {
+                User = new User { FirstName = $"Student{rank}", LastName = "Test" }
+            };
+            p.AwardPassedTestXp(1, baseTime.AddMinutes(rank));
+            profiles.Add(p);
+        }
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(profiles);
+
+        // Student #40 is in Gold tier: visible tiers should be Bronze, Silver, Gold (current), and Diamond (next tier to reach, NOT Obsidian)
+        var result = await _service.GetHallOfFameLeaderboardAsync(courseId, 40, periodId);
+
+        Assert.That(result.CurrentTier.Tier, Is.EqualTo(HallOfFameTier.Gold));
+        Assert.That(result.VisibleTiers.Select(t => t.Tier), Is.EqualTo(new[]
+        {
+            HallOfFameTier.Bronze,
+            HallOfFameTier.Silver,
+            HallOfFameTier.Gold,
+            HallOfFameTier.Diamond
+        }));
     }
 
     [Test]

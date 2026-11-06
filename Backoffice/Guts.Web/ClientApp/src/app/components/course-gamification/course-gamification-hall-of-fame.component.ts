@@ -178,7 +178,9 @@ export class CourseGamificationHallOfFameComponent implements OnInit, OnChanges 
         if (res.success && res.value) {
           this.hallOfFame = res.value.entries || [];
           this.currentTier = res.value.currentTier || null;
-          this.visibleTiers = res.value.visibleTiers || [];
+          this.visibleTiers = (res.value.visibleTiers || []).filter(
+            (t) => t.studentCount > 0,
+          );
           this.allTiers = res.value.allTiers || [];
           this.nextTargetStudent = res.value.nextTargetStudent || null;
           this.currentUserRank = res.value.currentUserRank ?? null;

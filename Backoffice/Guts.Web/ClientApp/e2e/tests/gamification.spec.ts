@@ -79,7 +79,7 @@ test.describe("Course Gamification (Feature 002)", () => {
     await expect(rows.nth(1)).toContainText("🥈");
   });
 
-  test("Hall of Fame hides Class column when class competition is disabled or no classes exist", async ({
+  test("Hall of Fame and Weekly Sprint hide Class column when class competition is disabled or no classes exist", async ({
     studentPage,
   }) => {
     await setupGamificationApiMocks(studentPage, {
@@ -90,8 +90,14 @@ test.describe("Course Gamification (Feature 002)", () => {
 
     const gamificationPage = new CourseGamificationPage(studentPage);
     await gamificationPage.goto(1);
-    await gamificationPage.tabHallOfFame.click();
 
+    // Weekly Sprint hides Class column
+    await expect(gamificationPage.weeklySprintTableHeaders.filter({ hasText: "Class" })).toHaveCount(0);
+    await expect(gamificationPage.weeklySprintTableRows.first()).toContainText("AliceDev");
+    await expect(gamificationPage.weeklySprintTableRows.first()).not.toContainText("1TIN-A");
+
+    // Hall of Fame hides Class column
+    await gamificationPage.tabHallOfFame.click();
     await expect(gamificationPage.hallOfFameTableHeaders.filter({ hasText: "Class" })).toHaveCount(0);
     await expect(gamificationPage.hallOfFameTableRows.first()).toContainText("AliceDev");
     await expect(gamificationPage.hallOfFameTableRows.first()).not.toContainText("1TIN-A");

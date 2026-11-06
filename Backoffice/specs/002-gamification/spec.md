@@ -28,7 +28,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 - **US-3 (Earn XP, Levels, Streaks, Badges, and Ranking Bonuses from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, badges, and Hall of Fame overtake (`+4 XP`) and tier-promotion (`+5 XP`) bonuses when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
 - **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events (including overtake and tier-up bonuses) are listed individually.
 - **US-5 (Compete on Tiered Hall of Fame, View Leaderboards & Teacher Inspection of Student Perspective)**:
-  - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a 4-icon tier progression header (1 previous, current enlarged, 2 next) and a motivational callout to overtake the student directly above me.
+  - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a tier progression header (showing up to 2 previous tiers, my current tier enlarged, and only the next tier to reach unless in the two lowest levels, filtering out any tiers without students) and a motivational callout to overtake the student directly above me.
   - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary card; instead, I want to browse **all Hall of Fame levels** (teacher overview) with tier-relative ranks (no global ranks) AND **select a student** to inspect the **Hero Summary card** and **earned badges** of that student and see the **leaderboards** (Weekly Sprint and Hall of Fame tier) from that student's perspective (in read-only mode).
 - **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`) to eligible students.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
@@ -77,23 +77,29 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 - **Given** `IsBadgesEnabled == true` for the course
 - **When** a qualifying action occurs for a badge the student does not already own
 - **Then** a `StudentBadge` is added once per `BadgeType`:
-  - `FirstSpark` (`1`): First passing test in the course.
-  - `SpeedDemon` (`2`): Top-10 fastest completion of all tests in an assignment.
-  - `CleanSweep` (`4`): Passed 100% of tests across all assignments in a chapter/topic.
-  - `NightOwl` (`5`): Passing test submitted between `00:00` and `04:59` (`Hour >= 0 && Hour < 5`).
-  - `EarlyBird` (`6`): Passing test submitted between `05:00` and `07:59` (`Hour >= 5 && Hour < 8`).
-  - `WeekendWarrior` (`7`): Passing test submitted on `Saturday` or `Sunday`.
-  - `CenturyClub` (`8`): Reached $\ge 100$ unique `PassedTest` events in the course.
-  - `OnFire` (`9`): Reached a `CurrentStreak` of $\ge 4$ consecutive ISO weeks.
-  - `IronWill` (`10`): Reached a `CurrentStreak` of $\ge 8$ consecutive ISO weeks.
-  - `TeamPowerhouse` (`12`): Earned the Team Synergy bonus on a project component.
+  - `FirstSpark` (`1`, `"First Spark"`, `🌱`): First passing test in the course.
+  - `QuarterCentury` (`19`, `"Quarter Century"`, `🎯`): Reached $\ge 25$ unique `PassedTest` events in the course.
+  - `HalfCentury` (`20`, `"Half Century"`, `🏅`): Reached $\ge 50$ unique `PassedTest` events in the course.
+  - `CenturyClub` (`8`, `"Century Club"`, `💯`): Reached $\ge 100$ unique `PassedTest` events in the course.
+  - `FirstVictory` (`21`, `"First Victory"`, `🏁`): Completed 100% of all tests in a first assignment ($\ge 1$ `AssignmentCompleted` event in the course).
+  - `HighFive` (`22`, `"High Five"`, `🖐️`): Completed 100% of all tests in 5 assignments ($\ge 5$ `AssignmentCompleted` events in the course).
+  - `SpeedDemon` (`2`, `"Speed Demon"`, `⚡`): Top-10 fastest completion of all tests in an assignment.
+  - `CleanSweep` (`4`, `"Clean Sweep"`, `🧹`): Passed 100% of tests across all assignments in a chapter/topic.
+  - `NightOwl` (`5`, `"Night Owl"`, `🦉`): Passing test submitted between `00:00` and `04:59` (`Hour >= 0 && Hour < 5`).
+  - `EarlyBird` (`6`, `"Early Bird"`, `🌅`): Passing test submitted between `05:00` and `07:59` (`Hour >= 5 && Hour < 8`).
+  - `WeekendWarrior` (`7`, `"Weekend Warrior"`, `⚔️`): Passing test submitted on `Saturday` or `Sunday`.
+  - `WarmingUp` (`17`, `"Warming Up"`, `🕯️`): Reached a `CurrentStreak` of $\ge 2$ consecutive ISO weeks.
+  - `OnFire` (`9`, `"On Fire"`, `🔥`): Reached a `CurrentStreak` of $\ge 4$ consecutive ISO weeks.
+  - `Unstoppable` (`18`, `"Unstoppable"`, `☄️`): Reached a `CurrentStreak` of $\ge 6$ consecutive ISO weeks.
+  - `IronWill` (`10`, `"Iron Will"`, `🛡️`): Reached a `CurrentStreak` of $\ge 8$ consecutive ISO weeks.
+  - `TeamPowerhouse` (`12`, `"Team Powerhouse"`, `🤝`): Earned the Team Synergy bonus on a project component.
   - `SprintGold` (`11`), `SprintSilver` (`13`), `SprintBronze` (`14`), `SprintTop4` (`15`), `SprintTop5` (`16`): Cumulative top-5 placement on the Weekly Sprint Leaderboard as of Friday `23:59:59 UTC` (e.g., Rank #1 earns Gold, Silver, Bronze, Top4, and Top5 if not already earned; ties with #1 on both `Score` and `GreenTestsCount` also earn `SprintGold`).
 
 ### AC-4: Leaderboards, Hall of Fame Tiers, Teacher Exclusion & Student Perspective
 - **Given** opted-in student profiles (`ShowInLeaderBoard == true`, excluding any user with the `Lector` role) for a `(courseId, periodId)`
 - **When** a leaderboard is requested:
   - **Teacher Exclusion**: Users with the `Lector` role are excluded from all rankings (**Weekly Sprint**, **Hall of Fame**, and **Class Championship**).
-  - **Weekly Sprint (`leaderboard/weekly`)**: Ranks students who have earned XP (`Score > 0`) between Monday `00:00` of the current ISO week and now by `Score` descending, tie-breaking by weekly `PassedTest` count (`GreenTestsCount`). Students with `0 XP` for the current week are excluded from the Weekly Sprint Leaderboard. In the UI, when a student (or a Lector viewing a selected student's perspective) is not on the Weekly Sprint Leaderboard, a callout banner triggers the student to earn XP to get on the board. If a Lector passes a `perspectiveUserId` query parameter, `IsCurrentUser` highlights that selected student. Returns empty if `IsGamificationEnabled`, `IsWeeklyStreakEnabled`, or `IsLeaderboardEnabled` is `false`.
+  - **Weekly Sprint (`leaderboard/weekly`)**: Ranks students who have earned XP (`Score > 0`) between Monday `00:00` of the current ISO week and now by `Score` descending, tie-breaking by weekly `PassedTest` count (`GreenTestsCount`). Students with `0 XP` for the current week are excluded from the Weekly Sprint Leaderboard. In the UI, the `Class` column (`classGroupName`) is only displayed when `IsClassCompetitionEnabled == true` and at least one class group (`CourseClassGroup`) exists for the course (`hasClasses`). When a student (or a Lector viewing a selected student's perspective) is not on the Weekly Sprint Leaderboard, a callout banner triggers the student to earn XP to get on the board. If a Lector passes a `perspectiveUserId` query parameter, `IsCurrentUser` highlights that selected student. Returns empty if `IsGamificationEnabled`, `IsWeeklyStreakEnabled`, or `IsLeaderboardEnabled` is `false`.
   - **Hall of Fame (`leaderboard/hall-of-fame`)**:
     - Ranks opted-in students by all-time `TotalXp` descending.
     - **Tie-Breaking Rule**: When two or more students have equal `TotalXp`, the student who reached that XP level **first** (earliest timestamp of their most recent XP-earning `GamificationEvent`, or earliest `Id` if `TotalXp == 0`) is ranked higher.
@@ -103,7 +109,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     - **Student View (or Lector with a selected student `perspectiveUserId`)**: Returns only the leaderboard entries belonging to the target student's current Hall of Fame tier (if opted out or unranked, defaults to the lowest active tier / `Paper`), along with:
       - `CurrentTier`: metadata (tier enum/id, name, icon) of the displayed tier. Note: Tier position/rank ranges (e.g., `(#1–#15)`) must **not** be displayed in the UI (e.g., display `"Obsidian League"` rather than `"Obsidian League (#1–#15)"`).
       - `CurrentUserRank`: the student's 1-based relative rank within their tier (`1` for the top student in their tier).
-      - `VisibleTiers`: the 4-tier progression window around the student's current tier (normally `[PreviousTier, CurrentTier, NextTier1, NextTier2]`; clamped to a 4-tier window at the boundaries: `[Paper, Wood, Iron, Bronze]` when at `Paper`, and `[Silver, Gold, Diamond, Obsidian]` when at `Diamond` or `Obsidian`), flagging which tier is active so the UI renders the current tier icon larger and the other 3 icons smaller and slightly blurred.
+      - `VisibleTiers`: the tier progression window around the student's current tier, showing only the next tier to reach (normally `[PreviousTier2, PreviousTier1, CurrentTier, NextTier1]`; clamped at the boundaries: `[Paper, Wood, Iron, Bronze]` when at `Paper`, `Wood`, or `Iron` so only the two lowest levels `Paper` and `Wood` include two or more next levels, and `[Silver, Gold, Diamond, Obsidian]` when at `Diamond` or `Obsidian`), and **filtered to only include tiers that have actual students (`StudentCount > 0`)**, flagging which tier is active so the UI renders the current tier icon larger and the neighbor icons smaller and slightly blurred.
       - `NextTargetStudent`: information about the student immediately above the target student in overall course order (even if that student is at the bottom of the next tier above), with `Rank` expressing their relative rank within their own tier (e.g., `#15 in 🌋 Obsidian`), including their `DisplayName`, `Avatar`, `Score`, and `XpNeededToOvertake` (`(targetScore - currentScore) + 1`, or `1` when tied on XP), to trigger and motivate the student to overtake them.
     - **Lector (Teacher) Overview & Student Perspective Selector**:
       - Teachers do **not** have a personal Hero Summary card.

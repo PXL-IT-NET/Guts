@@ -145,19 +145,97 @@ public class StudentCourseProfileTests
     }
 
     [Test]
-    public void RecordWeeklyActivity_4And8Weeks_ShouldAwardOnFireAndIronWillBadges()
+    public void RecordWeeklyActivity_2And4And6And8Weeks_ShouldAwardWarmingUpOnFireUnstoppableAndIronWillBadges()
     {
         var profile = _factory.CreateNew(1, 2, 3);
         var startMonday = new DateTime(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc);
 
-        for (int w = 0; w < 8; w++)
-        {
-            profile.RecordWeeklyActivity(startMonday.AddDays(w * 7));
-        }
+        // Week 1 & Week 2 -> WarmingUp (2-week streak)
+        profile.RecordWeeklyActivity(startMonday);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WarmingUp), Is.False);
 
-        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(8));
+        profile.RecordWeeklyActivity(startMonday.AddDays(7));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WarmingUp), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.OnFire), Is.False);
+
+        // Week 3 & Week 4 -> OnFire (4-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(14));
+        profile.RecordWeeklyActivity(startMonday.AddDays(21));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(4));
         Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.OnFire), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.Unstoppable), Is.False);
+
+        // Week 5 & Week 6 -> Unstoppable (6-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(28));
+        profile.RecordWeeklyActivity(startMonday.AddDays(35));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(6));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.Unstoppable), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.IronWill), Is.False);
+
+        // Week 7 & Week 8 -> IronWill (8-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(42));
+        profile.RecordWeeklyActivity(startMonday.AddDays(49));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(8));
         Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.IronWill), Is.True);
+    }
+
+    [Test]
+    public void AwardPassedTestXp_At25And50And100Tests_ShouldAwardQuarterCenturyHalfCenturyAndCenturyClubBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        for (int i = 1; i <= 24; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.QuarterCentury), Is.False);
+
+        profile.AwardPassedTestXp(25, now.AddMinutes(25));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.QuarterCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HalfCentury), Is.False);
+
+        for (int i = 26; i <= 50; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HalfCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CenturyClub), Is.False);
+
+        for (int i = 51; i <= 100; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CenturyClub), Is.True);
+    }
+
+    [Test]
+    public void AwardAssignmentBonus_At1stAnd5thCompletedAssignments_ShouldAwardFirstVictoryAndHighFiveBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        profile.AwardAssignmentBonus(1, now);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.FirstVictory), Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.False);
+
+        for (int a = 2; a <= 4; a++)
+        {
+            profile.AwardAssignmentBonus(a, now.AddMinutes(a));
+        }
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.False);
+
+        profile.AwardAssignmentBonus(5, now.AddMinutes(5));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.True);
+
+        // When badges are disabled, no assignment completion badges are awarded
+        var noBadgesProfile = _factory.CreateNew(2, 2, 3);
+        for (int a = 1; a <= 5; a++)
+        {
+            noBadgesProfile.AwardAssignmentBonus(a, now.AddMinutes(a), isBadgesEnabled: false);
+        }
+        Assert.That(noBadgesProfile.Badges, Is.Empty);
     }
 
     [Test]

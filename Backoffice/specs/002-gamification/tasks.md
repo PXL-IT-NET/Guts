@@ -42,7 +42,7 @@
     - `151..200` ➔ `Wood` (`2`)
     - `>= 201` ➔ `Paper` (`1`)
   - Verify `GetTierForRank(<= 0)` throws `ContractException`.
-  - Verify `HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier currentTier)` returns a 4-tier progression window `[Previous, Current, Next1, Next2]` and clamps to 4 tiers at boundaries (`[Paper, Wood, Iron, Bronze]` at `Paper`; `[Silver, Gold, Diamond, Obsidian]` at `Diamond` and `Obsidian`).
+  - Verify `HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier currentTier)` returns a 4-tier progression window `[Previous2, Previous1, Current, Next1]` showing only the next tier to reach (unless in the two lowest levels `Paper` and `Wood`), and clamps to 4 tiers at boundaries (`[Paper, Wood, Iron, Bronze]` at `Paper`, `Wood`, and `Iron`; `[Silver, Gold, Diamond, Obsidian]` at `Diamond` and `Obsidian`), and `GamificationService` filters `VisibleTiers` to tiers with `StudentCount > 0`.
 - [x] **[T3.2]** `[AC-2, AC-4, DR-7, DR-8]` Write failing unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/StudentCourseProfileTests.cs`:
   - Verify `LastXpEarnedAt` returns the maximum `CreatedAt` among positive-XP events, or `DateTime.MaxValue` when no positive-XP events exist.
   - Verify `EvaluateHallOfFameProgression(previousRank, newRank, timestamp)`:
@@ -194,3 +194,31 @@
 - [x] **[T5.9]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
 - [x] **[T5.10]** Run SonarQube analysis or quality checks.
 - [x] **[T5.11]** Update `spec.md`, `design.md`, and `tasks.md` status to `Implemented`.
+
+---
+
+## Increment 6: Additional Streak, Test Count, and Assignment Completion Badges (AC-3 / DR-2) — _Completed_
+
+### Phase 1: Domain Layer (`Guts.Domain.Tests` ➔ `Guts.Domain`)
+
+- [x] **[T6.1]** `[AC-3, DR-2]` Write failing unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/StudentCourseProfileTests.cs`:
+  - Verify `RecordWeeklyActivity` / `AwardPassedTestXp` awards `BadgeType.WarmingUp` at a 2-week streak and `BadgeType.Unstoppable` at a 6-week streak (alongside `OnFire` at 4 weeks and `IronWill` at 8 weeks).
+  - Verify `AwardPassedTestXp` awards `BadgeType.QuarterCentury` upon reaching 25 unique passing tests and `BadgeType.HalfCentury` upon reaching 50 unique passing tests.
+  - Verify `AwardAssignmentBonus` awards `BadgeType.FirstVictory` upon completing the 1st assignment and `BadgeType.HighFive` upon completing 5 assignments (when `isBadgesEnabled == true`).
+- [x] **[T6.2]** `[AC-3, DR-2]` Add `WarmingUp = 17`, `Unstoppable = 18`, `QuarterCentury = 19`, `HalfCentury = 20`, `FirstVictory = 21`, `HighFive = 22` to `BadgeType.cs` and implement the unlock rules in `StudentCourseProfile.cs`.
+- [x] **[T6.3]** Run `dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+
+- [x] **[T6.4]** `[AC-3]` Write failing unit test in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs` verifying `GetBadgeMetadataAsync` and `MapToProfileDto` include metadata (`Name`, `Description`, `Icon`) for all 21 badge types (including `WarmingUp`, `Unstoppable`, `QuarterCentury`, `HalfCentury`, `FirstVictory`, and `HighFive`).
+- [x] **[T6.5]** `[AC-3]` Register the 6 new badges in `GamificationService.BadgeMetadata` in `Backoffice/Guts.Business/Services/GamificationService.cs`.
+- [x] **[T6.6]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 3: Final Verification & Quality Gate
+
+- [x] **[T6.7]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
+- [x] **[T6.8]** Update `tasks.md` checkboxes and verify `spec.md` and `design.md` status.

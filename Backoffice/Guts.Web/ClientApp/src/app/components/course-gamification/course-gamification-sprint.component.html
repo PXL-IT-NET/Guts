@@ -22,7 +22,9 @@
           <tr>
             <th style="width: 70px;">Rank</th>
             <th>Student</th>
-            <th>Class</th>
+            @if (isClassCompetitionEnabled && hasClasses) {
+              <th>Class</th>
+            }
             <th class="text-center">Weekly Streak</th>
             <th class="text-center">Green Tests (Week)</th>
             <th class="text-end pe-4">Weekly XP</th>
@@ -49,11 +51,13 @@
                   </div>
                 </div>
               </td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
-                  {{ entry.classGroupName }}
-                </span>
-              </td>
+              @if (isClassCompetitionEnabled && hasClasses) {
+                <td>
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+                    {{ entry.classGroupName }}
+                  </span>
+                </td>
+              }
               <td class="text-center">
                 <span class="text-danger fw-semibold">🔥 {{ entry.weeklyStreak }}w</span>
               </td>
@@ -66,7 +70,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="text-center py-4 text-body-secondary">
+              <td [attr.colspan]="isClassCompetitionEnabled && hasClasses ? 6 : 5" class="text-center py-4 text-body-secondary">
                 No sprint points recorded yet for this week. Pass a test to claim first place!
               </td>
             </tr>

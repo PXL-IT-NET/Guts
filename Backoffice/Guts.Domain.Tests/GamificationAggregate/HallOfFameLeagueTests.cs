@@ -37,10 +37,12 @@ public class HallOfFameLeagueTests
         Assert.That(() => HallOfFameLeague.GetTierForRank(invalidRank), Throws.InstanceOf<ContractException>());
     }
 
-    [Test]
-    public void GetVisibleTierWindow_AtPaperBoundary_ShouldReturnPaperWoodIronBronze()
+    [TestCase(HallOfFameTier.Paper)]
+    [TestCase(HallOfFameTier.Wood)]
+    [TestCase(HallOfFameTier.Iron)]
+    public void GetVisibleTierWindow_AtLowestTiersAndIron_ShouldReturnPaperWoodIronBronze(HallOfFameTier currentTier)
     {
-        var window = HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier.Paper);
+        var window = HallOfFameLeague.GetVisibleTierWindow(currentTier);
 
         Assert.That(window, Is.EqualTo(new[]
         {
@@ -52,16 +54,24 @@ public class HallOfFameLeagueTests
     }
 
     [Test]
-    public void GetVisibleTierWindow_InMiddleTier_ShouldReturnPreviousCurrentAndNextTwoTiers()
+    public void GetVisibleTierWindow_InMiddleTier_ShouldReturnTwoPreviousCurrentAndOnlyNextTier()
     {
-        var window = HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier.Bronze);
-
-        Assert.That(window, Is.EqualTo(new[]
+        var bronzeWindow = HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier.Bronze);
+        Assert.That(bronzeWindow, Is.EqualTo(new[]
         {
+            HallOfFameTier.Wood,
             HallOfFameTier.Iron,
             HallOfFameTier.Bronze,
+            HallOfFameTier.Silver
+        }));
+
+        var goldWindow = HallOfFameLeague.GetVisibleTierWindow(HallOfFameTier.Gold);
+        Assert.That(goldWindow, Is.EqualTo(new[]
+        {
+            HallOfFameTier.Bronze,
             HallOfFameTier.Silver,
-            HallOfFameTier.Gold
+            HallOfFameTier.Gold,
+            HallOfFameTier.Diamond
         }));
     }
 
@@ -96,4 +106,3 @@ public class HallOfFameLeagueTests
         Assert.That(paper.Icon, Is.Not.Empty);
     }
 }
-

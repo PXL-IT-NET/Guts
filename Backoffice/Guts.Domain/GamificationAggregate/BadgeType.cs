@@ -16,5 +16,11 @@ public enum BadgeType
     SprintSilver = 13,
     SprintBronze = 14,
     SprintTop4 = 15,
-    SprintTop5 = 16
+    SprintTop5 = 16,
+    WarmingUp = 17,
+    Unstoppable = 18,
+    QuarterCentury = 19,
+    HalfCentury = 20,
+    FirstVictory = 21,
+    HighFive = 22
 }

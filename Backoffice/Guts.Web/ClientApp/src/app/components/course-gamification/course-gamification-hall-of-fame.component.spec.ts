@@ -55,8 +55,8 @@ describe("CourseGamificationHallOfFameComponent", () => {
     },
     visibleTiers: [
       { tier: 5, name: "Silver", icon: "⚔️", minRank: 56, maxRank: 75, isCurrentTier: false, studentCount: 0 },
-      { tier: 6, name: "Gold", icon: "👑", minRank: 36, maxRank: 55, isCurrentTier: false, studentCount: 0 },
-      { tier: 7, name: "Diamond", icon: "💎", minRank: 16, maxRank: 35, isCurrentTier: false, studentCount: 0 },
+      { tier: 6, name: "Gold", icon: "👑", minRank: 36, maxRank: 55, isCurrentTier: false, studentCount: 20 },
+      { tier: 7, name: "Diamond", icon: "💎", minRank: 16, maxRank: 35, isCurrentTier: false, studentCount: 20 },
       { tier: 8, name: "Obsidian", icon: "🌋", minRank: 1, maxRank: 15, isCurrentTier: true, studentCount: 2 },
     ],
     allTiers: [
@@ -100,10 +100,12 @@ describe("CourseGamificationHallOfFameComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create and load hall of fame data and reload on ngOnChanges", () => {
+  it("should create and load hall of fame data, filter out empty visible tiers, and reload on ngOnChanges", () => {
     expect(component).toBeTruthy();
     expect(component.hallOfFame).toHaveSize(2);
-    expect(component.visibleTiers).toHaveSize(4);
+    // Silver has studentCount === 0, so only Gold, Diamond, Obsidian are shown
+    expect(component.visibleTiers).toHaveSize(3);
+    expect(component.visibleTiers.map((t) => t.name)).toEqual(["Gold", "Diamond", "Obsidian"]);
     expect(component.currentTier?.name).toBe("Obsidian");
     expect(component.nextTargetStudent?.displayName).toBe("Leader");
     expect(component.loading).toBeFalse();
@@ -118,7 +120,7 @@ describe("CourseGamificationHallOfFameComponent", () => {
     const progressionEl = fixture.nativeElement.querySelector("#hallOfFameTierProgression");
     expect(progressionEl).toBeTruthy();
     expect(progressionEl.querySelectorAll(".hall-of-fame-tier-current")).toHaveSize(1);
-    expect(progressionEl.querySelectorAll(".hall-of-fame-tier-neighbor")).toHaveSize(3);
+    expect(progressionEl.querySelectorAll(".hall-of-fame-tier-neighbor")).toHaveSize(2);
     expect(fixture.nativeElement.textContent).toContain("Obsidian League");
     expect(fixture.nativeElement.textContent).not.toContain("#1–#15");
 

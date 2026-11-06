@@ -200,6 +200,8 @@
           [periodId]="periodId"
           [isTeacher]="userProfile.isTeacher()"
           [perspectiveUserId]="perspectiveUserId"
+          [isClassCompetitionEnabled]="!!config?.isClassCompetitionEnabled"
+          [hasClasses]="hasClasses"
         ></app-course-gamification-sprint>
       }
 
