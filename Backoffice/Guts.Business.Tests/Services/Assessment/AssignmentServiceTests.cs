@@ -144,27 +144,56 @@ public class ProjectTeamAssessmentServiceTests
         Assert.That(result.TeamId, Is.EqualTo(existingTeamAssessment.Team.Id));
         Assert.That(result.IsComplete, Is.EqualTo(existingTeamAssessment.IsComplete));
         Assert.That(result.PeersThatNeedToEvaluateOthers.Count, Is.EqualTo(existingTeamAssessment.Team.TeamUsers.Count));
+        Assert.That(result.PeerIds, Is.EquivalentTo(existingTeamAssessment.GetPeers().Select(u => u.Id)));
     }
 
     [Test]
-    public void GetResultsForLectorAsync_RetrievesTeamAssessmentAndCreatesAResultForEachTeamUser()
+    public void GetResultsForTeacherAsync_RetrievesTeamAssessmentAndCreatesAResultForEachPeer()
     {
         //Arrange
-        var existingTeamAssessment = new ProjectTeamAssessmentBuilder()
-            .WithId()
-            .WithAllPeerAssessmentsAdded()
-            .Build();
-        _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(It.IsAny<int>(), It.IsAny<int>()))
+        int projectAssessmentId = _random.NextPositive();
+        int teamId = _random.NextPositive();
+        var peer1 = new UserBuilder().WithId().Build();
+        var peer2 = new UserBuilder().WithId().Build();
+        var peers = new List<User> { peer1, peer2 };
+
+        var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
+        existingTeamAssessmentMock.Setup(ta => ta.GetPeers()).Returns(peers);
+        IProjectTeamAssessment existingTeamAssessment = existingTeamAssessmentMock.Object;
+
+        _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(projectAssessmentId, teamId))
             .ReturnsAsync(existingTeamAssessment);
 
         //Act
-        IReadOnlyList<IAssessmentResult> results = _service.GetResultsForLectorAsync(existingTeamAssessment.ProjectAssessment.Id, existingTeamAssessment.Team.Id).Result;
+        IReadOnlyList<IAssessmentResult> results = _service.GetResultsForTeacherAsync(projectAssessmentId, teamId).Result;
 
         //Assert
-        Assert.That(results.Count, Is.EqualTo(existingTeamAssessment.Team.TeamUsers.Count));
+        Assert.That(results.Count, Is.EqualTo(peers.Count));
         _assessmentResultFactoryMock.Verify(factory =>
-            factory.Create(It.IsIn(existingTeamAssessment.Team.TeamUsers.Select(tu => tu.UserId)),
-                existingTeamAssessment, true), Times.Exactly(existingTeamAssessment.Team.TeamUsers.Count));
+            factory.Create(It.IsIn(peers.Select(p => p.Id)),
+                existingTeamAssessment, true), Times.Exactly(peers.Count));
+    }
+
+    [Test]
+    public void SetPeerInclusionAsync_RetrievesTeamAssessment_SetsPeerInclusion_UpdatesTeamAssessment()
+    {
+        //Arrange
+        int projectAssessmentId = _random.NextPositive();
+        int teamId = _random.NextPositive();
+        int userId = _random.NextPositive();
+        bool isIncluded = _random.NextBool();
+
+        var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
+        IProjectTeamAssessment existingTeamAssessment = existingTeamAssessmentMock.Object;
+        _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(projectAssessmentId, teamId))
+            .ReturnsAsync(existingTeamAssessment);
+
+        //Act
+        _service.SetPeerInclusionAsync(projectAssessmentId, teamId, userId, isIncluded).Wait();
+
+        //Assert
+        existingTeamAssessmentMock.Verify(ta => ta.SetPeerInclusion(userId, isIncluded), Times.Once);
+        _projectTeamAssessmentRepositoryMock.Verify(repo => repo.UpdateAsync(existingTeamAssessment), Times.Once);
     }
 
     [Test]

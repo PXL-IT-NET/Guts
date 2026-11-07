@@ -42,20 +42,20 @@ The **Project Team Peer Assessments** feature enables:
 - **Then** a new `ProjectTeamAssessment` is automatically created and persisted for that assessment and team.
 
 ### AC-3: Retrieving Stored and Missing Peer Assessments for a Student
-- **Given** a student who is an eligible participant of the `ProjectTeamAssessment`
+- **Given** a student who is an eligible peer in the `ProjectTeamAssessment`
 - **When** the student requests their peer assessments for a `ProjectTeamAssessment`
-- **Then** the system returns all stored `PeerAssessment` entries authored by that student plus newly initialized placeholder `PeerAssessment` entries (`NullScore = -1`) for any eligible team members (including self) not yet evaluated.
+- **Then** the system returns all stored `PeerAssessment` entries authored by that student plus newly initialized placeholder `PeerAssessment` entries (`NullScore = -1`) for any eligible peers (including self) not yet evaluated.
 
 ### AC-4: Submitting and Validating Peer Assessments
-- **Given** a student who is an eligible participant of the `ProjectTeamAssessment` and `IsComplete == false`
+- **Given** a student who is an eligible peer in the `ProjectTeamAssessment` and `IsComplete == false`
 - **When** the student saves their peer assessments for the team
 - **Then** each evaluation is added or updated, provided that:
   1. All three scores (`CooperationScore`, `ContributionScore`, `EffortScore`) are valid and not `NullScore (-1)`.
   2. An `Explanation` is non-empty whenever any of the three scores is not `Average (3)`.
-  3. Once the student has evaluated all $N$ eligible team members, not all members are rated strictly above `Average (3)` on the same criterion, and not all members are rated strictly below `Average (3)` on the same criterion.
+  3. Once the student has evaluated all $N$ eligible peers, not all peers are rated strictly above `Average (3)` on the same criterion, and not all peers are rated strictly below `Average (3)` on the same criterion.
 
 ### AC-5: Locking Completed Team Assessments
-- **Given** a `ProjectTeamAssessment` with $N \ge 2$ participants where all $N \times N$ peer evaluations have been saved (`IsComplete == true`)
+- **Given** a `ProjectTeamAssessment` with $N \ge 2$ peers where all $N \times N$ peer evaluations have been saved (`IsComplete == true`)
 - **When** any user attempts to add or update a peer assessment
 - **Then** the operation is rejected with a `ContractException`.
 - **And** subsequent additions or removals of members in the underlying `ProjectTeam` do not alter `IsComplete` (`true`) or modify the stored `PeerAssessments` of the completed `ProjectTeamAssessment`.
@@ -67,10 +67,10 @@ The **Project Team Peer Assessments** feature enables:
   - `SelfValue` / `SelfScore` (the subject's self-evaluation)
   - `PeerValue` / `PeerScore` (mean of evaluations of the subject by other teammates)
   - `Value` / `Score` (mean of all evaluations of the subject, including self)
-  - `AverageValue`, `AverageSelfValue`, and `AveragePeerValue` across all participants of that `ProjectTeamAssessment`
+  - `AverageValue`, `AverageSelfValue`, and `AveragePeerValue` across all peers of that `ProjectTeamAssessment`
 - **And** individual `PeerAssessments` (with evaluator identity and explanation) are included **only** for Teachers (`includePeerAssessments = true`) and omitted for Students (`includePeerAssessments = false`).
-- **And** for a completed `ProjectTeamAssessment`, Teacher detailed results (`GetResultsForLectorAsync`) include results for all participants who completed that assessment (derived from stored `PeerAssessments`, including members later removed from the team and excluding members who joined after completion).
-- **And** on the student's personal results view (`/my-result`), only current team members who participated in the assessment can view their result, and the page title displays "[Description] - Your results".
+- **And** for a completed `ProjectTeamAssessment`, Teacher detailed results (`GetResultsForLectorAsync`) include results for all peers who completed that assessment (derived from stored `PeerAssessments`, including members later removed from the team and excluding members who joined after completion).
+- **And** on the student's personal results view (`/my-result`), only current team members who were peers in the assessment can view their result, and the page title displays "[Description] - Your results".
 
 ### AC-7: Navigating Detailed Results Between Completed Teams (Teacher)
 - **Given** an open or completed project assessment with multiple project teams
@@ -87,8 +87,8 @@ The **Project Team Peer Assessments** feature enables:
 - **And** for every **incomplete** `ProjectTeamAssessment` (`IsComplete == false`) of that team (regardless of whether `DeadlineUtc` has passed):
   - All stored `PeerAssessment` entries authored by (`User.Id == userId`) or targeting (`Subject.Id == userId`) the removed user are deleted.
   - Existing evaluations submitted by remaining team members for each other are retained as-is without re-running `DR-7` relative-average validation.
-  - If at least 2 eligible participants remain ($N \ge 2$) and all $N \times N$ evaluations among those remaining participants are already present, the `ProjectTeamAssessment` automatically becomes complete (`IsComplete == true`).
-  - If only 1 participant remains ($N = 1$), `IsComplete` remains `false`.
+  - If at least 2 eligible peers remain ($N \ge 2$) and all $N \times N$ evaluations among those remaining peers are already present, the `ProjectTeamAssessment` automatically becomes complete (`IsComplete == true`).
+  - If only 1 peer remains ($N = 1$), `IsComplete` remains `false`.
 - **And** for every **completed** `ProjectTeamAssessment` (`IsComplete == true`) of that team:
   - All stored `PeerAssessment` entries (including those authored by or targeting the removed user) are preserved untouched, and `IsComplete` remains `true`.
 - **And** any future `ProjectTeamAssessment` created for the team excludes the removed user.
@@ -99,15 +99,15 @@ The **Project Team Peer Assessments** feature enables:
 - **Then** the membership record (`ProjectTeamUser`) stores `JoinedOnUtc = DateTime.UtcNow`.
 - **And** if the user was previously a member of another team in the same project and left that team after completing a `ProjectTeamAssessment` there, those historical `PeerAssessment` records in the former team's completed assessment do not prevent the user from joining the new team.
 - **And** for every **completed** `ProjectTeamAssessment` (`IsComplete == true`) of that team:
-  - The assessment remains completed (`IsComplete == true`) with its original participants (derived from its stored `PeerAssessments`), excluding the newly added user.
+  - The assessment remains completed (`IsComplete == true`) with its original peers (derived from its stored `PeerAssessments`), excluding the newly added user.
 - **And** for every **incomplete** `ProjectTeamAssessment` (`IsComplete == false`) of that team:
   - **Default eligibility**:
-    - If `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, the newly added user is **included by default** as an eligible participant.
+    - If `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, the newly added user is **included by default** as an eligible peer.
     - If `JoinedOnUtc > ProjectAssessment.DeadlineUtc`, the newly added user is **excluded by default**.
   - **Teacher control in Edit Team modal**:
     - In the **Edit Team** modal (`app-project-team-edit`), for any team member who joined after an incomplete assessment opened (`JoinedOnUtc > ProjectAssessment.OpenOnUtc`), the **Teacher** can indicate (toggle) whether that member is **included in** or **excluded from** that incomplete `ProjectTeamAssessment`.
-    - When the Teacher **excludes** a member from an incomplete `ProjectTeamAssessment`, all `PeerAssessment` entries already authored by (`User.Id == userId`) or targeting (`Subject.Id == userId`) that member in that assessment are deleted; if the remaining $N \ge 2$ eligible participants have all evaluated each other, the assessment automatically becomes complete (`IsComplete == true`).
-    - When the Teacher **includes** a member in an incomplete `ProjectTeamAssessment`, that member becomes an eligible participant, appears in `PeersThatNeedToEvaluateOthers`, and must evaluate (and be evaluated by) all eligible teammates before `IsComplete` becomes `true`.
+    - When the Teacher **excludes** a member from an incomplete `ProjectTeamAssessment`, all `PeerAssessment` entries already authored by (`User.Id == userId`) or targeting (`Subject.Id == userId`) that member in that assessment are deleted; if the remaining $N \ge 2$ eligible peers have all evaluated each other, the assessment automatically becomes complete (`IsComplete == true`).
+    - When the Teacher **includes** a member in an incomplete `ProjectTeamAssessment`, that member becomes an eligible peer, appears in `PeersThatNeedToEvaluateOthers`, and must evaluate (and be evaluated by) all eligible peers before `IsComplete` becomes `true`.
 - **And** any future `ProjectTeamAssessment` (where `JoinedOnUtc <= ProjectAssessment.OpenOnUtc`) automatically includes the user.
 
 ---
@@ -131,14 +131,14 @@ The **Project Team Peer Assessments** feature enables:
   - `team != null` ("A team must be provided.")
   - `team.TeamUsers.Count > 0` ("The team has no members.")
   - `team.TeamUsers.First().User != null` ("The users of team must be loaded with user data.")
-- **DR-4 (Eligible Participants & Team Membership Check)**:
-  - For an **incomplete** `ProjectTeamAssessment` (`IsComplete == false`), the eligible participants are the members in `Team.TeamUsers` who either joined on or before `ProjectAssessment.OpenOnUtc`, or joined after `OpenOnUtc` and are currently included (by default if `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, or explicitly included/excluded by the Teacher).
-  - For a **completed** `ProjectTeamAssessment` (`IsComplete == true`), the participants are derived from the distinct subjects (`Subject`) stored in `PeerAssessments`.
-  - `AddOrUpdatePeerAssessment` (for both `userId` and `subjectId`), `GetPeerAssessmentsOf(userId)`, and `GetMissingPeerAssessmentsOf(userId)` require the user to be an eligible participant of the `ProjectTeamAssessment` (throwing `ContractException` if not).
+- **DR-4 (Eligible Peers & Team Membership Check)**:
+  - For an **incomplete** `ProjectTeamAssessment` (`IsComplete == false`), the eligible peers (`GetPeers()`) are the members in `Team.TeamUsers` who either joined on or before `ProjectAssessment.OpenOnUtc`, or joined after `OpenOnUtc` and are currently included (by default if `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, or explicitly included/excluded by the Teacher).
+  - For a **completed** `ProjectTeamAssessment` (`IsComplete == true`), the peers (`GetPeers()`) are derived from the distinct subjects (`Subject`) stored in `PeerAssessments`.
+  - `AddOrUpdatePeerAssessment` (for both `userId` and `subjectId`), `GetPeerAssessmentsOf(userId)`, and `GetMissingPeerAssessmentsOf(userId)` require the user to be an eligible peer of the `ProjectTeamAssessment` (throwing `ContractException` if not).
 - **DR-5 (Completion & Immutability After Completion)**:
   - A `ProjectTeamAssessment` is complete (`IsComplete == true`) when either:
-    1. Its stored `PeerAssessments` form a complete $M \times M$ evaluation matrix among a closed set of $M \ge 2$ distinct participants (`PeerAssessments.Select(pa => pa.Subject.Id).Distinct()`) where every participant has evaluated all $M$ participants (`PeerAssessments.Count == M * M`), and if not yet locked against a changed team, matches all eligible participants at the time of completion; once complete, it remains complete even if `Team.TeamUsers` later changes.
-    2. It has at least 2 participants ($N \ge 2$); a single-member team ($N < 2$) can never be marked `IsComplete == true`.
+    1. Its stored `PeerAssessments` form a complete $M \times M$ evaluation matrix among a closed set of $M \ge 2$ distinct peers (`PeerAssessments.Select(pa => pa.Subject.Id).Distinct()`) where every peer has evaluated all $M$ peers (`PeerAssessments.Count == M * M`), and if not yet locked against a changed team, matches all eligible peers at the time of completion; once complete, it remains complete even if `Team.TeamUsers` later changes.
+    2. It has at least 2 peers ($N \ge 2$); a single-member team ($N < 2$) can never be marked `IsComplete == true`.
   - Once `IsComplete == true`, no peer assessment in that `ProjectTeamAssessment` can be added, modified, or deleted (`Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change a peer assessment.")`).
 - **DR-6 (`AddOrUpdatePeerAssessment` Score & Explanation Preconditions)**:
   - Empty (`NullScore = -1`) scores are forbidden on save:
@@ -146,8 +146,8 @@ The **Project Team Peer Assessments** feature enables:
     - `contributionScore != AssessmentScore.NullScore` ("An empty score for 'contribution' is not allowed.")
     - `effortScore != AssessmentScore.NullScore` ("An empty score for 'effort' is not allowed.")
   - If `cooperationScore != AssessmentScore.Average (3)` OR `contributionScore != AssessmentScore.Average (3)` OR `effortScore != AssessmentScore.Average (3)`, `explanation` must not be null, empty, or whitespace (`!string.IsNullOrWhiteSpace(explanation)`, "An explanation is required when a score is not 'Equal to group average' (3).").
-- **DR-7 (Zero-Sum / Relative Average Guard in `ValidateAssessmentsOf`)**: When a user saves their evaluations and has evaluated all eligible team members (`allAssessmentsOfUser.Count == eligibleCount`), they cannot rate **every** member $> 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore`, nor can they rate **every** member $< 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore` (each violation throws a `ContractException`). If the user has not yet evaluated all eligible team members, `ValidateAssessmentsOf` performs no check. This validation is enforced on save and is not retroactively re-run when another member leaves or is excluded from an incomplete assessment.
-- **DR-8 (Result Calculation Preconditions)**: Creating an `AssessmentResult` for a subject requires the subject to be a participant of the `ProjectTeamAssessment` (either in `Team.TeamUsers` or in stored `PeerAssessments` of a completed assessment), with both a self-assessment by the subject and at least one peer assessment from another participant.
+- **DR-7 (Zero-Sum / Relative Average Guard in `ValidateAssessmentsOf`)**: When a user saves their evaluations and has evaluated all eligible peers (`allAssessmentsOfUser.Count == peers.Count`), they cannot rate **every** peer $> 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore`, nor can they rate **every** peer $< 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore` (each violation throws a `ContractException`). If the user has not yet evaluated all eligible peers, `ValidateAssessmentsOf` performs no check. This validation is enforced on save and is not retroactively re-run when another member leaves or is excluded from an incomplete assessment.
+- **DR-8 (Result Calculation Preconditions)**: Creating an `AssessmentResult` for a subject requires the subject to be a peer in the `ProjectTeamAssessment` (`GetPeer(subjectId)` for Teachers or `Team.GetTeamUser(subjectId)` for Students), with both a self-assessment by the subject and at least one peer assessment from another peer.
 - **DR-9 (`PeerAssessment` Construction & Identity Invariants)**:
   - Constructing a `PeerAssessment(int projectTeamAssessmentId, User user, User subject)` requires:
     - `projectTeamAssessmentId > 0` ("An existing project team assessment identifier must be provided.")

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Guts.Business.Dtos;
 
@@ -8,4 +8,5 @@ public class ProjectTeamAssessmentStatusDto
     public int TeamId { get; set; }
     public bool IsComplete { get; set; }
     public IReadOnlyList<UserDto> PeersThatNeedToEvaluateOthers { get; set; }
+    public IReadOnlyList<int> PeerIds { get; set; }
 }

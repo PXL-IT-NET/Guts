@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Guts.Common.Extensions;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
@@ -27,6 +27,13 @@ internal class ProjectAssessmentMockBuilder : BaseBuilder<Mock<IProjectAssessmen
     {
         Item.SetupGet(pa => pa.OpenOnUtc).Returns(openOnUtc);
         Item.SetupGet(pa => pa.DeadlineUtc).Returns(openOnUtc.AddDays(15));
+        return this;
+    }
+
+    public ProjectAssessmentMockBuilder WithDates(DateTime openOnUtc, DateTime deadlineUtc)
+    {
+        Item.SetupGet(pa => pa.OpenOnUtc).Returns(openOnUtc);
+        Item.SetupGet(pa => pa.DeadlineUtc).Returns(deadlineUtc);
         return this;
     }
 }

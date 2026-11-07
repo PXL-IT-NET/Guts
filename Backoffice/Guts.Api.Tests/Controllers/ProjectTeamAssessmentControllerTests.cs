@@ -125,7 +125,7 @@ public class ProjectTeamAssessmentControllerTests
             new Mock<IAssessmentResult>().Object
         };
 
-        _projectTeamAssessmentServiceMock.Setup(service => service.GetResultsForLectorAsync(projectAssessmentId, teamId))
+        _projectTeamAssessmentServiceMock.Setup(service => service.GetResultsForTeacherAsync(projectAssessmentId, teamId))
             .ReturnsAsync(assessmentResults);
 
         var model = new AssessmentResultModel();

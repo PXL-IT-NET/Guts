@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
@@ -34,6 +34,7 @@ internal class ProjectTeamMockBuilder : BaseBuilder<Mock<IProjectTeam>>
             User user = new UserBuilder().Build();
             memberMock.SetupGet(m => m.UserId).Returns(user.Id);
             memberMock.SetupGet(m => m.User).Returns(user);
+            memberMock.SetupProperty(m => m.JoinedOnUtc, DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc));
 
             members.Add(memberMock.Object);
         }

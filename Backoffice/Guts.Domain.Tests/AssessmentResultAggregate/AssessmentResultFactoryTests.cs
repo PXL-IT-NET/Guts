@@ -147,4 +147,25 @@ public class AssessmentResultFactoryTests
         Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
             Throws.InstanceOf<ContractException>());
     }
+
+    [Test]
+    public void Create_RemovedTeamMemberInCompletedAssessment_ShouldSucceedForTeacherAndThrowForStudent()
+    {
+        //Arrange
+        var builder = new ProjectTeamAssessmentBuilder().WithId().WithAllPeerAssessmentsAdded();
+        ProjectTeamAssessment projectTeamAssessment = builder.Build();
+        User removedSubject = projectTeamAssessment.Team.TeamUsers.First().User;
+
+        // Remove the user from the underlying team after the assessment was completed
+        builder.RemoveTeamMember(removedSubject.Id);
+        projectTeamAssessment.RemovePeer(removedSubject.Id);
+
+        //Act + Assert — Teacher (includePeerAssessments: true) still gets the removed peer's result
+        IAssessmentResult teacherResult = _factory.Create(removedSubject.Id, projectTeamAssessment, true);
+        Assert.That(teacherResult.Subject, Is.SameAs(removedSubject));
+
+        //Act + Assert — Removed Student (includePeerAssessments: false) is rejected
+        Assert.That(() => _factory.Create(removedSubject.Id, projectTeamAssessment, false),
+            Throws.InstanceOf<ContractException>());
+    }
 }

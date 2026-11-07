@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common.Extensions;
@@ -26,6 +26,34 @@ internal class ProjectTeamAssessmentBuilder : BaseBuilder<ProjectTeamAssessment>
     {
         SetProperty(pta => pta.Id, Random.Shared.NextPositive());
         return this;
+    }
+
+    public ProjectTeamAssessmentBuilder WithMemberCount(int numberOfMembers)
+    {
+        Mock<IProjectTeam> projectTeamMock = new ProjectTeamMockBuilder().WithMembers(numberOfMembers).Build();
+        ConstructItem(Item.ProjectAssessment, projectTeamMock.Object);
+        return this;
+    }
+
+    public User AddTeamMember(DateTime joinedOnUtc)
+    {
+        var memberMock = new Mock<IProjectTeamUser>();
+        User user = new UserBuilder().WithId().Build();
+        memberMock.SetupGet(m => m.UserId).Returns(user.Id);
+        memberMock.SetupGet(m => m.User).Returns(user);
+        memberMock.SetupProperty(m => m.JoinedOnUtc, joinedOnUtc);
+
+        Item.Team.TeamUsers.Add(memberMock.Object);
+        return user;
+    }
+
+    public void RemoveTeamMember(int userId)
+    {
+        IProjectTeamUser existing = Item.Team.TeamUsers.FirstOrDefault(tu => tu.UserId == userId);
+        if (existing != null)
+        {
+            Item.Team.TeamUsers.Remove(existing);
+        }
     }
 
     public ProjectTeamAssessmentBuilder WithAllPeerAssessmentsAdded()

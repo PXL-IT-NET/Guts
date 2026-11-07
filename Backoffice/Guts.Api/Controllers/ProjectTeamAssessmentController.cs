@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -60,7 +60,7 @@ public class ProjectTeamAssessmentController(
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> GetProjectTeamAssessmentResults(int projectAssessmentId, int teamId)
     {
-        IReadOnlyList<IAssessmentResult> results = await projectTeamAssessmentService.GetResultsForLectorAsync(projectAssessmentId, teamId);
+        IReadOnlyList<IAssessmentResult> results = await projectTeamAssessmentService.GetResultsForTeacherAsync(projectAssessmentId, teamId);
         IList<AssessmentResultModel> models = results.Select(result => mapper.MapToAssessmentResultModel(result)).ToList();
         return Ok(models);
     }
