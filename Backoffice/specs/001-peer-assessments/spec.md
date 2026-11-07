@@ -1,7 +1,7 @@
 # Specification: Project Team Peer Assessments
 
 - **Feature ID**: `001-peer-assessments`
-- **Status**: `In Progress` (Extended with Team Membership Changes)
+- **Status**: `Implemented`
 - **Created**: `2026-10-27`
 
 ---

@@ -2,7 +2,7 @@
 
 - **Feature ID**: `001-peer-assessments`
 - **Specification**: [`spec.md`](./spec.md)
-- **Status**: `Draft` (Extended with Team Membership Changes)
+- **Status**: `Implemented`
 
 ---
 

@@ -1,7 +1,12 @@
 import { TestBed } from "@angular/core/testing";
 import { ProjectTeamEditComponent } from "./project-team-edit.component";
-import { ProjectService } from "../../services";
-import { PostResult } from "../../util/result";
+import { ProjectService, ProjectTeamAssessmentService } from "../../services";
+import { ProjectAssessmentService } from "../../services/project.assessment.service";
+import { GetResult, PostResult } from "../../util/result";
+import {
+  ProjectAssessmentModel,
+  ProjectTeamAssessmentStatusModel,
+} from "../../viewmodels/projectassessment.model";
 import { of } from "rxjs";
 import {
   createModalRefSpy,
@@ -12,6 +17,8 @@ describe("ProjectTeamEditComponent", () => {
   let component: ProjectTeamEditComponent;
   let modalRefSpy: ReturnType<typeof createModalRefSpy>;
   let projectServiceSpy: jasmine.SpyObj<ProjectService>;
+  let projectAssessmentServiceSpy: jasmine.SpyObj<ProjectAssessmentService>;
+  let projectTeamAssessmentServiceSpy: jasmine.SpyObj<ProjectTeamAssessmentService>;
   let toastrSpy: ReturnType<typeof createToastrSpy>;
 
   beforeEach(() => {
@@ -19,14 +26,46 @@ describe("ProjectTeamEditComponent", () => {
     projectServiceSpy = jasmine.createSpyObj<ProjectService>("ProjectService", [
       "updateTeam",
       "removeFromTeam",
+      "getProjectDetails",
     ]);
+    projectAssessmentServiceSpy =
+      jasmine.createSpyObj<ProjectAssessmentService>(
+        "ProjectAssessmentService",
+        ["getAssessmentsOfProject"],
+      );
+    projectTeamAssessmentServiceSpy =
+      jasmine.createSpyObj<ProjectTeamAssessmentService>(
+        "ProjectTeamAssessmentService",
+        ["getStatusOfProjectTeamAssessment", "setPeerInclusion"],
+      );
     toastrSpy = createToastrSpy();
 
-    component = TestBed.runInInjectionContext(() => new ProjectTeamEditComponent(
-      modalRefSpy as any,
-      projectServiceSpy,
-      toastrSpy,
-    ));
+    projectServiceSpy.getProjectDetails.and.returnValue(
+      of(
+        GetResult.success({
+          id: 5,
+          code: "PROJ1",
+          description: "Project 1",
+          components: [],
+          teams: [],
+          assignments: [],
+        }),
+      ),
+    );
+    projectAssessmentServiceSpy.getAssessmentsOfProject.and.returnValue(
+      of(GetResult.success([])),
+    );
+
+    component = TestBed.runInInjectionContext(
+      () =>
+        new ProjectTeamEditComponent(
+          modalRefSpy as any,
+          projectServiceSpy,
+          toastrSpy,
+          projectAssessmentServiceSpy,
+          projectTeamAssessmentServiceSpy,
+        ),
+    );
     component.courseId = 1;
     component.projectCode = "PROJ1";
     component.team = {
@@ -130,6 +169,88 @@ describe("ProjectTeamEditComponent", () => {
     nameCtrl.setValue("");
     nameCtrl.markAsTouched();
     expect(component.isInvalid(nameCtrl)).toBeTrue();
+  });
+
+  describe("peer inclusion in incomplete assessments", () => {
+    it("should load incomplete open assessments, track hasPeerInclusionChanges on toggle, and persist on submit", () => {
+      const openAssessment = new ProjectAssessmentModel({
+        id: 50,
+        description: "Sprint 1",
+        openOnUtc: new Date(Date.now() - 86400000),
+        deadlineUtc: new Date(Date.now() + 86400000),
+        teamStatus: new ProjectTeamAssessmentStatusModel(),
+      });
+      projectAssessmentServiceSpy.getAssessmentsOfProject.and.returnValue(
+        of(GetResult.success([openAssessment])),
+      );
+      projectTeamAssessmentServiceSpy.getStatusOfProjectTeamAssessment.and.returnValue(
+        of(
+          GetResult.success(
+            new ProjectTeamAssessmentStatusModel({
+              id: 1,
+              teamId: 10,
+              isComplete: false,
+              peersThatNeedToEvaluateOthers: [],
+              peerIds: [100],
+            }),
+          ),
+        ),
+      );
+
+      component.ngOnInit();
+
+      expect(component.incompleteAssessments).toHaveSize(1);
+      expect(component.hasPeerInclusionChanges).toBeFalse();
+      expect(
+        component.isPeerIncluded(openAssessment, { userId: 100, name: "Alice" }),
+      ).toBeTrue();
+      expect(
+        component.isPeerIncluded(openAssessment, { userId: 101, name: "Bob" }),
+      ).toBeFalse();
+
+      // Toggle Bob to included -> hasPeerInclusionChanges becomes true
+      component.togglePeerInclusion(
+        openAssessment,
+        { userId: 101, name: "Bob" },
+        true,
+      );
+
+      expect(
+        component.isPeerIncluded(openAssessment, { userId: 101, name: "Bob" }),
+      ).toBeTrue();
+      expect(component.hasPeerInclusionChanges).toBeTrue();
+      expect(
+        projectTeamAssessmentServiceSpy.setPeerInclusion,
+      ).not.toHaveBeenCalled();
+
+      // Toggle Bob back to excluded -> hasPeerInclusionChanges becomes false
+      component.togglePeerInclusion(
+        openAssessment,
+        { userId: 101, name: "Bob" },
+        false,
+      );
+      expect(component.hasPeerInclusionChanges).toBeFalse();
+
+      // Toggle Bob to included and submit -> calls setPeerInclusion and hides modal
+      component.togglePeerInclusion(
+        openAssessment,
+        { userId: 101, name: "Bob" },
+        true,
+      );
+      expect(component.hasPeerInclusionChanges).toBeTrue();
+
+      projectTeamAssessmentServiceSpy.setPeerInclusion.and.returnValue(
+        of(PostResult.success()),
+      );
+
+      component.onSubmit();
+
+      expect(
+        projectTeamAssessmentServiceSpy.setPeerInclusion,
+      ).toHaveBeenCalledWith(50, 10, 101, true);
+      expect(projectServiceSpy.updateTeam).not.toHaveBeenCalled();
+      expect(modalRefSpy.hide).toHaveBeenCalled();
+    });
   });
 });
 

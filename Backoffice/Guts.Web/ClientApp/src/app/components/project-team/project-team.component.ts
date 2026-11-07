@@ -102,7 +102,7 @@ export class ProjectTeamComponent implements OnInit {
     let confirmMessage =
       "Are you sure you want to leave '" +
       this.myTeam.name +
-      "'? All your submitted test results and peer assessments for this project will be deleted.";
+      "'? All your submitted test results and incomplete peer assessments for this project will be deleted.";
     if (confirm(confirmMessage)) {
       this.projectService
         .leaveTeam(this.courseId, this.projectCode, this.myTeam.id)

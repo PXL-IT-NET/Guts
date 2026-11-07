@@ -150,5 +150,23 @@ describe("ProjectTeamAssessmentService", () => {
       )
       .flush("Err", { status: 500, statusText: "Error" });
     expect(saveRes.success).toBeFalse();
+
+    let inclusionRes: any;
+    service.setPeerInclusion(10, 20, 30, false).subscribe((r) => (inclusionRes = r));
+    const putReq = httpMock.expectOne(
+      "api/project-team-assessments/of-project-assessment/10/of-team/20/peers/30/inclusion",
+    );
+    expect(putReq.request.method).toBe("PUT");
+    expect(putReq.request.body).toBeFalse();
+    putReq.flush({});
+    expect(inclusionRes.success).toBeTrue();
+
+    service.setPeerInclusion(10, 20, 30, true).subscribe((r) => (inclusionRes = r));
+    httpMock
+      .expectOne(
+        "api/project-team-assessments/of-project-assessment/10/of-team/20/peers/30/inclusion",
+      )
+      .flush("Err", { status: 400, statusText: "Bad Request" });
+    expect(inclusionRes.success).toBeFalse();
   });
 });

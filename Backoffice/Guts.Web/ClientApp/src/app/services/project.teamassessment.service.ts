@@ -129,4 +129,26 @@ export class ProjectTeamAssessmentService {
       }),
     );
   }
+
+  public setPeerInclusion(
+    projectAssessmentId: number,
+    teamId: number,
+    userId: number,
+    isIncluded: boolean,
+  ): Observable<PostResult> {
+    const url =
+      "api/project-team-assessments/of-project-assessment/" +
+      projectAssessmentId +
+      "/of-team/" +
+      teamId +
+      "/peers/" +
+      userId +
+      "/inclusion";
+    return this.http.put(url, isIncluded).pipe(
+      map(() => PostResult.success()),
+      catchError((errorResponse: HttpErrorResponse) => {
+        return of(PostResult.fromHttpErrorResponse(errorResponse));
+      }),
+    );
+  }
 }

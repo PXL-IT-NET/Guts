@@ -59,22 +59,22 @@
 
 ## Phase 5: Frontend SPA (`Guts.Web/ClientApp`)
 
-- [ ] **[T5.1]** `[AC-8, AC-9]` Write failing Jasmine unit tests (`*.spec.ts`) in `project.teamassessment.service.spec.ts` and `project-team-edit.component.spec.ts` covering:
+- [x] **[T5.1]** `[AC-8, AC-9]` Write failing Jasmine unit tests (`*.spec.ts`) in `project.teamassessment.service.spec.ts` and `project-team-edit.component.spec.ts` covering:
   - `ProjectTeamAssessmentService.setPeerInclusion(...)` sending `PUT` request.
   - `ProjectTeamEditComponent` displaying inclusion checkboxes per incomplete open assessment for each team member and invoking `setPeerInclusion` when toggled.
-- [ ] **[T5.2]** `[AC-8, AC-9]` Implement updates in `projectassessment.model.ts`, `project.teamassessment.service.ts`, `project-team.component.ts/.html`, and `project-team-edit.component.ts/.html`.
-- [ ] **[T5.3]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all unit tests pass.
-- [ ] **[T5.4]** `[AC-5, AC-6, AC-8, AC-9, DR-11]` Write Playwright E2E tests in `Backoffice/Guts.Web/ClientApp/e2e/tests/` covering:
+- [x] **[T5.2]** `[AC-8, AC-9]` Implement updates in `projectassessment.model.ts`, `project.teamassessment.service.ts`, `project-team.component.ts/.html`, and `project-team-edit.component.ts/.html`.
+- [x] **[T5.3]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all unit tests pass.
+- [x] **[T5.4]** `[AC-5, AC-6, AC-8, AC-9, DR-11]` Write Playwright E2E tests in `Backoffice/Guts.Web/ClientApp/e2e/tests/` covering:
   - Student leaving a team and joining another team (`DR-11`, `AC-8`, `AC-9`).
   - Removing a member from a team with an incomplete vs. completed peer assessment (`AC-5`, `AC-6`, `AC-8`).
   - Teacher toggling a team member's peer inclusion in the Edit Team modal (`AC-9`).
-- [ ] **[T5.5]** Run Playwright E2E tests (`npm run test:e2e` in `Backoffice/Guts.Web/ClientApp`) and verify all E2E scenarios pass.
+- [x] **[T5.5]** Run Playwright E2E tests (`npm run test:e2e` in `Backoffice/Guts.Web/ClientApp`) and verify all E2E scenarios pass.
 
 ---
 
 ## Phase 6: Final Verification & Quality Gate
 
-- [ ] **[T6.1]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
-- [ ] **[T6.2]** Run frontend production build & test check: `npm run build`
-- [ ] **[T6.3]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
-- [ ] **[T6.4]** Update `spec.md` and `design.md` status to `Implemented`.
+- [x] **[T6.1]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
+- [x] **[T6.2]** Run frontend production build & test check: `npm run build`
+- [x] **[T6.3]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
+- [x] **[T6.4]** Update `spec.md` and `design.md` status to `Implemented`.

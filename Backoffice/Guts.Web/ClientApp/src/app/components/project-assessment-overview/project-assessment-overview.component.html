@@ -96,6 +96,7 @@
                       assessment.isAfterOpenOn &&
                       !assessment.teamStatus.isComplete &&
                       userProfile.isMemberOf(assessment.teamStatus.teamId) &&
+                      assessment.teamStatus.peerIds?.includes(userProfile.id) &&
                       activePeriod
                       ) {
                       <div
@@ -137,7 +138,8 @@
                     }
                     @if (
                       assessment.teamStatus.isComplete &&
-                      userProfile.isMemberOf(selectedTeamId)
+                      userProfile.isMemberOf(selectedTeamId) &&
+                      assessment.teamStatus.peerIds?.includes(userProfile.id)
                       ) {
                       <div
                         class="m-2"

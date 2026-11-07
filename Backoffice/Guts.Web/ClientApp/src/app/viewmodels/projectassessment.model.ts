@@ -78,6 +78,7 @@ export interface IProjectTeamAssessmentStatusModel {
   teamId: number;
   isComplete: boolean;
   peersThatNeedToEvaluateOthers: IUserModel[];
+  peerIds?: number[];
 }
 
 export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentStatusModel {
@@ -85,12 +86,14 @@ export class ProjectTeamAssessmentStatusModel implements IProjectTeamAssessmentS
   public teamId = 0;
   public isComplete = false;
   public peersThatNeedToEvaluateOthers: IUserModel[] = [];
+  public peerIds: number[] = [];
 
   constructor(source?: IProjectTeamAssessmentStatusModel) {
     if (source) {
       Object.assign(this, source);
       this.peersThatNeedToEvaluateOthers =
-        source.peersThatNeedToEvaluateOthers.map((peer) => new UserModel(peer));
+        (source.peersThatNeedToEvaluateOthers || []).map((peer) => new UserModel(peer));
+      this.peerIds = source.peerIds ? [...source.peerIds] : [];
     }
   }
 }
