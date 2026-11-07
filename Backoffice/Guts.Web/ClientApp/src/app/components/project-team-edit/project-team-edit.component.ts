@@ -182,7 +182,22 @@ export class ProjectTeamEditComponent implements OnInit {
   }
 
   private updateHasPeerInclusionChanges() {
-    let changed = false;
+    this._hasPeerInclusionChanges.set(
+      this.getPendingPeerInclusionChanges().length > 0,
+    );
+  }
+
+  private getPendingPeerInclusionChanges(): {
+    assessment: ProjectAssessmentModel;
+    member: ITeamMemberModel;
+    isIncluded: boolean;
+  }[] {
+    const changes: {
+      assessment: ProjectAssessmentModel;
+      member: ITeamMemberModel;
+      isIncluded: boolean;
+    }[] = [];
+
     for (const assessment of this.incompleteAssessments) {
       const initialPeerIds =
         this.initialPeerIdsByAssessment.get(assessment.id) || [];
@@ -190,41 +205,77 @@ export class ProjectTeamEditComponent implements OnInit {
         const initiallyIncluded = initialPeerIds.includes(member.userId);
         const currentlyIncluded = this.isPeerIncluded(assessment, member);
         if (initiallyIncluded !== currentlyIncluded) {
-          changed = true;
-          break;
+          changes.push({
+            assessment,
+            member,
+            isIncluded: currentlyIncluded,
+          });
         }
       }
-      if (changed) {
-        break;
-      }
     }
-    this._hasPeerInclusionChanges.set(changed);
+
+    return changes;
+  }
+
+  private buildPeerInclusionConfirmMessage(
+    changes: {
+      assessment: ProjectAssessmentModel;
+      member: ITeamMemberModel;
+      isIncluded: boolean;
+    }[],
+  ): string {
+    const lines: string[] = [
+      `You are about to change peer inclusion for team '${this.team.name}':`,
+    ];
+
+    for (const change of changes) {
+      const action = change.isIncluded ? "include" : "exclude";
+      lines.push(
+        `- '${change.assessment.description}': ${action} ${change.member.name}`,
+      );
+    }
+
+    const hasInclusions = changes.some((c) => c.isIncluded);
+    const hasExclusions = changes.some((c) => !c.isIncluded);
+
+    lines.push("");
+    if (hasInclusions) {
+      lines.push(
+        "• Including a peer means that team members who have already submitted the assessment form will need to edit and save their evaluation again to assess the newly included peer(s).",
+      );
+    }
+    if (hasExclusions) {
+      lines.push(
+        "• Excluding a peer will permanently delete all peer evaluations already saved by or for that peer in the assessment. If all remaining included peers have already evaluated each other, the team assessment will automatically be marked as completed and locked.",
+      );
+    }
+
+    lines.push("", "Are you sure you want to save these changes?");
+    return lines.join("\n");
   }
 
   onSubmit() {
     if (this.editTeamForm.invalid) return;
 
-    const inclusionRequests: Observable<PostResult>[] = [];
-    if (this.projectTeamAssessmentService) {
-      for (const assessment of this.incompleteAssessments) {
-        const initialPeerIds =
-          this.initialPeerIdsByAssessment.get(assessment.id) || [];
-        for (const member of this.team.members || []) {
-          const initiallyIncluded = initialPeerIds.includes(member.userId);
-          const currentlyIncluded = this.isPeerIncluded(assessment, member);
-          if (initiallyIncluded !== currentlyIncluded) {
-            inclusionRequests.push(
-              this.projectTeamAssessmentService.setPeerInclusion(
-                assessment.id,
-                this.team.id,
-                member.userId,
-                currentlyIncluded,
-              ),
-            );
-          }
-        }
-      }
+    const pendingChanges = this.getPendingPeerInclusionChanges();
+    if (
+      pendingChanges.length > 0 &&
+      !confirm(this.buildPeerInclusionConfirmMessage(pendingChanges))
+    ) {
+      return;
     }
+
+    const inclusionRequests: Observable<PostResult>[] =
+      this.projectTeamAssessmentService
+        ? pendingChanges.map((change) =>
+            this.projectTeamAssessmentService.setPeerInclusion(
+              change.assessment.id,
+              this.team.id,
+              change.member.userId,
+              change.isIncluded,
+            ),
+          )
+        : [];
 
     const requests: Observable<PostResult>[] = [];
     if (!this.editTeamForm.pristine || inclusionRequests.length === 0) {

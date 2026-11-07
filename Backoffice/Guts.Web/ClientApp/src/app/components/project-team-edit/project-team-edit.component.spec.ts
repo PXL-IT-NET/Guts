@@ -231,7 +231,7 @@ describe("ProjectTeamEditComponent", () => {
       );
       expect(component.hasPeerInclusionChanges).toBeFalse();
 
-      // Toggle Bob to included and submit -> calls setPeerInclusion and hides modal
+      // Toggle Bob to included and cancel confirmation -> does not call setPeerInclusion
       component.togglePeerInclusion(
         openAssessment,
         { userId: 101, name: "Bob" },
@@ -239,12 +239,43 @@ describe("ProjectTeamEditComponent", () => {
       );
       expect(component.hasPeerInclusionChanges).toBeTrue();
 
+      const confirmSpy = spyOn(window, "confirm").and.returnValue(false);
+      component.onSubmit();
+
+      expect(confirmSpy).toHaveBeenCalled();
+      expect(confirmSpy.calls.mostRecent().args[0]).toContain(
+        "- 'Sprint 1': include Bob",
+      );
+      expect(confirmSpy.calls.mostRecent().args[0]).toContain(
+        "Including a peer means that team members who have already submitted the assessment form will need to edit and save their evaluation again",
+      );
+      expect(
+        projectTeamAssessmentServiceSpy.setPeerInclusion,
+      ).not.toHaveBeenCalled();
+      expect(modalRefSpy.hide).not.toHaveBeenCalled();
+
+      // Also exclude Alice and accept confirmation -> calls setPeerInclusion and hides modal
+      component.togglePeerInclusion(
+        openAssessment,
+        { userId: 100, name: "Alice" },
+        false,
+      );
+      confirmSpy.and.returnValue(true);
       projectTeamAssessmentServiceSpy.setPeerInclusion.and.returnValue(
         of(PostResult.success()),
       );
 
       component.onSubmit();
 
+      expect(confirmSpy.calls.mostRecent().args[0]).toContain(
+        "- 'Sprint 1': exclude Alice",
+      );
+      expect(confirmSpy.calls.mostRecent().args[0]).toContain(
+        "Excluding a peer will permanently delete all peer evaluations already saved by or for that peer",
+      );
+      expect(
+        projectTeamAssessmentServiceSpy.setPeerInclusion,
+      ).toHaveBeenCalledWith(50, 10, 100, false);
       expect(
         projectTeamAssessmentServiceSpy.setPeerInclusion,
       ).toHaveBeenCalledWith(50, 10, 101, true);

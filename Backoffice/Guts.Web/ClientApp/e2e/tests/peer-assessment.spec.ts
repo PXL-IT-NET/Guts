@@ -341,9 +341,20 @@ test.describe("Project Team Peer Assessments (Feature 001)", () => {
     await expect(charlieCheckbox101).toBeChecked();
     await expect(teamsPage.modalSaveButton).toBeDisabled();
 
-    // Uncheck again and click Save changes -> persists inclusion change and closes modal
+    // Uncheck again and click Save changes -> confirms peer inclusion change, persists it, and closes modal
     await charlieCheckbox101.uncheck();
     await expect(teamsPage.modalSaveButton).toBeEnabled();
+
+    teacherPage.once("dialog", async (dialog) => {
+      expect(dialog.message()).toContain(
+        "- 'Sprint 1 Peer Assessment': exclude Charlie Third",
+      );
+      expect(dialog.message()).toContain(
+        "Excluding a peer will permanently delete all peer evaluations already saved by or for that peer",
+      );
+      await dialog.accept();
+    });
+
     await teamsPage.modalSaveButton.click();
     await expect(teamsPage.modalContainer).toHaveCount(0);
 
