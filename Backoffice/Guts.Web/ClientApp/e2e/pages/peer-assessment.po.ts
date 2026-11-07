@@ -205,3 +205,58 @@ export class LectorDetailedResultsPage {
     await this.page.waitForLoadState("networkidle");
   }
 }
+
+export class ProjectTeamsPage {
+  readonly page: Page;
+  readonly pageTitle: Locator;
+  readonly modalContainer: Locator;
+  readonly modalTitle: Locator;
+  readonly modalCloseButton: Locator;
+  readonly modalSaveButton: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.pageTitle = page.locator("h5", { hasText: "Team" });
+    this.modalContainer = page.locator("modal-container");
+    this.modalTitle = this.modalContainer.locator(".modal-title");
+    this.modalCloseButton = this.modalContainer.locator("button.btn-close");
+    this.modalSaveButton = this.modalContainer.getByRole("button", {
+      name: "Save changes",
+    });
+  }
+
+  async goto(courseId = 1, projectCode = "proj1") {
+    await this.page.goto(`/courses/${courseId}/projects/${projectCode}/teams`);
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  getLeaveTeamButton(teamName: string): Locator {
+    return this.page.getByRole("button", { name: `Leave ${teamName}` });
+  }
+
+  getTeamAccordionButton(teamName: string): Locator {
+    return this.page.locator("button[ngbAccordionButton]", {
+      hasText: teamName,
+    });
+  }
+
+  getJoinTeamButton(teamName: string): Locator {
+    return this.page.getByRole("button", { name: `Join ${teamName}` });
+  }
+
+  getEditTeamButtonInItem(accordionItem: Locator): Locator {
+    return accordionItem.getByRole("button", { name: "Edit team" });
+  }
+
+  getPeerInclusionCheckbox(assessmentId: number, userId: number): Locator {
+    return this.modalContainer.locator(
+      `#peer-inclusion-${assessmentId}-${userId}`,
+    );
+  }
+
+  getMemberRowInModal(memberName: string): Locator {
+    return this.modalContainer
+      .locator("li.list-group-item")
+      .filter({ hasText: memberName });
+  }
+}

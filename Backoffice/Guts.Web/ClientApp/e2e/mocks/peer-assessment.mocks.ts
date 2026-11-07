@@ -1,6 +1,7 @@
 import { Page, Route } from "@playwright/test";
 import { mockActivePeriod } from "./course.mocks";
 import { IProjectDetailsModel } from "../../src/app/viewmodels/project.model";
+import { ITeamDetailsModel } from "../../src/app/viewmodels/team.model";
 import {
   IProjectAssessmentModel,
   IProjectTeamAssessmentStatusModel,
@@ -20,6 +21,28 @@ export const mockProjectWithAssessments: IProjectDetailsModel = {
   ],
   assignments: [],
 };
+
+export const mockTeamsDetails: ITeamDetailsModel[] = [
+  {
+    id: 1,
+    name: "Team 1",
+    members: [
+      { userId: 202, name: "Student Guts" },
+      { userId: 203, name: "Alice TeamMate" },
+      { userId: 204, name: "Charlie Third" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Team 2",
+    members: [{ userId: 301, name: "Bob Incomplete" }],
+  },
+  {
+    id: 3,
+    name: "Team 3",
+    members: [],
+  },
+];
 
 export const mockCourseContentsWithProject = {
   id: 1,
@@ -46,6 +69,7 @@ export const mockAssessmentList: IProjectAssessmentModel[] = [
       id: 501,
       teamId: 1,
       isComplete: false,
+      peerIds: [202, 203, 204],
       peersThatNeedToEvaluateOthers: [
         { id: 202, fullName: "Student Guts" },
         { id: 203, fullName: "Alice TeamMate" },
@@ -61,6 +85,7 @@ export const mockAssessmentList: IProjectAssessmentModel[] = [
       id: 502,
       teamId: 1,
       isComplete: true,
+      peerIds: [202, 203],
       peersThatNeedToEvaluateOthers: [],
     },
   },
@@ -70,6 +95,7 @@ export const mockStatusAssessment101Team1: IProjectTeamAssessmentStatusModel = {
   id: 501,
   teamId: 1,
   isComplete: false,
+  peerIds: [202, 203, 204],
   peersThatNeedToEvaluateOthers: [
     { id: 202, fullName: "Student Guts" },
     { id: 203, fullName: "Alice TeamMate" },
@@ -80,6 +106,7 @@ export const mockStatusAssessment102Team1: IProjectTeamAssessmentStatusModel = {
   id: 502,
   teamId: 1,
   isComplete: true,
+  peerIds: [202, 203],
   peersThatNeedToEvaluateOthers: [],
 };
 
@@ -87,6 +114,7 @@ export const mockStatusAssessment102Team2: IProjectTeamAssessmentStatusModel = {
   id: 504,
   teamId: 2,
   isComplete: false,
+  peerIds: [301],
   peersThatNeedToEvaluateOthers: [
     { id: 301, fullName: "Bob Incomplete" },
   ],
@@ -96,6 +124,7 @@ export const mockStatusAssessment102Team3: IProjectTeamAssessmentStatusModel = {
   id: 505,
   teamId: 3,
   isComplete: true,
+  peerIds: [],
   peersThatNeedToEvaluateOthers: [],
 };
 
@@ -372,6 +401,85 @@ async function handleDetailedResultsRoute(route: Route, url: string): Promise<vo
   });
 }
 
+async function handleProjectTeamsRoute(
+  route: Route,
+  url: string,
+  method: string,
+  teams: ITeamDetailsModel[],
+): Promise<boolean> {
+  const leaveMatch = /\/teams\/(\d+)\/leave/.exec(url);
+  if (method === "POST" && leaveMatch) {
+    const team = teams.find((t) => t.id === Number(leaveMatch[1]));
+    if (team) {
+      team.members = team.members.filter((m) => m.userId !== 202);
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({}),
+    });
+    return true;
+  }
+
+  const joinMatch = /\/teams\/(\d+)\/join/.exec(url);
+  if (method === "POST" && joinMatch) {
+    const team = teams.find((t) => t.id === Number(joinMatch[1]));
+    if (team && !team.members.some((m) => m.userId === 202)) {
+      team.members.push({ userId: 202, name: "Student Guts" });
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({}),
+    });
+    return true;
+  }
+
+  const removeMatch = /\/teams\/(\d+)\/remove/.exec(url);
+  if (method === "POST" && removeMatch) {
+    const userIdToRemove = Number(route.request().postDataJSON());
+    const team = teams.find((t) => t.id === Number(removeMatch[1]));
+    if (team) {
+      team.members = team.members.filter((m) => m.userId !== userIdToRemove);
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({}),
+    });
+    return true;
+  }
+
+  if (method === "GET") {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(teams),
+    });
+    return true;
+  }
+
+  return false;
+}
+
+function updateStatusPeerInclusion(
+  status: IProjectTeamAssessmentStatusModel,
+  peerId: number,
+  isIncluded: boolean,
+): IProjectTeamAssessmentStatusModel {
+  const currentPeerIds = status.peerIds || [];
+  if (isIncluded && !currentPeerIds.includes(peerId)) {
+    return { ...status, peerIds: [...currentPeerIds, peerId] };
+  }
+  if (!isIncluded) {
+    return {
+      ...status,
+      peerIds: currentPeerIds.filter((id) => id !== peerId),
+    };
+  }
+  return status;
+}
+
 /**
  * Registers network route mocks for peer assessments, projects, and related evaluation APIs.
  */
@@ -388,6 +496,16 @@ export async function setupPeerAssessmentApiMocks(
     assessments = [...mockAssessmentList];
   }
 
+  const teams: ITeamDetailsModel[] = mockTeamsDetails.map((t) => ({
+    ...t,
+    members: [...t.members],
+  }));
+
+  let status101Team1: IProjectTeamAssessmentStatusModel = {
+    ...mockStatusAssessment101Team1,
+    peerIds: [...(mockStatusAssessment101Team1.peerIds || [])],
+  };
+
   // 1. Periods endpoint
   await page.route("**/api/periods", async (route) => {
     await route.fulfill({
@@ -397,9 +515,17 @@ export async function setupPeerAssessmentApiMocks(
     });
   });
 
-  // 2. Course details endpoint
+  // 2. Course details & project teams endpoints
   await page.route("**/api/courses/1**", async (route) => {
     const url = route.request().url();
+    const method = route.request().method();
+
+    if (
+      url.includes("/projects/proj1/teams") &&
+      (await handleProjectTeamsRoute(route, url, method, teams))
+    ) {
+      return;
+    }
 
     if (url.includes("/projects/proj1")) {
       await route.fulfill({
@@ -466,6 +592,7 @@ export async function setupPeerAssessmentApiMocks(
           id: 503,
           teamId: 1,
           isComplete: false,
+          peerIds: [202, 203, 204],
           peersThatNeedToEvaluateOthers: [
             { id: 202, fullName: "Student Guts" },
             { id: 203, fullName: "Alice TeamMate" },
@@ -513,27 +640,47 @@ export async function setupPeerAssessmentApiMocks(
     const method = route.request().method();
 
     if (url.includes("/status")) {
+      if (
+        url.includes("/of-project-assessment/101/") &&
+        url.includes("/of-team/1/")
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(status101Team1),
+        });
+        return;
+      }
       await handleStatusRoute(route, url);
       return;
     }
 
+    const inclusionMatch =
+      /\/of-project-assessment\/(\d+)\/of-team\/(\d+)\/peers\/(\d+)\/inclusion/.exec(
+        url,
+      );
+    if (method === "PUT" && inclusionMatch) {
+      status101Team1 = updateStatusPeerInclusion(
+        status101Team1,
+        Number(inclusionMatch[3]),
+        Boolean(route.request().postDataJSON()),
+      );
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(status101Team1),
+      });
+      return;
+    }
+
     if (url.includes("/peer-assessments")) {
-      if (method === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(mockEvaluationList101),
-        });
-        return;
-      }
-      if (method === "POST") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({}),
-        });
-        return;
-      }
+      const body = method === "GET" ? mockEvaluationList101 : {};
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+      return;
     }
 
     if (url.includes("/my-result")) {

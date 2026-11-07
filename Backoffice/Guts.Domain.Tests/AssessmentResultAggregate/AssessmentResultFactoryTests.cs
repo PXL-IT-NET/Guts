@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.AssessmentResultAggregate;
+using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
@@ -145,6 +147,37 @@ public class AssessmentResultFactoryTests
 
         //Act + Assert
         Assert.That(() => _factory.Create(subject.Id, projectTeamAssessment, true),
+            Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void Create_SubjectRemovedFromTeamAfterCompletingAssessment_TeacherRequestsResult_ShouldCreateResultForRemovedPeer()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
+        User removedPeer = teamUsers.First().User;
+        teamUsers.RemoveAt(0);
+
+        //Act
+        IAssessmentResult result = _factory.Create(removedPeer.Id, projectTeamAssessment, true);
+
+        //Assert
+        Assert.That(result.Subject, Is.SameAs(removedPeer));
+        Assert.That(result.PeerAssessments, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Create_SubjectRemovedFromTeamAfterCompletingAssessment_StudentRequestsResult_ShouldThrowContractException()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
+        User removedPeer = teamUsers.First().User;
+        teamUsers.RemoveAt(0);
+
+        //Act + Assert
+        Assert.That(() => _factory.Create(removedPeer.Id, projectTeamAssessment, false),
             Throws.InstanceOf<ContractException>());
     }
 }

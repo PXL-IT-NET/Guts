@@ -5,6 +5,7 @@ import {
   PeerEvaluationFormPage,
   StudentMyResultPage,
   LectorDetailedResultsPage,
+  ProjectTeamsPage,
 } from "../pages/peer-assessment.po";
 
 test.describe("Project Team Peer Assessments (Feature 001)", () => {
@@ -272,5 +273,156 @@ test.describe("Project Team Peer Assessments (Feature 001)", () => {
 
     await expect(overviewPage.emptyMessage).toBeVisible();
     await expect(overviewPage.assessmentTable).toHaveCount(0);
+  });
+
+  test("student leaves a team with incomplete peer assessment warning and joins another team (AC-8, AC-9, DR-11)", async ({
+    studentPage,
+  }) => {
+    await setupPeerAssessmentApiMocks(studentPage);
+
+    const teamsPage = new ProjectTeamsPage(studentPage);
+    await teamsPage.goto(1, "proj1");
+
+    await expect(teamsPage.pageTitle).toBeVisible();
+    const leaveBtn = teamsPage.getLeaveTeamButton("Team 1");
+    await expect(leaveBtn).toBeVisible();
+
+    studentPage.once("dialog", async (dialog) => {
+      expect(dialog.message()).toContain(
+        "incomplete peer assessments for this project will be deleted",
+      );
+      await dialog.accept();
+    });
+
+    await leaveBtn.click();
+
+    await expect(studentPage.getByText("Please join a team...")).toBeVisible();
+    await teamsPage.getTeamAccordionButton("Team 2").click();
+    const joinTeam2Btn = teamsPage.getJoinTeamButton("Team 2");
+    await expect(joinTeam2Btn).toBeVisible();
+    await joinTeam2Btn.click();
+
+    await expect(teamsPage.getLeaveTeamButton("Team 2")).toBeVisible();
+  });
+
+  test("lector edits team, toggles peer inclusion for incomplete assessment, and removes member from team (AC-5, AC-8, AC-9, DR-4)", async ({
+    teacherPage,
+  }) => {
+    await setupPeerAssessmentApiMocks(teacherPage);
+
+    const teamsPage = new ProjectTeamsPage(teacherPage);
+    await teamsPage.goto(1, "proj1");
+
+    await expect(teamsPage.pageTitle).toBeVisible();
+    await teamsPage.getTeamAccordionButton("Team 1").click();
+
+    const editTeamBtn = teacherPage
+      .getByRole("button", { name: "Edit team" })
+      .first();
+    await expect(editTeamBtn).toBeVisible();
+    await editTeamBtn.click();
+
+    await expect(teamsPage.modalTitle).toContainText("Edit team");
+    await expect(teamsPage.modalSaveButton).toBeDisabled();
+
+    // Incomplete assessment (101) shows peer inclusion checkboxes, completed assessment (102) does not
+    const charlieCheckbox101 = teamsPage.getPeerInclusionCheckbox(101, 204);
+    await expect(charlieCheckbox101).toBeVisible();
+    await expect(charlieCheckbox101).toBeChecked();
+    await expect(teamsPage.getPeerInclusionCheckbox(102, 204)).toHaveCount(0);
+
+    // Exclude Charlie Third (204) from Sprint 1 Peer Assessment (101) -> Save changes button becomes enabled
+    await charlieCheckbox101.uncheck();
+    await expect(charlieCheckbox101).not.toBeChecked();
+    await expect(teamsPage.modalSaveButton).toBeEnabled();
+
+    // Re-include Charlie Third (204) -> Save changes button becomes disabled again since it matches initial state
+    await charlieCheckbox101.check();
+    await expect(charlieCheckbox101).toBeChecked();
+    await expect(teamsPage.modalSaveButton).toBeDisabled();
+
+    // Uncheck again and click Save changes -> persists inclusion change and closes modal
+    await charlieCheckbox101.uncheck();
+    await expect(teamsPage.modalSaveButton).toBeEnabled();
+    await teamsPage.modalSaveButton.click();
+    await expect(teamsPage.modalContainer).toHaveCount(0);
+
+    // Reopen Edit team modal to verify exclusion persisted and remove Charlie Third from the team
+    await editTeamBtn.click();
+    await expect(teamsPage.modalTitle).toContainText("Edit team");
+    await expect(teamsPage.getPeerInclusionCheckbox(101, 204)).not.toBeChecked();
+
+    // Remove Charlie Third from the team
+    const charlieRow = teamsPage.getMemberRowInModal("Charlie Third");
+    await expect(charlieRow).toBeVisible();
+
+    teacherPage.once("dialog", async (dialog) => {
+      expect(dialog.message()).toContain(
+        "incomplete peer assessments of this member will also be deleted",
+      );
+      await dialog.accept();
+    });
+
+    await charlieRow.getByRole("button", { name: "Remove" }).click();
+
+    await expect(teamsPage.getMemberRowInModal("Charlie Third")).toHaveCount(0);
+  });
+
+  test("excluded team member does not see 'Evaluate self and others' or 'View my result' buttons on assessment overview (AC-6, AC-9, DR-4)", async ({
+    studentPage,
+  }) => {
+    await setupPeerAssessmentApiMocks(studentPage);
+
+    // Override status routes so student 202 (who is a member of Team 1) is NOT in peerIds
+    await studentPage.route(
+      "**/api/project-team-assessments/**/status",
+      async (route) => {
+        const url = route.request().url();
+        if (url.includes("/of-project-assessment/101/")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              id: 501,
+              teamId: 1,
+              isComplete: false,
+              peerIds: [203, 204], // student 202 is excluded
+              peersThatNeedToEvaluateOthers: [
+                { id: 203, fullName: "Alice TeamMate" },
+              ],
+            }),
+          });
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: 502,
+            teamId: 1,
+            isComplete: true,
+            peerIds: [203, 204], // student 202 is excluded
+            peersThatNeedToEvaluateOthers: [],
+          }),
+        });
+      },
+    );
+
+    const overviewPage = new ProjectAssessmentOverviewPage(studentPage);
+    await overviewPage.goto(1, "proj1");
+
+    const row1 = overviewPage.getRowByDescription("Sprint 1 Peer Assessment");
+    await expect(row1).toContainText("Not completed");
+    await expect(
+      row1.getByRole("link", { name: "Evaluate self and others" }),
+    ).toHaveCount(0);
+
+    const row2 = overviewPage.getRowByDescription(
+      "Sprint 2 Peer Assessment (Completed)",
+    );
+    await expect(row2).toContainText("Completed");
+    await expect(
+      row2.getByRole("link", { name: "View my result" }),
+    ).toHaveCount(0);
   });
 });

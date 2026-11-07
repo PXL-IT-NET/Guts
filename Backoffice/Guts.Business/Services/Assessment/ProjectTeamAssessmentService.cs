@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Business.Dtos;
@@ -66,15 +66,16 @@ internal class ProjectTeamAssessmentService(
             IsComplete = teamAssessment.IsComplete,
             PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
                 new UserDto { FirstName = user.FirstName, LastName = user.LastName, Id = user.Id }).ToList(),
+            PeerIds = teamAssessment.Peers.Select(user => user.Id).ToList(),
         };
     }
 
-    public async Task<IReadOnlyList<IAssessmentResult>> GetResultsForLectorAsync(int projectAssessmentId, int teamId)
+    public async Task<IReadOnlyList<IAssessmentResult>> GetResultsForTeacherAsync(int projectAssessmentId, int teamId)
     {
         IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
-        List<IAssessmentResult> results = teamAssessment.Team.TeamUsers
-            .Select(teamUser => assessmentResultFactory.Create(teamUser.UserId, teamAssessment, true)).ToList();
+        List<IAssessmentResult> results = teamAssessment.Peers
+            .Select(peer => assessmentResultFactory.Create(peer.Id, teamAssessment, true)).ToList();
 
         return results;
     }
@@ -109,6 +110,13 @@ internal class ProjectTeamAssessmentService(
 
         teamAssessment.ValidateAssessmentsOf(userId);
 
+        await repository.UpdateAsync(teamAssessment);
+    }
+
+    public async Task SetPeerInclusionAsync(int projectAssessmentId, int teamId, int userId, bool isIncluded)
+    {
+        IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
+        teamAssessment.SetPeerInclusion(userId, isIncluded);
         await repository.UpdateAsync(teamAssessment);
     }
 }

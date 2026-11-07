@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
+using Guts.Domain.UserAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -22,6 +23,15 @@ internal class ProjectTeamAssessmentConfiguration : IEntityTypeConfiguration<Pro
             .HasForeignKey(nameof(ProjectTeam) + "Id")
             .OnDelete(DeleteBehavior.NoAction)
             .IsRequired();
+
+        builder.HasMany(pta => pta.Peers)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "ProjectTeamAssessmentPeers",
+                j => j.HasOne<User>().WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade),
+                j => j.HasOne<ProjectTeamAssessment>().WithMany().HasForeignKey("ProjectTeamAssessmentId").OnDelete(DeleteBehavior.Cascade));
+
+        builder.Navigation(pta => pta.Peers).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasMany(pta => (IReadOnlyCollection<PeerAssessment>)pta.PeerAssessments)
             .WithOne()

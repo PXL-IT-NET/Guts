@@ -34,7 +34,11 @@ internal class AssessmentResult : IAssessmentResult
         {
             AssessmentResult result = new AssessmentResult();
 
-            User subject = projectTeamAssessment.Team.GetTeamUser(subjectId);
+            if (!includePeerAssessments)
+            {
+                projectTeamAssessment.Team.GetTeamUser(subjectId);
+            }
+            User subject = projectTeamAssessment.GetPeer(subjectId);
             result.Subject = subject;
             result.AssessmentDescription = projectTeamAssessment.ProjectAssessment?.Description ?? string.Empty;
 

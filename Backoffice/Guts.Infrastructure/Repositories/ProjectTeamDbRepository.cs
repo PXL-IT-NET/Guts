@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -40,9 +41,34 @@ internal class ProjectTeamDbRepository : BaseDbRepository<IProjectTeam, ProjectT
     {
         _context.ProjectTeamUsers.Add(new ProjectTeamUser
         {
-            ProjectTeamId = teamId, UserId = userId
+            ProjectTeamId = teamId,
+            UserId = userId
         });
         await _context.SaveChangesAsync();
+
+        List<ProjectTeamAssessment> teamAssessments = await _context.ProjectTeamAssessments
+            .Where(pta => pta.Team.Id == teamId)
+            .AsSplitQuery()
+            .Include(pta => pta.Team.TeamUsers)
+            .ThenInclude(tu => tu.User)
+            .Include(pta => pta.ProjectAssessment)
+            .Include(pta => pta.Peers)
+            .Include(pta => pta.PeerAssessments)
+            .ToListAsync();
+
+        DateTime utcNow = DateTime.UtcNow;
+        foreach (ProjectTeamAssessment teamAssessment in teamAssessments)
+        {
+            if (!teamAssessment.IsComplete && utcNow <= teamAssessment.ProjectAssessment.DeadlineUtc)
+            {
+                teamAssessment.AddPeer(userId);
+            }
+        }
+
+        if (teamAssessments.Count > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task RemoveUserFromTeam(int teamId, int userId)
@@ -50,20 +76,29 @@ internal class ProjectTeamDbRepository : BaseDbRepository<IProjectTeam, ProjectT
         ProjectTeamUser teamUser = await _context.ProjectTeamUsers.FirstOrDefaultAsync(tu => tu.ProjectTeamId == teamId && tu.UserId == userId);
         Contracts.Require(teamUser is not null, "Cannot remove user from team. The user is not a member of the team.");
 
-        var entityEntry = _context.Entry(teamUser);
-        entityEntry.State = EntityState.Deleted;
+        List<ProjectTeamAssessment> teamAssessments = await _context.ProjectTeamAssessments
+            .Where(pta => pta.Team.Id == teamId)
+            .AsSplitQuery()
+            .Include(pta => pta.Team.TeamUsers)
+            .ThenInclude(tu => tu.User)
+            .Include(pta => pta.ProjectAssessment)
+            .Include(pta => pta.Peers)
+            .Include(pta => pta.PeerAssessments)
+            .ThenInclude(pa => pa.User)
+            .Include(pta => pta.PeerAssessments)
+            .ThenInclude(pa => pa.Subject)
+            .ToListAsync();
 
-        var query = from teamAssessment in _context.ProjectTeamAssessments
-            from peerAssessment in teamAssessment.PeerAssessments
-            where teamAssessment.Team.Id == teamId && (peerAssessment.User.Id == userId || peerAssessment.Subject.Id == userId) 
-            select peerAssessment;
-
-        List<IPeerAssessment> peerAssessmentsToDelete = await query.ToListAsync();
-
-        foreach (IPeerAssessment peerAssessment in peerAssessmentsToDelete)
+        foreach (ProjectTeamAssessment teamAssessment in teamAssessments.Where(ta => !ta.IsComplete))
         {
-            _context.Entry(peerAssessment).State = EntityState.Deleted;
+            IReadOnlyList<IPeerAssessment> peerAssessmentsToDelete = teamAssessment.RemovePeer(userId);
+            foreach (IPeerAssessment peerAssessment in peerAssessmentsToDelete)
+            {
+                _context.Entry(peerAssessment).State = EntityState.Deleted;
+            }
         }
+
+        _context.Entry(teamUser).State = EntityState.Deleted;
 
         await _context.SaveChangesAsync();
     }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
@@ -12,9 +12,19 @@ public interface IProjectTeamAssessment : IEntity
 
     IProjectTeam Team { get; }
 
+    IReadOnlyCollection<User> Peers { get; }
+
     IReadOnlyCollection<IPeerAssessment> PeerAssessments { get; }
 
     bool IsComplete { get; }
+
+    User GetPeer(int userId);
+
+    void AddPeer(int userId);
+
+    IReadOnlyList<IPeerAssessment> RemovePeer(int userId);
+
+    void SetPeerInclusion(int userId, bool isIncluded);
 
     IPeerAssessment AddOrUpdatePeerAssessment(int userId, int subjectId,
         AssessmentScore cooperationScore, AssessmentScore contributionScore, AssessmentScore effortScore, 

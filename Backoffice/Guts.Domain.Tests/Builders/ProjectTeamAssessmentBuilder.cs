@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common.Extensions;
@@ -25,6 +25,14 @@ internal class ProjectTeamAssessmentBuilder : BaseBuilder<ProjectTeamAssessment>
     public ProjectTeamAssessmentBuilder WithId()
     {
         SetProperty(pta => pta.Id, Random.Shared.NextPositive());
+        return this;
+    }
+
+    public ProjectTeamAssessmentBuilder WithTeam(IProjectTeam team)
+    {
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        Mock<IProjectAssessment> projectAssessmentMock = new ProjectAssessmentMockBuilder().WithId().WithOpenOn(openOnUtc).Build();
+        ConstructItem(projectAssessmentMock.Object, team);
         return this;
     }
 
