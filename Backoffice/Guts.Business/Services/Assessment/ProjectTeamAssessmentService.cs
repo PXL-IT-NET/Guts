@@ -66,7 +66,7 @@ internal class ProjectTeamAssessmentService(
             IsComplete = teamAssessment.IsComplete,
             PeersThatNeedToEvaluateOthers = teamAssessment.GetPeersThatNeedToEvaluateOthers().Select(user =>
                 new UserDto { FirstName = user.FirstName, LastName = user.LastName, Id = user.Id }).ToList(),
-            PeerIds = teamAssessment.GetPeers().Select(user => user.Id).ToList(),
+            PeerIds = teamAssessment.Peers.Select(user => user.Id).ToList(),
         };
     }
 
@@ -74,7 +74,7 @@ internal class ProjectTeamAssessmentService(
     {
         IProjectTeamAssessment teamAssessment = await GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId);
 
-        List<IAssessmentResult> results = teamAssessment.GetPeers()
+        List<IAssessmentResult> results = teamAssessment.Peers
             .Select(peer => assessmentResultFactory.Create(peer.Id, teamAssessment, true)).ToList();
 
         return results;

@@ -925,6 +925,21 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ProjectTeamAssessmentPeers", b =>
+                {
+                    b.Property<int>("ProjectTeamAssessmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProjectTeamAssessmentId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectTeamAssessmentPeers");
+                });
+
             modelBuilder.Entity("Guts.Domain.TopicAggregate.ChapterAggregate.Chapter", b =>
                 {
                     b.HasBaseType("Guts.Domain.TopicAggregate.Topic");
@@ -1339,6 +1354,21 @@ namespace Guts.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ProjectTeamAssessmentPeers", b =>
+                {
+                    b.HasOne("Guts.Domain.ProjectTeamAssessmentAggregate.ProjectTeamAssessment", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectTeamAssessmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Guts.Domain.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")

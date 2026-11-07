@@ -94,6 +94,45 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
             var loaded = await repo.LoadByIdAsync(_teamId);
             Assert.That(loaded.TeamUsers, Has.Count.EqualTo(2));
             Assert.That(context.PeerAssessments.ToList(), Is.Empty);
+
+            var assessmentRepo = new ProjectTeamAssessmentDbRepository(context);
+            var loadedAssessment = await assessmentRepo.LoadAsync(projectAssessment.Id, _teamId);
+            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { _user2Id, user3.Id }));
+        }
+    }
+
+    [Test]
+    public async Task RemoveUserFromTeam_And_AddUserToTeam_WhenTeamAssessmentIsComplete_ShouldPreservePeersAndPeerAssessments()
+    {
+        var user3 = await Seeder.SeedUserAsync("Charlie");
+        var projectAssessment = await Seeder.SeedProjectAssessmentAsync(_projectId);
+        await Seeder.SeedProjectTeamAssessmentAsync(projectAssessment.Id, _teamId);
+
+        await using (var context = CreateDbContext())
+        {
+            var assessmentRepo = new ProjectTeamAssessmentDbRepository(context);
+            var loadedAssessment = await assessmentRepo.LoadAsync(projectAssessment.Id, _teamId);
+            loadedAssessment.AddOrUpdatePeerAssessment(_user1Id, _user1Id, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, "");
+            loadedAssessment.AddOrUpdatePeerAssessment(_user1Id, _user2Id, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, "");
+            loadedAssessment.AddOrUpdatePeerAssessment(_user2Id, _user1Id, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, "");
+            loadedAssessment.AddOrUpdatePeerAssessment(_user2Id, _user2Id, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, Domain.ValueObjects.AssessmentScore.Average, "");
+            await assessmentRepo.UpdateAsync(loadedAssessment);
+        }
+
+        await using (var context = CreateDbContext())
+        {
+            var teamRepo = new ProjectTeamDbRepository(context);
+            await teamRepo.RemoveUserFromTeam(_teamId, _user1Id);
+            await teamRepo.AddUserToTeam(_teamId, user3.Id);
+        }
+
+        await using (var context = CreateDbContext())
+        {
+            var assessmentRepo = new ProjectTeamAssessmentDbRepository(context);
+            var loadedAssessment = await assessmentRepo.LoadAsync(projectAssessment.Id, _teamId);
+            Assert.That(loadedAssessment.IsComplete, Is.True);
+            Assert.That(loadedAssessment.PeerAssessments, Has.Count.EqualTo(4));
+            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { _user1Id, _user2Id }));
         }
     }
 }

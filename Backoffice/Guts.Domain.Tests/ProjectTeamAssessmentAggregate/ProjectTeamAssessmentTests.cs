@@ -8,6 +8,7 @@ using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
+using Moq;
 using NUnit.Framework;
 
 namespace Guts.Domain.Tests.ProjectTeamAssessmentAggregate;
@@ -370,209 +371,158 @@ public class ProjectTeamAssessmentTests
     }
 
     [Test]
-    public void IsComplete_SingleMemberTeamWithSelfAssessment_ShouldReturnFalse()
+    public void CreateNew_ShouldInitializePeersFromTeamUsers()
+    {
+        //Act + Assert
+        Assert.That(_projectTeamAssessment.Peers, Is.EquivalentTo(_projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User)));
+        foreach (IProjectTeamUser teamUser in _projectTeamAssessment.Team.TeamUsers)
+        {
+            Assert.That(_projectTeamAssessment.GetPeer(teamUser.UserId), Is.SameAs(teamUser.User));
+        }
+    }
+
+    [Test]
+    public void IsComplete_SinglePeerTeamWithSelfAssessment_ShouldReturnFalse()
     {
         //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(1).WithId().WithAllPeerAssessmentsAdded();
-        _projectTeamAssessment = builder.Build();
+        Mock<IProjectTeam> singleMemberTeamMock = new ProjectTeamMockBuilder().WithId().WithMembers(1).Build();
+        _projectTeamAssessment = new ProjectTeamAssessmentBuilder()
+            .WithTeam(singleMemberTeamMock.Object)
+            .WithId()
+            .WithAllPeerAssessmentsAdded()
+            .Build();
 
         //Act + Assert
         Assert.That(_projectTeamAssessment.IsComplete, Is.False);
     }
 
     [Test]
-    public void CompletedAssessment_WhenMemberJoinsOrLeavesTeamLater_ShouldRemainCompleteAndPreserveOriginalPeers()
+    public void CompletedAssessment_WhenTeamUsersChange_ShouldKeepPeersAndRemainCompleteAndRejectPeerChanges()
     {
         //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithId();
-        _projectTeamAssessment = builder.Build();
-        List<User> originalMembers = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
+        _projectTeamAssessment = new ProjectTeamAssessmentBuilder()
+            .WithId()
+            .WithAllPeerAssessmentsAdded()
+            .Build();
+        var originalPeers = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
+        var teamUsers = (IList<IProjectTeamUser>)_projectTeamAssessment.Team.TeamUsers;
 
-        foreach (User evaluator in originalMembers)
+        // Simulate a member leaving and a new member joining the team after completion
+        User removedUser = teamUsers.First().User;
+        teamUsers.RemoveAt(0);
+
+        User newUser = new UserBuilder().Build();
+        var newMemberMock = new Mock<IProjectTeamUser>();
+        newMemberMock.SetupGet(m => m.UserId).Returns(newUser.Id);
+        newMemberMock.SetupGet(m => m.User).Returns(newUser);
+        teamUsers.Add(newMemberMock.Object);
+
+        //Act + Assert
+        Assert.That(_projectTeamAssessment.IsComplete, Is.True);
+        Assert.That(_projectTeamAssessment.Peers, Is.EquivalentTo(originalPeers));
+        Assert.That(() => _projectTeamAssessment.AddPeer(newUser.Id), Throws.InstanceOf<ContractException>());
+        Assert.That(() => _projectTeamAssessment.RemovePeer(removedUser.Id), Throws.InstanceOf<ContractException>());
+        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(newUser.Id, true), Throws.InstanceOf<ContractException>());
+        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(originalPeers.Last().Id, false), Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void AddPeer_And_SetPeerInclusionTrue_IncompleteAssessment_ShouldAddTeamMemberToPeers()
+    {
+        //Arrange
+        var teamUsers = (IList<IProjectTeamUser>)_projectTeamAssessment.Team.TeamUsers;
+        User newUser = new UserBuilder().Build();
+        var newMemberMock = new Mock<IProjectTeamUser>();
+        newMemberMock.SetupGet(m => m.UserId).Returns(newUser.Id);
+        newMemberMock.SetupGet(m => m.User).Returns(newUser);
+        teamUsers.Add(newMemberMock.Object);
+
+        Assert.That(_projectTeamAssessment.Peers, Does.Not.Contain(newUser));
+
+        //Act
+        _projectTeamAssessment.SetPeerInclusion(newUser.Id, true);
+
+        //Assert
+        Assert.That(_projectTeamAssessment.Peers, Does.Contain(newUser));
+        Assert.That(_projectTeamAssessment.GetPeer(newUser.Id), Is.SameAs(newUser));
+        Assert.That(_projectTeamAssessment.GetPeersThatNeedToEvaluateOthers(), Does.Contain(newUser));
+    }
+
+    [Test]
+    public void AddPeer_UserNotInTeam_ShouldThrowContractException()
+    {
+        //Arrange
+        User nonTeamUser = new UserBuilder().Build();
+
+        //Act + Assert
+        Assert.That(() => _projectTeamAssessment.AddPeer(nonTeamUser.Id), Throws.InstanceOf<ContractException>());
+        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(nonTeamUser.Id, true), Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void RemovePeer_And_SetPeerInclusionFalse_IncompleteAssessment_ShouldRemoveFromPeersAndDeleteEvaluationsAndAutoCompleteWhenRemainingPeersComplete()
+    {
+        //Arrange
+        Mock<IProjectTeam> teamMock = new ProjectTeamMockBuilder().WithId().WithMembers(3).Build();
+        _projectTeamAssessment = new ProjectTeamAssessmentBuilder()
+            .WithTeam(teamMock.Object)
+            .WithId()
+            .Build();
+        var users = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
+        User user1 = users[0];
+        User user2 = users[1];
+        User user3 = users[2];
+
+        // User 1 and User 2 evaluate everyone (including User 3); User 3 only evaluates User 1
+        foreach (User evaluator in new[] { user1, user2 })
         {
-            foreach (User subject in originalMembers)
+            foreach (User subject in users)
             {
                 _projectTeamAssessment.AddOrUpdatePeerAssessment(evaluator.Id, subject.Id,
                     AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
             }
         }
-
-        Assert.That(_projectTeamAssessment.IsComplete, Is.True);
-        Assert.That(_projectTeamAssessment.CompletedOnUtc, Is.Not.Null);
-
-        //Act — remove one original member and add a new member to the underlying team
-        User removedMember = originalMembers.First();
-        builder.RemoveTeamMember(removedMember.Id);
-        IReadOnlyList<IPeerAssessment> removedAssessments = _projectTeamAssessment.RemovePeer(removedMember.Id);
-        User addedMember = builder.AddTeamMember(_projectTeamAssessment.ProjectAssessment.OpenOnUtc.AddHours(1));
-
-        //Assert
-        Assert.That(removedAssessments, Is.Empty);
-        Assert.That(_projectTeamAssessment.IsComplete, Is.True);
-        Assert.That(_projectTeamAssessment.PeerAssessments, Has.Count.EqualTo(originalMembers.Count * originalMembers.Count));
-        IReadOnlyList<User> peers = _projectTeamAssessment.GetPeers();
-        Assert.That(peers, Is.EquivalentTo(originalMembers));
-        Assert.That(peers, Does.Not.Contain(addedMember));
-        Assert.That(_projectTeamAssessment.GetPeer(removedMember.Id), Is.SameAs(removedMember));
-        Assert.That(() => _projectTeamAssessment.GetPeer(addedMember.Id), Throws.InstanceOf<ContractException>());
-    }
-
-    [Test]
-    public void RemovePeer_IncompleteAssessmentWithThreeMembersWhereOtherTwoAlreadyEvaluatedAll_ShouldDeleteUserAssessmentsAndAutoComplete()
-    {
-        //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(3).WithId();
-        _projectTeamAssessment = builder.Build();
-        List<User> members = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
-        User member1 = members[0];
-        User member2 = members[1];
-        User leavingMember = members[2];
-
-        foreach (User evaluator in new[] { member1, member2 })
-        {
-            foreach (User subject in members)
-            {
-                _projectTeamAssessment.AddOrUpdatePeerAssessment(evaluator.Id, subject.Id,
-                    AssessmentScore.AboveAverage, AssessmentScore.AboveAverage, AssessmentScore.AboveAverage, "Explanation");
-            }
-        }
+        _projectTeamAssessment.AddOrUpdatePeerAssessment(user3.Id, user1.Id,
+            AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
 
         Assert.That(_projectTeamAssessment.IsComplete, Is.False);
 
         //Act
-        builder.RemoveTeamMember(leavingMember.Id);
-        IReadOnlyList<IPeerAssessment> deleted = _projectTeamAssessment.RemovePeer(leavingMember.Id);
+        _projectTeamAssessment.SetPeerInclusion(user3.Id, false);
 
         //Assert
-        Assert.That(deleted, Has.Count.EqualTo(2));
+        Assert.That(_projectTeamAssessment.Peers, Is.EquivalentTo(new[] { user1, user2 }));
         Assert.That(_projectTeamAssessment.PeerAssessments, Has.Count.EqualTo(4));
+        Assert.That(_projectTeamAssessment.PeerAssessments.Any(pa => pa.User.Id == user3.Id || pa.Subject.Id == user3.Id), Is.False);
         Assert.That(_projectTeamAssessment.IsComplete, Is.True);
-        Assert.That(_projectTeamAssessment.CompletedOnUtc, Is.Not.Null);
-        Assert.That(_projectTeamAssessment.GetPeers(), Is.EquivalentTo(new[] { member1, member2 }));
+        Assert.That(() => _projectTeamAssessment.GetPeer(user3.Id), Throws.InstanceOf<ContractException>());
     }
 
     [Test]
-    public void RemovePeer_IncompleteAssessmentWithTwoMembersWhereFirstMemberEvaluatedBoth_ShouldNotCompleteWithOneRemainingPeer()
+    public void RemovePeer_TwoPeerTeam_WhenOnePeerRemoved_ShouldDeleteEvaluationsAndKeepIsCompleteFalse()
     {
         //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(2).WithId();
-        _projectTeamAssessment = builder.Build();
-        List<User> members = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
-        User remainingMember = members[0];
-        User leavingMember = members[1];
+        Mock<IProjectTeam> teamMock = new ProjectTeamMockBuilder().WithId().WithMembers(2).Build();
+        _projectTeamAssessment = new ProjectTeamAssessmentBuilder()
+            .WithTeam(teamMock.Object)
+            .WithId()
+            .Build();
+        var users = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
+        User user1 = users[0];
+        User user2 = users[1];
 
-        foreach (User subject in members)
-        {
-            _projectTeamAssessment.AddOrUpdatePeerAssessment(remainingMember.Id, subject.Id,
-                AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
-        }
+        _projectTeamAssessment.AddOrUpdatePeerAssessment(user1.Id, user1.Id,
+            AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
+        _projectTeamAssessment.AddOrUpdatePeerAssessment(user1.Id, user2.Id,
+            AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
 
         //Act
-        builder.RemoveTeamMember(leavingMember.Id);
-        IReadOnlyList<IPeerAssessment> deleted = _projectTeamAssessment.RemovePeer(leavingMember.Id);
+        IReadOnlyList<IPeerAssessment> removedAssessments = _projectTeamAssessment.RemovePeer(user2.Id);
 
         //Assert
-        Assert.That(deleted, Has.Count.EqualTo(1));
+        Assert.That(removedAssessments, Has.Count.EqualTo(1));
+        Assert.That(_projectTeamAssessment.Peers, Is.EquivalentTo(new[] { user1 }));
         Assert.That(_projectTeamAssessment.PeerAssessments, Has.Count.EqualTo(1));
         Assert.That(_projectTeamAssessment.IsComplete, Is.False);
-        Assert.That(_projectTeamAssessment.CompletedOnUtc, Is.Null);
-    }
-
-    [Test]
-    public void GetPeers_LateJoiningMemberBeforeDeadline_ShouldBeIncludedByDefault_AndAfterDeadline_ShouldBeExcludedByDefault()
-    {
-        //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(2).WithId();
-        _projectTeamAssessment = builder.Build();
-        DateTime openOnUtc = _projectTeamAssessment.ProjectAssessment.OpenOnUtc;
-        DateTime deadlineUtc = _projectTeamAssessment.ProjectAssessment.DeadlineUtc;
-
-        User joinedBeforeDeadline = builder.AddTeamMember(openOnUtc.AddHours(2));
-        User joinedAfterDeadline = builder.AddTeamMember(deadlineUtc.AddHours(1));
-
-        //Act
-        IReadOnlyList<User> peers = _projectTeamAssessment.GetPeers();
-
-        //Assert
-        Assert.That(peers, Does.Contain(joinedBeforeDeadline));
-        Assert.That(peers, Does.Not.Contain(joinedAfterDeadline));
-        Assert.That(() => _projectTeamAssessment.GetPeerAssessmentsOf(joinedAfterDeadline.Id), Throws.InstanceOf<ContractException>());
-    }
-
-    [Test]
-    public void SetPeerInclusion_ExcludeLateJoiningMember_ShouldRemoveTheirAssessmentsAndAutoCompleteIfRemainingPeersAreDone()
-    {
-        //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(2).WithId();
-        _projectTeamAssessment = builder.Build();
-        List<User> originalMembers = _projectTeamAssessment.Team.TeamUsers.Select(tu => tu.User).ToList();
-        User lateMember = builder.AddTeamMember(_projectTeamAssessment.ProjectAssessment.OpenOnUtc.AddHours(1));
-
-        // Both original members evaluate everyone (including lateMember), lateMember has not evaluated yet
-        foreach (User evaluator in originalMembers)
-        {
-            foreach (User subject in _projectTeamAssessment.GetPeers())
-            {
-                _projectTeamAssessment.AddOrUpdatePeerAssessment(evaluator.Id, subject.Id,
-                    AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
-            }
-        }
-
-        Assert.That(_projectTeamAssessment.IsComplete, Is.False);
-
-        //Act — Teacher excludes lateMember
-        _projectTeamAssessment.SetPeerInclusion(lateMember.Id, false);
-
-        //Assert
-        Assert.That(_projectTeamAssessment.GetPeers(), Is.EquivalentTo(originalMembers));
-        Assert.That(_projectTeamAssessment.PeerAssessments.Any(pa => pa.User.Id == lateMember.Id || pa.Subject.Id == lateMember.Id), Is.False);
-        Assert.That(_projectTeamAssessment.IsComplete, Is.True);
-    }
-
-    [Test]
-    public void SetPeerInclusion_IncludeMemberWhoJoinedAfterDeadline_ShouldMakeThemEligiblePeer()
-    {
-        //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(2).WithId();
-        _projectTeamAssessment = builder.Build();
-        User joinedAfterDeadline = builder.AddTeamMember(_projectTeamAssessment.ProjectAssessment.DeadlineUtc.AddHours(2));
-
-        Assert.That(_projectTeamAssessment.GetPeers(), Does.Not.Contain(joinedAfterDeadline));
-
-        //Act — Teacher includes joinedAfterDeadline
-        _projectTeamAssessment.SetPeerInclusion(joinedAfterDeadline.Id, true);
-
-        //Assert
-        Assert.That(_projectTeamAssessment.GetPeers(), Does.Contain(joinedAfterDeadline));
-        Assert.That(_projectTeamAssessment.GetPeersThatNeedToEvaluateOthers(), Does.Contain(joinedAfterDeadline));
-    }
-
-    [Test]
-    public void SetPeerInclusion_WhenAssessmentCompleteOrMemberJoinedBeforeOpenOn_ShouldThrowContractException()
-    {
-        //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithMemberCount(2).WithId();
-        _projectTeamAssessment = builder.Build();
-        User originalMember = _projectTeamAssessment.Team.TeamUsers.First().User;
-        User lateMember = builder.AddTeamMember(_projectTeamAssessment.ProjectAssessment.OpenOnUtc.AddHours(1));
-
-        // Member joined before OpenOnUtc -> cannot toggle inclusion
-        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(originalMember.Id, false), Throws.InstanceOf<ContractException>());
-
-        // Unknown user -> cannot toggle inclusion
-        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(999999, false), Throws.InstanceOf<ContractException>());
-
-        // Complete the assessment
-        foreach (User evaluator in _projectTeamAssessment.GetPeers())
-        {
-            foreach (User subject in _projectTeamAssessment.GetPeers())
-            {
-                _projectTeamAssessment.AddOrUpdatePeerAssessment(evaluator.Id, subject.Id,
-                    AssessmentScore.Average, AssessmentScore.Average, AssessmentScore.Average, string.Empty);
-            }
-        }
-
-        Assert.That(_projectTeamAssessment.IsComplete, Is.True);
-        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(lateMember.Id, false), Throws.InstanceOf<ContractException>());
     }
 }

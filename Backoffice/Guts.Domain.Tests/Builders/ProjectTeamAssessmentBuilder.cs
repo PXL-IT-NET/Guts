@@ -28,32 +28,12 @@ internal class ProjectTeamAssessmentBuilder : BaseBuilder<ProjectTeamAssessment>
         return this;
     }
 
-    public ProjectTeamAssessmentBuilder WithMemberCount(int numberOfMembers)
+    public ProjectTeamAssessmentBuilder WithTeam(IProjectTeam team)
     {
-        Mock<IProjectTeam> projectTeamMock = new ProjectTeamMockBuilder().WithMembers(numberOfMembers).Build();
-        ConstructItem(Item.ProjectAssessment, projectTeamMock.Object);
+        DateTime openOnUtc = DateTime.UtcNow.AddDays(-1);
+        Mock<IProjectAssessment> projectAssessmentMock = new ProjectAssessmentMockBuilder().WithId().WithOpenOn(openOnUtc).Build();
+        ConstructItem(projectAssessmentMock.Object, team);
         return this;
-    }
-
-    public User AddTeamMember(DateTime joinedOnUtc)
-    {
-        var memberMock = new Mock<IProjectTeamUser>();
-        User user = new UserBuilder().WithId().Build();
-        memberMock.SetupGet(m => m.UserId).Returns(user.Id);
-        memberMock.SetupGet(m => m.User).Returns(user);
-        memberMock.SetupProperty(m => m.JoinedOnUtc, joinedOnUtc);
-
-        Item.Team.TeamUsers.Add(memberMock.Object);
-        return user;
-    }
-
-    public void RemoveTeamMember(int userId)
-    {
-        IProjectTeamUser existing = Item.Team.TeamUsers.FirstOrDefault(tu => tu.UserId == userId);
-        if (existing != null)
-        {
-            Item.Team.TeamUsers.Remove(existing);
-        }
     }
 
     public ProjectTeamAssessmentBuilder WithAllPeerAssessmentsAdded()

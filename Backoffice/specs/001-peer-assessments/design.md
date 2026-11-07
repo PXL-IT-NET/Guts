@@ -44,48 +44,39 @@ flowchart TD
    - Entity defining an assessment milestone for a `Project` (`ProjectId`, `Description`, `OpenOnUtc`, `DeadlineUtc`).
    - Created via `ProjectAssessment.Factory` (`IProjectAssessmentFactory`) and mutated via `Update(...)`.
 
-3. **`ProjectTeamUser` & `IProjectTeamUser` (`Guts.Domain/ProjectTeamAggregate/`)**
-   - **Modified Property** (`[DR-10]`, `[AC-9]`):
-     - `DateTime JoinedOnUtc { get; set; } = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);`
-     - Defaults to `DateTime.MinValue` (UTC) for existing/seeded records so pre-existing members are treated as having joined prior to any `ProjectAssessment.OpenOnUtc`, and is explicitly set to `DateTime.UtcNow` when a user joins a team at runtime.
-
-4. **`ProjectTeamAssessment` & `IProjectTeamAssessment` (`Guts.Domain/ProjectTeamAssessmentAggregate/`)**
+3. **`ProjectTeamAssessment` & `IProjectTeamAssessment` (`Guts.Domain/ProjectTeamAssessmentAggregate/`)**
    - `AggregateRoot` linking an `IProjectAssessment` and an `IProjectTeam`.
+   - Holds `HashSet<User> _peers` exposed as `IReadOnlyCollection<User> Peers` (`[DR-3]`, `[DR-4]`, `[AC-2]`) — initialized by copying `team.TeamUsers.Select(tu => tu.User)` in `ProjectTeamAssessment.Factory.CreateNew`.
    - Holds `HashSet<IPeerAssessment> _peerAssessments` exposed as `IReadOnlyCollection<IPeerAssessment> PeerAssessments`.
-   - **New State & Properties** (`[DR-4]`, `[DR-5]`, `[AC-5]`, `[AC-8]`, `[AC-9]`):
-     - `DateTime? CompletedOnUtc { get; private set; }` — Set to `DateTime.UtcNow` as soon as the assessment reaches completion (`IsComplete` transitions to `true`), permanently locking the assessment as a historical snapshot.
-     - `HashSet<int> _includedUserIds` and `HashSet<int> _excludedUserIds` — Track Teacher overrides for late-joining team members (`JoinedOnUtc > ProjectAssessment.OpenOnUtc`) while the assessment is incomplete.
-     - `bool IsComplete` (`[DR-5]`):
-       - Returns `true` if `CompletedOnUtc.HasValue`, OR if `_peerAssessments` forms a complete $M \times M$ evaluation matrix ($M \ge 2$) matching all currently eligible peers (`GetPeers()`).
-       - Requires at least 2 peers ($N \ge 2$); a 1-person team ($N < 2$) never evaluates to `IsComplete == true`.
-   - **Updated & New Domain Methods**:
-     - `IReadOnlyList<User> GetPeers()` (`[DR-4]`, `[AC-5]`, `[AC-6]`):
-       - If `IsComplete == true`: returns the distinct subjects stored in `_peerAssessments` (`_peerAssessments.Select(pa => pa.Subject).DistinctBy(u => u.Id).ToList()`), preserving removed members and excluding users who joined after completion.
-       - If `IsComplete == false`: returns the eligible peers from `Team.TeamUsers` where `IsUserEligiblePeer(teamUser)` is `true`:
-         1. If `teamUser.JoinedOnUtc <= ProjectAssessment.OpenOnUtc` ➔ `true`.
-         2. If `_excludedUserIds.Contains(teamUser.UserId)` ➔ `false`.
-         3. If `_includedUserIds.Contains(teamUser.UserId)` ➔ `true`.
-         4. Otherwise ➔ `teamUser.JoinedOnUtc <= ProjectAssessment.DeadlineUtc`.
+   - **`bool IsComplete`** (`[DR-5]`):
+     - Returns `true` strictly when `_peers.Count >= 2 && _peerAssessments.Count == _peers.Count * _peers.Count`.
+     - Requires at least 2 peers ($N \ge 2$); a 1-person assessment ($N < 2$) never evaluates to `IsComplete == true`.
+   - **Domain Methods**:
      - `User GetPeer(int userId)` (`[DR-4]`, `[DR-8]`):
-       - Returns the matching `User` from `GetPeers()`, or throws `ContractException` if the user is not a peer in this `ProjectTeamAssessment`.
-     - `void SetPeerInclusion(int userId, bool isIncluded)` (`[AC-9]`, `[DR-4]`, `[DR-11]`):
-       - Enforces `Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change peer inclusion.");`.
-       - Enforces that `userId` is in `Team.TeamUsers` and `teamUser.JoinedOnUtc > ProjectAssessment.OpenOnUtc`.
-       - When `isIncluded == true`: adds `userId` to `_includedUserIds` and removes from `_excludedUserIds`.
-       - When `isIncluded == false`: adds `userId` to `_excludedUserIds`, removes from `_includedUserIds`, removes all `IPeerAssessment` entries in `_peerAssessments` where `pa.User.Id == userId || pa.Subject.Id == userId`, and updates `CompletedOnUtc` if the remaining $N \ge 2$ eligible peers have now completed all $N \times N$ evaluations.
-     - `IReadOnlyList<IPeerAssessment> RemovePeer(int userId)` (`[AC-8]`, `[DR-11]`):
-       - If `IsComplete == true`: returns an empty list and leaves `_peerAssessments` and `CompletedOnUtc` untouched.
-       - If `IsComplete == false`: removes `userId` from `_includedUserIds` and `_excludedUserIds`, removes all `IPeerAssessment` entries from `_peerAssessments` where `pa.User.Id == userId || pa.Subject.Id == userId`, updates `CompletedOnUtc` if the remaining $N \ge 2$ eligible peers (excluding `userId`) have completed all $N \times N$ evaluations, and returns the removed `IPeerAssessment` list.
+       - Returns the matching `User` from `_peers`, or throws `ContractException` (`"The user with id '{userId}' is not a peer in this team assessment."`).
+     - `void AddPeer(int userId)` (`[AC-9]`, `[DR-4]`, `[DR-10]`):
+       - Enforces `Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to add or remove peers.");`.
+       - Resolves `User user = Team.GetTeamUser(userId);` (throws `ContractException` if the user is not a current member of `Team.TeamUsers`).
+       - If `_peers.All(p => p.Id != userId)`, adds `user` to `_peers`.
+     - `IReadOnlyList<IPeerAssessment> RemovePeer(int userId)` (`[AC-8]`, `[AC-9]`, `[DR-4]`, `[DR-10]`):
+       - Enforces `Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to add or remove peers.");`.
+       - Removes any `User` with `Id == userId` from `_peers`.
+       - Removes all `IPeerAssessment` entries from `_peerAssessments` where `pa.User.Id == userId || pa.Subject.Id == userId` and returns the removed `IPeerAssessment` list.
+     - `void SetPeerInclusion(int userId, bool isIncluded)` (`[AC-9]`, `[DR-4]`):
+       - Enforces `Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to add or remove peers.");`.
+       - Enforces `Team.GetTeamUser(userId)` (user must be a current member of `Team.TeamUsers`).
+       - If `isIncluded`: calls `AddPeer(userId)`.
+       - If `!isIncluded`: calls `RemovePeer(userId)`.
      - `AddOrUpdatePeerAssessment(...)`, `GetPeerAssessmentsOf(userId)`, `GetMissingPeerAssessmentsOf(userId)`, `GetPeersThatNeedToEvaluateOthers()`, and `ValidateAssessmentsOf(userId)`:
-       - Updated to validate and operate against `GetPeers()` rather than raw `Team.TeamUsers`, and `AddOrUpdatePeerAssessment` sets `CompletedOnUtc = DateTime.UtcNow` when the final required evaluation is added.
+       - Operate against `Peers` / `GetPeer(userId)` rather than `Team.TeamUsers`.
 
-5. **`PeerAssessment` (`Guts.Domain/ProjectTeamAssessmentAggregate/PeerAssessment.cs`)**
+4. **`PeerAssessment` (`Guts.Domain/ProjectTeamAssessmentAggregate/PeerAssessment.cs`)**
    - `Entity` representing a single evaluation by `User` (evaluator) about `Subject` (teammate) within a `ProjectTeamAssessment`.
 
-6. **`AssessmentResult` & `AssessmentSubResult` (`Guts.Domain/AssessmentResultAggregate/`)**
+5. **`AssessmentResult` & `AssessmentSubResult` (`Guts.Domain/AssessmentResultAggregate/`)**
    - **`AssessmentResult.Factory.Create(int subjectId, IProjectTeamAssessment projectTeamAssessment, bool includePeerAssessments)`** (`[AC-6]`, `[DR-8]`):
-     - When `includePeerAssessments == false` (Student requesting `/my-result`): requires `subjectId` to be a current member of `projectTeamAssessment.Team.TeamUsers` (`projectTeamAssessment.Team.GetTeamUser(subjectId)`), preventing removed team members from accessing team results.
-     - When `includePeerAssessments == true` (Teacher requesting `/detailed-results`): resolves `User subject = projectTeamAssessment.GetPeer(subjectId)`, allowing results to be generated for all peers of a completed assessment (including members later removed from the team).
+     - When `includePeerAssessments == false` (Student requesting `/my-result`): requires `subjectId` to be a current member of `projectTeamAssessment.Team.TeamUsers` (`projectTeamAssessment.Team.GetTeamUser(subjectId)`) AND a peer in `projectTeamAssessment.Peers` (`projectTeamAssessment.GetPeer(subjectId)`), preventing removed team members from accessing team results.
+     - When `includePeerAssessments == true` (Teacher requesting `/detailed-results`): resolves `User subject = projectTeamAssessment.GetPeer(subjectId)`, allowing results to be generated for all peers in `projectTeamAssessment.Peers` (including members later removed from `Team.TeamUsers`).
 
 ---
 
@@ -96,14 +87,13 @@ flowchart TD
   - `Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId);`
 - `IProjectTeamAssessmentRepository`:
   - `Task<IProjectTeamAssessment> LoadAsync(int projectAssessmentId, int teamId);`
-  - `Task<IReadOnlyList<IProjectTeamAssessment>> FindByTeamIdAsync(int teamId);` *(or handled within repository cleanup on member removal)*
 
 ### Application Services (`Guts.Business/Services/`)
 - **`IProjectTeamAssessmentService` / `ProjectTeamAssessmentService`** (`Guts.Business/Services/Assessment/`):
   - `GetOrCreateTeamAssessmentAsync(projectAssessmentId, projectTeamId)` — Loads existing `ProjectTeamAssessment` or provisions a new one via `IProjectTeamAssessmentFactory`.
-  - `GetStatusAsync(projectAssessmentId, teamId)` — Returns `ProjectTeamAssessmentStatusDto` including `PeerIds` (`teamAssessment.GetPeers().Select(u => u.Id).ToList()`).
+  - `GetStatusAsync(projectAssessmentId, teamId)` — Returns `ProjectTeamAssessmentStatusDto` including `PeerIds` (`teamAssessment.Peers.Select(u => u.Id).ToList()`).
   - `GetResultsForTeacherAsync(projectAssessmentId, teamId)` (`[AC-6]`):
-    - Iterates over `teamAssessment.GetPeers()` (instead of `teamAssessment.Team.TeamUsers`) and invokes `assessmentResultFactory.Create(peer.Id, teamAssessment, true)`.
+    - Iterates over `teamAssessment.Peers` (instead of `teamAssessment.Team.TeamUsers`) and invokes `assessmentResultFactory.Create(peer.Id, teamAssessment, true)`.
   - `GetResultForStudent(projectAssessmentId, teamId, userId)` — Invokes `assessmentResultFactory.Create(userId, teamAssessment, false)`.
   - `GetPeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId)` — Concatenates stored and missing `IPeerAssessment` records for the user.
   - `SavePeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId, peerAssessments)` — Applies each `PeerAssessmentDto`, invokes `ValidateAssessmentsOf(userId)`, and persists via `repository.UpdateAsync(...)`.
@@ -122,30 +112,40 @@ flowchart TD
 ## 4. Infrastructure Layer (`Guts.Infrastructure`)
 
 ### EF Core Configuration & Migrations
-- **`ProjectTeamConfiguration` / `ProjectTeamUser`**:
-  - Maps `ProjectTeamUser.JoinedOnUtc` (required `DateTime`, converted via `UtcDateTimeConverter`).
 - **`ProjectTeamAssessmentConfiguration` (`Guts.Infrastructure/EntityConfigurations/ProjectTeamAssessmentConfiguration.cs`)**:
-  - Maps `CompletedOnUtc` (`DateTime?`).
-  - Maps private fields `_includedUserIds` (`Column("IncludedUserIds")`) and `_excludedUserIds` (`Column("ExcludedUserIds")`) using a `ValueConverter<HashSet<int>, string>` (comma-separated integer IDs) with a `ValueComparer<HashSet<int>>`.
+  - Maps `ProjectTeamAssessment.Peers` (backed by `_peers`) as a many-to-many relationship to `User` using join table `ProjectTeamAssessmentPeers`:
+    ```csharp
+    builder.HasMany(pta => pta.Peers)
+        .WithMany()
+        .UsingEntity<Dictionary<string, object>>(
+            "ProjectTeamAssessmentPeers",
+            j => j.HasOne<User>().WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade),
+            j => j.HasOne<ProjectTeamAssessment>().WithMany().HasForeignKey("ProjectTeamAssessmentId").OnDelete(DeleteBehavior.Cascade));
+    builder.Metadata.FindNavigation(nameof(ProjectTeamAssessment.Peers)).SetPropertyAccessMode(PropertyAccessMode.Field);
+    ```
 - **Migration Required?**: `Yes`
-  - Migration adds `JoinedOnUtc` to `ProjectTeamUsers` and `CompletedOnUtc`, `IncludedUserIds`, `ExcludedUserIds` to `ProjectTeamAssessments`.
+  - Migration creates the `ProjectTeamAssessmentPeers` join table (`ProjectTeamAssessmentId`, `UserId`) and executes a data migration SQL statement in `Up(...)` to populate `ProjectTeamAssessmentPeers` for all existing `ProjectTeamAssessments` (selecting distinct `(ProjectTeamAssessmentId, UserId)` pairs from the assessment's `ProjectTeamUsers` and stored `PeerAssessments`).
 
 ### Repository Implementations (`Guts.Infrastructure/Repositories/`)
 - **`ProjectTeamAssessmentDbRepository`**:
   - `LoadAsync(projectAssessmentId, teamId)` eagerly loads:
     - `Team.TeamUsers` -> `ThenInclude(tu => tu.User)`
     - `ProjectAssessment`
+    - `Peers`
     - `PeerAssessments` -> `ThenInclude(pa => pa.User)`
-    - `PeerAssessments` -> `ThenInclude(pa => pa.Subject)` *(added so removed team members' `Subject` user entities are always loaded on completed assessments)*
-  - `UpdateAsync(IProjectTeamAssessment entity)`:
-    - Ensures any `PeerAssessment` removed from `entity.PeerAssessments` (e.g., when a Teacher excludes a late-joining member via `SetPeerInclusion(userId, false)`) is deleted from `_context.PeerAssessments` before `SaveChangesAsync()`.
+    - `PeerAssessments` -> `ThenInclude(pa => pa.Subject)`
+  - `UpdateAsync(IProjectTeamAssessment existingEntity)`:
+    - Ensures any `PeerAssessment` removed from `existingEntity.PeerAssessments` (e.g., when a Teacher excludes a peer via `SetPeerInclusion(userId, false)`) is deleted from `_context.PeerAssessments` before `SaveChangesAsync()`.
 - **`ProjectTeamDbRepository`**:
   - `AddUserToTeam(int teamId, int userId)` (`[AC-9]`, `[DR-10]`):
-    - Sets `JoinedOnUtc = DateTime.UtcNow` on the new `ProjectTeamUser`.
-  - `RemoveUserFromTeam(int teamId, int userId)` (`[AC-8]`, `[DR-11]`):
-    - Loads the `ProjectTeamUser` and marks it `EntityState.Deleted`.
-    - Loads all `ProjectTeamAssessment` aggregates for `teamId` (including `Team.TeamUsers`, `ProjectAssessment`, and `PeerAssessments` with `User` and `Subject`).
+    - Adds the `ProjectTeamUser` to `_context.ProjectTeamUsers` and saves (or loads the user into `Team.TeamUsers`).
+    - Loads all `ProjectTeamAssessment` aggregates for `teamId` (including `Team.TeamUsers.User`, `ProjectAssessment`, `Peers`, and `PeerAssessments`).
+    - For each `teamAssessment` where `!teamAssessment.IsComplete && DateTime.UtcNow <= teamAssessment.ProjectAssessment.DeadlineUtc`, invokes `teamAssessment.AddPeer(userId)`.
+  - `RemoveUserFromTeam(int teamId, int userId)` (`[AC-8]`, `[DR-10]`):
+    - Loads the `ProjectTeamUser` (throws `ContractException` if not found).
+    - Loads all `ProjectTeamAssessment` aggregates for `teamId` (including `Team.TeamUsers.User`, `ProjectAssessment`, `Peers`, and `PeerAssessments` with `User` and `Subject`).
     - For each `teamAssessment` where `!teamAssessment.IsComplete`, invokes `teamAssessment.RemovePeer(userId)` and marks the returned `IPeerAssessment` records as `EntityState.Deleted`. Completed assessments (`teamAssessment.IsComplete == true`) are left untouched.
+    - Marks the `ProjectTeamUser` as `EntityState.Deleted` and saves changes.
 
 ---
 
@@ -167,16 +167,11 @@ flowchart TD
      - Request Body: `[FromBody] bool isIncluded`
      - Calls `projectTeamAssessmentService.SetPeerInclusionAsync(projectAssessmentId, teamId, userId, isIncluded)` and returns `200 OK`.
 
-3. **`TeamUserModel` & `TeamConverter` (`Guts.Api/Models/ProjectModels/TeamUserModel.cs`, `Guts.Api/Models/Converters/TeamConverter.cs`)**
-   - Add `DateTime JoinedOnUtc { get; set; }` to `TeamUserModel` and map `teamUser.JoinedOnUtc` in `TeamConverter.ToTeamDetailsModel`.
-
 ---
 
 ## 6. Frontend Layer (`Guts.Web/ClientApp`)
 
 ### Services & ViewModels
-- **`team.model.ts`**:
-  - Extend `ITeamMemberModel` with `joinedOnUtc?: Date | string;`.
 - **`projectassessment.model.ts`**:
   - Extend `IProjectTeamAssessmentStatusModel` and `ProjectTeamAssessmentStatusModel` with `peerIds: number[]`.
 - **`ProjectTeamAssessmentService` (`src/app/services/project.teamassessment.service.ts`)**:
@@ -184,10 +179,9 @@ flowchart TD
 
 ### Components (`src/app/components/`)
 - **`ProjectTeamEditComponent` (`src/app/components/project-team-edit/`)** (`[AC-9]`):
-  - Accepts `@Input() projectId?: number` (or loads open project assessments for the project) and fetches team assessment statuses for open assessments (`isAfterOpenOn`).
+  - Accepts `@Input() openAssessments: IProjectAssessmentModel[]` (or loads open assessments for the project) and fetches team assessment statuses (`getProjectTeamAssessmentStatus`).
   - Filters to incomplete assessments (`!status.isComplete`).
-  - For each team member in `team.members`, checks if there are incomplete assessments where `new Date(member.joinedOnUtc) > new Date(assessment.openOnUtc)`.
-  - Renders a checkbox/switch per applicable incomplete assessment allowing the Teacher to include or exclude that late-joining peer (`isPeerIncluded(assessment, member)` / `togglePeerInclusion(assessment, member, isIncluded)`).
+  - For each team member in `team.members`, renders an inclusion checkbox per incomplete open assessment allowing the Teacher to include or exclude that peer (`isPeerIncluded(assessment, member)` / `togglePeerInclusion(assessment, member, isIncluded)`).
   - Updates the removal confirmation prompt in `ProjectTeamEditComponent` and `ProjectTeamComponent` to clarify that only open/incomplete peer assessments are deleted when a member leaves or is removed.
 
 ---

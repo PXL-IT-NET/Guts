@@ -1,4 +1,3 @@
-using System;
 using Guts.Domain.UserAggregate;
 
 namespace Guts.Domain.ProjectTeamAggregate;
@@ -9,5 +8,4 @@ public interface IProjectTeamUser : IEntity
     int ProjectTeamId { get; set; }
     User User { get; set; }
     int UserId { get; set; }
-    DateTime JoinedOnUtc { get; set; }
 }

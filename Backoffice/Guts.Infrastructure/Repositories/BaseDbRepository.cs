@@ -45,7 +45,7 @@ internal abstract class BaseDbRepository<T, TConcrete> : IBasicRepository<T> whe
         return entry.Entity;
     }
 
-    public async Task<T> UpdateAsync(T existingEntity)
+    public virtual async Task<T> UpdateAsync(T existingEntity)
     {
         if (existingEntity.Id <= 0)
         {

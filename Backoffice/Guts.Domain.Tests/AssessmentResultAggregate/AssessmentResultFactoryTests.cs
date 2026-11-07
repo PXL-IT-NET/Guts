@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.AssessmentResultAggregate;
+using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
@@ -149,23 +151,33 @@ public class AssessmentResultFactoryTests
     }
 
     [Test]
-    public void Create_RemovedTeamMemberInCompletedAssessment_ShouldSucceedForTeacherAndThrowForStudent()
+    public void Create_SubjectRemovedFromTeamAfterCompletingAssessment_TeacherRequestsResult_ShouldCreateResultForRemovedPeer()
     {
         //Arrange
-        var builder = new ProjectTeamAssessmentBuilder().WithId().WithAllPeerAssessmentsAdded();
-        ProjectTeamAssessment projectTeamAssessment = builder.Build();
-        User removedSubject = projectTeamAssessment.Team.TeamUsers.First().User;
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
+        User removedPeer = teamUsers.First().User;
+        teamUsers.RemoveAt(0);
 
-        // Remove the user from the underlying team after the assessment was completed
-        builder.RemoveTeamMember(removedSubject.Id);
-        projectTeamAssessment.RemovePeer(removedSubject.Id);
+        //Act
+        IAssessmentResult result = _factory.Create(removedPeer.Id, projectTeamAssessment, true);
 
-        //Act + Assert — Teacher (includePeerAssessments: true) still gets the removed peer's result
-        IAssessmentResult teacherResult = _factory.Create(removedSubject.Id, projectTeamAssessment, true);
-        Assert.That(teacherResult.Subject, Is.SameAs(removedSubject));
+        //Assert
+        Assert.That(result.Subject, Is.SameAs(removedPeer));
+        Assert.That(result.PeerAssessments, Is.Not.Empty);
+    }
 
-        //Act + Assert — Removed Student (includePeerAssessments: false) is rejected
-        Assert.That(() => _factory.Create(removedSubject.Id, projectTeamAssessment, false),
+    [Test]
+    public void Create_SubjectRemovedFromTeamAfterCompletingAssessment_StudentRequestsResult_ShouldThrowContractException()
+    {
+        //Arrange
+        ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
+        var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
+        User removedPeer = teamUsers.First().User;
+        teamUsers.RemoveAt(0);
+
+        //Act + Assert
+        Assert.That(() => _factory.Create(removedPeer.Id, projectTeamAssessment, false),
             Throws.InstanceOf<ContractException>());
     }
 }

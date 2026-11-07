@@ -143,8 +143,8 @@ public class ProjectTeamAssessmentServiceTests
         Assert.That(result.Id, Is.EqualTo(existingTeamAssessment.Id));
         Assert.That(result.TeamId, Is.EqualTo(existingTeamAssessment.Team.Id));
         Assert.That(result.IsComplete, Is.EqualTo(existingTeamAssessment.IsComplete));
-        Assert.That(result.PeersThatNeedToEvaluateOthers.Count, Is.EqualTo(existingTeamAssessment.Team.TeamUsers.Count));
-        Assert.That(result.PeerIds, Is.EquivalentTo(existingTeamAssessment.GetPeers().Select(u => u.Id)));
+        Assert.That(result.PeersThatNeedToEvaluateOthers.Count, Is.EqualTo(existingTeamAssessment.Peers.Count));
+        Assert.That(result.PeerIds, Is.EquivalentTo(existingTeamAssessment.Peers.Select(u => u.Id)));
     }
 
     [Test]
@@ -158,7 +158,7 @@ public class ProjectTeamAssessmentServiceTests
         var peers = new List<User> { peer1, peer2 };
 
         var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
-        existingTeamAssessmentMock.Setup(ta => ta.GetPeers()).Returns(peers);
+        existingTeamAssessmentMock.SetupGet(ta => ta.Peers).Returns(peers);
         IProjectTeamAssessment existingTeamAssessment = existingTeamAssessmentMock.Object;
 
         _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(projectAssessmentId, teamId))
