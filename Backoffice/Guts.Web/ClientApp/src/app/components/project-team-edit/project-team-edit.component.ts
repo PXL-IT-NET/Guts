@@ -1,5 +1,14 @@
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Component, Input, OnInit, Optional, ChangeDetectionStrategy, DestroyRef, inject, signal } from "@angular/core";
+import {
+  Component,
+  Input,
+  OnInit,
+  Optional,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+  signal,
+} from "@angular/core";
 import {
   ITeamDetailsModel,
   ITeamMemberModel,
@@ -46,7 +55,9 @@ export class ProjectTeamEditComponent implements OnInit {
     this._loading.set(v);
   }
 
-  private readonly _incompleteAssessments = signal<ProjectAssessmentModel[]>([]);
+  private readonly _incompleteAssessments = signal<ProjectAssessmentModel[]>(
+    [],
+  );
   public get incompleteAssessments(): ProjectAssessmentModel[] {
     return this._incompleteAssessments();
   }
@@ -69,8 +80,10 @@ export class ProjectTeamEditComponent implements OnInit {
     public readonly modalRef: BsModalRef,
     private readonly projectService: ProjectService,
     private readonly toastr: ToastrService,
-    @Optional() private readonly projectAssessmentService?: ProjectAssessmentService,
-    @Optional() private readonly projectTeamAssessmentService?: ProjectTeamAssessmentService,
+    @Optional()
+    private readonly projectAssessmentService?: ProjectAssessmentService,
+    @Optional()
+    private readonly projectTeamAssessmentService?: ProjectTeamAssessmentService,
   ) {}
 
   ngOnInit() {
@@ -138,14 +151,17 @@ export class ProjectTeamEditComponent implements OnInit {
       .subscribe((statusResult) => {
         if (statusResult?.success) {
           assessment.teamStatus = statusResult.value;
-          this.initialPeerIdsByAssessment.set(
-            assessment.id,
-            [...(statusResult.value.peerIds || [])],
-          );
+          this.initialPeerIdsByAssessment.set(assessment.id, [
+            ...(statusResult.value.peerIds || []),
+          ]);
           this._incompleteAssessments.update((current) => {
-            const withoutCurrent = current.filter((a) => a.id !== assessment.id);
+            const withoutCurrent = current.filter(
+              (a) => a.id !== assessment.id,
+            );
             if (!assessment.teamStatus.isComplete) {
-              return [...withoutCurrent, assessment].sort((a, b) => a.id - b.id);
+              return [...withoutCurrent, assessment].sort(
+                (a, b) => a.id - b.id,
+              );
             }
             return withoutCurrent;
           });
@@ -265,17 +281,17 @@ export class ProjectTeamEditComponent implements OnInit {
       return;
     }
 
-    const inclusionRequests: Observable<PostResult>[] =
-      this.projectTeamAssessmentService
-        ? pendingChanges.map((change) =>
-            this.projectTeamAssessmentService.setPeerInclusion(
-              change.assessment.id,
-              this.team.id,
-              change.member.userId,
-              change.isIncluded,
-            ),
-          )
-        : [];
+    const inclusionRequests: Observable<PostResult>[] = this
+      .projectTeamAssessmentService
+      ? pendingChanges.map((change) =>
+          this.projectTeamAssessmentService.setPeerInclusion(
+            change.assessment.id,
+            this.team.id,
+            change.member.userId,
+            change.isIncluded,
+          ),
+        )
+      : [];
 
     const requests: Observable<PostResult>[] = [];
     if (!this.editTeamForm.pristine || inclusionRequests.length === 0) {
@@ -316,7 +332,7 @@ export class ProjectTeamEditComponent implements OnInit {
       member.name +
       "' from '" +
       this.team.name +
-      "'? All test results and incomplete peer assessments of this member will also be deleted.";
+      "'? All test results and incomplete peer assessments of this member will also be deleted. Completed peer assessments will remain unchanged.";
     if (confirm(confirmMessage)) {
       this.loading = true;
       this.projectService
