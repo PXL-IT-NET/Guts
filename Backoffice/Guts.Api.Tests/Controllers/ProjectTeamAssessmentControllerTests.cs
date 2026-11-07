@@ -165,6 +165,22 @@ public class ProjectTeamAssessmentControllerTests
         _mapperMock.Verify(mapper => mapper.MapToAssessmentResultModel(assessmentResult), Times.Once);
     }
 
+    [Test]
+    public void SetPeerInclusion_ShouldUseServiceToUpdateInclusionAndReturnOk()
+    {
+        int projectAssessmentId = _random.NextPositive();
+        int teamId = _random.NextPositive();
+        int peerUserId = _random.NextPositive();
+        bool isIncluded = _random.NextBool();
+
+        OkResult result = _controller.SetPeerInclusion(projectAssessmentId, teamId, peerUserId, isIncluded).Result as OkResult;
+
+        Assert.That(result, Is.Not.Null);
+        _projectTeamAssessmentServiceMock.Verify(
+            service => service.SetPeerInclusionAsync(projectAssessmentId, teamId, peerUserId, isIncluded),
+            Times.Once);
+    }
+
     private ProjectTeamAssessmentController CreateControllerWithUserInContext(string role)
     {
         return new ProjectTeamAssessmentController(_projectTeamAssessmentServiceMock.Object, _mapperMock.Object)

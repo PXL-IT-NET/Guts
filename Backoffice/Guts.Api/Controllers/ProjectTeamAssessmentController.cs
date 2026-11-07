@@ -77,4 +77,14 @@ public class ProjectTeamAssessmentController(
         AssessmentResultModel model = mapper.MapToAssessmentResultModel(result);
         return Ok(model);
     }
+
+    [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
+    [HttpPut("of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peers/{userId}/inclusion")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> SetPeerInclusion(int projectAssessmentId, int teamId, int userId, [FromBody] bool isIncluded)
+    {
+        await projectTeamAssessmentService.SetPeerInclusionAsync(projectAssessmentId, teamId, userId, isIncluded);
+        return Ok();
+    }
 }

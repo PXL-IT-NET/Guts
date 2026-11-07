@@ -51,9 +51,9 @@
 
 ## Phase 4: API Layer (`Guts.Api.Tests` ➔ `Guts.Api`)
 
-- [ ] **[T4.1]** `[AC-9]` Write failing unit tests in `Guts.Api.Tests/Controllers/ProjectTeamAssessmentControllerTests.cs` covering `PUT of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peers/{userId}/inclusion` calling `SetPeerInclusionAsync` and returning `OkResult`.
-- [ ] **[T4.2]** `[AC-9]` Implement `ProjectTeamAssessmentController.SetPeerInclusion` in `Guts.Api/Controllers/ProjectTeamAssessmentController.cs`.
-- [ ] **[T4.3]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and verify all tests pass.
+- [x] **[T4.1]** `[AC-9]` Write failing unit tests in `Guts.Api.Tests/Controllers/ProjectTeamAssessmentControllerTests.cs` covering `PUT of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peers/{userId}/inclusion` calling `SetPeerInclusionAsync` and returning `OkResult`.
+- [x] **[T4.2]** `[AC-9]` Implement `ProjectTeamAssessmentController.SetPeerInclusion` in `Guts.Api/Controllers/ProjectTeamAssessmentController.cs`.
+- [x] **[T4.3]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and verify all tests pass.
 
 ---
 
