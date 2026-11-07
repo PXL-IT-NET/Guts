@@ -124,21 +124,39 @@ The **Project Team Peer Assessments** feature enables:
   - `5` (`WayAboveAverage`)
   - Values $> 5$ throw `ContractException`; values $< 0$ normalize to `-1`. Double-to-score conversion uses `MidpointRounding.AwayFromZero`.
 - **DR-2 (`ProjectAssessment` Dates)**: `Description` cannot be empty, `OpenOnUtc` and `DeadlineUtc` must have `DateTimeKind.Utc`, `OpenOnUtc < DeadlineUtc`, and on creation `DeadlineUtc > DateTime.UtcNow`.
-- **DR-3 (`ProjectTeamAssessment` Creation)**: Requires a stored `ProjectAssessment` (`Id > 0`) that is currently open (`OpenOnUtc <= DateTime.UtcNow`) and a `ProjectTeam` with at least one eligible member (`TeamUsers` with loaded `User` entities).
+- **DR-3 (`ProjectTeamAssessment` Creation Preconditions)**: Creating a `ProjectTeamAssessment` via `ProjectTeamAssessment.Factory.CreateNew` requires:
+  - `projectAssessment != null` ("A project assessment must be provided to create a project team assessment.")
+  - `projectAssessment.OpenOnUtc <= DateTime.UtcNow` ("The project team assessment cannot be created because the project assessment is not opened yet.")
+  - `projectAssessment.Id > 0` ("A project team assessment can only created for an existing (stored) project assessment.")
+  - `team != null` ("A team must be provided.")
+  - `team.TeamUsers.Count > 0` ("The team has no members.")
+  - `team.TeamUsers.First().User != null` ("The users of team must be loaded with user data.")
 - **DR-4 (Eligible Participants & Team Membership Check)**:
-  - For an **incomplete** `ProjectTeamAssessment` (`IsComplete == false`), the eligible participants are the members in `Team.TeamUsers` who either joined on or before `ProjectAssessment.OpenOnUtc`, or joined after `OpenOnUtc` and are currently included (by default if `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, or explicitly included/excluded by the Teacher). Only eligible participants can author (`userId`) or be the target (`subjectId`) of a `PeerAssessment`.
+  - For an **incomplete** `ProjectTeamAssessment` (`IsComplete == false`), the eligible participants are the members in `Team.TeamUsers` who either joined on or before `ProjectAssessment.OpenOnUtc`, or joined after `OpenOnUtc` and are currently included (by default if `JoinedOnUtc <= ProjectAssessment.DeadlineUtc`, or explicitly included/excluded by the Teacher).
   - For a **completed** `ProjectTeamAssessment` (`IsComplete == true`), the participants are derived from the distinct subjects (`Subject`) stored in `PeerAssessments`.
+  - `AddOrUpdatePeerAssessment` (for both `userId` and `subjectId`), `GetPeerAssessmentsOf(userId)`, and `GetMissingPeerAssessmentsOf(userId)` require the user to be an eligible participant of the `ProjectTeamAssessment` (throwing `ContractException` if not).
 - **DR-5 (Completion & Immutability After Completion)**:
   - A `ProjectTeamAssessment` is complete (`IsComplete == true`) when either:
     1. Its stored `PeerAssessments` form a complete $M \times M$ evaluation matrix among a closed set of $M \ge 2$ distinct participants (`PeerAssessments.Select(pa => pa.Subject.Id).Distinct()`) where every participant has evaluated all $M$ participants (`PeerAssessments.Count == M * M`), and if not yet locked against a changed team, matches all eligible participants at the time of completion; once complete, it remains complete even if `Team.TeamUsers` later changes.
     2. It has at least 2 participants ($N \ge 2$); a single-member team ($N < 2$) can never be marked `IsComplete == true`.
-  - Once `IsComplete == true`, no peer assessment in that `ProjectTeamAssessment` can be added, modified, or deleted.
-- **DR-6 (Mandatory Explanation for Non-Average Scores)**: If `CooperationScore != Average (3)` OR `ContributionScore != Average (3)` OR `EffortScore != Average (3)`, `Explanation` must not be null or whitespace.
-- **DR-7 (Zero-Sum / Relative Average Guard)**: When a user saves their evaluations and has evaluated all eligible team members, they cannot rate **every** member $> 3$ (`Average`) on Contribution, Cooperation, or Effort, nor can they rate **every** member $< 3$ (`Average`) on Contribution, Cooperation, or Effort. (This validation is enforced on save and is not retroactively re-run when another member leaves or is excluded from an incomplete assessment.)
+  - Once `IsComplete == true`, no peer assessment in that `ProjectTeamAssessment` can be added, modified, or deleted (`Contracts.Require(!IsComplete, "The team assessment is completed by all peers. It is not possible anymore to change a peer assessment.")`).
+- **DR-6 (`AddOrUpdatePeerAssessment` Score & Explanation Preconditions)**:
+  - Empty (`NullScore = -1`) scores are forbidden on save:
+    - `cooperationScore != AssessmentScore.NullScore` ("An empty score for 'cooperation' is not allowed.")
+    - `contributionScore != AssessmentScore.NullScore` ("An empty score for 'contribution' is not allowed.")
+    - `effortScore != AssessmentScore.NullScore` ("An empty score for 'effort' is not allowed.")
+  - If `cooperationScore != AssessmentScore.Average (3)` OR `contributionScore != AssessmentScore.Average (3)` OR `effortScore != AssessmentScore.Average (3)`, `explanation` must not be null, empty, or whitespace (`!string.IsNullOrWhiteSpace(explanation)`, "An explanation is required when a score is not 'Equal to group average' (3).").
+- **DR-7 (Zero-Sum / Relative Average Guard in `ValidateAssessmentsOf`)**: When a user saves their evaluations and has evaluated all eligible team members (`allAssessmentsOfUser.Count == eligibleCount`), they cannot rate **every** member $> 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore`, nor can they rate **every** member $< 3$ (`Average`) on `ContributionScore`, `CooperationScore`, or `EffortScore` (each violation throws a `ContractException`). If the user has not yet evaluated all eligible team members, `ValidateAssessmentsOf` performs no check. This validation is enforced on save and is not retroactively re-run when another member leaves or is excluded from an incomplete assessment.
 - **DR-8 (Result Calculation Preconditions)**: Creating an `AssessmentResult` for a subject requires the subject to be a participant of the `ProjectTeamAssessment` (either in `Team.TeamUsers` or in stored `PeerAssessments` of a completed assessment), with both a self-assessment by the subject and at least one peer assessment from another participant.
-- **DR-9 (`ProjectTeamUser.JoinedOnUtc`)**: Every `ProjectTeamUser` tracks `JoinedOnUtc` (in UTC) indicating when the user joined the `ProjectTeam`.
-- **DR-10 (Selective Cleanup on Team Member Removal or Exclusion)**: Removing a user from a `ProjectTeam` (or a Teacher excluding a late-joining member from an incomplete assessment) deletes `PeerAssessment` records involving that user (`User.Id == userId || Subject.Id == userId`) **only** for the affected `ProjectTeamAssessment` instances where `IsComplete == false`.
-- **DR-11 (Single Active Team Membership per Project)**: A student can only be an active member (`TeamUsers`) of **one** `ProjectTeam` within a project at any time. To join another team in the same project, the student must first leave (or be removed from) their current team.
+- **DR-9 (`PeerAssessment` Construction & Identity Invariants)**:
+  - Constructing a `PeerAssessment(int projectTeamAssessmentId, User user, User subject)` requires:
+    - `projectTeamAssessmentId > 0` ("An existing project team assessment identifier must be provided.")
+    - `user != null` ("A user must be provided.") and `user.Id > 0` ("An existing user must be provided.")
+    - `subject != null` ("A subject must be provided.") and `subject.Id > 0` ("An existing subject must be provided.")
+  - Upon construction, `CooperationScore`, `ContributionScore`, and `EffortScore` are initialized to `AssessmentScore.NullScore (-1)`, and `IsSelfAssessment` is `true` when `User.Id == Subject.Id`.
+- **DR-10 (`ProjectTeamUser.JoinedOnUtc`)**: Every `ProjectTeamUser` tracks `JoinedOnUtc` (in UTC) indicating when the user joined the `ProjectTeam`.
+- **DR-11 (Selective Cleanup on Team Member Removal or Exclusion)**: Removing a user from a `ProjectTeam` (or a Teacher excluding a late-joining member from an incomplete assessment) deletes `PeerAssessment` records involving that user (`User.Id == userId || Subject.Id == userId`) **only** for the affected `ProjectTeamAssessment` instances where `IsComplete == false`.
+- **DR-12 (Single Active Team Membership per Project)**: A student can only be an active member (`TeamUsers`) of **one** `ProjectTeam` within a project at any time. To join another team in the same project, the student must first leave (or be removed from) their current team.
 
 ---
 
@@ -160,9 +178,13 @@ The **Project Team Peer Assessments** feature enables:
 
 | Scenario | Expected Behavior / Error Type | HTTP Status |
 | :--- | :--- | :--- |
-| Creating team assessment before `OpenOnUtc` | Throws `ContractException` | `400 Bad Request` |
-| Non-Average score submitted without explanation | Throws `ContractException` | `400 Bad Request` |
-| Student rates all teammates above (or all below) Average on save | Throws `ContractException` in `ValidateAssessmentsOf` | `400 Bad Request` |
+| Creating team assessment with null `projectAssessment`, unpersisted `projectAssessment` (`Id <= 0`), or before `OpenOnUtc` | Throws `ContractException` | `400 Bad Request` |
+| Creating team assessment with null `team`, empty `team.TeamUsers`, or unloaded `User` data | Throws `ContractException` | `400 Bad Request` |
+| Creating `PeerAssessment` with `projectTeamAssessmentId <= 0`, null/unpersisted `user`, or null/unpersisted `subject` | Throws `ContractException` | `400 Bad Request` |
+| Submitting `NullScore (-1)` for Cooperation, Contribution, or Effort | Throws `ContractException` | `400 Bad Request` |
+| Non-Average score submitted without explanation (null, empty, or whitespace) | Throws `ContractException` | `400 Bad Request` |
+| Student rates all teammates above (or all below) Average on Cooperation, Contribution, or Effort on save | Throws `ContractException` in `ValidateAssessmentsOf` | `400 Bad Request` |
+| Non-member / non-participant userId or subjectId passed to `AddOrUpdatePeerAssessment`, `GetPeerAssessmentsOf`, or `GetMissingPeerAssessmentsOf` | Throws `ContractException` | `400 Bad Request` |
 | Student attempts to save assessments for another `userId` | Throws `ContractException` | `400 Bad Request` |
 | Modifying assessments after `IsComplete == true` | Throws `ContractException` | `400 Bad Request` |
 | Requesting results before self or peers have evaluated | Throws `ContractException` | `400 Bad Request` |
