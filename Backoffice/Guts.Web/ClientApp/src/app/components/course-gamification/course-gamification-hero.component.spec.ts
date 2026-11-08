@@ -129,10 +129,12 @@ describe("CourseGamificationHeroComponent", () => {
     expect(gamificationServiceSpy.getProfile).toHaveBeenCalled();
   });
 
-  it("should provide exactly 20 distinct avatars and fallback icon for unknown avatar", () => {
-    expect(component.availableAvatars).toHaveSize(20);
+  it("should provide 40 distinct avatars and fallback icon for unknown avatar", () => {
+    expect(component.availableAvatars).toHaveSize(40);
     const ids = new Set(component.availableAvatars.map((a) => a.id));
-    expect(ids.size).toBe(20);
+    expect(ids.size).toBe(40);
+    const icons = new Set(component.availableAvatars.map((a) => a.icon));
+    expect(icons.size).toBe(40);
     expect(component.getAvatarIcon("UnknownAvatar")).toBe("🐱");
   });
 
