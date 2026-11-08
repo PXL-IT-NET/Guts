@@ -108,8 +108,10 @@ export class GamificationService {
   public getClassLeaderboard(
     courseId: number,
     periodId?: number,
+    perspectiveUserId?: number | null,
   ): Observable<GetResult<IClassGroupLeaderboardEntryModel[]>> {
-    const url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/classes`, periodId);
+    let url = this.appendPeriod(`api/courses/${courseId}/gamification/leaderboard/classes`, periodId);
+    url = this.appendQueryParam(url, "perspectiveUserId", perspectiveUserId);
     return this.http
       .get<IClassGroupLeaderboardEntryModel[]>(url)
       .pipe(

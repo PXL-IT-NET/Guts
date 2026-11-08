@@ -166,10 +166,17 @@ describe("GamificationService", () => {
 
     httpMock
       .expectOne("api/courses/10/gamification/leaderboard/classes")
-      .flush([{ rank: 1, classGroupName: "1TIN-A", averageXp: 85.0 }]);
+      .flush([{ rank: 1, classGroupName: "1TIN-A", classScore: 85 }]);
 
     expect(res.success).toBeTrue();
     expect(res.value[0].classGroupName).toBe("1TIN-A");
+    expect(res.value[0].classScore).toBe(85);
+
+    service.getClassLeaderboard(10, 2, 42).subscribe((r) => (res = r));
+    httpMock
+      .expectOne("api/courses/10/gamification/leaderboard/classes?periodId=2&perspectiveUserId=42")
+      .flush([{ rank: 1, classGroupName: "1TIN-A", classScore: 85, isCurrentUserClass: true, currentUserContribution: 55 }]);
+    expect(res.success).toBeTrue();
 
     service.getClassLeaderboard(10).subscribe((r) => (res = r));
     httpMock

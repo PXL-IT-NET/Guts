@@ -170,4 +170,29 @@ test.describe("Course Gamification (Feature 002)", () => {
     // New class appears in list
     await expect(gamificationPage.adminClassList.filter({ hasText: "1TIN-C" })).toBeVisible();
   });
+
+  test("student views Class Championship with Class Score, highlighted class card, and personal contribution in score points", async ({
+    studentPage,
+  }) => {
+    await setupGamificationApiMocks(studentPage, { enabled: true, isTeacher: false });
+
+    const gamificationPage = new CourseGamificationPage(studentPage);
+    await gamificationPage.goto(1);
+
+    await gamificationPage.tabClassChampionship.click();
+
+    // Personal contribution callout shows class name, rank, and score points without exposing internal multipliers
+    await expect(gamificationPage.classPersonalContributionCallout).toBeVisible();
+    await expect(gamificationPage.classPersonalContributionCallout).toContainText("1TIN-A");
+    await expect(gamificationPage.classPersonalContributionCallout).toContainText("+113 pts");
+    await expect(gamificationPage.classPersonalContributionCallout).toContainText("Class Rank #1");
+
+    // Student's class card has 'Your Class' badge and displays Class Score (never Average XP, Total XP, or Total Green Tests)
+    await expect(gamificationPage.yourClassBadge).toBeVisible();
+    await expect(gamificationPage.classChampionshipCards).toHaveCount(2);
+    await expect(gamificationPage.classChampionshipCards.first()).toContainText("385 pts");
+    await expect(gamificationPage.classChampionshipCards.first()).not.toContainText("Average XP");
+    await expect(gamificationPage.classChampionshipCards.first()).not.toContainText("Total XP");
+    await expect(gamificationPage.classChampionshipCards.first()).not.toContainText("Total Green Tests");
+  });
 });

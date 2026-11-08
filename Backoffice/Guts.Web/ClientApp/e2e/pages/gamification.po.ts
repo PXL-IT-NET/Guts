@@ -10,6 +10,7 @@ export class CourseGamificationPage {
   readonly heroPseudonym: Locator;
   readonly tabWeeklySprint: Locator;
   readonly tabHallOfFame: Locator;
+  readonly tabClassChampionship: Locator;
   readonly tabBadges: Locator;
   readonly tabTeacherControls: Locator;
   readonly hallOfFameProgression: Locator;
@@ -18,6 +19,9 @@ export class CourseGamificationPage {
   readonly hallOfFameTableRows: Locator;
   readonly weeklySprintTableHeaders: Locator;
   readonly weeklySprintTableRows: Locator;
+  readonly classPersonalContributionCallout: Locator;
+  readonly yourClassBadge: Locator;
+  readonly classChampionshipCards: Locator;
   readonly adminNewClassNameInput: Locator;
   readonly adminAddClassButton: Locator;
   readonly adminClassList: Locator;
@@ -32,6 +36,7 @@ export class CourseGamificationPage {
     this.heroPseudonym = page.locator("app-course-gamification-hero h3");
     this.tabWeeklySprint = page.getByRole("button", { name: /Weekly Sprint/i });
     this.tabHallOfFame = page.getByRole("button", { name: /Course Hall of Fame/i });
+    this.tabClassChampionship = page.getByRole("button", { name: /Class Championship/i });
     this.tabBadges = page.getByRole("button", { name: /Badges/i });
     this.tabTeacherControls = page.getByRole("button", { name: /Teacher Controls/i });
     this.hallOfFameProgression = page.locator("#hallOfFameTierProgression");
@@ -40,6 +45,9 @@ export class CourseGamificationPage {
     this.hallOfFameTableRows = page.locator("app-course-gamification-hall-of-fame tbody tr");
     this.weeklySprintTableHeaders = page.locator("app-course-gamification-sprint thead th");
     this.weeklySprintTableRows = page.locator("app-course-gamification-sprint tbody tr");
+    this.classPersonalContributionCallout = page.locator("#classPersonalContributionCallout");
+    this.yourClassBadge = page.locator("#yourClassBadge");
+    this.classChampionshipCards = page.locator("app-course-gamification-class-championship .row > div > .card");
     this.adminNewClassNameInput = page.locator("#adminNewClassNameInput");
     this.adminAddClassButton = page.getByRole("button", { name: /Add Class/i });
     this.adminClassList = page.locator("app-course-gamification-admin .list-group-item");

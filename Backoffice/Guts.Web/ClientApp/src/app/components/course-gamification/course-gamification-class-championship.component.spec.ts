@@ -18,8 +18,10 @@ describe("CourseGamificationClassChampionshipComponent", () => {
       classGroupName: "1TIN-A",
       studentCount: 5,
       totalGreenTests: 40,
-      averageXp: 72.0,
+      classScore: 385,
       totalXp: 360,
+      isCurrentUserClass: true,
+      currentUserContribution: 85,
     },
   ];
 
@@ -46,11 +48,25 @@ describe("CourseGamificationClassChampionshipComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create and load class leaderboard data and reload on ngOnChanges", () => {
+  it("should create, load class leaderboard data, expose currentUserClassEntry, and reload on ngOnChanges", () => {
     expect(component).toBeTruthy();
     expect(component.classLeaderboard).toHaveSize(1);
+    expect(component.currentUserClassEntry?.classGroupName).toBe("1TIN-A");
+    expect(component.currentUserClassEntry?.currentUserContribution).toBe(85);
     expect(component.loading).toBeFalse();
-    expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledWith(10, undefined);
+    expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledWith(
+      10,
+      undefined,
+      undefined,
+    );
+
+    const nativeEl: HTMLElement = fixture.nativeElement;
+    expect(nativeEl.querySelector("#classPersonalContributionCallout")?.textContent).toContain("+85 pts");
+    expect(nativeEl.querySelector("#yourClassBadge")?.textContent).toContain("Your Class");
+    expect(nativeEl.textContent).toContain("385 pts");
+    expect(nativeEl.textContent).not.toContain("Average XP");
+    expect(nativeEl.textContent).not.toContain("Total XP");
+    expect(nativeEl.textContent).not.toContain("Total Green Tests");
 
     component.ngOnChanges({
       courseId: new SimpleChange(10, 20, false),
@@ -61,5 +77,15 @@ describe("CourseGamificationClassChampionshipComponent", () => {
       periodId: new SimpleChange(1, 2, false),
     });
     expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledTimes(3);
+
+    component.perspectiveUserId = 42;
+    component.ngOnChanges({
+      perspectiveUserId: new SimpleChange(null, 42, false),
+    });
+    expect(gamificationServiceSpy.getClassLeaderboard).toHaveBeenCalledWith(
+      10,
+      undefined,
+      42,
+    );
   });
 });

@@ -222,3 +222,49 @@
 
 - [x] **[T6.7]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
 - [x] **[T6.8]** Update `tasks.md` checkboxes and verify `spec.md` and `design.md` status.
+
+---
+
+## Increment 7: Stepped-Bracket Class Championship Scoring & Personal Contribution (AC-4 / DR-13) — _Completed_
+
+### Phase 1: Domain Layer (`Guts.Domain.Tests` ➔ `Guts.Domain`)
+
+- [x] **[T7.1]** `[AC-4, DR-13]` Write failing unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/CourseClassGroupTests.cs`:
+  - Verify `GetContributionWeightForRank` returns `1.00` for ranks `1..5`, `0.60` for ranks `6..10`, `0.30` for ranks `11..15`, and `0.15` for ranks `>= 16`, and throws `ContractException` for `<= 0`.
+  - Verify `CalculateStudentContribution` returns `5 + Round(totalXp * weight, MidpointRounding.AwayFromZero)` (including `5` when `totalXp == 0`).
+  - Verify `CalculateClassScore` orders students by `TotalXp` descending, `LastXpEarnedAt` ascending, `Id` ascending, sums their contributions, never decreases when a `0 XP` or low-XP student joins, and returns `CurrentUserContribution` when `currentUserId` matches a class member.
+- [x] **[T7.2]** `[AC-4, DR-13]` Implement `JoinBonusPoints`, `GetContributionWeightForRank`, `CalculateStudentContribution`, and `CalculateClassScore` in `Backoffice/Guts.Domain/GamificationAggregate/CourseClassGroup.cs`.
+- [x] **[T7.3]** Run `dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+
+- [x] **[T7.4]** `[AC-4, DR-13]` Update `ClassGroupLeaderboardEntryDto` in `Backoffice/Guts.Business/Dtos/Gamification/GamificationDtos.cs` (replace `AverageXp` with `ClassScore`, `IsCurrentUserClass`, and `CurrentUserContribution`) and update `IGamificationService.GetClassGroupLeaderboardAsync`.
+- [x] **[T7.5]** `[AC-4, DR-13]` Update and add unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+  - Verify `GetClassGroupLeaderboardAsync` uses `GetByCourseAndPeriodAsync` (including `ShowInLeaderBoard == false` students), calculates `ClassScore` via stepped brackets + join bonus, ranks by `ClassScore` descending then `TotalGreenTests` descending, and populates `IsCurrentUserClass` and `CurrentUserContribution` for `currentUserId`.
+- [x] **[T7.6]** `[AC-4, DR-13]` Implement updated `GetClassGroupLeaderboardAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs`.
+- [x] **[T7.7]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 3: API Layer (`Guts.Api.Tests` ➔ `Guts.Api`)
+
+- [x] **[T7.8]** `[AC-4, DR-13]` Update `GamificationController.GetClassLeaderboard` in `Backoffice/Guts.Api/Controllers/GamificationController.cs` to accept `[FromQuery] int? perspectiveUserId = null` and pass `effectiveUserId` (`IsLector() ? perspectiveUserId : GetUserId()`) to `GetClassGroupLeaderboardAsync`, and update `Backoffice/Guts.Api.Tests/Controllers/GamificationControllerTests.cs`.
+- [x] **[T7.9]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 4: Frontend Layer (`Guts.Web/ClientApp`)
+
+- [x] **[T7.10]** `[AC-4, DR-13]` Update `IClassGroupLeaderboardEntryModel` in `gamification.model.ts` (`classScore`, `isCurrentUserClass`, `currentUserContribution`) and `getClassLeaderboard(courseId, periodId?, perspectiveUserId?)` in `gamification.service.ts` + `gamification.service.spec.ts`.
+- [x] **[T7.11]** `[AC-4, DR-13]` Update `CourseGamificationClassChampionshipComponent` (`course-gamification-class-championship.component.ts`, `.html`, `.spec.ts`) and `course-gamification.component.html`:
+  - Pass `[isTeacher]="userProfile.isTeacher()"` and `[perspectiveUserId]="perspectiveUserId"` to `<app-course-gamification-class-championship>`.
+  - Display personal contribution callout banner (in score points only, without exposing bracket weights), highlight the student's class card (`isCurrentUserClass`), and display `Class Score` (`classScore pts`) instead of `Average XP`.
+- [x] **[T7.12]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all Karma/Jasmine tests pass.
+
+---
+
+### Phase 5: Final Verification
+
+- [x] **[T7.13]** Run full backend test suite (`dotnet test Backoffice/Guts.slnx`) and mark tasks complete.

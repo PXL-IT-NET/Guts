@@ -1,13 +1,36 @@
 <div class="card shadow-sm border-0">
   <div class="card-header bg-transparent py-3">
     <h5 class="mb-0 fw-bold">🏫 Class Championship</h5>
-    <small class="text-body-secondary">Ranked by Average XP per student so small and large classes compete on an equal footing.</small>
+    <small class="text-body-secondary">Every student who joins and passes tests boosts their class score — balanced so small and large classes compete on an equal footing.</small>
   </div>
   <div class="card-body">
+    @if (currentUserClassEntry && currentUserClassEntry.currentUserContribution !== null && currentUserClassEntry.currentUserContribution !== undefined) {
+      <div
+        class="alert alert-primary d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4"
+        id="classPersonalContributionCallout"
+      >
+        <div>
+          <i class="bi bi-stars me-2"></i>
+          <strong>Your Class Contribution ({{ currentUserClassEntry.classGroupName }}):</strong>
+          You have contributed
+          <span class="badge bg-primary ms-1 me-1">+{{ currentUserClassEntry.currentUserContribution }} pts</span>
+          to your class score! Every test you make green adds more points for your class.
+        </div>
+        <span class="badge bg-dark">Class Rank #{{ currentUserClassEntry.rank }}</span>
+      </div>
+    }
+
     <div class="row g-4">
       @for (item of classLeaderboard; track item.classGroupId) {
         <div class="col-md-6 col-lg-4">
-          <div class="card h-100 border-0 shadow-sm" [class.border-warning]="item.rank === 1" [class.border]="item.rank === 1">
+          <div
+            class="card h-100 shadow-sm"
+            [class.border-warning]="item.rank === 1 && !item.isCurrentUserClass"
+            [class.border-primary]="item.isCurrentUserClass"
+            [class.border-2]="item.isCurrentUserClass"
+            [class.border-0]="item.rank !== 1 && !item.isCurrentUserClass"
+            [class.border]="item.rank === 1 || item.isCurrentUserClass"
+          >
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="fs-3">
@@ -16,22 +39,19 @@
                   @else if (item.rank === 3) { 🥉 }
                   @else { 🎖️ }
                 </span>
-                <span class="badge bg-primary fs-6">Rank #{{ item.rank }}</span>
+                <div class="d-flex align-items-center gap-2">
+                  @if (item.isCurrentUserClass) {
+                    <span class="badge bg-info text-dark" id="yourClassBadge">Your Class</span>
+                  }
+                  <span class="badge bg-primary fs-6">Rank #{{ item.rank }}</span>
+                </div>
               </div>
               <h4 class="fw-bold mb-1">{{ item.classGroupName }}</h4>
               <p class="text-body-secondary mb-3">{{ item.studentCount }} participating student(s)</p>
               <div class="p-3 bg-body-tertiary rounded mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="text-body-secondary">Average XP:</span>
-                  <span class="fw-bold text-primary">{{ item.averageXp }} XP</span>
-                </div>
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="text-body-secondary">Total XP:</span>
-                  <span class="fw-semibold">{{ item.totalXp }} XP</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-body-secondary">Total Green Tests:</span>
-                  <span class="fw-semibold text-success">✅ {{ item.totalGreenTests }}</span>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-body-secondary">Class Score:</span>
+                  <span class="fw-bold fs-5 text-primary">{{ item.classScore }} pts</span>
                 </div>
               </div>
             </div>

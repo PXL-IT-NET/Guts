@@ -19,6 +19,8 @@ import { IClassGroupLeaderboardEntryModel } from "../../viewmodels/gamification.
 export class CourseGamificationClassChampionshipComponent implements OnInit, OnChanges {
   @Input() public courseId: number = 0;
   @Input() public periodId?: number;
+  @Input() public isTeacher: boolean = false;
+  @Input() public perspectiveUserId?: number | null;
 
   private readonly _classLeaderboard = signal<IClassGroupLeaderboardEntryModel[]>([]);
   public get classLeaderboard(): IClassGroupLeaderboardEntryModel[] {
@@ -26,6 +28,10 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
   }
   public set classLeaderboard(v: IClassGroupLeaderboardEntryModel[]) {
     this._classLeaderboard.set(v);
+  }
+
+  public get currentUserClassEntry(): IClassGroupLeaderboardEntryModel | null {
+    return this.classLeaderboard.find((c) => !!c.isCurrentUserClass) ?? null;
   }
 
   private readonly _loading = signal<boolean>(false);
@@ -43,8 +49,11 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if ((changes["courseId"] && !changes["courseId"].firstChange) ||
-        (changes["periodId"] && !changes["periodId"].firstChange)) {
+    if (
+      (changes["courseId"] && !changes["courseId"].firstChange) ||
+      (changes["periodId"] && !changes["periodId"].firstChange) ||
+      (changes["perspectiveUserId"] && !changes["perspectiveUserId"].firstChange)
+    ) {
       this.loadClassLeaderboard();
     }
   }
@@ -52,12 +61,18 @@ export class CourseGamificationClassChampionshipComponent implements OnInit, OnC
   public loadClassLeaderboard(): void {
     if (this.courseId <= 0) return;
     this.loading = true;
-    this.gamificationService.getClassLeaderboard(this.courseId, this.periodId).subscribe((res) => {
-      this.loading = false;
-      if (res.success && res.value) {
-        this.classLeaderboard = res.value;
-      }
-    });
+    this.gamificationService
+      .getClassLeaderboard(
+        this.courseId,
+        this.periodId,
+        this.perspectiveUserId ?? undefined,
+      )
+      .subscribe((res) => {
+        this.loading = false;
+        if (res.success && res.value) {
+          this.classLeaderboard = res.value;
+        }
+      });
   }
 }
 

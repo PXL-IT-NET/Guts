@@ -128,6 +128,20 @@ flowchart TD
      - `HallOfFameOvertake = 6` (`TargetId = surpassedRank`, `XpEarned = 4`)
      - `HallOfFameTierUp = 7` (`TargetId = (int)reachedTier`, `XpEarned = 5`)
 
+4. **`CourseClassGroup` (`CourseClassGroup.cs`)** (`[AC-4]`, `[DR-13]`):
+   - Encapsulates Class Championship stepped-bracket scoring:
+     - `public const int JoinBonusPoints = 5;`
+     - `public static double GetContributionWeightForRank(int withinClassRank)`:
+       - Enforces `Contracts.Require(withinClassRank > 0, "Within-class rank must be positive.");`
+       - Returns `1.00` for ranks `1..5`, `0.60` for ranks `6..10`, `0.30` for ranks `11..15`, and `0.15` for ranks `>= 16`.
+     - `public static int CalculateStudentContribution(int totalXp, int withinClassRank)`:
+       - Enforces `Contracts.Require(totalXp >= 0, "Total XP cannot be negative.");` and `Contracts.Require(withinClassRank > 0, "Within-class rank must be positive.");`
+       - Returns `JoinBonusPoints + (int)Math.Round(totalXp * GetContributionWeightForRank(withinClassRank), MidpointRounding.AwayFromZero);`
+     - `public static (int ClassScore, int? CurrentUserContribution) CalculateClassScore(IEnumerable<StudentCourseProfile> classProfiles, int? currentUserId = null)`:
+       - Enforces `Contracts.Require(classProfiles != null, "Class profiles cannot be null.");`
+       - Orders profiles by `TotalXp` descending, then `LastXpEarnedAt` ascending, then `Id` ascending (`[DR-7]`, `[DR-13]`).
+       - Sums `CalculateStudentContribution(profile.TotalXp, rank)` across all ordered profiles (`0` if empty), capturing the contribution for `profile.UserId == currentUserId.Value` when `currentUserId.HasValue`.
+
 ---
 
 ## 3. Business Layer (`Guts.Business`)
@@ -229,6 +243,11 @@ flowchart TD
         - Populates `AllTiers` with metadata and student counts for all 8 tiers (`Obsidian` down to `Paper`).
         - If `selectedTier.HasValue`, filters `Entries` to `selectedTier.Value` and sets `CurrentTier` and `VisibleTiers` around `selectedTier.Value`; if `selectedTier == null`, returns all ranked entries across all tiers (each with their tier-relative rank starting at 1) and defaults `CurrentTier` to `Obsidian`.
         - Always populates `StudentOptions` (for `isLector == true`) with the list of ranked students displaying their tier-relative rank (`#{{ student.rank }} {{ student.displayName }} ({{ student.tierIcon }} {{ student.tierName }} — {{ student.score }} XP)`), completely avoiding global ranks.
+  - `GetClassGroupLeaderboardAsync(int courseId, int? periodId = null, int? currentUserId = null)` (`[AC-4]`, `[DR-13]`):
+    - Loads all non-Lector student profiles in the course and period via `studentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, period.Id)` (so students who opted out of individual leaderboards via `ShowInLeaderBoard == false` still contribute to their class score).
+    - For each `CourseClassGroup`, filters profiles with `p.ClassGroupId == group.Id` and invokes `group.CalculateClassScore(groupStudents, currentUserId)`.
+    - Populates `ClassGroupLeaderboardEntryDto` with `ClassScore`, `TotalXp`, `TotalGreenTests`, `StudentCount`, `IsCurrentUserClass = currentUserContribution.HasValue`, and `CurrentUserContribution`.
+    - Orders class groups by `ClassScore` descending, then `TotalGreenTests` descending, then `TotalXp` descending, and assigns 1-based `Rank`.
 
 ### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
 - New Streak Reminder DTOs (`[US-8]`, `[AC-7]`):
@@ -263,6 +282,16 @@ flowchart TD
     - `int? CurrentUserRank`
     - `IReadOnlyList<LeaderboardEntryDto> Entries`
     - `IReadOnlyList<HallOfFameStudentOptionDto> StudentOptions`
+- Updated `ClassGroupLeaderboardEntryDto` (`[AC-4]`, `[DR-13]`):
+  - `int Rank`
+  - `int ClassGroupId`
+  - `string ClassGroupName`
+  - `int StudentCount`
+  - `int TotalGreenTests`
+  - `int ClassScore` (replaces `AverageXp`)
+  - `int TotalXp`
+  - `bool IsCurrentUserClass`
+  - `int? CurrentUserContribution`
 
 ---
 
@@ -319,6 +348,11 @@ flowchart TD
   - Accepts `[FromQuery] int? periodId = null, [FromQuery] int? perspectiveUserId = null, [FromQuery] HallOfFameTier? tier = null`.
   - Invokes `gamificationService.GetHallOfFameLeaderboardAsync(courseId, GetUserId(), periodId, IsLector(), IsLector() ? perspectiveUserId : null, IsLector() ? tier : null)`.
   - Produces `HallOfFameLeaderboardDto`.
+- `GET api/courses/{courseId}/gamification/leaderboard/classes`:
+  - Accepts `[FromQuery] int? periodId = null, [FromQuery] int? perspectiveUserId = null`.
+  - Resolves `int? effectiveUserId = IsLector() ? perspectiveUserId : GetUserId();`
+  - Invokes `gamificationService.GetClassGroupLeaderboardAsync(courseId, periodId, effectiveUserId)`.
+  - Produces `IReadOnlyList<ClassGroupLeaderboardEntryDto>`.
 
 ---
 
@@ -363,6 +397,11 @@ flowchart TD
 4. **`CourseGamificationHeroComponent` (`course-gamification-hero.component.ts` & `.html`)**:
    - Accepts `@Input() public readOnly: boolean = false;`.
    - When `readOnly` is `true`, the "Customize Profile" / settings button is hidden and `openSettings()` is disabled so teachers cannot alter a student's profile settings.
+5. **`CourseGamificationClassChampionshipComponent` (`course-gamification-class-championship.component.ts` & `.html`)**:
+   - Accepts `@Input() public courseId: number = 0;`, `@Input() public periodId?: number;`, `@Input() public isTeacher: boolean = false;`, and `@Input() public perspectiveUserId?: number | null;`.
+   - Calls `gamificationService.getClassLeaderboard(courseId, periodId, perspectiveUserId)`.
+   - Displays a personal contribution callout banner when an entry has `isCurrentUserClass && currentUserContribution != null` showing the student's class name and their personal contribution in score points (`currentUserContribution` pts), without exposing internal bracket multipliers.
+   - Highlights the student's class card (`isCurrentUserClass`) with a `"Your Class"` badge and displays only `Class Score` (`classScore pts`) and participating student count (`Average XP`, `Total XP`, and `Total Green Tests` are not displayed on the cards).
 
 ---
 

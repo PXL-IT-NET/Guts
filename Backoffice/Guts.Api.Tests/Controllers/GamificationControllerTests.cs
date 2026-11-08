@@ -226,15 +226,44 @@ public class GamificationControllerTests
     }
 
     [Test]
-    public async Task GetClassLeaderboard_ShouldReturnClassRankings()
+    public async Task GetClassLeaderboard_ShouldReturnClassRankingsForAuthenticatedStudent()
     {
         var rankings = new List<ClassGroupLeaderboardEntryDto>
         {
-            new ClassGroupLeaderboardEntryDto { Rank = 1, ClassGroupName = "1TIN-A", AverageXp = 80.5 }
+            new ClassGroupLeaderboardEntryDto
+            {
+                Rank = 1,
+                ClassGroupName = "1TIN-A",
+                ClassScore = 85,
+                IsCurrentUserClass = true,
+                CurrentUserContribution = 85
+            }
         };
-        _gamificationServiceMock.Setup(s => s.GetClassGroupLeaderboardAsync(CourseId, PeriodId)).ReturnsAsync(rankings);
+        _gamificationServiceMock.Setup(s => s.GetClassGroupLeaderboardAsync(CourseId, PeriodId, UserId)).ReturnsAsync(rankings);
 
         var actionResult = await _controller.GetClassLeaderboard(CourseId, PeriodId);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(rankings));
+    }
+
+    [Test]
+    public async Task GetClassLeaderboard_WhenLectorWithPerspectiveUserId_ShouldPassPerspectiveUserId()
+    {
+        const int selectedStudentId = 999;
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(UserId.ToString())
+            .WithRole(Role.Constants.Lector)
+            .Build();
+
+        var rankings = new List<ClassGroupLeaderboardEntryDto>
+        {
+            new ClassGroupLeaderboardEntryDto { Rank = 1, ClassGroupName = "1TIN-A", ClassScore = 160 }
+        };
+        _gamificationServiceMock.Setup(s => s.GetClassGroupLeaderboardAsync(CourseId, PeriodId, selectedStudentId)).ReturnsAsync(rankings);
+
+        var actionResult = await _controller.GetClassLeaderboard(CourseId, PeriodId, selectedStudentId);
 
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);

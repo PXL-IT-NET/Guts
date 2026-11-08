@@ -708,7 +708,10 @@ public class GamificationService(
         return string.IsNullOrWhiteSpace(displayName) ? profile.Pseudonym : displayName;
     }
 
-    public async Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(int courseId, int? periodId = null)
+    public async Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(
+        int courseId,
+        int? periodId = null,
+        int? currentUserId = null)
     {
         var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
         if (config != null && (!config.IsGamificationEnabled || !config.IsClassCompetitionEnabled))
@@ -718,17 +721,17 @@ public class GamificationService(
 
         var period = await periodRepository.GetPeriodAsync(periodId);
         var classGroups = await courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
-        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
+        var allProfiles = await studentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
 
         var result = new List<ClassGroupLeaderboardEntryDto>();
 
         foreach (var group in classGroups)
         {
-            var groupStudents = optedInProfiles.Where(p => p.ClassGroupId == group.Id).ToList();
+            var groupStudents = allProfiles.Where(p => p.ClassGroupId == group.Id).ToList();
             int studentCount = groupStudents.Count;
             int totalXp = groupStudents.Sum(p => p.TotalXp);
             int totalGreen = groupStudents.Sum(p => p.TotalGreenTests);
-            double avgXp = studentCount > 0 ? Math.Round((double)totalXp / studentCount, 1) : 0;
+            var (classScore, currentUserContribution) = CourseClassGroup.CalculateClassScore(groupStudents, currentUserId);
 
             result.Add(new ClassGroupLeaderboardEntryDto
             {
@@ -736,12 +739,18 @@ public class GamificationService(
                 ClassGroupName = group.Name,
                 StudentCount = studentCount,
                 TotalGreenTests = totalGreen,
-                AverageXp = avgXp,
-                TotalXp = totalXp
+                ClassScore = classScore,
+                TotalXp = totalXp,
+                IsCurrentUserClass = currentUserContribution.HasValue,
+                CurrentUserContribution = currentUserContribution
             });
         }
 
-        var ordered = result.OrderByDescending(r => r.AverageXp).ThenByDescending(r => r.TotalGreenTests).ToList();
+        var ordered = result
+            .OrderByDescending(r => r.ClassScore)
+            .ThenByDescending(r => r.TotalGreenTests)
+            .ThenByDescending(r => r.TotalXp)
+            .ToList();
         for (int i = 0; i < ordered.Count; i++)
         {
             ordered[i].Rank = i + 1;

@@ -24,7 +24,10 @@ public interface IGamificationService
         bool isLector = false,
         int? perspectiveUserId = null,
         HallOfFameTier? selectedTier = null);
-    Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(int courseId, int? periodId = null);
+    Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(
+        int courseId,
+        int? periodId = null,
+        int? currentUserId = null);
     Task<CourseGamificationConfigDto> GetCourseConfigAsync(int courseId);
     Task<CourseGamificationConfigDto> UpdateCourseConfigAsync(int courseId, CourseGamificationConfigDto configDto);
     Task<IReadOnlyList<CourseClassGroupDto>> GetCourseClassGroupsAsync(int courseId, int? periodId = null);

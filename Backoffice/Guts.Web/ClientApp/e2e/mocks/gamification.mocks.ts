@@ -5,6 +5,7 @@ import {
   IStudentGamificationProfileModel,
   IHallOfFameLeaderboardModel,
   ILeaderboardEntryModel,
+  IClassGroupLeaderboardEntryModel,
   ICourseClassGroupModel,
 } from "../../src/app/viewmodels/gamification.model";
 
@@ -275,6 +276,31 @@ export const mockWeeklySprintEntries: ILeaderboardEntryModel[] = [
   },
 ];
 
+export const mockClassLeaderboardEntries: IClassGroupLeaderboardEntryModel[] = [
+  {
+    rank: 1,
+    classGroupId: 10,
+    classGroupName: "1TIN-A",
+    studentCount: 5,
+    totalGreenTests: 38,
+    classScore: 385,
+    totalXp: 375,
+    isCurrentUserClass: true,
+    currentUserContribution: 113,
+  },
+  {
+    rank: 2,
+    classGroupId: 20,
+    classGroupName: "1TIN-B",
+    studentCount: 4,
+    totalGreenTests: 22,
+    classScore: 240,
+    totalXp: 220,
+    isCurrentUserClass: false,
+    currentUserContribution: null,
+  },
+];
+
 export interface SetupGamificationOptions {
   enabled?: boolean;
   isTeacher?: boolean;
@@ -371,6 +397,23 @@ async function handleGamificationLeaderboardRoute(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(mockWeeklySprintEntries),
+    });
+    return;
+  }
+
+  if (url.includes("/gamification/leaderboard/classes")) {
+    const showPersonalPerspective = !isTeacher || url.includes("perspectiveUserId=");
+    const entries = showPersonalPerspective
+      ? mockClassLeaderboardEntries
+      : mockClassLeaderboardEntries.map((entry) => ({
+          ...entry,
+          isCurrentUserClass: false,
+          currentUserContribution: null,
+        }));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(entries),
     });
   }
 }

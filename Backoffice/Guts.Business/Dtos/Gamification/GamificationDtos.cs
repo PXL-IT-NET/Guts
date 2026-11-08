@@ -130,8 +130,10 @@ public class ClassGroupLeaderboardEntryDto
     public string ClassGroupName { get; set; }
     public int StudentCount { get; set; }
     public int TotalGreenTests { get; set; }
-    public double AverageXp { get; set; }
+    public int ClassScore { get; set; }
     public int TotalXp { get; set; }
+    public bool IsCurrentUserClass { get; set; }
+    public int? CurrentUserContribution { get; set; }
 }
 
 public class CourseGamificationConfigDto

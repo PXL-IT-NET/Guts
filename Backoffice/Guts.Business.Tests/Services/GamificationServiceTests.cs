@@ -549,7 +549,7 @@ public class GamificationServiceTests
     }
 
     [Test]
-    public async Task GetClassGroupLeaderboardAsync_ShouldCalculateAverageXpCorrectly()
+    public async Task GetClassGroupLeaderboardAsync_ShouldCalculateSteppedClassScoreAndIncludeOptedOutStudents()
     {
         const int courseId = 10;
         const int periodId = 1;
@@ -560,33 +560,40 @@ public class GamificationServiceTests
         _courseClassGroupRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
             .ReturnsAsync(new List<CourseClassGroup> { groupA, groupB });
 
-        var student1 = new StudentCourseProfile(101, courseId, periodId);
+        var student1 = new StudentCourseProfile(101, courseId, periodId) { Id = 1 };
         student1.Enroll(true, "Student1", "CodeCat", 1, true);
-        student1.AwardAssignmentBonus(1, DateTime.UtcNow); // +50 XP
+        student1.AwardAssignmentBonus(1, DateTime.UtcNow); // +50 XP -> rank 2 in groupA (100% weight) -> 5 + 50 = 55
 
-        var student2 = new StudentCourseProfile(102, courseId, periodId);
-        student2.Enroll(true, "Student2", "CodeCat", 1, true);
-        student2.AwardChapterBonus(1, DateTime.UtcNow); // +100 XP
+        var student2 = new StudentCourseProfile(102, courseId, periodId) { Id = 2 };
+        student2.Enroll(false, "Student2", "CodeCat", 1, true); // ShowInLeaderBoard = false still contributes to class!
+        student2.AwardChapterBonus(1, DateTime.UtcNow); // +100 XP -> rank 1 in groupA (100% weight) -> 5 + 100 = 105
 
-        var student3 = new StudentCourseProfile(103, courseId, periodId);
+        var student3 = new StudentCourseProfile(103, courseId, periodId) { Id = 3 };
         student3.Enroll(true, "Student3", "CodeCat", 2, true);
-        student3.AwardPassedTestXp(1, DateTime.UtcNow); // +10 XP
+        student3.AwardPassedTestXp(1, DateTime.UtcNow); // +10 XP -> rank 1 in groupB (100% weight) -> 5 + 10 = 15
 
-        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
             .ReturnsAsync(new List<StudentCourseProfile> { student1, student2, student3 });
 
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsClassCompetitionEnabled = true });
 
-        var result = await _service.GetClassGroupLeaderboardAsync(courseId, periodId);
+        var result = await _service.GetClassGroupLeaderboardAsync(courseId, periodId, currentUserId: 101);
 
         Assert.That(result.Count, Is.EqualTo(2));
         Assert.That(result[0].ClassGroupName, Is.EqualTo("1TIN-A"));
         Assert.That(result[0].Rank, Is.EqualTo(1));
-        Assert.That(result[0].AverageXp, Is.EqualTo(75.0));
+        Assert.That(result[0].StudentCount, Is.EqualTo(2));
+        Assert.That(result[0].TotalXp, Is.EqualTo(150));
+        Assert.That(result[0].ClassScore, Is.EqualTo(160));
+        Assert.That(result[0].IsCurrentUserClass, Is.True);
+        Assert.That(result[0].CurrentUserContribution, Is.EqualTo(55));
+
         Assert.That(result[1].ClassGroupName, Is.EqualTo("1TIN-B"));
         Assert.That(result[1].Rank, Is.EqualTo(2));
-        Assert.That(result[1].AverageXp, Is.EqualTo(10.0));
+        Assert.That(result[1].ClassScore, Is.EqualTo(15));
+        Assert.That(result[1].IsCurrentUserClass, Is.False);
+        Assert.That(result[1].CurrentUserContribution, Is.Null);
     }
 
     [Test]

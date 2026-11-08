@@ -84,9 +84,15 @@ public class GamificationController(
 
     [HttpGet("leaderboard/classes")]
     [ProducesResponseType(typeof(IReadOnlyList<ClassGroupLeaderboardEntryDto>), (int)HttpStatusCode.OK)]
-    public async Task<IActionResult> GetClassLeaderboard(int courseId, [FromQuery] int? periodId = null)
+    public async Task<IActionResult> GetClassLeaderboard(
+        int courseId,
+        [FromQuery] int? periodId = null,
+        [FromQuery] int? perspectiveUserId = null)
     {
-        var leaderboard = await gamificationService.GetClassGroupLeaderboardAsync(courseId, periodId);
+        int? effectiveUserId = IsLector()
+            ? perspectiveUserId
+            : GetUserId();
+        var leaderboard = await gamificationService.GetClassGroupLeaderboardAsync(courseId, periodId, effectiveUserId);
         return Ok(leaderboard);
     }
 

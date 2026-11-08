@@ -113,8 +113,10 @@ export interface IClassGroupLeaderboardEntryModel {
   classGroupName: string;
   studentCount: number;
   totalGreenTests: number;
-  averageXp: number;
+  classScore: number;
   totalXp: number;
+  isCurrentUserClass?: boolean;
+  currentUserContribution?: number | null;
 }
 
 export interface ICourseGamificationConfigModel {
