@@ -156,7 +156,7 @@ public static class HallOfFameLeague
         Contracts.Require(optedInProfiles != null, "Opted-in profiles cannot be null.");
         Contracts.Require(week != null, "IsoWeek cannot be null.");
 
-        var rankedProfiles = OrderProfiles(optedInProfiles!.Where(p => p.TotalXp > 0));
+        var rankedProfiles = OrderProfiles(optedInProfiles.Where(p => p.TotalXp > 0));
         if (rankedProfiles.Count == 0)
         {
             return Array.Empty<StudentCourseProfile>();

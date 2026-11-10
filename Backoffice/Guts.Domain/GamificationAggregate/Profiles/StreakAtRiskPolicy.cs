@@ -16,7 +16,7 @@ public static class StreakAtRiskPolicy
         Contracts.Require(currentWeek != null, "CurrentWeek cannot be null.");
         Contracts.Require(allAvailableCourseTestIds != null, "Available course test IDs cannot be null.");
 
-        if (profile!.WeeklyStreak.CurrentStreak <= 0)
+        if (profile.WeeklyStreak.CurrentStreak <= 0)
         {
             return false;
         }

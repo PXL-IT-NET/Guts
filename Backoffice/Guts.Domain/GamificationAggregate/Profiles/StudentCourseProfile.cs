@@ -459,7 +459,7 @@ public class StudentCourseProfile : AggregateRoot
         Contracts.Require(currentRank > 0, "Current rank must be positive.");
         Contracts.Require(totalRankedStudents >= currentRank, "Total ranked students must be at least currentRank.");
 
-        DateTime startOfWeek = week!.StartOfWeek;
+        DateTime startOfWeek = week.StartOfWeek;
         DateTime endOfWeek = week.EndOfWeek;
 
         if (!IsEligibleForRankDefense(currentRank, totalRankedStudents, startOfWeek, endOfWeek, allAvailableCourseTestIds))

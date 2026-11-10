@@ -20,7 +20,7 @@ public class RecentGainsSummary
         Gains = AggregateEvents(recentEvents);
     }
 
-    private static IReadOnlyList<AggregatedXpGain> AggregateEvents(IReadOnlyList<GamificationEvent> events)
+    private static List<AggregatedXpGain> AggregateEvents(IReadOnlyList<GamificationEvent> events)
     {
         var aggregated = new List<AggregatedXpGain>();
 

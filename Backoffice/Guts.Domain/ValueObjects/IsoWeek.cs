@@ -52,7 +52,7 @@ public sealed class IsoWeek : ValueObject<IsoWeek>, IComparable<IsoWeek>, IEquat
     public int WeeksBetween(IsoWeek other)
     {
         Contracts.Require(other != null, "Other IsoWeek cannot be null.");
-        TimeSpan diff = other!.StartOfWeek - StartOfWeek;
+        TimeSpan diff = other.StartOfWeek - StartOfWeek;
         return (int)Math.Round(diff.TotalDays / 7.0);
     }
 

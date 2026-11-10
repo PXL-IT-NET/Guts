@@ -72,6 +72,6 @@ public class ProjectTeam : AggregateRoot, IProjectTeam
     public void EnsureBelongsTo(int courseId, string projectCode)
     {
         Contracts.Require(Project != null && Project.CourseId == courseId, $"Team with id '{Id}' is not linked to course with id '{courseId}'");
-        Contracts.Require(Project != null && string.Equals((string)Project.Code, projectCode, StringComparison.OrdinalIgnoreCase), $"Team with id '{Id}' is not linked to project with code '{projectCode}'");
+        Contracts.Require(string.Equals((string)Project.Code, projectCode, StringComparison.OrdinalIgnoreCase), $"Team with id '{Id}' is not linked to project with code '{projectCode}'");
     }
 }

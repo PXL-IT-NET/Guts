@@ -16,7 +16,7 @@ public static class WeeklySprintCompetition
         IsoWeek sprintWeek)
     {
         Contracts.Require(sprintWeek != null, "SprintWeek cannot be null.");
-        return DetermineStandings(profiles, sprintWeek!.StartOfWeek, sprintWeek.FridayCutoff);
+        return DetermineStandings(profiles, sprintWeek.StartOfWeek, sprintWeek.FridayCutoff);
     }
 
     public static IReadOnlyList<WeeklySprintStanding> DetermineStandings(
@@ -68,7 +68,7 @@ public static class WeeklySprintCompetition
         IsoWeek sprintWeek)
     {
         Contracts.Require(sprintWeek != null, "SprintWeek cannot be null.");
-        return AwardBadges(standings, sprintWeek!.FridayCutoff);
+        return AwardBadges(standings, sprintWeek.FridayCutoff);
     }
 
     public static (int BadgesAwarded, IReadOnlyList<StudentCourseProfile> ModifiedProfiles) AwardBadges(
