@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -12,5 +12,8 @@ internal class ProjectConfiguration : IEntityTypeConfiguration<Project>
     {
         builder.HasMany(p => (ICollection<ProjectAssessment>)p.Assessments).WithOne().HasForeignKey(pa => pa.ProjectId);
         builder.HasMany(p => (ICollection<ProjectTeam>)p.Teams).WithOne(pt => (Project)pt.Project).HasForeignKey(pa => pa.ProjectId);
+
+        builder.Navigation(p => p.Teams)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -122,19 +122,9 @@ internal class ProjectService(
     public async Task<IProjectTeam> AddProjectTeamAsync(int courseId, string projectCode, string teamName)
     {
         IPeriod period = await periodRepository.GetPeriodAsync(null);
-
         IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
-        ProjectTeam newTeam = new()
-        {
-            Name = teamName,
-            ProjectId = project.Id
-        };
-
-        ICollection<IProjectTeam> allTeams = project.Teams;
-        bool alreadyExists = allTeams.Any(team => string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase));
-        Contracts.Require(!alreadyExists, "A team with the same name already exists");
-
+        IProjectTeam newTeam = project.AddTeam(teamName);
         return await projectTeamRepository.AddAsync(newTeam);
     }
 
@@ -144,10 +134,9 @@ internal class ProjectService(
         IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
         IProjectTeam teamToUpdate = await projectTeamRepository.LoadByIdAsync(teamId);
 
-        Contracts.Require(teamToUpdate.ProjectId == project.Id, "The team does not belong to the project");
+        project.EnsureTeamBelongsToProject(teamToUpdate);
 
         teamToUpdate.Name = teamName;
-
         await projectTeamRepository.UpdateAsync(teamToUpdate);
     }
 
@@ -157,7 +146,7 @@ internal class ProjectService(
         IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
         IProjectTeam teamToDelete = await projectTeamRepository.LoadByIdAsync(teamId);
 
-        Contracts.Require(teamToDelete.ProjectId == project.Id, "The team does not belong to the project");
+        project.EnsureTeamBelongsToProject(teamToDelete);
 
         await projectTeamRepository.DeleteAsync(teamToDelete);
     }
@@ -167,24 +156,14 @@ internal class ProjectService(
         Contracts.Require(teamNumberFrom > 0, "The start team number must be greater than zero.");
         Contracts.Require(teamNumberTo >= teamNumberFrom, "The end team number must be greater than or equal to the start team number.");
         Contracts.Require(teamNumberTo - teamNumberFrom <= 100, "Cannot generate more than 100 teams in a single request.");
-        IPeriod period = await periodRepository.GetPeriodAsync(null);
 
+        IPeriod period = await periodRepository.GetPeriodAsync(null);
         IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);
 
-        ICollection<IProjectTeam> allTeams = project.Teams;
-
-        for (int teamNumber = teamNumberFrom; teamNumber <= teamNumberTo; teamNumber++)
+        IReadOnlyList<IProjectTeam> newTeams = project.GenerateTeams(teamBaseName, teamNumberFrom, teamNumberTo);
+        foreach (var team in newTeams)
         {
-            ProjectTeam newTeam = new()
-            {
-                Name = $"{teamBaseName} {teamNumber:D2}",
-                ProjectId = project.Id
-            };
-
-            if (allTeams.All(team => !string.Equals(team.Name, newTeam.Name, StringComparison.OrdinalIgnoreCase)))
-            {
-                await projectTeamRepository.AddAsync(newTeam);
-            }
+            await projectTeamRepository.AddAsync(team);
         }
     }
 
@@ -199,11 +178,12 @@ internal class ProjectService(
     public async Task AddUserToProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
     {
         IReadOnlyList<IProjectTeam> allTeams = await LoadTeamsOfProjectAsync(courseId, projectCode, periodId: null);
-        IProjectTeam currentTeam = allTeams.FirstOrDefault(t => t.TeamUsers.Any(tu => tu.UserId == userId));
-        Contracts.Require(currentTeam is null, () => $"The user is already a member of '{currentTeam.Name}'. It is not allowed to be in multiple teams.");
 
-        IProjectTeam targetTeam = allTeams.FirstOrDefault(t => t.Id == teamId);
-        Contracts.Require(targetTeam != null, $"The team you want to join is not a team of project '{projectCode}'.");
+        IPeriod period = await periodRepository.GetPeriodAsync(null);
+        IProject project = await projectRepository.GetSingleAsync(courseId, projectCode, period.Id);
+        project.LoadTeams(allTeams);
+
+        project.ValidateUserCanJoinTeam(teamId, userId);
 
         await projectTeamRepository.AddUserToTeam(teamId, userId);
     }
@@ -211,11 +191,9 @@ internal class ProjectService(
     public async Task RemoveUserFromProjectTeamAsync(int courseId, string projectCode, int teamId, int userId)
     {
         IProject project = await LoadProjectForUserAsync(courseId, projectCode, userId, periodId: null);
-
-        Contracts.Require(project.Teams.Count == 1, "The user is not a member ot the team");
+        project.EnsureUserIsMemberOfProject(userId);
 
         await projectTeamRepository.RemoveUserFromTeam(teamId, userId);
-
         await testRunRepository.RemoveAllTopicTestRunsOfUserAsync(project.Id, userId);
     }
 

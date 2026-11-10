@@ -73,7 +73,7 @@ internal class ProjectDbRepository : BaseDbRepository<IProject, Project>, IProje
         //only return the teams of the user
         var userProjectTeamIds = await _context.ProjectTeamUsers.Where(ptu => ptu.UserId == userId)
             .Select(ptu => ptu.ProjectTeamId).ToListAsync();
-        project.Teams = project.Teams.Where(pt => userProjectTeamIds.Any(teamId => teamId == pt.Id)).ToList();
+        project.LoadTeams(project.Teams.Where(pt => userProjectTeamIds.Any(teamId => teamId == pt.Id)));
 
         return project;
     }
