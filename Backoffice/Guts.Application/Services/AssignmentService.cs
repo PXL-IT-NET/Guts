@@ -129,22 +129,12 @@ internal class AssignmentService(
 
     public async Task<bool> ValidateTestCodeHashAsync(string testCodeHash, Assignment assignment, bool isLector)
     {
-        if (assignment.TestCodeHashes.Count == 0 && string.IsNullOrEmpty(testCodeHash)) return true; //Ok to send an empty hash when no hashes are associated with the assignment
-
-        if (assignment.TestCodeHashes.Any(ah => ah.Hash == testCodeHash)) return true;
-
-        if (isLector && !string.IsNullOrEmpty(testCodeHash))
+        var (isValid, hashWasAdded) = assignment.ValidateOrRegisterTestCodeHash(testCodeHash, isLector);
+        if (hashWasAdded)
         {
-            //add the hash to the collection of hashed associated with the assignment
-            assignment.TestCodeHashes.Add(new TestCodeHash
-            {
-                AssignmentId = assignment.Id,
-                Hash = testCodeHash
-            });
             await assignmentRepository.UpdateAsync(assignment);
-            return true;
         }
-        return false;
+        return isValid;
     }
 
     public async Task<AssignmentStatisticsDto> GetAssignmentUserStatisticsAsync(int assignmentId, DateTime? dateUtc)

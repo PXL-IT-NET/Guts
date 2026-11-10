@@ -101,13 +101,14 @@ internal sealed class TestDataSeeder
         if (!string.IsNullOrEmpty(assignmentCode))
         {
             var names = testNames.Length > 0 ? testNames : new[] { "Test_1" };
-            chapter.Assignments.Add(new Assignment
+            var assignment = new Assignment
             {
                 Code = assignmentCode,
                 Description = $"Assignment {assignmentCode}",
-                Tests = names.Select(n => new Test { TestName = n }).ToList(),
-                TestCodeHashes = new List<TestCodeHash> { new() { Hash = $"HASH_{assignmentCode}" } }
-            });
+                Tests = names.Select(n => new Test { TestName = n }).ToList()
+            };
+            assignment.AddTestCodeHash($"HASH_{assignmentCode}");
+            chapter.Assignments.Add(assignment);
         }
 
         context.Chapters.Add(chapter);

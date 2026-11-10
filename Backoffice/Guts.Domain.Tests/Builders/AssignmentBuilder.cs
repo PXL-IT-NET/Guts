@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
@@ -76,12 +76,7 @@ internal class AssignmentBuilder : BaseBuilder<Assignment>
 
     public AssignmentBuilder WithTestCodeHash(string testCodeHash)
     {
-        Item.TestCodeHashes.Add(new TestCodeHash
-        {
-            Id = Random.Shared.NextPositive(),
-            AssignmentId = Item.Id,
-            Hash = testCodeHash
-        });
+        Item.AddTestCodeHash(testCodeHash, Random.Shared.NextPositive());
         return this;
     }
 }
