@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Infrastructure.Migrations;
 using Guts.Infrastructure.Tests.Repositories;
 using Microsoft.Data.Sqlite;
@@ -24,7 +25,6 @@ public class AddGamificationMigrationTests
     private class TestOptimizeStudentCourseProfileLeaderboardStats : OptimizeStudentCourseProfileLeaderboardStats
     {
         public void ApplyUp(MigrationBuilder builder) => Up(builder);
-        public void ApplyDown(MigrationBuilder builder) => Down(builder);
     }
 
     private SqliteConnection _connection;
@@ -58,23 +58,24 @@ public class AddGamificationMigrationTests
         // 1. Setup base database schema
         using (var initialContext = CreateDbContext())
         {
-            initialContext.Database.EnsureCreated();
+            await initialContext.Database.EnsureCreatedAsync();
         }
 
         var seeder = new TestDataSeeder(CreateDbContext);
 
         // 2. Seed test data before migration
         var (course, period) = await seeder.SeedCourseAndActivePeriodAsync("NET1");
-        var emptyCourse = await seeder.SeedCourseAsync("EMPTY", "Empty Course");
+        await seeder.SeedCourseAsync("EMPTY", "Empty Course");
 
         // Regular chapter with 2 tests
         var chapter = await seeder.SeedChapterAsync(
             course.Id,
             period.Id,
-            code: "Ch01",
-            description: "Chapter 1",
-            assignmentCode: "Ex01",
-            testNames: new[] { "Test_A", "Test_B" });
+            "Ch01",
+            "Chapter 1",
+            "Ex01",
+            "Test_A",
+            "Test_B");
 
         var assignment = chapter.Assignments.First();
         var testA = assignment.Tests.First(t => t.TestName == "Test_A");
@@ -85,22 +86,22 @@ public class AddGamificationMigrationTests
         var centuryChapter = await seeder.SeedChapterAsync(
             course.Id,
             period.Id,
-            code: "Ch02",
-            description: "Chapter 2",
-            assignmentCode: "Ex02",
-            testNames: centuryTestNames);
+            "Ch02",
+            "Chapter 2",
+            "Ex02",
+            centuryTestNames);
         var centuryAssignment = centuryChapter.Assignments.First();
 
         // Exam chapter with 1 test
         var examChapter = await seeder.SeedChapterAsync(
             course.Id,
             period.Id,
-            code: "ExamCh",
-            description: "Exam Chapter",
-            assignmentCode: "ExamEx",
-            testNames: new[] { "ExamTest_1" });
+            "ExamCh",
+            "Exam Chapter",
+            "ExamEx",
+            "ExamTest_1");
         var examAssignment = examChapter.Assignments.First();
-        await seeder.SeedExamWithPartAndEvaluationAsync(course.Id, period.Id, examAssignment);
+        await seeder.SeedExamEvaluationRawAsync(course.Id, period.Id, examAssignment.Id);
 
         // Users
         var studentNormal = await seeder.SeedUserAsync("Alice", "Normal", "alice@student.pxl.be");
@@ -133,11 +134,11 @@ public class AddGamificationMigrationTests
         // 3. Drop gamification tables to simulate pre-migration state
         using (var dropContext = CreateDbContext())
         {
-            dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS StudentBadges;");
-            dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS GamificationEvents;");
-            dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS StudentCourseProfiles;");
-            dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS CourseClassGroups;");
-            dropContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS CourseGamificationConfigs;");
+            await dropContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS StudentBadges;");
+            await dropContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS GamificationEvents;");
+            await dropContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS StudentCourseProfiles;");
+            await dropContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS CourseClassGroups;");
+            await dropContext.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS CourseGamificationConfigs;");
         }
 
         // 4. Run the AddGamification and OptimizeStudentCourseProfileLeaderboardStats migrations
@@ -150,7 +151,7 @@ public class AddGamificationMigrationTests
             migration.ApplyUp(builder);
             foreach (var command in sqlGenerator.Generate(builder.Operations))
             {
-                migrateContext.Database.ExecuteSqlRaw(command.CommandText);
+                await migrateContext.Database.ExecuteSqlRawAsync(command.CommandText);
             }
 
             var builder2 = new MigrationBuilder(migrateContext.Database.ProviderName);
@@ -158,7 +159,7 @@ public class AddGamificationMigrationTests
             migration2.ApplyUp(builder2);
             foreach (var command in sqlGenerator.Generate(builder2.Operations))
             {
-                migrateContext.Database.ExecuteSqlRaw(command.CommandText);
+                await migrateContext.Database.ExecuteSqlRawAsync(command.CommandText);
             }
         }
 
@@ -217,14 +218,14 @@ public class AddGamificationMigrationTests
             .Where(b => b.StudentCourseProfileId == aliceProfile.Id)
             .ToListAsync();
         Assert.That(aliceBadges.Count, Is.EqualTo(1));
-        Assert.That(aliceBadges[0].BadgeType, Is.EqualTo(BadgeType.FirstSpark));
+        Assert.That(aliceBadges[0].Badge, Is.EqualTo(Badge.FirstSpark));
         Assert.That(aliceBadges[0].EarnedAt, Is.EqualTo(t1));
 
         var bobBadges = await verifyContext.StudentBadges
             .Where(b => b.StudentCourseProfileId == bobProfile.Id)
             .ToListAsync();
         Assert.That(bobBadges.Count, Is.EqualTo(2), "Bob should earn both FirstSpark and CenturyClub.");
-        Assert.That(bobBadges.Select(b => b.BadgeType), Is.EquivalentTo(new[] { BadgeType.FirstSpark, BadgeType.CenturyClub }));
+        Assert.That(bobBadges.Select(b => b.Badge), Is.EquivalentTo([Badge.FirstSpark, Badge.CenturyClub]));
 
         // 5d. Verify CourseGamificationConfigs
         var configs = await verifyContext.CourseGamificationConfigs.ToListAsync();

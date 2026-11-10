@@ -10,10 +10,10 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 ## Templates & Locations
 
 - **Specs Directory**: `Backoffice/specs/`
-- **Feature Folder Pattern**: `Backoffice/specs/NNN-feature-slug/` (e.g., `001-exam-export`)
+- **Feature Folder Pattern**: `Backoffice/specs/NNN-feature-slug/` (e.g., `001-peer-assessments`)
 - **Templates**:
   - `Backoffice/specs/_templates/spec.md` — Requirements, User Stories, Acceptance Criteria (`AC-*`), Domain Rules (`DR-*`).
-  - `Backoffice/specs/_templates/design.md` — Layered DDD design (`Guts.Domain`, `Guts.Business`, `Guts.Infrastructure`, `Guts.Api`, `Guts.Web/ClientApp`).
+  - `Backoffice/specs/_templates/design.md` — Layered DDD design (`Guts.Domain`, `Guts.Application`, `Guts.Infrastructure`, `Guts.Api`, `Guts.Web/ClientApp`).
   - `Backoffice/specs/_templates/tasks.md` — Inside-out TDD task breakdown with traceability to `AC-*` and `DR-*`.
 
 ---
@@ -23,15 +23,16 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 ### Phase 1: Specify (`spec.md`)
 1. Check existing folders in `Backoffice/specs/` to determine the next `NNN` number.
 2. Read `Backoffice/specs/_templates/spec.md`.
-3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology (`PeriodAggregate`, `CourseAggregate`, `Chapter`, `Project`, `Assignment`, `TestAggregate`, `TestRunAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, `ExamAggregate`).
+3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology (`PeriodAggregate`, `CourseAggregate`, `Chapter`, `Project`, `Assignment`, `TestAggregate`, `TestRunAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`).
 4. If any requirements, permissions, or edge cases are ambiguous, ask the user clarifying questions before finalizing `spec.md`.
 5. Pause and ask the user to review `spec.md` before moving to Phase 2.
 
 ### Phase 2: Technical Design (`design.md`)
 1. Read the approved `spec.md` and `Backoffice/specs/_templates/design.md`.
-2. Inspect the affected files in `Guts.Domain`, `Guts.Business`, `Guts.Infrastructure`, `Guts.Api`, and `Guts.Web/ClientApp`.
+2. Inspect the affected files in `Guts.Domain`, `Guts.Application`, `Guts.Infrastructure`, `Guts.Api`, and `Guts.Web/ClientApp`.
 3. Ensure the design adheres strictly to [`Backoffice/AGENTS.md`](../../../Backoffice/AGENTS.md):
    - All business rules and state transitions belong in `Guts.Domain` (enforced via `Contracts.Require(...)` from `Guts.Common`).
+   - `Guts.Application` contains strictly use-case orchestration and zero domain logic.
    - Object creation uses `I*Factory` where appropriate.
    - Naming conventions match `Guts.Bootstrapper/StartUpExtensions.cs` for automatic DI registration.
 4. Write `design.md` in the feature's spec directory and pause for user review before generating `tasks.md`.
@@ -40,7 +41,7 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 1. Read `spec.md`, `design.md`, and `Backoffice/specs/_templates/tasks.md`.
 2. Create an ordered, inside-out **TDD checklist** in `tasks.md`:
    - Phase 1: `Guts.Domain.Tests` ➔ `Guts.Domain`
-   - Phase 2: `Guts.Business.Tests` ➔ `Guts.Business`
+   - Phase 2: `Guts.Application.Tests` ➔ `Guts.Application`
    - Phase 3: `Guts.Infrastructure.Tests` ➔ `Guts.Infrastructure` (including EF Core migrations if needed)
    - Phase 4: `Guts.Api.Tests` ➔ `Guts.Api`
    - Phase 5: `Guts.Web/ClientApp` (`*.spec.ts` ➔ Angular components/services)

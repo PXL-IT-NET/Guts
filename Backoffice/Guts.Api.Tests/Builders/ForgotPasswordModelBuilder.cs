@@ -9,7 +9,7 @@ internal class ForgotPasswordModelBuilder
 
     public ForgotPasswordModelBuilder()
     {
-        _model = new ForgotPasswordModel
+        _model = new()
         {
             Email = Guid.NewGuid().ToString(),
             CaptchaToken = Guid.NewGuid().ToString()

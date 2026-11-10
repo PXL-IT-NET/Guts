@@ -1,4 +1,5 @@
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
-using Guts.Business.Dtos;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Tests.Builders;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
@@ -19,7 +19,7 @@ internal class TopicConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new TopicConverter();
+        _converter = new();
     }
 
     [Test]
@@ -101,7 +101,7 @@ internal class TopicConverterTests
     {
         //Arrange
         var chapter = new ChapterBuilder().WithAssignments(1, 1).Build();
-        chapter.Assignments.First().Tests = null;
+        chapter.Assignments.First().ClearTests();
 
         //Act + Assert
         Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
@@ -121,13 +121,13 @@ internal class TopicConverterTests
         var firstAssignment = chapter.Assignments.First();
         var statisticsList = new List<AssignmentStatisticsDto>
         {
-            new AssignmentStatisticsDto
+            new()
             {
                 AssignmentId = firstAssignment.Id,
                 TestPassageStatistics = new List<TestPassageStatisticDto>
                 {
-                    new TestPassageStatisticDto { AmountOfPassedTests = 2, AmountOfUsers = 4 },
-                    new TestPassageStatisticDto { AmountOfPassedTests = 3, AmountOfUsers = 6 }
+                    new() { AmountOfPassedTests = 2, AmountOfUsers = 4 },
+                    new() { AmountOfPassedTests = 3, AmountOfUsers = 6 }
                 }
             }
         };
@@ -172,7 +172,7 @@ internal class TopicConverterTests
     public void ToTopicStatisticsModel_WhenAssignmentTestsAreNull_ShouldThrowArgumentNullException()
     {
         var chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
-        chapter.Assignments.First().Tests = null;
+        chapter.Assignments.First().ClearTests();
 
         Assert.That(() => _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students"), Throws.ArgumentNullException);
     }
@@ -204,7 +204,7 @@ internal class TopicConverterTests
             if (numberOfPassingTests <= 0 && numberOfFailingTests <= 0) continue;
 
             var passed = numberOfPassingTests > 0;
-            assignmentResult.TestResults.Add(new TestResult
+            assignmentResult.TestResults.Add(new()
             {
                 TestId = test.Id,
                 Passed = passed

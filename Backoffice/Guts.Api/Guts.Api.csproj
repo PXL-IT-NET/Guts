@@ -47,7 +47,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Guts.Bootstrapper\Guts.Bootstrapper.csproj" />
-    <ProjectReference Include="..\Guts.Business\Guts.Business.csproj" />
+    <ProjectReference Include="..\Guts.Application\Guts.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

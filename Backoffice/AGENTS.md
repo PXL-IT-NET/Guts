@@ -36,11 +36,11 @@ Guts.Api / Guts.Web
        │
 Guts.Bootstrapper   ──► Auto-registers dependency injection by convention
        │
-Guts.Business       ──► Application services, repository interfaces, DTOs, mappers
+Guts.Application    ──► Use-case orchestration only (application services, repository interfaces, DTOs, mappers)
        │
 Guts.Infrastructure ──► EF Core DbContext, migrations, repository implementations
        │
-Guts.Domain         ──► Aggregates, Entities, Value Objects, Domain Factories (pure domain)
+Guts.Domain         ──► Aggregates, Entities, Value Objects, Domain Factories, Domain Services (pure domain)
        │
 Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) & extensions
 ```
@@ -50,15 +50,18 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
 - **`Guts.Common` (`Guts.Common.Tests`)**: Design-by-Contract primitives (`Contracts.Require`, `ContractException`), common extensions, and utilities.
 - **`Guts.Domain` (`Guts.Domain.Tests`)**: Core business domain organized by aggregate folders.
   - Inherit from `AggregateRoot`, `Entity`, or `ValueObject<T>`.
+  - Encapsulates **all** business rules, state invariants, and domain calculations.
+  - Value Objects must be immutable (no public setters).
   - Restrict construction to domain factories (`I*Factory`) to enforce valid initial states.
-- **`Guts.Business` (`Guts.Business.Tests`)**: Application orchestration layer.
-  - Coordinates repositories, domain factories, and domain entities to fulfill use cases.
+- **`Guts.Application` (`Guts.Application.Tests`)**: Application orchestration layer.
+  - Thin Use-Case Orchestration: Coordinates repositories, domain factories, and domain entities to fulfill use cases.
+  - **Zero domain logic allowed here**: No business rule `if/else` branching, domain calculations, or direct entity collection mutations.
   - Houses repository contracts (`Repositories/`), application services (`Services/`), and DTOs.
 - **`Guts.Infrastructure`**: Persistence and external adapters.
   - EF Core `DbContext`, entity type configurations, and concrete repositories (`Repositories/`).
 - **`Guts.Bootstrapper`**: Auto-registers services, repositories, and factories into DI using naming conventions (`StartUpExtensions.cs`).
 - **`Guts.Api` (`Guts.Api.Tests`)**: Web API controllers, request/response models, and Model Context Protocol (`Mcp/`) resources and tools.
-- **`Guts.Architecture.Tests`**: ArchUnitNET test suite enforcing layer dependencies, DI auto-registration conventions (`StartUpExtensions.cs`), `Guts.Infrastructure` encapsulation, and API controller security.
+- **`Guts.Architecture.Tests`**: ArchUnitNET test suite enforcing layer dependencies, DI auto-registration conventions (`StartUpExtensions.cs`), `Guts.Infrastructure` encapsulation, Value Object immutability, and API controller security.
 - **`Guts.Web` (`Guts.Web/ClientApp`)**: Frontend host and Angular SPA.
   - Code under `src/app/` is partitioned into `components/`, `services/`, `viewmodels/`, `guards/`, `interceptors/`, and `util/`.
   - E2E testing framework lives under `e2e/`.
@@ -79,7 +82,7 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
 - Run a single backend test project:
   ```powershell
   dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj
-  dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
+  dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj
   dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
   dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
   dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj
@@ -130,3 +133,39 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
   ```powershell
   .\run-sonarqube.ps1 -StartServer
   ```
+
+---
+
+## Instructing AI Agents for DDD Deep Modeling & Breakthroughs
+
+GUTS uses a specialized agent skill (`ddd-deep-modeling`, located at [`.agent/skills/ddd-deep-modeling/SKILL.md`](../.agent/skills/ddd-deep-modeling/SKILL.md)) based on Eric Evans' *Domain-Driven Design: Tackling Complexity in the Heart of Software* (Part III: *Refactoring Toward Deeper Insight*).
+
+### What AI Agents Must Enforce
+
+1. **Strict Layer Boundary**:
+   - `Guts.Domain` owns **100% of domain rules, calculations, and invariant enforcement**.
+   - `Guts.Application` contains **zero domain logic**. It is strictly a use-case orchestrator (load from repo ➔ invoke domain method/service ➔ save to repo ➔ return DTO).
+   - If an application service contains `if/else` business checks, LINQ aggregations, or direct modifications of child collections (`entity.Items.Add(...)`), that logic has leaked and must be refactored into `Guts.Domain`.
+2. **Making Implicit Concepts Explicit (Evans Ch. 9)**:
+   - Primitive Obsession: Strings with validation rules or format restrictions become immutable `ValueObject<T>` types (e.g. `Code`, `FilePath`, `AssessmentScore`).
+   - Domain Policies: Complex eligibility rules or calculations become explicit Specifications, Policies, or pure Domain Services in `Guts.Domain`.
+3. **Aggregate Encapsulation & Immutability**:
+   - `ValueObject<T>` subclasses must have **no public setters**.
+   - Aggregate roots expose child collections as `IReadOnlyCollection<T>` with private backing fields, mutated exclusively via intention-revealing methods.
+4. **Supple Design & Zero-Mock Domain Tests (Evans Ch. 10)**:
+   - Pure domain logic must be testable in `Guts.Domain.Tests` with direct object instantiation—no mocking required.
+   - If a test in `Guts.Application.Tests` requires mocking 6–10 repositories just to test a business rule, that business rule belongs in `Guts.Domain`.
+
+### Copy-Pasteable Prompts to Guide AI Agents
+
+Use these prompts when collaborating with an agent:
+
+- **Audit a Service for Leaked Logic**:
+  > *"Review `@AssignmentService.cs` using the `ddd-deep-modeling` skill. Produce a DDD Leakage & Breakthrough Report identifying domain logic that should move into `Assignment`, missing Value Objects, and anemic aggregate symptoms. Do not write code yet; wait for my approval."*
+
+- **Hunt for Domain Breakthroughs**:
+  > *"Audit the `@GamificationAggregate/` and `@GamificationService.cs` with the `ddd-deep-modeling` skill. Search for implicit concepts (such as ISO calendar weeks, leaderboard ranking rules, or streak evaluations) that can be made explicit as Value Objects or Domain Services."*
+
+- **Refactor Toward Rich Domain Model**:
+  > *"Refactor `@Project.cs` and `@ProjectService.cs` so that adding teams, validating duplicate team names, and managing components are encapsulated inside the `Project` aggregate root. Follow inside-out TDD starting with `Guts.Domain.Tests`."*
+

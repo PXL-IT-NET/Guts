@@ -1,11 +1,6 @@
 import { AssignmentDetailModel } from "./assignmentdetail.model";
 import { AssignmentStatisticsModel } from "./assignmentstatistics.model";
 import { AssignmentSummaryModel } from "./assignmentsummary.model";
-import {
-  AssignmentEvaluation,
-  ExamModel,
-  ExamPartModel,
-} from "./exam.model";
 import { PeriodModel } from "./period.model";
 import {
   PeerAssessmentModel,
@@ -171,43 +166,6 @@ describe("ViewModels", () => {
       expect(detail.solutionFiles).toHaveSize(1);
       expect(detail.solutionFiles[0] instanceof SolutionFileModel).toBeTrue();
       expect(detail.solutionFiles[0].isCollapsed).toBeTrue();
-    });
-  });
-
-  describe("ExamModel, ExamPartModel & AssignmentEvaluation", () => {
-    it("should convert deadline to and from NgbDateStruct and NgbTimeStruct", () => {
-      const date = new Date(2026, 5, 15, 14, 30, 0);
-      const exam = new ExamModel({
-        id: 1,
-        courseId: 2,
-        name: "June Exam",
-        maximumScore: 20,
-        parts: [
-          {
-            id: 10,
-            name: "Part 1",
-            deadline: date,
-            assignmentEvaluations: [
-              {
-                id: 100,
-                assignmentId: 5,
-                maximumScore: 10,
-                numberOfTestsAlreadyGreenAtStart: 1,
-              },
-            ],
-          },
-        ],
-      });
-
-      expect(exam.isCollapsed).toBeTrue();
-      expect(exam.parts).toHaveSize(1);
-      const part: ExamPartModel = exam.parts[0];
-      expect(part.deadlineDate).toEqual({ year: 2026, month: 6, day: 15 });
-      expect(part.deadlineTime).toEqual({ hour: 14, minute: 30, second: 0 });
-      expect(part.deadline.getFullYear()).toBe(2026);
-      expect(
-        part.assignmentEvaluations[0] instanceof AssignmentEvaluation,
-      ).toBeTrue();
     });
   });
 

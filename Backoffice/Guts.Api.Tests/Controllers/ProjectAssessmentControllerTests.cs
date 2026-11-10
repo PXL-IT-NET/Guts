@@ -4,8 +4,8 @@ using Guts.Api.Models;
 using Guts.Api.Controllers;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Repositories;
-using Guts.Business.Services;
+using Guts.Application.Repositories;
+using Guts.Application.Services;
 using Guts.Common.Extensions;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.Tests.Builders;
@@ -29,11 +29,11 @@ public class ProjectAssessmentControllerTests
     [SetUp]
     public void Setup()
     {
-        _random = new Random();
+        _random = new();
         _userId = _random.NextPositive();
-        _projectServiceMock = new Mock<IProjectService>();
-        _projectAssessmentRepositoryMock = new Mock<IProjectAssessmentRepository>();
-        _mapperMock = new Mock<IMapper>();
+        _projectServiceMock = new();
+        _projectAssessmentRepositoryMock = new();
+        _mapperMock = new();
         _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
     }
 
@@ -219,7 +219,7 @@ public class ProjectAssessmentControllerTests
 
     private ProjectAssessmentController CreateControllerWithUserInContext(string role)
     {
-        return new ProjectAssessmentController(_projectServiceMock.Object, _projectAssessmentRepositoryMock.Object, _mapperMock.Object)
+        return new(_projectServiceMock.Object, _projectAssessmentRepositoryMock.Object, _mapperMock.Object)
         {
             ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()
         };

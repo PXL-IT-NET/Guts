@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Guts.Api.Models.Converters;
-using Guts.Business.Dtos;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Tests.Builders;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
@@ -20,9 +21,9 @@ internal class CourseConverterTests
     [SetUp]
     public void Setup()
     {
-        _chapterConverter = new Mock<IChapterConverter>();
-        _projectConverter = new Mock<IProjectConverter>();
-        _converter = new CourseConverter(_chapterConverter.Object, _projectConverter.Object);
+        _chapterConverter = new();
+        _projectConverter = new();
+        _converter = new(_chapterConverter.Object, _projectConverter.Object);
     }
 
     [Test]
@@ -118,7 +119,7 @@ internal class CourseConverterTests
             TotalTests = 20,
             Students = new List<CourseStudentStatisticsDto>
             {
-                new CourseStudentStatisticsDto
+                new()
                 {
                     StudentId = 42,
                     FirstName = "John",
@@ -129,14 +130,14 @@ internal class CourseConverterTests
                     CompletionPercentage = 90.0,
                     Chapters = new List<CourseStudentChapterStatisticsDto>
                     {
-                        new CourseStudentChapterStatisticsDto
+                        new()
                         {
                             ChapterId = 10,
                             Code = "ch01",
                             Description = "Intro",
                             Assignments = new List<CourseStudentAssignmentStatisticsDto>
                             {
-                                new CourseStudentAssignmentStatisticsDto
+                                new()
                                 {
                                     AssignmentId = 101,
                                     Code = "ex01",

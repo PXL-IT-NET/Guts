@@ -5,10 +5,10 @@ using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
-using Guts.Business;
-using Guts.Business.Dtos;
-using Guts.Business.Services;
-using Guts.Business.Tests.Builders;
+using Guts.Application;
+using Guts.Application.Dtos;
+using Guts.Application.Services;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -34,11 +34,11 @@ public class ProjectControllerTests
     public void Setup()
     {
         _userId = Random.Shared.NextPositive();
-        _projectServiceMock = new Mock<IProjectService>();
-        _projectConverterMock = new Mock<IProjectConverter>();
-        _topicConverterMock = new Mock<ITopicConverter>();
-        _solutionFileServiceMock = new Mock<ISolutionFileService>();
-        _memoryCacheMock = new Mock<IMemoryCache>();
+        _projectServiceMock = new();
+        _projectConverterMock = new();
+        _topicConverterMock = new();
+        _solutionFileServiceMock = new();
+        _memoryCacheMock = new();
 
         object cachedProjectStatisticsModel;
         _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedProjectStatisticsModel)).Returns(false);
@@ -71,7 +71,7 @@ public class ProjectControllerTests
         _projectServiceMock.Setup(service => service.LoadProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()))
             .ReturnsAsync(project);
 
-        ProjectDetailModel model = new ProjectDetailModel();
+        ProjectDetailModel model = new();
         _projectConverterMock.Setup(converter => converter.ToProjectDetailModel(It.IsAny<Project>()))
             .Returns(model);
 
@@ -100,7 +100,7 @@ public class ProjectControllerTests
         _projectServiceMock.Setup(service => service.LoadProjectForUserAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int?>()))
             .ReturnsAsync(project);
 
-        ProjectDetailModel model = new ProjectDetailModel();
+        ProjectDetailModel model = new();
         _projectConverterMock.Setup(converter => converter.ToProjectDetailModel(It.IsAny<Project>()))
             .Returns(model);
 
@@ -293,7 +293,7 @@ public class ProjectControllerTests
         string projectCode = Guid.NewGuid().ToString();
         DateTime date = DateTime.UtcNow;
         Project project = new ProjectBuilder().WithId().Build();
-        var solutions = new List<SolutionDto> { new SolutionDto() };
+        var solutions = new List<SolutionDto> { new() };
         var zipBytes = new byte[] { 10, 20, 30 };
 
         _projectServiceMock.Setup(service => service.LoadProjectAsync(courseId, projectCode, null))
@@ -318,7 +318,7 @@ public class ProjectControllerTests
 
     private ProjectController CreateControllerWithUserInContext(string role)
     {
-        return new ProjectController(_projectServiceMock.Object, 
+        return new(_projectServiceMock.Object, 
             _projectConverterMock.Object, 
             _topicConverterMock.Object, 
             _solutionFileServiceMock.Object,

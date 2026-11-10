@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
@@ -15,9 +15,9 @@ internal class AssignmentBuilder : BaseBuilder<Assignment>
         {
             TopicId = Random.Shared.NextPositive(),
             Code = Guid.NewGuid().ToString(),
-            Description = Guid.NewGuid().ToString(),
-            Tests = new List<Test>()
+            Description = Guid.NewGuid().ToString()
         };
+        Item.LoadTests([]);
     }
 
     public AssignmentBuilder WithId()
@@ -40,18 +40,10 @@ internal class AssignmentBuilder : BaseBuilder<Assignment>
 
     public AssignmentBuilder WithRandomTests(int numberOfTests)
     {
-        var tests = new List<Test>();
         for (int i = 0; i < numberOfTests; i++)
         {
-            var test = new Test
-            {
-                Id = Random.Shared.NextPositive(),
-                TestName = Guid.NewGuid().ToString(),
-                AssignmentId = Item.Id
-            };
-            tests.Add(test);
+            Item.AddTest(Guid.NewGuid().ToString(), Random.Shared.NextPositive());
         }
-        Item.Tests = tests;
         return this;
     }
 
@@ -70,18 +62,13 @@ internal class AssignmentBuilder : BaseBuilder<Assignment>
 
     public AssignmentBuilder WithoutTestsLoaded()
     {
-        Item.Tests = null;
+        Item.ClearTests();
         return this;
     }
 
     public AssignmentBuilder WithTestCodeHash(string testCodeHash)
     {
-        Item.TestCodeHashes.Add(new TestCodeHash
-        {
-            Id = Random.Shared.NextPositive(),
-            AssignmentId = Item.Id,
-            Hash = testCodeHash
-        });
+        Item.AddTestCodeHash(testCodeHash, Random.Shared.NextPositive());
         return this;
     }
 }

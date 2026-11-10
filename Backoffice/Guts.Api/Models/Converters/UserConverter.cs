@@ -9,7 +9,7 @@ public class UserConverter : IUserConverter
         return new UserModel
         {
             Id = user.Id,
-            FullName = $"{user.FirstName} {user.LastName}".Trim()
+            FullName = user.FullName
         };
     }
 }

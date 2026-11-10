@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Guts.Api.BackgroundServices;
-using Guts.Business.Services;
+using Guts.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -154,7 +154,7 @@ public class SprintLeaderboardBackgroundServiceTests
     public async Task StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
     {
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         await _service.StartAsync(cts.Token);
         await _service.StopAsync(CancellationToken.None);

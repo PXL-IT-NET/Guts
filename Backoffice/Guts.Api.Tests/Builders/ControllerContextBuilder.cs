@@ -15,18 +15,18 @@ internal class ControllerContextBuilder
 
     public ControllerContextBuilder()
     {
-        _random = new Random();
-        _context = new ControllerContext { HttpContext = new DefaultHttpContext() };
-        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
+        _random = new();
+        _context = new() { HttpContext = new DefaultHttpContext() };
+        _context.HttpContext.User = new(new ClaimsIdentity(new List<Claim>()));
     }
 
     public ControllerContextBuilder WithUser(string nameIdentifier)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, nameIdentifier)
+            new(ClaimTypes.NameIdentifier, nameIdentifier)
         };
-        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        _context.HttpContext.User = new(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
         return this;
     }
 
@@ -34,15 +34,15 @@ internal class ControllerContextBuilder
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Role, role)
+            new(ClaimTypes.Role, role)
         };
-        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        _context.HttpContext.User = new(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
         return this;
     }
 
     public ControllerContextBuilder WithUserWithoutNameIdentifier()
     {
-        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>()));
+        _context.HttpContext.User = new(new ClaimsIdentity(new List<Claim>()));
         return this;
     }
 
@@ -50,7 +50,7 @@ internal class ControllerContextBuilder
     {
         var maxValue = Convert.ToInt64("FFFFFFFF", 16);
         var address = Convert.ToInt64(_random.NextDouble() * maxValue);
-        _context.HttpContext.Connection.RemoteIpAddress = new IPAddress(address);
+        _context.HttpContext.Connection.RemoteIpAddress = new(address);
         return this;
     }
 
@@ -65,9 +65,9 @@ internal class ControllerContextBuilder
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Email, email)
+            new(ClaimTypes.Email, email)
         };
-        _context.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
+        _context.HttpContext.User = new(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
         return this;
     }
 

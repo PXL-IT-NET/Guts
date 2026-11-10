@@ -9,8 +9,9 @@ namespace Guts.Domain.Tests.UserAggregate;
 [TestFixture]
 public class UserTests
 {
-    private class DerivedUser : User
+    private sealed class DerivedUser : User
     {
+        public override string ToString() => nameof(DerivedUser);
     }
 
     [Test]
@@ -98,5 +99,15 @@ public class UserTests
         Assert.That(userA == userB, Is.False);
         Assert.That(userA != userB, Is.True);
         Assert.That(userA.GetHashCode(), Is.Not.EqualTo(userB.GetHashCode()));
+    }
+
+    [TestCase("John", "Doe", "John Doe")]
+    [TestCase("  John  ", "  Doe  ", "John     Doe")]
+    [TestCase("John", "", "John")]
+    [TestCase("", "Doe", "Doe")]
+    public void FullName_ShouldCombineFirstAndLastName(string first, string last, string expected)
+    {
+        var user = new User { FirstName = first, LastName = last };
+        Assert.That(user.FullName, Is.EqualTo(expected));
     }
 }

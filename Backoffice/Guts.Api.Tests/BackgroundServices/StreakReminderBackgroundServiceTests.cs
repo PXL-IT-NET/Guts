@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Guts.Api.BackgroundServices;
-using Guts.Business.Services;
+using Guts.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -25,19 +25,19 @@ public class StreakReminderBackgroundServiceTests
     [SetUp]
     public void Setup()
     {
-        _scopeFactoryMock = new Mock<IServiceScopeFactory>();
-        _scopeMock = new Mock<IServiceScope>();
-        _serviceProviderMock = new Mock<IServiceProvider>();
-        _streakReminderServiceMock = new Mock<IStreakReminderService>();
-        _loggerMock = new Mock<ILogger<StreakReminderBackgroundService>>();
+        _scopeFactoryMock = new();
+        _scopeMock = new();
+        _serviceProviderMock = new();
+        _streakReminderServiceMock = new();
+        _loggerMock = new();
         _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         _scopeFactoryMock.Setup(f => f.CreateScope()).Returns(_scopeMock.Object);
         _scopeMock.Setup(s => s.ServiceProvider).Returns(_serviceProviderMock.Object);
         _serviceProviderMock.Setup(sp => sp.GetService(typeof(IStreakReminderService))).Returns(_streakReminderServiceMock.Object);
 
-        _timeProvider = new ControllableTimeProvider(new DateTime(2026, 10, 28, 15, 30, 0, DateTimeKind.Utc));
-        _service = new StreakReminderBackgroundService(_scopeFactoryMock.Object, _loggerMock.Object, _timeProvider);
+        _timeProvider = new(new(2026, 10, 28, 15, 30, 0, DateTimeKind.Utc));
+        _service = new(_scopeFactoryMock.Object, _loggerMock.Object, _timeProvider);
     }
 
     [TearDown]
@@ -190,7 +190,7 @@ public class StreakReminderBackgroundServiceTests
 
         public void SetUtcNow(DateTime utcNow)
         {
-            _utcNow = new DateTimeOffset(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
+            _utcNow = new(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
         }
 
         public override DateTimeOffset GetUtcNow() => _utcNow;

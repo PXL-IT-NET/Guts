@@ -4,7 +4,6 @@ export * from "./chapter.service";
 export * from "./client.settings";
 export * from "./client.settings.service";
 export * from "./course.service";
-export * from "./exam.service";
 export * from "./project.service";
 export * from "./project.assessment.service";
 export * from "./project.teamassessment.service";

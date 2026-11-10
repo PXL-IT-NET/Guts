@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
@@ -87,10 +88,10 @@ public class PeriodTests
     public bool OverlapsWithPeriod_ShouldReturnExpectedResult(string periodFrom, string periodUntil, string testFrom, string testUntil)
     {
         // Arrange
-        Period period = new PeriodBuilder().WithId().WithRange(DateTime.Parse(periodFrom), DateTime.Parse(periodUntil)).Build();
+        Period period = new PeriodBuilder().WithId().WithRange(DateTime.Parse(periodFrom, CultureInfo.InvariantCulture), DateTime.Parse(periodUntil, CultureInfo.InvariantCulture)).Build();
 
         // Act
-        bool result = period.OverlapsWith(DateTime.Parse(testFrom), DateTime.Parse(testUntil));
+        bool result = period.OverlapsWith(DateTime.Parse(testFrom, CultureInfo.InvariantCulture), DateTime.Parse(testUntil, CultureInfo.InvariantCulture));
 
         // Assert
         return result;
@@ -99,7 +100,7 @@ public class PeriodTests
     public void Update_ValidPeriod_ShouldUpdatePeriodCorrectly()
     {
         // Arrange
-        Period period = _existingPeriods.First();
+        Period period = _existingPeriods[0];
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = DateTime.Now.AddMonths(-10);
         DateTime newUntil = DateTime.Now.AddMonths(-7);
@@ -117,7 +118,7 @@ public class PeriodTests
     public void Update_HasOverlapWithExistingPeriod_ShouldThrowContractException()
     {
         // Arrange
-        Period period = _existingPeriods.First();
+        Period period = _existingPeriods[0];
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = DateTime.Now.AddMonths(-10);
         DateTime newUntil = DateTime.Now.AddMonths(-3);
@@ -130,7 +131,7 @@ public class PeriodTests
     public void Update_UntilIsBeforeFrom_ShouldThrowContractException()
     {
         // Arrange
-        Period period = _existingPeriods.First();
+        Period period = _existingPeriods[0];
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = DateTime.Now.AddMonths(-7);
         DateTime newUntil = DateTime.Now.AddMonths(-10);
@@ -143,7 +144,7 @@ public class PeriodTests
     public void Update_NewDatesOverlapWithSelfInExistingPeriods_ShouldUpdateWithoutThrowing()
     {
         // Arrange
-        Period period = _existingPeriods.First();
+        Period period = _existingPeriods[0];
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = period.From.AddDays(1);
         DateTime newUntil = period.Until.AddDays(-1);

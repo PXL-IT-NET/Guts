@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using Guts.Business.Captcha;
-using Guts.Business.Communication;
-using Guts.Business.Security;
-using Guts.Business.Services;
+using Guts.Application.Captcha;
+using Guts.Application.Communication;
+using Guts.Application.Security;
+using Guts.Application.Services;
 using Guts.Infrastructure.Repositories;
-using Guts.Domain.ExamAggregate;
+using Guts.Domain.CourseAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Infrastructure;
@@ -23,10 +23,11 @@ public static class StartUpExtensions
 {
     public static void AddDomainLayerServices(this IServiceCollection services)
     {
-        Assembly domainAssembly = typeof(ExamPart).Assembly;
+        Assembly domainAssembly = typeof(Course).Assembly;
 
         //register domain factories
         services.RegisterTypesWhoseNameEndsWith("Factory", domainAssembly, ServiceLifetime.Singleton);
+        services.RegisterTypesWhoseNameEndsWith("Calculator", domainAssembly, ServiceLifetime.Singleton);
     }
 
     public static void AddInfrastructureLayerServices(this IServiceCollection services, IConfiguration configuration)
@@ -81,18 +82,15 @@ public static class StartUpExtensions
         services.RegisterTypesWhoseNameEndsWith("Repository", dataAssembly, ServiceLifetime.Scoped);
     }
 
-    public static void AddBusinessLayerServices(this IServiceCollection services, IConfiguration configuration)
+    public static void AddApplicationLayerServices(this IServiceCollection services, IConfiguration configuration)
     {
-        Assembly businessAssembly = typeof(CourseService).Assembly;
+        Assembly applicationAssembly = typeof(CourseService).Assembly;
 
         //register converters
-        services.RegisterTypesWhoseNameEndsWith("Converter", businessAssembly, ServiceLifetime.Singleton);
+        services.RegisterTypesWhoseNameEndsWith("Converter", applicationAssembly, ServiceLifetime.Singleton);
 
         //register services
-        services.RegisterTypesWhoseNameEndsWith("Service", businessAssembly, ServiceLifetime.Scoped);
-
-        //register loaders
-        services.RegisterTypesWhoseNameEndsWith("Loader", businessAssembly, ServiceLifetime.Scoped);
+        services.RegisterTypesWhoseNameEndsWith("Service", applicationAssembly, ServiceLifetime.Scoped);
 
         services.AddScoped<IHttpClient, HttpClientAdapter>();
         services.AddScoped<ICaptchaValidator>(provider =>

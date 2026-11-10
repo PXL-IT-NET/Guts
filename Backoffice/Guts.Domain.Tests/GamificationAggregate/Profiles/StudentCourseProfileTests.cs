@@ -1,0 +1,701 @@
+using System;
+using System.Linq;
+using Guts.Common;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
+using NUnit.Framework;
+
+namespace Guts.Domain.Tests.GamificationAggregate.Profiles;
+
+[TestFixture]
+public class StudentCourseProfileTests
+{
+    private StudentCourseProfile.Factory _factory;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _factory = new StudentCourseProfile.Factory();
+    }
+
+    [Test]
+    public void Factory_CreateNew_ValidArguments_ShouldInitializeCorrectly()
+    {
+        var profile = _factory.CreateNew(10, 20, 30);
+
+        Assert.That(profile.UserId, Is.EqualTo(10));
+        Assert.That(profile.CourseId, Is.EqualTo(20));
+        Assert.That(profile.PeriodId, Is.EqualTo(30));
+        Assert.That(profile.ShowInLeaderBoard, Is.True);
+        Assert.That(profile.TotalXp, Is.Zero);
+        Assert.That(profile.Level, Is.EqualTo(1));
+        Assert.That(profile.LevelTitle, Is.EqualTo("Byte Novice"));
+        Assert.That(profile.Badges, Is.Empty);
+        Assert.That(profile.Events, Is.Empty);
+    }
+
+    [Test]
+    public void Enroll_ShouldUpdatePreferences()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        profile.Enroll(false, "ShadowCoder", "SyntaxFox", 5, true);
+
+        Assert.That(profile.ShowInLeaderBoard, Is.False);
+        Assert.That(profile.Pseudonym, Is.EqualTo("ShadowCoder"));
+        Assert.That(profile.Avatar, Is.EqualTo("SyntaxFox"));
+        Assert.That(profile.ClassGroupId, Is.EqualTo(5));
+        Assert.That(profile.UsePseudonym, Is.True);
+    }
+
+    [Test]
+    public void HideFromLeaderboard_And_ShowOnLeaderboard_ShouldToggleShowInLeaderBoard()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.ShowInLeaderBoard, Is.True);
+        profile.HideFromLeaderboard();
+        Assert.That(profile.ShowInLeaderBoard, Is.False);
+        profile.ShowOnLeaderboard();
+        Assert.That(profile.ShowInLeaderBoard, Is.True);
+    }
+
+    [Test]
+    public void RecordLeaderboardVisit_ShouldUpdateLastLeaderboardVisitDate()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.LastLeaderboardVisitDate, Is.Null);
+
+        var visitTime = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
+        bool updated = profile.RecordLeaderboardVisit(visitTime);
+
+        Assert.That(updated, Is.True);
+        Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(visitTime));
+    }
+
+    [Test]
+    public void RecordLeaderboardVisit_WhenWithin10Minutes_ShouldNotUpdateDateAndReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var initialVisit = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
+        profile.RecordLeaderboardVisit(initialVisit);
+
+        var secondVisit = initialVisit.AddMinutes(5);
+        bool updated = profile.RecordLeaderboardVisit(secondVisit);
+
+        Assert.That(updated, Is.False);
+        Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(initialVisit));
+    }
+
+    [Test]
+    public void RecordLeaderboardVisit_WhenMoreThan10MinutesLater_ShouldUpdateDateAndReturnTrue()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var initialVisit = new DateTime(2026, 10, 25, 12, 0, 0, DateTimeKind.Utc);
+        profile.RecordLeaderboardVisit(initialVisit);
+
+        var secondVisit = initialVisit.AddMinutes(11);
+        bool updated = profile.RecordLeaderboardVisit(secondVisit);
+
+        Assert.That(updated, Is.True);
+        Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(secondVisit));
+    }
+
+    [Test]
+    public void AwardPassedTestXp_FirstTime_ShouldAdd10XpAndPassedTestEvent()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        bool result = profile.AwardPassedTestXp(101, now);
+
+        Assert.That(result, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(10));
+        Assert.That(profile.Events.Count, Is.EqualTo(1));
+        var evt = profile.Events.First();
+        Assert.That(evt.EventType, Is.EqualTo(GamificationEventType.PassedTest));
+        Assert.That(evt.TargetId, Is.EqualTo(101));
+        Assert.That(evt.XpEarned, Is.EqualTo(10));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.FirstSpark), Is.True);
+    }
+
+    [Test]
+    public void AwardPassedTestXp_AlreadyPassed_ShouldReturnFalseAndNotAddXp()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(101, now);
+        bool secondAttempt = profile.AwardPassedTestXp(101, now.AddMinutes(5));
+
+        Assert.That(secondAttempt, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(10));
+        Assert.That(profile.Events.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void AwardPassedTestXp_WhenStreakAndBadgesDisabled_ShouldNotRecordStreakOrBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        bool result = profile.AwardPassedTestXp(101, now, isStreakEnabled: false, isBadgesEnabled: false);
+
+        Assert.That(result, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(10));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+        Assert.That(profile.Badges, Is.Empty);
+    }
+
+    [Test]
+    public void RecordWeeklyActivity_2And4And6And8Weeks_ShouldAwardWarmingUpOnFireUnstoppableAndIronWillBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var startMonday = new DateTime(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc);
+
+        // Week 1 & Week 2 -> WarmingUp (2-week streak)
+        profile.RecordWeeklyActivity(startMonday);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WarmingUp), Is.False);
+
+        profile.RecordWeeklyActivity(startMonday.AddDays(7));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WarmingUp), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.OnFire), Is.False);
+
+        // Week 3 & Week 4 -> OnFire (4-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(14));
+        profile.RecordWeeklyActivity(startMonday.AddDays(21));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(4));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.OnFire), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.Unstoppable), Is.False);
+
+        // Week 5 & Week 6 -> Unstoppable (6-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(28));
+        profile.RecordWeeklyActivity(startMonday.AddDays(35));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(6));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.Unstoppable), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.IronWill), Is.False);
+
+        // Week 7 & Week 8 -> IronWill (8-week streak)
+        profile.RecordWeeklyActivity(startMonday.AddDays(42));
+        profile.RecordWeeklyActivity(startMonday.AddDays(49));
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(8));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.IronWill), Is.True);
+    }
+
+    [Test]
+    public void AwardPassedTestXp_At25And50And100Tests_ShouldAwardQuarterCenturyHalfCenturyAndCenturyClubBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        for (int i = 1; i <= 24; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.QuarterCentury), Is.False);
+
+        profile.AwardPassedTestXp(25, now.AddMinutes(25));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.QuarterCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HalfCentury), Is.False);
+
+        for (int i = 26; i <= 50; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HalfCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CenturyClub), Is.False);
+
+        for (int i = 51; i <= 100; i++)
+        {
+            profile.AwardPassedTestXp(i, now.AddMinutes(i));
+        }
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CenturyClub), Is.True);
+    }
+
+    [Test]
+    public void AwardAssignmentBonus_At1stAnd5thCompletedAssignments_ShouldAwardFirstVictoryAndHighFiveBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        profile.AwardAssignmentBonus(1, now);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.FirstVictory), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.False);
+
+        for (int a = 2; a <= 4; a++)
+        {
+            profile.AwardAssignmentBonus(a, now.AddMinutes(a));
+        }
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.False);
+
+        profile.AwardAssignmentBonus(5, now.AddMinutes(5));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.True);
+
+        // When badges are disabled, no assignment completion badges are awarded
+        var noBadgesProfile = _factory.CreateNew(2, 2, 3);
+        for (int a = 1; a <= 5; a++)
+        {
+            noBadgesProfile.AwardAssignmentBonus(a, now.AddMinutes(a), isBadgesEnabled: false);
+        }
+        Assert.That(noBadgesProfile.Badges, Is.Empty);
+    }
+
+    [Test]
+    public void AwardAssignmentBonus_FirstTime_ShouldAdd50Xp_AndDuplicateShouldReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        bool result = profile.AwardAssignmentBonus(55, now);
+        bool duplicate = profile.AwardAssignmentBonus(55, now.AddMinutes(1));
+
+        Assert.That(result, Is.True);
+        Assert.That(duplicate, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(50));
+        Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompleted && e.TargetId == 55), Is.True);
+    }
+
+    [TestCase(0, 50, 100)] // 1st student: 50 base + 50 quick = 100
+    [TestCase(1, 40, 90)]  // 2nd student: 50 base + 40 quick = 90
+    [TestCase(2, 30, 80)]  // 3rd student: 50 base + 30 quick = 80
+    [TestCase(3, 20, 70)]  // 4th student: 50 base + 20 quick = 70
+    [TestCase(9, 20, 70)]  // 10th student: 50 base + 20 quick = 70
+    [TestCase(10, 0, 50)]  // 11th student: 50 base + 0 quick = 50
+    [TestCase(25, 0, 50)]  // 26th student: 50 base + 0 quick = 50
+    public void AwardAssignmentBonus_WithCompletionRank_ShouldAwardAdditionalQuickBonus(
+        int previousCompletions, int expectedQuickXp, int expectedTotalXp)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        bool result = profile.AwardAssignmentBonus(55, now, previousCompletions);
+
+        Assert.That(result, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(expectedTotalXp));
+        Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompleted && e.TargetId == 55), Is.True);
+        if (expectedQuickXp > 0)
+        {
+            var quickEvt = profile.Events.FirstOrDefault(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly && e.TargetId == 55);
+            Assert.That(quickEvt, Is.Not.Null);
+            Assert.That(quickEvt.XpEarned, Is.EqualTo(expectedQuickXp));
+            Assert.That(profile.Badges.Any(b => b.Badge == Badge.SpeedDemon), Is.True);
+        }
+        else
+        {
+            Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly), Is.False);
+        }
+    }
+
+    [Test]
+    public void AwardChapterBonus_FirstTime_ShouldAdd100XpAndCleanSweepBadge_AndDuplicateShouldReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        bool result = profile.AwardChapterBonus(77, now);
+        bool duplicate = profile.AwardChapterBonus(77, now.AddMinutes(1));
+
+        Assert.That(result, Is.True);
+        Assert.That(duplicate, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(100));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CleanSweep), Is.True);
+    }
+
+    [Test]
+    public void AwardTeamSynergyBonus_FirstTime_ShouldAdd30XpAndTeamPowerhouseBadge()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        bool result = profile.AwardTeamSynergyBonus(99, now);
+
+        Assert.That(result, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(30));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.True);
+    }
+
+    [Test]
+    public void AwardTeamSynergyBonus_BadgesDisabled_ShouldAdd30XpWithoutBadge()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        bool result = profile.AwardTeamSynergyBonus(99, now, isBadgesEnabled: false);
+
+        Assert.That(result, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(30));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.False);
+    }
+
+    [Test]
+    public void AwardTeamSynergyBonus_SecondTime_ShouldReturnFalseAndNotAddDuplicateXp()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var now = DateTime.UtcNow;
+
+        profile.AwardTeamSynergyBonus(99, now);
+        bool secondResult = profile.AwardTeamSynergyBonus(99, now.AddMinutes(1));
+
+        Assert.That(secondResult, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(30));
+    }
+
+    [TestCase(0, 1, "Byte Novice")]
+    [TestCase(30, 2, "Syntax Scout")]
+    [TestCase(100, 3, "Logic Apprentice")]
+    [TestCase(230, 4, "Code Crafter")]
+    [TestCase(400, 5, "Algorithm Ace")]
+    [TestCase(630, 6, "Refactor Ranger")]
+    [TestCase(900, 7, "System Architect")]
+    [TestCase(1230, 8, "Bug Whisperer")]
+    [TestCase(1600, 9, "Full-Stack Guru")]
+    [TestCase(2030, 10, "Code Titan")]
+    public void Level_And_LevelTitle_ShouldCalculateCorrectly(int totalXp, int expectedLevel, string expectedTitle)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+
+        for (int i = 0; i < totalXp / 10; i++)
+        {
+            profile.AwardPassedTestXp(i + 1, DateTime.UtcNow);
+        }
+
+        Assert.That(profile.Level, Is.EqualTo(expectedLevel));
+        Assert.That(profile.LevelTitle, Is.EqualTo(expectedTitle));
+    }
+
+    [Test]
+    public void AwardPassedTestXp_TimeBadges_ShouldTriggerCorrectly()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+
+        // Night Owl (02:00)
+        profile.AwardPassedTestXp(1, new DateTime(2026, 10, 21, 2, 30, 0, DateTimeKind.Utc));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.True);
+
+        // Early Bird (06:00)
+        profile.AwardPassedTestXp(2, new DateTime(2026, 10, 21, 6, 30, 0, DateTimeKind.Utc));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.True);
+
+        // Weekend Warrior (Saturday)
+        profile.AwardPassedTestXp(3, new DateTime(2026, 10, 24, 14, 0, 0, DateTimeKind.Utc));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WeekendWarrior), Is.True);
+    }
+
+    [Test]
+    public void AwardBadge_SprintBadges_ShouldAddBadgeOnce()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = DateTime.UtcNow;
+
+        Assert.That(profile.AwardBadge(Badge.SprintGold, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintSilver, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintBronze, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintTop4, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintTop5, timestamp), Is.True);
+
+        // Cannot earn duplicate badge
+        Assert.That(profile.AwardBadge(Badge.SprintGold, timestamp), Is.False);
+        Assert.That(profile.Badges.Count(b => b.Badge == Badge.SprintGold), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenStreakDoesNotNeedEvaluation_ShouldShortCircuitAndReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week43 = new DateTime(2026, 10, 19, 10, 0, 0, DateTimeKind.Utc);
+        var week44 = week43.AddDays(7);
+
+        profile.AwardPassedTestXp(101, week43);
+
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102 });
+
+        Assert.That(changed, Is.False);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekAndNotAllTestsPassed_ShouldResetCurrentStreakToZeroAndReturnTrue()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week41 = new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc);
+        var week42 = week41.AddDays(7);
+        var week44 = week41.AddDays(21); // Missed Week 43
+
+        profile.AwardPassedTestXp(101, week41);
+        profile.AwardPassedTestXp(102, week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.True);
+
+        // Test 103 is not yet passed
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102, 103 });
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+        Assert.That(profile.WeeklyStreak.BestStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekAndNoCourseTestsExist_ShouldResetCurrentStreakToZero()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week42 = new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc);
+        var week44 = week42.AddDays(14); // Missed Week 43
+
+        profile.RecordWeeklyActivity(week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(1));
+
+        bool changed = profile.EvaluateWeeklyStreak(week44, Array.Empty<int>());
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.Zero);
+    }
+
+    [Test]
+    public void EvaluateWeeklyStreak_WhenMissedLastWeekButAllAvailableCourseTestsPassed_ShouldKeepStreakAndReturnTrue()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week41 = new DateTime(2026, 10, 5, 10, 0, 0, DateTimeKind.Utc);
+        var week42 = week41.AddDays(7);
+        var week44 = week41.AddDays(21); // Missed Week 43
+
+        profile.AwardPassedTestXp(101, week41);
+        profile.AwardPassedTestXp(102, week42);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+
+        // Student has already passed both available course tests (101 and 102)
+        bool changed = profile.EvaluateWeeklyStreak(week44, new[] { 101, 102 });
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
+        Assert.That(profile.WeeklyStreak.BestStreak, Is.EqualTo(2));
+        Assert.That(profile.NeedsWeeklyStreakEvaluation(week44), Is.False);
+    }
+
+    [Test]
+    public void LastXpEarnedAt_ShouldReturnLatestPositiveXpTimestampOrNullWhenNoXpEarned()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.LastXpEarnedAt, Is.Null);
+
+        var firstTime = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
+        var secondTime = firstTime.AddMinutes(30);
+
+        profile.AwardPassedTestXp(1, firstTime);
+        profile.AwardPassedTestXp(2, secondTime);
+
+        Assert.That(profile.LastXpEarnedAt, Is.EqualTo(secondTime));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenSurpassingMultipleStudentsAndRisingTier_ShouldAward6XpDailyCapAnd5XpPerTier()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+
+        // Moves from Rank 37 (Gold, tier 6) to Rank 34 (Diamond, tier 7):
+        // Surpassed 3 rank positions (36, 35, 34) on the same day -> 4 XP (1st) + 2 XP (2nd) + 0 XP (3rd) = 6 XP
+        // Rose 1 tier (Gold -> Diamond) -> 1 * 5 = 5 XP
+        bool changed = profile.EvaluateHallOfFameProgression(37, 34, timestamp);
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(11));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(34));
+        Assert.That(profile.BestHallOfFameTier, Is.EqualTo(HallOfFameTier.Diamond));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(3));
+        Assert.That(profile.Events.Where(e => e.EventType == GamificationEventType.HallOfFameOvertake).Sum(e => e.XpEarned), Is.EqualTo(6));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameTierUp), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenOvertaking50StudentsInCluster_ShouldCapOvertakeBonusAt6XpPerDay()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 10, 0, 0, DateTimeKind.Utc);
+
+        // Surpasses 50 students within Iron tier (Rank 150 -> Rank 101, no tier change):
+        bool changed = profile.EvaluateHallOfFameProgression(150, 101, timestamp);
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(101));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(49));
+        Assert.That(profile.Events.Where(e => e.EventType == GamificationEventType.HallOfFameOvertake).Sum(e => e.XpEarned), Is.EqualTo(6));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenOvertakingAcrossMultipleRunsSameDayAndNextDay_ShouldTopUpTo6XpSameDayAndResetNextDay()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var day1Morning = new DateTime(2026, 10, 25, 9, 0, 0, DateTimeKind.Utc);
+        var day1Afternoon = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+        var day1Evening = new DateTime(2026, 10, 25, 19, 0, 0, DateTimeKind.Utc);
+        var day2Morning = new DateTime(2026, 10, 26, 9, 0, 0, DateTimeKind.Utc);
+
+        // Run 1 (Day 1 morning): Overtakes 1 student (Rank 10 -> Rank 9) -> +4 XP
+        bool run1 = profile.EvaluateHallOfFameProgression(10, 9, day1Morning);
+        Assert.That(run1, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(4));
+
+        // Run 2 (Day 1 afternoon): Overtakes 1 more student (Rank 9 -> Rank 8) -> +2 XP (tops up to 6 XP daily max)
+        bool run2 = profile.EvaluateHallOfFameProgression(9, 8, day1Afternoon);
+        Assert.That(run2, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+
+        // Run 3 (Day 1 evening): Overtakes 2 more students (Rank 8 -> Rank 6) -> +0 XP (daily cap reached), BestHallOfFameRank still updates to 6
+        bool run3 = profile.EvaluateHallOfFameProgression(8, 6, day1Evening);
+        Assert.That(run3, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(6));
+
+        // Run 4 (Day 2 morning): Overtakes 1 student (Rank 6 -> Rank 5) -> +4 XP (new UTC day)
+        bool run4 = profile.EvaluateHallOfFameProgression(6, 5, day2Morning);
+        Assert.That(run4, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(10));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenTradingPlacesBackAndForth_ShouldNotReAwardAlreadyAchievedRanksOrTiers()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+
+        // First climb: Rank 16 (Diamond) -> Rank 15 (Obsidian): +4 XP (rank 15) + 5 XP (Obsidian) = 9 XP
+        profile.EvaluateHallOfFameProgression(16, 15, timestamp);
+        Assert.That(profile.TotalXp, Is.EqualTo(9));
+
+        // Later drops back to 16 and climbs to 15 again -> should NOT earn duplicate XP for rank 15 or Obsidian
+        bool secondClimb = profile.EvaluateHallOfFameProgression(16, 15, timestamp.AddHours(1));
+        Assert.That(secondClimb, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(9));
+
+        // Climbs from 15 to 14 on same day -> rank 14 is 2nd overtake of the day (+2 XP)
+        bool thirdClimb = profile.EvaluateHallOfFameProgression(15, 14, timestamp.AddHours(2));
+        Assert.That(thirdClimb, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(11));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(14));
+    }
+
+    [TestCase(0, 5)]
+    [TestCase(5, 0)]
+    [TestCase(-1, 2)]
+    public void EvaluateHallOfFameProgression_WithNonPositiveRanks_ShouldThrowContractException(int previousRank, int newRank)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(() => profile.EvaluateHallOfFameProgression(previousRank, newRank, DateTime.UtcNow),
+            Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void EvaluateWeeklyRankDefense_WhenActiveAndKeptBestRankWithStudentsBehind_ShouldAward5XpAndUnlockRankDefenderBadgeAt3Weeks()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week1Monday = new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc);
+
+        // Student passes a test in Week 41 and reaches Rank 3 out of 10
+        profile.AwardPassedTestXp(101, week1Monday.AddDays(1));
+        profile.EvaluateHallOfFameProgression(5, 3, week1Monday.AddDays(1));
+        int xpBeforeDefense = profile.TotalXp;
+
+        // Week 1 (2026, 41) defense: Rank 3 <= BestHallOfFameRank (3), 10 total students
+        bool defendedWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek1, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(xpBeforeDefense + 5));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.False);
+
+        // Duplicate call for same week should return false
+        bool duplicateWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
+        Assert.That(duplicateWeek1, Is.False);
+
+        // Week 2 (2026, 42): Student passes test 102 (now 100% of course tests passed!) and holds Rank 3
+        var week2Monday = week1Monday.AddDays(7);
+        profile.AwardPassedTestXp(102, week2Monday.AddDays(2));
+        bool defendedWeek2 = profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek2, Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.False);
+
+        // Week 3 (2026, 43): Student earned 0 new test XP in Week 3, but has passed 100% of course tests (101, 102) and holds Rank 3 -> unlocks RankDefender badge!
+        bool defendedWeek3 = profile.EvaluateWeeklyRankDefense(2026, 43, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek3, Is.True);
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended), Is.EqualTo(3));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.True);
+    }
+
+    [Test]
+    public void EvaluateWeeklyRankDefense_WhenOvertakenOrLastPlaceOrInactive_ShouldReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var weekMonday = new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(101, weekMonday.AddDays(1));
+        profile.EvaluateHallOfFameProgression(5, 3, weekMonday.AddDays(1));
+
+        // 1. Overtaken (currentRank 4 > BestHallOfFameRank 3)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 4, 10, new[] { 101, 102 }), Is.False);
+
+        // 2. In last place (currentRank 3 == totalRankedStudents 3, and currentRank > 1)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 3, 3, new[] { 101, 102 }), Is.False);
+
+        // 3. Inactive in next week and not all course tests passed (test 102 still unpassed)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, new[] { 101, 102 }), Is.False);
+
+        // 4. Inactive in next week and empty course tests list
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, Array.Empty<int>()), Is.False);
+
+        // 5. Opted out of leaderboard
+        profile.HideFromLeaderboard();
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 }), Is.False);
+    }
+
+    [Test]
+    public void GetPassedTestIds_ShouldReturnAllUniquePassedTestIds()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        profile.AwardPassedTestXp(101, DateTime.UtcNow);
+        profile.AwardPassedTestXp(102, DateTime.UtcNow);
+
+        var passedIds = profile.GetPassedTestIds();
+
+        Assert.That(passedIds, Is.EquivalentTo(new[] { 101, 102 }));
+    }
+
+    [Test]
+    public void HasPassedAllTests_ValidSets_ShouldReturnTrueOrFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        profile.AwardPassedTestXp(101, DateTime.UtcNow);
+        profile.AwardPassedTestXp(102, DateTime.UtcNow);
+
+        Assert.That(profile.HasPassedAllTests(new[] { 101 }), Is.True);
+        Assert.That(profile.HasPassedAllTests(new[] { 101, 102 }), Is.True);
+        Assert.That(profile.HasPassedAllTests(new[] { 101, 102, 103 }), Is.False);
+        Assert.That(profile.HasPassedAllTests(Array.Empty<int>()), Is.False);
+    }
+
+    [Test]
+    public void HasCompletedAssignmentAndChapter_ShouldReturnTrueOnlyWhenCompleted()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.HasCompletedAssignment(5), Is.False);
+        Assert.That(profile.HasCompletedChapter(10), Is.False);
+
+        profile.AwardAssignmentBonus(5, DateTime.UtcNow);
+        profile.AwardChapterBonus(10, DateTime.UtcNow);
+
+        Assert.That(profile.HasCompletedAssignment(5), Is.True);
+        Assert.That(profile.HasCompletedChapter(10), Is.True);
+        Assert.That(profile.HasCompletedAssignment(6), Is.False);
+    }
+
+    [Test]
+    public void AddEvent_ValidEvent_ShouldAddToEventsCollection()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var evt = new GamificationEvent(profile.Id, GamificationEventType.PassedTest, 999, 10, DateTime.UtcNow);
+
+        profile.AddEvent(evt);
+
+        Assert.That(profile.Events, Does.Contain(evt));
+    }
+}

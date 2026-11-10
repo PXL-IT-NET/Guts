@@ -9,7 +9,7 @@ internal class LoginModelBuilder
 
     public LoginModelBuilder()
     {
-        _model = new LoginModel
+        _model = new()
         {
             Email = Guid.NewGuid().ToString(),
             Password = Guid.NewGuid().ToString(),

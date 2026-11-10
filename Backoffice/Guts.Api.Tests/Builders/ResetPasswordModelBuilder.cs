@@ -9,7 +9,7 @@ internal class ResetPasswordModelBuilder
 
     public ResetPasswordModelBuilder()
     {
-        _model = new ResetPasswordModel
+        _model = new()
         {
             UserId = Guid.NewGuid().ToString(),
             Token = Guid.NewGuid().ToString(),

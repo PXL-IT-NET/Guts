@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Guts.Domain.Tests.Builders;
 
-internal abstract class BaseBuilder<T> where T : class
+public abstract class BaseBuilder<T> where T : class
 {
     private Type _itemType;
 

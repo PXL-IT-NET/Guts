@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Repositories;
+using Guts.Application.Repositories;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.RoleAggregate;
 using Microsoft.EntityFrameworkCore;
 

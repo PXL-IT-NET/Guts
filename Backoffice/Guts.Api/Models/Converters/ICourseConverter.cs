@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;

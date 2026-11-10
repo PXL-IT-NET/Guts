@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TopicAggregate;
 
@@ -68,8 +68,6 @@ public class TopicConverter : ITopicConverter
             Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList(),
         };
 
-        EnsureAssignmentDescription(assignmentSummaryModel, assignment);
-
         var matchingResult = assignmentResults.FirstOrDefault(result => result.AssignmentId == assignment.Id);
         if (matchingResult != null)
         {
@@ -95,8 +93,6 @@ public class TopicConverter : ITopicConverter
             Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
         };
 
-        EnsureAssignmentDescription(model, assignment);
-
         var assignmentStatistics = assignmentStatisticsList.FirstOrDefault(result => result.AssignmentId == assignment.Id);
         if (assignmentStatistics != null)
         {
@@ -113,21 +109,5 @@ public class TopicConverter : ITopicConverter
         }
 
         return model;
-    }
-
-    private static void EnsureAssignmentDescription(AssignmentModel assignmentModel, Assignment assignment)
-    {
-        _ = int.TryParse(assignment.Code, out int assignmentNumber);
-        if (assignmentModel.Description == assignmentNumber.ToString())
-        {
-            if (assignmentNumber > 0)
-            {
-                assignmentModel.Description = "Assignment " + assignmentNumber;
-            }
-            else
-            {
-                assignmentModel.Description = assignment.Code;
-            }
-        }
     }
 }

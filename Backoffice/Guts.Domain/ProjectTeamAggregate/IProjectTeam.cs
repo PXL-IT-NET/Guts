@@ -12,4 +12,10 @@ public interface IProjectTeam : IEntity
     ICollection<IProjectTeamUser> TeamUsers { get; set; }
 
     User GetTeamUser(int userId);
+    bool HasMember(int userId);
+    void AddUser(int userId);
+    void AddUser(User user);
+    void RemoveUser(int userId);
+    void Rename(string newName);
+    void EnsureBelongsTo(int courseId, string projectCode);
 }

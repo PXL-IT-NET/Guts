@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Guts.Api.Models;
-using Guts.Business.Dtos;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.TestAggregate;
 
@@ -15,8 +15,8 @@ internal class CreateAssignmentTestRunModelBuilder
 
     public CreateAssignmentTestRunModelBuilder()
     {
-        _random = new Random();
-        _model = new CreateAssignmentTestRunModel
+        _random = new();
+        _model = new()
         {
             Assignment = new AssignmentDtoBuilder().Build(),
             Results = new List<TestResultModel>(),

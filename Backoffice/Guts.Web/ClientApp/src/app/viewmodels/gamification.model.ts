@@ -1,18 +1,15 @@
-export interface IStudentBadgeModel {
-  badgeType: number;
+export interface IBadgeModel {
+  value: number;
   name: string;
   description: string;
   icon: string;
+}
+
+export interface IStudentBadgeModel extends IBadgeModel {
   earnedAt: string;
 }
 
-export interface IBadgeMetadataModel {
-  badgeType: number;
-  type?: number;
-  name: string;
-  description: string;
-  icon: string;
-}
+export type IBadgeMetadataModel = IBadgeModel;
 
 export interface IRecentXpEventModel {
   description: string;

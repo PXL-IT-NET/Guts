@@ -1,0 +1,32 @@
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Threading.Tasks;
+using Guts.Application.Dtos;
+
+namespace Guts.Application.Services;
+
+public class SolutionFileService : ISolutionFileService
+{
+    public async Task<byte[]> CreateZipFromFiles(IReadOnlyList<SolutionDto> solutions)
+    {
+        await using var memoryStream = new MemoryStream();
+
+        using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        {
+            foreach (var solution in solutions)
+            {
+                foreach (var solutionFile in solution.SolutionFiles)
+                {
+                    var entry = zipArchive.CreateEntry($@"{solution.WriterName}\{solutionFile.FilePath}");
+                    await using Stream entryStream = await entry.OpenAsync();
+                    await using StreamWriter writer = new StreamWriter(entryStream);
+                    await writer.WriteAsync(solutionFile.Content);
+                }
+            }
+        }
+
+        memoryStream.Position = 0;
+        return memoryStream.ToArray();
+    }
+}

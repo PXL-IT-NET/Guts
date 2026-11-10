@@ -32,7 +32,7 @@ public class FilePathTests
     [Test]
     public void Constructor_PathWithInvalidCharacters_ShouldThrowContractException()
     {
-        char invalidChar = Path.GetInvalidPathChars().First();
+        char invalidChar = Path.GetInvalidPathChars()[0];
         string invalidPath = $"Folder{invalidChar}File.cs";
 
         Assert.That(() => new FilePath(invalidPath), Throws.InstanceOf<ContractException>());

@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
-using Guts.Business.Repositories;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Repositories;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.TestAggregate;
 using Microsoft.AspNetCore.Mvc;
@@ -19,8 +19,8 @@ public class TestControllerTests
     [SetUp]
     public void Setup()
     {
-        _testRepositoryMock = new Mock<ITestRepository>();
-        _controller = new TestController(_testRepositoryMock.Object);
+        _testRepositoryMock = new();
+        _controller = new(_testRepositoryMock.Object);
     }
 
     [Test]

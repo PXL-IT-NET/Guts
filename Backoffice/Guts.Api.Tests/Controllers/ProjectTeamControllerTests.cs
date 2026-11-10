@@ -5,10 +5,10 @@ using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Api.Models.ProjectModels;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Dtos;
-using Guts.Business.Repositories;
-using Guts.Business.Services;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Repositories;
+using Guts.Application.Services;
+using Guts.Application.Tests.Builders;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
@@ -52,11 +52,11 @@ public class ProjectTeamControllerTests
         int periodId = Random.Shared.NextPositive();
         string projectCode = Guid.NewGuid().ToString();
 
-        List<ProjectTeam> teams = new List<ProjectTeam>
-        {
+        List<ProjectTeam> teams =
+        [
             new ProjectTeamBuilder().Build(),
             new ProjectTeamBuilder().Build()
-        };
+        ];
         _projectServiceMock.Setup(service => service.LoadTeamsOfProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()))
             .ReturnsAsync(teams);
 
@@ -195,7 +195,6 @@ public class ProjectTeamControllerTests
     {
         //Arrange
         Project project = new ProjectBuilder().Build();
-        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
 
         _projectServiceMock.Setup(service => service.GenerateTeamsForProject(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));
@@ -222,7 +221,6 @@ public class ProjectTeamControllerTests
     {
         //Arrange
         Project project = new ProjectBuilder().Build();
-        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
 
         _projectServiceMock.Setup(service => service.GenerateTeamsForProject(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));

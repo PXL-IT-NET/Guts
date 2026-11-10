@@ -92,91 +92,7 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("Courses");
                 });
 
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ExamPartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaximumScore")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NumberOfTestsAlreadyGreenAtStart")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignmentId");
-
-                    b.HasIndex("ExamPartId");
-
-                    b.ToTable("AssignmentEvaluation");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaximumScore")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PeriodId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("PeriodId");
-
-                    b.ToTable("Exams");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Deadline")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ExamId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamId");
-
-                    b.ToTable("ExamParts");
-                });
-
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.CourseClassGroup", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseClassGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -205,7 +121,7 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("CourseClassGroups", (string)null);
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.CourseGamificationConfig", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseGamificationConfig", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -244,7 +160,7 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("CourseGamificationConfigs", (string)null);
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.GamificationEvent", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.GamificationEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -274,7 +190,7 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("GamificationEvents", (string)null);
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.StudentBadge", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentBadge", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -282,8 +198,9 @@ namespace Guts.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BadgeType")
-                        .HasColumnType("int");
+                    b.Property<int>("Badge")
+                        .HasColumnType("int")
+                        .HasColumnName("BadgeType");
 
                     b.Property<DateTime>("EarnedAt")
                         .HasColumnType("datetime2");
@@ -293,13 +210,13 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentCourseProfileId", "BadgeType")
+                    b.HasIndex("StudentCourseProfileId", "Badge")
                         .IsUnique();
 
                     b.ToTable("StudentBadges", (string)null);
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.StudentCourseProfile", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -976,52 +893,7 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("Assignment");
                 });
 
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
-                {
-                    b.HasOne("Guts.Domain.AssignmentAggregate.Assignment", "Assignment")
-                        .WithMany()
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Guts.Domain.ExamAggregate.ExamPart", null)
-                        .WithMany("AssignmentEvaluations")
-                        .HasForeignKey("ExamPartId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Assignment");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
-                {
-                    b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Period");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
-                {
-                    b.HasOne("Guts.Domain.ExamAggregate.Exam", null)
-                        .WithMany("Parts")
-                        .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.CourseClassGroup", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseClassGroup", b =>
                 {
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
@@ -1040,7 +912,7 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("Period");
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.CourseGamificationConfig", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseGamificationConfig", b =>
                 {
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
@@ -1051,9 +923,9 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("Course");
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.GamificationEvent", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.GamificationEvent", b =>
                 {
-                    b.HasOne("Guts.Domain.GamificationAggregate.StudentCourseProfile", "StudentCourseProfile")
+                    b.HasOne("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", "StudentCourseProfile")
                         .WithMany("Events")
                         .HasForeignKey("StudentCourseProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1062,9 +934,9 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("StudentCourseProfile");
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.StudentBadge", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentBadge", b =>
                 {
-                    b.HasOne("Guts.Domain.GamificationAggregate.StudentCourseProfile", "StudentCourseProfile")
+                    b.HasOne("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", "StudentCourseProfile")
                         .WithMany("Badges")
                         .HasForeignKey("StudentCourseProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1073,9 +945,9 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("StudentCourseProfile");
                 });
 
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.StudentCourseProfile", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", b =>
                 {
-                    b.HasOne("Guts.Domain.GamificationAggregate.CourseClassGroup", "ClassGroup")
+                    b.HasOne("Guts.Domain.GamificationAggregate.Configuration.CourseClassGroup", "ClassGroup")
                         .WithMany()
                         .HasForeignKey("ClassGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -1098,7 +970,7 @@ namespace Guts.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.OwnsOne("Guts.Domain.GamificationAggregate.WeeklyStreak", "WeeklyStreak", b1 =>
+                    b.OwnsOne("Guts.Domain.GamificationAggregate.Profiles.WeeklyStreak", "WeeklyStreak", b1 =>
                         {
                             b1.Property<int>("StudentCourseProfileId")
                                 .HasColumnType("int");
@@ -1385,17 +1257,7 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("Tests");
                 });
 
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
-                {
-                    b.Navigation("Parts");
-                });
-
-            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
-                {
-                    b.Navigation("AssignmentEvaluations");
-                });
-
-            modelBuilder.Entity("Guts.Domain.GamificationAggregate.StudentCourseProfile", b =>
+            modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", b =>
                 {
                     b.Navigation("Badges");
 

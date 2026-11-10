@@ -26,7 +26,7 @@ public static class StartUpExtensions
         services.RegisterTypesWhoseNameEndsWith("Converter", apiAssembly, ServiceLifetime.Singleton);
 
         services.AddDomainLayerServices();
-        services.AddBusinessLayerServices(configuration);
+        services.AddApplicationLayerServices(configuration);
         services.AddInfrastructureLayerServices(configuration);
         services.AddSingleton<IAttributeGuideService, AttributeGuideService>();
     }

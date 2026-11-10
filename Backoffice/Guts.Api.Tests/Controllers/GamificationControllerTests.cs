@@ -1,14 +1,16 @@
-using Guts.Business.Communication;
-using Guts.Business.Repositories;
+using Guts.Application.Communication;
+using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.UserAggregate;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Dtos.Gamification;
-using Guts.Business.Services;
+using Guts.Application.Dtos.Gamification;
+using Guts.Application.Services;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -30,10 +32,10 @@ public class GamificationControllerTests
     [SetUp]
     public void Setup()
     {
-        _gamificationServiceMock = new Mock<IGamificationService>();
-        _mailSenderMock = new Mock<IMailSender>();
-        _courseRepositoryMock = new Mock<ICourseRepository>();
-        _controller = new GamificationController(
+        _gamificationServiceMock = new();
+        _mailSenderMock = new();
+        _courseRepositoryMock = new();
+        _controller = new(
             _gamificationServiceMock.Object,
             _mailSenderMock.Object,
             _courseRepositoryMock.Object)
@@ -141,8 +143,8 @@ public class GamificationControllerTests
     {
         var leaderboard = new List<LeaderboardEntryDto>
         {
-            new LeaderboardEntryDto { Rank = 1, UserId = 1, Score = 100 },
-            new LeaderboardEntryDto { Rank = 2, UserId = UserId, Score = 50 }
+            new() { Rank = 1, UserId = 1, Score = 100 },
+            new() { Rank = 2, UserId = UserId, Score = 50 }
         };
         _gamificationServiceMock.Setup(s => s.GetWeeklySprintLeaderboardAsync(CourseId, UserId, PeriodId)).ReturnsAsync(leaderboard);
 
@@ -164,7 +166,7 @@ public class GamificationControllerTests
         const int perspectiveUserId = 555;
         var leaderboard = new List<LeaderboardEntryDto>
         {
-            new LeaderboardEntryDto { Rank = 1, UserId = perspectiveUserId, Score = 100, IsCurrentUser = true }
+            new() { Rank = 1, UserId = perspectiveUserId, Score = 100, IsCurrentUser = true }
         };
         _gamificationServiceMock.Setup(s => s.GetWeeklySprintLeaderboardAsync(CourseId, perspectiveUserId, PeriodId))
             .ReturnsAsync(leaderboard);
@@ -183,7 +185,7 @@ public class GamificationControllerTests
         {
             Entries = new List<LeaderboardEntryDto>
             {
-                new LeaderboardEntryDto { Rank = 1, UserId = 1, Score = 500 }
+                new() { Rank = 1, UserId = 1, Score = 500 }
             }
         };
         _gamificationServiceMock
@@ -211,7 +213,7 @@ public class GamificationControllerTests
             CurrentUserRank = 18,
             Entries = new List<LeaderboardEntryDto>
             {
-                new LeaderboardEntryDto { Rank = 18, UserId = selectedStudentId, Score = 250, IsCurrentUser = true }
+                new() { Rank = 18, UserId = selectedStudentId, Score = 250, IsCurrentUser = true }
             }
         };
         _gamificationServiceMock
@@ -230,7 +232,7 @@ public class GamificationControllerTests
     {
         var rankings = new List<ClassGroupLeaderboardEntryDto>
         {
-            new ClassGroupLeaderboardEntryDto
+            new()
             {
                 Rank = 1,
                 ClassGroupName = "1TIN-A",
@@ -259,7 +261,7 @@ public class GamificationControllerTests
 
         var rankings = new List<ClassGroupLeaderboardEntryDto>
         {
-            new ClassGroupLeaderboardEntryDto { Rank = 1, ClassGroupName = "1TIN-A", ClassScore = 160 }
+            new() { Rank = 1, ClassGroupName = "1TIN-A", ClassScore = 160 }
         };
         _gamificationServiceMock.Setup(s => s.GetClassGroupLeaderboardAsync(CourseId, PeriodId, selectedStudentId)).ReturnsAsync(rankings);
 
@@ -297,9 +299,9 @@ public class GamificationControllerTests
     [Test]
     public void GetBadgeMetadata_ShouldCallServiceAndReturnOkWithBadges()
     {
-        var badgeList = new List<BadgeMetadataDto>
+        var badgeList = new List<Badge>
         {
-            new BadgeMetadataDto { BadgeType = BadgeType.FirstSpark, Name = "First Spark", Icon = "🌱" }
+            Badge.FirstSpark
         };
         _gamificationServiceMock.Setup(s => s.GetBadgeMetadata()).Returns(badgeList);
 
@@ -350,7 +352,7 @@ public class GamificationControllerTests
     {
         var classes = new List<CourseClassGroupDto>
         {
-            new CourseClassGroupDto { Id = 1, Name = "1TIN-A", CourseId = CourseId, PeriodId = PeriodId }
+            new() { Id = 1, Name = "1TIN-A", CourseId = CourseId, PeriodId = PeriodId }
         };
         _gamificationServiceMock.Setup(s => s.GetCourseClassGroupsAsync(CourseId, PeriodId)).ReturnsAsync(classes);
 

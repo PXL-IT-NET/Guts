@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business;
-using Guts.Business.Repositories;
+using Guts.Application;
+using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
 using Microsoft.EntityFrameworkCore;
 

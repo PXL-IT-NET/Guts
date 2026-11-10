@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TestRunAggregate;

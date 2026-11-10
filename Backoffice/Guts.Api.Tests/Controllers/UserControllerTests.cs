@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Repositories;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Repositories;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.RoleAggregate;
@@ -28,17 +28,17 @@ public class UserControllerTests
     [SetUp]
     public void Setup()
     {
-        _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
-        _controller = new UserController(_projectTeamRepositoryMock.Object);
+        _projectTeamRepositoryMock = new();
+        _controller = new(_projectTeamRepositoryMock.Object);
         _userId = Random.Shared.NextPositive();
         _role = Role.Constants.Student;
         _email = Guid.NewGuid().ToString();
 
-        _teams = new List<ProjectTeam>()
-        {
+        _teams =
+        [
             new ProjectTeamBuilder().WithId().WithUser(_userId).Build(),
             new ProjectTeamBuilder().WithId().WithUser(_userId).Build()
-        };
+        ];
         _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(_userId)).ReturnsAsync(_teams);
 
         _controller.ControllerContext = new ControllerContextBuilder()

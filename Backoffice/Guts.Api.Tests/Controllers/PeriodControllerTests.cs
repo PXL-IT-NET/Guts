@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.PeriodModels;
-using Guts.Business;
-using Guts.Business.Repositories;
-using Guts.Business.Services.Period;
+using Guts.Application;
+using Guts.Application.Repositories;
+using Guts.Application.Services.Period;
 using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.PeriodAggregate;
@@ -29,11 +29,11 @@ public class PeriodControllerTests
     [SetUp]
     public void Setup()
     {
-        _periodRepositoryMock = new Mock<IPeriodRepository>();
-        _periodServiceMock = new Mock<IPeriodService>();
-        _mapperMock = new Mock<IMapper>();
+        _periodRepositoryMock = new();
+        _periodServiceMock = new();
+        _mapperMock = new();
 
-        _controller = new PeriodController(
+        _controller = new(
             _periodRepositoryMock.Object,
             _periodServiceMock.Object,
             _mapperMock.Object);

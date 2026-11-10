@@ -10,8 +10,8 @@
 
 ## Increment 1: Summarize Passed Test Events in Recent XP Gains (US-4 / AC-5) — _Completed_
 
-- [x] **[T0.1]** `[US-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs` (`GetStudentCourseProfileAsync_WithMultiplePassedTests_ShouldSummarizePassedTestsIntoSingleEvent`, `GetStudentCourseProfileAsync_WithSinglePassedTest_ShouldUseSingularDescription`).
-- [x] **[T0.2]** `[US-4, AC-5]` Update `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs` to aggregate `GamificationEventType.PassedTest` events in `RecentGains.Events`.
+- [x] **[T0.1]** `[US-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs` (`GetStudentCourseProfileAsync_WithMultiplePassedTests_ShouldSummarizePassedTestsIntoSingleEvent`, `GetStudentCourseProfileAsync_WithSinglePassedTest_ShouldUseSingularDescription`).
+- [x] **[T0.2]** `[US-4, AC-5]` Update `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Application/Services/GamificationService.cs` to aggregate `GamificationEventType.PassedTest` events in `RecentGains.Events`.
 - [x] **[T0.3]** `[US-4, AC-5]` Update unit test in `Backoffice/Guts.Web/ClientApp/src/app/components/course-gamification/course-gamification-hero.component.spec.ts` and verify all backend & frontend tests pass.
 
 ---
@@ -55,18 +55,18 @@
 
 ---
 
-### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T3.5]** `[AC-2, AC-4, DR-9]` Update `IStudentCourseProfileRepository` (`IsUserLectorAsync`), `IGamificationService` (`GetHallOfFameLeaderboardAsync` returning `HallOfFameLeaderboardDto`), and DTOs in `Backoffice/Guts.Business/Dtos/Gamification/GamificationDtos.cs`.
-- [x] **[T3.6]** `[AC-2, AC-4, AC-5, DR-7, DR-8, DR-9]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+- [x] **[T3.5]** `[AC-2, AC-4, DR-9]` Update `IStudentCourseProfileRepository` (`IsUserLectorAsync`), `IGamificationService` (`GetHallOfFameLeaderboardAsync` returning `HallOfFameLeaderboardDto`), and DTOs in `Backoffice/Guts.Application/Dtos/Gamification/GamificationDtos.cs`.
+- [x] **[T3.6]** `[AC-2, AC-4, AC-5, DR-7, DR-8, DR-9]` Write failing unit tests in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs`:
   - `ProcessTestRunAsync_WhenUserIsLector_ShouldSkipGamificationProcessing` (`[AC-2, DR-9]`).
   - `ProcessTestRunAsync_WhenStudentOvertakesAndRisesTier_ShouldAwardOvertakeAndTierUpBonusXp` (`[AC-2, DR-8]`).
   - `GetHallOfFameLeaderboardAsync_WithEqualTotalXp_ShouldRankStudentWhoReachedXpFirstHigher` (`[AC-4, DR-7]`).
   - `GetHallOfFameLeaderboardAsync_ForStudent_ShouldReturnOnlyCurrentTierEntriesVisibleTiersAndNextTarget` (`[AC-4, DR-7]`).
   - `GetHallOfFameLeaderboardAsync_ForLector_ShouldReturnAllLevelsOrSelectedStudentPerspective` (`[AC-4, US-5]`).
   - `GetStudentCourseProfileAsync_WithOvertakeAndTierUpEvents_ShouldIncludeInRecentGains` (`[AC-5]`).
-- [x] **[T3.7]** `[AC-2, AC-4, AC-5, DR-7, DR-8, DR-9]` Implement teacher exclusion, Hall of Fame tie-breaking, tiered leaderboard slicing, 4-icon window, next target calculation, student perspective support, and overtake/tier-up evaluation in `Backoffice/Guts.Business/Services/GamificationService.cs`.
-- [x] **[T3.8]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T3.7]** `[AC-2, AC-4, AC-5, DR-7, DR-8, DR-9]` Implement teacher exclusion, Hall of Fame tie-breaking, tiered leaderboard slicing, 4-icon window, next target calculation, student perspective support, and overtake/tier-up evaluation in `Backoffice/Guts.Application/Services/GamificationService.cs`.
+- [x] **[T3.8]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
@@ -111,16 +111,16 @@
 
 ## Increment 4: Teacher Student Perspective Inspection — Hero Summary, Badges & Leaderboards (US-5 / AC-4 / AC-5)
 
-### Phase 1: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 1: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T4.1]** `[US-5, AC-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+- [x] **[T4.1]** `[US-5, AC-4, AC-5]` Write failing unit tests in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs`:
   - `GetStudentCourseProfileAsync_WhenUserIsLectorWithPerspectiveUserId_ShouldReturnTargetStudentProfileWithoutUpdatingLastVisitDate`
   - `GetStudentCourseProfileAsync_WhenUserIsStudentWithPerspectiveUserId_ShouldIgnorePerspectiveUserIdAndReturnOwnProfile`
-- [x] **[T4.2]** `[US-5, AC-4, AC-5]` Update `IGamificationService` and `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs`:
+- [x] **[T4.2]** `[US-5, AC-4, AC-5]` Update `IGamificationService` and `GamificationService.GetStudentCourseProfileAsync` in `Backoffice/Guts.Application/Services/GamificationService.cs`:
   - Accept `bool isLector = false` and `int? perspectiveUserId = null`.
   - Resolve target user ID: `int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;`.
   - When `isLector && perspectiveUserId.HasValue`, do not invoke `profile.RecordLeaderboardVisit()` (preserving the student's `LastLeaderboardVisitDate`).
-- [x] **[T4.3]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T4.3]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
@@ -164,11 +164,11 @@
 
 ## Increment 5: Thursday Midday Streak Reminder Notifications & Throttled Queue (US-8 / AC-7 / DR-10 / DR-11 / DR-12)
 
-### Phase 1: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 1: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T5.1]** `[US-8, AC-7]` Create `StreakReminderAssignmentDto` and `StreakReminderEmailMessage` in `Backoffice/Guts.Business/Dtos/Gamification/GamificationDtos.cs`.
-- [x] **[T5.2]** `[US-8, AC-7]` Add `SendStreakReminderEmailAsync` to `IMailSender` and write unit tests in `Backoffice/Guts.Business.Tests/Communication/MailSenderTests.cs` (verifying subject, greeting, streak count, next target to beat, recommended assignment links). Implement in `Backoffice/Guts.Business/Communication/MailSender.cs`.
-- [x] **[T5.3]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/StreakReminderServiceTests.cs`:
+- [x] **[T5.1]** `[US-8, AC-7]` Create `StreakReminderAssignmentDto` and `StreakReminderEmailMessage` in `Backoffice/Guts.Application/Dtos/Gamification/GamificationDtos.cs`.
+- [x] **[T5.2]** `[US-8, AC-7]` Add `SendStreakReminderEmailAsync` to `IMailSender` and write unit tests in `Backoffice/Guts.Application.Tests/Communication/MailSenderTests.cs` (verifying subject, greeting, streak count, next target to beat, recommended assignment links). Implement in `Backoffice/Guts.Application/Communication/MailSender.cs`.
+- [x] **[T5.3]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Write failing unit tests in `Backoffice/Guts.Application.Tests/Services/StreakReminderServiceTests.cs`:
   - `SendStreakRemindersAsync_WhenStudentHasStreakAndNoXpThisWeek_ShouldQueueReminder` (`[US-8, AC-7, DR-10]`).
   - `SendStreakRemindersAsync_WhenStudentEarnedXpThisWeek_ShouldNotQueueReminder` (`[DR-10]`).
   - `SendStreakRemindersAsync_WhenStudentCompletedAllTests_ShouldNotQueueReminder` (`[DR-10]`).
@@ -176,8 +176,8 @@
   - `SendStreakRemindersAsync_ShouldRecommendInProgressAssignmentsBeforeUntouchedAssignments` (`[DR-11]`).
   - `SendStreakRemindersAsync_WhenStudentOptedIn_ShouldIncludeNextTargetStudent` (`[AC-7]`).
   - `SendStreakRemindersAsync_WhenEmailFailsForOneStudent_ShouldLogAndContinueQueue` (`[AC-7, DR-12]`).
-- [x] **[T5.4]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Implement `IStreakReminderService` and `StreakReminderService` in `Backoffice/Guts.Business/Services/StreakReminderService.cs`.
-- [x] **[T5.5]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T5.4]** `[US-8, AC-7, DR-10, DR-11, DR-12]` Implement `IStreakReminderService` and `StreakReminderService` in `Backoffice/Guts.Application/Services/StreakReminderService.cs`.
+- [x] **[T5.5]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
@@ -210,11 +210,11 @@
 
 ---
 
-### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T6.4]** `[AC-3]` Write failing unit test in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs` verifying `GetBadgeMetadataAsync` and `MapToProfileDto` include metadata (`Name`, `Description`, `Icon`) for all 21 badge types (including `WarmingUp`, `Unstoppable`, `QuarterCentury`, `HalfCentury`, `FirstVictory`, and `HighFive`).
-- [x] **[T6.5]** `[AC-3]` Register the 6 new badges in `GamificationService.BadgeMetadata` in `Backoffice/Guts.Business/Services/GamificationService.cs`.
-- [x] **[T6.6]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T6.4]** `[AC-3]` Write failing unit test in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs` verifying `GetBadgeMetadataAsync` and `MapToProfileDto` include metadata (`Name`, `Description`, `Icon`) for all 21 badge types (including `WarmingUp`, `Unstoppable`, `QuarterCentury`, `HalfCentury`, `FirstVictory`, and `HighFive`).
+- [x] **[T6.5]** `[AC-3]` Register the 6 new badges in `GamificationService.BadgeMetadata` in `Backoffice/Guts.Application/Services/GamificationService.cs`.
+- [x] **[T6.6]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
@@ -238,13 +238,13 @@
 
 ---
 
-### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T7.4]** `[AC-4, DR-13]` Update `ClassGroupLeaderboardEntryDto` in `Backoffice/Guts.Business/Dtos/Gamification/GamificationDtos.cs` (replace `AverageXp` with `ClassScore`, `IsCurrentUserClass`, and `CurrentUserContribution`) and update `IGamificationService.GetClassGroupLeaderboardAsync`.
-- [x] **[T7.5]** `[AC-4, DR-13]` Update and add unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+- [x] **[T7.4]** `[AC-4, DR-13]` Update `ClassGroupLeaderboardEntryDto` in `Backoffice/Guts.Application/Dtos/Gamification/GamificationDtos.cs` (replace `AverageXp` with `ClassScore`, `IsCurrentUserClass`, and `CurrentUserContribution`) and update `IGamificationService.GetClassGroupLeaderboardAsync`.
+- [x] **[T7.5]** `[AC-4, DR-13]` Update and add unit tests in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs`:
   - Verify `GetClassGroupLeaderboardAsync` uses `GetByCourseAndPeriodAsync` (including `ShowInLeaderBoard == false` students), calculates `ClassScore` via stepped brackets + join bonus, ranks by `ClassScore` descending then `TotalGreenTests` descending, and populates `IsCurrentUserClass` and `CurrentUserContribution` for `currentUserId`.
-- [x] **[T7.6]** `[AC-4, DR-13]` Implement updated `GetClassGroupLeaderboardAsync` in `Backoffice/Guts.Business/Services/GamificationService.cs`.
-- [x] **[T7.7]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T7.6]** `[AC-4, DR-13]` Implement updated `GetClassGroupLeaderboardAsync` in `Backoffice/Guts.Application/Services/GamificationService.cs`.
+- [x] **[T7.7]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
@@ -289,14 +289,14 @@
 
 ---
 
-### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+### Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [x] **[T8.5]** `[AC-3, AC-5, AC-8]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+- [x] **[T8.5]** `[AC-3, AC-5, AC-8]` Write failing unit tests in `Backoffice/Guts.Application.Tests/Services/GamificationServiceTests.cs`:
   - Verify `GetBadgeMetadata` includes `BadgeType.RankDefender` (`"Rank Defender"`, `🏰`).
   - Verify `GetStudentCourseProfileAsync` summarizes `HallOfFameOvertake` events only when summed `XpEarned > 0` and maps `HallOfFameRankDefended` events to `"Hall of Fame rank defense bonus"`.
   - Verify `AwardWeeklySprintBadgesAsync` evaluates weekly Hall of Fame rank defense for opted-in students with `TotalXp > 0` and persists modified profiles.
-- [x] **[T8.6]** `[AC-3, AC-5, AC-8]` Update `GamificationService.cs` (`BadgeMetadata`, `BuildRecentEventDtos`, and `EvaluateWeeklyRankDefenseForCourseAsync` called during `AwardWeeklySprintBadgesAsync`).
-- [x] **[T8.7]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T8.6]** `[AC-3, AC-5, AC-8]` Update `GamificationService.cs` (`BadgeMetadata`, event summarization via `RecentGainsSummary`, and `EvaluateWeeklyRankDefenseForCourseAsync` called during `AwardWeeklySprintBadgesAsync`).
+- [x] **[T8.7]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 

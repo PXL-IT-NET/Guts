@@ -1,5 +1,5 @@
 using Guts.Api.Models.Converters;
-using Guts.Business.Services;
+using Guts.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Api.Models;
-using Guts.Business.Dtos;
-using Guts.Business.Repositories;
+using Guts.Application.Dtos;
+using Guts.Application.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -80,7 +80,7 @@ public class AssignmentController(
         var team = await projectTeamRepository.LoadByIdAsync(teamId);
         if (IsStudent())
         {
-            if (team.TeamUsers.All(tu => tu.UserId != GetUserId()))
+            if (!team.HasMember(GetUserId()))
             {
                 return Forbid();
             }

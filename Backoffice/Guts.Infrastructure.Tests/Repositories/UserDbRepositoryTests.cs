@@ -26,10 +26,10 @@ internal class UserDbRepositoryTests : RepositoryTestsBase
         var repo = new UserDbRepository(context);
 
         var topicUsers = await repo.GetUsersOfTopicAsync(chapter.Id);
-        Assert.That(topicUsers.Select(u => u.FirstName), Is.EqualTo(new[] { "Alice", "Bob" }));
+        Assert.That(topicUsers.Select(u => u.FirstName), Is.EqualTo(["Alice", "Bob"]));
 
         var courseUsers = await repo.GetUsersOfCourseForCurrentPeriodAsync(course.Id);
-        Assert.That(courseUsers.Select(u => u.FirstName), Is.EqualTo(new[] { "Alice", "Bob" }));
+        Assert.That(courseUsers.Select(u => u.FirstName), Is.EqualTo(["Alice", "Bob"]));
     }
 
     [Test]

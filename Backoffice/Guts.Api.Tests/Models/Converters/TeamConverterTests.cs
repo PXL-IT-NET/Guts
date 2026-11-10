@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.Converters;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Tests.Builders;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.UserAggregate;
 using NUnit.Framework;
@@ -17,7 +17,7 @@ internal class TeamConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new TeamConverter();
+        _converter = new();
     }
 
     [Test]

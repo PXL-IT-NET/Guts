@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 
@@ -62,6 +63,6 @@ internal class CourseClassGroupDbRepositoryTests : RepositoryTestsBase
         var repo = new CourseClassGroupDbRepository(context);
 
         var list = await repo.GetByCourseAndPeriodAsync(course.Id, period.Id);
-        Assert.That(list.Select(cg => cg.Name), Is.EqualTo(new[] { "1TIN-A", "1TIN-B", "1TIN-C" }));
+        Assert.That(list.Select(cg => cg.Name), Is.EqualTo(["1TIN-A", "1TIN-B", "1TIN-C"]));
     }
 }

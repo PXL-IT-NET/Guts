@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 
 namespace Guts.Api.Models;
 

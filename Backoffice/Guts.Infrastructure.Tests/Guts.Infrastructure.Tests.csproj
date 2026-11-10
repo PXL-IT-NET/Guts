@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Guts.Infrastructure\Guts.Infrastructure.csproj" />
-    <ProjectReference Include="..\Guts.Business\Guts.Business.csproj" />
+    <ProjectReference Include="..\Guts.Application\Guts.Application.csproj" />
     <ProjectReference Include="..\Guts.Domain\Guts.Domain.csproj" />
     <ProjectReference Include="..\Guts.Common\Guts.Common.csproj" />
     <ProjectReference Include="..\Guts.Domain.Tests\Guts.Domain.Tests.csproj" />

@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business;
-using Guts.Business.Dtos;
-using Guts.Business.Services;
-using Guts.Business.Tests.Builders;
+using Guts.Application;
+using Guts.Application.Dtos;
+using Guts.Application.Services;
+using Guts.Application.Tests.Builders;
+using Guts.Domain.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
@@ -33,11 +34,11 @@ public class CourseControllerTests
     [SetUp]
     public void Setup()
     {
-        _courseServiceMock = new Mock<ICourseService>();
-        _chapterServiceMock = new Mock<IChapterService>();
-        _projectServiceMock = new Mock<IProjectService>();
-        _courseConverterMock = new Mock<ICourseConverter>();
-        _controller = new CourseController(_courseServiceMock.Object, 
+        _courseServiceMock = new();
+        _chapterServiceMock = new();
+        _projectServiceMock = new();
+        _courseConverterMock = new();
+        _controller = new(_courseServiceMock.Object, 
             _chapterServiceMock.Object,
             _projectServiceMock.Object,
             _courseConverterMock.Object);
@@ -53,7 +54,7 @@ public class CourseControllerTests
     public void GetCoursesShouldReturnTheCoursesReturnedByCourseService()
     {
         //Arrange
-        List<Course> allCourses = new List<Course>();
+        List<Course> allCourses = [];
         _courseServiceMock.Setup(service => service.GetAllCoursesAsync()).ReturnsAsync(allCourses);
 
         //Act
@@ -87,14 +88,14 @@ public class CourseControllerTests
         _courseServiceMock.Setup(service => service.GetCourseByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(existingCourse);
 
-        List<Chapter> existingChapters = new List<Chapter>
-        {
+        List<Chapter> existingChapters =
+        [
             new ChapterBuilder().Build(),
-            new ChapterBuilder().Build(),
-        };
+            new ChapterBuilder().Build()
+        ];
         _chapterServiceMock.Setup(service => service.GetChaptersOfCourseAsync(It.IsAny<int>(), It.IsAny<int?>())).ReturnsAsync(existingChapters);
 
-        CourseContentsModel convertedCourse = new CourseContentsModel();
+        CourseContentsModel convertedCourse = new();
         _courseConverterMock
             .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IReadOnlyList<Chapter>>(), It.IsAny<IReadOnlyList<Project>>()))
             .Returns(convertedCourse);
@@ -118,14 +119,14 @@ public class CourseControllerTests
         _courseServiceMock.Setup(service => service.GetCourseByIdAsync(It.IsAny<int>()))
             .ReturnsAsync(existingCourse);
 
-        List<Project> existingProjects = new List<Project>
-        {
+        List<Project> existingProjects =
+        [
             new ProjectBuilder().Build(),
-            new ProjectBuilder().Build(),
-        };
+            new ProjectBuilder().Build()
+        ];
         _projectServiceMock.Setup(service => service.GetProjectsOfCourseAsync(It.IsAny<int>(), It.IsAny<int?>())).ReturnsAsync(existingProjects);
 
-        CourseContentsModel convertedCourse = new CourseContentsModel();
+        CourseContentsModel convertedCourse = new();
         _courseConverterMock
             .Setup(converter => converter.ToCourseContentsModel(It.IsAny<Course>(), It.IsAny<IReadOnlyList<Chapter>>(), It.IsAny<IReadOnlyList<Project>>()))
             .Returns(convertedCourse);

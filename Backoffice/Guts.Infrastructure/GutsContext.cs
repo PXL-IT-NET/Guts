@@ -2,8 +2,9 @@ using System;
 using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
@@ -52,8 +53,6 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
     public DbSet<TestRun> TestRuns { get; set; }
     public DbSet<SolutionFile> SolutionFiles { get; set; }
     public DbSet<TestResult> TestResults { get; set; }
-    public DbSet<Exam> Exams { get; set; }
-    public DbSet<ExamPart> ExamParts { get; set; }
     public DbSet<LoginSession> LoginSessions { get; set; }
 
     public DbSet<ProjectTeamAssessment> ProjectTeamAssessments { get; set; }
@@ -87,9 +86,6 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
         builder.ApplyConfiguration(new SolutionFileConfiguration());
         builder.ApplyConfiguration(new TestResultConfiguration());
         builder.ApplyConfiguration(new TestConfiguration());
-        builder.ApplyConfiguration(new ExamConfiguration());
-        builder.ApplyConfiguration(new ExamPartConfiguration());
-        builder.ApplyConfiguration(new AssignmentEvaluationConfiguration());
         builder.ApplyConfiguration(new ProjectConfiguration());
         builder.ApplyConfiguration(new ProjectTeamConfiguration());
         builder.ApplyConfiguration(new ProjectAssessmentConfiguration());

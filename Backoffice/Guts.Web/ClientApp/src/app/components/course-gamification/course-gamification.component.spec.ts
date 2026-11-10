@@ -46,7 +46,7 @@ describe("CourseGamificationComponent", () => {
     totalGreenTests: 18,
     earnedBadges: [
       {
-        badgeType: 1,
+        value: 1,
         name: "First Spark",
         description: "Passed your first test",
         icon: "🌱",
@@ -212,7 +212,7 @@ describe("CourseGamificationComponent", () => {
       totalGreenTests: 25,
       earnedBadges: [
         {
-          badgeType: 1,
+          value: 1,
           name: "First Spark",
           description: "Earned first test",
           icon: "Spark",

@@ -9,7 +9,7 @@ import {
 import { GamificationService } from "../../services/gamification.service";
 import {
   IStudentGamificationProfileModel,
-  IBadgeMetadataModel,
+  IBadgeModel,
 } from "../../viewmodels/gamification.model";
 
 @Component({
@@ -29,11 +29,11 @@ export class CourseGamificationBadgesComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  private readonly _allBadges = signal<IBadgeMetadataModel[]>([]);
-  public get allBadges(): IBadgeMetadataModel[] {
+  private readonly _allBadges = signal<IBadgeModel[]>([]);
+  public get allBadges(): IBadgeModel[] {
     return this._allBadges();
   }
-  public set allBadges(v: IBadgeMetadataModel[]) {
+  public set allBadges(v: IBadgeModel[]) {
     this._allBadges.set(v);
     this.cdr.markForCheck();
   }
@@ -52,12 +52,12 @@ export class CourseGamificationBadgesComponent implements OnInit {
     });
   }
 
-  public isBadgeEarned(badgeType: number): boolean {
-    return !!this.profile?.earnedBadges?.some((b) => b.badgeType === badgeType);
+  public isBadgeEarned(value: number): boolean {
+    return !!this.profile?.earnedBadges?.some((b) => b.value === value);
   }
 
-  public getBadgeEarnedDate(badgeType: number): string | null {
-    const found = this.profile?.earnedBadges?.find((b) => b.badgeType === badgeType);
+  public getBadgeEarnedDate(value: number): string | null {
+    const found = this.profile?.earnedBadges?.find((b) => b.value === value);
     return found ? found.earnedAt : null;
   }
 }

@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.PeriodAggregate;
+using Microsoft.EntityFrameworkCore;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TestAggregate;
@@ -100,14 +100,15 @@ internal sealed class TestDataSeeder
 
         if (!string.IsNullOrEmpty(assignmentCode))
         {
-            var names = testNames.Length > 0 ? testNames : new[] { "Test_1" };
-            chapter.Assignments.Add(new Assignment
+            var names = testNames.Length > 0 ? testNames : ["Test_1"];
+            var assignment = new Assignment
             {
                 Code = assignmentCode,
                 Description = $"Assignment {assignmentCode}",
-                Tests = names.Select(n => new Test { TestName = n }).ToList(),
-                TestCodeHashes = new List<TestCodeHash> { new() { Hash = $"HASH_{assignmentCode}" } }
-            });
+                Tests = names.Select(n => new Test { TestName = n }).ToList()
+            };
+            assignment.AddTestCodeHash($"HASH_{assignmentCode}");
+            chapter.Assignments.Add(assignment);
         }
 
         context.Chapters.Add(chapter);
@@ -125,7 +126,7 @@ internal sealed class TestDataSeeder
         params (string TeamName, int[] UserIds)[] teams)
     {
         await using var context = _contextFactory();
-        var names = testNames is { Length: > 0 } ? testNames : new[] { "Test_1" };
+        var names = testNames is { Length: > 0 } ? testNames : ["Test_1"];
 
         var project = new Project
         {
@@ -198,25 +199,25 @@ internal sealed class TestDataSeeder
         return teamAssessment;
     }
 
-    public async Task<(Exam Exam, ExamPart ExamPart)> SeedExamWithPartAndEvaluationAsync(
-        int courseId,
-        int periodId,
-        Assignment assignment,
-        string examName = "Midterm Exam",
-        string partName = "Part 1")
+    public async Task SeedExamEvaluationRawAsync(int courseId, int periodId, int assignmentId)
     {
         await using var context = _contextFactory();
-        var exam = new Exam.Factory().CreateNew(courseId, periodId, examName);
-        context.Exams.Add(exam);
-        await context.SaveChangesAsync();
+        await context.Database.ExecuteSqlRawAsync(
+            "CREATE TABLE IF NOT EXISTS Exams (Id INTEGER PRIMARY KEY AUTOINCREMENT, CourseId INTEGER NOT NULL, PeriodId INTEGER NOT NULL, Name TEXT, MaximumScore INTEGER NOT NULL);");
+        await context.Database.ExecuteSqlRawAsync(
+            "CREATE TABLE IF NOT EXISTS ExamParts (Id INTEGER PRIMARY KEY AUTOINCREMENT, ExamId INTEGER NOT NULL, Name TEXT, Deadline TEXT NOT NULL);");
+        await context.Database.ExecuteSqlRawAsync(
+            "CREATE TABLE IF NOT EXISTS AssignmentEvaluation (Id INTEGER PRIMARY KEY AUTOINCREMENT, ExamPartId INTEGER NOT NULL, AssignmentId INTEGER NOT NULL, MaximumScore INTEGER NOT NULL, NumberOfTestsAlreadyGreenAtStart INTEGER NOT NULL);");
 
-        var examPart = (ExamPart)exam.AddExamPart(partName, DateTime.UtcNow.AddDays(1));
-        await context.SaveChangesAsync();
-
-        examPart.AddAssignmentEvaluation(assignment, 10, 0);
-        await context.SaveChangesAsync();
-
-        return (exam, examPart);
+        await context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO Exams (CourseId, PeriodId, Name, MaximumScore) VALUES ({0}, {1}, 'Midterm Exam', 20);",
+            courseId, periodId);
+        await context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO ExamParts (ExamId, Name, Deadline) VALUES (last_insert_rowid(), 'Part 1', {0});",
+            DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss"));
+        await context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO AssignmentEvaluation (ExamPartId, AssignmentId, MaximumScore, NumberOfTestsAlreadyGreenAtStart) VALUES (last_insert_rowid(), {0}, 10, 0);",
+            assignmentId);
     }
 
     public async Task<TestRun> SeedTestRunAsync(

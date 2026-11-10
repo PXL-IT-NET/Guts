@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business.Repositories;
+using Guts.Application.Repositories;
 using Guts.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 

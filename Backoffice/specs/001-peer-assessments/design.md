@@ -80,16 +80,16 @@ flowchart TD
 
 ---
 
-## 3. Business Layer (`Guts.Business`)
+## 3. Business Layer (`Guts.Application`)
 
-### Repository Contracts (`Guts.Business/Repositories/`)
+### Repository Contracts (`Guts.Application/Repositories/`)
 - `IProjectAssessmentRepository`:
   - `Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId);`
 - `IProjectTeamAssessmentRepository`:
   - `Task<IProjectTeamAssessment> LoadAsync(int projectAssessmentId, int teamId);`
 
-### Application Services (`Guts.Business/Services/`)
-- **`IProjectTeamAssessmentService` / `ProjectTeamAssessmentService`** (`Guts.Business/Services/Assessment/`):
+### Application Services (`Guts.Application/Services/`)
+- **`IProjectTeamAssessmentService` / `ProjectTeamAssessmentService`** (`Guts.Application/Services/Assessment/`):
   - `GetOrCreateTeamAssessmentAsync(projectAssessmentId, projectTeamId)` — Loads existing `ProjectTeamAssessment` or provisions a new one via `IProjectTeamAssessmentFactory`.
   - `GetStatusAsync(projectAssessmentId, teamId)` — Returns `ProjectTeamAssessmentStatusDto` including `PeerIds` (`teamAssessment.Peers.Select(u => u.Id).ToList()`).
   - `GetResultsForTeacherAsync(projectAssessmentId, teamId)` (`[AC-6]`):
@@ -102,7 +102,7 @@ flowchart TD
     - Calls `teamAssessment.SetPeerInclusion(userId, isIncluded)`.
     - Persists changes via `repository.UpdateAsync(teamAssessment)`.
 
-### DTOs (`Guts.Business/Dtos/`)
+### DTOs (`Guts.Application/Dtos/`)
 - `ProjectTeamAssessmentStatusDto`:
   - `Id`, `TeamId`, `IsComplete`, `PeersThatNeedToEvaluateOthers`, and **new property** `IReadOnlyList<int> PeerIds { get; set; }`.
 - `PeerAssessmentDto` (`UserId`, `SubjectId`, `CooperationScore`, `ContributionScore`, `EffortScore`, `Explanation`)

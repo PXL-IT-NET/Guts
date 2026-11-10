@@ -9,7 +9,7 @@ internal class SolutionFileOutputModelBuilder
 
     public SolutionFileOutputModelBuilder()
     {
-        _outputModel = new SolutionFileOutputModel
+        _outputModel = new()
         {
             Content = Guid.NewGuid().ToString(),
             FilePath = Guid.NewGuid().ToString()

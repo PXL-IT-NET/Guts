@@ -1,7 +1,7 @@
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business;
-using Guts.Business.Services;
+using Guts.Application;
+using Guts.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;

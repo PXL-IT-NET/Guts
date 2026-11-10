@@ -72,8 +72,6 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     c.ProjectAssessmentOverviewComponent,
     c.ProjectAssessmentAddComponent,
     c.ProjectAssessmentEditComponent,
-    c.ExamComponent,
-    c.ExampartComponent,
     PositiveNumberValidatorDirective,
     NgDatetimeComponent,
     c.ProjectTeamAssessmentEvaluationFormComponent,

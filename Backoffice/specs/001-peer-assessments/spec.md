@@ -209,7 +209,7 @@ The **Project Team Peer Assessments** feature enables:
 
 ## 7. Out of Scope
 
-- Direct automatic synchronization of peer assessment scores into `ExamAggregate` grades (handled separately via exam/score administration).
+- Direct automatic synchronization of peer assessment scores into external course grading systems (handled separately via score administration).
 - Email/notification reminders for pending peer assessments.
 
 ---

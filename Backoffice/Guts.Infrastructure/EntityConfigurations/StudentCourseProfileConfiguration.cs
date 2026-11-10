@@ -1,5 +1,6 @@
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -57,9 +58,15 @@ internal class StudentCourseProfileConfiguration : IEntityTypeConfiguration<Stud
             .HasForeignKey(sb => sb.StudentCourseProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Navigation(sp => sp.Badges)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasMany(sp => sp.Events)
             .WithOne(ge => ge.StudentCourseProfile)
             .HasForeignKey(ge => ge.StudentCourseProfileId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(sp => sp.Events)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -1,8 +1,8 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
-using Guts.Business.Repositories;
+using Guts.Application.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers;

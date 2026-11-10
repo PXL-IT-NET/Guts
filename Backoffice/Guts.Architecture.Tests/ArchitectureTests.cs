@@ -6,9 +6,9 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using Guts.Api.Controllers;
 using Guts.Bootstrapper;
-using Guts.Business.Services;
+using Guts.Application.Services;
 using Guts.Common;
-using Guts.Domain.ExamAggregate;
+using Guts.Domain.CourseAggregate;
 using Microsoft.AspNetCore.Authorization;
 using NUnit.Framework;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
@@ -19,8 +19,8 @@ namespace Guts.Architecture.Tests;
 public class ArchitectureTests
 {
     private static readonly System.Reflection.Assembly CommonAssembly = typeof(Contracts).Assembly;
-    private static readonly System.Reflection.Assembly DomainAssembly = typeof(ExamPart).Assembly;
-    private static readonly System.Reflection.Assembly BusinessAssembly = typeof(ICourseService).Assembly;
+    private static readonly System.Reflection.Assembly DomainAssembly = typeof(Course).Assembly;
+    private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(ICourseService).Assembly;
     private static readonly System.Reflection.Assembly InfrastructureAssembly = System.Reflection.Assembly.Load("Guts.Infrastructure");
     private static readonly System.Reflection.Assembly BootstrapperAssembly = typeof(StartUpExtensions).Assembly;
     private static readonly System.Reflection.Assembly ApiAssembly = typeof(CourseController).Assembly;
@@ -29,7 +29,7 @@ public class ArchitectureTests
         .LoadAssemblies(
             CommonAssembly,
             DomainAssembly,
-            BusinessAssembly,
+            ApplicationAssembly,
             InfrastructureAssembly,
             BootstrapperAssembly,
             ApiAssembly)
@@ -41,8 +41,8 @@ public class ArchitectureTests
     private static readonly IObjectProvider<IType> DomainLayer =
         Types().That().ResideInAssembly(DomainAssembly).As("Guts.Domain Layer");
 
-    private static readonly IObjectProvider<IType> BusinessLayer =
-        Types().That().ResideInAssembly(BusinessAssembly).As("Guts.Business Layer");
+    private static readonly IObjectProvider<IType> ApplicationLayer =
+        Types().That().ResideInAssembly(ApplicationAssembly).As("Guts.Application Layer");
 
     private static readonly IObjectProvider<IType> InfrastructureLayer =
         Types().That().ResideInAssembly(InfrastructureAssembly).As("Guts.Infrastructure Layer");
@@ -58,7 +58,7 @@ public class ArchitectureTests
     {
         IArchRule rule = Types().That().Are(CommonLayer)
             .Should().NotDependOnAny(DomainLayer)
-            .AndShould().NotDependOnAny(BusinessLayer)
+            .AndShould().NotDependOnAny(ApplicationLayer)
             .AndShould().NotDependOnAny(InfrastructureLayer)
             .AndShould().NotDependOnAny(BootstrapperLayer)
             .AndShould().NotDependOnAny(ApiLayer)
@@ -71,7 +71,7 @@ public class ArchitectureTests
     public void DomainLayer_ShouldOnlyDependOnCommonAndNeverOnOuterLayersOrEfCore()
     {
         IArchRule layerRule = Types().That().Are(DomainLayer)
-            .Should().NotDependOnAny(BusinessLayer)
+            .Should().NotDependOnAny(ApplicationLayer)
             .AndShould().NotDependOnAny(InfrastructureLayer)
             .AndShould().NotDependOnAny(BootstrapperLayer)
             .AndShould().NotDependOnAny(ApiLayer)
@@ -88,13 +88,13 @@ public class ArchitectureTests
     }
 
     [Test]
-    public void BusinessLayer_ShouldNotDependOnInfrastructureBootstrapperOrApiLayers()
+    public void ApplicationLayer_ShouldNotDependOnInfrastructureBootstrapperOrApiLayers()
     {
-        IArchRule rule = Types().That().Are(BusinessLayer)
+        IArchRule rule = Types().That().Are(ApplicationLayer)
             .Should().NotDependOnAny(InfrastructureLayer)
             .AndShould().NotDependOnAny(BootstrapperLayer)
             .AndShould().NotDependOnAny(ApiLayer)
-            .Because("Guts.Business orchestrates domain logic through abstractions and must not depend on Infrastructure or API layers.");
+            .Because("Guts.Application orchestrates domain logic through abstractions and must not depend on Infrastructure or API layers.");
 
         AssertNoViolations(rule);
     }
@@ -116,23 +116,23 @@ public class ArchitectureTests
         IArchRule rule = Types().That().Are(ApiLayer)
             .And().DoNotHaveFullName("Guts.Api.Program")
             .Should().NotDependOnAny(InfrastructureLayer)
-            .Because("Guts.Api controllers, models, and services must communicate through Guts.Business interfaces and never access Guts.Infrastructure directly.");
+            .Because("Guts.Api controllers, models, and services must communicate through Guts.Application interfaces and never access Guts.Infrastructure directly.");
 
         AssertNoViolations(rule);
     }
 
     [TestCase("Factory", nameof(DomainAssembly))]
+    [TestCase("Calculator", nameof(DomainAssembly))]
     [TestCase("Repository", nameof(InfrastructureAssembly))]
-    [TestCase("Service", nameof(BusinessAssembly))]
-    [TestCase("Converter", nameof(BusinessAssembly))]
-    [TestCase("Loader", nameof(BusinessAssembly))]
+    [TestCase("Service", nameof(ApplicationAssembly))]
+    [TestCase("Converter", nameof(ApplicationAssembly))]
     public void AutoRegisteredClasses_ShouldImplementMatchingInterfaceEndingWithSameSuffix(string suffix, string assemblyFieldName)
     {
         System.Reflection.Assembly targetAssembly = assemblyFieldName switch
         {
             nameof(DomainAssembly) => DomainAssembly,
             nameof(InfrastructureAssembly) => InfrastructureAssembly,
-            nameof(BusinessAssembly) => BusinessAssembly,
+            nameof(ApplicationAssembly) => ApplicationAssembly,
             _ => throw new ArgumentOutOfRangeException(nameof(assemblyFieldName))
         };
 
@@ -197,6 +197,62 @@ public class ArchitectureTests
             unsecuredControllers,
             Is.Empty,
             () => $"All API controllers must either inherit from Guts.Api.Controllers.ControllerBase or explicitly declare [Authorize]/[AllowAnonymous] on the class or all actions: {string.Join(", ", unsecuredControllers)}");
+    }
+
+    [Test]
+    public void ValueObjects_ShouldBeImmutableAndHaveNoPublicSetters()
+    {
+        var valueObjectTypes = DomainAssembly.GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && IsSubclassOfGenericValueObject(t))
+            .ToList();
+
+        Assert.That(valueObjectTypes, Is.Not.Empty, "Expected ValueObject subclasses in Guts.Domain.");
+
+        var violatingProperties = (from type in valueObjectTypes
+                                   from prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                                   where prop.SetMethod != null && prop.SetMethod.IsPublic
+                                   select $"{type.FullName}.{prop.Name}").ToList();
+
+        Assert.That(
+            violatingProperties,
+            Is.Empty,
+            () => $"Value Objects must be immutable and declare no public setters: {string.Join(", ", violatingProperties)}");
+    }
+
+    [Test]
+    public void DomainFactories_ShouldBeStateless()
+    {
+        var factoryTypes = DomainAssembly.GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } &&
+                        t.Name.EndsWith("Factory", StringComparison.Ordinal) &&
+                        t.GetInterfaces().Any(i => i.Name.EndsWith("Factory", StringComparison.Ordinal)))
+            .ToList();
+
+        Assert.That(factoryTypes, Is.Not.Empty, "Expected domain factory types in Guts.Domain.");
+
+        var mutableFields = (from type in factoryTypes
+                             from field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                             where !field.IsInitOnly && !field.Name.Contains("BackingField", StringComparison.Ordinal)
+                             select $"{type.FullName}.{field.Name}").ToList();
+
+        Assert.That(
+            mutableFields,
+            Is.Empty,
+            () => $"Domain factories are registered as Singletons and must be stateless without mutable instance fields: {string.Join(", ", mutableFields)}");
+    }
+
+    private static bool IsSubclassOfGenericValueObject(System.Type type)
+    {
+        var current = type.BaseType;
+        while (current != null && current != typeof(object))
+        {
+            if (current.IsGenericType && current.GetGenericTypeDefinition().Name.StartsWith("ValueObject", StringComparison.Ordinal))
+            {
+                return true;
+            }
+            current = current.BaseType;
+        }
+        return false;
     }
 
     private static bool HasExplicitAuthorizationAttributes(System.Type controllerType)

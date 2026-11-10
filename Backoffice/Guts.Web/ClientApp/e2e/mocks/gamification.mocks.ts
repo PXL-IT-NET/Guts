@@ -55,14 +55,14 @@ export const mockStudentGamificationProfile: IStudentGamificationProfileModel = 
   totalGreenTests: 18,
   earnedBadges: [
     {
-      badgeType: 1,
+      value: 1,
       name: "First Spark",
       description: "Made your very first test green in the course.",
       icon: "⚡",
       earnedAt: "2026-10-01T10:00:00Z",
     },
     {
-      badgeType: 9,
+      value: 9,
       name: "On Fire",
       description: "Maintained a streak of 4 consecutive coding weeks.",
       icon: "🔥",
@@ -92,7 +92,7 @@ export const mockInspectedStudentProfile: IStudentGamificationProfileModel = {
   totalGreenTests: 28,
   earnedBadges: [
     {
-      badgeType: 1,
+      value: 1,
       name: "First Spark",
       description: "Made your very first test green in the course.",
       icon: "⚡",

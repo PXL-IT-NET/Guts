@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Domain.CourseAggregate;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
@@ -53,7 +53,7 @@ internal class BaseDbRepositoryTests : RepositoryTestsBase
         await using (var context = CreateDbContext())
         {
             var repo = new TestableCourseDbRepository(context);
-            Assert.That(async () => await repo.GetByIdAsync(courseId), Throws.InstanceOf<DataNotFoundException>());
+            await Assert.ThatAsync(async () => await repo.GetByIdAsync(courseId), Throws.InstanceOf<DataNotFoundException>());
         }
     }
 
@@ -63,10 +63,10 @@ internal class BaseDbRepositoryTests : RepositoryTestsBase
         await using var context = CreateDbContext();
         var repo = new TestableCourseDbRepository(context);
 
-        Assert.That(async () => await repo.AddAsync(new Course { Id = 5, Code = "C1", Name = "N1" }),
+        await Assert.ThatAsync(async () => await repo.AddAsync(new Course { Id = 5, Code = "C1", Name = "N1" }),
             Throws.InstanceOf<ArgumentException>());
 
-        Assert.That(async () => await repo.UpdateAsync(new Course { Id = 0, Code = "C1", Name = "N1" }),
+        await Assert.ThatAsync(async () => await repo.UpdateAsync(new Course { Id = 0, Code = "C1", Name = "N1" }),
             Throws.InstanceOf<ArgumentException>());
     }
 

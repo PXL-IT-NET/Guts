@@ -1,7 +1,7 @@
 root = true
 
 # Enforce key SonarAnalyzer.CSharp quality gates as compile-time build errors in production projects
-[{Guts.Common,Guts.Domain,Guts.Business,Guts.Infrastructure,Guts.Bootstrapper,Guts.Api,Guts.Web}/**/*.cs]
+[{Guts.Common,Guts.Domain,Guts.Application,Guts.Infrastructure,Guts.Bootstrapper,Guts.Api,Guts.Web}/**/*.cs]
 # S3776: Cognitive Complexity of methods should not be too high
 dotnet_diagnostic.S3776.severity = error
 # S107: Methods should not have too many parameters

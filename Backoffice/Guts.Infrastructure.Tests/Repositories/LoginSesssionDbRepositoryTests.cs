@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
@@ -39,9 +39,9 @@ internal class LoginSesssionDbRepositoryTests : RepositoryTestsBase
             var byAll = await repo.GetSingleAsync("pub-123", "127.0.0.1", "tok-abc");
             Assert.That(byAll.Id, Is.GreaterThan(0));
 
-            Assert.That(async () => await repo.GetSingleAsync("pub-123", "10.0.0.1"),
+            await Assert.ThatAsync(() => repo.GetSingleAsync("pub-123", "10.0.0.1"),
                 Throws.InstanceOf<DataNotFoundException>());
-            Assert.That(async () => await repo.GetSingleAsync("pub-123", "127.0.0.1", "wrong-token"),
+            await Assert.ThatAsync(async () => await repo.GetSingleAsync("pub-123", "127.0.0.1", "wrong-token"),
                 Throws.InstanceOf<DataNotFoundException>());
         }
     }

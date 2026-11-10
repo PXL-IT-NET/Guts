@@ -266,8 +266,8 @@ describe("GamificationService", () => {
     httpMock
       .expectOne("api/gamification/badges")
       .flush([
-        { badgeType: 1, type: 1, name: "First Spark", icon: "🌱", description: "Passed test" },
-        { badgeType: 11, type: 11, name: "Sprint Gold", icon: "🥇", description: "Sprint #1" },
+        { value: 1, name: "First Spark", icon: "🌱", description: "Passed test" },
+        { value: 11, name: "Sprint Gold", icon: "🥇", description: "Sprint #1" },
       ]);
 
     expect(res.success).toBeTrue();

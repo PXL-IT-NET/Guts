@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.Converters;
-using Guts.Business.Dtos;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
@@ -25,7 +25,7 @@ internal class AssignmentConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new AssignmentConverter();
+        _converter = new();
     }
 
     [Test]
@@ -36,7 +36,7 @@ internal class AssignmentConverterTests
 
         //Act + Assert
         Assert.That(
-            () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
+            () => _converter.ToAssignmentDetailModel(assignment, new(), null, null),
             Throws.ArgumentException);
     }
 
@@ -49,7 +49,7 @@ internal class AssignmentConverterTests
 
         //Act + Assert
         Assert.That(
-            () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
+            () => _converter.ToAssignmentDetailModel(assignment, new(), null, null),
             Throws.ArgumentException);
     }
 
@@ -62,7 +62,7 @@ internal class AssignmentConverterTests
 
         //Act + Assert
         Assert.That(
-            () => _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null),
+            () => _converter.ToAssignmentDetailModel(assignment, new(), null, null),
             Throws.ArgumentException);
     }
 
@@ -87,7 +87,7 @@ internal class AssignmentConverterTests
         Assignment assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
 
         //Act
-        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, null);
+        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new(), null, null);
 
         //Assert
         Assert.That(model, Is.Not.Null);
@@ -103,7 +103,7 @@ internal class AssignmentConverterTests
         Assignment assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
         DateTime utcNow = DateTime.UtcNow;
 
-        AssignmentTestRunInfoDto testRunInfo = new AssignmentTestRunInfoDto
+        AssignmentTestRunInfoDto testRunInfo = new()
         {
             FirstRunDateTime = utcNow.AddDays(-1),
             LastRunDateTime = utcNow,
@@ -134,7 +134,7 @@ internal class AssignmentConverterTests
 
         List<Test> tests = assignment.Tests.ToList();
         int numberOfTestResults = Random.Shared.Next(1, tests.Count / 2);
-        List<TestResult> testResults = new List<TestResult>();
+        List<TestResult> testResults = [];
         for (int i = 0; i < numberOfTestResults; i++)
         {
             Test test = tests[i];
@@ -142,7 +142,7 @@ internal class AssignmentConverterTests
         }
 
         //Act
-        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), testResults, null);
+        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new(), testResults, null);
 
         //Assert
         Assert.That(model, Is.Not.Null);
@@ -156,14 +156,14 @@ internal class AssignmentConverterTests
         // Arrange
         Chapter chapter = new ChapterBuilder().WithCourse().Build();
         Assignment assignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
-        List<SolutionFile> solutionFiles = new List<SolutionFile>
-        {
+        List<SolutionFile> solutionFiles =
+        [
             new SolutionFileBuilder().Build(),
             new SolutionFileBuilder().Build()
-        };
+        ];
 
         // Act
-        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new AssignmentTestRunInfoDto(), null, solutionFiles);
+        AssignmentDetailModel model = _converter.ToAssignmentDetailModel(assignment, new(), null, solutionFiles);
 
         // Assert
         Assert.That(model, Is.Not.Null);

@@ -1,8 +1,8 @@
 using System;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Guts.Business.Services;
+using Guts.Application.Services;
+using Guts.Domain.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -36,11 +36,8 @@ public class SprintLeaderboardBackgroundService(
 
     public static (int Year, int WeekNumber) GetPreviousCompletedWeek(DateTime fromUtc)
     {
-        int currentYear = ISOWeek.GetYear(fromUtc);
-        int currentWeek = ISOWeek.GetWeekOfYear(fromUtc);
-        DateTime currentMonday = ISOWeek.ToDateTime(currentYear, currentWeek, DayOfWeek.Monday);
-        DateTime previousSunday = currentMonday.AddDays(-1);
-        return (ISOWeek.GetYear(previousSunday), ISOWeek.GetWeekOfYear(previousSunday));
+        var prevWeek = IsoWeek.From(fromUtc).Previous();
+        return (prevWeek.Year, prevWeek.WeekNumber);
     }
 
     public async Task ExecuteSprintAwardingAsync(DateTime executionTime, CancellationToken cancellationToken = default)

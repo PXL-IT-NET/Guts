@@ -22,7 +22,7 @@ Define **what** needs to be built and **why** before deciding how to code it.
 ### Phase 2: Design (`design.md`)
 Map the requirements onto the GUTS Backoffice layered DDD architecture (`Guts.slnx` + Angular SPA):
 1. **`Guts.Domain`**: Aggregates, Entities, Value Objects, `Contracts.Require(...)` preconditions, and `I*Factory` interfaces.
-2. **`Guts.Business`**: Application services, repository interfaces (`I*Repository`), DTOs, and converters.
+2. **`Guts.Application`**: Application services, repository interfaces (`I*Repository`), DTOs, and converters.
 3. **`Guts.Infrastructure`**: EF Core entity configurations, migrations, and repository implementations.
 4. **`Guts.Api`**: REST API endpoints, request/response models, authorization attributes, and MCP server tools/resources (if applicable).
 5. **`Guts.Web/ClientApp`**: Angular components, services, viewmodels, routes, and guards.
@@ -34,7 +34,7 @@ Translate the design into small, ordered **Test-Driven Development (TDD)** slice
 - Reference the relevant Acceptance Criteria (`[AC-1]`) on each task.
 - Order tasks from the inside out:
   1. **Domain Layer** (`Guts.Domain.Tests` ➔ `Guts.Domain`)
-  2. **Business Layer** (`Guts.Business.Tests` ➔ `Guts.Business`)
+  2. **Business Layer** (`Guts.Application.Tests` ➔ `Guts.Application`)
   3. **Infrastructure Layer** (`Guts.Infrastructure.Tests` ➔ `Guts.Infrastructure` + EF Migrations)
   4. **API Layer** (`Guts.Api.Tests` ➔ `Guts.Api`)
   5. **Frontend SPA** (`*.spec.ts` ➔ Angular components/services in `Guts.Web/ClientApp`)
@@ -57,7 +57,7 @@ Backoffice/specs/
 │   ├── spec.md                # Functional requirements & acceptance criteria
 │   ├── design.md              # Layered DDD & Angular technical design
 │   └── tasks.md               # Ordered TDD implementation checklist
-└── NNN-feature-slug/          # Active or completed feature folder (e.g., 001-exam-part-export)
+└── NNN-feature-slug/          # Active or completed feature folder (e.g., 001-peer-assessments)
     ├── spec.md
     ├── design.md
     └── tasks.md

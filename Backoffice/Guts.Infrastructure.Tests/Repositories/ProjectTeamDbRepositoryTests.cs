@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Common;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
@@ -28,7 +28,7 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            teams: ("Team Alpha", new[] { _user1Id, _user2Id }));
+            teams: ("Team Alpha", [_user1Id, _user2Id]));
 
         _projectId = project.Id;
         _teamId = project.Teams.First().Id;
@@ -59,8 +59,8 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
         Assert.That(loaded.Project, Is.Not.Null);
         Assert.That(loaded.TeamUsers, Has.Count.EqualTo(2));
 
-        Assert.That(async () => await repo.LoadByIdAsync(0), Throws.InstanceOf<ContractException>());
-        Assert.That(async () => await repo.LoadByIdAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.LoadByIdAsync(0), Throws.InstanceOf<ContractException>());
+        await Assert.ThatAsync(async () => await repo.LoadByIdAsync(99999), Throws.InstanceOf<DataNotFoundException>());
     }
 
     [Test]
@@ -84,7 +84,7 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
 
             await repo.RemoveUserFromTeam(_teamId, _user1Id);
 
-            Assert.That(async () => await repo.RemoveUserFromTeam(_teamId, 99999),
+            await Assert.ThatAsync(async () => await repo.RemoveUserFromTeam(_teamId, 99999),
                 Throws.InstanceOf<ContractException>());
         }
 
@@ -97,7 +97,7 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
 
             var assessmentRepo = new ProjectTeamAssessmentDbRepository(context);
             var loadedAssessment = await assessmentRepo.LoadAsync(projectAssessment.Id, _teamId);
-            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { _user2Id, user3.Id }));
+            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo([_user2Id, user3.Id]));
         }
     }
 
@@ -132,7 +132,7 @@ internal class ProjectTeamDbRepositoryTests : RepositoryTestsBase
             var loadedAssessment = await assessmentRepo.LoadAsync(projectAssessment.Id, _teamId);
             Assert.That(loadedAssessment.IsComplete, Is.True);
             Assert.That(loadedAssessment.PeerAssessments, Has.Count.EqualTo(4));
-            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { _user1Id, _user2Id }));
+            Assert.That(loadedAssessment.Peers.Select(p => p.Id), Is.EquivalentTo([_user1Id, _user2Id]));
         }
     }
 }

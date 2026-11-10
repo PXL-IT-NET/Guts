@@ -1,13 +1,11 @@
 #pragma warning disable RMG089 // Implicit user-defined conversion on AssessmentScore value object is intentional
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
-using Guts.Api.Models.ExamModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TestAggregate;
@@ -27,7 +25,7 @@ public partial class Mapper : IMapper
         return new UserModel
         {
             Id = source.Id,
-            FullName = $"{source.FirstName} {source.LastName}".Trim()
+            FullName = source.FullName
         };
     }
 
@@ -56,30 +54,12 @@ public partial class Mapper : IMapper
         };
     }
 
-    public PeriodOutputModel MapToPeriodOutputModel(IExam source)
-    {
-        return new PeriodOutputModel { Id = source.Id };
-    }
-
     // ── Mapperly source-generated mappings ───────────────────────────────────
 
     [MapperIgnoreSource(nameof(Test.Assignment))]
     [MapperIgnoreSource(nameof(Test.AssignmentId))]
     [MapperIgnoreSource(nameof(Test.Results))]
     public partial TestModel MapToTestModel(Test source);
-
-    [MapperIgnoreSource(nameof(IExam.Course))]
-    [MapperIgnoreSource(nameof(IExam.Period))]
-    [MapperIgnoreSource(nameof(IExam.PeriodId))]
-    public partial ExamOutputModel MapToExamOutputModel(IExam source);
-
-    [MapperIgnoreSource(nameof(IExamPart.ExamId))]
-    [MapperIgnoreSource(nameof(IExamPart.MaximumScore))]
-    public partial ExamPartOutputModel MapToExamPartOutputModel(IExamPart source);
-
-    [MapperIgnoreSource(nameof(IAssignmentEvaluation.Assignment))]
-    [MapperIgnoreSource(nameof(IAssignmentEvaluation.ExamPartId))]
-    public partial AssignmentEvaluationOutputModel MapToAssignmentEvaluationOutputModel(IAssignmentEvaluation source);
 
     public partial PeriodOutputModel MapToPeriodOutputModel(IPeriod source);
 

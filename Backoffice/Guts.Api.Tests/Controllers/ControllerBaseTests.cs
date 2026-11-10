@@ -17,7 +17,7 @@ public class ControllerBaseTests
     [SetUp]
     public void Setup()
     {
-        _controller = new TestableControllerBase();    
+        _controller = new();    
     }
 
     [Test]

@@ -11,7 +11,7 @@ public class HomeControllerTests
     [SetUp]
     public void Setup()
     {
-        _controller = new HomeController();
+        _controller = new();
     }
 
     [Test]

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 

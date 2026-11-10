@@ -19,6 +19,6 @@ internal class TestDbRepositoryTests : RepositoryTestsBase
         var repo = new TestDbRepository(context);
 
         var tests = await repo.FindByAssignmentId(assignmentId);
-        Assert.That(tests.Select(t => t.TestName), Is.EquivalentTo(new[] { "Test_A", "Test_B" }));
+        Assert.That(tests.Select(t => t.TestName), Is.EquivalentTo(["Test_A", "Test_B"]));
     }
 }

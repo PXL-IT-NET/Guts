@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 
@@ -18,7 +18,7 @@ internal class ProjectTeamAssessmentDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            teams: ("Team Alpha", new[] { user1.Id, user2.Id }));
+            teams: ("Team Alpha", [user1.Id, user2.Id]));
         var teamId = project.Teams.First().Id;
 
         var projectAssessment = await Seeder.SeedProjectAssessmentAsync(project.Id);
@@ -37,7 +37,7 @@ internal class ProjectTeamAssessmentDbRepositoryTests : RepositoryTestsBase
         Assert.That(loaded.PeerAssessments, Has.Count.EqualTo(1));
         Assert.That(loaded.PeerAssessments.First().Subject, Is.Not.Null);
 
-        Assert.That(async () => await repo.LoadAsync(99999, teamId),
+        await Assert.ThatAsync(async () => await repo.LoadAsync(99999, teamId),
             Throws.InstanceOf<DataNotFoundException>());
     }
 
@@ -51,7 +51,7 @@ internal class ProjectTeamAssessmentDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            teams: ("Team Alpha", new[] { user1.Id, user2.Id, user3.Id }));
+            teams: ("Team Alpha", [user1.Id, user2.Id, user3.Id]));
         var teamId = project.Teams.First().Id;
 
         var projectAssessment = await Seeder.SeedProjectAssessmentAsync(project.Id);
@@ -88,7 +88,7 @@ internal class ProjectTeamAssessmentDbRepositoryTests : RepositoryTestsBase
             var loaded = await repo.LoadAsync(projectAssessment.Id, teamId);
             Assert.That(loaded.IsComplete, Is.True);
             Assert.That(loaded.PeerAssessments, Has.Count.EqualTo(4));
-            Assert.That(loaded.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { user1.Id, user2.Id }));
+            Assert.That(loaded.Peers.Select(p => p.Id), Is.EquivalentTo([user1.Id, user2.Id]));
             Assert.That(context.PeerAssessments.Count(), Is.EqualTo(4));
         }
     }
