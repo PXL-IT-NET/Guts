@@ -7,8 +7,8 @@
         <h5 class="mb-0 fw-bold">🏆 Course Hall of Fame</h5>
         <small class="text-body-secondary">
           @if (!isTeacher || perspectiveUserId) {
-            League tier rankings — overtake the student above you (+4 XP) and
-            rise a level (+5 XP)!
+            League tier rankings — overtake students above you (+4 / +6 XP per
+            day), rise a level (+5 XP), or defend your rank each week (+5 XP)!
           } @else {
             All-time course rankings across all 8 Hall of Fame League Tiers.
           }
@@ -97,9 +97,10 @@
             nextTargetStudent.rank
           }}
           in {{ nextTargetStudent.tierIcon }} {{ nextTargetStudent.tierName }})
-          and claim <strong>+4 bonus XP</strong>!
+          and claim up to <strong>+6 daily bonus XP</strong> (+4 XP for 1, +6 XP
+          for 2+)!
         </div>
-        <span class="badge bg-primary">+4 XP Overtake</span>
+        <span class="badge bg-primary">+4 / +6 XP Overtake</span>
       </div>
     } @else if ((!isTeacher || perspectiveUserId) && currentUserRank === 1) {
       <div

@@ -487,22 +487,71 @@ public class StudentCourseProfileTests
     }
 
     [Test]
-    public void EvaluateHallOfFameProgression_WhenSurpassingStudentsAndRisingTier_ShouldAward4XpPerRankAnd5XpPerTier()
+    public void EvaluateHallOfFameProgression_WhenSurpassingMultipleStudentsAndRisingTier_ShouldAward6XpDailyCapAnd5XpPerTier()
     {
         var profile = _factory.CreateNew(1, 2, 3);
         var timestamp = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
 
         // Moves from Rank 37 (Gold, tier 6) to Rank 34 (Diamond, tier 7):
-        // Surpassed 3 rank positions (36, 35, 34) -> 3 * 4 = 12 XP
+        // Surpassed 3 rank positions (36, 35, 34) on the same day -> 4 XP (1st) + 2 XP (2nd) + 0 XP (3rd) = 6 XP
         // Rose 1 tier (Gold -> Diamond) -> 1 * 5 = 5 XP
         bool changed = profile.EvaluateHallOfFameProgression(37, 34, timestamp);
 
         Assert.That(changed, Is.True);
-        Assert.That(profile.TotalXp, Is.EqualTo(17));
+        Assert.That(profile.TotalXp, Is.EqualTo(11));
         Assert.That(profile.BestHallOfFameRank, Is.EqualTo(34));
         Assert.That(profile.BestHallOfFameTier, Is.EqualTo(HallOfFameTier.Diamond));
         Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(3));
+        Assert.That(profile.Events.Where(e => e.EventType == GamificationEventType.HallOfFameOvertake).Sum(e => e.XpEarned), Is.EqualTo(6));
         Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameTierUp), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenOvertaking50StudentsInCluster_ShouldCapOvertakeBonusAt6XpPerDay()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var timestamp = new DateTime(2026, 10, 25, 10, 0, 0, DateTimeKind.Utc);
+
+        // Surpasses 50 students within Iron tier (Rank 150 -> Rank 101, no tier change):
+        bool changed = profile.EvaluateHallOfFameProgression(150, 101, timestamp);
+
+        Assert.That(changed, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(101));
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(49));
+        Assert.That(profile.Events.Where(e => e.EventType == GamificationEventType.HallOfFameOvertake).Sum(e => e.XpEarned), Is.EqualTo(6));
+    }
+
+    [Test]
+    public void EvaluateHallOfFameProgression_WhenOvertakingAcrossMultipleRunsSameDayAndNextDay_ShouldTopUpTo6XpSameDayAndResetNextDay()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var day1Morning = new DateTime(2026, 10, 25, 9, 0, 0, DateTimeKind.Utc);
+        var day1Afternoon = new DateTime(2026, 10, 25, 14, 0, 0, DateTimeKind.Utc);
+        var day1Evening = new DateTime(2026, 10, 25, 19, 0, 0, DateTimeKind.Utc);
+        var day2Morning = new DateTime(2026, 10, 26, 9, 0, 0, DateTimeKind.Utc);
+
+        // Run 1 (Day 1 morning): Overtakes 1 student (Rank 10 -> Rank 9) -> +4 XP
+        bool run1 = profile.EvaluateHallOfFameProgression(10, 9, day1Morning);
+        Assert.That(run1, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(4));
+
+        // Run 2 (Day 1 afternoon): Overtakes 1 more student (Rank 9 -> Rank 8) -> +2 XP (tops up to 6 XP daily max)
+        bool run2 = profile.EvaluateHallOfFameProgression(9, 8, day1Afternoon);
+        Assert.That(run2, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+
+        // Run 3 (Day 1 evening): Overtakes 2 more students (Rank 8 -> Rank 6) -> +0 XP (daily cap reached), BestHallOfFameRank still updates to 6
+        bool run3 = profile.EvaluateHallOfFameProgression(8, 6, day1Evening);
+        Assert.That(run3, Is.False);
+        Assert.That(profile.TotalXp, Is.EqualTo(6));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(6));
+
+        // Run 4 (Day 2 morning): Overtakes 1 student (Rank 6 -> Rank 5) -> +4 XP (new UTC day)
+        bool run4 = profile.EvaluateHallOfFameProgression(6, 5, day2Morning);
+        Assert.That(run4, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(10));
+        Assert.That(profile.BestHallOfFameRank, Is.EqualTo(5));
     }
 
     [Test]
@@ -520,10 +569,10 @@ public class StudentCourseProfileTests
         Assert.That(secondClimb, Is.False);
         Assert.That(profile.TotalXp, Is.EqualTo(9));
 
-        // Climbs from 15 to 14 -> only rank 14 is new (+4 XP)
+        // Climbs from 15 to 14 on same day -> rank 14 is 2nd overtake of the day (+2 XP)
         bool thirdClimb = profile.EvaluateHallOfFameProgression(15, 14, timestamp.AddHours(2));
         Assert.That(thirdClimb, Is.True);
-        Assert.That(profile.TotalXp, Is.EqualTo(13));
+        Assert.That(profile.TotalXp, Is.EqualTo(11));
         Assert.That(profile.BestHallOfFameRank, Is.EqualTo(14));
     }
 
@@ -535,5 +584,66 @@ public class StudentCourseProfileTests
         var profile = _factory.CreateNew(1, 2, 3);
         Assert.That(() => profile.EvaluateHallOfFameProgression(previousRank, newRank, DateTime.UtcNow),
             Throws.InstanceOf<ContractException>());
+    }
+
+    [Test]
+    public void EvaluateWeeklyRankDefense_WhenActiveAndKeptBestRankWithStudentsBehind_ShouldAward5XpAndUnlockRankDefenderBadgeAt3Weeks()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var week1Monday = new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc);
+
+        // Student passes a test in Week 41 and reaches Rank 3 out of 10
+        profile.AwardPassedTestXp(101, week1Monday.AddDays(1));
+        profile.EvaluateHallOfFameProgression(5, 3, week1Monday.AddDays(1));
+        int xpBeforeDefense = profile.TotalXp;
+
+        // Week 1 (2026, 41) defense: Rank 3 <= BestHallOfFameRank (3), 10 total students
+        bool defendedWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek1, Is.True);
+        Assert.That(profile.TotalXp, Is.EqualTo(xpBeforeDefense + 5));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.False);
+
+        // Duplicate call for same week should return false
+        bool duplicateWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
+        Assert.That(duplicateWeek1, Is.False);
+
+        // Week 2 (2026, 42): Student passes test 102 (now 100% of course tests passed!) and holds Rank 3
+        var week2Monday = week1Monday.AddDays(7);
+        profile.AwardPassedTestXp(102, week2Monday.AddDays(2));
+        bool defendedWeek2 = profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek2, Is.True);
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.False);
+
+        // Week 3 (2026, 43): Student earned 0 new test XP in Week 3, but has passed 100% of course tests (101, 102) and holds Rank 3 -> unlocks RankDefender badge!
+        bool defendedWeek3 = profile.EvaluateWeeklyRankDefense(2026, 43, 3, 10, new[] { 101, 102 });
+        Assert.That(defendedWeek3, Is.True);
+        Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended), Is.EqualTo(3));
+        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.True);
+    }
+
+    [Test]
+    public void EvaluateWeeklyRankDefense_WhenOvertakenOrLastPlaceOrInactive_ShouldReturnFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var weekMonday = new DateTime(2026, 10, 5, 0, 0, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(101, weekMonday.AddDays(1));
+        profile.EvaluateHallOfFameProgression(5, 3, weekMonday.AddDays(1));
+
+        // 1. Overtaken (currentRank 4 > BestHallOfFameRank 3)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 4, 10, new[] { 101, 102 }), Is.False);
+
+        // 2. In last place (currentRank 3 == totalRankedStudents 3, and currentRank > 1)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 3, 3, new[] { 101, 102 }), Is.False);
+
+        // 3. Inactive in next week and not all course tests passed (test 102 still unpassed)
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, new[] { 101, 102 }), Is.False);
+
+        // 4. Inactive in next week and empty course tests list
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, Array.Empty<int>()), Is.False);
+
+        // 5. Opted out of leaderboard
+        profile.HideFromLeaderboard();
+        Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 }), Is.False);
     }
 }

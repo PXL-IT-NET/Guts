@@ -22,5 +22,6 @@ public enum BadgeType
     QuarterCentury = 19,
     HalfCentury = 20,
     FirstVictory = 21,
-    HighFive = 22
+    HighFive = 22,
+    RankDefender = 23
 }

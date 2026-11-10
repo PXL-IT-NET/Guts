@@ -52,7 +52,8 @@ public class GamificationService(
         { BadgeType.SprintBronze, ("Sprint Bronze", "Finished in the top 3 of the Weekly Sprint Leaderboard", "🥉") },
         { BadgeType.SprintTop4, ("Sprint Top 4", "Finished in the top 4 of the Weekly Sprint Leaderboard", "🎖️") },
         { BadgeType.SprintTop5, ("Sprint Top 5", "Finished in the top 5 of the Weekly Sprint Leaderboard", "⭐") },
-        { BadgeType.TeamPowerhouse, ("Team Powerhouse", "Project team where all members have green tests", "🤝") }
+        { BadgeType.TeamPowerhouse, ("Team Powerhouse", "Project team where all members have green tests", "🤝") },
+        { BadgeType.RankDefender, ("Rank Defender", "Defended your Hall of Fame rank without being overtaken for 3 weeks", "🏰") }
     };
 
     public async Task ProcessTestRunAsync(TestRun testRun)
@@ -363,14 +364,15 @@ public class GamificationService(
             .Where(e => e.EventType == GamificationEventType.HallOfFameOvertake)
             .ToList();
 
-        if (overtakeEvents.Count > 0)
+        int overtakeXp = overtakeEvents.Sum(e => e.XpEarned);
+        if (overtakeEvents.Count > 0 && overtakeXp > 0)
         {
             int count = overtakeEvents.Count;
             string studentWord = count == 1 ? "student" : "students";
             recentEventDtos.Add(new RecentXpEventDto
             {
                 Description = $"Overtake bonus (surpassed {count} {studentWord} in Hall of Fame)",
-                XpEarned = overtakeEvents.Sum(e => e.XpEarned),
+                XpEarned = overtakeXp,
                 CreatedAt = overtakeEvents.Max(e => e.CreatedAt)
             });
         }
@@ -387,6 +389,7 @@ public class GamificationService(
                 GamificationEventType.TeamSynergy => "Team synergy bonus",
                 GamificationEventType.HallOfFameTierUp =>
                     $"Hall of Fame level up bonus ({HallOfFameLeague.GetTierMetadata((HallOfFameTier)evt.TargetId).Name})",
+                GamificationEventType.HallOfFameRankDefended => "Hall of Fame rank defense bonus",
                 _ => "Gamification bonus"
             };
 
@@ -881,7 +884,64 @@ public class GamificationService(
         {
             var config = await courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
             await AwardWeeklySprintBadgesForCourseAsync(course, period.Id, startOfWeek, fridayCutoff, config);
+            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, year, weekNumber, config);
             await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config);
+        }
+    }
+
+    private async Task EvaluateWeeklyRankDefenseForCourseAsync(
+        int courseId,
+        int periodId,
+        int year,
+        int weekNumber,
+        CourseGamificationConfig config)
+    {
+        if (config == null || !config.IsGamificationEnabled || !config.IsLeaderboardEnabled)
+        {
+            return;
+        }
+
+        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId);
+        if (optedInProfiles == null || optedInProfiles.Count == 0)
+        {
+            return;
+        }
+
+        var rankedProfiles = optedInProfiles
+            .Where(p => p.TotalXp > 0)
+            .OrderByDescending(p => p.TotalXp)
+            .ThenBy(p => p.LastXpEarnedAt ?? DateTime.MaxValue)
+            .ThenBy(p => p.Id)
+            .ThenBy(p => p.UserId)
+            .ToList();
+
+        if (rankedProfiles.Count == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<int> courseTestIds = await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId) ?? Array.Empty<int>();
+        var modifiedProfiles = new List<StudentCourseProfile>();
+
+        for (int i = 0; i < rankedProfiles.Count; i++)
+        {
+            var profile = rankedProfiles[i];
+            int currentRank = i + 1;
+            if (profile.EvaluateWeeklyRankDefense(
+                    year,
+                    weekNumber,
+                    currentRank,
+                    rankedProfiles.Count,
+                    courseTestIds,
+                    config.IsBadgesEnabled))
+            {
+                modifiedProfiles.Add(profile);
+            }
+        }
+
+        if (modifiedProfiles.Count > 0)
+        {
+            await studentCourseProfileRepository.UpdateRangeAsync(modifiedProfiles);
         }
     }
 

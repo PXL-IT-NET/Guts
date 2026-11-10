@@ -8,5 +8,6 @@ public enum GamificationEventType
     TeamSynergy = 4,
     AssignmentCompletedQuickly = 5,
     HallOfFameOvertake = 6,
-    HallOfFameTierUp = 7
+    HallOfFameTierUp = 7,
+    HallOfFameRankDefended = 8
 }

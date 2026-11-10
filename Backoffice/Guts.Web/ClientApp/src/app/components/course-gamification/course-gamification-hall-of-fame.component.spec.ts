@@ -127,7 +127,8 @@ describe("CourseGamificationHallOfFameComponent", () => {
     const calloutEl = fixture.nativeElement.querySelector("#hallOfFameOvertakeCallout");
     expect(calloutEl).toBeTruthy();
     expect(calloutEl.textContent).toContain("Leader");
-    expect(calloutEl.textContent).toContain("+4 XP");
+    expect(calloutEl.textContent).toContain("+6 daily bonus XP");
+    expect(calloutEl.textContent).toContain("+4 / +6 XP Overtake");
 
     component.ngOnChanges({
       courseId: new SimpleChange(10, 20, false),

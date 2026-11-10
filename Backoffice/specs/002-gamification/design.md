@@ -87,17 +87,25 @@ flowchart TD
              : previousTier;
          ```
        - If `newRank < previousRank && newRank < effectiveBestRank`:
+         - Counts `int overtakesToday = Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake && e.CreatedAt.Date == timestamp.Date);`
          - For each newly surpassed rank `r` from `effectiveBestRank - 1` down to `newRank`:
-           - If no `GamificationEvent` with `(HallOfFameOvertake, r)` exists yet, adds `new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, 4, timestamp)` and increments `TotalXp += 4`.
+           - If no `GamificationEvent` with `(HallOfFameOvertake, r)` exists yet:
+             - Determines daily-capped XP (`4` when `overtakesToday == 0`, `2` when `overtakesToday == 1` to reach the `6 XP` daily max, `0` when `overtakesToday >= 2`), increments `overtakesToday++`, adds `new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp)`, and if `overtakeXp > 0`, increments `TotalXp += overtakeXp` and updates `LastXpEarnedAt = timestamp`.
        - Computes `HallOfFameTier newTier = HallOfFameLeague.GetTierForRank(newRank)`.
        - If `(int)newTier > (int)effectiveBestTier`:
          - For each newly reached tier value `t` from `(int)effectiveBestTier + 1` to `(int)newTier`:
            - If no `GamificationEvent` with `(HallOfFameTierUp, t)` exists yet, adds `new GamificationEvent(Id, GamificationEventType.HallOfFameTierUp, t, 5, timestamp)` and increments `TotalXp += 5`.
        - Updates `BestHallOfFameRank = Math.Min(effectiveBestRank, newRank)` and `BestHallOfFameTier = (HallOfFameTier)Math.Max((int)effectiveBestTier, (int)newTier)`.
-       - Returns `true` if `BestHallOfFameRank`, `BestHallOfFameTier`, or `TotalXp` changed.
+       - Returns `true` if `TotalXp` changed.
+     - **New**: `public bool EvaluateWeeklyRankDefense(int year, int weekNumber, int currentRank, int totalRankedStudents, IReadOnlyCollection<int> allAvailableCourseTestIds, bool isBadgesEnabled = true)` (`[AC-8]`, `[DR-8]`):
+       - Enforces `Contracts.Require(currentRank > 0, "Current rank must be positive.")` and `Contracts.Require(totalRankedStudents >= currentRank, "Total ranked students must be at least currentRank.")`.
+       - Requires `ShowInLeaderBoard == true`, `TotalXp > 0`, `BestHallOfFameRank.HasValue && currentRank <= BestHallOfFameRank.Value`, and `(currentRank == 1 || currentRank < totalRankedStudents)`.
+       - Checks weekly activity (`Events.Any(e => e.XpEarned > 0 && e.CreatedAt >= startOfWeek && e.CreatedAt <= endOfWeek)`) OR all-tests-passed protection (`allAvailableCourseTestIds is { Count: > 0 } && allAvailableCourseTestIds.All(passedTestIds.Contains)`).
+       - Computes `int weekTargetId = year * 100 + weekNumber;`. If `(HallOfFameRankDefended, weekTargetId)` already exists, returns `false`.
+       - Awards `+5 XP` (`GamificationEventType.HallOfFameRankDefended`, `TargetId = weekTargetId`, `CreatedAt = endOfWeek`), updates `BestHallOfFameRank = currentRank`, and if `isBadgesEnabled == true` and `Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended) >= 3`, awards `BadgeType.RankDefender` (`earnedAt = endOfWeek`).
 
 3. **`GamificationEvent` (`GamificationEvent.cs`) & `GamificationEventType` (`GamificationEventType.cs`) & `BadgeType` (`BadgeType.cs`)**
-   - `BadgeType` enum values (`1..22`, excluding `3`):
+   - `BadgeType` enum values (`1..23`, excluding `3`):
      - `FirstSpark = 1` (`"First Spark"`, `🌱`)
      - `SpeedDemon = 2` (`"Speed Demon"`, `⚡`)
      - `CleanSweep = 4` (`"Clean Sweep"`, `🧹`)
@@ -119,14 +127,16 @@ flowchart TD
      - `HalfCentury = 20` (`"Half Century"`, `🏅` — `"Achieved 50 unique passing tests in the course"`)
      - `FirstVictory = 21` (`"First Victory"`, `🏁` — `"Completed all tests of your first assignment"`)
      - `HighFive = 22` (`"High Five"`, `🖐️` — `"Completed all tests of 5 assignments in the course"`)
+     - `RankDefender = 23` (`"Rank Defender"`, `🏰` — `"Defended your Hall of Fame rank without being overtaken for 3 weeks"`)
    - `GamificationEventType` enum values:
      - `PassedTest = 1`
      - `AssignmentCompleted = 2`
      - `ChapterCompleted = 3`
      - `TeamSynergy = 4`
      - `AssignmentCompletedQuickly = 5`
-     - `HallOfFameOvertake = 6` (`TargetId = surpassedRank`, `XpEarned = 4`)
+     - `HallOfFameOvertake = 6` (`TargetId = surpassedRank`, `XpEarned = 4, 2, or 0` capped at `6 XP/day`)
      - `HallOfFameTierUp = 7` (`TargetId = (int)reachedTier`, `XpEarned = 5`)
+     - `HallOfFameRankDefended = 8` (`TargetId = year * 100 + weekNumber`, `XpEarned = 5`)
 
 4. **`CourseClassGroup` (`CourseClassGroup.cs`)** (`[AC-4]`, `[DR-13]`):
    - Encapsulates Class Championship stepped-bracket scoring:
@@ -222,8 +232,15 @@ flowchart TD
     4. Persists `profile` via `studentCourseProfileRepository.UpdateAsync(profile)`.
   - `BuildRecentEventDtos(IReadOnlyList<GamificationEvent> recentEvents)` (`[AC-5]`):
     - Aggregates `PassedTest` events into `"Made {count} test(s) green"`.
-    - Aggregates `HallOfFameOvertake` events in the window into a single `RecentXpEventDto` (`Description = count == 1 ? "Overtake bonus (surpassed 1 student in Hall of Fame)" : $"Overtake bonus (surpassed {count} students in Hall of Fame)"`, `XpEarned = sum`, `CreatedAt = max`).
+    - Aggregates `HallOfFameOvertake` events in the window into a single `RecentXpEventDto` (`Description = count == 1 ? "Overtake bonus (surpassed 1 student in Hall of Fame)" : $"Overtake bonus (surpassed {count} students in Hall of Fame)"`, `XpEarned = sum`, `CreatedAt = max`) when `sum > 0`.
     - Maps each `HallOfFameTierUp` event to `"Hall of Fame level up bonus ({tierMetadata.Name})"`.
+    - Maps each `HallOfFameRankDefended` event to `"Hall of Fame rank defense bonus"`.
+  - `AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)` (`[US-6]`, `[AC-6]`, `[AC-8]`):
+    - Awards weekly sprint badges for the completed ISO week `(year, weekNumber)` (Friday `23:59:59 UTC` cutoff).
+    - Evaluates weekly Hall of Fame Rank Defense for each active course where `IsGamificationEnabled && IsLeaderboardEnabled`:
+      - Ranks opted-in students with `TotalXp > 0` by `[DR-7]` ordering (`TotalXp` descending, `LastXpEarnedAt` ascending, `Id` ascending).
+      - Invokes `profile.EvaluateWeeklyRankDefense(year, weekNumber, currentRank, totalRankedStudents, startOfWeek, sundayEndOfWeek, courseTestIds, config.IsBadgesEnabled)` and persists modified profiles via `UpdateRangeAsync`.
+    - Evaluates weekly streak resets for the new Monday (`nextMonday`).
   - `GetWeeklySprintLeaderboardAsync(int courseId, int currentUserId, int? periodId = null)`:
     - Highlights `IsCurrentUser = item.Profile.UserId == currentUserId` (where `currentUserId` is the authenticated student or the Lector's `perspectiveUserId`).
   - `GetHallOfFameLeaderboardAsync(int courseId, int currentUserId, int? periodId = null, bool isLector = false, int? perspectiveUserId = null, HallOfFameTier? selectedTier = null)`:
@@ -386,7 +403,7 @@ flowchart TD
      - The neighbor tiers (`!tier.isCurrentTier`) are rendered smaller and slightly blurred (`hall-of-fame-tier-neighbor`: `filter: blur(1.2px); opacity: 0.65; transform: scale(0.88)`).
    - **Overtake Motivation Banner (`nextTargetStudent`)**:
      - Displays a motivational callout above the table when viewing from a student's perspective:
-       - If `nextTargetStudent` exists: *"🎯 **Target to Overtake:** Earn **{{ nextTargetStudent.xpNeededToOvertake }} XP** to surpass **{{ nextTargetStudent.displayName }}** (#{{ nextTargetStudent.rank }}) and earn **+4 bonus XP**!"*
+       - If `nextTargetStudent` exists: *"🎯 **Next Overtake Target:** Earn **{{ nextTargetStudent.xpNeededToOvertake }} XP** to surpass **{{ nextTargetStudent.displayName }}** (#{{ nextTargetStudent.rank }} in {{ nextTargetStudent.tierIcon }} {{ nextTargetStudent.tierName }}) and claim up to **+6 daily bonus XP** (+4 XP for 1, +6 XP for 2+)!"*
        - If `currentUserRank === 1`: *"🌋 **Apex Champion!** You hold Rank #1 in the Obsidian League!"*
    - **Teacher All-Levels Switcher**:
      - When `isTeacher && !perspectiveUserId`, renders tier filter pills for all 8 tiers (`allTiers`) plus an `"All Levels"` button so the teacher can inspect any individual tier or view all tiers at once.

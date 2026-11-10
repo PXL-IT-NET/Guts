@@ -268,3 +268,45 @@
 ### Phase 5: Final Verification
 
 - [x] **[T7.13]** Run full backend test suite (`dotnet test Backoffice/Guts.slnx`) and mark tasks complete.
+
+---
+
+## Increment 8: Daily Overtake Bonus Cap (+4 / +6 XP per UTC Day) & Weekly Hall of Fame Rank Defense Bonus (+5 XP & Rank Defender Badge) (US-3 / US-6 / AC-2 / AC-3 / AC-5 / AC-8 / DR-8) — _Completed_
+
+### Phase 1: Domain Layer (`Guts.Domain.Tests` ➔ `Guts.Domain`)
+
+- [x] **[T8.1]** `[AC-2, DR-8]` Write failing unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/StudentCourseProfileTests.cs` for the daily overtake cap in `EvaluateHallOfFameProgression`:
+  - Verify overtaking 1 student awards `+4 XP`.
+  - Verify overtaking 2 or more students (e.g. 50 students) in a single test run awards `+6 XP` total (`+4 XP` for the 1st surpassed rank, `+2 XP` for the 2nd, and `0 XP` for the remaining 48), while updating `BestHallOfFameRank` to `newRank` and recording `HallOfFameOvertake` events for all surpassed ranks.
+  - Verify overtaking 1 student in the morning (`+4 XP`) and 1+ more students later on the same UTC day tops up `+2 XP` to the `6 XP` daily maximum, and any further overtakes on the same UTC day award `0 XP`.
+  - Verify overtaking students on a subsequent UTC day resets the daily allowance (`+4 XP` / `+6 XP`).
+- [x] **[T8.2]** `[AC-3, AC-8, DR-8]` Write failing unit tests in `Backoffice/Guts.Domain.Tests/GamificationAggregate/StudentCourseProfileTests.cs` for `EvaluateWeeklyRankDefense`:
+  - Awards `+5 XP` (`GamificationEventType.HallOfFameRankDefended`, `TargetId = year * 100 + weekNumber`, `CreatedAt = endOfWeek`) when the student is opted in (`ShowInLeaderBoard == true`), has `TotalXp > 0`, held or improved their `BestHallOfFameRank` (`currentRank <= BestHallOfFameRank.Value`), is either Rank #1 or has at least 1 ranked student behind them (`currentRank < totalRankedStudents`), and was active in the week (or passed 100% of available course tests).
+  - Does not award the bonus if the student was overtaken (`currentRank > BestHallOfFameRank.Value`), is in last place (`currentRank == totalRankedStudents && currentRank > 1`), was inactive without 100% tests passed, or already received the bonus for `(year, weekNumber)`.
+  - Awards `BadgeType.RankDefender` (`23`) upon reaching 3 defended weeks when `isBadgesEnabled == true`.
+- [x] **[T8.3]** `[AC-2, AC-3, AC-8, DR-8]` Update `GamificationEventType.cs` (`HallOfFameRankDefended = 8`), `BadgeType.cs` (`RankDefender = 23`), and `StudentCourseProfile.cs` (`ApplyOvertakeProgression` daily cap and `EvaluateWeeklyRankDefense`).
+- [x] **[T8.4]** Run `dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+
+- [x] **[T8.5]** `[AC-3, AC-5, AC-8]` Write failing unit tests in `Backoffice/Guts.Business.Tests/Services/GamificationServiceTests.cs`:
+  - Verify `GetBadgeMetadata` includes `BadgeType.RankDefender` (`"Rank Defender"`, `🏰`).
+  - Verify `GetStudentCourseProfileAsync` summarizes `HallOfFameOvertake` events only when summed `XpEarned > 0` and maps `HallOfFameRankDefended` events to `"Hall of Fame rank defense bonus"`.
+  - Verify `AwardWeeklySprintBadgesAsync` evaluates weekly Hall of Fame rank defense for opted-in students with `TotalXp > 0` and persists modified profiles.
+- [x] **[T8.6]** `[AC-3, AC-5, AC-8]` Update `GamificationService.cs` (`BadgeMetadata`, `BuildRecentEventDtos`, and `EvaluateWeeklyRankDefenseForCourseAsync` called during `AwardWeeklySprintBadgesAsync`).
+- [x] **[T8.7]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+
+---
+
+### Phase 3: Frontend Layer (`Guts.Web/ClientApp`)
+
+- [x] **[T8.8]** `[US-3, AC-4]` Update `course-gamification-hall-of-fame.component.html` and `course-gamification-hall-of-fame.component.spec.ts` to reflect the daily overtake bonus (`+4 XP` for 1 student, `+6 XP` for 2+ students, max `6 XP/day`).
+- [x] **[T8.9]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all Karma/Jasmine tests pass.
+
+---
+
+### Phase 4: Final Verification
+
+- [x] **[T8.10]** Run full backend test suite (`dotnet test Backoffice/Guts.slnx`) and mark tasks complete.

@@ -3,7 +3,7 @@
 - **Feature ID**: `002-gamification`
 - **Status**: `Implemented`
 - **Created**: `2026-10-27`
-- **Updated**: `2026-11-08`
+- **Updated**: `2026-11-10`
 
 ---
 
@@ -13,7 +13,7 @@ To motivate consistent practice, early assignment completion, and collaboration 
 
 When enabled by a Lector for a course (`CourseGamificationConfig`), students earn Experience Points (**XP**), level up through programming ranks, maintain ISO-week coding streaks (`WeeklyStreak`), unlock achievements (`BadgeType`), and compete on individual and class-group leaderboards (**Weekly Sprint**, **Hall of Fame**, and **Class Championship**), while retaining privacy controls (opt-out of leaderboards or display a pseudonym/avatar).
 
-To prevent demotivation among students with lower rankings on the **Hall of Fame Leaderboard**, the Hall of Fame is divided into **8 League Tiers** (**Obsidian**, **Diamond**, **Gold**, **Silver**, **Bronze**, **Iron**, **Wood**, and **Paper**). In the UI, rankings within every league tier **always start at 1** (awarding 🥇 gold, 🥈 silver, 🥉 bronze to the top 3 of that tier, followed by `#4`, `#5`, etc.), no matter the tier. Global rankings across the entire course are **never** displayed in the UI to students or teachers to avoid demotivating lower ranked students. Students only see the leaderboard slice for their own current tier, are visually guided by a 4-icon tier progression bar, and are actively incentivized to overtake the student directly above them (`+4 XP` per newly surpassed rank) and climb to higher tiers (`+5 XP` per newly reached tier).
+To prevent demotivation among students with lower rankings on the **Hall of Fame Leaderboard**, the Hall of Fame is divided into **8 League Tiers** (**Obsidian**, **Diamond**, **Gold**, **Silver**, **Bronze**, **Iron**, **Wood**, and **Paper**). In the UI, rankings within every league tier **always start at 1** (awarding 🥇 gold, 🥈 silver, 🥉 bronze to the top 3 of that tier, followed by `#4`, `#5`, etc.), no matter the tier. Global rankings across the entire course are **never** displayed in the UI to students or teachers to avoid demotivating lower ranked students. Students only see the leaderboard slice for their own current tier, are visually guided by a 4-icon tier progression bar, and are actively incentivized to overtake the student directly above them (`+4 XP` for overtaking 1 student or `+6 XP` for overtaking multiple students on the same day, capped at `6 XP/day`), climb to higher tiers (`+5 XP` per newly reached tier), and defend their rank from week to week without being overtaken (`+5 XP` per defended ISO week and the `Rank Defender` badge after 3 defended weeks).
 
 Teachers (`Lector`) are completely excluded from all rankings and do not have a personal Hero Summary card. Instead, teachers can view all Hall of Fame levels (teacher overview) or select a specific student to inspect that student's Hero Summary card, earned badges, and the leaderboards from that student's exact perspective.
 
@@ -25,12 +25,12 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 
 - **US-1 (Configure Course Gamification & Class Groups)**: As a **Lector**, I want to toggle gamification and its individual sub-features (Weekly Streaks, Leaderboards, Class Competition, Team Synergy, Badges) per course, and manage `CourseClassGroup` entities so I can tailor the experience to my course structure.
 - **US-2 (Manage Student Profile & Privacy)**: As a **Student**, I want to customize my avatar, pseudonym, class group membership, and leaderboard visibility (`ShowInLeaderBoard`, `UsePseudonym`) so I can participate comfortably.
-- **US-3 (Earn XP, Levels, Streaks, Badges, and Ranking Bonuses from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, badges, and Hall of Fame overtake (`+4 XP`) and tier-promotion (`+5 XP`) bonuses when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
-- **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events (including overtake and tier-up bonuses) are listed individually.
+- **US-3 (Earn XP, Levels, Streaks, Badges, and Ranking Bonuses from Test Runs)**: As a **Student**, I want to automatically earn XP, level progression, weekly streak increments, badges, and Hall of Fame overtake (`+4 XP` for 1 student, `+6 XP` for 2+ students on the same day, capped at `6 XP/day`) and tier-promotion (`+5 XP`) bonuses when my IDE submits passing test runs (`TestRun`) that yield new XP for exercises and project components.
+- **US-4 (Review Recent XP Gains)**: As a **Student**, I want to see a concise breakdown of XP events earned since my last visit to the gamification dashboard (`RecentXpGainDto`), where all passing test events are summarized into a single row (`"Made {count} test(s) green"`) while bonus events (including overtake, tier-up, and rank defense bonuses) are listed individually.
 - **US-5 (Compete on Tiered Hall of Fame, View Leaderboards & Teacher Inspection of Student Perspective)**:
   - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a tier progression header (showing up to 2 previous tiers, my current tier enlarged, and only the next tier to reach unless in the two lowest levels, filtering out any tiers without students) and a motivational callout to overtake the student directly above me.
   - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary card; instead, I want to browse **all Hall of Fame levels** (teacher overview) with tier-relative ranks (no global ranks) AND **select a student** to inspect the **Hero Summary card** and **earned badges** of that student and see the **leaderboards** (Weekly Sprint and Hall of Fame tier) from that student's perspective (in read-only mode).
-- **US-6 (Automated Weekly Sprint Badge Awarding)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) and award top-5 sprint badges (`SprintGold` through `SprintTop5`) to eligible students.
+- **US-6 (Automated Weekly Sprint Badge Awarding & Hall of Fame Rank Defense Evaluation)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) to award top-5 sprint badges (`SprintGold` through `SprintTop5`), and evaluate the Hall of Fame Leaderboard at the end of the completed week to award a `+5 XP` **Weekly Rank Defense** bonus (`HallOfFameRankDefended`) and the `RankDefender` badge (after 3 defended weeks) to active students who held their `BestHallOfFameRank` without being overtaken.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
 - **US-8 (Thursday Midday Streak Reminder Notification & Throttled Queue)**:
   - As a **Student** with an active streak (`CurrentStreak > 0`), I want to receive an encouraging and supportive reminder email every Thursday around midday if I haven't earned any XP yet in the current week, highlighting my current streak, my next Hall of Fame target to beat, and smart assignment suggestions (focusing on exercises I've started but not yet completed), so that I am motivated to practice and keep my streak alive before the week ends.
@@ -66,10 +66,12 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
        - Every team member has passed at least one test of the component (`Overlaps`), AND
        - The union of passing tests across all team members covers 100% of the component's tests (`IsSubsetOf`),
        then every team member who has not yet received `TeamSynergy` for that component is awarded `+30 XP` and the `TeamPowerhouse` badge.
-    6. **Hall of Fame Overtake Bonus (`+4 XP` per newly surpassed rank) & Tier Promotion Bonus (`+5 XP` per newly reached tier)**:
+    6. **Hall of Fame Overtake Bonus (`+4 XP` for 1 student, `+6 XP` for 2+ students, max `6 XP/day`) & Tier Promotion Bonus (`+5 XP` per newly reached tier)**:
        - If `IsLeaderboardEnabled == true`, the student's profile is opted in (`ShowInLeaderBoard == true`), and the student earned new XP during steps 1–5:
        - The Hall of Fame ranking of opted-in students for `(courseId, periodId)` is evaluated before and after the student's XP gain from steps 1–5 (using the tie-breaking rule in `DR-7`).
-       - **Overtake Bonus (`+4 XP`)**: For each rank position the student improves beyond their previously recorded best Hall of Fame rank (`BestHallOfFameRank`, initialized to their rank prior to the overtake among currently ranked students), the student is awarded `+4 XP` per newly surpassed position (`GamificationEventType.HallOfFameOvertake`, `TargetId = newRank`).
+       - **Overtake Bonus (`+4 XP` / `+6 XP`, daily cap of `6 XP` per UTC calendar day)**:
+         - For each rank position `r` the student improves beyond their previously recorded best Hall of Fame rank (`BestHallOfFameRank`, initialized to their rank prior to the overtake among currently ranked students), a `GamificationEvent` (`GamificationEventType.HallOfFameOvertake`, `TargetId = r`) is recorded and `BestHallOfFameRank` is updated to `newRank`.
+         - Within the same UTC calendar day (`timestamp.Date`), the **1st** newly surpassed rank awards `+4 XP`, the **2nd** newly surpassed rank (in the same test run or a subsequent test run on that same UTC day) awards `+2 XP` (topping up to the `6 XP` daily maximum for overtaking multiple students), and the **3rd and subsequent** newly surpassed ranks on the same UTC day award `0 XP`.
        - **Tier Promotion Bonus (`+5 XP`)**: If the student's new Hall of Fame rank places them in a higher Hall of Fame League Tier (`HallOfFameTier`) than their best previously achieved tier (`BestHallOfFameTier`), the student is awarded `+5 XP` for each newly reached tier (`GamificationEventType.HallOfFameTierUp`, `TargetId = (int)tier`).
        - Awarding Overtake and Tier Promotion XP updates the student's `TotalXp` at the end of the test run without triggering recursive secondary overtake evaluations.
 
@@ -94,6 +96,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - `IronWill` (`10`, `"Iron Will"`, `🛡️`): Reached a `CurrentStreak` of $\ge 8$ consecutive ISO weeks.
   - `TeamPowerhouse` (`12`, `"Team Powerhouse"`, `🤝`): Earned the Team Synergy bonus on a project component.
   - `SprintGold` (`11`), `SprintSilver` (`13`), `SprintBronze` (`14`), `SprintTop4` (`15`), `SprintTop5` (`16`): Cumulative top-5 placement on the Weekly Sprint Leaderboard as of Friday `23:59:59 UTC` (e.g., Rank #1 earns Gold, Silver, Bronze, Top4, and Top5 if not already earned; ties with #1 on both `Score` and `GreenTestsCount` also earn `SprintGold`).
+  - `RankDefender` (`23`, `"Rank Defender"`, `🏰`): Defended Hall of Fame rank without being overtaken in $\ge 3$ ISO weeks ($\ge 3$ `HallOfFameRankDefended` events in the course).
 
 ### AC-4: Leaderboards, Hall of Fame Tiers, Teacher Exclusion & Student Perspective
 - **Given** opted-in student profiles (`ShowInLeaderBoard == true`, excluding any user with the `Lector` role) for a `(courseId, periodId)`
@@ -144,7 +147,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     - `Description`: `"Made 1 test green"` when 1 test was passed, or `"Made {count} tests green"` when multiple tests were passed.
     - `XpEarned`: sum of `XpEarned` across all recent `PassedTest` events (e.g., `100` for 10 passed tests).
     - `CreatedAt`: the latest `CreatedAt` timestamp among the aggregated `PassedTest` events.
-  - All `GamificationEventType.HallOfFameOvertake` events in the window are summarized or listed clearly (e.g., `"Overtake bonus (surpassed {count} student(s) in Hall of Fame)"`), and `GamificationEventType.HallOfFameTierUp` events are listed as `"Hall of Fame level up bonus ({TierName})"`.
+  - All `GamificationEventType.HallOfFameOvertake` events in the window are summarized into a single `RecentXpEventDto` (`"Overtake bonus (surpassed {count} student(s) in Hall of Fame)"`, where `count` is the total number of `HallOfFameOvertake` events in the window and `XpEarned` is their summed XP) whenever their summed `XpEarned > 0`, `GamificationEventType.HallOfFameTierUp` events are listed as `"Hall of Fame level up bonus ({TierName})"`, and `GamificationEventType.HallOfFameRankDefended` events are listed as `"Hall of Fame rank defense bonus"`.
   - All other non-`PassedTest` bonus events (`AssignmentCompleted`, `AssignmentCompletedQuickly`, `ChapterCompleted`, `TeamSynergy`) remain individual `RecentXpEventDto` items.
   - The resulting `RecentGains.Events` list is ordered by `CreatedAt` descending.
 - **And** `LastLeaderboardVisitDate` is updated to `DateTime.UtcNow` if more than 10 minutes have elapsed since the previous recorded visit.
@@ -180,6 +183,16 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - **Throttling / Anti-Spam Rate Limiting**: The queue dispatches emails sequentially with an enforced throttle delay (e.g. 1 second between consecutive emails) to ensure the SMTP server does not flag or throttle the messages as bulk spam.
   - **Resilience**: An exception when sending an email to a single recipient is logged via `ILogger` and does not terminate the background processing for the remaining queue items.
 
+### AC-8: Weekly Hall of Fame Rank Defense Bonus & Badge
+- **Given** a course where `IsGamificationEnabled == true` and `IsLeaderboardEnabled == true` when `AwardWeeklySprintBadgesAsync(year, weekNumber)` executes on Monday at `00:01 UTC` for the completed ISO week `(year, weekNumber)`
+- **When** the Hall of Fame ranking of opted-in students (`ShowInLeaderBoard == true`, excluding Lectors) with `TotalXp > 0` is evaluated at the end of the completed week (`sundayEndOfWeek = startOfWeek.AddDays(7).AddSeconds(-1)`):
+  - A ranked student at 1-based global rank `currentRank` (out of `totalRankedStudents` opted-in students with `TotalXp > 0`) is eligible for the Weekly Rank Defense bonus if and only if:
+    1. `BestHallOfFameRank.HasValue && currentRank <= BestHallOfFameRank.Value` (the student held or improved their personal best rank and finished the week without being overtaken below their best rank).
+    2. `currentRank == 1 || currentRank < totalRankedStudents` (the student is either Rank #1 overall or has at least one ranked student behind them).
+    3. The student was active during the completed ISO week (earned `> 0 XP` between `startOfWeek` and `sundayEndOfWeek`) **OR** has already passed 100% of all currently available tests in the course (with at least 1 test in the course).
+    4. The student has not yet received `GamificationEventType.HallOfFameRankDefended` for `TargetId = year * 100 + weekNumber`.
+- **Then** the student is awarded `+5 XP` (`GamificationEventType.HallOfFameRankDefended`, `TargetId = year * 100 + weekNumber`, `CreatedAt = sundayEndOfWeek`), and if `IsBadgesEnabled == true` and the student has now accumulated $\ge 3$ `HallOfFameRankDefended` events in the course, the `RankDefender` (`23`, `"Rank Defender"`, `🏰`) badge is awarded.
+
 ---
 
 ## 4. Domain Rules & Invariants
@@ -212,11 +225,16 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     | `Wood` (`2`) | **Wood** | Rank `151 – 200` | `🪵` (Carved Timber) |
     | `Paper` (`1`) | **Paper** | Rank `201+` | `📜` (Ancient Scroll) |
   - **Tier-Relative Display Rank Invariant**: Within each league tier, student ranking in `LeaderboardEntryDto.Rank`, `CurrentUserRank`, and `HallOfFameStudentOptionDto.Rank` **always starts at 1** (e.g., student at global rank 16 is `#1` in Diamond). Global ranks across the whole course are never exposed in the UI.
-- **DR-8 (Overtake & Tier-Up Anti-Farming Invariant)**:
+- **DR-8 (Overtake Daily Cap, Tier-Up & Weekly Rank Defense Invariant)**:
   - Each `StudentCourseProfile` tracks `BestHallOfFameRank` (`int?`) and `BestHallOfFameTier` (`HallOfFameTier?`).
-  - Surpassing a student in the Hall of Fame ranking awards `+4 XP` per newly surpassed rank position (`previousEffectiveBestRank - newRank`, provided the student actually overtook at least one student above them and improved upon `BestHallOfFameRank`).
-  - Rising a Hall of Fame tier awards `+5 XP` per newly reached tier above `BestHallOfFameTier` (`(int)newTier - (int)previousEffectiveBestTier`).
-  - Because `BestHallOfFameRank` and `BestHallOfFameTier` only move upward (toward Rank 1 / `Obsidian`), two students trading places back and forth cannot farm infinite XP, and overtake/tier bonuses do not trigger cascading re-evaluations.
+  - **Daily Overtake Bonus Cap (`+4 XP` / `+6 XP` per UTC day)**:
+    - Surpassing a student in the Hall of Fame ranking (`newRank < previousRank && newRank < effectiveBestRank`) records a `GamificationEvent` (`GamificationEventType.HallOfFameOvertake`, `TargetId = r`) for each newly surpassed rank `r` (`effectiveBestRank - 1` down to `newRank`) and updates `BestHallOfFameRank = newRank`.
+    - Within the same UTC calendar day (`timestamp.Date`), the 1st newly surpassed rank awards `+4 XP`, the 2nd newly surpassed rank awards `+2 XP` (for a daily maximum of `6 XP` when overtaking multiple students in one day), and the 3rd+ newly surpassed ranks on the same UTC day award `0 XP`.
+  - **Tier-Up Bonus (`+5 XP`)**: Rising a Hall of Fame tier awards `+5 XP` per newly reached tier above `BestHallOfFameTier` (`(int)newTier - (int)previousEffectiveBestTier`).
+  - **Weekly Rank Defense Bonus (`+5 XP` & `RankDefender` badge)**:
+    - At the Monday weekly evaluation for ISO week `(year, weekNumber)` (`weekKey = year * 100 + weekNumber`), an opted-in student with `TotalXp > 0` who finishes the week at `currentRank <= BestHallOfFameRank.Value`, has at least one student ranked behind them (or `currentRank == 1`), and was active in that week (or has passed 100% of available course tests) earns `+5 XP` (`GamificationEventType.HallOfFameRankDefended`, `TargetId = weekKey`, timestamped at Sunday `23:59:59 UTC` of that week so it does not auto-extend the next week's streak).
+    - Accumulating $\ge 3$ `HallOfFameRankDefended` events in the course awards `BadgeType.RankDefender` (`23`, `"Rank Defender"`, `🏰`) if `isBadgesEnabled == true`.
+  - Because `BestHallOfFameRank` and `BestHallOfFameTier` only move upward (toward Rank 1 / `Obsidian`), two students trading places back and forth cannot farm infinite XP, and overtake/tier/defense bonuses do not trigger cascading re-evaluations.
 - **DR-9 (Teacher Exclusion from Gamification)**:
   - Users in the `Lector` role are never enrolled in `StudentCourseProfile` via test runs and are filtered out of all leaderboard queries (`GetForLeaderboardByCourseAndPeriodAsync`, `GetByCourseAndPeriodAsync`, Weekly Sprint badge evaluation, and assignment completion counts).
 - **DR-10 (Streak Reminder Eligibility & All-Tests Protection Alignment)**:

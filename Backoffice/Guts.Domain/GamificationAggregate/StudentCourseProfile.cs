@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Guts.Common;
 using Guts.Domain.UserAggregate;
@@ -343,21 +344,128 @@ public class StudentCourseProfile : AggregateRoot
         if (newRank < previousRank && newRank < effectiveBestRank)
         {
             BestHallOfFameRank = newRank;
-            const int overtakeXp = 4;
-            for (int r = effectiveBestRank - 1; r >= newRank; r--)
-            {
-                if (Events.All(e => !(e.EventType == GamificationEventType.HallOfFameOvertake && e.TargetId == r)))
-                {
-                    TotalXp += overtakeXp;
-                    LastXpEarnedAt = timestamp;
-                    Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp));
-                }
-            }
+            AwardOvertakeEvents(effectiveBestRank, newRank, timestamp);
         }
         else if (!BestHallOfFameRank.HasValue || previousRank < BestHallOfFameRank.Value)
         {
             BestHallOfFameRank = effectiveBestRank;
         }
+    }
+
+    private void AwardOvertakeEvents(int effectiveBestRank, int newRank, DateTime timestamp)
+    {
+        int overtakesToday = Events.Count(e =>
+            e.EventType == GamificationEventType.HallOfFameOvertake &&
+            e.CreatedAt.Date == timestamp.Date);
+
+        for (int r = effectiveBestRank - 1; r >= newRank; r--)
+        {
+            if (HasOvertakeEventForRank(r))
+            {
+                continue;
+            }
+
+            int overtakeXp = GetNextDailyOvertakeXp(overtakesToday);
+            overtakesToday++;
+
+            if (overtakeXp > 0)
+            {
+                TotalXp += overtakeXp;
+                LastXpEarnedAt = timestamp;
+            }
+
+            Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp));
+        }
+    }
+
+    private bool HasOvertakeEventForRank(int rank)
+    {
+        return Events.Any(e => e.EventType == GamificationEventType.HallOfFameOvertake && e.TargetId == rank);
+    }
+
+    private static int GetNextDailyOvertakeXp(int overtakesToday)
+    {
+        return overtakesToday switch
+        {
+            0 => 4,
+            1 => 2,
+            _ => 0
+        };
+    }
+
+    public bool EvaluateWeeklyRankDefense(
+        int year,
+        int weekNumber,
+        int currentRank,
+        int totalRankedStudents,
+        IReadOnlyCollection<int> allAvailableCourseTestIds,
+        bool isBadgesEnabled = true)
+    {
+        Contracts.Require(currentRank > 0, "Current rank must be positive.");
+        Contracts.Require(totalRankedStudents >= currentRank, "Total ranked students must be at least currentRank.");
+
+        DateTime startOfWeek = DateTime.SpecifyKind(ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday), DateTimeKind.Utc);
+        DateTime endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+
+        if (!IsEligibleForRankDefense(currentRank, totalRankedStudents, startOfWeek, endOfWeek, allAvailableCourseTestIds))
+        {
+            return false;
+        }
+
+        int weekTargetId = (year * 100) + weekNumber;
+        if (Events.Any(e => e.EventType == GamificationEventType.HallOfFameRankDefended && e.TargetId == weekTargetId))
+        {
+            return false;
+        }
+
+        const int defenseXp = 5;
+        TotalXp += defenseXp;
+        LastXpEarnedAt = endOfWeek;
+        BestHallOfFameRank = currentRank;
+        Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameRankDefended, weekTargetId, defenseXp, endOfWeek));
+
+        if (isBadgesEnabled && Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended) >= 3)
+        {
+            AwardBadge(BadgeType.RankDefender, endOfWeek);
+        }
+
+        return true;
+    }
+
+    private bool IsEligibleForRankDefense(
+        int currentRank,
+        int totalRankedStudents,
+        DateTime startOfWeek,
+        DateTime endOfWeek,
+        IReadOnlyCollection<int> allAvailableCourseTestIds)
+    {
+        if (!ShowInLeaderBoard || TotalXp <= 0 || !BestHallOfFameRank.HasValue || currentRank > BestHallOfFameRank.Value)
+        {
+            return false;
+        }
+
+        if (currentRank > 1 && currentRank >= totalRankedStudents)
+        {
+            return false;
+        }
+
+        bool wasActiveInWeek = Events.Any(e => e.XpEarned > 0 && e.CreatedAt >= startOfWeek && e.CreatedAt <= endOfWeek);
+        if (wasActiveInWeek)
+        {
+            return true;
+        }
+
+        if (allAvailableCourseTestIds is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        var passedTestIds = Events
+            .Where(e => e.EventType == GamificationEventType.PassedTest)
+            .Select(e => e.TargetId)
+            .ToHashSet();
+
+        return allAvailableCourseTestIds.All(passedTestIds.Contains);
     }
 
     private void ApplyTierProgression(int previousRank, int newRank, DateTime timestamp)

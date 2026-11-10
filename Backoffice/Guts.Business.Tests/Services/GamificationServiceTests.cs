@@ -1004,12 +1004,12 @@ public class GamificationServiceTests
     }
 
     [Test]
-    public void GetBadgeMetadata_ShouldReturnAll21BadgeMetadataEntries()
+    public void GetBadgeMetadata_ShouldReturnAll22BadgeMetadataEntries()
     {
         var badges = _service.GetBadgeMetadata();
 
         Assert.That(badges, Is.Not.Null);
-        Assert.That(badges.Count, Is.EqualTo(21));
+        Assert.That(badges.Count, Is.EqualTo(22));
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstSpark && b.Icon == "🌱"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.QuarterCentury && b.Name == "Quarter Century" && b.Icon == "🎯"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.HalfCentury && b.Name == "Half Century" && b.Icon == "🏅"), Is.True);
@@ -1023,6 +1023,7 @@ public class GamificationServiceTests
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop4 && b.Icon == "🎖️"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop5 && b.Icon == "⭐"), Is.True);
         Assert.That(badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse && b.Icon == "🤝"), Is.True);
+        Assert.That(badges.Any(b => b.BadgeType == BadgeType.RankDefender && b.Name == "Rank Defender" && b.Icon == "🏰"), Is.True);
         Assert.That(badges.All(b => b.Type == (int)b.BadgeType), Is.True);
     }
 
@@ -1668,11 +1669,12 @@ public class GamificationServiceTests
 
         await _service.ProcessTestRunAsync(testRun);
 
-        // 10 initial + 20 passed tests + 50 assignment bonus + 60 overtake (15 ranks * 4) + 5 tier-up (Obsidian) = 145 XP
-        Assert.That(currentStudent.TotalXp, Is.EqualTo(145));
+        // 10 initial + 20 passed tests + 50 assignment bonus + 6 overtake (daily cap for 15 ranks) + 5 tier-up (Obsidian) = 91 XP
+        Assert.That(currentStudent.TotalXp, Is.EqualTo(91));
         Assert.That(currentStudent.BestHallOfFameRank, Is.EqualTo(1));
         Assert.That(currentStudent.BestHallOfFameTier, Is.EqualTo(HallOfFameTier.Obsidian));
         Assert.That(currentStudent.Events.Count(e => e.EventType == GamificationEventType.HallOfFameOvertake), Is.EqualTo(15));
+        Assert.That(currentStudent.Events.Where(e => e.EventType == GamificationEventType.HallOfFameOvertake).Sum(e => e.XpEarned), Is.EqualTo(6));
         Assert.That(currentStudent.Events.Count(e => e.EventType == GamificationEventType.HallOfFameTierUp), Is.EqualTo(1));
     }
 
@@ -1864,18 +1866,22 @@ public class GamificationServiceTests
     }
 
     [Test]
-    public async Task GetStudentCourseProfileAsync_WithOvertakeAndTierUpEvents_ShouldIncludeInRecentGains()
+    public async Task GetStudentCourseProfileAsync_WithOvertakeTierUpAndRankDefenseEvents_ShouldIncludeInRecentGains()
     {
         const int userId = 5;
         const int courseId = 10;
         const int periodId = 1;
         var now = DateTime.UtcNow.AddMinutes(-5);
+        int isoYear = System.Globalization.ISOWeek.GetYear(now);
+        int isoWeek = System.Globalization.ISOWeek.GetWeekOfYear(now);
 
         var profile = new StudentCourseProfile(userId, courseId, periodId)
         {
             User = new User { FirstName = "Bob", LastName = "Builder" }
         };
-        profile.EvaluateHallOfFameProgression(17, 15, now); // Surpasses 2 students (+8 XP) and enters Obsidian (+5 XP)
+        profile.AwardPassedTestXp(101, now.AddMinutes(-1));
+        profile.EvaluateHallOfFameProgression(17, 15, now); // Surpasses 2 students (+6 XP daily cap) and enters Obsidian (+5 XP)
+        profile.EvaluateWeeklyRankDefense(isoYear, isoWeek, 15, 20, new[] { 101 }); // +5 XP
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
             .ReturnsAsync(profile);
@@ -1884,11 +1890,66 @@ public class GamificationServiceTests
 
         var result = await _service.GetStudentCourseProfileAsync(userId, courseId, periodId);
 
-        Assert.That(result.RecentGains.TotalXpGained, Is.EqualTo(13));
+        Assert.That(result.RecentGains.TotalXpGained, Is.EqualTo(26));
         Assert.That(result.RecentGains.Events.Any(e =>
-            e.Description == "Overtake bonus (surpassed 2 students in Hall of Fame)" && e.XpEarned == 8), Is.True);
+            e.Description == "Overtake bonus (surpassed 2 students in Hall of Fame)" && e.XpEarned == 6), Is.True);
         Assert.That(result.RecentGains.Events.Any(e =>
             e.Description == "Hall of Fame level up bonus (Obsidian)" && e.XpEarned == 5), Is.True);
+        Assert.That(result.RecentGains.Events.Any(e =>
+            e.Description == "Hall of Fame rank defense bonus" && e.XpEarned == 5), Is.True);
+    }
+
+    [Test]
+    public async Task AwardWeeklySprintBadgesAsync_ShouldEvaluateWeeklyRankDefenseAndAward5XpToEligibleStudents()
+    {
+        const int courseId = 10;
+        const int periodId = 1;
+        const int year = 2026;
+        const int weekNumber = 43;
+        var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
+
+        var course = new Course { Id = courseId, Code = "CSharp" };
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsWeeklyStreakEnabled = true,
+                IsLeaderboardEnabled = true,
+                IsBadgesEnabled = true
+            });
+
+        // Student 1: Rank 1, BestHallOfFameRank = 1, active in week -> earns +5 XP Rank Defense
+        var s1 = new StudentCourseProfile(1, courseId, periodId);
+        s1.AwardPassedTestXp(101, eventTime);
+        s1.AwardPassedTestXp(102, eventTime);
+        s1.EvaluateHallOfFameProgression(2, 1, eventTime);
+
+        // Student 2: Rank 2 (last place out of 2), BestHallOfFameRank = 2 -> does NOT earn Rank Defense (no student behind them)
+        var s2 = new StudentCourseProfile(2, courseId, periodId);
+        s2.AwardPassedTestXp(101, eventTime);
+        s2.EvaluateHallOfFameProgression(2, 2, eventTime);
+
+        var profiles = new List<StudentCourseProfile> { s1, s2 };
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
+            .ReturnsAsync(profiles);
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(profiles);
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
+            .ReturnsAsync(profiles);
+        _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
+            .ReturnsAsync((StudentCourseProfile p) => p);
+        _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
+            .ReturnsAsync(new List<int> { 101, 102 });
+
+        await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
+
+        Assert.That(s1.Events.Any(e => e.EventType == GamificationEventType.HallOfFameRankDefended && e.XpEarned == 5), Is.True);
+        Assert.That(s2.Events.Any(e => e.EventType == GamificationEventType.HallOfFameRankDefended), Is.False);
+        _studentCourseProfileRepositoryMock.Verify(
+            r => r.UpdateRangeAsync(It.Is<IReadOnlyCollection<StudentCourseProfile>>(list => list.Contains(s1) && !list.Contains(s2))),
+            Times.Once);
     }
 
     [Test]
