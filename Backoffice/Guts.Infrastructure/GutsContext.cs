@@ -33,11 +33,9 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
 
     private static readonly ValueConverter<DateTime?, DateTime?> NullableUtcDateTimeConverter =
         new(
-            value => value.HasValue
-                ? value.Value.Kind == DateTimeKind.Utc
-                    ? value
-                    : value.Value.ToUniversalTime()
-                : value,
+            value => !value.HasValue || value.Value.Kind == DateTimeKind.Utc
+                ? value
+                : value.Value.ToUniversalTime(),
             value => value.HasValue
                 ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
                 : value);

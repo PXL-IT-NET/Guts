@@ -10,6 +10,7 @@ using Guts.Api.Models;
 using Guts.Business.Dtos;
 using Guts.Business.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Guts.Domain.AssignmentAggregate;
 
@@ -18,6 +19,7 @@ namespace Guts.Api.Controllers;
 [Produces("application/json")]
 [Route("api/assignments")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[method: SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters", Justification = "Controller orchestrates assignment dependencies; preserving backward compatibility.")]
 public class AssignmentController(
     IAssignmentService assignmentService,
     IAssignmentRepository assignmentRepository,

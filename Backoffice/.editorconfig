@@ -1,0 +1,14 @@
+root = true
+
+# Enforce key SonarAnalyzer.CSharp quality gates as compile-time build errors in production projects
+[{Guts.Common,Guts.Domain,Guts.Business,Guts.Infrastructure,Guts.Bootstrapper,Guts.Api,Guts.Web}/**/*.cs]
+# S3776: Cognitive Complexity of methods should not be too high
+dotnet_diagnostic.S3776.severity = error
+# S107: Methods should not have too many parameters
+dotnet_diagnostic.S107.severity = error
+# S1481: Unused local variables should be removed
+dotnet_diagnostic.S1481.severity = error
+# S1144: Unused private types or members should be removed
+dotnet_diagnostic.S1144.severity = error
+# S6967: ModelState.IsValid is handled by ASP.NET Core [ApiController] conventions
+dotnet_diagnostic.S6967.severity = none

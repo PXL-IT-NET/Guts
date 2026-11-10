@@ -75,6 +75,11 @@ The repository is organized into three main areas:
   dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
   dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
   dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
+  dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj
+  ```
+- **Frontend lint** (from `Backoffice/Guts.Web/ClientApp`):
+  ```powershell
+  npm run lint
   ```
 - **Frontend unit tests** (from `Backoffice/Guts.Web/ClientApp`):
   ```powershell

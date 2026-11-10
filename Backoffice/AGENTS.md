@@ -58,6 +58,7 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
   - EF Core `DbContext`, entity type configurations, and concrete repositories (`Repositories/`).
 - **`Guts.Bootstrapper`**: Auto-registers services, repositories, and factories into DI using naming conventions (`StartUpExtensions.cs`).
 - **`Guts.Api` (`Guts.Api.Tests`)**: Web API controllers, request/response models, and Model Context Protocol (`Mcp/`) resources and tools.
+- **`Guts.Architecture.Tests`**: ArchUnitNET test suite enforcing layer dependencies, DI auto-registration conventions (`StartUpExtensions.cs`), `Guts.Infrastructure` encapsulation, and API controller security.
 - **`Guts.Web` (`Guts.Web/ClientApp`)**: Frontend host and Angular SPA.
   - Code under `src/app/` is partitioned into `components/`, `services/`, `viewmodels/`, `guards/`, `interceptors/`, and `util/`.
   - E2E testing framework lives under `e2e/`.
@@ -66,10 +67,11 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
 
 ## Testing Guidelines & Commands
 
-### Backend Unit Tests
+### Backend Unit & Architecture Tests
 
 - Keep unit tests fast and isolated by mocking dependencies and repositories.
 - Reuse or extend the test builder pattern (`Builders/`) and random test generators.
+- Compile-time code quality rules (`SonarAnalyzer.CSharp`: cognitive complexity `S3776`, parameter count `S107`, unused variables/members `S1481`/`S1144`) are configured in `Backoffice/Directory.Build.props` and `Backoffice/.editorconfig` and run automatically during `dotnet build` / `dotnet test`.
 - Execute all backend tests:
   ```powershell
   dotnet test Backoffice/Guts.slnx
@@ -80,6 +82,14 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
   dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
   dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
   dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
+  dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj
+  ```
+
+### Frontend Linting (ESLint)
+
+- Lint TypeScript and Angular HTML templates from `Backoffice/Guts.Web/ClientApp`:
+  ```powershell
+  npm run lint
   ```
 
 ### Frontend Unit Tests (Karma / Jasmine)
