@@ -48,8 +48,7 @@ public class ProjectTeamController(
     {
         IProjectTeam team = await projectTeamRepository.LoadByIdAsync(teamId);
 
-        Contracts.Require(team.Project.CourseId == courseId, $"Team with id '{teamId}' is not linked to course with id '{courseId}'");
-        Contracts.Require(team.Project.Code == projectCode, $"Team with id '{teamId}' is not linked to project with code '{projectCode}'");
+        team.EnsureBelongsTo(courseId, projectCode);
 
         TeamDetailsModel model = teamConverter.ToTeamDetailsModel(team);
 
@@ -165,7 +164,8 @@ public class ProjectTeamController(
 
         var dateUtc = date?.ToUniversalTime();
 
-        project.Assignments = await assignmentRepository.GetByTopicWithTests(project.Id);
+        var assignments = await assignmentRepository.GetByTopicWithTests(project.Id);
+        project.LoadAssignments(assignments);
 
         IReadOnlyList<AssignmentResultDto> assignmentResults = await projectService.GetResultsForTeamAsync(project, teamId, dateUtc);
 

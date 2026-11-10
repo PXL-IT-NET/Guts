@@ -136,7 +136,7 @@ internal class ProjectService(
 
         project.EnsureTeamBelongsToProject(teamToUpdate);
 
-        teamToUpdate.Name = teamName;
+        teamToUpdate.Rename(teamName);
         await projectTeamRepository.UpdateAsync(teamToUpdate);
     }
 

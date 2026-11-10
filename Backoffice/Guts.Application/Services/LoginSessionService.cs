@@ -15,38 +15,29 @@ internal class LoginSessionService(ILoginSesssionRepository loginSesssionReposit
 
     public async Task<LoginSession> CreateSessionAsync(string clientIpAddress)
     {
-        var newSession = new LoginSession
-        {
-            PublicIdentifier = Guid.NewGuid().ToString(),
-            IpAddress = clientIpAddress,
-            IsCancelled = false,
-            SessionToken = Guid.NewGuid().ToString(),
-            LoginToken = null,
-            CreateDateTime = DateTime.UtcNow
-        };
-
-        var addedSession = await loginSesssionRepository.AddAsync(newSession);
-        return addedSession;
+        var newSession = LoginSession.Create(clientIpAddress);
+        return await loginSesssionRepository.AddAsync(newSession);
     }
 
     public async Task CleanUpOldSessionsAsync()
     {
         var allSessions = await loginSesssionRepository.GetAllAsync();
-        var sessionsToDelete = allSessions.Where(s => s.CreateDateTime < DateTime.UtcNow.AddHours(-1)).ToList();
+        DateTime now = DateTime.UtcNow;
+        var sessionsToDelete = allSessions.Where(s => s.IsExpired(now)).ToList();
         await loginSesssionRepository.DeleteBulkAsync(sessionsToDelete);
     }
 
     public async Task CancelSessionAsync(string publicIdentifier, string clientIpAddress)
     {
         var session = await loginSesssionRepository.GetSingleAsync(publicIdentifier, clientIpAddress);
-        session.IsCancelled = true;
+        session.Cancel();
         await loginSesssionRepository.UpdateAsync(session);
     }
 
     public async Task SetLoginTokenForSessionAsync(string publicIdentifier, string loginToken)
     {
         var session = await loginSesssionRepository.GetSingleAsync(publicIdentifier);
-        session.LoginToken = loginToken;
+        session.AttachLoginToken(loginToken);
         await loginSesssionRepository.UpdateAsync(session);
     }
 }

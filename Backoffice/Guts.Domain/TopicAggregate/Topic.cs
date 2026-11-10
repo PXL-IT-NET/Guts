@@ -52,4 +52,10 @@ public abstract class Topic : AggregateRoot, ITopic
         Assignments.Add(assignment);
         return assignment;
     }
+
+    public void LoadAssignments(IEnumerable<Assignment> assignments)
+    {
+        Contracts.Require(assignments != null, "Assignments cannot be null.");
+        Assignments = [.. assignments];
+    }
 }

@@ -4,6 +4,7 @@ using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.Tests.Builders;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 using NUnit.Framework;
 
@@ -117,5 +118,45 @@ public class ProjectTeamTests
         var team = new ProjectTeam { Id = 5 };
 
         Assert.Throws<ContractException>(() => team.RemoveUser(99));
+    }
+
+    [Test]
+    public void Rename_ValidName_ShouldUpdateAndTrimName()
+    {
+        var team = new ProjectTeam { Name = "Old Name" };
+
+        team.Rename("  New Team Name  ");
+
+        Assert.That(team.Name, Is.EqualTo("New Team Name"));
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void Rename_InvalidName_ShouldThrowContractException(string invalidName)
+    {
+        var team = new ProjectTeam { Name = "Old Name" };
+
+        Assert.Throws<ContractException>(() => team.Rename(invalidName));
+    }
+
+    [Test]
+    public void EnsureBelongsTo_MatchingCourseAndProject_ShouldSucceed()
+    {
+        var project = new Project(1) { CourseId = 10, Code = "Proj1" };
+        var team = new ProjectTeam { Id = 1, Project = project };
+
+        Assert.DoesNotThrow(() => team.EnsureBelongsTo(10, "Proj1"));
+        Assert.DoesNotThrow(() => team.EnsureBelongsTo(10, "PROJ1"));
+    }
+
+    [Test]
+    public void EnsureBelongsTo_MismatchingCourseOrProject_ShouldThrowContractException()
+    {
+        var project = new Project(1) { CourseId = 10, Code = "Proj1" };
+        var team = new ProjectTeam { Id = 1, Project = project };
+
+        Assert.Throws<ContractException>(() => team.EnsureBelongsTo(999, "Proj1"));
+        Assert.Throws<ContractException>(() => team.EnsureBelongsTo(10, "WrongProject"));
     }
 }

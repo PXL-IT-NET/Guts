@@ -16,4 +16,5 @@ public interface ITopic : IEntity
     IPeriod Period { get; }
     int PeriodId { get; }
     Assignment AddAssignment(Assignment assignment);
+    void LoadAssignments(IEnumerable<Assignment> assignments);
 }

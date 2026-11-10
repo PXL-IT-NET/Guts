@@ -13,7 +13,7 @@ public class LoginSessionBuilder
         _random = new Random();
         _session = new LoginSession
         {
-            CreateDateTime = DateTime.UtcNow.AddMinutes(-1 * _random.Next(60 * 10)),
+            CreateDateTime = DateTime.UtcNow.AddMinutes(-1 * _random.Next(1, 30)),
             IpAddress = Guid.NewGuid().ToString(),
             IsCancelled = false,
             LoginToken = null,

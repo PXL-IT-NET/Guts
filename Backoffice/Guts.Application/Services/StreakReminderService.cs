@@ -238,47 +238,17 @@ public class StreakReminderService : IStreakReminderService
         IReadOnlyList<ITopic> topics,
         HashSet<int> passedTestIds)
     {
-        var inProgress = new List<StreakReminderAssignmentDto>();
-        var untouched = new List<StreakReminderAssignmentDto>();
+        var recommendations = AssignmentRecommendationPolicy.RecommendAssignments(topics, passedTestIds, 2);
 
-        foreach (var topic in topics)
+        return recommendations.Select(r => new StreakReminderAssignmentDto
         {
-            foreach (var assignment in topic.Assignments ?? Enumerable.Empty<Assignment>())
-            {
-                var tests = assignment.Tests ?? new List<Test>();
-                if (tests.Count == 0)
-                {
-                    continue;
-                }
-
-                int passedCount = tests.Count(t => passedTestIds.Contains(t.Id));
-                if (passedCount == tests.Count)
-                {
-                    continue;
-                }
-
-                var dto = new StreakReminderAssignmentDto
-                {
-                    AssignmentId = assignment.Id,
-                    AssignmentDescription = assignment.Description,
-                    TopicDescription = topic.Description,
-                    TopicCode = topic.Code,
-                    GreenTestsCount = passedCount,
-                    TotalTestsCount = tests.Count
-                };
-
-                if (passedCount > 0)
-                {
-                    inProgress.Add(dto);
-                }
-                else
-                {
-                    untouched.Add(dto);
-                }
-            }
-        }
-
-        return inProgress.Concat(untouched).Take(2).ToList();
+            AssignmentId = r.AssignmentId,
+            AssignmentDescription = r.AssignmentDescription,
+            TopicDescription = r.TopicDescription,
+            TopicCode = r.TopicCode,
+            GreenTestsCount = r.GreenTestsCount,
+            TotalTestsCount = r.TotalTestsCount
+        }).ToList();
     }
 
     private async Task<int> SendMessagesAsync(

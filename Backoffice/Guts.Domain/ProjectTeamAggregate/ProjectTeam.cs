@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
@@ -60,5 +61,17 @@ public class ProjectTeam : AggregateRoot, IProjectTeam
         var member = TeamUsers?.FirstOrDefault(tu => tu.UserId == userId);
         Contracts.Require(member != null, "The user is not a member of the team.");
         TeamUsers.Remove(member);
+    }
+
+    public void Rename(string newName)
+    {
+        Contracts.Require(!string.IsNullOrWhiteSpace(newName), "The team name is required.");
+        Name = newName.Trim();
+    }
+
+    public void EnsureBelongsTo(int courseId, string projectCode)
+    {
+        Contracts.Require(Project != null && Project.CourseId == courseId, $"Team with id '{Id}' is not linked to course with id '{courseId}'");
+        Contracts.Require(Project != null && string.Equals((string)Project.Code, projectCode, StringComparison.OrdinalIgnoreCase), $"Team with id '{Id}' is not linked to project with code '{projectCode}'");
     }
 }
