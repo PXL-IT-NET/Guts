@@ -133,36 +133,7 @@ public class GamificationService(
             return;
         }
 
-        var competitors = optedInProfiles
-            .Where(p => p.UserId != profile.UserId)
-            .Select(p => (p.UserId, p.Id, Score: p.TotalXp, LastXpAt: p.LastXpEarnedAt ?? DateTime.MaxValue))
-            .ToList();
-
-        if (competitors.Count == 0)
-        {
-            profile.EvaluateHallOfFameProgression(1, 1, timestamp);
-            return;
-        }
-
-        var beforeOrdering = competitors
-            .Append((profile.UserId, profile.Id, Score: xpBefore, LastXpAt: lastXpBefore ?? DateTime.MaxValue))
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.LastXpAt)
-            .ThenBy(x => x.Id)
-            .ThenBy(x => x.UserId)
-            .ToList();
-
-        var afterOrdering = competitors
-            .Append((profile.UserId, profile.Id, Score: profile.TotalXp, LastXpAt: profile.LastXpEarnedAt ?? DateTime.MaxValue))
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.LastXpAt)
-            .ThenBy(x => x.Id)
-            .ThenBy(x => x.UserId)
-            .ToList();
-
-        int previousRank = beforeOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
-        int newRank = afterOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
-
+        var (previousRank, newRank) = HallOfFameLeague.DetermineRankProgression(profile, xpBefore, lastXpBefore, optedInProfiles);
         if (previousRank > 0 && newRank > 0)
         {
             profile.EvaluateHallOfFameProgression(previousRank, newRank, timestamp);
@@ -454,53 +425,21 @@ public class GamificationService(
         DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(now), ISOWeek.GetWeekOfYear(now), DayOfWeek.Monday);
         IReadOnlyList<StudentCourseProfile> optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(courseId, period.Id, startOfWeek);
 
-        return GetWeeklySprintLeaderboard(optedInProfiles, currentUserId, now);
-    }
+        var sprintEntries = WeeklySprintCompetition.DetermineStandings(optedInProfiles, startOfWeek, now);
 
-    private static List<LeaderboardEntryDto> GetWeeklySprintLeaderboard(IReadOnlyList<StudentCourseProfile> optedInProfiles, int currentUserId, DateTime timestamp)
-    {
-        DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(timestamp), ISOWeek.GetWeekOfYear(timestamp), DayOfWeek.Monday);
-
-        var scored = optedInProfiles.Select(profile =>
-            {
-                var weeklyEvents = profile.Events.Where(e => e.CreatedAt >= startOfWeek && e.CreatedAt <= timestamp).ToList();
-                int weekXp = weeklyEvents.Sum(e => e.XpEarned);
-                int greenTests = weeklyEvents.Count(e => e.EventType == GamificationEventType.PassedTest);
-
-                return new
-                {
-                    Profile = profile,
-                    Score = weekXp,
-                    GreenTests = greenTests
-                };
-            })
-            .Where(x => x.Score > 0)
-            .OrderByDescending(x => x.Score)
-            .ThenByDescending(x => x.GreenTests)
-            .ToList();
-
-        var result = new List<LeaderboardEntryDto>();
-        for (int i = 0; i < scored.Count; i++)
+        return sprintEntries.Select(item => new LeaderboardEntryDto
         {
-            var item = scored[i];
-            string displayName = GetDisplayName(item.Profile);
-
-            result.Add(new LeaderboardEntryDto
-            {
-                Rank = i + 1,
-                UserId = item.Profile.UserId,
-                DisplayName = displayName,
-                Avatar = item.Profile.Avatar,
-                ClassGroupName = item.Profile.ClassGroup?.Name ?? "Unassigned",
-                Score = item.Score,
-                Level = item.Profile.Level,
-                WeeklyStreak = item.Profile.WeeklyStreak.CurrentStreak,
-                GreenTestsCount = item.GreenTests,
-                IsCurrentUser = item.Profile.UserId == currentUserId
-            });
-        }
-
-        return result;
+            Rank = item.Rank,
+            UserId = item.Profile.UserId,
+            DisplayName = GetDisplayName(item.Profile),
+            Avatar = item.Profile.Avatar,
+            ClassGroupName = item.Profile.ClassGroup?.Name ?? "Unassigned",
+            Score = item.Score,
+            Level = item.Profile.Level,
+            WeeklyStreak = item.Profile.WeeklyStreak.CurrentStreak,
+            GreenTestsCount = item.GreenTestsCount,
+            IsCurrentUser = item.Profile.UserId == currentUserId
+        }).ToList();
     }
 
     public async Task<HallOfFameLeaderboardDto> GetHallOfFameLeaderboardAsync(
@@ -520,15 +459,10 @@ public class GamificationService(
         var period = await periodRepository.GetPeriodAsync(periodId);
         var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, period.Id);
 
-        var ordered = optedInProfiles
-            .OrderByDescending(p => p.TotalXp)
-            .ThenBy(p => p.LastXpEarnedAt ?? DateTime.MaxValue)
-            .ThenBy(p => p.Id)
-            .ThenBy(p => p.UserId)
-            .ToList();
+        var rankedEntries = HallOfFameLeague.DetermineStandings(optedInProfiles);
 
         int effectiveTargetUserId = isLector ? (perspectiveUserId ?? 0) : currentUserId;
-        var allEntries = BuildHallOfFameEntries(ordered, effectiveTargetUserId);
+        var allEntries = BuildHallOfFameEntries(rankedEntries, effectiveTargetUserId);
         var tierCounts = allEntries
             .GroupBy(e => e.Tier)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -559,26 +493,19 @@ public class GamificationService(
     }
 
     private static List<LeaderboardEntryDto> BuildHallOfFameEntries(
-        List<StudentCourseProfile> orderedProfiles,
+        IReadOnlyList<HallOfFameStanding> rankedEntries,
         int effectiveTargetUserId)
     {
-        var allEntries = new List<LeaderboardEntryDto>(orderedProfiles.Count);
-        var tierRankCounters = new Dictionary<HallOfFameTier, int>();
+        var allEntries = new List<LeaderboardEntryDto>(rankedEntries.Count);
 
-        for (int i = 0; i < orderedProfiles.Count; i++)
+        foreach (var rankEntry in rankedEntries)
         {
-            var profile = orderedProfiles[i];
-            int globalRank = i + 1;
-            var tier = HallOfFameLeague.GetTierForRank(globalRank);
-            int tierRank = tierRankCounters.GetValueOrDefault(tier, 0) + 1;
-            tierRankCounters[tier] = tierRank;
-
-            var tierMeta = HallOfFameLeague.GetTierMetadata(tier);
-            int totalGreen = profile.TotalGreenTests;
+            var profile = rankEntry.Profile;
+            var tierMeta = HallOfFameLeague.GetTierMetadata(rankEntry.Tier);
 
             allEntries.Add(new LeaderboardEntryDto
             {
-                Rank = tierRank,
+                Rank = rankEntry.TierRank,
                 UserId = profile.UserId,
                 DisplayName = GetDisplayName(profile),
                 Avatar = profile.Avatar,
@@ -586,9 +513,9 @@ public class GamificationService(
                 Score = profile.TotalXp,
                 Level = profile.Level,
                 WeeklyStreak = profile.WeeklyStreak.CurrentStreak,
-                GreenTestsCount = totalGreen,
+                GreenTestsCount = profile.TotalGreenTests,
                 IsCurrentUser = profile.UserId == effectiveTargetUserId,
-                Tier = tier,
+                Tier = rankEntry.Tier,
                 TierName = tierMeta.Name,
                 TierIcon = tierMeta.Icon
             });
@@ -635,7 +562,7 @@ public class GamificationService(
                 Avatar = aboveEntry.Avatar,
                 Rank = aboveEntry.Rank,
                 Score = aboveEntry.Score,
-                XpNeededToOvertake = Math.Max(1, (aboveEntry.Score - targetEntry.Score) + 1),
+                XpNeededToOvertake = HallOfFameLeague.CalculateXpToOvertake(targetEntry.Score, aboveEntry.Score),
                 TierName = aboveEntry.TierName,
                 TierIcon = aboveEntry.TierIcon
             };
@@ -907,37 +834,14 @@ public class GamificationService(
             return;
         }
 
-        var rankedProfiles = optedInProfiles
-            .Where(p => p.TotalXp > 0)
-            .OrderByDescending(p => p.TotalXp)
-            .ThenBy(p => p.LastXpEarnedAt ?? DateTime.MaxValue)
-            .ThenBy(p => p.Id)
-            .ThenBy(p => p.UserId)
-            .ToList();
-
-        if (rankedProfiles.Count == 0)
-        {
-            return;
-        }
-
         IReadOnlyList<int> courseTestIds = await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId) ?? Array.Empty<int>();
-        var modifiedProfiles = new List<StudentCourseProfile>();
 
-        for (int i = 0; i < rankedProfiles.Count; i++)
-        {
-            var profile = rankedProfiles[i];
-            int currentRank = i + 1;
-            if (profile.EvaluateWeeklyRankDefense(
-                    year,
-                    weekNumber,
-                    currentRank,
-                    rankedProfiles.Count,
-                    courseTestIds,
-                    config.IsBadgesEnabled))
-            {
-                modifiedProfiles.Add(profile);
-            }
-        }
+        var modifiedProfiles = HallOfFameLeague.EvaluateWeeklyRankDefense(
+            optedInProfiles,
+            year,
+            weekNumber,
+            courseTestIds,
+            config.IsBadgesEnabled);
 
         if (modifiedProfiles.Count > 0)
         {
@@ -968,46 +872,19 @@ public class GamificationService(
         }
 
         var optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(course.Id, periodId, startOfWeek);
-        var sprintLeaderboard = GetWeeklySprintLeaderboard(optedInProfiles, 0, fridayCutoff);
-        var topEntries = sprintLeaderboard.Where(e => e.Score > 0).Take(5).ToList();
+        var sprintEntries = WeeklySprintCompetition.DetermineStandings(optedInProfiles, startOfWeek, fridayCutoff);
 
-        int badgesAwarded = await AwardBadgesToTopEntriesAsync(topEntries, optedInProfiles, fridayCutoff);
+        var (badgesAwarded, modifiedProfiles) = WeeklySprintCompetition.AwardBadges(sprintEntries, fridayCutoff);
+        foreach (var profile in modifiedProfiles)
+        {
+            await studentCourseProfileRepository.UpdateAsync(profile);
+        }
 
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Course {CourseCode} (Id: {CourseId}): {BadgeCount} weekly sprint badges awarded.",
                 course.Code, course.Id, badgesAwarded);
         }
-    }
-
-    private async Task<int> AwardBadgesToTopEntriesAsync(
-        List<LeaderboardEntryDto> topEntries,
-        IReadOnlyList<StudentCourseProfile> optedInProfiles,
-        DateTime fridayCutoff)
-    {
-        if (topEntries.Count == 0)
-        {
-            return 0;
-        }
-
-        int badgesAwarded = 0;
-        var topEntry = topEntries[0];
-
-        foreach (var entry in topEntries)
-        {
-            var profile = optedInProfiles.FirstOrDefault(p => p.UserId == entry.UserId);
-            if (profile != null)
-            {
-                int newlyAwarded = AwardSprintBadgesForEntry(profile, entry, topEntry, fridayCutoff);
-                if (newlyAwarded > 0)
-                {
-                    badgesAwarded += newlyAwarded;
-                    await studentCourseProfileRepository.UpdateAsync(profile);
-                }
-            }
-        }
-
-        return badgesAwarded;
     }
 
     private async Task EvaluateWeeklyStreaksForCourseAsync(
@@ -1048,43 +925,6 @@ public class GamificationService(
         }
     }
 
-    private static int AwardSprintBadgesForEntry(
-        StudentCourseProfile profile,
-        LeaderboardEntryDto entry,
-        LeaderboardEntryDto topEntry,
-        DateTime fridayCutoff)
-    {
-        int count = 0;
-        int rank = entry.Rank;
-
-        if ((rank == 1 || (entry.Score == topEntry.Score && entry.GreenTestsCount == topEntry.GreenTestsCount)) &&
-            profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
-        {
-            count++;
-        }
-
-        if (rank <= 2 && profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
-        {
-            count++;
-        }
-
-        if (rank <= 3 && profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
-        {
-            count++;
-        }
-
-        if (rank <= 4 && profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
-        {
-            count++;
-        }
-
-        if (rank <= 5 && profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
-        {
-            count++;
-        }
-
-        return count;
-    }
 
     public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()
     {

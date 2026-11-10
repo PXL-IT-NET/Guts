@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Guts.Common;
 
 namespace Guts.Domain.GamificationAggregate;
@@ -65,5 +66,117 @@ public static class HallOfFameLeague
             (HallOfFameTier)(start + 3)
         ];
     }
-}
 
+    public static IReadOnlyList<HallOfFameStanding> DetermineStandings(IEnumerable<StudentCourseProfile> profiles)
+    {
+        Contracts.Require(profiles != null, "Profiles cannot be null.");
+
+        var ordered = OrderProfiles(profiles);
+        var entries = new List<HallOfFameStanding>(ordered.Count);
+        var tierRankCounters = new Dictionary<HallOfFameTier, int>();
+
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            var profile = ordered[i];
+            int globalRank = i + 1;
+            var tier = GetTierForRank(globalRank);
+            int tierRank = tierRankCounters.GetValueOrDefault(tier, 0) + 1;
+            tierRankCounters[tier] = tierRank;
+
+            entries.Add(new HallOfFameStanding(profile, globalRank, tier, tierRank));
+        }
+
+        return entries;
+    }
+
+    public static (int PreviousRank, int NewRank) DetermineRankProgression(
+        StudentCourseProfile profile,
+        int xpBefore,
+        DateTime? lastXpBefore,
+        IEnumerable<StudentCourseProfile> allOptedInProfiles)
+    {
+        Contracts.Require(profile != null, "Profile cannot be null.");
+        Contracts.Require(allOptedInProfiles != null, "All opted-in profiles cannot be null.");
+
+        var competitors = allOptedInProfiles
+            .Where(p => p.UserId != profile.UserId)
+            .Select(p => (p.UserId, p.Id, Score: p.TotalXp, LastXpAt: p.LastXpEarnedAt ?? DateTime.MaxValue))
+            .ToList();
+
+        if (competitors.Count == 0)
+        {
+            return (1, 1);
+        }
+
+        var beforeOrdering = competitors
+            .Append((profile.UserId, profile.Id, Score: xpBefore, LastXpAt: lastXpBefore ?? DateTime.MaxValue))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.LastXpAt)
+            .ThenBy(x => x.Id)
+            .ThenBy(x => x.UserId)
+            .ToList();
+
+        var afterOrdering = competitors
+            .Append((profile.UserId, profile.Id, Score: profile.TotalXp, LastXpAt: profile.LastXpEarnedAt ?? DateTime.MaxValue))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.LastXpAt)
+            .ThenBy(x => x.Id)
+            .ThenBy(x => x.UserId)
+            .ToList();
+
+        int previousRank = beforeOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
+        int newRank = afterOrdering.FindIndex(x => x.UserId == profile.UserId) + 1;
+
+        return (previousRank, newRank);
+    }
+
+    public static int CalculateXpToOvertake(int targetScore, int competitorAboveScore)
+    {
+        return Math.Max(1, (competitorAboveScore - targetScore) + 1);
+    }
+
+    public static IReadOnlyList<StudentCourseProfile> EvaluateWeeklyRankDefense(
+        IEnumerable<StudentCourseProfile> optedInProfiles,
+        int year,
+        int weekNumber,
+        IReadOnlyList<int> courseTestIds,
+        bool isBadgesEnabled)
+    {
+        Contracts.Require(optedInProfiles != null, "Opted-in profiles cannot be null.");
+
+        var rankedProfiles = OrderProfiles(optedInProfiles.Where(p => p.TotalXp > 0));
+        if (rankedProfiles.Count == 0)
+        {
+            return Array.Empty<StudentCourseProfile>();
+        }
+
+        var modifiedProfiles = new List<StudentCourseProfile>();
+        for (int i = 0; i < rankedProfiles.Count; i++)
+        {
+            var profile = rankedProfiles[i];
+            int currentRank = i + 1;
+            if (profile.EvaluateWeeklyRankDefense(
+                    year,
+                    weekNumber,
+                    currentRank,
+                    rankedProfiles.Count,
+                    courseTestIds,
+                    isBadgesEnabled))
+            {
+                modifiedProfiles.Add(profile);
+            }
+        }
+
+        return modifiedProfiles;
+    }
+
+    private static IReadOnlyList<StudentCourseProfile> OrderProfiles(IEnumerable<StudentCourseProfile> profiles)
+    {
+        return profiles
+            .OrderByDescending(p => p.TotalXp)
+            .ThenBy(p => p.LastXpEarnedAt ?? DateTime.MaxValue)
+            .ThenBy(p => p.Id)
+            .ThenBy(p => p.UserId)
+            .ToList();
+    }
+}
