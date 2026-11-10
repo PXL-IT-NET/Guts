@@ -24,7 +24,7 @@ public class ChapterBuilder
             Description = Guid.NewGuid().ToString(),
             CourseId = _random.NextPositive(),
             PeriodId = _random.NextPositive(),
-            Assignments = new Collection<Assignment>()
+            Assignments = (Collection<Assignment>)[]
         };
     }
 
@@ -63,7 +63,7 @@ public class ChapterBuilder
 
     public ChapterBuilder WithAssignments(int numberOfAssignments, int numberOfTestsPerAssignment)
     {
-        _chapter.Assignments = new List<Assignment>();
+        _chapter.Assignments = (List<Assignment>)[];
 
         for (int i = 0; i < numberOfAssignments; i++)
         {

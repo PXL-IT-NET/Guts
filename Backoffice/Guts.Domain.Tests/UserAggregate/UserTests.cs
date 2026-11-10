@@ -9,8 +9,9 @@ namespace Guts.Domain.Tests.UserAggregate;
 [TestFixture]
 public class UserTests
 {
-    private class DerivedUser : User
+    private sealed class DerivedUser : User
     {
+        public override string ToString() => nameof(DerivedUser);
     }
 
     [Test]

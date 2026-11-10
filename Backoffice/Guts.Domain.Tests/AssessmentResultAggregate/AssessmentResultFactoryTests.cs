@@ -44,28 +44,28 @@ public class AssessmentResultFactoryTests
         _assessmentSubResultFactoryMock.Setup(
                 sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
                     It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.ContributionScore)))
+                        Math.Abs(calculateScoreFunction(dummyPeerAssessment) - dummyPeerAssessment.ContributionScore) < 0.0001)))
             .Returns(contributionResultMock.Object).Verifiable();
 
         var effortResultMock = new Mock<IAssessmentSubResult>();
         _assessmentSubResultFactoryMock.Setup(
                 sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
                     It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.EffortScore)))
+                        Math.Abs(calculateScoreFunction(dummyPeerAssessment) - dummyPeerAssessment.EffortScore) < 0.0001)))
             .Returns(effortResultMock.Object).Verifiable();
 
         var cooperationResultMock = new Mock<IAssessmentSubResult>();
         _assessmentSubResultFactoryMock.Setup(
                 sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
                     It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                        calculateScoreFunction(dummyPeerAssessment) == dummyPeerAssessment.CooperationScore)))
+                        Math.Abs(calculateScoreFunction(dummyPeerAssessment) - dummyPeerAssessment.CooperationScore) < 0.0001)))
             .Returns(cooperationResultMock.Object).Verifiable();
 
         var averageResultMock = new Mock<IAssessmentSubResult>();
         _assessmentSubResultFactoryMock.Setup(
                 sf => sf.Create(subject.Id, projectTeamAssessment.PeerAssessments,
                     It.Is<Func<IPeerAssessment, double>>(calculateScoreFunction =>
-                        calculateScoreFunction(dummyPeerAssessment) == (dummyPeerAssessment.CooperationScore + dummyPeerAssessment.EffortScore + dummyPeerAssessment.ContributionScore) / 3.0)))
+                        Math.Abs(calculateScoreFunction(dummyPeerAssessment) - (dummyPeerAssessment.CooperationScore + dummyPeerAssessment.EffortScore + dummyPeerAssessment.ContributionScore) / 3.0) < 0.0001)))
             .Returns(averageResultMock.Object).Verifiable();
 
         //Act
@@ -156,7 +156,7 @@ public class AssessmentResultFactoryTests
         //Arrange
         ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
         var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
-        User removedPeer = teamUsers.First().User;
+        User removedPeer = teamUsers[0].User;
         teamUsers.RemoveAt(0);
 
         //Act
@@ -173,7 +173,7 @@ public class AssessmentResultFactoryTests
         //Arrange
         ProjectTeamAssessment projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
         var teamUsers = (IList<IProjectTeamUser>)projectTeamAssessment.Team.TeamUsers;
-        User removedPeer = teamUsers.First().User;
+        User removedPeer = teamUsers[0].User;
         teamUsers.RemoveAt(0);
 
         //Act + Assert

@@ -52,10 +52,10 @@ public class JwtSecurityTokenAccessPassFactoryTests
             Email = "someEmail@test.com"
         };
         var customClaim = new Claim("custom_claim_type", Guid.NewGuid().ToString());
-        var claims = new List<Claim> { customClaim };
+        List<Claim> claims = [customClaim];
         string role1 = Guid.NewGuid().ToString();
         string role2 = Guid.NewGuid().ToString();
-        var roles = new List<string> { role1, role2 };
+        List<string> roles = [role1, role2];
 
         //Act
         var accessPass = factory.Create(user, claims, roles);

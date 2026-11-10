@@ -9,7 +9,7 @@ internal class RegisterModelBuilder
 
     public RegisterModelBuilder()
     {
-        _model = new RegisterModel
+        _model = new()
         {
             Email = Guid.NewGuid().ToString(),
             Password = Guid.NewGuid().ToString(),

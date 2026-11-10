@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Guts.Domain.GamificationAggregate.Profiles;
 
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Competitions;
 
 public static class TeamSynergyPolicy
 {

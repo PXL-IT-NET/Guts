@@ -1,4 +1,4 @@
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public enum GamificationEventType
 {

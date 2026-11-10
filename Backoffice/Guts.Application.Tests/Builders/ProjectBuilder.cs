@@ -24,8 +24,8 @@ public class ProjectBuilder
             PeriodId = _random.NextPositive(),
             Code = Guid.NewGuid().ToString(),
             Description = Guid.NewGuid().ToString(),
-            Assignments = new Collection<Assignment>(),
-            Teams = new Collection<IProjectTeam>()
+            Assignments = (Collection<Assignment>)[],
+            Teams = (Collection<IProjectTeam>)[]
         };
     }
 

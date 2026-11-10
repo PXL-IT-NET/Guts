@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 
 namespace Guts.Application.Repositories;
 

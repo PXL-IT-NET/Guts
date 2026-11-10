@@ -40,19 +40,19 @@ public class ChapterControllerTests
     public void Setup()
     {
         _userId = Random.Shared.NextPositive();
-        _chapterServiceMock = new Mock<IChapterService>();
-        _topicConverterMock = new Mock<ITopicConverter>();
-        _chapterConverterMock = new Mock<IChapterConverter>();
-        _memoryCacheMock = new Mock<IMemoryCache>();
-        _userRepositoryMock = new Mock<IUserRepository>();
+        _chapterServiceMock = new();
+        _topicConverterMock = new();
+        _chapterConverterMock = new();
+        _memoryCacheMock = new();
+        _userRepositoryMock = new();
 
-        Mock<IUserStore<User>> userStoreMock = new Mock<IUserStore<User>>();
-        Mock<IPasswordHasher<User>> passwordHasherMock = new Mock<IPasswordHasher<User>>();
-        Mock<ILookupNormalizer> lookupNormalizerMock = new Mock<ILookupNormalizer>();
-        Mock<IdentityErrorDescriber> errorsMock = new Mock<IdentityErrorDescriber>();
-        Mock<ILogger<UserManager<User>>> loggerMock = new Mock<ILogger<UserManager<User>>>();
+        Mock<IUserStore<User>> userStoreMock = new();
+        Mock<IPasswordHasher<User>> passwordHasherMock = new();
+        Mock<ILookupNormalizer> lookupNormalizerMock = new();
+        Mock<IdentityErrorDescriber> errorsMock = new();
+        Mock<ILogger<UserManager<User>>> loggerMock = new();
 
-        _userManagerMock = new Mock<UserManager<User>>(
+        _userManagerMock = new(
             userStoreMock.Object,
             null,
             passwordHasherMock.Object,
@@ -66,7 +66,7 @@ public class ChapterControllerTests
         object cachedChapterStatisticsModel;
         _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel)).Returns(false);
 
-        _controller = new ChapterController(_chapterServiceMock.Object,  
+        _controller = new(_chapterServiceMock.Object,  
             _chapterConverterMock.Object, 
             _topicConverterMock.Object,
             _userManagerMock.Object,
@@ -89,7 +89,7 @@ public class ChapterControllerTests
     {
         //Arrange
         Chapter existingChapter = new ChapterBuilder().WithId().Build();
-        TopicSummaryModel chapterContents = new TopicSummaryModel();
+        TopicSummaryModel chapterContents = new();
         var userAssignmentResults = new List<AssignmentResultDto>();
         int periodId = Random.Shared.NextPositive();
           
@@ -188,7 +188,7 @@ public class ChapterControllerTests
         //Arrange
         Chapter existingChapter = new ChapterBuilder().WithId().Build();
         var chapterStatistics = new List<AssignmentStatisticsDto>();
-        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        TopicStatisticsModel chapterStatisticsModel = new();
         DateTime date = DateTime.Now.AddDays(-1);
         int periodId = Random.Shared.NextPositive();
 
@@ -244,8 +244,8 @@ public class ChapterControllerTests
     {
         //Arrange
         Chapter existingChapter = new ChapterBuilder().WithId().Build();
-        List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
-        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        List<AssignmentStatisticsDto> chapterStatistics = [];
+        TopicStatisticsModel chapterStatisticsModel = new();
         DateTime aLongTimeAgo = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds - 1);
 
 
@@ -277,8 +277,8 @@ public class ChapterControllerTests
     {
         //Arrange
         Chapter existingChapter = new ChapterBuilder().WithId().Build();
-        List<AssignmentStatisticsDto> chapterStatistics = new List<AssignmentStatisticsDto>();
-        TopicStatisticsModel chapterStatisticsModel = new TopicStatisticsModel();
+        List<AssignmentStatisticsDto> chapterStatistics = [];
+        TopicStatisticsModel chapterStatisticsModel = new();
         DateTime date = DateTime.Now.AddSeconds(-ChapterController.CacheTimeInSeconds + 1);
         int periodId = Random.Shared.NextPositive();
         string expectedCacheKey = $"GetChapterStatistics-{existingChapter.CourseId}-{existingChapter.Code}-{periodId}";
@@ -297,7 +297,7 @@ public class ChapterControllerTests
         _memoryCacheMock.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out cachedChapterStatisticsModel))
             .Returns(false);
 
-        Mock<ICacheEntry> cacheEntryMock = new Mock<ICacheEntry>();
+        Mock<ICacheEntry> cacheEntryMock = new();
         _memoryCacheMock.Setup(cache => cache.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
 
         //Act
@@ -505,7 +505,7 @@ public class ChapterControllerTests
             .Build();
 
         Chapter existingChapter = new ChapterBuilder().WithId().Build();
-        TopicSummaryModel chapterContents = new TopicSummaryModel();
+        TopicSummaryModel chapterContents = new();
         var userAssignmentResults = new List<AssignmentResultDto>();
         int studentUserId = _userId + 1;
 

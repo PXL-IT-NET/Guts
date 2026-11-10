@@ -24,16 +24,16 @@ internal class ChapterConverterTests
     [SetUp]
     public void Setup()
     {
-        _userConverterMock = new Mock<IUserConverter>();
+        _userConverterMock = new();
         var mapperMock = new Mock<IMapper>();
         mapperMock.Setup(m => m.MapToAssignmentModel(It.IsAny<Assignment>()))
-            .Returns<Assignment>(a => new AssignmentModel
+            .Returns<Assignment>(a => new()
             {
                 AssignmentId = a.Id,
                 Code = a.Code,
                 Description = a.Description
             });
-        _converter = new ChapterConverter(_userConverterMock.Object, mapperMock.Object);
+        _converter = new(_userConverterMock.Object, mapperMock.Object);
     }
 
     [Test]

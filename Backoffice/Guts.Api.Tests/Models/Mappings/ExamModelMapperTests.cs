@@ -22,7 +22,7 @@ internal class ExamModelMapperTests
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        _mapper = new Mapper();
+        _mapper = new();
     }
 
     [Test]
@@ -243,8 +243,8 @@ internal class ExamModelMapperTests
         //Arrange
         var model = new PeerAssessmentModel
         {
-            User = new UserModel { Id = Random.Shared.NextPositive(), FullName = "User Name" },
-            Subject = new UserModel { Id = Random.Shared.NextPositive(), FullName = "Subject Name" },
+            User = new() { Id = Random.Shared.NextPositive(), FullName = "User Name" },
+            Subject = new() { Id = Random.Shared.NextPositive(), FullName = "Subject Name" },
             ContributionScore = 4,
             CooperationScore = 3,
             EffortScore = 5,

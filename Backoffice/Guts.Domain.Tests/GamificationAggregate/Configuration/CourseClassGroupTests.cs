@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
-using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.GamificationAggregate;
+namespace Guts.Domain.Tests.GamificationAggregate.Configuration;
 
 [TestFixture]
 public class CourseClassGroupTests

@@ -64,7 +64,7 @@ public class StringExtensionsTests
     public void ToValidFilePath_ContainsInvalidPathChars_ReplacesInvalidCharsWithUnderscores()
     {
         // Arrange
-        char invalidChar = Path.GetInvalidPathChars().First();
+        char invalidChar = Path.GetInvalidPathChars()[0];
         string input = $"folder{invalidChar}file.cs";
 
         // Act
@@ -89,7 +89,7 @@ public class StringExtensionsTests
     public void IsValidFilePath_ContainsInvalidPathChar_ReturnsFalse()
     {
         // Arrange
-        char invalidChar = Path.GetInvalidPathChars().First();
+        char invalidChar = Path.GetInvalidPathChars()[0];
         string input = $"folder{invalidChar}file.cs";
 
         // Act

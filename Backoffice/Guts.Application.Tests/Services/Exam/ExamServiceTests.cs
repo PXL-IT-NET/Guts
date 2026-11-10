@@ -97,7 +97,7 @@ public class ExamServiceTests
 
         int courseId = Random.Shared.NextPositive();
 
-        List<Domain.ExamAggregate.Exam> retrievedExams = new List<Domain.ExamAggregate.Exam>();
+        List<Domain.ExamAggregate.Exam> retrievedExams = [];
         _examRepositoryMock
             .Setup(repo => repo.FindWithPartsAndEvaluationsAsync(courseId, existingPeriod.Id)).ReturnsAsync(retrievedExams).Verifiable();
 
@@ -119,12 +119,12 @@ public class ExamServiceTests
         {
             Name = Random.Shared.NextString(),
             Deadline = Random.Shared.NextDateTimeInFuture(),
-            AssignmentEvaluations = new List<AssignmentEvaluationDto>
-            {
+            AssignmentEvaluations = (List<AssignmentEvaluationDto>)
+            [
                 new AssignmentEvaluationDtoBuilder().Build(),
                 new AssignmentEvaluationDtoBuilder().Build(),
                 new AssignmentEvaluationDtoBuilder().Build()
-            }
+            ]
         };
 
         Mock<IExam> examMock = new Mock<IExam>();
@@ -167,7 +167,7 @@ public class ExamServiceTests
         {
             Name = Random.Shared.NextString(),
             Deadline = Random.Shared.NextDateTimeInFuture(),
-            AssignmentEvaluations = new List<AssignmentEvaluationDto>()
+            AssignmentEvaluations = (List<AssignmentEvaluationDto>)[]
         };
 
         //Act  +Assert
@@ -208,7 +208,7 @@ public class ExamServiceTests
             .Returns(examScoreMock.Object);
 
         int numberOfUsers = Random.Shared.Next(2, 11);
-        List<User> users = new List<User>();
+        List<User> users = [];
         for (int i = 0; i < numberOfUsers; i++)
         {
             users.Add(new UserBuilder().Build());

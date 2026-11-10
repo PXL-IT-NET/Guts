@@ -211,7 +211,7 @@ public class ProjectTeamAssessmentTests
     public void GetMissingPeerAssessmentsOf_NoPeerAssessmentsStoredYet_ShouldReturnANewPeerAssessmentForEachTeamMember()
     {
         //Arrange
-        User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User; ;
+        User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
 
         //Act
         IReadOnlyList<IPeerAssessment> results = _projectTeamAssessment.GetMissingPeerAssessmentsOf(user.Id);
@@ -233,7 +233,7 @@ public class ProjectTeamAssessmentTests
     {
         //Arrange
         _projectTeamAssessment = new ProjectTeamAssessmentBuilder().WithAllPeerAssessmentsAdded().Build();
-        User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User; ;
+        User user = _projectTeamAssessment.Team.TeamUsers.NextRandomItem().User;
 
         //Act
         IReadOnlyList<IPeerAssessment> results = _projectTeamAssessment.GetMissingPeerAssessmentsOf(user.Id);
@@ -408,7 +408,7 @@ public class ProjectTeamAssessmentTests
         var teamUsers = (IList<IProjectTeamUser>)_projectTeamAssessment.Team.TeamUsers;
 
         // Simulate a member leaving and a new member joining the team after completion
-        User removedUser = teamUsers.First().User;
+        User removedUser = teamUsers[0].User;
         teamUsers.RemoveAt(0);
 
         User newUser = new UserBuilder().Build();
@@ -423,7 +423,7 @@ public class ProjectTeamAssessmentTests
         Assert.That(() => _projectTeamAssessment.AddPeer(newUser.Id), Throws.InstanceOf<ContractException>());
         Assert.That(() => _projectTeamAssessment.RemovePeer(removedUser.Id), Throws.InstanceOf<ContractException>());
         Assert.That(() => _projectTeamAssessment.SetPeerInclusion(newUser.Id, true), Throws.InstanceOf<ContractException>());
-        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(originalPeers.Last().Id, false), Throws.InstanceOf<ContractException>());
+        Assert.That(() => _projectTeamAssessment.SetPeerInclusion(originalPeers[^1].Id, false), Throws.InstanceOf<ContractException>());
     }
 
     [Test]

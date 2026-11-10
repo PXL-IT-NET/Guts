@@ -30,10 +30,10 @@ public class ProjectTeamAssessmentControllerTests
     [SetUp]
     public void Setup()
     {
-        _random = new Random();
+        _random = new();
         _userId = _random.NextPositive();
-        _projectTeamAssessmentServiceMock = new Mock<IProjectTeamAssessmentService>();
-        _mapperMock = new Mock<IMapper>();
+        _projectTeamAssessmentServiceMock = new();
+        _mapperMock = new();
         _controller = CreateControllerWithUserInContext(Role.Constants.Student);
     }
 
@@ -93,9 +93,9 @@ public class ProjectTeamAssessmentControllerTests
 
         var inputModels = new PeerAssessmentModel[]
         {
-            new PeerAssessmentModel(),
-            new PeerAssessmentModel(),
-            new PeerAssessmentModel()
+            new(),
+            new(),
+            new()
         };
 
         var mappedDto = new PeerAssessmentDto();
@@ -183,7 +183,7 @@ public class ProjectTeamAssessmentControllerTests
 
     private ProjectTeamAssessmentController CreateControllerWithUserInContext(string role)
     {
-        return new ProjectTeamAssessmentController(_projectTeamAssessmentServiceMock.Object, _mapperMock.Object)
+        return new(_projectTeamAssessmentServiceMock.Object, _mapperMock.Object)
         {
             ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()
         };

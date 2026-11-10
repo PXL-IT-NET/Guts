@@ -1,4 +1,4 @@
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Configuration;
 
 public interface ICourseClassGroupFactory
 {

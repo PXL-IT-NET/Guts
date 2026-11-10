@@ -4,6 +4,8 @@ using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.ExamAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;

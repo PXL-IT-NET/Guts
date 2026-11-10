@@ -55,7 +55,7 @@ public class TopicServiceTests
     {
         //Arrange
         Period existingPeriod = new PeriodBuilder().WithId().Build();
-        List<Topic> existingTopics = new List<Topic>();
+        List<Topic> existingTopics = [];
         var courseId = Random.Shared.NextPositive();
 
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);

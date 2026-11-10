@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Guts.Common;
 
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class WeeklyStreak : ValueObject<WeeklyStreak>
 {

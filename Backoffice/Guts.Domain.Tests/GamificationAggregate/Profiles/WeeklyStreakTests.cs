@@ -1,10 +1,10 @@
 using System;
 using System.Globalization;
 using Guts.Common;
-using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.GamificationAggregate;
+namespace Guts.Domain.Tests.GamificationAggregate.Profiles;
 
 [TestFixture]
 public class WeeklyStreakTests
@@ -39,7 +39,7 @@ public class WeeklyStreakTests
     public void RecordActivity_FirstTime_ShouldStartStreakAtOne()
     {
         var streak = new WeeklyStreak();
-        var now = new DateTime(2026, 10, 21); // Wednesday
+        var now = new DateTime(2026, 10, 21, 0, 0, 0, DateTimeKind.Utc); // Wednesday
         var updated = streak.RecordActivity(now);
 
         Assert.That(updated.CurrentStreak, Is.EqualTo(1));
@@ -51,7 +51,7 @@ public class WeeklyStreakTests
     [Test]
     public void RecordActivity_SameWeek_ShouldNotIncrementStreak()
     {
-        var now = new DateTime(2026, 10, 21); // Wednesday
+        var now = new DateTime(2026, 10, 21, 0, 0, 0, DateTimeKind.Utc); // Wednesday
         var streak = new WeeklyStreak().RecordActivity(now);
         var nextDay = now.AddDays(1); // Thursday of same week
         var updated = streak.RecordActivity(nextDay);
@@ -63,7 +63,7 @@ public class WeeklyStreakTests
     [Test]
     public void RecordActivity_ConsecutiveWeek_ShouldIncrementStreak()
     {
-        var week1 = new DateTime(2026, 10, 19); // Monday Week 43
+        var week1 = new DateTime(2026, 10, 19, 0, 0, 0, DateTimeKind.Utc); // Monday Week 43
         var week2 = week1.AddDays(7); // Monday Week 44
 
         var streak = new WeeklyStreak().RecordActivity(week1);
@@ -77,7 +77,7 @@ public class WeeklyStreakTests
     [Test]
     public void RecordActivity_SkippedWeek_ShouldResetStreakToOne()
     {
-        var week1 = new DateTime(2026, 10, 19); // Monday Week 43
+        var week1 = new DateTime(2026, 10, 19, 0, 0, 0, DateTimeKind.Utc); // Monday Week 43
         var week3 = week1.AddDays(14); // Monday Week 45 (skipped Week 44)
 
         var streak = new WeeklyStreak().RecordActivity(week1);
@@ -90,7 +90,7 @@ public class WeeklyStreakTests
     [Test]
     public void IsActiveInWeek_MatchingWeek_ShouldReturnTrue()
     {
-        var now = new DateTime(2026, 10, 21);
+        var now = new DateTime(2026, 10, 21, 0, 0, 0, DateTimeKind.Utc);
         var streak = new WeeklyStreak().RecordActivity(now);
 
         Assert.That(streak.IsActiveInWeek(now), Is.True);
@@ -100,7 +100,7 @@ public class WeeklyStreakTests
     [Test]
     public void RecordActivity_PastWeek_ShouldReturnUnchangedStreak()
     {
-        var week2 = new DateTime(2026, 10, 26); // Monday Week 44
+        var week2 = new DateTime(2026, 10, 26, 0, 0, 0, DateTimeKind.Utc); // Monday Week 44
         var week1 = week2.AddDays(-7); // Monday Week 43
 
         var streak = new WeeklyStreak().RecordActivity(week2);
@@ -127,7 +127,7 @@ public class WeeklyStreakTests
     public void NeedsEvaluation_WhenZeroStreakOrActiveCurrentOrPreviousWeek_ShouldReturnFalse()
     {
         var emptyStreak = new WeeklyStreak();
-        var week43 = new DateTime(2026, 10, 19); // Monday Week 43
+        var week43 = new DateTime(2026, 10, 19, 0, 0, 0, DateTimeKind.Utc); // Monday Week 43
         var week44 = week43.AddDays(7); // Monday Week 44
 
         Assert.That(emptyStreak.NeedsEvaluation(week44), Is.False);
@@ -140,7 +140,7 @@ public class WeeklyStreakTests
     [Test]
     public void NeedsEvaluation_WhenActiveStreakMissedLastWeek_ShouldReturnTrue()
     {
-        var week42 = new DateTime(2026, 10, 12); // Monday Week 42
+        var week42 = new DateTime(2026, 10, 12, 0, 0, 0, DateTimeKind.Utc); // Monday Week 42
         var week44 = week42.AddDays(14); // Monday Week 44 (missed Week 43)
 
         var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));
@@ -151,7 +151,7 @@ public class WeeklyStreakTests
     [Test]
     public void EvaluateStreak_WhenDoesNotNeedEvaluation_ShouldReturnSameInstance()
     {
-        var week43 = new DateTime(2026, 10, 19); // Week 43
+        var week43 = new DateTime(2026, 10, 19, 0, 0, 0, DateTimeKind.Utc); // Week 43
         var week44 = week43.AddDays(7); // Week 44
         var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week43), ISOWeek.GetWeekOfYear(week43));
 
@@ -163,7 +163,7 @@ public class WeeklyStreakTests
     [Test]
     public void EvaluateStreak_WhenMissedLastWeekAndNotAllTestsPassed_ShouldResetCurrentStreakToZeroAndKeepBestStreak()
     {
-        var week42 = new DateTime(2026, 10, 12); // Week 42
+        var week42 = new DateTime(2026, 10, 12, 0, 0, 0, DateTimeKind.Utc); // Week 42
         var week44 = week42.AddDays(14); // Week 44 (missed Week 43)
         var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));
 
@@ -179,7 +179,7 @@ public class WeeklyStreakTests
     [Test]
     public void EvaluateStreak_WhenMissedLastWeekAndAllAvailableTestsPassed_ShouldKeepStreakAndAdvanceLastActiveWeek()
     {
-        var week42 = new DateTime(2026, 10, 12); // Week 42
+        var week42 = new DateTime(2026, 10, 12, 0, 0, 0, DateTimeKind.Utc); // Week 42
         var week43 = week42.AddDays(7); // Week 43
         var week44 = week42.AddDays(14); // Week 44 (missed Week 43)
         var streak = new WeeklyStreak(3, 5, ISOWeek.GetYear(week42), ISOWeek.GetWeekOfYear(week42));

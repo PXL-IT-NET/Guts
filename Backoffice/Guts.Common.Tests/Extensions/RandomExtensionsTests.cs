@@ -4,7 +4,7 @@ namespace Guts.Common.Tests.Extensions;
 
 public class RandomExtensionsTests
 {
-    private enum SampleEnum
+    private enum SampleChoice
     {
         First,
         Second,
@@ -77,10 +77,10 @@ public class RandomExtensionsTests
     public void NextEnum_WithEnumType_ReturnsValidEnumValue()
     {
         // Act
-        SampleEnum value = Random.Shared.NextEnum<SampleEnum>();
+        SampleChoice value = Random.Shared.NextEnum<SampleChoice>();
 
         // Assert
-        Assert.That(Enum.IsDefined(typeof(SampleEnum), value), Is.True);
+        Assert.That(Enum.IsDefined(typeof(SampleChoice), value), Is.True);
     }
 
     [Test]

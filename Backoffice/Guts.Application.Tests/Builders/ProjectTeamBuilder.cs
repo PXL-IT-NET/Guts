@@ -19,7 +19,7 @@ public class ProjectTeamBuilder
         {
             Id = 0,
             Name = Guid.NewGuid().ToString(),
-            TeamUsers = new Collection<IProjectTeamUser>()
+            TeamUsers = (Collection<IProjectTeamUser>)[]
         };
     }
 

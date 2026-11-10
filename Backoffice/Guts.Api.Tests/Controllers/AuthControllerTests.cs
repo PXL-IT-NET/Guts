@@ -35,12 +35,12 @@ public class AuthControllerTests
     public void Setup()
     {
         var userStoreMock = new Mock<IUserStore<User>>();
-        _passwordHasherMock = new Mock<IPasswordHasher<User>>();
+        _passwordHasherMock = new();
         var lookupNormalizerMock = new Mock<ILookupNormalizer>();
         var errorsMock = new Mock<IdentityErrorDescriber>();
         var userManagerLoggerMock = new Mock<ILogger<UserManager<User>>>();
 
-        _userManagerMock = new Mock<UserManager<User>>(
+        _userManagerMock = new(
             userStoreMock.Object,
             null,
             _passwordHasherMock.Object,
@@ -55,19 +55,19 @@ public class AuthControllerTests
             .ReturnsAsync(new IdentityResult());
 
         var expectedCaptchaResult = new CaptchaVerificationResult { Success = true };
-        _captchaValidatorMock = new Mock<ICaptchaValidator>();
+        _captchaValidatorMock = new();
         _captchaValidatorMock.Setup(validator => validator.Validate(It.IsAny<string>(), It.IsAny<IPAddress>()))
             .ReturnsAsync(expectedCaptchaResult);
 
-        _mailSenderMock = new Mock<IMailSender>();
+        _mailSenderMock = new();
 
-        _accessPassFactoryMock = new Mock<ITokenAccessPassFactory>();
+        _accessPassFactoryMock = new();
 
-        _loginSessionServiceMock = new Mock<ILoginSessionService>();
+        _loginSessionServiceMock = new();
 
         var controllerLoggerMock = new Mock<ILogger<AuthController>>();
 
-        _controller = new AuthController(_userManagerMock.Object,
+        _controller = new(_userManagerMock.Object,
             _captchaValidatorMock.Object,
             _mailSenderMock.Object,
             _accessPassFactoryMock.Object,

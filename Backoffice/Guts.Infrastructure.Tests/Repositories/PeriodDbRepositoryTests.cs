@@ -20,7 +20,7 @@ internal class PeriodDbRepositoryTests : RepositoryTestsBase
         var repo = new PeriodDbRepository(context);
 
         var periods = await repo.GetAllAsync();
-        Assert.That(periods.Select(p => p.Description), Is.EqualTo(new[] { "Earlier", "Later" }));
+        Assert.That(periods.Select(p => p.Description), Is.EqualTo(["Earlier", "Later"]));
     }
 
     [Test]
@@ -31,7 +31,7 @@ internal class PeriodDbRepositoryTests : RepositoryTestsBase
         await using (var context = CreateDbContext())
         {
             var repo = new PeriodDbRepository(context);
-            Assert.That(async () => await repo.GetPeriodAsync(null), Throws.InstanceOf<DataNotFoundException>());
+            await Assert.ThatAsync(() => repo.GetPeriodAsync(null), Throws.InstanceOf<DataNotFoundException>());
         }
 
         var active = await Seeder.SeedPeriodAsync(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(10), "Active");
@@ -46,7 +46,7 @@ internal class PeriodDbRepositoryTests : RepositoryTestsBase
             var current = await repo.GetPeriodAsync(null);
             Assert.That(current.Id, Is.EqualTo(active.Id));
 
-            Assert.That(async () => await repo.GetPeriodAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+            await Assert.ThatAsync(async () => await repo.GetPeriodAsync(99999), Throws.InstanceOf<DataNotFoundException>());
         }
     }
 }

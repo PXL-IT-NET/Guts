@@ -15,8 +15,8 @@ internal class CreateAssignmentTestRunModelBuilder
 
     public CreateAssignmentTestRunModelBuilder()
     {
-        _random = new Random();
-        _model = new CreateAssignmentTestRunModel
+        _random = new();
+        _model = new()
         {
             Assignment = new AssignmentDtoBuilder().Build(),
             Results = new List<TestResultModel>(),

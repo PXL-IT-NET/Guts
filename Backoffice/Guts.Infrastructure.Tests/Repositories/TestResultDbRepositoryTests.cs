@@ -35,8 +35,8 @@ internal class TestResultDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            testNames: new[] { "Test1", "Test2" },
-            teams: ("Team 01", new[] { _user1Id, _user2Id }));
+            testNames: ["Test1", "Test2"],
+            teams: ("Team 01", [_user1Id, _user2Id]));
 
         _projectId = project.Id;
         var assignment = project.Assignments.First();
@@ -80,7 +80,7 @@ internal class TestResultDbRepositoryTests : RepositoryTestsBase
         var allTeamsLatest = await repo.GetLastTestResultsOfAllTeams(_projectId, _assignmentId, null);
         Assert.That(allTeamsLatest, Has.Count.EqualTo(2));
 
-        var ofAssignments = await repo.GetLastTestResultsOfAssignmentsAsync(new[] { _assignmentId }, null);
+        var ofAssignments = await repo.GetLastTestResultsOfAssignmentsAsync([_assignmentId], null);
         Assert.That(ofAssignments, Has.Count.EqualTo(3));
         Assert.That(ofAssignments.All(r => r.Test != null), Is.True);
         Assert.That(ofAssignments.All(r => r.User != null), Is.True);

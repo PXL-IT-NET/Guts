@@ -29,8 +29,11 @@ app.MapFallbackToFile("index.html");
 
 await app.RunAsync();
 
-[ExcludeFromCodeCoverage]
-public partial class Program
+namespace Guts.Web
 {
-    protected Program() { }
+    [ExcludeFromCodeCoverage]
+    public partial class Program
+    {
+        protected Program() { }
+    }
 }

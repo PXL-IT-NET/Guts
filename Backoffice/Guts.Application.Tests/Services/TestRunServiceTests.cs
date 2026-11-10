@@ -45,7 +45,7 @@ public class TestRunServiceTests
         _testRunRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<TestRun>())).ReturnsAsync(savedTestRun);
 
         //Act
-        var result = _service.RegisterRunAsync(toBeSavedTestRun, new List<SolutionFile>()).Result;
+        var result = _service.RegisterRunAsync(toBeSavedTestRun, (List<SolutionFile>)[]).Result;
 
         //Assert
         Assert.That(result, Is.Not.Null);
@@ -101,7 +101,7 @@ public class TestRunServiceTests
         int userId = _random.NextPositive();
         SolutionFile solutionFile =
             new SolutionFileBuilder().WithUserId(userId).WithAssignmentId(assignmentId).Build();
-        var solutionFiles = new List<SolutionFile>{ solutionFile};
+        List<SolutionFile> solutionFiles = [solutionFile];
 
         _solutionFileRepositoryMock
             .Setup(repo => repo.GetLatestForUserAsync(assignmentId, userId, It.IsAny<FilePath>()))

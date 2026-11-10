@@ -40,17 +40,17 @@ public class AssignmentControllerTests
     [SetUp]
     public void Setup()
     {
-        _random = new Random();
-        _assignmentServiceMock = new Mock<IAssignmentService>();
-        _assignmentRepositoryMock = new Mock<IAssignmentRepository>();
-        _assignmentConverterMock = new Mock<IAssignmentConverter>();
-        _projectTeamRepositoryMock = new Mock<IProjectTeamRepository>();
-        _topicServiceMock = new Mock<ITopicService>();
-        _solutionFileRepositoryMock = new Mock<ISolutionFileRepository>();
-        _solutionFileServiceMock = new Mock<ISolutionFileService>();
-        _mapperMock = new Mock<IMapper>();
+        _random = new();
+        _assignmentServiceMock = new();
+        _assignmentRepositoryMock = new();
+        _assignmentConverterMock = new();
+        _projectTeamRepositoryMock = new();
+        _topicServiceMock = new();
+        _solutionFileRepositoryMock = new();
+        _solutionFileServiceMock = new();
+        _mapperMock = new();
 
-        _controller = new AssignmentController(_assignmentServiceMock.Object,
+        _controller = new(_assignmentServiceMock.Object,
             _assignmentRepositoryMock.Object, 
             _assignmentConverterMock.Object,
             _projectTeamRepositoryMock.Object, 
@@ -461,7 +461,7 @@ public class AssignmentControllerTests
     {
         // Arrange
         int assignmentId = _random.NextPositive();
-        var solutions = new List<SolutionDto> { new SolutionDto() };
+        var solutions = new List<SolutionDto> { new() };
         var zipBytes = new byte[] { 1, 2, 3, 4 };
 
         _assignmentServiceMock.Setup(service => service.GetAllSolutions(assignmentId))

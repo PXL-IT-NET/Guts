@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.GamificationAggregate;
+namespace Guts.Domain.Tests.GamificationAggregate.Competitions;
 
 [TestFixture]
 public class TeamSynergyPolicyTests

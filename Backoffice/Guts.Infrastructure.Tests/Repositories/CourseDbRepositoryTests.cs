@@ -20,7 +20,7 @@ internal class CourseDbRepositoryTests : RepositoryTestsBase
         var repo = new CourseDbRepository(context);
 
         var all = await repo.GetAllAsync();
-        Assert.That(all.Select(c => c.Name), Is.EqualTo(new[] { "Course A", "Course B", "Course C" }));
+        Assert.That(all.Select(c => c.Name), Is.EqualTo(["Course A", "Course B", "Course C"]));
     }
 
     [Test]
@@ -34,6 +34,6 @@ internal class CourseDbRepositoryTests : RepositoryTestsBase
         var found = await repo.GetSingleAsync("DOTNET1");
         Assert.That(found.Name, Is.EqualTo(".NET Essentials"));
 
-        Assert.That(async () => await repo.GetSingleAsync("NonExistent"), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.GetSingleAsync("NonExistent"), Throws.InstanceOf<DataNotFoundException>());
     }
 }

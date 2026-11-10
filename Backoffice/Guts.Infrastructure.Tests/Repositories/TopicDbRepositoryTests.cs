@@ -34,7 +34,7 @@ internal class TopicDbRepositoryTests : RepositoryTestsBase
         var topic = await repo.GetSingleAsync(_courseCode, "Ch01", _periodId);
         Assert.That(topic.Description, Is.EqualTo("Chapter 1"));
 
-        Assert.That(async () => await repo.GetSingleAsync(_courseCode, "Missing", _periodId),
+        await Assert.ThatAsync(() => repo.GetSingleAsync(_courseCode, "Missing", _periodId),
             Throws.InstanceOf<DataNotFoundException>());
     }
 
@@ -46,7 +46,7 @@ internal class TopicDbRepositoryTests : RepositoryTestsBase
             var repo = new TopicDbRepository(context);
             await repo.UpdateAsync(_courseId, "Ch01", _periodId, "Updated Chapter 1");
 
-            Assert.That(async () => await repo.UpdateAsync(_courseId, "Missing", _periodId, "Desc"),
+            await Assert.ThatAsync(async () => await repo.UpdateAsync(_courseId, "Missing", _periodId, "Desc"),
                 Throws.InstanceOf<ContractException>());
         }
 

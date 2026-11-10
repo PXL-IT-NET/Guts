@@ -72,8 +72,8 @@ public class MailSenderTests
         int courseId = 42;
         int currentStreak = 3;
         string targetStudentName = "Bob Builder";
-        var recommendations = new List<StreakReminderAssignmentDto>
-        {
+        List<StreakReminderAssignmentDto> recommendations =
+        [
             new()
             {
                 AssignmentId = 101,
@@ -83,7 +83,7 @@ public class MailSenderTests
                 TotalTestsCount = 5,
                 WebUrl = "http://someWebAppUrl.com/courses/42/chapters/Ch2/testresults?assignmentId=101"
             }
-        };
+        ];
 
         //Act
         _mailSender.SendStreakReminderEmailAsync(_user, courseName, courseId, currentStreak, targetStudentName, recommendations).Wait();

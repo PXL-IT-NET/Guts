@@ -10,6 +10,9 @@ using Guts.Application.Dtos.Gamification;
 using Guts.Application.Repositories;
 using Guts.Common;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestRunAggregate;
 using Microsoft.Extensions.Logging;
@@ -66,13 +69,9 @@ public class GamificationService(
             AwardPassedTestsXp(profile, testRun, config);
 
             var allAssignmentTestIds = assignment.Tests.Select(t => t.Id).ToHashSet();
-            var userPassedTestIds = profile.Events
-                .Where(e => e.EventType == GamificationEventType.PassedTest)
-                .Select(e => e.TargetId)
-                .ToHashSet();
 
             bool allTestsOfAssignmentPassed = await CheckAssignmentAndTopicCompletionAsync(
-                profile, assignment, courseId, periodId, testRun.CreateDateTime, config, userPassedTestIds, allAssignmentTestIds);
+                profile, assignment, courseId, periodId, testRun.CreateDateTime, config, allAssignmentTestIds);
 
             if (config.IsTeamSynergyEnabled && allTestsOfAssignmentPassed)
             {
@@ -140,10 +139,9 @@ public class GamificationService(
         int periodId,
         DateTime testRunDateTime,
         CourseGamificationConfig config,
-        HashSet<int> userPassedTestIds,
         HashSet<int> allAssignmentTestIds)
     {
-        bool allTestsOfAssignmentPassed = allAssignmentTestIds.Count > 0 && allAssignmentTestIds.IsSubsetOf(userPassedTestIds);
+        bool allTestsOfAssignmentPassed = allAssignmentTestIds.Count > 0 && profile.HasPassedAllTests(allAssignmentTestIds);
         if (allTestsOfAssignmentPassed)
         {
             int previousCompletions = await studentCourseProfileRepository.CountAssignmentCompletionsAsync(assignment.Id, courseId, periodId);
@@ -151,7 +149,7 @@ public class GamificationService(
 
             var topicAssignments = await assignmentRepository.GetByTopicWithTests(assignment.TopicId);
             var allTopicTestIds = topicAssignments.SelectMany(a => a.Tests).Select(t => t.Id).ToHashSet();
-            if (allTopicTestIds.Count > 0 && allTopicTestIds.IsSubsetOf(userPassedTestIds))
+            if (allTopicTestIds.Count > 0 && profile.HasPassedAllTests(allTopicTestIds))
             {
                 profile.AwardChapterBonus(assignment.TopicId, testRunDateTime, config.IsBadgesEnabled);
             }
@@ -614,40 +612,20 @@ public class GamificationService(
         var classGroups = await courseClassGroupRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
         var allProfiles = await studentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, period.Id);
 
-        var result = new List<ClassGroupLeaderboardEntryDto>();
+        var standings = ClassGroupCompetition.DetermineStandings(classGroups, allProfiles, currentUserId);
 
-        foreach (var group in classGroups)
+        return standings.Select(s => new ClassGroupLeaderboardEntryDto
         {
-            var groupStudents = allProfiles.Where(p => p.ClassGroupId == group.Id).ToList();
-            int studentCount = groupStudents.Count;
-            int totalXp = groupStudents.Sum(p => p.TotalXp);
-            int totalGreen = groupStudents.Sum(p => p.TotalGreenTests);
-            var (classScore, currentUserContribution) = CourseClassGroup.CalculateClassScore(groupStudents, currentUserId);
-
-            result.Add(new ClassGroupLeaderboardEntryDto
-            {
-                ClassGroupId = group.Id,
-                ClassGroupName = group.Name,
-                StudentCount = studentCount,
-                TotalGreenTests = totalGreen,
-                ClassScore = classScore,
-                TotalXp = totalXp,
-                IsCurrentUserClass = currentUserContribution.HasValue,
-                CurrentUserContribution = currentUserContribution
-            });
-        }
-
-        var ordered = result
-            .OrderByDescending(r => r.ClassScore)
-            .ThenByDescending(r => r.TotalGreenTests)
-            .ThenByDescending(r => r.TotalXp)
-            .ToList();
-        for (int i = 0; i < ordered.Count; i++)
-        {
-            ordered[i].Rank = i + 1;
-        }
-
-        return ordered;
+            Rank = s.Rank,
+            ClassGroupId = s.ClassGroup.Id,
+            ClassGroupName = s.ClassGroup.Name,
+            StudentCount = s.StudentCount,
+            TotalGreenTests = s.TotalGreenTests,
+            ClassScore = s.ClassScore,
+            TotalXp = s.TotalXp,
+            IsCurrentUserClass = s.IsCurrentUserClass,
+            CurrentUserContribution = s.CurrentUserContribution
+        }).ToList();
     }
 
     public async Task<CourseGamificationConfigDto> GetCourseConfigAsync(int courseId)
@@ -680,22 +658,24 @@ public class GamificationService(
         if (config == null)
         {
             config = new CourseGamificationConfig(courseId);
-            config.IsGamificationEnabled = configDto.IsGamificationEnabled;
-            config.IsWeeklyStreakEnabled = configDto.IsWeeklyStreakEnabled;
-            config.IsLeaderboardEnabled = configDto.IsLeaderboardEnabled;
-            config.IsClassCompetitionEnabled = configDto.IsClassCompetitionEnabled;
-            config.IsTeamSynergyEnabled = configDto.IsTeamSynergyEnabled;
-            config.IsBadgesEnabled = configDto.IsBadgesEnabled;
+            config.UpdateSettings(
+                configDto.IsGamificationEnabled,
+                configDto.IsWeeklyStreakEnabled,
+                configDto.IsLeaderboardEnabled,
+                configDto.IsClassCompetitionEnabled,
+                configDto.IsTeamSynergyEnabled,
+                configDto.IsBadgesEnabled);
             config = await courseGamificationConfigRepository.AddAsync(config);
         }
         else
         {
-            config.IsGamificationEnabled = configDto.IsGamificationEnabled;
-            config.IsWeeklyStreakEnabled = configDto.IsWeeklyStreakEnabled;
-            config.IsLeaderboardEnabled = configDto.IsLeaderboardEnabled;
-            config.IsClassCompetitionEnabled = configDto.IsClassCompetitionEnabled;
-            config.IsTeamSynergyEnabled = configDto.IsTeamSynergyEnabled;
-            config.IsBadgesEnabled = configDto.IsBadgesEnabled;
+            config.UpdateSettings(
+                configDto.IsGamificationEnabled,
+                configDto.IsWeeklyStreakEnabled,
+                configDto.IsLeaderboardEnabled,
+                configDto.IsClassCompetitionEnabled,
+                configDto.IsTeamSynergyEnabled,
+                configDto.IsBadgesEnabled);
             config = await courseGamificationConfigRepository.UpdateAsync(config);
         }
 

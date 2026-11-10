@@ -33,7 +33,7 @@ internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            teams: ("Team 01", new[] { _user1Id, _user2Id }));
+            teams: ("Team 01", [_user1Id, _user2Id]));
 
         _assignmentId = project.Assignments.First().Id;
         _teamId = project.Teams.First().Id;
@@ -58,7 +58,7 @@ internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
 
         var allLatest = await repo.GetAllLatestOfAssignmentAsync(_assignmentId);
         Assert.That(allLatest, Has.Count.EqualTo(2));
-        Assert.That(allLatest.Select(f => f.Content), Is.EquivalentTo(new[] { "v2", "u2_v1" }));
+        Assert.That(allLatest.Select(f => f.Content), Is.EquivalentTo(["v2", "u2_v1"]));
     }
 
     [Test]

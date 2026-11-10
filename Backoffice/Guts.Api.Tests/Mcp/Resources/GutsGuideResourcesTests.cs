@@ -16,8 +16,8 @@ public class GutsGuideResourcesTests
     [SetUp]
     public void Setup()
     {
-        _guideServiceMock = new Mock<IAttributeGuideService>();
-        _resources = new AttributeGuideResources(_guideServiceMock.Object);
+        _guideServiceMock = new();
+        _resources = new(_guideServiceMock.Object);
     }
 
     [Test]

@@ -52,11 +52,11 @@ public class ProjectTeamControllerTests
         int periodId = Random.Shared.NextPositive();
         string projectCode = Guid.NewGuid().ToString();
 
-        List<ProjectTeam> teams = new List<ProjectTeam>
-        {
+        List<ProjectTeam> teams =
+        [
             new ProjectTeamBuilder().Build(),
             new ProjectTeamBuilder().Build()
-        };
+        ];
         _projectServiceMock.Setup(service => service.LoadTeamsOfProjectAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()))
             .ReturnsAsync(teams);
 
@@ -195,7 +195,6 @@ public class ProjectTeamControllerTests
     {
         //Arrange
         Project project = new ProjectBuilder().Build();
-        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
 
         _projectServiceMock.Setup(service => service.GenerateTeamsForProject(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));
@@ -222,7 +221,6 @@ public class ProjectTeamControllerTests
     {
         //Arrange
         Project project = new ProjectBuilder().Build();
-        ProjectTeam team = new ProjectTeamBuilder().WithProject(project).Build();
 
         _projectServiceMock.Setup(service => service.GenerateTeamsForProject(
             It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()));

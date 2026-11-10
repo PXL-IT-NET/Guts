@@ -9,7 +9,7 @@ internal class ConfirmEmailModelBuilder
 
     public ConfirmEmailModelBuilder()
     {
-        _model = new ConfirmEmailModel
+        _model = new()
         {
             UserId = Guid.NewGuid().ToString(),
             Token = Guid.NewGuid().ToString()

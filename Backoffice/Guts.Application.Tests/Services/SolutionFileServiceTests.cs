@@ -28,28 +28,26 @@ public class SolutionFileServiceTests
     public async Task CreateZipFromFiles_ShouldReturnValidZipByteArrayContainingAllSolutionFiles()
     {
         //Arrange
-        var solutions = new List<SolutionDto>
-        {
-            new SolutionDto
+        List<SolutionDto> solutions =
+        [
+            new()
             {
                 WriterId = Random.Shared.NextPositive(),
                 WriterName = $"{Random.Shared.NextString()} {Random.Shared.NextString()}",
-                SolutionFiles = new List<SolutionFile>
-                {
+                SolutionFiles = (List<SolutionFile>)
+                [
                     new SolutionFileBuilder().Build(),
                     new SolutionFileBuilder().Build()
-                }
+                ]
             },
-            new SolutionDto
+
+            new()
             {
                 WriterId = Random.Shared.NextPositive(),
                 WriterName = $"User{Random.Shared.NextPositive()}",
-                SolutionFiles = new List<SolutionFile>
-                {
-                    new SolutionFileBuilder().Build()
-                }
+                SolutionFiles = (List<SolutionFile>)[new SolutionFileBuilder().Build()]
             }
-        };
+        ];
 
         //Act
         byte[] zipBytes = await _service.CreateZipFromFiles(solutions);
@@ -72,7 +70,7 @@ public class SolutionFileServiceTests
                 ZipArchiveEntry entry = zipArchive.GetEntry(expectedEntryName);
                 Assert.That(entry, Is.Not.Null, $"Expected zip entry '{expectedEntryName}' was not found.");
 
-                using var reader = new StreamReader(entry.Open());
+                using var reader = new StreamReader(await entry.OpenAsync());
                 string content = await reader.ReadToEndAsync();
                 Assert.That(content, Is.EqualTo(solutionFile.Content));
             }

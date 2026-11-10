@@ -34,7 +34,7 @@ internal class ChapterDbRepositoryTests : RepositoryTestsBase
         var single = await repo.GetSingleAsync(_courseCode, "Ch01", _periodId);
         Assert.That(single.Description, Is.EqualTo("Chapter 1"));
 
-        Assert.That(async () => await repo.GetSingleAsync(_courseCode, "NotFound", _periodId),
+        await Assert.ThatAsync(async () => await repo.GetSingleAsync(_courseCode, "NotFound", _periodId),
             Throws.InstanceOf<DataNotFoundException>());
     }
 
@@ -50,7 +50,7 @@ internal class ChapterDbRepositoryTests : RepositoryTestsBase
         var withTests = await repo.LoadWithAssignmentsAndTestsAsync(_courseId, "Ch02", _periodId);
         Assert.That(withTests.Assignments.First().Tests, Has.Count.EqualTo(1));
 
-        Assert.That(async () => await repo.LoadWithAssignmentsAsync(_courseId, "NotFound", _periodId),
+        await Assert.ThatAsync(async () => await repo.LoadWithAssignmentsAsync(_courseId, "NotFound", _periodId),
             Throws.InstanceOf<DataNotFoundException>());
     }
 
@@ -61,10 +61,10 @@ internal class ChapterDbRepositoryTests : RepositoryTestsBase
         var repo = new ChapterDbRepository(context);
 
         var byCourse = await repo.GetByCourseIdAsync(_courseId, _periodId);
-        Assert.That(byCourse.Select(c => c.Code.ToString()), Is.EqualTo(new[] { "Ch01", "Ch02" }));
+        Assert.That(byCourse.Select(c => c.Code.ToString()), Is.EqualTo(["Ch01", "Ch02"]));
 
         var byCourseWithTests = await repo.GetByCourseIdWithAssignmentsAndTestsAsync(_courseId, _periodId);
-        Assert.That(byCourseWithTests.Select(c => c.Code.ToString()), Is.EqualTo(new[] { "Ch01", "Ch02" }));
+        Assert.That(byCourseWithTests.Select(c => c.Code.ToString()), Is.EqualTo(["Ch01", "Ch02"]));
         Assert.That(byCourseWithTests.First(c => c.Code.ToString() == "Ch02").Assignments.First().Tests, Has.Count.EqualTo(1));
     }
 }

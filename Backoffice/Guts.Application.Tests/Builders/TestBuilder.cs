@@ -18,7 +18,7 @@ public class TestBuilder
         {
             Id = 0,
             AssignmentId = _random.NextPositive(),
-            Results = new List<TestResult>(),
+            Results = (List<TestResult>)[],
             TestName = Guid.NewGuid().ToString()
         };
     }

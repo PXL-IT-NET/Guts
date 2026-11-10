@@ -15,15 +15,7 @@ namespace Guts.Application.Tests.Services.Exam;
 public class ExamTestResultLoaderTests
 {
     private ExamTestResultLoader _loader;
-
-    private Random _random;
     private Mock<ITestResultRepository> _testResultRepositoryMock;
-
-    [OneTimeSetUp]
-    public void OneTimeSetUp()
-    {
-        _random = new Random();
-    }
 
     [SetUp]
     public void Setup()
@@ -55,13 +47,13 @@ public class ExamTestResultLoaderTests
             .Build();
         int[] examPart2AssignmentIds = new int[] { assignmentEvaluation3.AssignmentId};
 
-        var examParts = new List<IExamPart>{examPart1, examPart2};
+        List<IExamPart> examParts = [examPart1, examPart2];
 
         examMock.SetupGet(exam => exam.Parts).Returns(examParts);
 
         _testResultRepositoryMock
             .Setup(repo => repo.GetLastTestResultsOfAssignmentsAsync(It.IsAny<int[]>(), It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<TestResult>());
+            .ReturnsAsync((List<TestResult>)[]);
 
         //Act
         var result = _loader.GetExamResultsAsync(examMock.Object).Result;

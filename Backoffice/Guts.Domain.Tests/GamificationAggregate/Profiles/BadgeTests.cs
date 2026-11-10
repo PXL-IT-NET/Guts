@@ -1,8 +1,7 @@
-using System;
-using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.GamificationAggregate;
+namespace Guts.Domain.Tests.GamificationAggregate.Profiles;
 
 [TestFixture]
 public class BadgeTests

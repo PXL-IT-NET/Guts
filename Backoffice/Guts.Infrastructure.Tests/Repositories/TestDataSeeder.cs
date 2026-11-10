@@ -100,7 +100,7 @@ internal sealed class TestDataSeeder
 
         if (!string.IsNullOrEmpty(assignmentCode))
         {
-            var names = testNames.Length > 0 ? testNames : new[] { "Test_1" };
+            var names = testNames.Length > 0 ? testNames : ["Test_1"];
             var assignment = new Assignment
             {
                 Code = assignmentCode,
@@ -126,7 +126,7 @@ internal sealed class TestDataSeeder
         params (string TeamName, int[] UserIds)[] teams)
     {
         await using var context = _contextFactory();
-        var names = testNames is { Length: > 0 } ? testNames : new[] { "Test_1" };
+        var names = testNames is { Length: > 0 } ? testNames : ["Test_1"];
 
         var project = new Project
         {

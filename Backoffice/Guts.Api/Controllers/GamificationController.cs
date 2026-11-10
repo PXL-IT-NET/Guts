@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Guts.Application.Dtos.Gamification;
 using Guts.Application.Services;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -19,7 +19,7 @@ internal class TopicConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new TopicConverter();
+        _converter = new();
     }
 
     [Test]
@@ -121,13 +121,13 @@ internal class TopicConverterTests
         var firstAssignment = chapter.Assignments.First();
         var statisticsList = new List<AssignmentStatisticsDto>
         {
-            new AssignmentStatisticsDto
+            new()
             {
                 AssignmentId = firstAssignment.Id,
                 TestPassageStatistics = new List<TestPassageStatisticDto>
                 {
-                    new TestPassageStatisticDto { AmountOfPassedTests = 2, AmountOfUsers = 4 },
-                    new TestPassageStatisticDto { AmountOfPassedTests = 3, AmountOfUsers = 6 }
+                    new() { AmountOfPassedTests = 2, AmountOfUsers = 4 },
+                    new() { AmountOfPassedTests = 3, AmountOfUsers = 6 }
                 }
             }
         };
@@ -204,7 +204,7 @@ internal class TopicConverterTests
             if (numberOfPassingTests <= 0 && numberOfFailingTests <= 0) continue;
 
             var passed = numberOfPassingTests > 0;
-            assignmentResult.TestResults.Add(new TestResult
+            assignmentResult.TestResults.Add(new()
             {
                 TestId = test.Id,
                 Passed = passed

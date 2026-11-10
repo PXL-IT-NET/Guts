@@ -9,6 +9,9 @@ using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TestAggregate;
@@ -76,10 +79,7 @@ public class GamificationServiceTests
     {
         var testRun = new TestRun
         {
-            TestResults = new List<TestResult>
-            {
-                new TestResult { Passed = false }
-            }
+            TestResults = (List<TestResult>)[new() { Passed = false }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -100,10 +100,7 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = userId,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 101, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 101, Passed = true }]
         };
 
         var chapter = new Chapter { Id = 7, CourseId = courseId, PeriodId = periodId };
@@ -112,7 +109,7 @@ public class GamificationServiceTests
             Id = assignmentId,
             TopicId = 7,
             Topic = chapter,
-            Tests = new List<Test> { new Test { Id = 101 } }
+            Tests = (List<Test>)[new() { Id = 101 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
@@ -137,7 +134,8 @@ public class GamificationServiceTests
             .ReturnsAsync(0);
 
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(7))
-            .ReturnsAsync(new List<Assignment> { assignment, new Assignment { Id = 99, Tests = new List<Test> { new Test { Id = 202 } } } });
+            .ReturnsAsync((List<Assignment>)
+                [assignment, new() { Id = 99, Tests = (List<Test>)[new() { Id = 202 }] }]);
 
         await _service.ProcessTestRunAsync(testRun);
 
@@ -165,7 +163,7 @@ public class GamificationServiceTests
             Id = componentId,
             TopicId = projectId,
             Topic = project,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            Tests = (List<Test>)[new() { Id = 1 }, new() { Id = 2 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
@@ -179,13 +177,13 @@ public class GamificationServiceTests
 
         var teamMock = new Mock<IProjectTeam>();
         teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
-        teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
-        {
+        teamMock.SetupGet(t => t.TeamUsers).Returns((List<IProjectTeamUser>)
+        [
             new ProjectTeamUser { UserId = user1Id },
             new ProjectTeamUser { UserId = user2Id }
-        });
+        ]);
         _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
-            .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+            .ReturnsAsync((List<IProjectTeam>)[teamMock.Object]);
 
         // User 2 already passed test 1 earlier
         var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
@@ -196,7 +194,7 @@ public class GamificationServiceTests
         profile1.AwardPassedTestXp(1, now.AddHours(-1));
 
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
-            .ReturnsAsync(new List<Assignment> { component });
+            .ReturnsAsync((List<Assignment>)[component]);
         _studentCourseProfileRepositoryMock.Setup(r => r.CountAssignmentCompletionsAsync(componentId, courseId, periodId))
             .ReturnsAsync(0);
 
@@ -208,10 +206,7 @@ public class GamificationServiceTests
             AssignmentId = componentId,
             UserId = user1Id,
             CreateDateTime = now,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 2, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -244,7 +239,7 @@ public class GamificationServiceTests
             Id = componentId,
             TopicId = projectId,
             Topic = project,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            Tests = (List<Test>)[new() { Id = 1 }, new() { Id = 2 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
@@ -258,13 +253,13 @@ public class GamificationServiceTests
 
         var teamMock = new Mock<IProjectTeam>();
         teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
-        teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
-        {
+        teamMock.SetupGet(t => t.TeamUsers).Returns((List<IProjectTeamUser>)
+        [
             new ProjectTeamUser { UserId = user1Id },
             new ProjectTeamUser { UserId = user2Id }
-        });
+        ]);
         _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
-            .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+            .ReturnsAsync((List<IProjectTeam>)[teamMock.Object]);
 
         // User 2 has NO tests passed for this component
         var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
@@ -274,7 +269,7 @@ public class GamificationServiceTests
         profile1.AwardPassedTestXp(1, now.AddHours(-1));
 
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
-            .ReturnsAsync(new List<Assignment> { component });
+            .ReturnsAsync((List<Assignment>)[component]);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
@@ -284,10 +279,7 @@ public class GamificationServiceTests
             AssignmentId = componentId,
             UserId = user1Id,
             CreateDateTime = now,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 2, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -316,7 +308,7 @@ public class GamificationServiceTests
             Id = componentId,
             TopicId = projectId,
             Topic = project,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 }, new Test { Id = 3 } }
+            Tests = (List<Test>)[new() { Id = 1 }, new() { Id = 2 }, new() { Id = 3 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
@@ -330,13 +322,13 @@ public class GamificationServiceTests
 
         var teamMock = new Mock<IProjectTeam>();
         teamMock.SetupGet(t => t.ProjectId).Returns(projectId);
-        teamMock.SetupGet(t => t.TeamUsers).Returns(new List<IProjectTeamUser>
-        {
+        teamMock.SetupGet(t => t.TeamUsers).Returns((List<IProjectTeamUser>)
+        [
             new ProjectTeamUser { UserId = user1Id },
             new ProjectTeamUser { UserId = user2Id }
-        });
+        ]);
         _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
-            .ReturnsAsync(new List<IProjectTeam> { teamMock.Object });
+            .ReturnsAsync((List<IProjectTeam>)[teamMock.Object]);
 
         var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
         profile2.AwardPassedTestXp(1, now.AddHours(-1));
@@ -351,10 +343,7 @@ public class GamificationServiceTests
             AssignmentId = componentId,
             UserId = user1Id,
             CreateDateTime = now,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 2, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -381,7 +370,7 @@ public class GamificationServiceTests
             Id = componentId,
             TopicId = projectId,
             Topic = project,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            Tests = (List<Test>)[new() { Id = 1 }, new() { Id = 2 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(componentId)).ReturnsAsync(component);
@@ -399,7 +388,7 @@ public class GamificationServiceTests
         profile1.AwardPassedTestXp(1, now.AddHours(-1));
 
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(projectId))
-            .ReturnsAsync(new List<Assignment> { component });
+            .ReturnsAsync((List<Assignment>)[component]);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user1Id, courseId, periodId)).ReturnsAsync(profile1);
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(user2Id, courseId, periodId)).ReturnsAsync(profile2);
@@ -409,10 +398,7 @@ public class GamificationServiceTests
             AssignmentId = componentId,
             UserId = user1Id,
             CreateDateTime = now,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 2, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -431,10 +417,7 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = 5,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 1, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 1, Passed = true }]
         };
 
         var assignment = new Assignment
@@ -468,11 +451,12 @@ public class GamificationServiceTests
             Id = assignmentId,
             TopicId = chapterId,
             Topic = chapter,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 } }
+            Tests = (List<Test>)[new() { Id = 1 }, new() { Id = 2 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
-        _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(chapterId)).ReturnsAsync(new List<Assignment> { assignment });
+        _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(chapterId)).ReturnsAsync((List<Assignment>)
+            [assignment]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -482,7 +466,7 @@ public class GamificationServiceTests
             });
 
         _projectTeamRepositoryMock.Setup(r => r.GetByUserAsync(user1Id))
-            .ReturnsAsync(new List<IProjectTeam>());
+            .ReturnsAsync((List<IProjectTeam>)[]);
 
         var profile2 = new StudentCourseProfile(user2Id, courseId, periodId);
         profile2.AwardPassedTestXp(1, now.AddHours(-1));
@@ -497,10 +481,7 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = user1Id,
             CreateDateTime = now,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 2, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -558,7 +539,7 @@ public class GamificationServiceTests
         var groupB = new CourseClassGroup("1TIN-B", courseId, periodId) { Id = 2 };
 
         _courseClassGroupRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<CourseClassGroup> { groupA, groupB });
+            .ReturnsAsync((List<CourseClassGroup>)[groupA, groupB]);
 
         var student1 = new StudentCourseProfile(101, courseId, periodId) { Id = 1 };
         student1.Enroll(true, "Student1", "CodeCat", 1, true);
@@ -573,7 +554,7 @@ public class GamificationServiceTests
         student3.AwardPassedTestXp(1, DateTime.UtcNow); // +10 XP -> rank 1 in groupB (100% weight) -> 5 + 10 = 15
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2, student3 });
+            .ReturnsAsync((List<StudentCourseProfile>)[student1, student2, student3]);
 
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId) { IsGamificationEnabled = true, IsClassCompetitionEnabled = true });
@@ -679,10 +660,7 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = 5,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 1, Passed = true }
-            }
+            TestResults = (List<TestResult>)[new() { TestId = 1, Passed = true }]
         };
 
         var chapter = new Chapter { CourseId = courseId, PeriodId = periodId };
@@ -753,7 +731,7 @@ public class GamificationServiceTests
         var weekendEventTime = new DateTime(2026, 10, 24, 10, 0, 0, DateTimeKind.Utc);
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -790,7 +768,7 @@ public class GamificationServiceTests
         s7WeekendXp.AwardAssignmentBonus(207, weekendEventTime);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1, s2, s3, s4, s5, s6ZeroXp, s7WeekendXp });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1, s2, s3, s4, s5, s6ZeroXp, s7WeekendXp]);
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
 
@@ -847,7 +825,7 @@ public class GamificationServiceTests
         const int weekNumber = 43;
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -871,7 +849,7 @@ public class GamificationServiceTests
         const int weekNumber = 43;
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync((CourseGamificationConfig)null);
 
@@ -889,7 +867,7 @@ public class GamificationServiceTests
         const int weekNumber = 43;
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -904,7 +882,7 @@ public class GamificationServiceTests
         s1WithoutEvents.Enroll(true, "Hero", "Wizard", null, false);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1WithoutEvents });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1WithoutEvents]);
 
         await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
 
@@ -931,7 +909,7 @@ public class GamificationServiceTests
         var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -945,7 +923,7 @@ public class GamificationServiceTests
         s1.AwardPassedTestXp(101, eventTime);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1 });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1]);
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
 
@@ -971,7 +949,7 @@ public class GamificationServiceTests
         var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -986,7 +964,7 @@ public class GamificationServiceTests
         int initialBadges = s1.Badges.Count;
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1 });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1]);
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
 
@@ -1087,7 +1065,7 @@ public class GamificationServiceTests
         p2.AwardPassedTestXp(3, DateTime.UtcNow); // 10 XP
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { p2, p1 });
+            .ReturnsAsync((List<StudentCourseProfile>)[p2, p1]);
 
         var result = await _service.GetHallOfFameLeaderboardAsync(courseId, 1, periodId);
 
@@ -1177,7 +1155,7 @@ public class GamificationServiceTests
 
         var group = new CourseClassGroup("1TIN-A", courseId, periodId) { Id = classGroupId };
         _courseClassGroupRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<CourseClassGroup> { group });
+            .ReturnsAsync((List<CourseClassGroup>)[group]);
 
         var groups = await _service.GetCourseClassGroupsAsync(courseId, periodId);
         Assert.That(groups.Count, Is.EqualTo(1));
@@ -1203,7 +1181,7 @@ public class GamificationServiceTests
         {
             Id = 99,
             AssignmentId = 42,
-            TestResults = new List<TestResult> { new TestResult { TestId = 1, Passed = true } }
+            TestResults = (List<TestResult>)[new() { TestId = 1, Passed = true }]
         };
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(42))
             .ThrowsAsync(new InvalidOperationException("DB error"));
@@ -1226,7 +1204,7 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = userId,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult> { new TestResult { TestId = 101, Passed = true } }
+            TestResults = (List<TestResult>)[new() { TestId = 101, Passed = true }]
         };
 
         var chapter = new Chapter { Id = 7, CourseId = courseId, PeriodId = periodId };
@@ -1235,7 +1213,7 @@ public class GamificationServiceTests
             Id = assignmentId,
             TopicId = 7,
             Topic = chapter,
-            Tests = new List<Test> { new Test { Id = 101 }, new Test { Id = 102 } }
+            Tests = (List<Test>)[new() { Id = 101 }, new() { Id = 102 }]
         };
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
@@ -1310,7 +1288,7 @@ public class GamificationServiceTests
         p3NoXpEver.Enroll(true, "ZeroXpStudent", "Wizard", null, true);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { p1, p2ZeroWeeklyXp, p3NoXpEver });
+            .ReturnsAsync((List<StudentCourseProfile>)[p1, p2ZeroWeeklyXp, p3NoXpEver]);
 
         var result = await _service.GetWeeklySprintLeaderboardAsync(courseId, 1, periodId);
 
@@ -1475,7 +1453,7 @@ public class GamificationServiceTests
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
             .ReturnsAsync(profile);
         _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
-            .ReturnsAsync(new List<int> { 101, 102, 103 });
+            .ReturnsAsync((List<int>)[101, 102, 103]);
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
 
@@ -1507,7 +1485,7 @@ public class GamificationServiceTests
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
             .ReturnsAsync(profile);
         _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
-            .ReturnsAsync(new List<int> { 101, 102 });
+            .ReturnsAsync((List<int>)[101, 102]);
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
 
@@ -1531,7 +1509,7 @@ public class GamificationServiceTests
         var week43 = new DateTime(2026, 10, 20, 10, 0, 0, DateTimeKind.Utc);
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -1554,11 +1532,11 @@ public class GamificationServiceTests
         s3Active.AwardPassedTestXp(101, week43);
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1Expired, s2Protected, s3Active]);
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { s1Expired, s2Protected, s3Active });
+            .ReturnsAsync((List<StudentCourseProfile>)[s1Expired, s2Protected, s3Active]);
         _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
-            .ReturnsAsync(new List<int> { 101, 102, 103 });
+            .ReturnsAsync((List<int>)[101, 102, 103]);
 
         await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
 
@@ -1587,7 +1565,7 @@ public class GamificationServiceTests
             AssignmentId = 42,
             UserId = lectorUserId,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult> { new TestResult { TestId = 1, Passed = true } }
+            TestResults = (List<TestResult>)[new() { TestId = 1, Passed = true }]
         };
 
         _studentCourseProfileRepositoryMock.Setup(r => r.IsUserLectorAsync(lectorUserId)).ReturnsAsync(true);
@@ -1616,7 +1594,11 @@ public class GamificationServiceTests
             TopicId = 7,
             Topic = chapter
         };
-        assignment.LoadTests(new List<Test> { new() { Id = 1, TestName = "Test1" }, new() { Id = 2, TestName = "Test2" }, new() { Id = 3, TestName = "Test3" } });
+        assignment.LoadTests((List<Test>)
+        [
+            new() { Id = 1, TestName = "Test1" }, new() { Id = 2, TestName = "Test2" },
+            new() { Id = 3, TestName = "Test3" }
+        ]);
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
@@ -1655,21 +1637,21 @@ public class GamificationServiceTests
             AssignmentId = assignmentId,
             UserId = currentStudentId,
             CreateDateTime = testRunTime,
-            TestResults = new List<TestResult>
-            {
-                new TestResult { TestId = 2, Passed = true },
-                new TestResult { TestId = 3, Passed = true }
-            }
+            TestResults = (List<TestResult>)
+            [
+                new() { TestId = 2, Passed = true },
+                new() { TestId = 3, Passed = true }
+            ]
         };
 
         _studentCourseProfileRepositoryMock.Setup(r => r.CountAssignmentCompletionsAsync(assignmentId, courseId, periodId))
             .ReturnsAsync(15); // No quick bonus
 
         var otherAssignment = new Assignment { Id = 99 };
-        otherAssignment.LoadTests(new List<Test> { new() { Id = 999, TestName = "OtherTest" } });
+        otherAssignment.LoadTests((List<Test>)[new() { Id = 999, TestName = "OtherTest" }]);
 
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(7))
-            .ReturnsAsync(new List<Assignment> { assignment, otherAssignment });
+            .ReturnsAsync((List<Assignment>)[assignment, otherAssignment]);
 
         await _service.ProcessTestRunAsync(testRun);
 
@@ -1710,7 +1692,7 @@ public class GamificationServiceTests
         studentEarlier.AwardPassedTestXp(2, earlierTime.AddMinutes(30));
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentLater, studentEarlier });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentLater, studentEarlier]);
 
         var result = await _service.GetHallOfFameLeaderboardAsync(courseId, 20, periodId);
 
@@ -1913,7 +1895,7 @@ public class GamificationServiceTests
         var eventTime = new DateTime(2026, 10, 22, 12, 0, 0, DateTimeKind.Utc);
 
         var course = new Course { Id = courseId, Code = "CSharp" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
             .ReturnsAsync(new CourseGamificationConfig(courseId)
             {
@@ -1934,7 +1916,7 @@ public class GamificationServiceTests
         s2.AwardPassedTestXp(101, eventTime);
         s2.EvaluateHallOfFameProgression(2, 2, eventTime);
 
-        var profiles = new List<StudentCourseProfile> { s1, s2 };
+        List<StudentCourseProfile> profiles = [s1, s2];
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
             .ReturnsAsync(profiles);
@@ -1945,7 +1927,7 @@ public class GamificationServiceTests
         _studentCourseProfileRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()))
             .ReturnsAsync((StudentCourseProfile p) => p);
         _assignmentRepositoryMock.Setup(r => r.GetCourseTestIdsAsync(courseId, periodId))
-            .ReturnsAsync(new List<int> { 101, 102 });
+            .ReturnsAsync((List<int>)[101, 102]);
 
         await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
 
@@ -2025,7 +2007,7 @@ public class GamificationServiceTests
         var profile = new StudentCourseProfile(studentUserId, courseId, periodId);
         profile.AwardPassedTestXp(1001, DateTime.UtcNow.AddMinutes(-10));
         // Add AssignmentCompletedQuickly
-        profile.Events.Add(new GamificationEvent
+        profile.AddEvent(new GamificationEvent
         {
             StudentCourseProfileId = profile.Id,
             EventType = GamificationEventType.AssignmentCompletedQuickly,
@@ -2034,7 +2016,7 @@ public class GamificationServiceTests
             CreatedAt = DateTime.UtcNow.AddMinutes(-5)
         });
         // Add other event type (e.g. unknown/unmapped)
-        profile.Events.Add(new GamificationEvent
+        profile.AddEvent(new GamificationEvent
         {
             StudentCourseProfileId = profile.Id,
             EventType = (GamificationEventType)99,
@@ -2043,7 +2025,7 @@ public class GamificationServiceTests
             CreatedAt = DateTime.UtcNow.AddMinutes(-4)
         });
         // Add 2 overtake events
-        profile.Events.Add(new GamificationEvent
+        profile.AddEvent(new GamificationEvent
         {
             StudentCourseProfileId = profile.Id,
             EventType = GamificationEventType.HallOfFameOvertake,
@@ -2051,7 +2033,7 @@ public class GamificationServiceTests
             XpEarned = 5,
             CreatedAt = DateTime.UtcNow.AddMinutes(-3)
         });
-        profile.Events.Add(new GamificationEvent
+        profile.AddEvent(new GamificationEvent
         {
             StudentCourseProfileId = profile.Id,
             EventType = GamificationEventType.HallOfFameOvertake,
@@ -2080,7 +2062,7 @@ public class GamificationServiceTests
         var course = new Course { Id = 10, Code = "OOP", Name = "Object-Oriented Programming" };
         var period = Mock.Of<IPeriod>(p => p.Id == 1);
         _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(period);
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
 
         // Gamification enabled, but WeeklyStreak disabled
         var config1 = new CourseGamificationConfig(10)
@@ -2123,9 +2105,9 @@ public class GamificationServiceTests
             TopicId = 2,
             Topic = new Chapter { Id = 2, CourseId = courseId, PeriodId = periodId }
         };
-        assignment.LoadTests(new List<Test> { new() { Id = 1001, TestName = "Test1001" } });
+        assignment.LoadTests((List<Test>)[new() { Id = 1001, TestName = "Test1001" }]);
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(5)).ReturnsAsync(assignment);
-        _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(2)).ReturnsAsync(new List<Assignment> { assignment });
+        _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(2)).ReturnsAsync((List<Assignment>)[assignment]);
 
         var config = new CourseGamificationConfig(courseId)
         {
@@ -2137,14 +2119,14 @@ public class GamificationServiceTests
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
             .ReturnsAsync(profile);
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { profile }); // only this student opted in (competitors.Count == 0)
+            .ReturnsAsync((List<StudentCourseProfile>)[profile]); // only this student opted in (competitors.Count == 0)
 
         var testRun = new TestRun
         {
             UserId = userId,
             AssignmentId = 5,
             CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult> { new() { TestId = 1001, Passed = true } }
+            TestResults = (List<TestResult>)[new() { TestId = 1001, Passed = true }]
         };
 
         await _service.ProcessTestRunAsync(testRun);
@@ -2161,7 +2143,7 @@ public class GamificationServiceTests
         var course = new Course { Id = courseId, Code = "OOP", Name = "Object-Oriented Programming" };
         var period = Mock.Of<IPeriod>(p => p.Id == periodId);
         _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(period);
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[course]);
 
         var config = new CourseGamificationConfig(courseId)
         {
@@ -2175,9 +2157,9 @@ public class GamificationServiceTests
         var profile = new StudentCourseProfile(42, courseId, periodId); // CurrentStreak = 0 => NeedsEvaluation returns false
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<StudentCourseProfile>());
+            .ReturnsAsync((List<StudentCourseProfile>)[]);
         _studentCourseProfileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile> { profile });
+            .ReturnsAsync((List<StudentCourseProfile>)[profile]);
 
         await _service.AwardWeeklySprintBadgesAsync(2026, 44);
 
@@ -2226,7 +2208,7 @@ public class GamificationServiceTests
         // 3. testRun with no passed tests
         await _service.ProcessTestRunAsync(new TestRun
         {
-            TestResults = new List<TestResult> { new() { Passed = false } }
+            TestResults = (List<TestResult>)[new() { Passed = false }]
         });
 
         // 4. assignment null
@@ -2234,7 +2216,7 @@ public class GamificationServiceTests
         {
             UserId = 42,
             AssignmentId = 999,
-            TestResults = new List<TestResult> { new() { Passed = true } }
+            TestResults = (List<TestResult>)[new() { Passed = true }]
         };
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(999)).ReturnsAsync((Assignment)null);
         await _service.ProcessTestRunAsync(testRun);
@@ -2266,7 +2248,7 @@ public class GamificationServiceTests
         int nonEnrolledUserId = 999;
 
         _studentCourseProfileRepositoryMock.Setup(r => r.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId))
-            .ReturnsAsync(new List<StudentCourseProfile>());
+            .ReturnsAsync((List<StudentCourseProfile>)[]);
 
         var result = await _service.GetHallOfFameLeaderboardAsync(courseId, nonEnrolledUserId, periodId);
 

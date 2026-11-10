@@ -25,8 +25,8 @@ public class ApplicationExceptionsFilterAttributeTests
     [SetUp]
     public void Setup()
     {
-        _loggerMock = new Mock<ILogger<ApplicationExceptionFilterAttribute>>();
-        _filter = new ApplicationExceptionFilterAttribute(_loggerMock.Object);
+        _loggerMock = new();
+        _filter = new(_loggerMock.Object);
     }
 
     [Test]
@@ -119,11 +119,11 @@ public class ApplicationExceptionsFilterAttributeTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Method = "GET";
         httpContext.Request.Scheme = "https";
-        httpContext.Request.Host = new HostString("localhost");
+        httpContext.Request.Host = new("localhost");
         httpContext.Request.Path = "/api/test";
 
-        var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
-        return new ExceptionContext(actionContext, new List<IFilterMetadata>())
+        var actionContext = new ActionContext(httpContext, new(), new());
+        return new(actionContext, new List<IFilterMetadata>())
         {
             Exception = exception
         };

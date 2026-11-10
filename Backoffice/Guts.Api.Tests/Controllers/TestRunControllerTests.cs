@@ -406,7 +406,7 @@ public class TestRunControllerTests
             service => service.LoadOrCreateTestsForAssignmentAsync(existingAssignment,
                 It.Is<IReadOnlyList<string>>(testNames => testNames.All(testName =>
                     postedModel.Results.Any(testResult => testResult.TestName == testName)))), Times.Once);
-        _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun, It.IsAny<IEnumerable<SolutionFile>>()), Times.Once); //TODO: also test if solution files are passed in
+        _testRunServiceMock.Verify(repo => repo.RegisterRunAsync(convertedTestRun, It.IsAny<IEnumerable<SolutionFile>>()), Times.Once);
         _testResultConverterMock.Verify(converter => converter.ToTestRunModel(savedTestRun), Times.Once);
         Assert.That(createdResult.ActionName, Is.EqualTo(nameof(_controller.GetTestRun)));
         Assert.That(createdResult.RouteValues["id"], Is.EqualTo(savedTestRunModel.Id));

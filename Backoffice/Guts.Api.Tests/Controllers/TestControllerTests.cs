@@ -19,8 +19,8 @@ public class TestControllerTests
     [SetUp]
     public void Setup()
     {
-        _testRepositoryMock = new Mock<ITestRepository>();
-        _controller = new TestController(_testRepositoryMock.Object);
+        _testRepositoryMock = new();
+        _controller = new(_testRepositoryMock.Object);
     }
 
     [Test]

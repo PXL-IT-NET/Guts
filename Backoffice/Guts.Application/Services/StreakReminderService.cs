@@ -11,6 +11,7 @@ using Guts.Application.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;

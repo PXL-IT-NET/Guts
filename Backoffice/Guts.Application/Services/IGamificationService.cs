@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Application.Dtos.Gamification;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Application.Services;

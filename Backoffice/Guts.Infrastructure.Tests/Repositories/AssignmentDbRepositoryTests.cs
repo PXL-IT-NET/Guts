@@ -36,7 +36,7 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
         var single = await repo.GetSingleAsync(_topicId, "Ex1");
         Assert.That(single.Id, Is.EqualTo(_assignmentId));
         Assert.That(single.TestCodeHashes, Has.Count.EqualTo(1));
-        Assert.That(async () => await repo.GetSingleAsync(_topicId, "Missing"), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.GetSingleAsync(_topicId, "Missing"), Throws.InstanceOf<DataNotFoundException>());
     }
 
     [Test]
@@ -57,13 +57,11 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
         }
 
         // Assert: verify that the new hash is persisted and readable in a fresh DbContext
-        await using (var verifyContext = CreateDbContext())
-        {
-            var verifyRepo = new AssignmentDbRepository(verifyContext);
-            var updated = await verifyRepo.GetSingleAsync(_topicId, "Ex1");
-            Assert.That(updated.TestCodeHashes, Has.Count.EqualTo(2));
-            Assert.That(updated.TestCodeHashes.Any(h => h.Hash == "NEW_VALID_HASH"), Is.True);
-        }
+        await using var verifyContext = CreateDbContext();
+        var verifyRepo = new AssignmentDbRepository(verifyContext);
+        var updated = await verifyRepo.GetSingleAsync(_topicId, "Ex1");
+        Assert.That(updated.TestCodeHashes, Has.Count.EqualTo(2));
+        Assert.That(updated.TestCodeHashes.Any(h => h.Hash == "NEW_VALID_HASH"), Is.True);
     }
 
     [Test]
@@ -87,14 +85,12 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
             Assert.That(newAssignmentId, Is.GreaterThan(0));
         }
 
-        await using (var verifyContext = CreateDbContext())
-        {
-            var verifyRepo = new AssignmentDbRepository(verifyContext);
-            var loaded = await verifyRepo.GetSingleAsync(_topicId, "Ex2");
-            Assert.That(loaded.Id, Is.EqualTo(newAssignmentId));
-            Assert.That(loaded.TestCodeHashes, Has.Count.EqualTo(2));
-            Assert.That(loaded.TestCodeHashes.Select(h => h.Hash), Is.EquivalentTo(new[] { "INITIAL_HASH_1", "INITIAL_HASH_2" }));
-        }
+        await using var verifyContext = CreateDbContext();
+        var verifyRepo = new AssignmentDbRepository(verifyContext);
+        var loaded = await verifyRepo.GetSingleAsync(_topicId, "Ex2");
+        Assert.That(loaded.Id, Is.EqualTo(newAssignmentId));
+        Assert.That(loaded.TestCodeHashes, Has.Count.EqualTo(2));
+        Assert.That(loaded.TestCodeHashes.Select(h => h.Hash), Is.EquivalentTo(["INITIAL_HASH_1", "INITIAL_HASH_2"]));
     }
 
     [Test]
@@ -105,12 +101,12 @@ internal class AssignmentDbRepositoryTests : RepositoryTestsBase
 
         var withTests = await repo.GetSingleWithTestsAsync(_assignmentId);
         Assert.That(withTests.Tests, Has.Count.EqualTo(2));
-        Assert.That(async () => await repo.GetSingleWithTestsAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.GetSingleWithTestsAsync(99999), Throws.InstanceOf<DataNotFoundException>());
 
         var withTestsAndCourse = await repo.GetSingleWithTestsAndCourseAsync(_assignmentId);
         Assert.That(withTestsAndCourse.Tests, Has.Count.EqualTo(2));
         Assert.That(withTestsAndCourse.Topic.Course.Code, Is.EqualTo("CS1"));
-        Assert.That(async () => await repo.GetSingleWithTestsAndCourseAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.GetSingleWithTestsAndCourseAsync(99999), Throws.InstanceOf<DataNotFoundException>());
     }
 
     [Test]

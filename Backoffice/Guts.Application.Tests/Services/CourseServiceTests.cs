@@ -80,7 +80,7 @@ public class CourseServiceTests
         _courseRepositoryMock.Setup(repo => repo.GetByIdAsync(course.Id)).ReturnsAsync(course);
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(period);
         _chapterRepositoryMock.Setup(repo => repo.GetByCourseIdWithAssignmentsAndTestsAsync(course.Id, period.Id))
-            .ReturnsAsync(new List<Chapter>());
+            .ReturnsAsync([]);
 
         // Act
         var result = await _service.GetCourseStatisticsAsync(course.Id);
@@ -102,7 +102,7 @@ public class CourseServiceTests
 
         var chapter1 = new ChapterBuilder().WithId().WithCode("ch01").WithAssignments(2, 2).Build();
         var chapter2 = new ChapterBuilder().WithId().WithCode("ch02").WithAssignments(1, 2).Build();
-        var chapters = new List<Chapter> { chapter1, chapter2 };
+        List<Chapter> chapters = [chapter1, chapter2];
 
         _courseRepositoryMock.Setup(repo => repo.GetByIdAsync(course.Id)).ReturnsAsync(course);
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(period.Id)).ReturnsAsync(period);
@@ -113,27 +113,24 @@ public class CourseServiceTests
         var studentA = new User { Id = 2, FirstName = "Alice", LastName = "Alpha" };
 
         var assignment1 = chapter1.Assignments.ElementAt(0);
-        var assignment2 = chapter1.Assignments.ElementAt(1);
         var assignment3 = chapter2.Assignments.ElementAt(0);
 
         var test1_1 = assignment1.Tests.ElementAt(0);
         var test1_2 = assignment1.Tests.ElementAt(1);
-        var test2_1 = assignment2.Tests.ElementAt(0);
-        var test2_2 = assignment2.Tests.ElementAt(1);
         var test3_1 = assignment3.Tests.ElementAt(0);
         var test3_2 = assignment3.Tests.ElementAt(1);
 
-        var testResults = new List<TestResult>
-        {
-            // Student A worked on assignment 1 (2 passed) and assignment 3 (1 passed, 1 failed) -> 2 assignments worked on, 3 passed out of 6 total
-            new TestResult { UserId = studentA.Id, User = studentA, TestId = test1_1.Id, Test = test1_1, Passed = true },
-            new TestResult { UserId = studentA.Id, User = studentA, TestId = test1_2.Id, Test = test1_2, Passed = true },
-            new TestResult { UserId = studentA.Id, User = studentA, TestId = test3_1.Id, Test = test3_1, Passed = true },
-            new TestResult { UserId = studentA.Id, User = studentA, TestId = test3_2.Id, Test = test3_2, Passed = false },
+        List<TestResult> testResults =
+[
+    // Student A worked on assignment 1 (2 passed) and assignment 3 (1 passed, 1 failed) -> 2 assignments worked on, 3 passed out of 6 total
+    new() { UserId = studentA.Id, User = studentA, TestId = test1_1.Id, Test = test1_1, Passed = true },
+    new() { UserId = studentA.Id, User = studentA, TestId = test1_2.Id, Test = test1_2, Passed = true },
+    new() { UserId = studentA.Id, User = studentA, TestId = test3_1.Id, Test = test3_1, Passed = true },
+    new() { UserId = studentA.Id, User = studentA, TestId = test3_2.Id, Test = test3_2, Passed = false },
 
-            // Student B worked on assignment 1 (1 passed) -> 1 assignment worked on, 1 passed out of 6 total
-            new TestResult { UserId = studentB.Id, User = studentB, TestId = test1_1.Id, Test = test1_1, Passed = true }
-        };
+    // Student B worked on assignment 1 (1 passed) -> 1 assignment worked on, 1 passed out of 6 total
+    new() { UserId = studentB.Id, User = studentB, TestId = test1_1.Id, Test = test1_1, Passed = true }
+];
 
         _testResultRepositoryMock.Setup(repo => repo.GetLastTestResultsOfAssignmentsAsync(It.IsAny<int[]>(), null))
             .ReturnsAsync(testResults);

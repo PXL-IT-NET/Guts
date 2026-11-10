@@ -17,8 +17,8 @@ internal class ProjectConverterTests
     [SetUp]
     public void Setup()
     {
-        _mapperMock = new Mock<IMapper>();
-        _converter = new ProjectConverter(_mapperMock.Object);
+        _mapperMock = new();
+        _converter = new(_mapperMock.Object);
     }
 
     [Test]

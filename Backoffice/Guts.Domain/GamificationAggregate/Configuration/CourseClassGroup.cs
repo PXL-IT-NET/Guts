@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Configuration;
 
 public class CourseClassGroup : AggregateRoot
 {

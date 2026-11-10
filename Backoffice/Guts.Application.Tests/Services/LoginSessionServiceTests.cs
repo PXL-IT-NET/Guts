@@ -126,13 +126,13 @@ public class LoginSessionServiceTests
     {
         //Arrange
         var utcNow = DateTime.UtcNow;
-        var allSessions = new List<LoginSession>
-        {
+        List<LoginSession> allSessions =
+        [
             new LoginSessionBuilder().WithCreationDateTime(utcNow.AddHours(-25)).Build(),
             new LoginSessionBuilder().WithCreationDateTime(utcNow.AddHours(-2)).Build(),
             new LoginSessionBuilder().WithCreationDateTime(utcNow.AddMinutes(-55)).Build(),
             new LoginSessionBuilder().WithCreationDateTime(utcNow).Build()
-        };
+        ];
 
         var sessionsThatShouldBeDeleted =
             allSessions.Where(s => s.CreateDateTime < DateTime.UtcNow.AddHours(-1)).ToList();

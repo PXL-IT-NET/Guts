@@ -28,7 +28,7 @@ internal class ExamDbRepositoryTests : RepositoryTestsBase
         Assert.That(eval.Assignment.Tests, Has.Count.EqualTo(2));
         Assert.That(eval.Assignment.Topic, Is.Not.Null);
 
-        Assert.That(async () => await repo.LoadDeepAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+        await Assert.ThatAsync(async () => await repo.LoadDeepAsync(99999), Throws.InstanceOf<DataNotFoundException>());
 
         var foundList = await repo.FindWithPartsAndEvaluationsAsync(course.Id, period.Id);
         Assert.That(foundList, Has.Count.EqualTo(1));

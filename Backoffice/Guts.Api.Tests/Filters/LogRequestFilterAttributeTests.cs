@@ -22,8 +22,8 @@ public class LogRequestFilterAttributeTests
     [SetUp]
     public void Setup()
     {
-        _loggerMock = new Mock<ILogger<LogBadRequestFilterAttribute>>();
-        _filter = new LogBadRequestFilterAttribute(_loggerMock.Object);
+        _loggerMock = new();
+        _filter = new(_loggerMock.Object);
     }
 
     [Test]
@@ -73,15 +73,15 @@ public class LogRequestFilterAttributeTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Method = "POST";
         httpContext.Request.Scheme = "https";
-        httpContext.Request.Host = new HostString("localhost");
+        httpContext.Request.Host = new("localhost");
         httpContext.Request.Path = "/api/test";
         httpContext.Response.StatusCode = statusCode;
 
-        var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
-        return new ResultExecutedContext(
+        var actionContext = new ActionContext(httpContext, new(), new());
+        return new(
             actionContext,
             new List<IFilterMetadata>(),
             result,
-            new object());
+            new());
     }
 }

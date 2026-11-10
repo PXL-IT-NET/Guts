@@ -32,8 +32,8 @@ public class ExamControllerTests
     [SetUp]
     public void Setup()
     {
-        _examServiceMock = new Mock<IExamService>();
-        _mapperMock = new Mock<IMapper>();
+        _examServiceMock = new();
+        _mapperMock = new();
 
         _controller = CreateControllerWithUserInContext(Role.Constants.Lector);
     }
@@ -309,7 +309,7 @@ public class ExamControllerTests
 
         var returnedCsvObjects = new List<ExpandoObject>
         {
-            new ExpandoObject()
+            new()
         };
 
         _examServiceMock.Setup(service => service.GetExamAsync(examId)).ReturnsAsync(examMock.Object).Verifiable();
@@ -342,7 +342,7 @@ public class ExamControllerTests
     private ExamController CreateControllerWithUserInContext(string role)
     {
         _userId = Random.Shared.Next(1, int.MaxValue);
-        return new ExamController(_examServiceMock.Object, _mapperMock.Object)
+        return new(_examServiceMock.Object, _mapperMock.Object)
         {
             ControllerContext = new ControllerContextBuilder().WithUser(_userId.ToString()).WithRole(role).Build()
         };

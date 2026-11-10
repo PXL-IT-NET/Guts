@@ -33,8 +33,8 @@ internal class TestRunDbRepositoryTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            testNames: new[] { "Test1" },
-            teams: ("Team 01", new[] { _user1Id, _user2Id }));
+            testNames: ["Test1"],
+            teams: ("Team 01", [_user1Id, _user2Id]));
 
         _projectId = project.Id;
         var assignment = project.Assignments.First();

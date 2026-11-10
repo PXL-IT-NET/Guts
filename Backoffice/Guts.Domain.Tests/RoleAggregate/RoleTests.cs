@@ -8,8 +8,9 @@ namespace Guts.Domain.Tests.RoleAggregate;
 [TestFixture]
 public class RoleTests
 {
-    private class DerivedRole : Role
+    private sealed class DerivedRole : Role
     {
+        public override string ToString() => nameof(DerivedRole);
     }
 
     [Test]

@@ -154,7 +154,7 @@ public class SprintLeaderboardBackgroundServiceTests
     public async Task StartAsync_WhenStoppingTokenCancelled_ShouldStopWithoutThrowing()
     {
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         await _service.StartAsync(cts.Token);
         await _service.StopAsync(CancellationToken.None);

@@ -11,6 +11,8 @@ using Guts.Application.Services;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;
@@ -67,7 +69,7 @@ public class StreakReminderServiceTests
         _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(_period);
 
         _course = new Course { Id = 10, Code = "OOP", Name = "Object-Oriented Programming" };
-        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Course> { _course });
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync((List<Course>)[_course]);
 
         _config = new CourseGamificationConfig(10)
         {
@@ -84,29 +86,29 @@ public class StreakReminderServiceTests
             Id = 101,
             Code = "Ex1",
             Description = "Exercise 1",
-            Tests = new List<Test>
-            {
+            Tests = (List<Test>)
+            [
                 new() { Id = 1001 },
                 new() { Id = 1002 }
-            }
+            ]
         };
         var assignment2 = new Assignment
         {
             Id = 102,
             Code = "Ex2",
             Description = "Exercise 2",
-            Tests = new List<Test>
-            {
+            Tests = (List<Test>)
+            [
                 new() { Id = 1003 },
                 new() { Id = 1004 }
-            }
+            ]
         };
 
         var topicMock = new Mock<ITopic>();
         topicMock.SetupGet(t => t.Id).Returns(1);
         topicMock.SetupGet(t => t.Description).Returns("Chapter 1: Basics");
-        topicMock.SetupGet(t => t.Assignments).Returns(new List<Assignment> { assignment1, assignment2 });
-        _topics = new List<ITopic> { topicMock.Object };
+        topicMock.SetupGet(t => t.Assignments).Returns((List<Assignment>)[assignment1, assignment2]);
+        _topics = [topicMock.Object];
 
         _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
             .ReturnsAsync(_topics);
@@ -125,7 +127,7 @@ public class StreakReminderServiceTests
 
         var user = new User { Id = 42, FirstName = "Alice", Email = "alice@test.com" };
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(42)).ReturnsAsync(user);
 
         // Act
@@ -152,7 +154,7 @@ public class StreakReminderServiceTests
         studentProfile.AwardPassedTestXp(1001, _thursdayExecution.AddHours(-2)); // earned XP in current week
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
 
         // Act
         int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
@@ -170,7 +172,7 @@ public class StreakReminderServiceTests
         var studentProfile = new StudentCourseProfile(42, 10, 1); // CurrentStreak = 0
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
 
         // Act
         int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
@@ -195,7 +197,7 @@ public class StreakReminderServiceTests
         studentProfile.AwardPassedTestXp(1004, previousWeekDate);
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
 
         // Act
         int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
@@ -215,7 +217,7 @@ public class StreakReminderServiceTests
         studentProfile.RecordWeeklyActivity(previousWeekDate);
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
         _profileRepositoryMock.Setup(r => r.IsUserLectorAsync(42)).ReturnsAsync(true);
 
         // Act
@@ -240,7 +242,7 @@ public class StreakReminderServiceTests
 
         var user = new User { Id = 42, FirstName = "Alice", Email = "alice@test.com" };
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { studentProfile });
+            .ReturnsAsync((List<StudentCourseProfile>)[studentProfile]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(42)).ReturnsAsync(user);
 
         IReadOnlyList<StreakReminderAssignmentDto> capturedRecommendations = null;
@@ -279,7 +281,7 @@ public class StreakReminderServiceTests
         var aliceUser = new User { Id = 2, FirstName = "Alice", LastName = "Wonderland", Email = "alice@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { bob, alice });
+            .ReturnsAsync((List<StudentCourseProfile>)[bob, alice]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(bobUser);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(aliceUser);
 
@@ -310,7 +312,7 @@ public class StreakReminderServiceTests
         var user2 = new User { Id = 2, Email = "student2@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2 });
+            .ReturnsAsync((List<StudentCourseProfile>)[student1, student2]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(user1);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(user2);
 
@@ -385,19 +387,19 @@ public class StreakReminderServiceTests
 
         // Topics empty
         _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
-            .ReturnsAsync(new List<ITopic>());
+            .ReturnsAsync((List<ITopic>)[]);
         Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
 
         // Topic with no tests
         var emptyTopic = Mock.Of<ITopic>(t => t.Assignments == new List<Assignment> { new() { Tests = new List<Test>() } });
         _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
-            .ReturnsAsync(new List<ITopic> { emptyTopic });
+            .ReturnsAsync((List<ITopic>)[emptyTopic]);
         Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
 
         // Topic with null assignments
         var nullAssignmentsTopic = Mock.Of<ITopic>(t => t.Assignments == null);
         _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
-            .ReturnsAsync(new List<ITopic> { nullAssignmentsTopic });
+            .ReturnsAsync((List<ITopic>)[nullAssignmentsTopic]);
         Assert.That(await _service.SendStreakRemindersAsync(_thursdayExecution), Is.EqualTo(0));
     }
 
@@ -413,7 +415,7 @@ public class StreakReminderServiceTests
         student2.RecordWeeklyActivity(previousWeekDate);
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2 });
+            .ReturnsAsync((List<StudentCourseProfile>)[student1, student2]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(userNoEmail);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(2)).ReturnsAsync((User)null);
 
@@ -435,7 +437,7 @@ public class StreakReminderServiceTests
         student.User = user; // profile.User already populated
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student });
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
 
         string capturedCourseName = null;
         _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
@@ -481,7 +483,7 @@ public class StreakReminderServiceTests
         alice.User = new User { Id = 4, Email = "alice@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { bob, charlie, diana, alice });
+            .ReturnsAsync((List<StudentCourseProfile>)[bob, charlie, diana, alice]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(new User { Id = 3, FirstName = " ", LastName = " " });
 
         string capturedTarget = null;
@@ -505,7 +507,7 @@ public class StreakReminderServiceTests
         bob.RecordWeeklyActivity(previousWeekDate);
         bob.User = new User { Id = 1, Email = "bob@test.com" };
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { bob });
+            .ReturnsAsync((List<StudentCourseProfile>)[bob]);
         capturedTarget = "initial";
         await _service.SendStreakRemindersAsync(_thursdayExecution);
         Assert.That(capturedTarget, Is.Null);
@@ -524,7 +526,7 @@ public class StreakReminderServiceTests
         student2.User = new User { Id = 2, Email = "s2@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student1, student2 });
+            .ReturnsAsync((List<StudentCourseProfile>)[student1, student2]);
 
         _service.ThrottleDelay = TimeSpan.FromMilliseconds(5);
 
@@ -545,7 +547,7 @@ public class StreakReminderServiceTests
         student.User = new User { Id = 1, Email = "s1@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student });
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
 
         Assert.ThrowsAsync<OperationCanceledException>(async () =>
             await _service.SendStreakRemindersAsync(_thursdayExecution, cts.Token));
@@ -560,7 +562,7 @@ public class StreakReminderServiceTests
             Code = "Ex3",
             Description = "Empty Tests"
         };
-        assignmentEmptyTests.LoadTests(new List<Test>());
+        assignmentEmptyTests.LoadTests((List<Test>)[]);
 
         var assignmentNullTests = new Assignment
         {
@@ -584,9 +586,10 @@ public class StreakReminderServiceTests
 
         var topicMock = new Mock<ITopic>();
         topicMock.SetupGet(t => t.Id).Returns(2);
-        topicMock.SetupGet(t => t.Assignments).Returns(new List<Assignment> { assignmentEmptyTests, assignmentNullTests, assignmentCompleted, _topics[0].Assignments.First() });
+        topicMock.SetupGet(t => t.Assignments).Returns((List<Assignment>)
+            [assignmentEmptyTests, assignmentNullTests, assignmentCompleted, _topics[0].Assignments.First()]);
         _topicRepositoryMock.Setup(r => r.GetByCourseWithAssignmentsAndTestsAsync(10, 1))
-            .ReturnsAsync(new List<ITopic> { topicMockWithNullAssignments.Object, topicMock.Object });
+            .ReturnsAsync((List<ITopic>)[topicMockWithNullAssignments.Object, topicMock.Object]);
 
         var previousWeekDate = _thursdayExecution.AddDays(-7);
         var student = new StudentCourseProfile(1, 10, 1);
@@ -597,7 +600,7 @@ public class StreakReminderServiceTests
         student.User = new User { Id = 1, Email = "s@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { student });
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
 
         int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
 
@@ -621,7 +624,7 @@ public class StreakReminderServiceTests
         student1.User = new User { Id = 11, Email = "s1@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { target1, student1 });
+            .ReturnsAsync((List<StudentCourseProfile>)[target1, student1]);
 
         string capturedTarget = null;
         _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
@@ -644,7 +647,7 @@ public class StreakReminderServiceTests
         student2.User = new User { Id = 21, Email = "s2@test.com" };
 
         _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
-            .ReturnsAsync(new List<StudentCourseProfile> { target2, student2 });
+            .ReturnsAsync((List<StudentCourseProfile>)[target2, student2]);
         _userRepositoryMock.Setup(r => r.GetByIdAsync(20)).ReturnsAsync(new User { Id = 20, FirstName = "Repo", LastName = "User" });
 
         capturedTarget = null;

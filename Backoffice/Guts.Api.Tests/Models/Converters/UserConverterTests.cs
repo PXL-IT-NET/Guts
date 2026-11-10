@@ -14,7 +14,7 @@ internal class UserConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new UserConverter();
+        _converter = new();
     }
 
     [Test]

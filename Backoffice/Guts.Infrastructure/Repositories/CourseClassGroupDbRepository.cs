@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Application.Repositories;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories;

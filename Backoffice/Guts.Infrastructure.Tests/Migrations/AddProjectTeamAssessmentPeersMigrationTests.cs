@@ -29,7 +29,7 @@ internal class AddProjectTeamAssessmentPeersMigrationTests : RepositoryTestsBase
         var project = await Seeder.SeedProjectAsync(
             course.Id,
             period.Id,
-            teams: ("Team Alpha", new[] { user1.Id, user2.Id, user3.Id }));
+            teams: ("Team Alpha", [user1.Id, user2.Id, user3.Id]));
         var teamId = project.Teams.First().Id;
 
         var projectAssessment = await Seeder.SeedProjectAssessmentAsync(project.Id);
@@ -73,7 +73,7 @@ internal class AddProjectTeamAssessmentPeersMigrationTests : RepositoryTestsBase
             var repo = new ProjectTeamAssessmentDbRepository(verifyContext);
             var loaded = await repo.LoadAsync(projectAssessment.Id, teamId);
             Assert.That(loaded.Id, Is.EqualTo(teamAssessment.Id));
-            Assert.That(loaded.Peers.Select(p => p.Id), Is.EquivalentTo(new[] { user1.Id, user2.Id, user3.Id }));
+            Assert.That(loaded.Peers.Select(p => p.Id), Is.EquivalentTo([user1.Id, user2.Id, user3.Id]));
         }
     }
 }

@@ -9,7 +9,7 @@ internal class ChangePasswordModelBuilder
 
     public ChangePasswordModelBuilder()
     {
-        _model = new ChangePasswordModel
+        _model = new()
         {
             CurrentPassword = Guid.NewGuid().ToString(),
             NewPassword = Guid.NewGuid().ToString()

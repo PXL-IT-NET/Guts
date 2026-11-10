@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 
 namespace Guts.Application.Dtos.Gamification;
 

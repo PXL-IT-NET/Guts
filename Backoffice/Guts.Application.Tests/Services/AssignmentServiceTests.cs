@@ -80,11 +80,11 @@ public class AssignmentServiceTests
         //Arrange
         var assignment = new AssignmentBuilder().WithId().Build();
 
-        var existingTests = new List<Test>
-        {
+        List<Test> existingTests =
+        [
             new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build(),
             new TestBuilder().WithId().WithAssignmentId(assignment.Id).Build()
-        };
+        ];
 
         _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(existingTests);
 
@@ -101,13 +101,13 @@ public class AssignmentServiceTests
     public void LoadOrCreateTestsForAssignmentAsync_ShouldCreateNonExistingTests()
     {
         //Arrange
-        var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        List<string> testNames = [Guid.NewGuid().ToString(), Guid.NewGuid().ToString()];
         var assignment = new Assignment
         {
             Id = _random.NextPositive()
         };
 
-        _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync(new List<Test>());
+        _testRepositoryMock.Setup(repo => repo.FindByAssignmentId(It.IsAny<int>())).ReturnsAsync((List<Test>)[]);
         _testRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Test>())).ReturnsAsync((Test test) =>
         {
             test.Id = _random.NextPositive();
@@ -131,7 +131,7 @@ public class AssignmentServiceTests
     public void LoadOrCreateTestsForAssignmentAsync_ShouldLoadExistingTests()
     {
         //Arrange
-        var testNames = new List<string> { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        List<string> testNames = [Guid.NewGuid().ToString(), Guid.NewGuid().ToString()];
         List<Test> existingTests = testNames.Select(name => new Test
         {
             Id = _random.NextPositive(),
@@ -339,12 +339,12 @@ public class AssignmentServiceTests
         var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
         var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
         var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
-        var testRuns = new List<TestRun>
-        {
+        List<TestRun> testRuns =
+        [
             firstRun,
             secondRun,
             lastRun
-        };
+        ];
         _testRunRepositoryMock
             .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
             .ReturnsAsync(testRuns);
@@ -371,12 +371,12 @@ public class AssignmentServiceTests
         var firstRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-10)).Build();
         var secondRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-5)).Build();
         var lastRun = new TestRunBuilder(random).WithCreationDate(now.AddDays(-1)).Build();
-        var testRuns = new List<TestRun>
-        {
+        List<TestRun> testRuns =
+        [
             firstRun,
             secondRun,
             lastRun
-        };
+        ];
         _testRunRepositoryMock
             .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()))
             .ReturnsAsync(testRuns);
@@ -478,7 +478,7 @@ public class AssignmentServiceTests
 
         _testRunRepositoryMock
             .Setup(repo => repo.GetUserTestRunsForAssignmentAsync(assignmentId, userId, now))
-            .ReturnsAsync(new List<TestRun>());
+            .ReturnsAsync((List<TestRun>)[]);
 
         //Act
         var testRunInfo = _service.GetUserTestRunInfoForAssignment(assignmentId, userId, now).Result;
@@ -500,7 +500,7 @@ public class AssignmentServiceTests
 
         _testRunRepositoryMock
             .Setup(repo => repo.GetTeamTestRunsForAssignmentAsync(assignmentId, teamId, now))
-            .ReturnsAsync(new List<TestRun>());
+            .ReturnsAsync((List<TestRun>)[]);
 
         //Act
         var testRunInfo = _service.GetTeamTestRunInfoForAssignment(assignmentId, teamId, now).Result;

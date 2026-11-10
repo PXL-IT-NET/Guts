@@ -54,12 +54,12 @@ public class AssignmentEvaluationScoreTests
         Assert.That(score1 == score2, Is.True);
     }
 
-    private AssignmentEvaluation BuildRandomAssignmentEvaluation()
+    private static AssignmentEvaluation BuildRandomAssignmentEvaluation()
     {
         return BuildAssignmentEvaluation(Random.Shared.Next(10, 101), Random.Shared.Next(5, 21), 0);
     }
 
-    private AssignmentEvaluation BuildAssignmentEvaluation(int maximumScore, int numberOfTests, int numberOfTestsAlreadyGreen)
+    private static AssignmentEvaluation BuildAssignmentEvaluation(int maximumScore, int numberOfTests, int numberOfTestsAlreadyGreen)
     {
         var assignment = new AssignmentBuilder()
             .WithId()

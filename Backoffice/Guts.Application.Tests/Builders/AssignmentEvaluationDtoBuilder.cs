@@ -7,7 +7,7 @@ namespace Guts.Application.Tests.Builders;
 public class AssignmentEvaluationDtoBuilder
 {
     private readonly AssignmentEvaluationDto _dto;
-    private Random _random;
+    private readonly Random _random;
 
     public AssignmentEvaluationDtoBuilder()
     {

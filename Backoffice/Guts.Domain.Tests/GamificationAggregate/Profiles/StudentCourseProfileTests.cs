@@ -1,10 +1,11 @@
 using System;
 using System.Linq;
 using Guts.Common;
-using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Profiles;
 using NUnit.Framework;
 
-namespace Guts.Domain.Tests.GamificationAggregate;
+namespace Guts.Domain.Tests.GamificationAggregate.Profiles;
 
 [TestFixture]
 public class StudentCourseProfileTests
@@ -645,5 +646,56 @@ public class StudentCourseProfileTests
         // 5. Opted out of leaderboard
         profile.HideFromLeaderboard();
         Assert.That(profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 }), Is.False);
+    }
+
+    [Test]
+    public void GetPassedTestIds_ShouldReturnAllUniquePassedTestIds()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        profile.AwardPassedTestXp(101, DateTime.UtcNow);
+        profile.AwardPassedTestXp(102, DateTime.UtcNow);
+
+        var passedIds = profile.GetPassedTestIds();
+
+        Assert.That(passedIds, Is.EquivalentTo(new[] { 101, 102 }));
+    }
+
+    [Test]
+    public void HasPassedAllTests_ValidSets_ShouldReturnTrueOrFalse()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        profile.AwardPassedTestXp(101, DateTime.UtcNow);
+        profile.AwardPassedTestXp(102, DateTime.UtcNow);
+
+        Assert.That(profile.HasPassedAllTests(new[] { 101 }), Is.True);
+        Assert.That(profile.HasPassedAllTests(new[] { 101, 102 }), Is.True);
+        Assert.That(profile.HasPassedAllTests(new[] { 101, 102, 103 }), Is.False);
+        Assert.That(profile.HasPassedAllTests(Array.Empty<int>()), Is.False);
+    }
+
+    [Test]
+    public void HasCompletedAssignmentAndChapter_ShouldReturnTrueOnlyWhenCompleted()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        Assert.That(profile.HasCompletedAssignment(5), Is.False);
+        Assert.That(profile.HasCompletedChapter(10), Is.False);
+
+        profile.AwardAssignmentBonus(5, DateTime.UtcNow);
+        profile.AwardChapterBonus(10, DateTime.UtcNow);
+
+        Assert.That(profile.HasCompletedAssignment(5), Is.True);
+        Assert.That(profile.HasCompletedChapter(10), Is.True);
+        Assert.That(profile.HasCompletedAssignment(6), Is.False);
+    }
+
+    [Test]
+    public void AddEvent_ValidEvent_ShouldAddToEventsCollection()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var evt = new GamificationEvent(profile.Id, GamificationEventType.PassedTest, 999, 10, DateTime.UtcNow);
+
+        profile.AddEvent(evt);
+
+        Assert.That(profile.Events, Does.Contain(evt));
     }
 }

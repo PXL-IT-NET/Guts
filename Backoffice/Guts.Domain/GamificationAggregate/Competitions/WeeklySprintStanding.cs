@@ -1,6 +1,7 @@
 using Guts.Common;
+using Guts.Domain.GamificationAggregate.Profiles;
 
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Competitions;
 
 public class WeeklySprintStanding
 {

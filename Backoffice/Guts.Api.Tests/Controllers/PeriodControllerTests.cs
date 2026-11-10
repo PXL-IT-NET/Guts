@@ -29,11 +29,11 @@ public class PeriodControllerTests
     [SetUp]
     public void Setup()
     {
-        _periodRepositoryMock = new Mock<IPeriodRepository>();
-        _periodServiceMock = new Mock<IPeriodService>();
-        _mapperMock = new Mock<IMapper>();
+        _periodRepositoryMock = new();
+        _periodServiceMock = new();
+        _mapperMock = new();
 
-        _controller = new PeriodController(
+        _controller = new(
             _periodRepositoryMock.Object,
             _periodServiceMock.Object,
             _mapperMock.Object);

@@ -34,10 +34,7 @@ public class PeriodServiceTests
         string description = Random.Shared.NextString();
         DateTime from = Random.Shared.NextDateTimeInFuture();
         DateTime until = from.AddMonths(6);
-        var existingPeriods = new List<IPeriod>
-        {
-            new PeriodBuilder().WithId().Build()
-        };
+        List<IPeriod> existingPeriods = [new PeriodBuilder().WithId().Build()];
         var createdPeriod = new PeriodBuilder().Build();
         var addedPeriod = new PeriodBuilder().WithId().Build();
 
@@ -64,10 +61,7 @@ public class PeriodServiceTests
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = Random.Shared.NextDateTimeInFuture();
         DateTime newUntil = newFrom.AddMonths(6);
-        var existingPeriods = new List<IPeriod>
-        {
-            new PeriodBuilder().WithId().Build()
-        };
+        List<IPeriod> existingPeriods = [new PeriodBuilder().WithId().Build()];
         var periodToUpdateMock = new Mock<IPeriod>();
 
         _periodRepositoryMock.Setup(repo => repo.GetAllAsync()).ReturnsAsync(existingPeriods);

@@ -21,13 +21,13 @@ internal class TestRunConverterTests
 
     public TestRunConverterTests()
     {
-        _random = new Random();
+        _random = new();
     }
 
     [SetUp]
     public void Setup()
     {
-        _converter = new TestRunConverter();
+        _converter = new();
         _userId = _random.NextPositive();
         _createAssignmentTestRunModel = new CreateAssignmentTestRunModelBuilder().Build();
     }
@@ -117,7 +117,7 @@ internal class TestRunConverterTests
             AssignmentId = _random.NextPositive(),
             TestResults = new List<TestResult>
             {
-                new TestResult
+                new()
                 {
                     Id = _random.NextPositive(),
                     Passed = true,

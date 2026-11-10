@@ -17,7 +17,7 @@ internal class TeamConverterTests
     [SetUp]
     public void Setup()
     {
-        _converter = new TeamConverter();
+        _converter = new();
     }
 
     [Test]

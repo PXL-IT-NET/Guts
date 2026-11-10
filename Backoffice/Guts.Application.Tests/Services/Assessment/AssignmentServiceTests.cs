@@ -22,7 +22,7 @@ namespace Guts.Application.Tests.Services.Assessment;
 public class ProjectTeamAssessmentServiceTests
 {
     private ProjectTeamAssessmentService _service;
-    private Random _random = new Random();
+    private readonly Random _random = new();
         
     private Mock<IProjectTeamAssessmentRepository> _projectTeamAssessmentRepositoryMock;
     private Mock<IProjectAssessmentRepository> _projectAssessmentRepositoryMock;
@@ -155,7 +155,7 @@ public class ProjectTeamAssessmentServiceTests
         int teamId = _random.NextPositive();
         var peer1 = new UserBuilder().WithId().Build();
         var peer2 = new UserBuilder().WithId().Build();
-        var peers = new List<User> { peer1, peer2 };
+        List<User> peers = [peer1, peer2];
 
         var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
         existingTeamAssessmentMock.SetupGet(ta => ta.Peers).Returns(peers);
@@ -234,14 +234,8 @@ public class ProjectTeamAssessmentServiceTests
         _projectTeamAssessmentRepositoryMock.Setup(repo => repo.LoadAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(existingTeamAssessment);
 
-        var storedPeerAssessments = new List<IPeerAssessment>
-        {
-            new PeerAssessmentBuilder().Build()
-        };
-        var missingPeerAssessments = new List<IPeerAssessment>
-        {
-            new PeerAssessmentBuilder().Build()
-        };
+        List<IPeerAssessment> storedPeerAssessments = [new PeerAssessmentBuilder().Build()];
+        List<IPeerAssessment> missingPeerAssessments = [new PeerAssessmentBuilder().Build()];
         existingTeamAssessmentMock.Setup(ta => ta.GetPeerAssessmentsOf(userId)).Returns(storedPeerAssessments);
         existingTeamAssessmentMock.Setup(ta => ta.GetMissingPeerAssessmentsOf(userId)).Returns(missingPeerAssessments);
 
@@ -260,11 +254,11 @@ public class ProjectTeamAssessmentServiceTests
         int projectAssessmentId = _random.NextPositive();
         int teamId = _random.NextPositive();
         int userId = _random.NextPositive();
-        var peerAssessmentDtos = new List<PeerAssessmentDto>
-        {
+        List<PeerAssessmentDto> peerAssessmentDtos =
+        [
             new PeerAssessmentDtoBuilder().WithUserId(userId).Build(),
-            new PeerAssessmentDtoBuilder().WithUserId(userId).Build(),
-        };
+            new PeerAssessmentDtoBuilder().WithUserId(userId).Build()
+        ];
 
         var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
         IProjectTeamAssessment existingTeamAssessment = existingTeamAssessmentMock.Object;
@@ -293,11 +287,11 @@ public class ProjectTeamAssessmentServiceTests
         int teamId = _random.NextPositive();
         int userId = _random.NextPositive();
         int otherUserId = _random.NextPositive();
-        var peerAssessmentDtos = new List<PeerAssessmentDto>
-        {
+        List<PeerAssessmentDto> peerAssessmentDtos =
+        [
             new PeerAssessmentDtoBuilder().WithUserId(userId).Build(),
-            new PeerAssessmentDtoBuilder().WithUserId(otherUserId).Build(),
-        };
+            new PeerAssessmentDtoBuilder().WithUserId(otherUserId).Build()
+        ];
 
         var existingTeamAssessmentMock = new Mock<IProjectTeamAssessment>();
         IProjectTeamAssessment existingTeamAssessment = existingTeamAssessmentMock.Object;

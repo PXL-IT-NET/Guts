@@ -158,7 +158,6 @@ public class ProjectServiceTests
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
 
         var projectsOfCourse = new List<Project>();
-        if (projectsOfCourse == null) throw new ArgumentNullException(nameof(projectsOfCourse));
         _projectRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(projectsOfCourse);
 
@@ -179,11 +178,11 @@ public class ProjectServiceTests
         int courseId = Random.Shared.NextPositive();
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
 
-        List<Project> projectsOfCourse = new List<Project>
-        {
+        List<Project> projectsOfCourse =
+        [
             new ProjectBuilder().WithDescription("zzz").Build(),
             new ProjectBuilder().WithDescription("aaa").Build()
-        };
+        ];
         _projectRepositoryMock.Setup(repo => repo.GetByCourseIdAsync(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(projectsOfCourse);
 
@@ -192,7 +191,7 @@ public class ProjectServiceTests
 
         //Assert
         Assert.That(results.Count, Is.EqualTo(projectsOfCourse.Count));
-        Assert.That(results.ElementAt(0).Description, Is.LessThan(results.ElementAt(1).Description));
+        Assert.That(results[0].Description, Is.LessThan(results[1].Description));
     }
 
     [Test]
@@ -249,7 +248,7 @@ public class ProjectServiceTests
         string teamBaseName = Random.Shared.NextString();
         int from = Random.Shared.Next(5, 101);
         int to = from + Random.Shared.Next(3, 10);
-        List<string> expectedTeamNumbers = new List<string>();
+        List<string> expectedTeamNumbers = [];
         for (int i = from; i <= to; i++)
         {
             expectedTeamNumbers.Add(i.ToString());
@@ -336,7 +335,7 @@ public class ProjectServiceTests
         //Arrange
         Period existingPeriod = new PeriodBuilder().WithId().Build();
         Project existingProject = new ProjectBuilder().WithId().Build();
-        List<ProjectTeam> existingTeams = new List<ProjectTeam>();
+        List<ProjectTeam> existingTeams = [];
 
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(existingPeriod.Id)).ReturnsAsync(existingPeriod);
         _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
@@ -360,7 +359,7 @@ public class ProjectServiceTests
         Period existingPeriod = new PeriodBuilder().WithId().Build();
         Project existingProject = new ProjectBuilder().WithId().Build();
         ProjectTeam team = new ProjectTeamBuilder().WithId().Build();
-        List<ProjectTeam> existingTeams = new List<ProjectTeam>(){team};
+        List<ProjectTeam> existingTeams = [team];
 
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
         _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
@@ -384,7 +383,7 @@ public class ProjectServiceTests
         Period existingPeriod = new PeriodBuilder().WithId().Build();
         Project existingProject = new ProjectBuilder().WithId().Build();
         ProjectTeam team = new ProjectTeamBuilder().WithId().WithUser(userId).Build();
-        List<ProjectTeam> existingTeams = new List<ProjectTeam>() { team };
+        List<ProjectTeam> existingTeams = [team];
 
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
         _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
@@ -407,12 +406,12 @@ public class ProjectServiceTests
         Period existingPeriod = new PeriodBuilder().WithId().Build();
         Project existingProject = new ProjectBuilder().WithId().Build();
         ProjectTeam otherProjectTeam = new ProjectTeamBuilder().WithId().Build();
-        List<ProjectTeam> existingTeams = new List<ProjectTeam>();
 
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(null)).ReturnsAsync(existingPeriod);
         _projectRepositoryMock.Setup(repo => repo.GetSingleAsync(It.IsAny<int>(), It.IsAny<Code>(), It.IsAny<int>()))
             .ReturnsAsync(existingProject);
-        _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync(new List<ProjectTeam>());
+        _projectTeamRepositoryMock.Setup(repo => repo.GetByProjectWithUsersAsync(It.IsAny<int>())).ReturnsAsync((List<ProjectTeam>)
+            []);
 
 
         //Act + Assert
@@ -783,10 +782,8 @@ public class ProjectServiceTests
 
         _solutionFileRepositoryMock
             .Setup(repo => repo.GetAllLatestOfAssignmentForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), dateUtc))
-            .ReturnsAsync((int assignmentId, int teamId, DateTime? _) => new List<SolutionFile>
-            {
-                new SolutionFileBuilder().WithAssignmentId(assignmentId).Build()
-            });
+            .ReturnsAsync((int assignmentId, int teamId, DateTime? _) => (List<SolutionFile>)
+                [new SolutionFileBuilder().WithAssignmentId(assignmentId).Build()]);
 
         //Act
         IReadOnlyList<SolutionDto> results = _service.GetAllSolutions(project, dateUtc).Result;

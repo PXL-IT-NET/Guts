@@ -3,17 +3,22 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Guts.Common;
+using Guts.Domain.GamificationAggregate.Competitions;
+using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.UserAggregate;
 
-namespace Guts.Domain.GamificationAggregate;
+namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class StudentCourseProfile : AggregateRoot
 {
-    public int UserId { get; set; }
+    private readonly HashSet<StudentBadge> _badges = [];
+    private readonly HashSet<GamificationEvent> _events = [];
+
+    public int UserId { get; private set; }
     public User User { get; set; }
 
-    public int CourseId { get; set; }
-    public int PeriodId { get; set; }
+    public int CourseId { get; private set; }
+    public int PeriodId { get; private set; }
 
     public bool ShowInLeaderBoard { get; private set; }
     public bool UsePseudonym { get; private set; }
@@ -26,13 +31,13 @@ public class StudentCourseProfile : AggregateRoot
     public int TotalXp { get; private set; }
     public int TotalGreenTests { get; private set; }
     public WeeklyStreak WeeklyStreak { get; private set; } = new WeeklyStreak();
-    public DateTime? LastLeaderboardVisitDate { get; set; }
+    public DateTime? LastLeaderboardVisitDate { get; private set; }
     public DateTime? LastXpEarnedAt { get; private set; }
     public int? BestHallOfFameRank { get; private set; }
     public HallOfFameTier? BestHallOfFameTier { get; private set; }
 
-    public virtual ICollection<StudentBadge> Badges { get; set; } = new HashSet<StudentBadge>();
-    public virtual ICollection<GamificationEvent> Events { get; set; } = new HashSet<GamificationEvent>();
+    public virtual IReadOnlyCollection<StudentBadge> Badges => _badges;
+    public virtual IReadOnlyCollection<GamificationEvent> Events => _events;
 
     public int Level => (int)Math.Floor(Math.Sqrt(TotalXp / 25.0)) + 1;
 
@@ -117,7 +122,7 @@ public class StudentCourseProfile : AggregateRoot
         TotalXp += xp;
         TotalGreenTests++;
         LastXpEarnedAt = timestamp;
-        Events.Add(new GamificationEvent(Id, GamificationEventType.PassedTest, testId, xp, timestamp));
+        _events.Add(new GamificationEvent(Id, GamificationEventType.PassedTest, testId, xp, timestamp));
         if (isStreakEnabled)
         {
             RecordWeeklyActivity(timestamp, isBadgesEnabled);
@@ -177,7 +182,7 @@ public class StudentCourseProfile : AggregateRoot
         const int xp = 50;
         TotalXp += xp;
         LastXpEarnedAt = timestamp;
-        Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompleted, assignmentId, xp, timestamp));
+        _events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompleted, assignmentId, xp, timestamp));
 
         if (isBadgesEnabled)
         {
@@ -205,7 +210,7 @@ public class StudentCourseProfile : AggregateRoot
             {
                 TotalXp += quickBonusXp;
                 LastXpEarnedAt = timestamp;
-                Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompletedQuickly, assignmentId, quickBonusXp, timestamp));
+                _events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompletedQuickly, assignmentId, quickBonusXp, timestamp));
                 if (isBadgesEnabled)
                 {
                     AwardBadge(Badge.SpeedDemon, timestamp);
@@ -227,7 +232,7 @@ public class StudentCourseProfile : AggregateRoot
         const int xp = 100;
         TotalXp += xp;
         LastXpEarnedAt = timestamp;
-        Events.Add(new GamificationEvent(Id, GamificationEventType.ChapterCompleted, chapterId, xp, timestamp));
+        _events.Add(new GamificationEvent(Id, GamificationEventType.ChapterCompleted, chapterId, xp, timestamp));
         if (isBadgesEnabled)
         {
             AwardBadge(Badge.CleanSweep, timestamp);
@@ -246,7 +251,7 @@ public class StudentCourseProfile : AggregateRoot
         const int xp = 30;
         TotalXp += xp;
         LastXpEarnedAt = timestamp;
-        Events.Add(new GamificationEvent(Id, GamificationEventType.TeamSynergy, componentId, xp, timestamp));
+        _events.Add(new GamificationEvent(Id, GamificationEventType.TeamSynergy, componentId, xp, timestamp));
         if (isBadgesEnabled)
         {
             AwardBadge(Badge.TeamPowerhouse, timestamp);
@@ -256,13 +261,50 @@ public class StudentCourseProfile : AggregateRoot
 
     public bool AwardBadge(Badge badge, DateTime timestamp)
     {
-        if (Badges.Any(b => b.Badge == badge))
+        if (_badges.Any(b => b.Badge == badge))
         {
             return false;
         }
 
-        Badges.Add(new StudentBadge(Id, badge, timestamp));
+        _badges.Add(new StudentBadge(Id, badge, timestamp));
         return true;
+    }
+
+    public HashSet<int> GetPassedTestIds()
+    {
+        return _events
+            .Where(e => e.EventType == GamificationEventType.PassedTest)
+            .Select(e => e.TargetId)
+            .ToHashSet();
+    }
+
+    public bool HasPassedAllTests(IEnumerable<int> testIds)
+    {
+        Contracts.Require(testIds != null, "TestIds cannot be null.");
+        var testIdList = testIds as IReadOnlyCollection<int> ?? testIds.ToList();
+        if (testIdList.Count == 0)
+        {
+            return false;
+        }
+
+        var passed = GetPassedTestIds();
+        return testIdList.All(passed.Contains);
+    }
+
+    public bool HasCompletedAssignment(int assignmentId)
+    {
+        return _events.Any(e => e.EventType == GamificationEventType.AssignmentCompleted && e.TargetId == assignmentId);
+    }
+
+    public bool HasCompletedChapter(int chapterId)
+    {
+        return _events.Any(e => e.EventType == GamificationEventType.ChapterCompleted && e.TargetId == chapterId);
+    }
+
+    internal void AddEvent(GamificationEvent @event)
+    {
+        Contracts.Require(@event != null, "Event cannot be null.");
+        _events.Add(@event);
     }
 
     public void RecordWeeklyActivity(DateTime timestamp, bool isBadgesEnabled = true)
@@ -310,12 +352,7 @@ public class StudentCourseProfile : AggregateRoot
         bool hasPassedAllAvailableTests = false;
         if (allAvailableCourseTestIds is { Count: > 0 })
         {
-            var passedTestIds = Events
-                .Where(e => e.EventType == GamificationEventType.PassedTest)
-                .Select(e => e.TargetId)
-                .ToHashSet();
-
-            hasPassedAllAvailableTests = allAvailableCourseTestIds.All(passedTestIds.Contains);
+            hasPassedAllAvailableTests = HasPassedAllTests(allAvailableCourseTestIds);
         }
 
         WeeklyStreak = WeeklyStreak.EvaluateStreak(timestamp, hasPassedAllAvailableTests);
@@ -374,7 +411,7 @@ public class StudentCourseProfile : AggregateRoot
                 LastXpEarnedAt = timestamp;
             }
 
-            Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp));
+            _events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameOvertake, r, overtakeXp, timestamp));
         }
     }
 
@@ -422,7 +459,7 @@ public class StudentCourseProfile : AggregateRoot
         TotalXp += defenseXp;
         LastXpEarnedAt = endOfWeek;
         BestHallOfFameRank = currentRank;
-        Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameRankDefended, weekTargetId, defenseXp, endOfWeek));
+        _events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameRankDefended, weekTargetId, defenseXp, endOfWeek));
 
         if (isBadgesEnabled && Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended) >= 3)
         {
@@ -460,12 +497,7 @@ public class StudentCourseProfile : AggregateRoot
             return false;
         }
 
-        var passedTestIds = Events
-            .Where(e => e.EventType == GamificationEventType.PassedTest)
-            .Select(e => e.TargetId)
-            .ToHashSet();
-
-        return allAvailableCourseTestIds.All(passedTestIds.Contains);
+        return HasPassedAllTests(allAvailableCourseTestIds);
     }
 
     private void ApplyTierProgression(int previousRank, int newRank, DateTime timestamp)
@@ -486,7 +518,7 @@ public class StudentCourseProfile : AggregateRoot
                 {
                     TotalXp += tierUpXp;
                     LastXpEarnedAt = timestamp;
-                    Events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameTierUp, t, tierUpXp, timestamp));
+                    _events.Add(new GamificationEvent(Id, GamificationEventType.HallOfFameTierUp, t, tierUpXp, timestamp));
                 }
             }
         }
