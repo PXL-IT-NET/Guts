@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using Guts.Api.Filters;
 using Guts.Api.Models;
-using Guts.Business;
+using Guts.Application;
 using Guts.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

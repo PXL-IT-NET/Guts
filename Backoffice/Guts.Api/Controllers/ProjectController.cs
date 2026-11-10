@@ -1,14 +1,14 @@
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business.Services;
+using Guts.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Guts.Business;
-using Guts.Business.Dtos;
+using Guts.Application;
+using Guts.Application.Dtos;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Microsoft.Extensions.Caching.Memory;
 using Guts.Api.Models.ProjectModels;

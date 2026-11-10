@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-_High-level summary of how this feature flows across the GUTS Backoffice layers (Angular SPA / MCP ➔ `Guts.Api` ➔ `Guts.Business` ➔ `Guts.Domain` & `Guts.Infrastructure`). Omit sections for layers that require no changes._
+_High-level summary of how this feature flows across the GUTS Backoffice layers (Angular SPA / MCP ➔ `Guts.Api` ➔ `Guts.Application` ➔ `Guts.Domain` & `Guts.Infrastructure`). Omit sections for layers that require no changes._
 
 ---
 
@@ -28,18 +28,21 @@ _High-level summary of how this feature flows across the GUTS Backoffice layers 
 
 ---
 
-## 3. Business Layer (`Guts.Business`)
+## 3. Application Layer (`Guts.Application`) — Use-Case Orchestration Only
 
-### Repository Contracts (`Guts.Business/Repositories/`)
+> [!IMPORTANT]
+> Zero domain logic allowed here. Application services must strictly coordinate I/O and orchestration: load aggregates via repository ➔ invoke intention-revealing methods on `Guts.Domain` aggregates/services ➔ persist changes via repository ➔ return DTOs.
+
+### Repository Contracts (`Guts.Application/Repositories/`)
 - `I[Entity]Repository`:
   - `Task<[Entity]> GetBy...Async(...);`
 
-### Application Services (`Guts.Business/Services/`)
+### Application Services (`Guts.Application/Services/`)
 - **Interface**: `I[Feature]Service`
 - **Implementation**: `[Feature]Service`
   - Methods & orchestration steps (load via repository ➔ invoke domain method/factory ➔ persist changes).
 
-### DTOs & Converters (`Guts.Business/Dtos/` & `Guts.Business/Converters/`)
+### DTOs & Converters (`Guts.Application/Dtos/` & `Guts.Application/Converters/`)
 - New/updated DTOs and `I*Converter` classes.
 
 ---

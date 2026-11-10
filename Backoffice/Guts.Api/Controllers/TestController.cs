@@ -1,6 +1,6 @@
-﻿using System.Net;
+using System.Net;
 using System.Threading.Tasks;
-using Guts.Business.Repositories;
+using Guts.Application.Repositories;
 using Guts.Domain.TestAggregate;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

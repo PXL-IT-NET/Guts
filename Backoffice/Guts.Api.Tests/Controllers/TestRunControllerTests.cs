@@ -6,9 +6,9 @@ using Guts.Api.Controllers;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Dtos;
-using Guts.Business.Services;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Dtos;
+using Guts.Application.Services;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
@@ -284,7 +284,7 @@ public class TestRunControllerTests
             .Build();
 
         _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(assignmentDto))
-            .ThrowsAsync(new Guts.Business.DataNotFoundException());
+            .ThrowsAsync(new Guts.Application.DataNotFoundException());
 
         //Act
         var badRequestResult = _controller.PostExerciseTestRun(postedModel).Result as BadRequestObjectResult;
@@ -306,7 +306,7 @@ public class TestRunControllerTests
             .Build();
 
         _assignmentServiceMock.Setup(service => service.GetAssignmentOfCurrentPeriodAsync(assignmentDto))
-            .ThrowsAsync(new Guts.Business.DataNotFoundException());
+            .ThrowsAsync(new Guts.Application.DataNotFoundException());
 
         //Act
         var badRequestResult = _controller.PostProjectTestRun(postedModel).Result as BadRequestObjectResult;

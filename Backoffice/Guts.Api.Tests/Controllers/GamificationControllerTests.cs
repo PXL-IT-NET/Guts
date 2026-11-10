@@ -1,13 +1,13 @@
-using Guts.Business.Communication;
-using Guts.Business.Repositories;
+using Guts.Application.Communication;
+using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.UserAggregate;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
-using Guts.Business.Dtos.Gamification;
-using Guts.Business.Services;
+using Guts.Application.Dtos.Gamification;
+using Guts.Application.Services;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Mvc;

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Tests.Builders;
 using Moq;
 using NUnit.Framework;
 

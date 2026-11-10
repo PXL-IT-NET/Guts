@@ -37,10 +37,6 @@ public class AssignmentEvaluation : Entity, IAssignmentEvaluation
 
     public IAssignmentEvaluationScore CalculateScore(IAssignmentResult assignmentResult)
     {
-        var score = new AssignmentEvaluationScore(this)
-        {
-            NumberOfPassedTests = assignmentResult.NumberOfPassingTests
-        };
-        return score;
+        return new AssignmentEvaluationScore(this, assignmentResult.NumberOfPassingTests);
     }
 }

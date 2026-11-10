@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.PeriodModels;
-using Guts.Business;
-using Guts.Business.Repositories;
-using Guts.Business.Services.Period;
+using Guts.Application;
+using Guts.Application.Repositories;
+using Guts.Application.Services.Period;
 using Guts.Common;
 using Guts.Domain.PeriodAggregate;
 using Microsoft.AspNetCore.Mvc;

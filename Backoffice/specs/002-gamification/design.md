@@ -154,16 +154,16 @@ flowchart TD
 
 ---
 
-## 3. Business Layer (`Guts.Business`)
+## 3. Business Layer (`Guts.Application`)
 
-### Repository Contracts (`Guts.Business/Repositories/`)
+### Repository Contracts (`Guts.Application/Repositories/`)
 - `IStudentCourseProfileRepository`:
   - Existing methods: `GetByUserCourseAndPeriodAsync`, `GetByCourseAndPeriodAsync`, `GetForLeaderboardByCourseAndPeriodAsync`, `CountAssignmentCompletionsAsync`, `UpdateRangeAsync`.
   - **New method**:
     - `Task<bool> IsUserLectorAsync(int userId);` — Returns `true` if the user has the `Lector` role (`[DR-9]`).
 
-### Application Services (`Guts.Business/Services/` & `Guts.Business/Communication/`)
-- **`IMailSender` / `MailSender` (`Guts.Business/Communication/MailSender.cs`)** (`[US-8]`, `[AC-7]`):
+### Application Services (`Guts.Application/Services/` & `Guts.Application/Communication/`)
+- **`IMailSender` / `MailSender` (`Guts.Application/Communication/MailSender.cs`)** (`[US-8]`, `[AC-7]`):
   - Adds method:
     ```csharp
     Task SendStreakReminderEmailAsync(
@@ -182,7 +182,7 @@ flowchart TD
     - **Call-to-Action**: Direct button/link to the course gamification dashboard (`"{webAppBaseUrl}/courses/{courseId}/gamification"`).
   - Sends email via `ISmtpClient.SendMailAsync(message)`.
 
-- **`IStreakReminderService` / `StreakReminderService` (`Guts.Business/Services/StreakReminderService.cs`)** (`[US-8]`, `[AC-7]`, `[DR-10]`, `[DR-11]`, `[DR-12]`):
+- **`IStreakReminderService` / `StreakReminderService` (`Guts.Application/Services/StreakReminderService.cs`)** (`[US-8]`, `[AC-7]`, `[DR-10]`, `[DR-11]`, `[DR-12]`):
   - Interface:
     ```csharp
     public interface IStreakReminderService
@@ -214,7 +214,7 @@ flowchart TD
        - Wraps each individual send in a `try/catch` block: logs errors with `ILogger<StreakReminderService>` and continues draining the queue for subsequent students.
        - Returns total count of successfully sent reminder emails.
 
-### Application Services (`Guts.Business/Services/`)
+### Application Services (`Guts.Application/Services/`)
 - **`IGamificationService` / `GamificationService`** (`GamificationService.cs`):
   - `GetStudentCourseProfileAsync(int userId, int courseId, int? periodId = null, bool isLector = false, int? perspectiveUserId = null)`:
     - Resolves target user: `int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;`
@@ -266,7 +266,7 @@ flowchart TD
     - Populates `ClassGroupLeaderboardEntryDto` with `ClassScore`, `TotalXp`, `TotalGreenTests`, `StudentCount`, `IsCurrentUserClass = currentUserContribution.HasValue`, and `CurrentUserContribution`.
     - Orders class groups by `ClassScore` descending, then `TotalGreenTests` descending, then `TotalXp` descending, and assigns 1-based `Rank`.
 
-### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
+### DTOs (`Guts.Application/Dtos/Gamification/GamificationDtos.cs`)
 - New Streak Reminder DTOs (`[US-8]`, `[AC-7]`):
   - `StreakReminderAssignmentDto`:
     - `int AssignmentId { get; set; }`
@@ -284,7 +284,7 @@ flowchart TD
     - `string? TargetStudentName { get; set; }`
     - `IReadOnlyList<StreakReminderAssignmentDto> RecommendedAssignments { get; set; }`
 
-### DTOs (`Guts.Business/Dtos/Gamification/GamificationDtos.cs`)
+### DTOs (`Guts.Application/Dtos/Gamification/GamificationDtos.cs`)
 - Updated `LeaderboardEntryDto`:
   - Adds `HallOfFameTier Tier { get; set; }`, `string TierName { get; set; }`, and `string TierIcon { get; set; }`.
 - New DTOs:

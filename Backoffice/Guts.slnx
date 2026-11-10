@@ -7,8 +7,8 @@
   <Project Path="Guts.Api.Tests/Guts.Api.Tests.csproj" />
   <Project Path="Guts.Api/Guts.Api.csproj" />
   <Project Path="Guts.Bootstrapper/Guts.Bootstrapper.csproj" />
-  <Project Path="Guts.Business.Tests/Guts.Business.Tests.csproj" />
-  <Project Path="Guts.Business/Guts.Business.csproj" />
+  <Project Path="Guts.Application.Tests/Guts.Application.Tests.csproj" />
+  <Project Path="Guts.Application/Guts.Application.csproj" />
   <Project Path="Guts.Common/Guts.Common.csproj" />
   <Project Path="Guts.Domain.Tests/Guts.Domain.Tests.csproj" />
   <Project Path="Guts.Domain/Guts.Domain.csproj" />

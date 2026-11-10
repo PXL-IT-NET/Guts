@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 

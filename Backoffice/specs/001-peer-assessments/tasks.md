@@ -24,15 +24,15 @@
 
 ---
 
-## Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+## Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
 - [x] **[T2.1]** `[AC-6, AC-9]` Update `ProjectTeamAssessmentStatusDto` (add `PeerIds`) and `IProjectTeamAssessmentService` (add `SetPeerInclusionAsync`).
-- [x] **[T2.2]** `[AC-6, AC-9]` Write failing unit tests in `Guts.Business.Tests/Services/Assessment/AssignmentServiceTests.cs` (`ProjectTeamAssessmentServiceTests`) covering:
+- [x] **[T2.2]** `[AC-6, AC-9]` Write failing unit tests in `Guts.Application.Tests/Services/Assessment/AssignmentServiceTests.cs` (`ProjectTeamAssessmentServiceTests`) covering:
   - `GetStatusAsync` returning `PeerIds` from `teamAssessment.Peers`.
   - `GetResultsForTeacherAsync` iterating over `teamAssessment.Peers` (including removed team members who are in `Peers` and excluding non-peer team members).
   - `SetPeerInclusionAsync` loading the team assessment, invoking `SetPeerInclusion(userId, isIncluded)`, and persisting via `repository.UpdateAsync(...)`.
-- [x] **[T2.3]** `[AC-6, AC-9]` Implement `ProjectTeamAssessmentService` updates in `Guts.Business/Services/Assessment/ProjectTeamAssessmentService.cs`.
-- [x] **[T2.4]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [x] **[T2.3]** `[AC-6, AC-9]` Implement `ProjectTeamAssessmentService` updates in `Guts.Application/Services/Assessment/ProjectTeamAssessmentService.cs`.
+- [x] **[T2.4]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 

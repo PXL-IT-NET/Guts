@@ -9,7 +9,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Guts.Api/Guts.Api.csproj", "Guts.Api/"]
 COPY ["Guts.Bootstrapper/Guts.Bootstrapper.csproj", "Guts.Bootstrapper/"]
-COPY ["Guts.Business/Guts.Business.csproj", "Guts.Business/"]
+COPY ["Guts.Application/Guts.Application.csproj", "Guts.Application/"]
 COPY ["Guts.Common/Guts.Common.csproj", "Guts.Common/"]
 COPY ["Guts.Domain/Guts.Domain.csproj", "Guts.Domain/"]
 COPY ["Guts.Infrastructure/Guts.Infrastructure.csproj", "Guts.Infrastructure/"]

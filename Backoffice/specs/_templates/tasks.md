@@ -17,12 +17,12 @@
 
 ---
 
-## Phase 2: Business Layer (`Guts.Business.Tests` ➔ `Guts.Business`)
+## Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
 - [ ] **[T2.1]** `[AC-1]` Define/update repository contract `I[Entity]Repository` and service interface `I[Feature]Service`.
-- [ ] **[T2.2]** `[AC-1]` Write failing unit tests in `Guts.Business.Tests/Services/[Feature]ServiceTests.cs` (and converter tests if applicable) using mocked repositories/factories.
-- [ ] **[T2.3]** `[AC-1]` Implement `[Feature]Service` (and DTOs/converters) in `Guts.Business/`.
-- [ ] **[T2.4]** Run `dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj` and verify all tests pass.
+- [ ] **[T2.2]** `[AC-1]` Write failing unit tests in `Guts.Application.Tests/Services/[Feature]ServiceTests.cs` (and converter tests if applicable) using mocked repositories/factories.
+- [ ] **[T2.3]** `[AC-1]` Implement `[Feature]Service` (and DTOs/converters) in `Guts.Application/`.
+- [ ] **[T2.4]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 

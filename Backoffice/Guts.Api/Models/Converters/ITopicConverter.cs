@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Guts.Business.Dtos;
+using System.Collections.Generic;
+using Guts.Application.Dtos;
 using Guts.Domain.TopicAggregate;
 
 namespace Guts.Api.Models.Converters;

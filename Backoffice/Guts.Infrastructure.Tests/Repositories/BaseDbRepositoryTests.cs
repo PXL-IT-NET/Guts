@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Guts.Business;
+using Guts.Application;
 using Guts.Domain.CourseAggregate;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;

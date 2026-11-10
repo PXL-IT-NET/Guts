@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Guts.Business\Guts.Business.csproj" />
+    <ProjectReference Include="..\Guts.Application\Guts.Application.csproj" />
     <ProjectReference Include="..\Guts.Infrastructure\Guts.Infrastructure.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Api.Models.ProjectModels;
-using Guts.Business.Dtos;
-using Guts.Business.Repositories;
-using Guts.Business.Services;
+using Guts.Application.Dtos;
+using Guts.Application.Repositories;
+using Guts.Application.Services;
 using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;

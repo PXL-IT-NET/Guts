@@ -12,17 +12,17 @@ public class AssignmentEvaluationScore : ValueObject<AssignmentEvaluationScore>,
     public string AssignmentDescription { get; }
     public double Score => Math.Max(NumberOfPassedTests - _numberOfTestsAlreadyGreenAtStart, 0) * _scorePerTest;
     public double MaximumScore { get; }
-    public int NumberOfTests { get;}
-    public int NumberOfPassedTests { get; set; }
+    public int NumberOfTests { get; }
+    public int NumberOfPassedTests { get; }
 
-    internal AssignmentEvaluationScore(AssignmentEvaluation assignmentEvaluation)
+    internal AssignmentEvaluationScore(AssignmentEvaluation assignmentEvaluation, int numberOfPassedTests = 0)
     {
         AssignmentEvaluationId = assignmentEvaluation.Id;
         var assignment = assignmentEvaluation.Assignment;
         AssignmentDescription = assignment.Description;
         MaximumScore = assignmentEvaluation.MaximumScore;
         NumberOfTests = assignment.Tests.Count;
-        NumberOfPassedTests = 0;
+        NumberOfPassedTests = numberOfPassedTests;
 
         _numberOfTestsAlreadyGreenAtStart = assignmentEvaluation.NumberOfTestsAlreadyGreenAtStart;
         _scorePerTest = MaximumScore /

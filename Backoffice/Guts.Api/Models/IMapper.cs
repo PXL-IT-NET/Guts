@@ -2,7 +2,7 @@ using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.ExamModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ExamAggregate;

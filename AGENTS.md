@@ -25,7 +25,7 @@ For functional background, see the [GUTS Teacher Concepts Documentation](https:/
 The repository is organized into three main areas:
 
 1. **[`Backoffice/`](Backoffice/AGENTS.md)** — Central web application, REST API, and MCP server (see [`Backoffice/AGENTS.md`](Backoffice/AGENTS.md) for architecture and rules).
-   - **Backend (.NET 10, EF Core)**: Layered DDD architecture (`Guts.Domain`, `Guts.Business`, `Guts.Infrastructure`, `Guts.Bootstrapper`, `Guts.Api`, `Guts.Common`) + MCP server in `Guts.Api/Mcp`.
+   - **Backend (.NET 10, EF Core)**: Layered DDD architecture (`Guts.Domain`, `Guts.Application`, `Guts.Infrastructure`, `Guts.Bootstrapper`, `Guts.Api`, `Guts.Common`) + MCP server in `Guts.Api/Mcp`.
    - **Frontend (`Guts.Web/ClientApp`)**: Angular SPA with Karma/Jasmine unit tests and Playwright E2E suites.
 2. **`DotNetClient/`** — .NET client libraries (`DotNetClient/Guts.sln`) used in C# test projects:
    - `Guts.Client.Core`: HTTP communication, auth caching, code extraction (`Solution`), and code stripping (`CodeCleaner`).
@@ -72,7 +72,7 @@ The repository is organized into three main areas:
 - **Backend tests (single project)**:
   ```powershell
   dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj
-  dotnet test Backoffice/Guts.Business.Tests/Guts.Business.Tests.csproj
+  dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj
   dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj
   dotnet test Backoffice/Guts.Common.Tests/Guts.Common.Tests.csproj
   dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj

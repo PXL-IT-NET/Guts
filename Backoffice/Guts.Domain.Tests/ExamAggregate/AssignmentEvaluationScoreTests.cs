@@ -27,19 +27,16 @@ public class AssignmentEvaluationScoreTests
     }
 
     [Test]
-    [TestCase(10,10,0, 10, 10)]
+    [TestCase(10, 10, 0, 10, 10)]
     [TestCase(10, 5, 0, 5, 10)]
     [TestCase(10, 5, 4, 4, 0)]
     [TestCase(10, 5, 4, 2, 0)]
     [TestCase(20, 10, 5, 8, 12)]
-    public void Score_ShouldBeCalculatedCorrectly(int maximumScore,int numberOfTests, int numberOfTestsAlreadyGreen, int numberOfPassingTests, double expectedScore)
+    public void Score_ShouldBeCalculatedCorrectly(int maximumScore, int numberOfTests, int numberOfTestsAlreadyGreen, int numberOfPassingTests, double expectedScore)
     {
         var assignmentEvaluation = BuildAssignmentEvaluation(maximumScore, numberOfTests, numberOfTestsAlreadyGreen);
 
-        var evaluationScore = new AssignmentEvaluationScore(assignmentEvaluation)
-        {
-            NumberOfPassedTests = numberOfPassingTests
-        };
+        var evaluationScore = new AssignmentEvaluationScore(assignmentEvaluation, numberOfPassingTests);
 
         Assert.That(evaluationScore.Score, Is.EqualTo(expectedScore));
     }
@@ -49,11 +46,9 @@ public class AssignmentEvaluationScoreTests
     {
         //Arrange
         var assignmentEvaluation = BuildRandomAssignmentEvaluation();
-        var score1 = new AssignmentEvaluationScore(assignmentEvaluation);
-        var score2 = new AssignmentEvaluationScore(assignmentEvaluation);
-        var numberOfPassedTests = Random.Shared.Next(0, score1.NumberOfTests + 1);
-        score1.NumberOfPassedTests = numberOfPassedTests;
-        score2.NumberOfPassedTests = numberOfPassedTests;
+        var numberOfPassedTests = Random.Shared.Next(0, 10);
+        var score1 = new AssignmentEvaluationScore(assignmentEvaluation, numberOfPassedTests);
+        var score2 = new AssignmentEvaluationScore(assignmentEvaluation, numberOfPassedTests);
 
         //Act + Assert
         Assert.That(score1 == score2, Is.True);

@@ -4,7 +4,7 @@ using System.Linq;
 using Guts.Api.Models;
 using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.Converters;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Tests.Builders;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.Tests.Builders;

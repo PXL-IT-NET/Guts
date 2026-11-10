@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Guts.Api.Models;
-using Guts.Business;
+using Guts.Application;
 using Guts.Common;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;

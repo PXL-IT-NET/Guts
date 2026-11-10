@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Api.Models;
 using Guts.Api.Models.ProjectModels;
-using Guts.Business.Tests.Builders;
+using Guts.Application.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;

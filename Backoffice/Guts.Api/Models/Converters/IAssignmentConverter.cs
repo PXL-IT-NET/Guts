@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Guts.Api.Models.AssignmentModels;
-using Guts.Business.Dtos;
+using Guts.Application.Dtos;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TestRunAggregate;
 using Guts.Domain.ValueObjects;

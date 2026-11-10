@@ -1,11 +1,11 @@
-using Guts.Business.Communication;
-using Guts.Business.Repositories;
+using Guts.Application.Communication;
+using Guts.Application.Repositories;
 using Guts.Domain.UserAggregate;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Guts.Business.Dtos.Gamification;
-using Guts.Business.Services;
+using Guts.Application.Dtos.Gamification;
+using Guts.Application.Services;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Authorization;

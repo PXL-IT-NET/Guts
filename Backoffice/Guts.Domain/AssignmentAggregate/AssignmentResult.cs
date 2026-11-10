@@ -7,8 +7,8 @@ namespace Guts.Domain.AssignmentAggregate;
 public class AssignmentResult : ValueObject<AssignmentResult>, IAssignmentResult
 {
     private readonly List<TestResult> _lastTestResults;
-    public int AssignmentId { get; set; }
-    public int UserId { get; set; }
+    public int AssignmentId { get; }
+    public int UserId { get; }
 
     public IReadOnlyList<TestResult> LastTestResults => _lastTestResults;
 
