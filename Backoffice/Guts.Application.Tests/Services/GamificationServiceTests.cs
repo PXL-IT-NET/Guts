@@ -143,7 +143,7 @@ public class GamificationServiceTests
 
         // 10 XP (pass test) + 50 XP (assignment bonus) + 50 XP (quick bonus for 1st) = 110 XP
         Assert.That(profile.TotalXp, Is.EqualTo(110));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.SpeedDemon), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.SpeedDemon), Is.True);
         Assert.That(profile.Events.Any(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly && e.XpEarned == 50), Is.True);
         _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
     }
@@ -218,10 +218,10 @@ public class GamificationServiceTests
 
         // Both members should have received TeamSynergy bonus (+30 XP) and TeamPowerhouse badge
         Assert.That(profile1.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy && e.TargetId == componentId), Is.True);
-        Assert.That(profile1.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
+        Assert.That(profile1.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.True);
 
         Assert.That(profile2.Events.Any(e => e.EventType == GamificationEventType.TeamSynergy && e.TargetId == componentId), Is.True);
-        Assert.That(profile2.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
+        Assert.That(profile2.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.True);
 
         _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile2), Times.Once);
         _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile1), Times.Once);
@@ -796,44 +796,44 @@ public class GamificationServiceTests
 
         await _service.AwardWeeklySprintBadgesAsync(year, weekNumber, periodId);
 
-        Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.True);
-        Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.True);
-        Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
-        Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
-        Assert.That(s1.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
-        Assert.That(s1.Badges.First(b => b.BadgeType == BadgeType.SprintGold).EarnedAt,
+        Assert.That(s1.Badges.Any(b => b.Badge == Badge.SprintGold), Is.True);
+        Assert.That(s1.Badges.Any(b => b.Badge == Badge.SprintSilver), Is.True);
+        Assert.That(s1.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.True);
+        Assert.That(s1.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.True);
+        Assert.That(s1.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.True);
+        Assert.That(s1.Badges.First(b => b.Badge == Badge.SprintGold).EarnedAt,
             Is.EqualTo(new DateTime(2026, 10, 23, 23, 59, 59, DateTimeKind.Utc)));
 
-        Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
-        Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.True);
-        Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
-        Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
-        Assert.That(s2.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+        Assert.That(s2.Badges.Any(b => b.Badge == Badge.SprintGold), Is.False);
+        Assert.That(s2.Badges.Any(b => b.Badge == Badge.SprintSilver), Is.True);
+        Assert.That(s2.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.True);
+        Assert.That(s2.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.True);
+        Assert.That(s2.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.True);
 
-        Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
-        Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
-        Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
-        Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
-        Assert.That(s3.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+        Assert.That(s3.Badges.Any(b => b.Badge == Badge.SprintGold), Is.False);
+        Assert.That(s3.Badges.Any(b => b.Badge == Badge.SprintSilver), Is.False);
+        Assert.That(s3.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.True);
+        Assert.That(s3.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.True);
+        Assert.That(s3.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.True);
 
-        Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
-        Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.True);
-        Assert.That(s4.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+        Assert.That(s4.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.False);
+        Assert.That(s4.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.True);
+        Assert.That(s4.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.True);
 
-        Assert.That(s5.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
-        Assert.That(s5.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.True);
+        Assert.That(s5.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.False);
+        Assert.That(s5.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.True);
 
-        Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
-        Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
-        Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
-        Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
-        Assert.That(s6ZeroXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.False);
+        Assert.That(s6ZeroXp.Badges.Any(b => b.Badge == Badge.SprintGold), Is.False);
+        Assert.That(s6ZeroXp.Badges.Any(b => b.Badge == Badge.SprintSilver), Is.False);
+        Assert.That(s6ZeroXp.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.False);
+        Assert.That(s6ZeroXp.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.False);
+        Assert.That(s6ZeroXp.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.False);
 
-        Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.False);
-        Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintSilver), Is.False);
-        Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.False);
-        Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop4), Is.False);
-        Assert.That(s7WeekendXp.Badges.Any(b => b.BadgeType == BadgeType.SprintTop5), Is.False);
+        Assert.That(s7WeekendXp.Badges.Any(b => b.Badge == Badge.SprintGold), Is.False);
+        Assert.That(s7WeekendXp.Badges.Any(b => b.Badge == Badge.SprintSilver), Is.False);
+        Assert.That(s7WeekendXp.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.False);
+        Assert.That(s7WeekendXp.Badges.Any(b => b.Badge == Badge.SprintTop4), Is.False);
+        Assert.That(s7WeekendXp.Badges.Any(b => b.Badge == Badge.SprintTop5), Is.False);
 
         _studentCourseProfileRepositoryMock.Verify(r => r.GetForWeeklySprintLeaderboardAsync(courseId, periodId, It.IsAny<DateTime>()), Times.Once);
     }
@@ -1010,21 +1010,21 @@ public class GamificationServiceTests
 
         Assert.That(badges, Is.Not.Null);
         Assert.That(badges.Count, Is.EqualTo(22));
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstSpark && b.Icon == "🌱"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.QuarterCentury && b.Name == "Quarter Century" && b.Icon == "🎯"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.HalfCentury && b.Name == "Half Century" && b.Icon == "🏅"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.FirstVictory && b.Name == "First Victory" && b.Icon == "🏁"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.HighFive && b.Name == "High Five" && b.Icon == "🖐️"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.WarmingUp && b.Name == "Warming Up" && b.Icon == "🕯️"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.Unstoppable && b.Name == "Unstoppable" && b.Icon == "☄️"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintGold && b.Icon == "🥇"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintSilver && b.Icon == "🥈"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintBronze && b.Icon == "🥉"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop4 && b.Icon == "🎖️"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.SprintTop5 && b.Icon == "⭐"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse && b.Icon == "🤝"), Is.True);
-        Assert.That(badges.Any(b => b.BadgeType == BadgeType.RankDefender && b.Name == "Rank Defender" && b.Icon == "🏰"), Is.True);
-        Assert.That(badges.All(b => b.Type == (int)b.BadgeType), Is.True);
+        Assert.That(badges.Any(b => b == Badge.FirstSpark && b.Icon == "🌱"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.QuarterCentury && b.Name == "Quarter Century" && b.Icon == "🎯"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.HalfCentury && b.Name == "Half Century" && b.Icon == "🏅"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.FirstVictory && b.Name == "First Victory" && b.Icon == "🏁"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.HighFive && b.Name == "High Five" && b.Icon == "🖐️"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.WarmingUp && b.Name == "Warming Up" && b.Icon == "🕯️"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.Unstoppable && b.Name == "Unstoppable" && b.Icon == "☄️"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.SprintGold && b.Icon == "🥇"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.SprintSilver && b.Icon == "🥈"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.SprintBronze && b.Icon == "🥉"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.SprintTop4 && b.Icon == "🎖️"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.SprintTop5 && b.Icon == "⭐"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.TeamPowerhouse && b.Icon == "🤝"), Is.True);
+        Assert.That(badges.Any(b => b == Badge.RankDefender && b.Name == "Rank Defender" && b.Icon == "🏰"), Is.True);
+        Assert.That(badges.All(b => b.Value > 0), Is.True);
     }
 
     [Test]

@@ -95,27 +95,27 @@ public static class WeeklySprintCompetition
         int count = 0;
 
         if ((rank == 1 || (score == topScore && greenTestsCount == topGreenTestsCount)) &&
-            profile.AwardBadge(BadgeType.SprintGold, fridayCutoff))
+            profile.AwardBadge(Badge.SprintGold, fridayCutoff))
         {
             count++;
         }
 
-        if (rank <= 2 && profile.AwardBadge(BadgeType.SprintSilver, fridayCutoff))
+        if (rank <= 2 && profile.AwardBadge(Badge.SprintSilver, fridayCutoff))
         {
             count++;
         }
 
-        if (rank <= 3 && profile.AwardBadge(BadgeType.SprintBronze, fridayCutoff))
+        if (rank <= 3 && profile.AwardBadge(Badge.SprintBronze, fridayCutoff))
         {
             count++;
         }
 
-        if (rank <= 4 && profile.AwardBadge(BadgeType.SprintTop4, fridayCutoff))
+        if (rank <= 4 && profile.AwardBadge(Badge.SprintTop4, fridayCutoff))
         {
             count++;
         }
 
-        if (rank <= 5 && profile.AwardBadge(BadgeType.SprintTop5, fridayCutoff))
+        if (rank <= 5 && profile.AwardBadge(Badge.SprintTop5, fridayCutoff))
         {
             count++;
         }

@@ -133,36 +133,36 @@ public class StudentCourseProfile : AggregateRoot
 
     private void EvaluatePassedTestBadges(DateTime timestamp)
     {
-        AwardBadge(BadgeType.FirstSpark, timestamp);
+        AwardBadge(Badge.FirstSpark, timestamp);
 
         int totalPassedTests = Events.Count(e => e.EventType == GamificationEventType.PassedTest);
         if (totalPassedTests >= 25)
         {
-            AwardBadge(BadgeType.QuarterCentury, timestamp);
+            AwardBadge(Badge.QuarterCentury, timestamp);
         }
 
         if (totalPassedTests >= 50)
         {
-            AwardBadge(BadgeType.HalfCentury, timestamp);
+            AwardBadge(Badge.HalfCentury, timestamp);
         }
 
         if (totalPassedTests >= 100)
         {
-            AwardBadge(BadgeType.CenturyClub, timestamp);
+            AwardBadge(Badge.CenturyClub, timestamp);
         }
 
         if (timestamp.Hour is >= 0 and < 5)
         {
-            AwardBadge(BadgeType.NightOwl, timestamp);
+            AwardBadge(Badge.NightOwl, timestamp);
         }
         else if (timestamp.Hour is >= 5 and < 8)
         {
-            AwardBadge(BadgeType.EarlyBird, timestamp);
+            AwardBadge(Badge.EarlyBird, timestamp);
         }
 
         if (timestamp.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
-            AwardBadge(BadgeType.WeekendWarrior, timestamp);
+            AwardBadge(Badge.WeekendWarrior, timestamp);
         }
     }
 
@@ -181,12 +181,12 @@ public class StudentCourseProfile : AggregateRoot
 
         if (isBadgesEnabled)
         {
-            AwardBadge(BadgeType.FirstVictory, timestamp);
+            AwardBadge(Badge.FirstVictory, timestamp);
 
             int completedAssignmentsCount = Events.Count(e => e.EventType == GamificationEventType.AssignmentCompleted);
             if (completedAssignmentsCount >= 5)
             {
-                AwardBadge(BadgeType.HighFive, timestamp);
+                AwardBadge(Badge.HighFive, timestamp);
             }
         }
 
@@ -208,7 +208,7 @@ public class StudentCourseProfile : AggregateRoot
                 Events.Add(new GamificationEvent(Id, GamificationEventType.AssignmentCompletedQuickly, assignmentId, quickBonusXp, timestamp));
                 if (isBadgesEnabled)
                 {
-                    AwardBadge(BadgeType.SpeedDemon, timestamp);
+                    AwardBadge(Badge.SpeedDemon, timestamp);
                 }
             }
         }
@@ -230,7 +230,7 @@ public class StudentCourseProfile : AggregateRoot
         Events.Add(new GamificationEvent(Id, GamificationEventType.ChapterCompleted, chapterId, xp, timestamp));
         if (isBadgesEnabled)
         {
-            AwardBadge(BadgeType.CleanSweep, timestamp);
+            AwardBadge(Badge.CleanSweep, timestamp);
         }
         return true;
     }
@@ -249,19 +249,19 @@ public class StudentCourseProfile : AggregateRoot
         Events.Add(new GamificationEvent(Id, GamificationEventType.TeamSynergy, componentId, xp, timestamp));
         if (isBadgesEnabled)
         {
-            AwardBadge(BadgeType.TeamPowerhouse, timestamp);
+            AwardBadge(Badge.TeamPowerhouse, timestamp);
         }
         return true;
     }
 
-    public bool AwardBadge(BadgeType badgeType, DateTime timestamp)
+    public bool AwardBadge(Badge badge, DateTime timestamp)
     {
-        if (Badges.Any(b => b.BadgeType == badgeType))
+        if (Badges.Any(b => b.Badge == badge))
         {
             return false;
         }
 
-        Badges.Add(new StudentBadge(Id, badgeType, timestamp));
+        Badges.Add(new StudentBadge(Id, badge, timestamp));
         return true;
     }
 
@@ -276,22 +276,22 @@ public class StudentCourseProfile : AggregateRoot
 
         if (WeeklyStreak.CurrentStreak >= 2)
         {
-            AwardBadge(BadgeType.WarmingUp, timestamp);
+            AwardBadge(Badge.WarmingUp, timestamp);
         }
 
         if (WeeklyStreak.CurrentStreak >= 4)
         {
-            AwardBadge(BadgeType.OnFire, timestamp);
+            AwardBadge(Badge.OnFire, timestamp);
         }
 
         if (WeeklyStreak.CurrentStreak >= 6)
         {
-            AwardBadge(BadgeType.Unstoppable, timestamp);
+            AwardBadge(Badge.Unstoppable, timestamp);
         }
 
         if (WeeklyStreak.CurrentStreak >= 8)
         {
-            AwardBadge(BadgeType.IronWill, timestamp);
+            AwardBadge(Badge.IronWill, timestamp);
         }
     }
 
@@ -426,7 +426,7 @@ public class StudentCourseProfile : AggregateRoot
 
         if (isBadgesEnabled && Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended) >= 3)
         {
-            AwardBadge(BadgeType.RankDefender, endOfWeek);
+            AwardBadge(Badge.RankDefender, endOfWeek);
         }
 
         return true;

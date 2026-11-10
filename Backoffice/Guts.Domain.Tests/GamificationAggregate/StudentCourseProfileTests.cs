@@ -113,7 +113,7 @@ public class StudentCourseProfileTests
         Assert.That(evt.EventType, Is.EqualTo(GamificationEventType.PassedTest));
         Assert.That(evt.TargetId, Is.EqualTo(101));
         Assert.That(evt.XpEarned, Is.EqualTo(10));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.FirstSpark), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.FirstSpark), Is.True);
     }
 
     [Test]
@@ -152,32 +152,32 @@ public class StudentCourseProfileTests
 
         // Week 1 & Week 2 -> WarmingUp (2-week streak)
         profile.RecordWeeklyActivity(startMonday);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WarmingUp), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WarmingUp), Is.False);
 
         profile.RecordWeeklyActivity(startMonday.AddDays(7));
         Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(2));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WarmingUp), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.OnFire), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WarmingUp), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.OnFire), Is.False);
 
         // Week 3 & Week 4 -> OnFire (4-week streak)
         profile.RecordWeeklyActivity(startMonday.AddDays(14));
         profile.RecordWeeklyActivity(startMonday.AddDays(21));
         Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(4));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.OnFire), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.Unstoppable), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.OnFire), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.Unstoppable), Is.False);
 
         // Week 5 & Week 6 -> Unstoppable (6-week streak)
         profile.RecordWeeklyActivity(startMonday.AddDays(28));
         profile.RecordWeeklyActivity(startMonday.AddDays(35));
         Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(6));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.Unstoppable), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.IronWill), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.Unstoppable), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.IronWill), Is.False);
 
         // Week 7 & Week 8 -> IronWill (8-week streak)
         profile.RecordWeeklyActivity(startMonday.AddDays(42));
         profile.RecordWeeklyActivity(startMonday.AddDays(49));
         Assert.That(profile.WeeklyStreak.CurrentStreak, Is.EqualTo(8));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.IronWill), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.IronWill), Is.True);
     }
 
     [Test]
@@ -190,24 +190,24 @@ public class StudentCourseProfileTests
         {
             profile.AwardPassedTestXp(i, now.AddMinutes(i));
         }
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.QuarterCentury), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.QuarterCentury), Is.False);
 
         profile.AwardPassedTestXp(25, now.AddMinutes(25));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.QuarterCentury), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HalfCentury), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.QuarterCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HalfCentury), Is.False);
 
         for (int i = 26; i <= 50; i++)
         {
             profile.AwardPassedTestXp(i, now.AddMinutes(i));
         }
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HalfCentury), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CenturyClub), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HalfCentury), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CenturyClub), Is.False);
 
         for (int i = 51; i <= 100; i++)
         {
             profile.AwardPassedTestXp(i, now.AddMinutes(i));
         }
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CenturyClub), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CenturyClub), Is.True);
     }
 
     [Test]
@@ -217,17 +217,17 @@ public class StudentCourseProfileTests
         var now = DateTime.UtcNow;
 
         profile.AwardAssignmentBonus(1, now);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.FirstVictory), Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.FirstVictory), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.False);
 
         for (int a = 2; a <= 4; a++)
         {
             profile.AwardAssignmentBonus(a, now.AddMinutes(a));
         }
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.False);
 
         profile.AwardAssignmentBonus(5, now.AddMinutes(5));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.HighFive), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.HighFive), Is.True);
 
         // When badges are disabled, no assignment completion badges are awarded
         var noBadgesProfile = _factory.CreateNew(2, 2, 3);
@@ -276,7 +276,7 @@ public class StudentCourseProfileTests
             var quickEvt = profile.Events.FirstOrDefault(e => e.EventType == GamificationEventType.AssignmentCompletedQuickly && e.TargetId == 55);
             Assert.That(quickEvt, Is.Not.Null);
             Assert.That(quickEvt.XpEarned, Is.EqualTo(expectedQuickXp));
-            Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.SpeedDemon), Is.True);
+            Assert.That(profile.Badges.Any(b => b.Badge == Badge.SpeedDemon), Is.True);
         }
         else
         {
@@ -296,7 +296,7 @@ public class StudentCourseProfileTests
         Assert.That(result, Is.True);
         Assert.That(duplicate, Is.False);
         Assert.That(profile.TotalXp, Is.EqualTo(100));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.CleanSweep), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.CleanSweep), Is.True);
     }
 
     [Test]
@@ -309,7 +309,7 @@ public class StudentCourseProfileTests
 
         Assert.That(result, Is.True);
         Assert.That(profile.TotalXp, Is.EqualTo(30));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.True);
     }
 
     [Test]
@@ -322,7 +322,7 @@ public class StudentCourseProfileTests
 
         Assert.That(result, Is.True);
         Assert.That(profile.TotalXp, Is.EqualTo(30));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.TeamPowerhouse), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.TeamPowerhouse), Is.False);
     }
 
     [Test]
@@ -368,15 +368,15 @@ public class StudentCourseProfileTests
 
         // Night Owl (02:00)
         profile.AwardPassedTestXp(1, new DateTime(2026, 10, 21, 2, 30, 0, DateTimeKind.Utc));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.NightOwl), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.True);
 
         // Early Bird (06:00)
         profile.AwardPassedTestXp(2, new DateTime(2026, 10, 21, 6, 30, 0, DateTimeKind.Utc));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.EarlyBird), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.True);
 
         // Weekend Warrior (Saturday)
         profile.AwardPassedTestXp(3, new DateTime(2026, 10, 24, 14, 0, 0, DateTimeKind.Utc));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.WeekendWarrior), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WeekendWarrior), Is.True);
     }
 
     [Test]
@@ -385,15 +385,15 @@ public class StudentCourseProfileTests
         var profile = _factory.CreateNew(1, 2, 3);
         var timestamp = DateTime.UtcNow;
 
-        Assert.That(profile.AwardBadge(BadgeType.SprintGold, timestamp), Is.True);
-        Assert.That(profile.AwardBadge(BadgeType.SprintSilver, timestamp), Is.True);
-        Assert.That(profile.AwardBadge(BadgeType.SprintBronze, timestamp), Is.True);
-        Assert.That(profile.AwardBadge(BadgeType.SprintTop4, timestamp), Is.True);
-        Assert.That(profile.AwardBadge(BadgeType.SprintTop5, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintGold, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintSilver, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintBronze, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintTop4, timestamp), Is.True);
+        Assert.That(profile.AwardBadge(Badge.SprintTop5, timestamp), Is.True);
 
         // Cannot earn duplicate badge
-        Assert.That(profile.AwardBadge(BadgeType.SprintGold, timestamp), Is.False);
-        Assert.That(profile.Badges.Count(b => b.BadgeType == BadgeType.SprintGold), Is.EqualTo(1));
+        Assert.That(profile.AwardBadge(Badge.SprintGold, timestamp), Is.False);
+        Assert.That(profile.Badges.Count(b => b.Badge == Badge.SprintGold), Is.EqualTo(1));
     }
 
     [Test]
@@ -601,7 +601,7 @@ public class StudentCourseProfileTests
         bool defendedWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
         Assert.That(defendedWeek1, Is.True);
         Assert.That(profile.TotalXp, Is.EqualTo(xpBeforeDefense + 5));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.False);
 
         // Duplicate call for same week should return false
         bool duplicateWeek1 = profile.EvaluateWeeklyRankDefense(2026, 41, 3, 10, new[] { 101, 102 });
@@ -612,13 +612,13 @@ public class StudentCourseProfileTests
         profile.AwardPassedTestXp(102, week2Monday.AddDays(2));
         bool defendedWeek2 = profile.EvaluateWeeklyRankDefense(2026, 42, 3, 10, new[] { 101, 102 });
         Assert.That(defendedWeek2, Is.True);
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.False);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.False);
 
         // Week 3 (2026, 43): Student earned 0 new test XP in Week 3, but has passed 100% of course tests (101, 102) and holds Rank 3 -> unlocks RankDefender badge!
         bool defendedWeek3 = profile.EvaluateWeeklyRankDefense(2026, 43, 3, 10, new[] { 101, 102 });
         Assert.That(defendedWeek3, Is.True);
         Assert.That(profile.Events.Count(e => e.EventType == GamificationEventType.HallOfFameRankDefended), Is.EqualTo(3));
-        Assert.That(profile.Badges.Any(b => b.BadgeType == BadgeType.RankDefender), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.RankDefender), Is.True);
     }
 
     [Test]

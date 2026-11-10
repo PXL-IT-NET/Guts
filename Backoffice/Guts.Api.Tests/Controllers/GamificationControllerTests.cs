@@ -297,9 +297,9 @@ public class GamificationControllerTests
     [Test]
     public void GetBadgeMetadata_ShouldCallServiceAndReturnOkWithBadges()
     {
-        var badgeList = new List<BadgeMetadataDto>
+        var badgeList = new List<Badge>
         {
-            new BadgeMetadataDto { BadgeType = BadgeType.FirstSpark, Name = "First Spark", Icon = "🌱" }
+            Badge.FirstSpark
         };
         _gamificationServiceMock.Setup(s => s.GetBadgeMetadata()).Returns(badgeList);
 

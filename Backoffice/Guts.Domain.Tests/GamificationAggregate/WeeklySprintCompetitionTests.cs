@@ -111,33 +111,33 @@ public class WeeklySprintCompetitionTests
         Assert.That(modifiedProfiles.Count, Is.EqualTo(5));
 
         // p1: Gold, Silver, Bronze, Top4, Top5
-        Assert.That(p1.Badges.Select(b => b.BadgeType), Is.EquivalentTo(new[]
+        Assert.That(p1.Badges.Select(b => b.Badge), Is.EquivalentTo(new[]
         {
-            BadgeType.SprintGold, BadgeType.SprintSilver, BadgeType.SprintBronze, BadgeType.SprintTop4, BadgeType.SprintTop5
+            Badge.SprintGold, Badge.SprintSilver, Badge.SprintBronze, Badge.SprintTop4, Badge.SprintTop5
         }));
 
         // p2: Silver, Bronze, Top4, Top5
-        Assert.That(p2.Badges.Select(b => b.BadgeType), Is.EquivalentTo(new[]
+        Assert.That(p2.Badges.Select(b => b.Badge), Is.EquivalentTo(new[]
         {
-            BadgeType.SprintSilver, BadgeType.SprintBronze, BadgeType.SprintTop4, BadgeType.SprintTop5
+            Badge.SprintSilver, Badge.SprintBronze, Badge.SprintTop4, Badge.SprintTop5
         }));
 
         // p3: Bronze, Top4, Top5
-        Assert.That(p3.Badges.Select(b => b.BadgeType), Is.EquivalentTo(new[]
+        Assert.That(p3.Badges.Select(b => b.Badge), Is.EquivalentTo(new[]
         {
-            BadgeType.SprintBronze, BadgeType.SprintTop4, BadgeType.SprintTop5
+            Badge.SprintBronze, Badge.SprintTop4, Badge.SprintTop5
         }));
 
         // p4: Top4, Top5
-        Assert.That(p4.Badges.Select(b => b.BadgeType), Is.EquivalentTo(new[]
+        Assert.That(p4.Badges.Select(b => b.Badge), Is.EquivalentTo(new[]
         {
-            BadgeType.SprintTop4, BadgeType.SprintTop5
+            Badge.SprintTop4, Badge.SprintTop5
         }));
 
         // p5: Top5
-        Assert.That(p5.Badges.Select(b => b.BadgeType), Is.EquivalentTo(new[]
+        Assert.That(p5.Badges.Select(b => b.Badge), Is.EquivalentTo(new[]
         {
-            BadgeType.SprintTop5
+            Badge.SprintTop5
         }));
 
         // p6: No badges awarded
@@ -163,8 +163,8 @@ public class WeeklySprintCompetitionTests
 
         Assert.That(badgesAwarded, Is.GreaterThan(0));
         Assert.That(modifiedProfiles.Count, Is.EqualTo(2));
-        Assert.That(p1.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.True);
-        Assert.That(p2.Badges.Any(b => b.BadgeType == BadgeType.SprintGold), Is.True);
+        Assert.That(p1.Badges.Any(b => b.Badge == Badge.SprintGold), Is.True);
+        Assert.That(p2.Badges.Any(b => b.Badge == Badge.SprintGold), Is.True);
     }
 
     [Test]

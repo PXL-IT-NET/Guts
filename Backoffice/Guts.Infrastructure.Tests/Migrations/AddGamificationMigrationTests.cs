@@ -217,14 +217,14 @@ public class AddGamificationMigrationTests
             .Where(b => b.StudentCourseProfileId == aliceProfile.Id)
             .ToListAsync();
         Assert.That(aliceBadges.Count, Is.EqualTo(1));
-        Assert.That(aliceBadges[0].BadgeType, Is.EqualTo(BadgeType.FirstSpark));
+        Assert.That(aliceBadges[0].Badge, Is.EqualTo(Badge.FirstSpark));
         Assert.That(aliceBadges[0].EarnedAt, Is.EqualTo(t1));
 
         var bobBadges = await verifyContext.StudentBadges
             .Where(b => b.StudentCourseProfileId == bobProfile.Id)
             .ToListAsync();
         Assert.That(bobBadges.Count, Is.EqualTo(2), "Bob should earn both FirstSpark and CenturyClub.");
-        Assert.That(bobBadges.Select(b => b.BadgeType), Is.EquivalentTo(new[] { BadgeType.FirstSpark, BadgeType.CenturyClub }));
+        Assert.That(bobBadges.Select(b => b.Badge), Is.EquivalentTo(new[] { Badge.FirstSpark, Badge.CenturyClub }));
 
         // 5d. Verify CourseGamificationConfigs
         var configs = await verifyContext.CourseGamificationConfigs.ToListAsync();

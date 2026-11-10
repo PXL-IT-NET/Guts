@@ -6,20 +6,12 @@ namespace Guts.Application.Dtos.Gamification;
 
 public class StudentBadgeDto
 {
-    public BadgeType BadgeType { get; set; }
+    public int Value { get; set; }
+    public Badge Badge => Badge.FromValue(Value);
     public string Name { get; set; }
     public string Description { get; set; }
     public string Icon { get; set; }
     public DateTime EarnedAt { get; set; }
-}
-
-public class BadgeMetadataDto
-{
-    public BadgeType BadgeType { get; set; }
-    public int Type => (int)BadgeType;
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public string Icon { get; set; }
 }
 
 public class RecentXpEventDto

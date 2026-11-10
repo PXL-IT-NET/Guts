@@ -34,5 +34,5 @@ public interface IGamificationService
     Task<CourseClassGroupDto> AddCourseClassGroupAsync(int courseId, string name, int? periodId = null);
     Task DeleteCourseClassGroupAsync(int courseId, int classGroupId);
     Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null);
-    IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata();
+    IReadOnlyList<Badge> GetBadgeMetadata();
 }

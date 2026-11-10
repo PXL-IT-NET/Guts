@@ -170,7 +170,7 @@ public static class HallOfFameLeague
         return modifiedProfiles;
     }
 
-    private static IReadOnlyList<StudentCourseProfile> OrderProfiles(IEnumerable<StudentCourseProfile> profiles)
+    private static List<StudentCourseProfile> OrderProfiles(IEnumerable<StudentCourseProfile> profiles)
     {
         return profiles
             .OrderByDescending(p => p.TotalXp)

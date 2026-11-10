@@ -10,6 +10,13 @@ internal class StudentBadgeConfiguration : IEntityTypeConfiguration<StudentBadge
     {
         builder.ToTable("StudentBadges");
 
-        builder.HasIndex(sb => new { sb.StudentCourseProfileId, sb.BadgeType }).IsUnique();
+        builder.Property(sb => sb.Badge)
+            .HasConversion(
+                b => b.Value,
+                value => Badge.FromValue(value))
+            .HasColumnName("BadgeType")
+            .IsRequired();
+
+        builder.HasIndex(sb => new { sb.StudentCourseProfileId, sb.Badge }).IsUnique();
     }
 }

@@ -30,32 +30,6 @@ public class GamificationService(
     ILogger<GamificationService> logger)
     : IGamificationService
 {
-    private static readonly Dictionary<BadgeType, (string Name, string Description, string Icon)> BadgeMetadata = new()
-    {
-        { BadgeType.FirstSpark, ("First Spark", "Passed your first test in the course", "🌱") },
-        { BadgeType.QuarterCentury, ("Quarter Century", "Achieved 25 unique passing tests in the course", "🎯") },
-        { BadgeType.HalfCentury, ("Half Century", "Achieved 50 unique passing tests in the course", "🏅") },
-        { BadgeType.CenturyClub, ("Century Club", "Achieved 100 unique passing tests in the course", "💯") },
-        { BadgeType.FirstVictory, ("First Victory", "Completed all tests of your first assignment", "🏁") },
-        { BadgeType.HighFive, ("High Five", "Completed all tests of 5 assignments in the course", "🖐️") },
-        { BadgeType.SpeedDemon, ("Speed Demon", "Completed all tests of an assignment within 24 hours", "⚡") },
-        { BadgeType.CleanSweep, ("Clean Sweep", "Solved 100% of all exercises in a chapter", "🧹") },
-        { BadgeType.NightOwl, ("Night Owl", "Submitted a passing test between 00:00 and 05:00", "🦉") },
-        { BadgeType.EarlyBird, ("Early Bird", "Submitted a passing test between 05:00 and 08:00", "🌅") },
-        { BadgeType.WeekendWarrior, ("Weekend Warrior", "Passed a test during the weekend", "⚔️") },
-        { BadgeType.WarmingUp, ("Warming Up", "Maintained a 2-week coding streak", "🕯️") },
-        { BadgeType.OnFire, ("On Fire", "Maintained a 4-week coding streak", "🔥") },
-        { BadgeType.Unstoppable, ("Unstoppable", "Maintained a 6-week coding streak", "☄️") },
-        { BadgeType.IronWill, ("Iron Will", "Maintained an 8-week coding streak", "🛡️") },
-        { BadgeType.SprintGold, ("Sprint Gold", "Finished #1 on the Weekly Sprint Leaderboard", "🥇") },
-        { BadgeType.SprintSilver, ("Sprint Silver", "Finished in the top 2 of the Weekly Sprint Leaderboard", "🥈") },
-        { BadgeType.SprintBronze, ("Sprint Bronze", "Finished in the top 3 of the Weekly Sprint Leaderboard", "🥉") },
-        { BadgeType.SprintTop4, ("Sprint Top 4", "Finished in the top 4 of the Weekly Sprint Leaderboard", "🎖️") },
-        { BadgeType.SprintTop5, ("Sprint Top 5", "Finished in the top 5 of the Weekly Sprint Leaderboard", "⭐") },
-        { BadgeType.TeamPowerhouse, ("Team Powerhouse", "Project team where all members have green tests", "🤝") },
-        { BadgeType.RankDefender, ("Rank Defender", "Defended your Hall of Fame rank without being overtaken for 3 weeks", "🏰") }
-    };
-
     public async Task ProcessTestRunAsync(TestRun testRun)
     {
         if (testRun?.TestResults == null || !testRun.TestResults.Any(tr => tr.Passed))
@@ -213,23 +187,10 @@ public class GamificationService(
             }
         }
 
-        bool allMembersContributed = teamProfiles.Count == teamUserIds.Count && teamProfiles.All(p =>
+        if (!TeamSynergyPolicy.IsSynergyAchieved(allAssignmentTestIds, teamUserIds.Count, teamProfiles))
         {
-            var memberPassedTests = p.Events
-                .Where(e => e.EventType == GamificationEventType.PassedTest)
-                .Select(e => e.TargetId);
-            return allAssignmentTestIds.Overlaps(memberPassedTests);
-        });
-
-        if (!allMembersContributed) return;
-
-        var allTeamPassedTests = teamProfiles
-            .SelectMany(p => p.Events
-                .Where(e => e.EventType == GamificationEventType.PassedTest)
-                .Select(e => e.TargetId))
-            .ToHashSet();
-
-        if (!allAssignmentTestIds.IsSubsetOf(allTeamPassedTests)) return;
+            return;
+        }
 
         foreach (var memberProfile in teamProfiles.Where(p => p.AwardTeamSynergyBonus(assignment.Id, testRun.CreateDateTime, config.IsBadgesEnabled)))
         {
@@ -811,8 +772,19 @@ public class GamificationService(
         {
             var config = await courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
             await AwardWeeklySprintBadgesForCourseAsync(course, period.Id, startOfWeek, fridayCutoff, config);
-            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, year, weekNumber, config);
-            await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config);
+
+            IReadOnlyList<int> cachedCourseTestIds = null;
+            async Task<IReadOnlyList<int>> GetCourseTestIdsAsync()
+            {
+                if (cachedCourseTestIds == null)
+                {
+                    cachedCourseTestIds = await assignmentRepository.GetCourseTestIdsAsync(course.Id, period.Id) ?? Array.Empty<int>();
+                }
+                return cachedCourseTestIds;
+            }
+
+            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, year, weekNumber, config, GetCourseTestIdsAsync);
+            await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config, GetCourseTestIdsAsync);
         }
     }
 
@@ -821,7 +793,8 @@ public class GamificationService(
         int periodId,
         int year,
         int weekNumber,
-        CourseGamificationConfig config)
+        CourseGamificationConfig config,
+        Func<Task<IReadOnlyList<int>>> getCourseTestIdsAsync)
     {
         if (config == null || !config.IsGamificationEnabled || !config.IsLeaderboardEnabled)
         {
@@ -834,7 +807,7 @@ public class GamificationService(
             return;
         }
 
-        IReadOnlyList<int> courseTestIds = await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId) ?? Array.Empty<int>();
+        IReadOnlyList<int> courseTestIds = await getCourseTestIdsAsync();
 
         var modifiedProfiles = HallOfFameLeague.EvaluateWeeklyRankDefense(
             optedInProfiles,
@@ -891,7 +864,8 @@ public class GamificationService(
         int courseId,
         int periodId,
         DateTime evaluationTimestamp,
-        CourseGamificationConfig config)
+        CourseGamificationConfig config,
+        Func<Task<IReadOnlyList<int>>> getCourseTestIdsAsync)
     {
         if (config == null || !config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled)
         {
@@ -912,7 +886,7 @@ public class GamificationService(
 
         bool anyCandidateHasPassedTests = candidates.Any(p => p.Events.Any(e => e.EventType == GamificationEventType.PassedTest));
         IReadOnlyList<int> courseTestIds = anyCandidateHasPassedTests
-            ? await assignmentRepository.GetCourseTestIdsAsync(courseId, periodId)
+            ? await getCourseTestIdsAsync()
             : Array.Empty<int>();
 
         var modifiedProfiles = candidates
@@ -926,33 +900,20 @@ public class GamificationService(
     }
 
 
-    public IReadOnlyList<BadgeMetadataDto> GetBadgeMetadata()
-    {
-        return BadgeMetadata.Select(kvp => new BadgeMetadataDto
-        {
-            BadgeType = kvp.Key,
-            Name = kvp.Value.Name,
-            Description = kvp.Value.Description,
-            Icon = kvp.Value.Icon
-        }).ToList();
-    }
+    public IReadOnlyList<Badge> GetBadgeMetadata() => Badge.All;
 
     private static StudentGamificationProfileDto MapToProfileDto(StudentCourseProfile profile)
     {
         DateTime now = DateTime.UtcNow;
         int totalGreen = profile.Events.Count(e => e.EventType == GamificationEventType.PassedTest);
 
-        var earnedBadges = profile.Badges.Select(b =>
+        var earnedBadges = profile.Badges.Select(b => new StudentBadgeDto
         {
-            BadgeMetadata.TryGetValue(b.BadgeType, out var meta);
-            return new StudentBadgeDto
-            {
-                BadgeType = b.BadgeType,
-                Name = meta.Name ?? b.BadgeType.ToString(),
-                Description = meta.Description ?? string.Empty,
-                Icon = meta.Icon ?? "🏅",
-                EarnedAt = b.EarnedAt
-            };
+            Value = b.Badge.Value,
+            Name = b.Badge.Name,
+            Description = b.Badge.Description,
+            Icon = b.Badge.Icon,
+            EarnedAt = b.EarnedAt
         }).OrderBy(b => b.EarnedAt).ToList();
 
         return new StudentGamificationProfileDto

@@ -114,7 +114,7 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
             var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
             profile.Enroll(true, "SprintMaster", "Lightning", classGroup.Id, false);
             profile.AwardPassedTestXp(101, midWeek);
-            profile.AwardBadge(BadgeType.SprintBronze, midWeek);
+            profile.AwardBadge(Badge.SprintBronze, midWeek);
 
             seedContext.StudentCourseProfiles.Add(profile);
             await seedContext.SaveChangesAsync();
@@ -128,7 +128,7 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
 
         var loadedProfile = sprintProfiles[0];
         Assert.That(loadedProfile.Badges, Is.Not.Null);
-        Assert.That(loadedProfile.Badges.Any(b => b.BadgeType == BadgeType.SprintBronze), Is.True);
+        Assert.That(loadedProfile.Badges.Any(b => b.Badge == Badge.SprintBronze), Is.True);
         Assert.That(loadedProfile.Events, Is.Not.Null);
         Assert.That(loadedProfile.Events.Count, Is.EqualTo(1));
         Assert.That(loadedProfile.User, Is.Not.Null);
@@ -147,7 +147,7 @@ internal class StudentCourseProfileDbRepositoryTests : RepositoryTestsBase
             var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
             profile.Enroll(true, "SprintCandidate", "Wizard", null, false);
             profile.AwardPassedTestXp(101, midWeek);
-            profile.AwardBadge(BadgeType.SprintGold, midWeek);
+            profile.AwardBadge(Badge.SprintGold, midWeek);
 
             seedContext.StudentCourseProfiles.Add(profile);
             await seedContext.SaveChangesAsync();

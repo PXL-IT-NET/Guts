@@ -141,7 +141,7 @@ public class GamificationController(
 
     [HttpGet("badges")]
     [HttpGet("/api/gamification/badges")]
-    [ProducesResponseType(typeof(IReadOnlyList<BadgeMetadataDto>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<Badge>), (int)HttpStatusCode.OK)]
     public IActionResult GetBadgeMetadata()
     {
         var badges = gamificationService.GetBadgeMetadata();
