@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Guts.Infrastructure.Logging;
@@ -40,7 +41,7 @@ internal class FileLoggerProviderTests
             LogDirectory = _tempDir,
             FileName = "guts-",
             Extension = "log",
-            FlushPeriod = TimeSpan.FromMilliseconds(50),
+            FlushPeriod = TimeSpan.FromMilliseconds(20),
             Periodicity = periodicity,
             IncludeScopes = true,
             IsEnabled = true,
@@ -51,6 +52,7 @@ internal class FileLoggerProviderTests
         var optionsMonitorMock = new Mock<IOptionsMonitor<FileLoggerOptions>>();
         optionsMonitorMock.Setup(m => m.CurrentValue).Returns(fileOptions);
 
+        string[] files = [];
         using (var provider = new FileLoggerProvider(optionsMonitorMock.Object))
         {
             ((ISupportExternalScope)provider).SetScopeProvider(new LoggerExternalScopeProvider());
@@ -61,11 +63,10 @@ internal class FileLoggerProviderTests
                 logger.LogInformation(new EventId(1), new InvalidOperationException("Boom"), "Hello world");
             }
 
-            await Task.Delay(150);
+            files = await WaitForFlushedLogFilesAsync(_tempDir, "guts-*.log", TimeSpan.FromSeconds(5));
         }
 
         Assert.That(Directory.Exists(_tempDir), Is.True);
-        var files = Directory.GetFiles(_tempDir, "guts-*.log");
         Assert.That(files, Has.Length.EqualTo(1));
 
         var content = await File.ReadAllTextAsync(files[0]);
@@ -73,6 +74,39 @@ internal class FileLoggerProviderTests
         Assert.That(content, Does.Contain("RequestScope"));
         Assert.That(content, Does.Contain("Hello world"));
         Assert.That(content, Does.Contain("Boom"));
+    }
+
+    private static async Task<string[]> WaitForFlushedLogFilesAsync(string directory, string searchPattern, TimeSpan timeout)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < timeout)
+        {
+            if (Directory.Exists(directory))
+            {
+                var files = Directory.GetFiles(directory, searchPattern);
+                if (files.Length == 1 && IsFileFlushedAndClosed(files[0]))
+                {
+                    return files;
+                }
+            }
+
+            await Task.Delay(25);
+        }
+
+        return Directory.Exists(directory) ? Directory.GetFiles(directory, searchPattern) : [];
+    }
+
+    private static bool IsFileFlushedAndClosed(string filePath)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None);
+            return stream.Length > 0;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
     }
 }
 
