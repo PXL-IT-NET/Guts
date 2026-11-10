@@ -22,11 +22,24 @@ public class Assignment : AggregateRoot
     {
         get
         {
-            if (!string.IsNullOrEmpty(_description)) return _description;
-            var alternativeDescription = Code;
-            return alternativeDescription;
+            if (!string.IsNullOrEmpty(_description) && !IsNumericDefault(_description))
+            {
+                return _description;
+            }
+
+            if (int.TryParse(Code, out int assignmentNumber) && assignmentNumber > 0)
+            {
+                return $"Assignment {assignmentNumber}";
+            }
+
+            return !string.IsNullOrEmpty(_description) ? _description : Code;
         }
         set => _description = value;
+    }
+
+    private bool IsNumericDefault(string description)
+    {
+        return int.TryParse(Code, out int assignmentNumber) && description == assignmentNumber.ToString();
     }
 
     public virtual IReadOnlyCollection<Test> Tests

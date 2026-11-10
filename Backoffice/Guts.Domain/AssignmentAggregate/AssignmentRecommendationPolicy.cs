@@ -61,3 +61,4 @@ public static class AssignmentRecommendationPolicy
         return inProgress.Concat(untouched).Take(maxCount).ToList();
     }
 }
+

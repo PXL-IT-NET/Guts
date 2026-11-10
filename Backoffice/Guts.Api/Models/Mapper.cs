@@ -25,7 +25,7 @@ public partial class Mapper : IMapper
         return new UserModel
         {
             Id = source.Id,
-            FullName = $"{source.FirstName} {source.LastName}".Trim()
+            FullName = source.FullName
         };
     }
 

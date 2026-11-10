@@ -109,3 +109,4 @@ public class LoginSessionTests
         Assert.That(session.IsExpired(createdAt.AddMinutes(31), TimeSpan.FromMinutes(30)), Is.True);
     }
 }
+

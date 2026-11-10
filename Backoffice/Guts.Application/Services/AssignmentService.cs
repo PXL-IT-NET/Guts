@@ -108,7 +108,7 @@ internal class AssignmentService(
             assignmentSolutions.Add(new SolutionDto
             {
                 WriterId = userFileGroup.Key.Id,
-                WriterName = $"{userFileGroup.Key.FirstName} {userFileGroup.Key.LastName}".Trim(),
+                WriterName = userFileGroup.Key.FullName,
                 SolutionFiles = userFileGroup
             });
         }

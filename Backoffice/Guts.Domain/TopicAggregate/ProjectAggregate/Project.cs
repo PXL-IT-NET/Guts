@@ -87,7 +87,7 @@ public class Project : Topic, IProject
 
     public IProjectTeam FindTeamOfUser(int userId)
     {
-        return _teams?.FirstOrDefault(t => t.TeamUsers != null && t.TeamUsers.Any(tu => tu.UserId == userId));
+        return _teams?.FirstOrDefault(t => t.HasMember(userId));
     }
 
     public void ValidateUserCanJoinTeam(int teamId, int userId)

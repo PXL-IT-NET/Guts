@@ -211,8 +211,8 @@ public class TestRunController(
             StringBuilder logMessageBuilder = new StringBuilder();
             logMessageBuilder.AppendLine($"Saving test run for user {testRun.UserId}:");
             logMessageBuilder.AppendLine($"AssignmentId: {testRun.AssignmentId}");
-            logMessageBuilder.AppendLine($"#Passing tests: {testRun.TestResults.Count(r => r.Passed)}");
-            logMessageBuilder.AppendLine($"#Failing tests: {testRun.TestResults.Count(r => !r.Passed)}");
+            logMessageBuilder.AppendLine($"#Passing tests: {testRun.PassedTestsCount}");
+            logMessageBuilder.AppendLine($"#Failing tests: {testRun.FailedTestsCount}");
             logMessageBuilder.AppendLine($"Sources: {sourcePaths}");
             logMessageBuilder.AppendLine("-------------------------------------");
             logger.LogInformation("{LogMessage}", logMessageBuilder.ToString());

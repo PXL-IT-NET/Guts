@@ -50,6 +50,24 @@ public class AssignmentTests
         Assert.That(assignment.Description, Is.EqualTo(customDescription));
     }
 
+    [TestCase("1", null, "Assignment 1")]
+    [TestCase("1", "1", "Assignment 1")]
+    [TestCase("123", null, "Assignment 123")]
+    [TestCase("123", "123", "Assignment 123")]
+    public void Description_WhenCodeIsPositiveInteger_ShouldReturnFormattedAssignmentDescription(string code, string description, string expected)
+    {
+        var assignment = new Assignment { Code = code, Description = description };
+        Assert.That(assignment.Description, Is.EqualTo(expected));
+    }
+
+    [TestCase("0", "0")]
+    [TestCase("-5", "-5")]
+    public void Description_WhenCodeIsNonPositiveIntegerAndDescriptionNotSet_ShouldReturnCode(string code, string expected)
+    {
+        var assignment = new Assignment { Code = code };
+        Assert.That(assignment.Description, Is.EqualTo(expected));
+    }
+
     [Test]
     public void ValidateOrRegisterTestCodeHash_WithMatchingHash_ShouldReturnValidAndNotAdded()
     {

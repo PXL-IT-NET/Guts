@@ -115,3 +115,4 @@ public class AssignmentRecommendationPolicyTests
         Assert.That(recommendations[1].GreenTestsCount, Is.EqualTo(0));
     }
 }
+

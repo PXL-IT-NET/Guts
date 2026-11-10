@@ -28,3 +28,4 @@ public class RecommendedAssignment
         TotalTestsCount = totalTestsCount;
     }
 }
+

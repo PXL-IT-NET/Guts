@@ -80,7 +80,7 @@ public class AssignmentController(
         var team = await projectTeamRepository.LoadByIdAsync(teamId);
         if (IsStudent())
         {
-            if (team.TeamUsers.All(tu => tu.UserId != GetUserId()))
+            if (!team.HasMember(GetUserId()))
             {
                 return Forbid();
             }

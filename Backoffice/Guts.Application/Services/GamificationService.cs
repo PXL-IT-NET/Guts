@@ -35,7 +35,7 @@ public class GamificationService(
 {
     public async Task ProcessTestRunAsync(TestRun testRun)
     {
-        if (testRun?.TestResults == null || !testRun.TestResults.Any(tr => tr.Passed))
+        if (testRun == null || !testRun.HasPassingTests)
         {
             return;
         }

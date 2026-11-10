@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -16,4 +17,8 @@ public class TestRun : AggregateRoot
     public DateTime CreateDateTime { get; set; }
 
     public virtual ICollection<TestResult> TestResults { get; set; } = new HashSet<TestResult>();
+
+    public bool HasPassingTests => TestResults != null && TestResults.Any(r => r.Passed);
+    public int PassedTestsCount => TestResults?.Count(r => r.Passed) ?? 0;
+    public int FailedTestsCount => TestResults?.Count(r => !r.Passed) ?? 0;
 }

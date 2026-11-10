@@ -15,3 +15,4 @@ public class AggregatedXpGain
         CreatedAt = createdAt;
     }
 }
+
