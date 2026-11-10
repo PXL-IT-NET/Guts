@@ -57,7 +57,7 @@ Backoffice/specs/
 │   ├── spec.md                # Functional requirements & acceptance criteria
 │   ├── design.md              # Layered DDD & Angular technical design
 │   └── tasks.md               # Ordered TDD implementation checklist
-└── NNN-feature-slug/          # Active or completed feature folder (e.g., 001-exam-part-export)
+└── NNN-feature-slug/          # Active or completed feature folder (e.g., 001-peer-assessments)
     ├── spec.md
     ├── design.md
     └── tasks.md

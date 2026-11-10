@@ -295,7 +295,7 @@
   - Verify `GetBadgeMetadata` includes `BadgeType.RankDefender` (`"Rank Defender"`, `🏰`).
   - Verify `GetStudentCourseProfileAsync` summarizes `HallOfFameOvertake` events only when summed `XpEarned > 0` and maps `HallOfFameRankDefended` events to `"Hall of Fame rank defense bonus"`.
   - Verify `AwardWeeklySprintBadgesAsync` evaluates weekly Hall of Fame rank defense for opted-in students with `TotalXp > 0` and persists modified profiles.
-- [x] **[T8.6]** `[AC-3, AC-5, AC-8]` Update `GamificationService.cs` (`BadgeMetadata`, `BuildRecentEventDtos`, and `EvaluateWeeklyRankDefenseForCourseAsync` called during `AwardWeeklySprintBadgesAsync`).
+- [x] **[T8.6]** `[AC-3, AC-5, AC-8]` Update `GamificationService.cs` (`BadgeMetadata`, event summarization via `RecentGainsSummary`, and `EvaluateWeeklyRankDefenseForCourseAsync` called during `AwardWeeklySprintBadgesAsync`).
 - [x] **[T8.7]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---

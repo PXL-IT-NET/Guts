@@ -152,6 +152,31 @@ flowchart TD
        - Orders profiles by `TotalXp` descending, then `LastXpEarnedAt` ascending, then `Id` ascending (`[DR-7]`, `[DR-13]`).
        - Sums `CalculateStudentContribution(profile.TotalXp, rank)` across all ordered profiles (`0` if empty), capturing the contribution for `profile.UserId == currentUserId.Value` when `currentUserId.HasValue`.
 
+5. **`RecentGainsSummary` (`RecentGainsSummary.cs`) & `AggregatedXpGain` (`AggregatedXpGain.cs`)** (`[AC-5]`):
+   - Pure domain event aggregator and Value Object encapsulating recent XP gain summarization:
+     - Aggregates multiple `PassedTest` events into a single entry: `"Made {count} test(s) green"` with summed XP and latest event timestamp.
+     - Aggregates multiple `HallOfFameOvertake` events into a single entry: `"Overtake bonus (surpassed {count} student(s) in Hall of Fame)"` with summed XP.
+     - Maps `HallOfFameTierUp`, `HallOfFameRankDefended`, and other bonus events individually with intention-revealing descriptions.
+     - Computes `TotalXpGained` across all aggregated gains.
+
+6. **`WeeklySprintCompetition` (`WeeklySprintCompetition.cs`) & `ClassGroupCompetition` (`ClassGroupCompetition.cs`)**:
+   - Pure, stateless domain services in `Guts.Domain.GamificationAggregate.Competitions`:
+     - `WeeklySprintCompetition.DetermineStandings(profiles, startOfWeek, endOfWeek)`: calculates student weekly sprint scores, green test counts, and tie-breaking standings (`Score` descending, `GreenTestsCount` descending, `LastXpEarnedAt` ascending).
+     - `ClassGroupCompetition.DetermineStandings(classGroups, profiles, currentUserId)`: calculates class group standings using stepped-bracket contribution weighting.
+
+7. **`IsoWeek` (`Guts.Domain.ValueObjects.IsoWeek`) & `StreakAtRiskPolicy` (`Guts.Domain.GamificationAggregate.Profiles.StreakAtRiskPolicy`)**:
+   - `IsoWeek` Value Object encapsulating ISO 8601 week calculations, boundaries (`StartOfWeek`, `EndOfWeek`), arithmetic (`AddWeeks`), comparisons, and formatting (`ToString("yyyy-Www")`).
+   - `StreakAtRiskPolicy.IsStreakAtRisk`: pure domain specification determining whether a student's active streak is at risk based on ISO week activity and course completion status (`[DR-10]`).
+
+8. **`AssignmentRecommendationPolicy` (`AssignmentRecommendationPolicy.cs`) & `RecommendedAssignment` (`RecommendedAssignment.cs`)** (`[DR-11]`):
+   - Pure domain policy in `Guts.Domain.AssignmentAggregate`:
+     - Filters out 100% completed assignments.
+     - Prioritizes in-progress assignments (passed $\ge 1$ test but $< 100\%$) ordered by completion progress descending.
+     - Falls back to earliest unattempted assignments, returning up to `maxRecommendations` (`RecommendedAssignment`).
+
+9. **`TestRun` Domain Metrics (`Guts.Domain.TestRunAggregate.TestRun`)**:
+   - Intention-revealing domain properties: `HasPassingTests`, `PassedTestsCount`, `FailedTestsCount`, eliminating procedural LINQ inspection in `GamificationService` and `TestRunController`.
+
 ---
 
 ## 3. Business Layer (`Guts.Application`)
@@ -230,11 +255,12 @@ flowchart TD
        - Computes the student's `previousRank` (ranked using `(xpBefore, lastXpBefore)` against the other opted-in profiles) and `newRank` (ranked using `(profile.TotalXp, profile.LastXpEarnedAt)` against the other opted-in profiles) using the `[DR-7]` ordering (`TotalXp` descending, `LastXpEarnedAt` ascending, `Id` ascending).
        - Invokes `profile.EvaluateHallOfFameProgression(previousRank, newRank, testRun.CreateDateTime)`.
     4. Persists `profile` via `studentCourseProfileRepository.UpdateAsync(profile)`.
-  - `BuildRecentEventDtos(IReadOnlyList<GamificationEvent> recentEvents)` (`[AC-5]`):
-    - Aggregates `PassedTest` events into `"Made {count} test(s) green"`.
-    - Aggregates `HallOfFameOvertake` events in the window into a single `RecentXpEventDto` (`Description = count == 1 ? "Overtake bonus (surpassed 1 student in Hall of Fame)" : $"Overtake bonus (surpassed {count} students in Hall of Fame)"`, `XpEarned = sum`, `CreatedAt = max`) when `sum > 0`.
-    - Maps each `HallOfFameTierUp` event to `"Hall of Fame level up bonus ({tierMetadata.Name})"`.
-    - Maps each `HallOfFameRankDefended` event to `"Hall of Fame rank defense bonus"`.
+  - `GetStudentCourseProfileAsync(...)` (`[AC-5]`):
+    - Delegates recent XP event summarization to domain aggregator `RecentGainsSummary`:
+      - Aggregates `PassedTest` events into `"Made {count} test(s) green"`.
+      - Aggregates `HallOfFameOvertake` events into a single entry with summed XP.
+      - Maps `HallOfFameTierUp`, `HallOfFameRankDefended`, and other bonuses to individual entries.
+    - Evaluates weekly streak expiration via `profile.NeedsWeeklyStreakEvaluation` and `profile.EvaluateWeeklyStreak`.
   - `AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)` (`[US-6]`, `[AC-6]`, `[AC-8]`):
     - Awards weekly sprint badges for the completed ISO week `(year, weekNumber)` (Friday `23:59:59 UTC` cutoff).
     - Evaluates weekly Hall of Fame Rank Defense for each active course where `IsGamificationEnabled && IsLeaderboardEnabled`:

@@ -10,7 +10,7 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 ## Templates & Locations
 
 - **Specs Directory**: `Backoffice/specs/`
-- **Feature Folder Pattern**: `Backoffice/specs/NNN-feature-slug/` (e.g., `001-exam-export`)
+- **Feature Folder Pattern**: `Backoffice/specs/NNN-feature-slug/` (e.g., `001-peer-assessments`)
 - **Templates**:
   - `Backoffice/specs/_templates/spec.md` — Requirements, User Stories, Acceptance Criteria (`AC-*`), Domain Rules (`DR-*`).
   - `Backoffice/specs/_templates/design.md` — Layered DDD design (`Guts.Domain`, `Guts.Application`, `Guts.Infrastructure`, `Guts.Api`, `Guts.Web/ClientApp`).
@@ -23,7 +23,7 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 ### Phase 1: Specify (`spec.md`)
 1. Check existing folders in `Backoffice/specs/` to determine the next `NNN` number.
 2. Read `Backoffice/specs/_templates/spec.md`.
-3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology (`PeriodAggregate`, `CourseAggregate`, `Chapter`, `Project`, `Assignment`, `TestAggregate`, `TestRunAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, `ExamAggregate`).
+3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology (`PeriodAggregate`, `CourseAggregate`, `Chapter`, `Project`, `Assignment`, `TestAggregate`, `TestRunAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`).
 4. If any requirements, permissions, or edge cases are ambiguous, ask the user clarifying questions before finalizing `spec.md`.
 5. Pause and ask the user to review `spec.md` before moving to Phase 2.
 
