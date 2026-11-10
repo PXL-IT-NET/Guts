@@ -102,7 +102,6 @@ describe("ViewModels", () => {
         description: "Exercise 1",
         totalNumberOfUnits: 20,
         unit: "students",
-        tests: [],
         testPassageStatistics: [
           { amountOfPassedTestsRange: "0-2", numberOfUsers: 5 },
           { amountOfPassedTestsRange: "3-5", numberOfUsers: 15 },
@@ -131,7 +130,6 @@ describe("ViewModels", () => {
             description: "Exercise 3",
             totalNumberOfUnits: 10,
             unit: "teams",
-            tests: [],
             testPassageStatistics: [],
           },
         ],

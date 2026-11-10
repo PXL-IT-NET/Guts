@@ -89,8 +89,7 @@ public class TopicConverter : ITopicConverter
             Description = assignment.Description,
             TotalNumberOfUnits = 0,
             Unit = unit,
-            TestPassageStatistics = new List<TestPassageStatisticModel>(),
-            Tests = assignment.Tests.Select(t => new TestModel { Id = t.Id, TestName = t.TestName }).ToList()
+            TestPassageStatistics = new List<TestPassageStatisticModel>()
         };
 
         var assignmentStatistics = assignmentStatisticsList.FirstOrDefault(result => result.AssignmentId == assignment.Id);

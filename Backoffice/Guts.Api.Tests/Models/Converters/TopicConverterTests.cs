@@ -145,7 +145,6 @@ internal class TopicConverterTests
         var firstAssignmentStats = model.AssignmentStatistics.First(a => a.AssignmentId == firstAssignment.Id);
         Assert.That(firstAssignmentStats.Unit, Is.EqualTo(unit));
         Assert.That(firstAssignmentStats.TotalNumberOfUnits, Is.EqualTo(10));
-        Assert.That(firstAssignmentStats.Tests, Has.Count.EqualTo(3));
         Assert.That(firstAssignmentStats.TestPassageStatistics, Has.Count.EqualTo(2));
         Assert.That(firstAssignmentStats.TestPassageStatistics[0].AmountOfPassedTestsRange, Is.EqualTo("2 tests"));
         Assert.That(firstAssignmentStats.TestPassageStatistics[0].NumberOfUsers, Is.EqualTo(4));
@@ -169,12 +168,15 @@ internal class TopicConverterTests
     }
 
     [Test]
-    public void ToTopicStatisticsModel_WhenAssignmentTestsAreNull_ShouldThrowArgumentNullException()
+    public void ToTopicStatisticsModel_WhenAssignmentTestsAreNull_ShouldSuccessfullyConvert()
     {
         var chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
         chapter.Assignments.First().ClearTests();
 
-        Assert.That(() => _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students"), Throws.ArgumentNullException);
+        var model = _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students");
+
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.AssignmentStatistics, Has.Count.EqualTo(1));
     }
 
     private static IReadOnlyList<AssignmentResultDto> GenerateAssignmentResults(Chapter chapter,
