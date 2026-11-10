@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Application.Dtos;
 using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Application.Services;
 
@@ -12,7 +12,8 @@ internal class CourseService(
     ICourseRepository courseRepository,
     IPeriodRepository periodRepository,
     IChapterRepository chapterRepository,
-    ITestResultRepository testResultRepository)
+    ITestResultRepository testResultRepository,
+    ICourseProgressCalculator courseProgressCalculator)
     : ICourseService
 {
     public async Task<IReadOnlyList<Course>> GetAllCoursesAsync()
@@ -32,103 +33,47 @@ internal class CourseService(
 
         var chapters = await chapterRepository.GetByCourseIdWithAssignmentsAndTestsAsync(courseId, period.Id);
 
-        var assignments = chapters.SelectMany(ch => ch.Assignments).ToList();
-        var allCourseTestIds = new HashSet<int>(assignments.SelectMany(a => a.Tests).Select(t => t.Id));
-        int totalAssignments = assignments.Count;
-        int totalTests = allCourseTestIds.Count;
-
-        var courseStatistics = new CourseStatisticsDto
+        var assignments = chapters.SelectMany(ch => ch.Assignments ?? []).ToList();
+        IList<TestResult> lastTestResults = [];
+        if (assignments.Count > 0)
         {
-            CourseId = course.Id,
-            CourseCode = course.Code,
-            CourseName = course.Name,
-            TotalAssignments = totalAssignments,
-            TotalTests = totalTests,
-            Students = new List<CourseStudentStatisticsDto>()
+            var assignmentIds = assignments.Select(a => a.Id).ToArray();
+            lastTestResults = await testResultRepository.GetLastTestResultsOfAssignmentsAsync(assignmentIds, null);
+        }
+
+        var report = courseProgressCalculator.CalculateProgress(course, [.. chapters], [.. lastTestResults]);
+
+        return new CourseStatisticsDto
+        {
+            CourseId = report.CourseId,
+            CourseCode = report.CourseCode,
+            CourseName = report.CourseName,
+            TotalAssignments = report.TotalAssignments,
+            TotalTests = report.TotalTests,
+            Students = report.Students.Select(s => new CourseStudentStatisticsDto
+            {
+                StudentId = s.StudentId,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                TotalTests = s.TotalTests,
+                TotalPassedTests = s.TotalPassedTests,
+                AssignmentsWorkedOn = s.AssignmentsWorkedOn,
+                CompletionPercentage = s.CompletionPercentage,
+                Chapters = s.Chapters.Select(c => new CourseStudentChapterStatisticsDto
+                {
+                    ChapterId = c.ChapterId,
+                    Code = c.Code,
+                    Description = c.Description,
+                    Assignments = c.Assignments.Select(a => new CourseStudentAssignmentStatisticsDto
+                    {
+                        AssignmentId = a.AssignmentId,
+                        Code = a.Code,
+                        Description = a.Description,
+                        NumberOfPassedTests = a.NumberOfPassedTests,
+                        NumberOfTests = a.NumberOfTests
+                    }).ToList()
+                }).ToList()
+            }).ToList()
         };
-
-        if (totalAssignments == 0)
-        {
-            return courseStatistics;
-        }
-
-        var assignmentIds = assignments.Select(a => a.Id).ToArray();
-        var lastTestResults = await testResultRepository.GetLastTestResultsOfAssignmentsAsync(assignmentIds, null);
-
-        var userGroups = lastTestResults
-            .Where(tr => tr.User != null)
-            .GroupBy(tr => tr.UserId)
-            .ToList();
-
-        foreach (var userGroup in userGroups)
-        {
-            var student = userGroup.First().User;
-            var studentResults = userGroup.ToList();
-
-            var studentDto = new CourseStudentStatisticsDto
-            {
-                StudentId = student.Id,
-                FirstName = student.FirstName ?? string.Empty,
-                LastName = student.LastName ?? string.Empty,
-                TotalTests = totalTests,
-                Chapters = new List<CourseStudentChapterStatisticsDto>()
-            };
-
-            int assignmentsWorkedOn = 0;
-            int totalPassedTests = 0;
-
-            foreach (var chapter in chapters.OrderBy(c => (string)c.Code))
-            {
-                var chapterDto = new CourseStudentChapterStatisticsDto
-                {
-                    ChapterId = chapter.Id,
-                    Code = chapter.Code,
-                    Description = chapter.Description,
-                    Assignments = new List<CourseStudentAssignmentStatisticsDto>()
-                };
-
-                foreach (var assignment in chapter.Assignments.OrderBy(a => a.Code))
-                {
-                    var assignmentTestIds = new HashSet<int>(assignment.Tests.Select(t => t.Id));
-                    var assignmentResults = studentResults.Where(tr => tr.Test?.AssignmentId == assignment.Id).ToList();
-
-                    if (assignmentResults.Count > 0)
-                    {
-                        assignmentsWorkedOn++;
-                    }
-
-                    int passedTests = assignmentResults.Count(tr => tr.Passed && assignmentTestIds.Contains(tr.TestId));
-                    totalPassedTests += passedTests;
-
-                    var assignmentDto = new CourseStudentAssignmentStatisticsDto
-                    {
-                        AssignmentId = assignment.Id,
-                        Code = assignment.Code,
-                        Description = assignment.Description,
-                        NumberOfPassedTests = passedTests,
-                        NumberOfTests = assignment.Tests.Count
-                    };
-
-                    chapterDto.Assignments.Add(assignmentDto);
-                }
-
-                studentDto.Chapters.Add(chapterDto);
-            }
-
-            studentDto.AssignmentsWorkedOn = assignmentsWorkedOn;
-            studentDto.TotalPassedTests = totalPassedTests;
-            studentDto.CompletionPercentage = totalTests > 0
-                ? Math.Round((double)totalPassedTests / totalTests * 100.0, 2)
-                : 0.0;
-
-            courseStatistics.Students.Add(studentDto);
-        }
-
-        courseStatistics.Students = courseStatistics.Students
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToList();
-
-        return courseStatistics;
     }
 }

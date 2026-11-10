@@ -8,7 +8,7 @@ using Guts.Api.Controllers;
 using Guts.Bootstrapper;
 using Guts.Application.Services;
 using Guts.Common;
-using Guts.Domain.ExamAggregate;
+using Guts.Domain.CourseAggregate;
 using Microsoft.AspNetCore.Authorization;
 using NUnit.Framework;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
@@ -19,7 +19,7 @@ namespace Guts.Architecture.Tests;
 public class ArchitectureTests
 {
     private static readonly System.Reflection.Assembly CommonAssembly = typeof(Contracts).Assembly;
-    private static readonly System.Reflection.Assembly DomainAssembly = typeof(ExamPart).Assembly;
+    private static readonly System.Reflection.Assembly DomainAssembly = typeof(Course).Assembly;
     private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(ICourseService).Assembly;
     private static readonly System.Reflection.Assembly InfrastructureAssembly = System.Reflection.Assembly.Load("Guts.Infrastructure");
     private static readonly System.Reflection.Assembly BootstrapperAssembly = typeof(StartUpExtensions).Assembly;
@@ -122,10 +122,10 @@ public class ArchitectureTests
     }
 
     [TestCase("Factory", nameof(DomainAssembly))]
+    [TestCase("Calculator", nameof(DomainAssembly))]
     [TestCase("Repository", nameof(InfrastructureAssembly))]
     [TestCase("Service", nameof(ApplicationAssembly))]
     [TestCase("Converter", nameof(ApplicationAssembly))]
-    [TestCase("Loader", nameof(ApplicationAssembly))]
     public void AutoRegisteredClasses_ShouldImplementMatchingInterfaceEndingWithSameSuffix(string suffix, string assemblyFieldName)
     {
         System.Reflection.Assembly targetAssembly = assemblyFieldName switch

@@ -140,15 +140,12 @@ internal class AssignmentService(
 
     private static AssignmentTestRunInfoDto ConstructTestRunInfoFromTestRuns(IList<TestRun> testRuns)
     {
-        var testRunInfo = new AssignmentTestRunInfoDto();
-        if (testRuns.Count > 0)
+        var summary = TestRunSummary.FromTestRuns(testRuns as IReadOnlyList<TestRun> ?? testRuns.ToList());
+        return new AssignmentTestRunInfoDto
         {
-            var firstTestRun = testRuns[0];
-            var lastTestRun = testRuns[^1];
-            testRunInfo.FirstRunDateTime = firstTestRun.CreateDateTime;
-            testRunInfo.LastRunDateTime = lastTestRun.CreateDateTime;
-            testRunInfo.NumberOfRuns = testRuns.Count;
-        }
-        return testRunInfo;
+            FirstRunDateTime = summary.FirstRunDateTime,
+            LastRunDateTime = summary.LastRunDateTime,
+            NumberOfRuns = summary.NumberOfRuns
+        };
     }
 }

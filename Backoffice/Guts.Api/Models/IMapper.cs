@@ -1,11 +1,9 @@
 using Guts.Api.Models.AssignmentModels;
-using Guts.Api.Models.ExamModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
 using Guts.Application.Dtos;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
-using Guts.Domain.ExamAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
 using Guts.Domain.TestAggregate;
@@ -20,9 +18,6 @@ public interface IMapper
     AssignmentModel MapToAssignmentModel(Assignment source);
     TopicAssignmentModel MapToTopicAssignmentModel(Assignment source);
     TestModel MapToTestModel(Test source);
-    ExamOutputModel MapToExamOutputModel(IExam source);
-    ExamPartOutputModel MapToExamPartOutputModel(IExamPart source);
-    AssignmentEvaluationOutputModel MapToAssignmentEvaluationOutputModel(IAssignmentEvaluation source);
     PeriodOutputModel MapToPeriodOutputModel(IPeriod source);
     ProjectAssessmentModel MapToProjectAssessmentModel(IProjectAssessment source);
     PeerAssessmentModel MapToPeerAssessmentModel(IPeerAssessment source);

@@ -36,7 +36,8 @@ public class CourseServiceTests
             _courseRepositoryMock.Object,
             _periodRepositoryMock.Object,
             _chapterRepositoryMock.Object,
-            _testResultRepositoryMock.Object);
+            _testResultRepositoryMock.Object,
+            new CourseProgressCalculator());
     }
 
     [Test]

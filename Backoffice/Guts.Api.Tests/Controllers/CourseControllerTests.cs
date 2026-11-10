@@ -9,6 +9,7 @@ using Guts.Application;
 using Guts.Application.Dtos;
 using Guts.Application.Services;
 using Guts.Application.Tests.Builders;
+using Guts.Domain.Tests.Builders;
 using Guts.Common.Extensions;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TopicAggregate.ChapterAggregate;

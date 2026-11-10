@@ -12,8 +12,6 @@ export * from "./course/course.component";
 export * from "./courseconfig/courseconfig.component";
 export * from "./coursestatistics/coursestatistics.component";
 export * from "./empty.component";
-export * from "./exam/exam.component";
-export * from "./exampart/exampart.component";
 export * from "./forgotpassword/forgotpassword.component";
 export * from "./home/home.component";
 export * from "./login/login.component";

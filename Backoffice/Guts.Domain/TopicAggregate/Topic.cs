@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
@@ -40,5 +41,15 @@ public abstract class Topic : AggregateRoot, ITopic
     protected Topic(int id) : base(id)
     {
             
+    }
+
+    public Assignment AddAssignment(Assignment assignment)
+    {
+        Contracts.Require(assignment != null, "Assignment cannot be null.");
+        Assignments ??= new HashSet<Assignment>();
+        assignment.TopicId = Id;
+        assignment.Topic = this;
+        Assignments.Add(assignment);
+        return assignment;
     }
 }

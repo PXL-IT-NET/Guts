@@ -6,7 +6,7 @@ using Guts.Application.Communication;
 using Guts.Application.Security;
 using Guts.Application.Services;
 using Guts.Infrastructure.Repositories;
-using Guts.Domain.ExamAggregate;
+using Guts.Domain.CourseAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Infrastructure;
@@ -23,10 +23,11 @@ public static class StartUpExtensions
 {
     public static void AddDomainLayerServices(this IServiceCollection services)
     {
-        Assembly domainAssembly = typeof(ExamPart).Assembly;
+        Assembly domainAssembly = typeof(Course).Assembly;
 
         //register domain factories
         services.RegisterTypesWhoseNameEndsWith("Factory", domainAssembly, ServiceLifetime.Singleton);
+        services.RegisterTypesWhoseNameEndsWith("Calculator", domainAssembly, ServiceLifetime.Singleton);
     }
 
     public static void AddInfrastructureLayerServices(this IServiceCollection services, IConfiguration configuration)
@@ -90,9 +91,6 @@ public static class StartUpExtensions
 
         //register services
         services.RegisterTypesWhoseNameEndsWith("Service", applicationAssembly, ServiceLifetime.Scoped);
-
-        //register loaders
-        services.RegisterTypesWhoseNameEndsWith("Loader", applicationAssembly, ServiceLifetime.Scoped);
 
         services.AddScoped<IHttpClient, HttpClientAdapter>();
         services.AddScoped<ICaptchaValidator>(provider =>

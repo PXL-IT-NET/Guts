@@ -15,4 +15,5 @@ public interface ITopic : IEntity
     string Description { get; }
     IPeriod Period { get; }
     int PeriodId { get; }
+    Assignment AddAssignment(Assignment assignment);
 }

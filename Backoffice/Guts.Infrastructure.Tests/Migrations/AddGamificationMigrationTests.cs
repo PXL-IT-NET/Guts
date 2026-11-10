@@ -101,7 +101,7 @@ public class AddGamificationMigrationTests
             "ExamEx",
             "ExamTest_1");
         var examAssignment = examChapter.Assignments.First();
-        await seeder.SeedExamWithPartAndEvaluationAsync(course.Id, period.Id, examAssignment);
+        await seeder.SeedExamEvaluationRawAsync(course.Id, period.Id, examAssignment.Id);
 
         // Users
         var studentNormal = await seeder.SeedUserAsync("Alice", "Normal", "alice@student.pxl.be");

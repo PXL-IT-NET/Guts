@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Guts.Api.Models.Converters;
 using Guts.Application.Dtos;
 using Guts.Application.Tests.Builders;
+using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ChapterAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Moq;
