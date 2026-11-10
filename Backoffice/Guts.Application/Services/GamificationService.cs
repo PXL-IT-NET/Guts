@@ -3,7 +3,6 @@ using Guts.Domain.CourseAggregate;
 using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Application.Dtos.Gamification;
@@ -15,6 +14,7 @@ using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestRunAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 namespace Guts.Application.Services;
@@ -356,11 +356,12 @@ public class GamificationService(
 
         if (profile.ClassGroupId.HasValue && (profile.ClassGroup == null || profile.ClassGroup.Id != profile.ClassGroupId.Value))
         {
-            profile.ClassGroup = await courseClassGroupRepository.GetByIdAsync(profile.ClassGroupId.Value);
+            var classGroup = await courseClassGroupRepository.GetByIdAsync(profile.ClassGroupId.Value);
+            profile.AssignClassGroup(classGroup);
         }
         else if (!profile.ClassGroupId.HasValue)
         {
-            profile.ClassGroup = null;
+            profile.AssignClassGroup(null);
         }
 
         if (profile.User == null)
@@ -380,8 +381,9 @@ public class GamificationService(
         }
 
         IPeriod period = await periodRepository.GetPeriodAsync(periodId);
-        DateTime now = DateTime.Now;
-        DateTime startOfWeek = ISOWeek.ToDateTime(ISOWeek.GetYear(now), ISOWeek.GetWeekOfYear(now), DayOfWeek.Monday);
+        DateTime now = DateTime.UtcNow;
+        IsoWeek currentWeek = IsoWeek.From(now);
+        DateTime startOfWeek = currentWeek.StartOfWeek;
         IReadOnlyList<StudentCourseProfile> optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(courseId, period.Id, startOfWeek);
 
         var sprintEntries = WeeklySprintCompetition.DetermineStandings(optedInProfiles, startOfWeek, now);
@@ -738,10 +740,8 @@ public class GamificationService(
 
     public async Task AwardWeeklySprintBadgesAsync(int year, int weekNumber, int? periodId = null)
     {
-        DateTime startOfWeek = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday);
-        DateTime friday = ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Friday);
-        DateTime fridayCutoff = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59, DateTimeKind.Utc);
-        DateTime nextMonday = startOfWeek.AddDays(7);
+        var sprintWeek = IsoWeek.From(year, weekNumber);
+        DateTime nextMonday = sprintWeek.Next().StartOfWeek;
 
         var period = await periodRepository.GetPeriodAsync(periodId);
         if (period == null) return;
@@ -751,7 +751,7 @@ public class GamificationService(
         foreach (var course in courses)
         {
             var config = await courseGamificationConfigRepository.GetByCourseIdAsync(course.Id);
-            await AwardWeeklySprintBadgesForCourseAsync(course, period.Id, startOfWeek, fridayCutoff, config);
+            await AwardWeeklySprintBadgesForCourseAsync(course, period.Id, sprintWeek, config);
 
             IReadOnlyList<int> cachedCourseTestIds = null;
             async Task<IReadOnlyList<int>> GetCourseTestIdsAsync()
@@ -763,7 +763,7 @@ public class GamificationService(
                 return cachedCourseTestIds;
             }
 
-            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, year, weekNumber, config, GetCourseTestIdsAsync);
+            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, sprintWeek, config, GetCourseTestIdsAsync);
             await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config, GetCourseTestIdsAsync);
         }
     }
@@ -771,8 +771,7 @@ public class GamificationService(
     private async Task EvaluateWeeklyRankDefenseForCourseAsync(
         int courseId,
         int periodId,
-        int year,
-        int weekNumber,
+        IsoWeek sprintWeek,
         CourseGamificationConfig config,
         Func<Task<IReadOnlyList<int>>> getCourseTestIdsAsync)
     {
@@ -791,8 +790,7 @@ public class GamificationService(
 
         var modifiedProfiles = HallOfFameLeague.EvaluateWeeklyRankDefense(
             optedInProfiles,
-            year,
-            weekNumber,
+            sprintWeek,
             courseTestIds,
             config.IsBadgesEnabled);
 
@@ -805,8 +803,7 @@ public class GamificationService(
     private async Task AwardWeeklySprintBadgesForCourseAsync(
         Course course,
         int periodId,
-        DateTime startOfWeek,
-        DateTime fridayCutoff,
+        IsoWeek sprintWeek,
         CourseGamificationConfig config)
     {
         if (config == null || !config.IsGamificationEnabled)
@@ -824,10 +821,10 @@ public class GamificationService(
             return;
         }
 
-        var optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(course.Id, periodId, startOfWeek);
-        var sprintEntries = WeeklySprintCompetition.DetermineStandings(optedInProfiles, startOfWeek, fridayCutoff);
+        var optedInProfiles = await studentCourseProfileRepository.GetForWeeklySprintLeaderboardAsync(course.Id, periodId, sprintWeek.StartOfWeek);
+        var sprintEntries = WeeklySprintCompetition.DetermineStandings(optedInProfiles, sprintWeek);
 
-        var (badgesAwarded, modifiedProfiles) = WeeklySprintCompetition.AwardBadges(sprintEntries, fridayCutoff);
+        var (badgesAwarded, modifiedProfiles) = WeeklySprintCompetition.AwardBadges(sprintEntries, sprintWeek);
         foreach (var profile in modifiedProfiles)
         {
             await studentCourseProfileRepository.UpdateAsync(profile);
@@ -885,7 +882,6 @@ public class GamificationService(
     private static StudentGamificationProfileDto MapToProfileDto(StudentCourseProfile profile)
     {
         DateTime now = DateTime.UtcNow;
-        int totalGreen = profile.Events.Count(e => e.EventType == GamificationEventType.PassedTest);
 
         var earnedBadges = profile.Badges.Select(b => new StudentBadgeDto
         {
@@ -915,7 +911,7 @@ public class GamificationService(
             CurrentWeeklyStreak = profile.WeeklyStreak.CurrentStreak,
             BestWeeklyStreak = profile.WeeklyStreak.BestStreak,
             IsActiveThisWeek = profile.WeeklyStreak.IsActiveInWeek(now),
-            TotalGreenTests = totalGreen,
+            TotalGreenTests = profile.TotalGreenTests,
             EarnedBadges = earnedBadges
         };
     }

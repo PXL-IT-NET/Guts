@@ -24,13 +24,13 @@ public class CourseClassGroup : AggregateRoot
         }
     }
 
-    public int CourseId { get; set; }
-    public Course Course { get; set; }
+    public int CourseId { get; internal set; }
+    public Course Course { get; internal set; }
 
-    public int PeriodId { get; set; }
-    public Period Period { get; set; }
+    public int PeriodId { get; internal set; }
+    public Period Period { get; internal set; }
 
-    public CourseClassGroup() { }
+    internal CourseClassGroup() { }
 
     public CourseClassGroup(string name, int courseId, int periodId)
     {

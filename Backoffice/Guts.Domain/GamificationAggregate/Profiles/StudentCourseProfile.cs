@@ -6,6 +6,7 @@ using Guts.Common;
 using Guts.Domain.GamificationAggregate.Competitions;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.UserAggregate;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.GamificationAggregate.Profiles;
 
@@ -15,7 +16,7 @@ public class StudentCourseProfile : AggregateRoot
     private readonly HashSet<GamificationEvent> _events = [];
 
     public int UserId { get; private set; }
-    public User User { get; set; }
+    public User User { get; internal set; }
 
     public int CourseId { get; private set; }
     public int PeriodId { get; private set; }
@@ -26,7 +27,7 @@ public class StudentCourseProfile : AggregateRoot
     public string Avatar { get; private set; }
 
     public int? ClassGroupId { get; private set; }
-    public CourseClassGroup ClassGroup { get; set; }
+    public CourseClassGroup ClassGroup { get; internal set; }
 
     public int TotalXp { get; private set; }
     public int TotalGreenTests { get; private set; }
@@ -89,6 +90,12 @@ public class StudentCourseProfile : AggregateRoot
         ClassGroupId = classGroupId;
     }
 
+    public void AssignClassGroup(CourseClassGroup classGroup)
+    {
+        ClassGroup = classGroup;
+        ClassGroupId = classGroup?.Id;
+    }
+
     public void HideFromLeaderboard()
     {
         ShowInLeaderBoard = false;
@@ -140,7 +147,7 @@ public class StudentCourseProfile : AggregateRoot
     {
         AwardBadge(Badge.FirstSpark, timestamp);
 
-        int totalPassedTests = Events.Count(e => e.EventType == GamificationEventType.PassedTest);
+        int totalPassedTests = TotalGreenTests;
         if (totalPassedTests >= 25)
         {
             AwardBadge(Badge.QuarterCentury, timestamp);
@@ -438,18 +445,29 @@ public class StudentCourseProfile : AggregateRoot
         IReadOnlyCollection<int> allAvailableCourseTestIds,
         bool isBadgesEnabled = true)
     {
+        return EvaluateWeeklyRankDefense(IsoWeek.From(year, weekNumber), currentRank, totalRankedStudents, allAvailableCourseTestIds, isBadgesEnabled);
+    }
+
+    public bool EvaluateWeeklyRankDefense(
+        IsoWeek week,
+        int currentRank,
+        int totalRankedStudents,
+        IReadOnlyCollection<int> allAvailableCourseTestIds,
+        bool isBadgesEnabled = true)
+    {
+        Contracts.Require(week != null, "IsoWeek cannot be null.");
         Contracts.Require(currentRank > 0, "Current rank must be positive.");
         Contracts.Require(totalRankedStudents >= currentRank, "Total ranked students must be at least currentRank.");
 
-        DateTime startOfWeek = DateTime.SpecifyKind(ISOWeek.ToDateTime(year, weekNumber, DayOfWeek.Monday), DateTimeKind.Utc);
-        DateTime endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+        DateTime startOfWeek = week!.StartOfWeek;
+        DateTime endOfWeek = week.EndOfWeek;
 
         if (!IsEligibleForRankDefense(currentRank, totalRankedStudents, startOfWeek, endOfWeek, allAvailableCourseTestIds))
         {
             return false;
         }
 
-        int weekTargetId = (year * 100) + weekNumber;
+        int weekTargetId = (week.Year * 100) + week.WeekNumber;
         if (Events.Any(e => e.EventType == GamificationEventType.HallOfFameRankDefended && e.TargetId == weekTargetId))
         {
             return false;
@@ -498,6 +516,11 @@ public class StudentCourseProfile : AggregateRoot
         }
 
         return HasPassedAllTests(allAvailableCourseTestIds);
+    }
+
+    public bool IsStreakAtRisk(IsoWeek currentWeek, IReadOnlySet<int> allAvailableCourseTestIds)
+    {
+        return StreakAtRiskPolicy.IsStreakAtRisk(this, currentWeek, allAvailableCourseTestIds);
     }
 
     private void ApplyTierProgression(int previousRank, int newRank, DateTime timestamp)

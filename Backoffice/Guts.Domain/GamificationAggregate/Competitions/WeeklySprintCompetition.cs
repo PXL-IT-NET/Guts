@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Domain.GamificationAggregate.Profiles;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.GamificationAggregate.Competitions;
 
@@ -12,15 +13,30 @@ public static class WeeklySprintCompetition
 
     public static IReadOnlyList<WeeklySprintStanding> DetermineStandings(
         IEnumerable<StudentCourseProfile> profiles,
+        IsoWeek sprintWeek)
+    {
+        Contracts.Require(sprintWeek != null, "SprintWeek cannot be null.");
+        return DetermineStandings(profiles, sprintWeek!.StartOfWeek, sprintWeek.FridayCutoff);
+    }
+
+    public static IReadOnlyList<WeeklySprintStanding> DetermineStandings(
+        IEnumerable<StudentCourseProfile> profiles,
         DateTime startOfWeek,
         DateTime cutoff)
     {
         Contracts.Require(profiles != null, "Profiles cannot be null.");
 
+        DateTime startUtc = startOfWeek.Kind == DateTimeKind.Utc ? startOfWeek : startOfWeek.ToUniversalTime();
+        DateTime cutoffUtc = cutoff.Kind == DateTimeKind.Utc ? cutoff : cutoff.ToUniversalTime();
+
         var scored = profiles.Select(profile =>
             {
                 var weeklyEvents = profile.Events
-                    .Where(e => e.CreatedAt >= startOfWeek && e.CreatedAt <= cutoff)
+                    .Where(e =>
+                    {
+                        DateTime eventUtc = e.CreatedAt.Kind == DateTimeKind.Utc ? e.CreatedAt : e.CreatedAt.ToUniversalTime();
+                        return eventUtc >= startUtc && eventUtc <= cutoffUtc;
+                    })
                     .ToList();
                 int weekXp = weeklyEvents.Sum(e => e.XpEarned);
                 int greenTests = weeklyEvents.Count(e => e.EventType == GamificationEventType.PassedTest);
@@ -45,6 +61,14 @@ public static class WeeklySprintCompetition
         }
 
         return result;
+    }
+
+    public static (int BadgesAwarded, IReadOnlyList<StudentCourseProfile> ModifiedProfiles) AwardBadges(
+        IReadOnlyList<WeeklySprintStanding> standings,
+        IsoWeek sprintWeek)
+    {
+        Contracts.Require(sprintWeek != null, "SprintWeek cannot be null.");
+        return AwardBadges(standings, sprintWeek!.FridayCutoff);
     }
 
     public static (int BadgesAwarded, IReadOnlyList<StudentCourseProfile> ModifiedProfiles) AwardBadges(

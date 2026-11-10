@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Guts.Common;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.GamificationAggregate.Profiles;
 
@@ -35,16 +35,15 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
 
     public WeeklyStreak RecordActivity(DateTime timestamp)
     {
-        int year = ISOWeek.GetYear(timestamp);
-        int week = ISOWeek.GetWeekOfYear(timestamp);
+        var week = IsoWeek.From(timestamp);
 
-        if (LastActiveYear == year && LastActiveWeek == week)
+        if (LastActiveYear == week.Year && LastActiveWeek == week.WeekNumber)
         {
             // Already active this week
             return this;
         }
 
-        int weeksDiff = CalculateWeeksDifference(LastActiveYear, LastActiveWeek, year, week);
+        int weeksDiff = CalculateWeeksDifference(LastActiveYear, LastActiveWeek, week.Year, week.WeekNumber);
 
         int newCurrentStreak;
         if (LastActiveYear == 0 && LastActiveWeek == 0)
@@ -65,14 +64,13 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
         }
 
         int newBestStreak = Math.Max(BestStreak, newCurrentStreak);
-        return new WeeklyStreak(newCurrentStreak, newBestStreak, year, week);
+        return new WeeklyStreak(newCurrentStreak, newBestStreak, week.Year, week.WeekNumber);
     }
 
     public bool IsActiveInWeek(DateTime timestamp)
     {
-        int year = ISOWeek.GetYear(timestamp);
-        int week = ISOWeek.GetWeekOfYear(timestamp);
-        return LastActiveYear == year && LastActiveWeek == week;
+        var week = IsoWeek.From(timestamp);
+        return LastActiveYear == week.Year && LastActiveWeek == week.WeekNumber;
     }
 
     public bool NeedsEvaluation(DateTime timestamp)
@@ -82,9 +80,8 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
             return false;
         }
 
-        int year = ISOWeek.GetYear(timestamp);
-        int week = ISOWeek.GetWeekOfYear(timestamp);
-        return CalculateWeeksDifference(LastActiveYear, LastActiveWeek, year, week) > 1;
+        var week = IsoWeek.From(timestamp);
+        return CalculateWeeksDifference(LastActiveYear, LastActiveWeek, week.Year, week.WeekNumber) > 1;
     }
 
     public WeeklyStreak EvaluateStreak(DateTime timestamp, bool hasPassedAllAvailableTests)
@@ -96,13 +93,8 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
 
         if (hasPassedAllAvailableTests)
         {
-            int currentYear = ISOWeek.GetYear(timestamp);
-            int currentWeek = ISOWeek.GetWeekOfYear(timestamp);
-            DateTime previousWeekMonday = ISOWeek.ToDateTime(currentYear, currentWeek, DayOfWeek.Monday).AddDays(-7);
-            int prevYear = ISOWeek.GetYear(previousWeekMonday);
-            int prevWeek = ISOWeek.GetWeekOfYear(previousWeekMonday);
-
-            return new WeeklyStreak(CurrentStreak, BestStreak, prevYear, prevWeek);
+            var prevWeek = IsoWeek.From(timestamp).Previous();
+            return new WeeklyStreak(CurrentStreak, BestStreak, prevWeek.Year, prevWeek.WeekNumber);
         }
 
         return new WeeklyStreak(0, BestStreak, LastActiveYear, LastActiveWeek);
@@ -111,10 +103,7 @@ public class WeeklyStreak : ValueObject<WeeklyStreak>
     public static int CalculateWeeksDifference(int fromYear, int fromWeek, int toYear, int toWeek)
     {
         if (fromYear == 0) return 1;
-        DateTime fromDate = ISOWeek.ToDateTime(fromYear, fromWeek, DayOfWeek.Monday);
-        DateTime toDate = ISOWeek.ToDateTime(toYear, toWeek, DayOfWeek.Monday);
-        TimeSpan diff = toDate - fromDate;
-        return (int)Math.Round(diff.TotalDays / 7.0);
+        return IsoWeek.From(fromYear, fromWeek).WeeksBetween(IsoWeek.From(toYear, toWeek));
     }
 
     protected override IEnumerable<object> GetEqualityComponents()

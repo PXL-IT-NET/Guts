@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
 using Guts.Domain.GamificationAggregate.Profiles;
+using Guts.Domain.ValueObjects;
 
 namespace Guts.Domain.GamificationAggregate.Competitions;
 
@@ -143,9 +144,19 @@ public static class HallOfFameLeague
         IReadOnlyList<int> courseTestIds,
         bool isBadgesEnabled)
     {
-        Contracts.Require(optedInProfiles != null, "Opted-in profiles cannot be null.");
+        return EvaluateWeeklyRankDefense(optedInProfiles, IsoWeek.From(year, weekNumber), courseTestIds, isBadgesEnabled);
+    }
 
-        var rankedProfiles = OrderProfiles(optedInProfiles.Where(p => p.TotalXp > 0));
+    public static IReadOnlyList<StudentCourseProfile> EvaluateWeeklyRankDefense(
+        IEnumerable<StudentCourseProfile> optedInProfiles,
+        IsoWeek week,
+        IReadOnlyList<int> courseTestIds,
+        bool isBadgesEnabled)
+    {
+        Contracts.Require(optedInProfiles != null, "Opted-in profiles cannot be null.");
+        Contracts.Require(week != null, "IsoWeek cannot be null.");
+
+        var rankedProfiles = OrderProfiles(optedInProfiles!.Where(p => p.TotalXp > 0));
         if (rankedProfiles.Count == 0)
         {
             return Array.Empty<StudentCourseProfile>();
@@ -157,8 +168,7 @@ public static class HallOfFameLeague
             var profile = rankedProfiles[i];
             int currentRank = i + 1;
             if (profile.EvaluateWeeklyRankDefense(
-                    year,
-                    weekNumber,
+                    week,
                     currentRank,
                     rankedProfiles.Count,
                     courseTestIds,

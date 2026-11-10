@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +15,7 @@ using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;
 using Guts.Domain.UserAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 namespace Guts.Application.Services;
@@ -77,13 +77,12 @@ public class StreakReminderService : IStreakReminderService
         var currentPeriod = await _periodRepository.GetPeriodAsync();
         var allCourses = await _courseRepository.GetAllAsync();
 
-        int currentYear = ISOWeek.GetYear(executionTime);
-        int currentWeek = ISOWeek.GetWeekOfYear(executionTime);
+        var currentWeek = IsoWeek.From(executionTime);
 
         var messagesToSend = new List<StreakReminderEmailMessage>();
         foreach (var course in allCourses)
         {
-            var courseMessages = await BuildMessagesForCourseAsync(course, currentPeriod.Id, currentYear, currentWeek);
+            var courseMessages = await BuildMessagesForCourseAsync(course, currentPeriod.Id, currentWeek);
             messagesToSend.AddRange(courseMessages);
         }
 
@@ -93,8 +92,7 @@ public class StreakReminderService : IStreakReminderService
     private async Task<List<StreakReminderEmailMessage>> BuildMessagesForCourseAsync(
         Course course,
         int periodId,
-        int currentYear,
-        int currentWeek)
+        IsoWeek currentWeek)
     {
         var config = await _configRepository.GetByCourseIdAsync(course.Id);
         if (config == null || !config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled)
@@ -115,7 +113,7 @@ public class StreakReminderService : IStreakReminderService
         }
 
         var profiles = await _profileRepository.GetByCourseAndPeriodAsync(course.Id, periodId);
-        var eligibleProfiles = await FilterEligibleProfilesAsync(profiles, allCourseTestIds, currentYear, currentWeek);
+        var eligibleProfiles = await FilterEligibleProfilesAsync(profiles, allCourseTestIds, currentWeek);
         if (eligibleProfiles.Count == 0)
         {
             return new List<StreakReminderEmailMessage>();
@@ -146,50 +144,24 @@ public class StreakReminderService : IStreakReminderService
 
     private async Task<List<StudentCourseProfile>> FilterEligibleProfilesAsync(
         IReadOnlyList<StudentCourseProfile> profiles,
-        HashSet<int> allCourseTestIds,
-        int currentYear,
-        int currentWeek)
+        IReadOnlySet<int> allCourseTestIds,
+        IsoWeek currentWeek)
     {
         var eligible = new List<StudentCourseProfile>();
         foreach (var profile in profiles)
         {
-            if (profile.WeeklyStreak.CurrentStreak <= 0)
-            {
-                continue;
-            }
-
             if (await _profileRepository.IsUserLectorAsync(profile.UserId))
             {
                 continue;
             }
 
-            int weeklyXp = profile.Events
-                .Where(e => ISOWeek.GetYear(e.CreatedAt) == currentYear && ISOWeek.GetWeekOfYear(e.CreatedAt) == currentWeek)
-                .Sum(e => e.XpEarned);
-
-            if (weeklyXp > 0)
+            if (profile.IsStreakAtRisk(currentWeek, allCourseTestIds))
             {
-                continue;
+                eligible.Add(profile);
             }
-
-            var passedTestIds = GetPassedTestIds(profile);
-            if (allCourseTestIds.All(passedTestIds.Contains))
-            {
-                continue;
-            }
-
-            eligible.Add(profile);
         }
 
         return eligible;
-    }
-
-    private static HashSet<int> GetPassedTestIds(StudentCourseProfile profile)
-    {
-        return profile.Events
-            .Where(e => e.EventType == GamificationEventType.PassedTest)
-            .Select(e => e.TargetId)
-            .ToHashSet();
     }
 
     private static List<StudentCourseProfile> GetOptedInLeaderboardProfiles(IReadOnlyList<StudentCourseProfile> profiles)
@@ -215,7 +187,7 @@ public class StreakReminderService : IStreakReminderService
         }
 
         string targetStudentName = await ResolveTargetStudentNameAsync(profile, optedInProfiles);
-        var passedTestIds = GetPassedTestIds(profile);
+        var passedTestIds = profile.GetPassedTestIds();
         var recommended = BuildRecommendedAssignments(topics, passedTestIds);
 
         return new StreakReminderEmailMessage

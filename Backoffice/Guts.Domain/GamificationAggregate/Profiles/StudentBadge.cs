@@ -5,13 +5,13 @@ namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class StudentBadge : Entity
 {
-    public int StudentCourseProfileId { get; set; }
-    public StudentCourseProfile StudentCourseProfile { get; set; }
+    public int StudentCourseProfileId { get; internal set; }
+    public StudentCourseProfile StudentCourseProfile { get; internal set; }
 
-    public Badge Badge { get; set; }
-    public DateTime EarnedAt { get; set; }
+    public Badge Badge { get; internal set; }
+    public DateTime EarnedAt { get; internal set; }
 
-    public StudentBadge() { }
+    protected StudentBadge() { }
 
     public StudentBadge(int studentCourseProfileId, Badge badge, DateTime earnedAt)
     {

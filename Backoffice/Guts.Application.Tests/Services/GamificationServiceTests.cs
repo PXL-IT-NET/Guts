@@ -2007,40 +2007,12 @@ public class GamificationServiceTests
         var profile = new StudentCourseProfile(studentUserId, courseId, periodId);
         profile.AwardPassedTestXp(1001, DateTime.UtcNow.AddMinutes(-10));
         // Add AssignmentCompletedQuickly
-        profile.AddEvent(new GamificationEvent
-        {
-            StudentCourseProfileId = profile.Id,
-            EventType = GamificationEventType.AssignmentCompletedQuickly,
-            TargetId = 200,
-            XpEarned = 15,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-5)
-        });
+        profile.AddEvent(new GamificationEvent(profile.Id, GamificationEventType.AssignmentCompletedQuickly, 200, 15, DateTime.UtcNow.AddMinutes(-5)));
         // Add other event type (e.g. unknown/unmapped)
-        profile.AddEvent(new GamificationEvent
-        {
-            StudentCourseProfileId = profile.Id,
-            EventType = (GamificationEventType)99,
-            TargetId = 1,
-            XpEarned = 25,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-4)
-        });
+        profile.AddEvent(new GamificationEvent(profile.Id, (GamificationEventType)99, 1, 25, DateTime.UtcNow.AddMinutes(-4)));
         // Add 2 overtake events
-        profile.AddEvent(new GamificationEvent
-        {
-            StudentCourseProfileId = profile.Id,
-            EventType = GamificationEventType.HallOfFameOvertake,
-            TargetId = 1,
-            XpEarned = 5,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-3)
-        });
-        profile.AddEvent(new GamificationEvent
-        {
-            StudentCourseProfileId = profile.Id,
-            EventType = GamificationEventType.HallOfFameOvertake,
-            TargetId = 2,
-            XpEarned = 5,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-2)
-        });
+        profile.AddEvent(new GamificationEvent(profile.Id, GamificationEventType.HallOfFameOvertake, 1, 5, DateTime.UtcNow.AddMinutes(-3)));
+        profile.AddEvent(new GamificationEvent(profile.Id, GamificationEventType.HallOfFameOvertake, 2, 5, DateTime.UtcNow.AddMinutes(-2)));
 
         profile.User = new User { FirstName = "Alice", LastName = "Smith" };
 
