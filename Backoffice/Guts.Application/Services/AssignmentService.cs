@@ -51,30 +51,19 @@ internal class AssignmentService(
     public async Task LoadTestsForAssignmentAsync(Assignment assignment)
     {
         var assignmentTests = await testRepository.FindByAssignmentId(assignment.Id);
-        assignment.Tests = assignmentTests;
+        assignment.LoadTests(assignmentTests);
     }
 
     public async Task LoadOrCreateTestsForAssignmentAsync(Assignment assignment, IReadOnlyList<string> testNames)
     {
         var assignmentTests = await testRepository.FindByAssignmentId(assignment.Id);
+        assignment.LoadTests(assignmentTests);
 
-        IList<string> testNamesToCreate =
-            testNames.Where(testName => assignmentTests.All(test => test.TestName != testName)).ToList();
-
-        foreach (string testNameToCreate in testNamesToCreate)
+        var missingTests = assignment.AddMissingTests(testNames);
+        foreach (var missingTest in missingTests)
         {
-            var newTest = new Test
-            {
-                AssignmentId = assignment.Id,
-                TestName = testNameToCreate
-            };
-            var savedTest = await testRepository.AddAsync(newTest);
-            assignmentTests.Add(savedTest);
+            await testRepository.AddAsync(missingTest);
         }
-
-
-
-        assignment.Tests = assignmentTests;
     }
 
     public async Task<AssignmentResultDto> GetResultsForUserAsync(int assignmentId, int userId, DateTime? dateUtc)

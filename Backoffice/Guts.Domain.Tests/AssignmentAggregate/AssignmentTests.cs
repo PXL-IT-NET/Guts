@@ -3,6 +3,7 @@ using System.Linq;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using NUnit.Framework;
+using TestEntity = Guts.Domain.TestAggregate.Test;
 
 namespace Guts.Domain.Tests.AssignmentAggregate;
 
@@ -154,5 +155,117 @@ public class AssignmentTests
         var assignment = new Assignment();
 
         Assert.That(() => assignment.AddTestCodeHash(string.Empty), Throws.InstanceOf<Common.ContractException>());
+    }
+
+    [Test]
+    public void AddTest_WithValidName_ShouldAddAndReturnTest()
+    {
+        // Arrange
+        var assignment = new Assignment { Id = 42 };
+
+        // Act
+        var test = assignment.AddTest("Test_A", id: 101);
+
+        // Assert
+        Assert.That(test, Is.Not.Null);
+        Assert.That(test.Id, Is.EqualTo(101));
+        Assert.That(test.AssignmentId, Is.EqualTo(42));
+        Assert.That(test.TestName, Is.EqualTo("Test_A"));
+        Assert.That(assignment.Tests, Is.Not.Null);
+        Assert.That(assignment.Tests, Has.Count.EqualTo(1));
+        Assert.That(assignment.Tests.First(), Is.SameAs(test));
+    }
+
+    [Test]
+    public void AddTest_WithExistingName_ShouldReturnExistingWithoutDuplicating()
+    {
+        // Arrange
+        var assignment = new Assignment { Id = 42 };
+        var first = assignment.AddTest("Test_A", id: 1);
+
+        // Act
+        var second = assignment.AddTest("Test_A", id: 2);
+
+        // Assert
+        Assert.That(second, Is.SameAs(first));
+        Assert.That(assignment.Tests, Has.Count.EqualTo(1));
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void AddTest_WithNullOrWhitespaceName_ShouldThrowContractException(string invalidName)
+    {
+        var assignment = new Assignment();
+
+        Assert.That(() => assignment.AddTest(invalidName), Throws.InstanceOf<Common.ContractException>());
+    }
+
+    [Test]
+    public void AddTest_WithTestEntity_ShouldAddIfNotPresent()
+    {
+        // Arrange
+        var assignment = new Assignment { Id = 55 };
+        var testEntity = new TestEntity { Id = 10, TestName = "UniqueTest" };
+
+        // Act
+        assignment.AddTest(testEntity);
+        assignment.AddTest(new TestEntity { Id = 99, TestName = "UniqueTest" });
+
+        // Assert
+        Assert.That(assignment.Tests, Has.Count.EqualTo(1));
+        Assert.That(assignment.Tests.First().AssignmentId, Is.EqualTo(55));
+    }
+
+    [Test]
+    public void LoadTests_ShouldReplaceExistingTests()
+    {
+        // Arrange
+        var assignment = new Assignment();
+        assignment.AddTest("OldTest");
+
+        var newTests = new[]
+        {
+            new TestEntity { Id = 1, TestName = "NewTest_1" },
+            new TestEntity { Id = 2, TestName = "NewTest_2" }
+        };
+
+        // Act
+        assignment.LoadTests(newTests);
+
+        // Assert
+        Assert.That(assignment.Tests, Has.Count.EqualTo(2));
+        Assert.That(assignment.Tests.Select(t => t.TestName), Is.EquivalentTo(new[] { "NewTest_1", "NewTest_2" }));
+    }
+
+    [Test]
+    public void ClearTests_ShouldResetTestsToNull()
+    {
+        // Arrange
+        var assignment = new Assignment();
+        assignment.AddTest("Test_1");
+        Assert.That(assignment.Tests, Is.Not.Null);
+
+        // Act
+        assignment.ClearTests();
+
+        // Assert
+        Assert.That(assignment.Tests, Is.Null);
+    }
+
+    [Test]
+    public void AddMissingTests_ShouldOnlyAddNewTestsAndReturnThem()
+    {
+        // Arrange
+        var assignment = new Assignment { Id = 10 };
+        assignment.AddTest("Existing_1");
+
+        // Act
+        var added = assignment.AddMissingTests(new[] { "Existing_1", "New_2", "New_3" });
+
+        // Assert
+        Assert.That(added, Has.Count.EqualTo(2));
+        Assert.That(added.Select(t => t.TestName), Is.EquivalentTo(new[] { "New_2", "New_3" }));
+        Assert.That(assignment.Tests, Has.Count.EqualTo(3));
     }
 }

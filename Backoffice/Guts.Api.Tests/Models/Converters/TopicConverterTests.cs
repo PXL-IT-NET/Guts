@@ -101,7 +101,7 @@ internal class TopicConverterTests
     {
         //Arrange
         var chapter = new ChapterBuilder().WithAssignments(1, 1).Build();
-        chapter.Assignments.First().Tests = null;
+        chapter.Assignments.First().ClearTests();
 
         //Act + Assert
         Assert.That(() => _converter.ToTopicSummaryModel(chapter, new List<AssignmentResultDto>()), Throws.InstanceOf<ArgumentException>());
@@ -172,7 +172,7 @@ internal class TopicConverterTests
     public void ToTopicStatisticsModel_WhenAssignmentTestsAreNull_ShouldThrowArgumentNullException()
     {
         var chapter = new ChapterBuilder().WithId().WithAssignments(1, 1).Build();
-        chapter.Assignments.First().Tests = null;
+        chapter.Assignments.First().ClearTests();
 
         Assert.That(() => _converter.ToTopicStatisticsModel(chapter, new List<AssignmentStatisticsDto>(), "Students"), Throws.ArgumentNullException);
     }

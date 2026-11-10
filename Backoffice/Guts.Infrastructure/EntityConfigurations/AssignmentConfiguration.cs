@@ -16,5 +16,12 @@ internal class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 
         builder.Navigation(a => a.TestCodeHashes)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(a => a.Tests)
+            .WithOne(t => t.Assignment)
+            .HasForeignKey(t => t.AssignmentId);
+
+        builder.Navigation(a => a.Tests)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

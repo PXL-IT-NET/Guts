@@ -12,6 +12,7 @@ public class Assignment : AggregateRoot
 {
     private string _description;
     private readonly HashSet<TestCodeHash> _testCodeHashes = [];
+    private HashSet<Test> _tests;
 
     [Required]
     [MaxLength(20)]
@@ -28,7 +29,11 @@ public class Assignment : AggregateRoot
         set => _description = value;
     }
 
-    public virtual ICollection<Test> Tests { get; set; } = new HashSet<Test>();
+    public virtual IReadOnlyCollection<Test> Tests
+    {
+        get => _tests;
+        init => _tests = value != null ? [.. value] : null;
+    }
 
     public virtual ICollection<TestRun> TestRuns { get; set; } = new HashSet<TestRun>();
 
@@ -37,9 +42,69 @@ public class Assignment : AggregateRoot
     public virtual Topic Topic { get; set; }
     public int TopicId { get; set; }
 
-    public Assignment()
+    public Test AddTest(string testName, int id = 0)
     {
+        Contracts.Require(!string.IsNullOrWhiteSpace(testName), "Test name cannot be empty.");
+        _tests ??= [];
 
+        var trimmedName = testName.Trim();
+        var existing = _tests.FirstOrDefault(t => t.TestName == trimmedName);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        var newTest = new Test
+        {
+            Id = id,
+            AssignmentId = Id,
+            TestName = trimmedName
+        };
+        _tests.Add(newTest);
+        return newTest;
+    }
+
+    public void AddTest(Test test)
+    {
+        Contracts.Require(test != null, "Test cannot be null.");
+        Contracts.Require(!string.IsNullOrWhiteSpace(test.TestName), "Test name cannot be empty.");
+        _tests ??= [];
+
+        var trimmedName = test.TestName.Trim();
+        if (_tests.All(t => t.TestName != trimmedName))
+        {
+            test.AssignmentId = Id;
+            _tests.Add(test);
+        }
+    }
+
+    public void LoadTests(IEnumerable<Test> tests)
+    {
+        Contracts.Require(tests != null, "Tests collection cannot be null.");
+        _tests = [.. tests];
+    }
+
+    public void ClearTests()
+    {
+        _tests = null;
+    }
+
+    public IReadOnlyList<Test> AddMissingTests(IEnumerable<string> testNames)
+    {
+        Contracts.Require(testNames != null, "Test names cannot be null.");
+        _tests ??= [];
+
+        var newlyCreatedTests = new List<Test>();
+        foreach (var testName in testNames.Where(name => !string.IsNullOrWhiteSpace(name)))
+        {
+            var trimmedName = testName.Trim();
+            if (_tests.All(t => t.TestName != trimmedName))
+            {
+                var newTest = AddTest(trimmedName);
+                newlyCreatedTests.Add(newTest);
+            }
+        }
+        return newlyCreatedTests;
     }
 
     public TestCodeHash AddTestCodeHash(string hash, int id = 0)

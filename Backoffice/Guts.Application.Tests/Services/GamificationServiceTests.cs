@@ -1614,9 +1614,9 @@ public class GamificationServiceTests
         {
             Id = assignmentId,
             TopicId = 7,
-            Topic = chapter,
-            Tests = new List<Test> { new Test { Id = 1 }, new Test { Id = 2 }, new Test { Id = 3 } }
+            Topic = chapter
         };
+        assignment.LoadTests(new List<Test> { new() { Id = 1, TestName = "Test1" }, new() { Id = 2, TestName = "Test2" }, new() { Id = 3, TestName = "Test3" } });
 
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
         _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
@@ -1664,8 +1664,12 @@ public class GamificationServiceTests
 
         _studentCourseProfileRepositoryMock.Setup(r => r.CountAssignmentCompletionsAsync(assignmentId, courseId, periodId))
             .ReturnsAsync(15); // No quick bonus
+
+        var otherAssignment = new Assignment { Id = 99 };
+        otherAssignment.LoadTests(new List<Test> { new() { Id = 999, TestName = "OtherTest" } });
+
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(7))
-            .ReturnsAsync(new List<Assignment> { assignment, new Assignment { Id = 99, Tests = new List<Test> { new Test { Id = 999 } } } });
+            .ReturnsAsync(new List<Assignment> { assignment, otherAssignment });
 
         await _service.ProcessTestRunAsync(testRun);
 
@@ -2117,9 +2121,9 @@ public class GamificationServiceTests
         {
             Id = 5,
             TopicId = 2,
-            Topic = new Chapter { Id = 2, CourseId = courseId, PeriodId = periodId },
-            Tests = new List<Test> { new() { Id = 1001 } }
+            Topic = new Chapter { Id = 2, CourseId = courseId, PeriodId = periodId }
         };
+        assignment.LoadTests(new List<Test> { new() { Id = 1001, TestName = "Test1001" } });
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(5)).ReturnsAsync(assignment);
         _assignmentRepositoryMock.Setup(r => r.GetByTopicWithTests(2)).ReturnsAsync(new List<Assignment> { assignment });
 

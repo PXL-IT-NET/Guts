@@ -558,23 +558,25 @@ public class StreakReminderServiceTests
         {
             Id = 103,
             Code = "Ex3",
-            Description = "Empty Tests",
-            Tests = new List<Test>()
+            Description = "Empty Tests"
         };
+        assignmentEmptyTests.LoadTests(new List<Test>());
+
         var assignmentNullTests = new Assignment
         {
             Id = 104,
             Code = "Ex4",
-            Description = "Null Tests",
-            Tests = null
+            Description = "Null Tests"
         };
+        assignmentNullTests.ClearTests();
+
         var assignmentCompleted = new Assignment
         {
             Id = 105,
             Code = "Ex5",
-            Description = "Completed",
-            Tests = new List<Test> { new() { Id = 1005 } }
+            Description = "Completed"
         };
+        assignmentCompleted.AddTest("Test1", id: 1005);
 
         var topicMockWithNullAssignments = new Mock<ITopic>();
         topicMockWithNullAssignments.SetupGet(t => t.Id).Returns(3);

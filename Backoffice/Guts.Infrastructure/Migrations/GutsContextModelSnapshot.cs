@@ -67,7 +67,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("AssignmentId");
 
-                    b.ToTable("TestCodeHash");
+                    b.ToTable("TestCodeHash", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.CourseAggregate.Course", b =>
@@ -89,7 +89,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.ExamAggregate.AssignmentEvaluation", b =>
@@ -118,7 +118,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("ExamPartId");
 
-                    b.ToTable("AssignmentEvaluation");
+                    b.ToTable("AssignmentEvaluation", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
@@ -148,7 +148,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("PeriodId");
 
-                    b.ToTable("Exams");
+                    b.ToTable("Exams", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamPart", b =>
@@ -173,7 +173,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("ExamId");
 
-                    b.ToTable("ExamParts");
+                    b.ToTable("ExamParts", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.GamificationAggregate.CourseClassGroup", b =>
@@ -402,7 +402,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LoginSessions");
+                    b.ToTable("LoginSessions", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.PeriodAggregate.Period", b =>
@@ -425,7 +425,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Periods");
+                    b.ToTable("Periods", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.ProjectTeamAggregate.ProjectTeam", b =>
@@ -586,7 +586,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("AssignmentId");
 
-                    b.ToTable("Tests");
+                    b.ToTable("Tests", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestResult", b =>
@@ -623,7 +623,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("TestId", "UserId", "CreateDateTime");
 
-                    b.ToTable("TestResults");
+                    b.ToTable("TestResults", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.TestRunAggregate.TestRun", b =>
@@ -649,7 +649,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TestRuns");
+                    b.ToTable("TestRuns", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.TopicAggregate.ProjectAggregate.ProjectAssessment", b =>
@@ -937,7 +937,7 @@ namespace Guts.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectTeamAssessmentPeers");
+                    b.ToTable("ProjectTeamAssessmentPeers", (string)null);
                 });
 
             modelBuilder.Entity("Guts.Domain.TopicAggregate.ChapterAggregate.Chapter", b =>
@@ -1121,7 +1121,7 @@ namespace Guts.Infrastructure.Migrations
 
                             b1.HasKey("StudentCourseProfileId");
 
-                            b1.ToTable("StudentCourseProfiles");
+                            b1.ToTable("StudentCourseProfiles", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("StudentCourseProfileId");
