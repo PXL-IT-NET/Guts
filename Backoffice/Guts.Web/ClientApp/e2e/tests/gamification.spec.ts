@@ -63,10 +63,10 @@ test.describe("Course Gamification (Feature 002)", () => {
     await expect(gamificationPage.hallOfFameProgression).toBeVisible();
     await expect(gamificationPage.hallOfFameProgression).toContainText("Diamond");
 
-    // Overtake motivation callout banner is visible with +4 XP incentive
+    // Overtake motivation callout banner is visible with daily overtake XP incentive
     await expect(gamificationPage.hallOfFameOvertakeCallout).toBeVisible();
     await expect(gamificationPage.hallOfFameOvertakeCallout).toContainText("AliceDev");
-    await expect(gamificationPage.hallOfFameOvertakeCallout).toContainText("+4 bonus XP");
+    await expect(gamificationPage.hallOfFameOvertakeCallout).toContainText("+6 daily bonus XP");
 
     // Tier rankings always start at #1 (🥇) and show Class column when class competition is enabled and classes exist
     await expect(gamificationPage.hallOfFameTableHeaders.filter({ hasText: "Class" })).toHaveCount(1);
