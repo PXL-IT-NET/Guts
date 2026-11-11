@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Guts.Application.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,11 +11,20 @@ namespace Guts.Api.BackgroundServices;
 
 public class StreakReminderBackgroundService(
     IServiceScopeFactory serviceScopeFactory,
+    IConfiguration configuration,
     ILogger<StreakReminderBackgroundService> logger,
     TimeProvider timeProvider = null)
     : BackgroundService
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
+    public StreakReminderBackgroundService(
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger<StreakReminderBackgroundService> logger,
+        TimeProvider timeProvider = null)
+        : this(serviceScopeFactory, null, logger, timeProvider)
+    {
+    }
 
     private static DateTime GetNextThursdayMiddayTrigger(DateTime fromUtc)
     {
@@ -50,6 +60,13 @@ public class StreakReminderBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        bool isEnabled = configuration?.GetValue<bool?>("StreakReminders:Enabled") ?? true;
+        if (!isEnabled)
+        {
+            logger.LogInformation("StreakReminderBackgroundService is disabled by configuration.");
+            return;
+        }
+
         logger.LogInformation("StreakReminderBackgroundService started.");
 
         while (!stoppingToken.IsCancellationRequested)

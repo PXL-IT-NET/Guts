@@ -8,7 +8,9 @@ public abstract class Entity : IEntity, IEquatable<Entity>
 {
     protected abstract IEnumerable<object> GetIdComponents();
 
+#pragma warning disable S2365 // IdentityValues property intentionally materialized as array per IEntity contract
     public virtual object[] IdentityValues => GetIdComponents()?.ToArray() ?? Array.Empty<object>();
+#pragma warning restore S2365
 
     public virtual bool IsTransient()
     {

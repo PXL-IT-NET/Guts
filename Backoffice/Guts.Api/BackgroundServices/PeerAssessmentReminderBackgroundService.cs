@@ -38,7 +38,17 @@ public class PeerAssessmentReminderBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("PeerAssessmentReminderBackgroundService started with interval {Interval}.", _checkInterval);
+        bool isEnabled = configuration?.GetValue<bool?>("PeerAssessmentReminders:Enabled") ?? true;
+        if (!isEnabled)
+        {
+            logger.LogInformation("PeerAssessmentReminderBackgroundService is disabled by configuration.");
+            return;
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("PeerAssessmentReminderBackgroundService started with interval {Interval}.", _checkInterval);
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Guts.Api.BackgroundServices;
 using Guts.Application.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -44,6 +45,31 @@ public class StreakReminderBackgroundServiceTests
     public void TearDown()
     {
         _service?.Dispose();
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WhenDisabledInConfiguration_ShouldLogAndExitWithoutSchedulingOrDispatching()
+    {
+        var inMemoryConfig = new Dictionary<string, string>
+        {
+            { "StreakReminders:Enabled", "false" }
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(inMemoryConfig).Build();
+
+        using var service = new StreakReminderBackgroundService(
+            _scopeFactoryMock.Object,
+            config,
+            _loggerMock.Object,
+            _timeProvider);
+
+        await service.StartAsync(CancellationToken.None);
+        await service.StopAsync(CancellationToken.None);
+
+        Assert.That(_timeProvider.ScheduledDelays, Is.Empty);
+        _scopeFactoryMock.Verify(f => f.CreateScope(), Times.Never);
+        _streakReminderServiceMock.Verify(
+            s => s.SendStreakRemindersAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]

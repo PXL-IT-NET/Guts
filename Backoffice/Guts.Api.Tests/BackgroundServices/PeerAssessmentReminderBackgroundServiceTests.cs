@@ -40,6 +40,31 @@ public class PeerAssessmentReminderBackgroundServiceTests
     }
 
     [Test]
+    public async Task ExecuteAsync_WhenDisabledInConfiguration_ShouldLogAndExitWithoutSchedulingOrDispatching()
+    {
+        var inMemoryConfig = new Dictionary<string, string>
+        {
+            { "PeerAssessmentReminders:Enabled", "false" }
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(inMemoryConfig).Build();
+
+        using var service = new PeerAssessmentReminderBackgroundService(
+            _scopeFactoryMock.Object,
+            config,
+            _loggerMock.Object,
+            _timeProvider);
+
+        await service.StartAsync(CancellationToken.None);
+        await service.StopAsync(CancellationToken.None);
+
+        Assert.That(_timeProvider.ScheduledDelays, Is.Empty);
+        _scopeFactoryMock.Verify(f => f.CreateScope(), Times.Never);
+        _reminderServiceMock.Verify(
+            s => s.SendAssessmentRemindersAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
     public async Task ExecuteAsync_DefaultInterval_ShouldScheduleForTwoHoursAndDispatchReminders()
     {
         var config = new ConfigurationBuilder().Build();
