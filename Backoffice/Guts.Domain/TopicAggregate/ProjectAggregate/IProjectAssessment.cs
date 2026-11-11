@@ -10,6 +10,8 @@ namespace Guts.Domain.TopicAggregate.ProjectAggregate;
 /// </summary>
 public interface IProjectAssessment : IEntity
 {
+    int Id { get; }
+
     /// <summary>
     /// Unique identifier of the project.
     /// </summary>

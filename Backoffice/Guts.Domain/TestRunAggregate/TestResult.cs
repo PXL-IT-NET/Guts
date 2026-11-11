@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -6,6 +7,7 @@ namespace Guts.Domain.TestRunAggregate;
 
 public class TestResult : Entity
 {
+    public int Id { get; set; }
     public virtual TestRun TestRun { get; set; }
     public int TestRunId { get; set; }
 
@@ -20,4 +22,9 @@ public class TestResult : Entity
     public int UserId { get; set; }
 
     public DateTime CreateDateTime { get; set; }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
+    }
 }

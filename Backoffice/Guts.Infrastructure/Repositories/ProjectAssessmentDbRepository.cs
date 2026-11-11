@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,5 +17,12 @@ internal class ProjectAssessmentDbRepository : BaseDbRepository<IProjectAssessme
     public async Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId)
     {
         return await _context.Set<ProjectAssessment>().Where(pa => pa.ProjectId == projectId).ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<IProjectAssessment>> GetOpenAssessmentsAsync(DateTime nowUtc)
+    {
+        return await _context.Set<ProjectAssessment>()
+            .Where(pa => pa.OpenOnUtc <= nowUtc && nowUtc < pa.DeadlineUtc)
+            .ToListAsync();
     }
 }

@@ -11,6 +11,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate;
 
 internal class ProjectTeamAssessment : AggregateRoot, IProjectTeamAssessment
 {
+    public int Id { get; set; }
+
     private readonly HashSet<User> _peers;
     private readonly HashSet<IPeerAssessment> _peerAssessments;
 
@@ -185,5 +187,10 @@ internal class ProjectTeamAssessment : AggregateRoot, IProjectTeamAssessment
             Contracts.Require(!allAssessmentsOfUser.All(pa => pa.EffortScore < AssessmentScore.Average),
                 "It is not possible that everyone has a below average effort score. Maybe you mean that everyone's score should be 'Average'?");
         }
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

@@ -8,6 +8,8 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate;
 
 public interface IProjectTeamAssessment : IEntity
 {
+    int Id { get; }
+
     IProjectAssessment ProjectAssessment { get; }
 
     IProjectTeam Team { get; }

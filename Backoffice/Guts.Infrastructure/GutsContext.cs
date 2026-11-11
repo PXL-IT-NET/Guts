@@ -6,6 +6,7 @@ using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.LoginSessionAggregate;
+using Guts.Domain.MessageTrackerAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.ProjectTeamAssessmentAggregate;
@@ -63,6 +64,7 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
     public DbSet<CourseGamificationConfig> CourseGamificationConfigs { get; set; }
     public DbSet<StudentBadge> StudentBadges { get; set; }
     public DbSet<GamificationEvent> GamificationEvents { get; set; }
+    public DbSet<MessageTracker> MessageTrackers { get; set; }
 
     public GutsContext(DbContextOptions<GutsContext> options) : base(options)
     {
@@ -96,6 +98,7 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
         builder.ApplyConfiguration(new CourseGamificationConfigConfiguration());
         builder.ApplyConfiguration(new StudentBadgeConfiguration());
         builder.ApplyConfiguration(new GamificationEventConfiguration());
+        builder.ApplyConfiguration(new MessageTrackerConfiguration());
 
         ApplyUtcDateTimeConverters(builder);
     }

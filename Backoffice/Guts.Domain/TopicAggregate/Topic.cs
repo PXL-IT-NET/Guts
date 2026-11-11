@@ -9,6 +9,8 @@ namespace Guts.Domain.TopicAggregate;
 
 public abstract class Topic : AggregateRoot, ITopic
 {
+    public virtual int Id { get; set; }
+
     private string _code;
 
     public Code Code
@@ -38,9 +40,14 @@ public abstract class Topic : AggregateRoot, ITopic
     {
     }
 
-    protected Topic(int id) : base(id)
+    protected Topic(int id)
     {
-            
+        Id = id;
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 
     public Assignment AddAssignment(Assignment assignment)

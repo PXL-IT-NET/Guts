@@ -8,6 +8,8 @@ namespace Guts.Domain.TestRunAggregate;
 
 public class TestRun : AggregateRoot
 {
+    public int Id { get; set; }
+
     public virtual Assignment Assignment { get; set; }
     public int AssignmentId { get; set; }
 
@@ -21,4 +23,9 @@ public class TestRun : AggregateRoot
     public bool HasPassingTests => TestResults != null && TestResults.Any(r => r.Passed);
     public int PassedTestsCount => TestResults?.Count(r => r.Passed) ?? 0;
     public int FailedTestsCount => TestResults?.Count(r => !r.Passed) ?? 0;
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
+    }
 }

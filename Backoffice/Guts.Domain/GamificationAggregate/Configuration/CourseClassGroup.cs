@@ -10,6 +10,8 @@ namespace Guts.Domain.GamificationAggregate.Configuration;
 
 public class CourseClassGroup : AggregateRoot
 {
+    public int Id { get; set; }
+
     public const int JoinBonusPoints = 5;
 
     private string _name;
@@ -101,5 +103,10 @@ public class CourseClassGroup : AggregateRoot
         {
             return new CourseClassGroup(name, courseId, periodId);
         }
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

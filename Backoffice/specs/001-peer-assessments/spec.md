@@ -30,6 +30,7 @@ The **Project Team Peer Assessments** feature enables:
   2. When a member leaves or is removed from a `ProjectTeam`, they are automatically removed from `Peers` (along with their evaluations) in any **incomplete** `ProjectTeamAssessment` (`IsComplete == false`).
   3. When a member joins a `ProjectTeam`, they are automatically added to `Peers` of any existing **incomplete** `ProjectTeamAssessment` if `DateTime.UtcNow <= ProjectAssessment.DeadlineUtc` (and not added automatically if `DateTime.UtcNow > ProjectAssessment.DeadlineUtc` or `IsComplete == true`).
   4. In the **Edit Team** modal (`app-project-team-edit`), a **Teacher** can include or exclude any current team member (`Team.TeamUsers`) as a peer in any open **incomplete** `ProjectTeamAssessment` (`IsComplete == false`).
+- **US-7 (Receive Assessment Reminder Notification)**: As a **Student** who is a member of a project team and has pending evaluations in an open peer assessment with a total duration of at least 48 hours, I want to receive an automated reminder email 24 hours (or a little less) before the deadline containing a direct link to my evaluation form so that I submit my ratings on time.
 
 ---
 
@@ -113,6 +114,34 @@ The **Project Team Peer Assessments** feature enables:
   - When the Teacher **includes** (`AddPeer(userId)`) a team member in an incomplete `ProjectTeamAssessment`, that member is added to `Peers`, appears in `PeersThatNeedToEvaluateOthers`, and must evaluate (and be evaluated by) all peers in `Peers` before `IsComplete` becomes `true`.
 - **And** any future `ProjectTeamAssessment` created for the team copies all current `Team.TeamUsers` into `Peers`.
 
+### AC-10: Automated Peer Assessment Deadline Reminders
+- **Given** an open `ProjectAssessment` (`OpenOnUtc <= DateTime.UtcNow < DeadlineUtc`) where the total assessment window (`DeadlineUtc - OpenOnUtc`) is at least 48 hours
+- **When** the current time is within the final 24-hour window before the deadline (`(DeadlineUtc - DateTime.UtcNow) <= TimeSpan.FromHours(24)`)
+- **Then** the background reminder task evaluates all teams within the project (lazily provisioning any missing `ProjectTeamAssessment` entities via `GetOrCreateTeamAssessmentAsync`)
+- **And** for each student in `teamAssessment.GetPeersThatNeedToEvaluateOthers()`, a reminder email is queued/dispatched if no successful reminder has already been tracked in `MessageTracker` for that assessment and student email.
+
+### AC-11: Idempotent Reminder Tracking & Retry Policy
+- **Given** a student who has pending evaluations in an eligible peer assessment
+- **When** the reminder service processes the notification
+- **Then** delivery is tracked using a `MessageTracker` aggregate:
+  - If no `MessageTracker` exists for `(EntityType = "PeerAssessment", EntityId = assessment.Id, Email = student.Email)`, a new tracker is created in `Sending` status.
+  - Upon successful dispatch via `IMailSender`, status transitions to `Succeeded` and `SentAtUtc` is recorded.
+  - If dispatch fails, status is marked as `Failed` and `RetryCount` is incremented.
+  - On subsequent 2-hour background runs prior to the deadline, students with `Status == Failed` and `RetryCount < 3` are retried; students with `Status == Succeeded` or `RetryCount >= 3` are skipped.
+
+### AC-12: Anti-Spam Throttling Across Outgoing Emails
+- **Given** multiple reminder emails (or streak reminders) being dispatched
+- **When** emails are transmitted via the mail infrastructure
+- **Then** outgoing messages are sent sequentially with a delay between them configured by `Mail:ThrottleDelayInSeconds` (default: 1 second) via a loosely coupled `IMailThrottler` (or decorator), preventing burst dispatch and spam flagging.
+
+### AC-13: Reminder Email Content & Direct Link
+- **Given** a reminder email generated for a student
+- **When** the email is assembled
+- **Then** it contains:
+  - Subject indicating the upcoming assessment deadline (e.g. `Reminder: Peer assessment '[Description]' deadline approaching`).
+  - Body greeting the student by first name (or fallback), stating the project description, peer assessment description and UTC deadline.
+  - A direct call-to-action link to the evaluation form: `courses/{courseId}/projects/{projectCode}/assessments/{assessmentId}/teams/{teamId}/evaluate`.
+
 ---
 
 ## 4. Domain Rules & Invariants
@@ -165,6 +194,31 @@ The **Project Team Peer Assessments** feature enables:
   - When a user joins a `ProjectTeam`, for each existing `ProjectTeamAssessment` of that team where `!IsComplete && DateTime.UtcNow <= ProjectAssessment.DeadlineUtc`, the user is automatically added to `Peers` (`AddPeer(userId)`).
   - When a user leaves or is removed from a `ProjectTeam`, for each existing `ProjectTeamAssessment` of that team where `!IsComplete`, the user is automatically removed from `Peers` (`RemovePeer(userId)`) along with their `PeerAssessment` entries; completed assessments (`IsComplete == true`) are left untouched.
 - **DR-11 (Single Active Team Membership per Project)**: A student can only be an active member (`TeamUsers`) of **one** `ProjectTeam` within a project at any time. To join another team in the same project, the student must first leave (or be removed from) their current team.
+- **DR-12 (`MessageTracker` Aggregate & Invariants)**:
+  - `MessageTracker` inherits from `Entity` (implementing `IMessageTracker : IEntity`), where `Entity` defines `protected abstract IEnumerable<object> GetIdComponents()` for value-like component identity:
+    - Does **not** have an `Id` property; its identity is a natural composite key returned by `GetIdComponents()`: `(EntityType, EntityId, Email)`.
+    - `EntityType` (non-empty string, maximum 64 characters, e.g. `"PeerAssessment"`).
+    - `EntityId` (positive integer identifier, e.g. `ProjectAssessment.Id`).
+    - `Email` (`Email` Value Object, validated email address with max 256 characters).
+    - `Status` (`MessageStatus`: `Sending`, `Succeeded`, `Failed`).
+    - `CreatedAtUtc` (`DateTime`, UTC timestamp when the `MessageTracker` is created).
+    - `SentAtUtc` (`DateTime`, UTC timestamp when the status transitions to `Sending`).
+    - `RetryCount` (non-negative integer, maximum 3 retries).
+    - `FailureReason` (optional string, set when status transitions to `Failed`, always cleared on transition to `Sending` or `Succeeded`).
+  - Preconditions and state transitions:
+    - Factory / Creation: Requires non-empty `entityType` (length $\le 64$), positive `entityId`, non-null valid `email`, and UTC `nowUtc`. Initialized with `Status = MessageStatus.Sending`, `RetryCount = 0`, `SentAtUtc = nowUtc`, and `FailureReason = null`.
+    - `MarkSucceeded()`: Requires `Status == MessageStatus.Sending` (can only follow a `Sending` status). Transitions status to `MessageStatus.Succeeded` and clears `FailureReason` (`FailureReason = null`).
+    - `MarkFailed(string reason)`: Requires `Status == MessageStatus.Sending` (can only follow a `Sending` status). Transitions status to `MessageStatus.Failed`, increments `RetryCount` by 1, and sets `FailureReason = reason`.
+    - `Retry(DateTime sentAtUtc)`: Requires `CanRetry` (`Status == MessageStatus.Failed && RetryCount < 3`) and `sentAtUtc.Kind == DateTimeKind.Utc`. Transitions status to `MessageStatus.Sending`, updates `SentAtUtc = sentAtUtc`, and always clears `FailureReason` (`FailureReason = null`).
+    - Retry eligibility: Retrying is allowed strictly when `Status == MessageStatus.Failed && RetryCount < 3`.
+- **DR-13 (Peer Assessment Reminder Eligibility)**:
+  - A `ProjectAssessment` is eligible for dispatching deadline reminders strictly when all of the following hold at evaluation time `now`:
+    1. `OpenOnUtc <= now` (assessment is currently open)
+    2. `(DeadlineUtc - OpenOnUtc) >= TimeSpan.FromHours(48)` (total assessment window is 48 hours or longer)
+    3. `(DeadlineUtc - now) <= TimeSpan.FromHours(24) && now < DeadlineUtc` (remaining time until deadline is 24 hours or less, and deadline has not passed).
+  - A student is eligible to receive a reminder strictly when:
+    1. The student is a peer in an eligible assessment's team who still needs to evaluate others (`GetPeersThatNeedToEvaluateOthers()`).
+    2. No `MessageTracker` exists for `("PeerAssessment", assessment.Id, student.Email)` with `Status == MessageStatus.Succeeded` or `RetryCount >= 3`.
 
 ---
 
@@ -204,13 +258,18 @@ The **Project Team Peer Assessments** feature enables:
 | Member leaves a 2-person incomplete assessment where the remaining member already evaluated both | Member is removed from `Peers` and their `PeerAssessment` is deleted; 1 self-assessment remains ($N=1$), `IsComplete` stays `false` | `200 OK` |
 | Member leaves a 3-person incomplete assessment where the remaining 2 members already evaluated everyone | Member is removed from `Peers` and their `PeerAssessment` entries are deleted; remaining $2 \times 2 = 4$ evaluations auto-complete the assessment (`IsComplete == true`) | `200 OK` |
 | Unknown `projectAssessmentId` or `teamId` when creating team assessment | `DataNotFoundException` caught and rethrown as `ContractException` | `400 Bad Request` |
+| Assessment total window `< 48 hours` | No reminders dispatched (assessment is excluded per `DR-13`) | N/A (Background Service) |
+| Team has not visited portal prior to 24h deadline window | `GetOrCreateTeamAssessmentAsync` auto-provisions `ProjectTeamAssessment`, evaluating all team members | N/A (Background Service) |
+| Student completes evaluation before 24h window or between 2-hour runs | Student is excluded from `GetPeersThatNeedToEvaluateOthers()`, no reminder sent | N/A (Background Service) |
+| Outgoing email delivery fails | `MessageTracker` status marked as `Failed`, `RetryCount` incremented by 1 | N/A (Background Service) |
+| Outgoing email delivery fails 3 times | `RetryCount == 3`, no further retries attempted on subsequent runs | N/A (Background Service) |
+| Background service restarts or executes multiple cycles in final 24 hours | Existing `MessageTracker` in `Succeeded` status prevents duplicate emails | N/A (Background Service) |
 
 ---
 
 ## 7. Out of Scope
 
 - Direct automatic synchronization of peer assessment scores into external course grading systems (handled separately via score administration).
-- Email/notification reminders for pending peer assessments.
 
 ---
 

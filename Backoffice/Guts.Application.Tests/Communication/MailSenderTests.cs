@@ -46,7 +46,7 @@ public class MailSenderTests
         _mailSender.SendConfirmUserEmailMessageAsync(_user, confirmationToken).Wait();
 
         //Assert
-        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
             VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), confirmationToken))), Times.Once);
     }
 
@@ -60,7 +60,7 @@ public class MailSenderTests
         _mailSender.SendForgotPasswordMessageAsync(_user, forgotPasswordToken).Wait();
 
         //Assert
-        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) => 
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
             VerifyMailMessage(message, _fromEmail, _webAppBaseUrl, _user.Id.ToString(), forgotPasswordToken))), Times.Once);
     }
 
@@ -136,6 +136,73 @@ public class MailSenderTests
         //Assert
         _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
             !message.Body.Contains("overtaking", StringComparison.OrdinalIgnoreCase))), Times.Once);
+    }
+
+    [Test]
+    public async Task SendPeerAssessmentReminderEmailAsync_ShouldSendFormattedHtmlEmailWithDirectLink()
+    {
+        // Arrange
+        string courseName = ".NET Framework";
+        int courseId = 5;
+        string projectCode = "project-case";
+        string projectDescription = "Awesome Project";
+        int teamId = 12;
+
+        var assessmentMock = new Mock<Guts.Domain.TopicAggregate.ProjectAggregate.IProjectAssessment>();
+        assessmentMock.SetupGet(a => a.Id).Returns(99);
+        assessmentMock.SetupGet(a => a.Description).Returns("Sprint 2 Peer Review");
+        assessmentMock.SetupGet(a => a.DeadlineUtc).Returns(new DateTime(2026, 11, 15, 22, 0, 0, DateTimeKind.Utc));
+
+        // Act
+        await _mailSender.SendPeerAssessmentReminderEmailAsync(
+            _user,
+            courseName,
+            courseId,
+            projectCode,
+            projectDescription,
+            assessmentMock.Object,
+            teamId);
+
+        // Assert
+        string expectedLink = "http://someWebAppUrl.com/courses/5/projects/project-case/assessments/99/teams/12/evaluate";
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
+            message.Subject.Contains("Sprint 2 Peer Review") &&
+            message.To.Any(t => t.Address == _user.Email) &&
+            message.IsBodyHtml &&
+            VerifyMailMessage(
+                message,
+                _fromEmail,
+                "Alice",
+                "Sprint 2 Peer Review",
+                "Awesome Project",
+                ".NET Framework",
+                "2026-11-15 22:00 UTC",
+                expectedLink))), Times.Once);
+    }
+
+    [Test]
+    public async Task SendPeerAssessmentReminderEmailAsync_WhenRecipientFirstNameIsEmpty_ShouldFallbackToStudentGreeting()
+    {
+        // Arrange
+        _user.FirstName = null;
+        var assessmentMock = new Mock<Guts.Domain.TopicAggregate.ProjectAggregate.IProjectAssessment>();
+        assessmentMock.SetupGet(a => a.Id).Returns(1);
+        assessmentMock.SetupGet(a => a.Description).Returns("Peer Review");
+        assessmentMock.SetupGet(a => a.DeadlineUtc).Returns(DateTime.UtcNow.AddHours(10));
+
+        // Act
+        await _mailSender.SendPeerAssessmentReminderEmailAsync(
+            _user,
+            "Course",
+            1,
+            "code",
+            "Project",
+            assessmentMock.Object,
+            1);
+
+        // Assert
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
+            message.Body.Contains("Dear student", StringComparison.OrdinalIgnoreCase))), Times.Once);
     }
 
     private static bool VerifyMailMessage(MailMessage message, string fromEmail, params string[] bodyParts)

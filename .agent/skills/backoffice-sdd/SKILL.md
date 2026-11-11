@@ -23,15 +23,15 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
 ### Phase 1: Specify (`spec.md`)
 1. Check existing folders in `Backoffice/specs/` to determine the next `NNN` number.
 2. Read `Backoffice/specs/_templates/spec.md`.
-3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology (`PeriodAggregate`, `CourseAggregate`, `Chapter`, `Project`, `Assignment`, `TestAggregate`, `TestRunAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`).
-4. If any requirements, permissions, or edge cases are ambiguous, ask the user clarifying questions before finalizing `spec.md`.
+3. Explore relevant existing domain aggregates in `Backoffice/Guts.Domain/` and controllers in `Backoffice/Guts.Api/` so the specification uses accurate GUTS domain terminology.
+4. If any requirements, permissions, or edge cases are ambiguous, ask the user clarifying questions before finalizing `spec.md`. Don't make assumptions.
 5. Pause and ask the user to review `spec.md` before moving to Phase 2.
 
 ### Phase 2: Technical Design (`design.md`)
 1. Read the approved `spec.md` and `Backoffice/specs/_templates/design.md`.
 2. Inspect the affected files in `Guts.Domain`, `Guts.Application`, `Guts.Infrastructure`, `Guts.Api`, and `Guts.Web/ClientApp`.
 3. Ensure the design adheres strictly to [`Backoffice/AGENTS.md`](../../../Backoffice/AGENTS.md):
-   - All business rules and state transitions belong in `Guts.Domain` (enforced via `Contracts.Require(...)` from `Guts.Common`).
+   - All business rules and state transitions belong in `Guts.Domain`. Use the DDD principles described by Eric Evans to design the domain model.
    - `Guts.Application` contains strictly use-case orchestration and zero domain logic.
    - Object creation uses `I*Factory` where appropriate.
    - Naming conventions match `Guts.Bootstrapper/StartUpExtensions.cs` for automatic DI registration.

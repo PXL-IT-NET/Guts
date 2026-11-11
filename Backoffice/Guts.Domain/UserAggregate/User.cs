@@ -18,6 +18,8 @@ public class User : IdentityUser<int>, IEntity, IEquatable<User>
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 
+    public object[] IdentityValues => [Id];
+
     public virtual ICollection<ProjectTeamUser> TeamUsers { get; set; } = new HashSet<ProjectTeamUser>();
 
     public override bool Equals(object obj)

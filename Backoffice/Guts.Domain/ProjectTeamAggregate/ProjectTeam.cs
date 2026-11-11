@@ -9,6 +9,8 @@ namespace Guts.Domain.ProjectTeamAggregate;
 
 public class ProjectTeam : AggregateRoot, IProjectTeam
 {
+    public int Id { get; set; }
+
     private string _name;
 
     public string Name
@@ -73,5 +75,10 @@ public class ProjectTeam : AggregateRoot, IProjectTeam
     {
         Contracts.Require(Project != null && Project.CourseId == courseId, $"Team with id '{Id}' is not linked to course with id '{courseId}'");
         Contracts.Require(string.Equals((string)Project.Code, projectCode, StringComparison.OrdinalIgnoreCase), $"Team with id '{Id}' is not linked to project with code '{projectCode}'");
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

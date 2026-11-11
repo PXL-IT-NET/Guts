@@ -7,6 +7,8 @@ namespace Guts.Domain.TestAggregate;
 
 public class Test : AggregateRoot
 {
+    public int Id { get; set; }
+
     [Required]
     public string TestName { get; set; }
 
@@ -14,4 +16,9 @@ public class Test : AggregateRoot
     public int AssignmentId { get; set; }
 
     public virtual ICollection<TestResult> Results { get; set; } = new HashSet<TestResult>();
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
+    }
 }

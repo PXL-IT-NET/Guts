@@ -12,6 +12,8 @@ namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class StudentCourseProfile : AggregateRoot
 {
+    public int Id { get; set; }
+
     private readonly HashSet<StudentBadge> _badges = [];
     private readonly HashSet<GamificationEvent> _events = [];
 
@@ -557,5 +559,10 @@ public class StudentCourseProfile : AggregateRoot
         {
             return new StudentCourseProfile(userId, courseId, periodId);
         }
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

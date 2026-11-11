@@ -353,6 +353,26 @@ public class StreakReminderServiceTests
     }
 
     [Test]
+    public void Constructor_WithMailThrottler_ShouldUseProvidedThrottler()
+    {
+        var throttlerMock = new Mock<IMailThrottler>();
+        throttlerMock.SetupGet(t => t.ThrottleDelay).Returns(TimeSpan.FromSeconds(3));
+
+        var service = new StreakReminderService(
+            _periodRepositoryMock.Object,
+            _courseRepositoryMock.Object,
+            _configRepositoryMock.Object,
+            _topicRepositoryMock.Object,
+            _profileRepositoryMock.Object,
+            _userRepositoryMock.Object,
+            _mailSenderMock.Object,
+            throttlerMock.Object,
+            _loggerMock.Object);
+
+        Assert.That(service.ThrottleDelay, Is.EqualTo(TimeSpan.FromSeconds(3)));
+    }
+
+    [Test]
     [TestCase(false, true, "Config null")]
     [TestCase(true, false, "Gamification disabled")]
     [TestCase(true, true, "Weekly streak disabled")]

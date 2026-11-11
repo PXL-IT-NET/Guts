@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Guts.Common;
 using Guts.Domain.UserAggregate;
 using Guts.Domain.ValueObjects;
@@ -6,6 +7,7 @@ namespace Guts.Domain.ProjectTeamAssessmentAggregate;
 
 internal class PeerAssessment : Entity, IPeerAssessment
 {
+    public int Id { get; protected internal set; }
     public int ProjectTeamAssessmentId { get; private set; }
 
     public User User { get; private set; }
@@ -56,5 +58,10 @@ internal class PeerAssessment : Entity, IPeerAssessment
         ContributionScore = contributionScore;
         EffortScore = effortScore;
         Explanation = explanation;
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

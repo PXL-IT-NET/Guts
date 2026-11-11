@@ -12,4 +12,5 @@ public interface IProjectRepository : IBasicRepository<IProject>
     Task<IReadOnlyList<IProject>> GetByCourseIdAsync(int courseId, int periodId);
     Task<IProject> LoadWithAssignmentsAndTeamsAsync(int courseId, Code projectCode, int periodId);
     Task<IProject> LoadWithAssignmentsAndTeamsOfUserAsync(int courseId, Code projectCode, int periodId, int userId);
+    Task<IProject> LoadWithCourseAsync(int projectId);
 }

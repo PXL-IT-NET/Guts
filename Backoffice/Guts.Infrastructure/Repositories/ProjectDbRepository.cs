@@ -77,4 +77,18 @@ internal class ProjectDbRepository : BaseDbRepository<IProject, Project>, IProje
 
         return project;
     }
+
+    public async Task<IProject> LoadWithCourseAsync(int projectId)
+    {
+        var project = await _context.Projects
+            .Include(p => p.Course)
+            .FirstOrDefaultAsync(p => p.Id == projectId);
+
+        if (project == null)
+        {
+            throw new DataNotFoundException();
+        }
+
+        return project;
+    }
 }

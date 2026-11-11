@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-The Peer Assessments feature spans four domain aggregates/value-object clusters (`ProjectAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, and `AssessmentResultAggregate`), orchestrated by `ProjectTeamAssessmentService` and `ProjectService`, persisted via EF Core repositories, and exposed through two REST controllers (`ProjectAssessmentController` and `ProjectTeamAssessmentController`) plus `ProjectTeamController`, consumed by the Angular SPA.
+The Peer Assessments feature spans five domain aggregates/value-object clusters (`ProjectAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, `AssessmentResultAggregate`, and `MessageTrackerAggregate`), orchestrated by `ProjectTeamAssessmentService`, `ProjectService`, and `PeerAssessmentReminderService`, persisted via EF Core repositories, and exposed through REST controllers plus a dedicated background service (`PeerAssessmentReminderBackgroundService`), consumed by the Angular SPA and email notifications.
 
 ```mermaid
 flowchart TD
@@ -27,6 +27,18 @@ flowchart TD
     PTAF --> PTA["ProjectTeamAssessment (AggregateRoot)"]
     PTA --> PA["PeerAssessment (Entity)"]
     ARF --> AR["AssessmentResult & AssessmentSubResult"]
+
+    PARBS["PeerAssessmentReminderBackgroundService (Guts.Api)"] --> PARS["PeerAssessmentReminderService (Guts.Application)"]
+    PARS --> PAR["IProjectAssessmentRepository"]
+    PARS --> PR["IProjectRepository"]
+    PARS --> PTR
+    PARS --> PTAS
+    PARS --> MTR["IMessageTrackerRepository"]
+    PARS --> MTF["IMessageTrackerFactory"]
+    PARS --> MS["IMailSender"]
+    PARS --> MT["IMailThrottler"]
+    MTF --> MTA["MessageTracker (AggregateRoot)"]
+    PARS --> PARP["PeerAssessmentReminderPolicy (Domain Policy)"]
 ```
 
 ---
@@ -78,6 +90,56 @@ flowchart TD
      - When `includePeerAssessments == false` (Student requesting `/my-result`): requires `subjectId` to be a current member of `projectTeamAssessment.Team.TeamUsers` (`projectTeamAssessment.Team.GetTeamUser(subjectId)`) AND a peer in `projectTeamAssessment.Peers` (`projectTeamAssessment.GetPeer(subjectId)`), preventing removed team members from accessing team results.
      - When `includePeerAssessments == true` (Teacher requesting `/detailed-results`): resolves `User subject = projectTeamAssessment.GetPeer(subjectId)`, allowing results to be generated for all peers in `projectTeamAssessment.Peers` (including members later removed from `Team.TeamUsers`).
 
+6. **`MessageTracker` & `IMessageTracker` (`Guts.Domain/MessageTrackerAggregate/`)** (`[DR-12]`, `[AC-11]`)
+   - `MessageTracker` inherits from `Entity` and implements `IMessageTracker : IEntity`, representing delivery tracking and idempotency for outgoing automated messages.
+   - Identified by its composite identity via `GetIdComponents()`: `(EntityType, EntityId, Email)` (no surrogate `Id` property).
+   - **Properties**:
+     - `string EntityType { get; }` (max 64 characters, e.g. `"PeerAssessment"`)
+     - `int EntityId { get; }` (e.g. `ProjectAssessment.Id`)
+     - `Email Email { get; }` (`Email` Value Object)
+     - `MessageStatus Status { get; }` (`Sending`, `Succeeded`, `Failed`)
+     - `DateTime CreatedAtUtc { get; }`
+     - `DateTime SentAtUtc { get; }`
+     - `int RetryCount { get; }` (defaults to `0`, max `3`)
+     - `string FailureReason { get; }` (optional error detail)
+     - `bool CanRetry => Status == MessageStatus.Failed && RetryCount < 3;`
+   - **Invariants (`Contracts.Require`)**:
+     - Non-empty `EntityType` (trimmed, max 64 characters) and non-null `Email`.
+     - Positive `EntityId`.
+     - `DateTimeKind.Utc` on all date properties.
+   - **State Transitions**:
+     - `void MarkSucceeded()`:
+       - Enforces `Contracts.Require(Status == MessageStatus.Sending, "MarkSucceeded can only follow a Sending status.");`.
+       - Sets `Status = MessageStatus.Succeeded` and clears `FailureReason` (`FailureReason = null`).
+     - `void MarkFailed(string reason)`:
+       - Enforces `Contracts.Require(Status == MessageStatus.Sending, "MarkFailed can only follow a Sending status.");`.
+       - Sets `Status = MessageStatus.Failed`, increments `RetryCount` by 1, and sets `FailureReason = reason`.
+     - `void Retry(DateTime sentAtUtc)`:
+       - Enforces `Contracts.Require(CanRetry, "Cannot retry this message because it is not in a failed state or the maximum retry count has been reached.");`.
+       - Enforces `Contracts.Require(sentAtUtc.Kind == DateTimeKind.Utc, "The retry timestamp must be a UTC date.");`.
+       - Transitions `Status` back to `MessageStatus.Sending`, updates `SentAtUtc = sentAtUtc`, and always clears `FailureReason` (`FailureReason = null`).
+
+7. **`MessageStatus` (`Guts.Domain/MessageTrackerAggregate/MessageStatus.cs`)**
+   - Enum: `Sending = 1`, `Succeeded = 2`, `Failed = 3`.
+
+8. **`MessageTrackerFactory` & `IMessageTrackerFactory` (`Guts.Domain/MessageTrackerAggregate/`)**
+   - `IMessageTracker CreateNew(string entityType, int entityId, Email email, DateTime nowUtc)`:
+     - Validates parameters via `Contracts.Require`.
+     - Instantiates `MessageTracker` with `Status = MessageStatus.Sending`, `CreatedAtUtc = nowUtc`, `SentAtUtc = nowUtc`, `RetryCount = 0`, `FailureReason = null`.
+
+9. **`PeerAssessmentReminderPolicy` (`Guts.Domain/TopicAggregate/ProjectAggregate/PeerAssessmentReminderPolicy.cs`)** (`[DR-13]`, `[AC-10]`)
+   - Pure static domain policy evaluating assessment eligibility:
+     ```csharp
+     public static bool IsAssessmentEligibleForReminders(IProjectAssessment assessment, DateTime nowUtc)
+     {
+         if (assessment == null) return false;
+         bool isOpen = assessment.OpenOnUtc <= nowUtc && nowUtc < assessment.DeadlineUtc;
+         bool hasMinimumDuration = (assessment.DeadlineUtc - assessment.OpenOnUtc) >= TimeSpan.FromHours(48);
+         bool isWithinFinal24Hours = (assessment.DeadlineUtc - nowUtc) <= TimeSpan.FromHours(24);
+         return isOpen && hasMinimumDuration && isWithinFinal24Hours;
+     }
+     ```
+
 ---
 
 ## 3. Business Layer (`Guts.Application`)
@@ -85,8 +147,16 @@ flowchart TD
 ### Repository Contracts (`Guts.Application/Repositories/`)
 - `IProjectAssessmentRepository`:
   - `Task<IReadOnlyList<IProjectAssessment>> FindByProjectIdAsync(int projectId);`
+  - `Task<IReadOnlyList<IProjectAssessment>> GetOpenAssessmentsAsync(DateTime nowUtc);`
+- `IProjectRepository`:
+  - `Task<IProject> LoadWithCourseAsync(int projectId);`
 - `IProjectTeamAssessmentRepository`:
   - `Task<IProjectTeamAssessment> LoadAsync(int projectAssessmentId, int teamId);`
+- `IMessageTrackerRepository`:
+  - `Task<IMessageTracker> FindByEntityAndEmailAsync(string entityType, int entityId, string email);`
+  - `Task<IReadOnlyList<IMessageTracker>> FindByEntityAsync(string entityType, int entityId);`
+  - `Task<IMessageTracker> AddAsync(IMessageTracker messageTracker);`
+  - `Task<IMessageTracker> UpdateAsync(IMessageTracker messageTracker);`
 
 ### Application Services (`Guts.Application/Services/`)
 - **`IProjectTeamAssessmentService` / `ProjectTeamAssessmentService`** (`Guts.Application/Services/Assessment/`):
@@ -97,10 +167,41 @@ flowchart TD
   - `GetResultForStudent(projectAssessmentId, teamId, userId)` — Invokes `assessmentResultFactory.Create(userId, teamAssessment, false)`.
   - `GetPeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId)` — Concatenates stored and missing `IPeerAssessment` records for the user.
   - `SavePeerAssessmentsOfUserAsync(projectAssessmentId, teamId, userId, peerAssessments)` — Applies each `PeerAssessmentDto`, invokes `ValidateAssessmentsOf(userId)`, and persists via `repository.UpdateAsync(...)`.
-  - **New Method**: `Task SetPeerInclusionAsync(int projectAssessmentId, int teamId, int userId, bool isIncluded)` (`[AC-9]`):
+  - `Task SetPeerInclusionAsync(int projectAssessmentId, int teamId, int userId, bool isIncluded)` (`[AC-9]`):
     - Loads (or creates) the `ProjectTeamAssessment` via `GetOrCreateTeamAssessmentAsync(projectAssessmentId, teamId)`.
     - Calls `teamAssessment.SetPeerInclusion(userId, isIncluded)`.
     - Persists changes via `repository.UpdateAsync(teamAssessment)`.
+- **`IPeerAssessmentReminderService` / `PeerAssessmentReminderService`** (`Guts.Application/Services/Assessment/`) (`[AC-10]`, `[AC-11]`, `[AC-13]`):
+  - `Task<int> SendAssessmentRemindersAsync(DateTime executionTime, CancellationToken cancellationToken = default)`:
+    - Loads open assessments via `_projectAssessmentRepository.GetOpenAssessmentsAsync(executionTime)`.
+    - Filters assessments matching `PeerAssessmentReminderPolicy.IsAssessmentEligibleForReminders(assessment, executionTime)`.
+    - For each eligible assessment:
+      - Loads project and course via `_projectRepository.LoadWithCourseAsync(assessment.ProjectId)`.
+      - Loads project teams via `_projectTeamRepository.GetByProjectWithUsersAsync(project.Id)`.
+      - For each team with members:
+        - Ensures team assessment is provisioned via `_projectTeamAssessmentService.GetOrCreateTeamAssessmentAsync(assessment.Id, team.Id)`.
+        - Retrieves peers with pending evaluations via `teamAssessment.GetPeersThatNeedToEvaluateOthers()`.
+        - For each peer with a valid email:
+          - Queries `_messageTrackerRepository.FindByEntityAndEmailAsync("PeerAssessment", assessment.Id, peer.Email)`.
+          - Skips if `tracker.Status == MessageStatus.Succeeded` or `tracker.RetryCount >= 3`.
+          - If tracker exists and `tracker.CanRetry`:
+            - Invokes `tracker.Retry(executionTime)` to transition status to `Sending` and persists update via `_messageTrackerRepository.UpdateAsync(tracker)`.
+          - If tracker does not exist:
+            - Creates new `MessageTracker` via `_messageTrackerFactory.CreateNew(...)` in `Sending` state and persists via `_messageTrackerRepository.AddAsync(...)`.
+          - Dispatches email via `_mailSender.SendPeerAssessmentReminderEmailAsync(...)`.
+          - On success: invokes `tracker.MarkSucceeded()`, updates repository, and increments sent counter.
+          - On failure: logs error, invokes `tracker.MarkFailed(ex.Message)`, and updates repository.
+          - Delays between outgoing messages via `_mailThrottler.ThrottleAsync(cancellationToken)`.
+    - Returns total count of successfully sent reminders.
+
+### Communication & Anti-Spam Throttling (`Guts.Application/Communication/`)
+- **`IMailThrottler` / `MailThrottler`** (`[AC-12]`):
+  - Decoupled rate-limiting component defining `TimeSpan ThrottleDelay { get; set; }` and `Task ThrottleAsync(CancellationToken cancellationToken = default);`.
+  - Configured via `Mail:ThrottleDelayInSeconds` (default: 1 second).
+  - Used by both `StreakReminderService` and `PeerAssessmentReminderService` to guarantee consistent pacing without code duplication.
+- **`IMailSender` / `MailSender`** (`[AC-13]`):
+  - Extended with `Task SendPeerAssessmentReminderEmailAsync(User recipient, string courseName, int courseId, string projectCode, string projectDescription, IProjectAssessment assessment, int teamId)`.
+  - Formats HTML email containing recipient greeting, project description, assessment description, UTC deadline, and direct link to `courses/{courseId}/projects/{projectCode}/assessments/{assessment.Id}/teams/{teamId}/evaluate`.
 
 ### DTOs (`Guts.Application/Dtos/`)
 - `ProjectTeamAssessmentStatusDto`:
@@ -123,10 +224,34 @@ flowchart TD
             j => j.HasOne<ProjectTeamAssessment>().WithMany().HasForeignKey("ProjectTeamAssessmentId").OnDelete(DeleteBehavior.Cascade));
     builder.Metadata.FindNavigation(nameof(ProjectTeamAssessment.Peers)).SetPropertyAccessMode(PropertyAccessMode.Field);
     ```
+- **`MessageTrackerConfiguration` (`Guts.Infrastructure/EntityConfigurations/MessageTrackerConfiguration.cs`)** (`[DR-12]`, `[AC-11]`):
+  - Internal entity configuration mapping `MessageTracker` aggregate to table `MessageTrackers`:
+    - Composite primary key: `builder.HasKey(mt => new { mt.EntityType, mt.EntityId, mt.Email });`
+    - Column constraints:
+      - `builder.Property(mt => mt.EntityType).IsRequired().HasMaxLength(MessageTracker.MaxEntityTypeLength);` (64 characters)
+      - `builder.Property(mt => mt.EntityId).IsRequired();`
+      - `builder.Property(mt => mt.Email).IsRequired().HasMaxLength(Email.MaxLength).HasConversion(e => e.ToString(), str => new Email(str));` (256 characters)
+      - `builder.Property(mt => mt.Status).IsRequired();`
+      - `builder.Property(mt => mt.CreatedAtUtc).IsRequired();`
+      - `builder.Property(mt => mt.SentAtUtc).IsRequired();`
+      - `builder.Property(mt => mt.RetryCount).IsRequired();`
+      - `builder.Property(mt => mt.FailureReason).HasMaxLength(1024);`
 - **Migration Required?**: `Yes`
-  - Migration creates the `ProjectTeamAssessmentPeers` join table (`ProjectTeamAssessmentId`, `UserId`) and executes a data migration SQL statement in `Up(...)` to populate `ProjectTeamAssessmentPeers` for all existing `ProjectTeamAssessments` (selecting distinct `(ProjectTeamAssessmentId, UserId)` pairs from the assessment's `ProjectTeamUsers` and stored `PeerAssessments`).
+  - 1. `ProjectTeamAssessmentPeers` migration (creates join table for peer collections).
+  - 2. `AddMessageTrackers` migration (creates `MessageTrackers` table with composite primary key).
 
 ### Repository Implementations (`Guts.Infrastructure/Repositories/`)
+- **`MessageTrackerDbRepository`** (`Guts.Infrastructure/Repositories/MessageTrackerDbRepository.cs`):
+  - Internal class inheriting `BaseDbRepository<IMessageTracker, MessageTracker>` and implementing `IMessageTrackerRepository`:
+    - `FindByEntityAndEmailAsync(string entityType, int entityId, Email email)`: queries `_context.MessageTrackers.FirstOrDefaultAsync(...)`.
+    - `FindByEntityAsync(string entityType, int entityId)`: queries `_context.MessageTrackers.Where(...).ToListAsync()`.
+    - Inherits `GetByIdAsync(params object[] idValues)`, `AddAsync`, `UpdateAsync`, etc., from `BaseDbRepository`.
+- **`ProjectAssessmentDbRepository`**:
+  - Extended with `GetOpenAssessmentsAsync(DateTime nowUtc)`:
+    - Queries `_context.Set<ProjectAssessment>().Where(pa => pa.OpenOnUtc <= nowUtc && pa.DeadlineUtc > nowUtc).ToListAsync()`.
+- **`ProjectDbRepository`**:
+  - Extended with `LoadWithCourseAsync(int projectId)`:
+    - Queries `_context.Projects.Include(p => p.Course).FirstOrDefaultAsync(p => p.Id == projectId)`.
 - **`ProjectTeamAssessmentDbRepository`**:
   - `LoadAsync(projectAssessmentId, teamId)` eagerly loads:
     - `Team.TeamUsers` -> `ThenInclude(tu => tu.User)`
@@ -149,7 +274,7 @@ flowchart TD
 
 ---
 
-## 5. API Layer (`Guts.Api`)
+## 5. API & Background Services Layer (`Guts.Api`)
 
 ### REST Endpoints (`Guts.Api/Controllers/`)
 
@@ -162,10 +287,27 @@ flowchart TD
    - `POST of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peer-assessments` — Save current user's peer evaluations.
    - `GET of-project-assessment/{projectAssessmentId}/of-team/{teamId}/detailed-results` (`LectorsOnlyPolicy`) — Get full team assessment results including individual peer evaluations.
    - `GET of-project-assessment/{projectAssessmentId}/of-team/{teamId}/my-result` — Get current student's summary result.
-   - **New Endpoint** (`[AC-9]`):
-     - `PUT of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peers/{userId}/inclusion` (`[Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]`)
+   - `PUT of-project-assessment/{projectAssessmentId}/of-team/{teamId}/peers/{userId}/inclusion` (`[Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]`) (`[AC-9]`):
      - Request Body: `[FromBody] bool isIncluded`
      - Calls `projectTeamAssessmentService.SetPeerInclusionAsync(projectAssessmentId, teamId, userId, isIncluded)` and returns `200 OK`.
+
+### Background Services (`Guts.Api/BackgroundServices/`)
+- **`PeerAssessmentReminderBackgroundService`** (`[AC-10]`):
+  - Inherits from `Microsoft.Extensions.Hosting.BackgroundService`.
+  - Constructor injects `IServiceScopeFactory`, `IConfiguration`, `ILogger<PeerAssessmentReminderBackgroundService>`, and optional `TimeProvider`.
+  - Reads check interval from configuration: `Configuration.GetValue<int>("PeerAssessmentReminders:CheckIntervalInHours", 2)`.
+  - While running, awaits the delay interval, creates a service scope, resolves `IPeerAssessmentReminderService`, and executes `SendAssessmentRemindersAsync(executionTime, stoppingToken)`.
+- **Hosted Service Registration (`Guts.Api/Startup.cs`)**:
+  - `services.AddHostedService<PeerAssessmentReminderBackgroundService>();`
+- **Configuration (`Guts.Api/appsettings.json`)**:
+  ```json
+  "PeerAssessmentReminders": {
+    "CheckIntervalInHours": 2
+  },
+  "Mail": {
+    "ThrottleDelayInSeconds": 1
+  }
+  ```
 
 ---
 
@@ -188,4 +330,9 @@ flowchart TD
 
 ## 7. Dependency Injection (`Guts.Bootstrapper`)
 
-- All modified and existing Factories (`*Factory`), Services (`*Service`), Repositories (`*Repository`), and Converters (`*Converter`) follow the naming conventions in `StartUpExtensions.cs` and are automatically registered in the DI container.
+- **Explicit Registrations (`Guts.Bootstrapper/StartUpExtensions.cs`)**:
+  - `IMailThrottler`: registered as a singleton or scoped service reading `Mail:ThrottleDelayInSeconds` from `IConfiguration`.
+- **Automatic Registrations (Convention-Based via `StartUpExtensions.cs`)**:
+  - `MessageTrackerFactory` implements `IMessageTrackerFactory` in `Guts.Domain` (ends with `Factory` ➔ Singleton).
+  - `PeerAssessmentReminderService` implements `IPeerAssessmentReminderService` in `Guts.Application` (ends with `Service` ➔ Scoped).
+  - `MessageTrackerDbRepository` implements `IMessageTrackerRepository` in `Guts.Infrastructure` (ends with `Repository` ➔ Scoped).

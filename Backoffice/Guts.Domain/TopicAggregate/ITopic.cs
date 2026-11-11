@@ -8,6 +8,7 @@ namespace Guts.Domain.TopicAggregate;
 
 public interface ITopic : IEntity
 {
+    int Id { get; }
     ICollection<Assignment> Assignments { get; set; }
     Code Code { get; }
     Course Course { get; }

@@ -13,6 +13,8 @@ public class Role : IdentityRole<int>, IEntity, IEquatable<Role>
         public const string Lector = "lector";
     }
 
+    public object[] IdentityValues => [Id];
+
     public override bool Equals(object obj)
     {
         return Equals(obj as Role);
