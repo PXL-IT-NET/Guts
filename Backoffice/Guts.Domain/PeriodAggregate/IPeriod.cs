@@ -5,6 +5,7 @@ namespace Guts.Domain.PeriodAggregate;
 
 public interface IPeriod : IEntity
 {
+    int Id { get; }
     string Description { get; set; }
     DateTime From { get; }
     DateTime Until { get; }

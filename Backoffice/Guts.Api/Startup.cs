@@ -118,6 +118,7 @@ public class Startup(IConfiguration configuration)
         services.AddApplicationServices(Configuration);
         services.AddHostedService<SprintLeaderboardBackgroundService>();
         services.AddHostedService<StreakReminderBackgroundService>();
+        services.AddHostedService<PeerAssessmentReminderBackgroundService>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

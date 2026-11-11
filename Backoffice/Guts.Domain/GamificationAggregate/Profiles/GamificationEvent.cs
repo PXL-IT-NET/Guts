@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Guts.Common;
 
 namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class GamificationEvent : Entity
 {
+    public int Id { get; internal set; }
     public int StudentCourseProfileId { get; internal set; }
     public StudentCourseProfile StudentCourseProfile { get; internal set; }
 
@@ -25,5 +27,10 @@ public class GamificationEvent : Entity
         TargetId = targetId;
         XpEarned = xpEarned;
         CreatedAt = createdAt;
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

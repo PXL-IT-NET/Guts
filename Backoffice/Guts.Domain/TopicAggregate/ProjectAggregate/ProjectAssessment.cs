@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Guts.Common;
 
 namespace Guts.Domain.TopicAggregate.ProjectAggregate;
 
 internal class ProjectAssessment : Entity, IProjectAssessment
 {
+    public int Id { get; protected internal set; }
     public int ProjectId { get; private set; }
     public string Description { get; private set; }
 
@@ -28,6 +30,11 @@ internal class ProjectAssessment : Entity, IProjectAssessment
         Contracts.Require(OpenOnUtc.Kind == DateTimeKind.Utc, "The opening date must be a UTC date.");
         Contracts.Require(OpenOnUtc < DeadlineUtc, "The deadline date cannot be before the opening date.");
         Contracts.Require(DeadlineUtc.Kind == DateTimeKind.Utc, "The deadline date must be a UTC date.");
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 
     public class Factory : IProjectAssessmentFactory

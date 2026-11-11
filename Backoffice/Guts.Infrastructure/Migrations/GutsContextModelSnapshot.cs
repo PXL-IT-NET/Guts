@@ -322,6 +322,40 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("LoginSessions");
                 });
 
+            modelBuilder.Entity("Guts.Domain.MessageTrackerAggregate.MessageTracker", b =>
+                {
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("EntityType", "EntityId", "Email");
+
+                    b.ToTable("MessageTrackers", (string)null);
+                });
+
             modelBuilder.Entity("Guts.Domain.PeriodAggregate.Period", b =>
                 {
                     b.Property<int>("Id")

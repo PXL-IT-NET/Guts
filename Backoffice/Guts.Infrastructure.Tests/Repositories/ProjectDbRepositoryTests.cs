@@ -84,4 +84,28 @@ internal class ProjectDbRepositoryTests : RepositoryTestsBase
         await Assert.ThatAsync(async () => await repo.LoadWithAssignmentsAndTeamsOfUserAsync(_courseId, "Missing", _periodId, _user1Id),
             Throws.InstanceOf<DataNotFoundException>());
     }
+
+    [Test]
+    public async Task LoadWithCourseAsync_WhenProjectExists_ShouldReturnProjectWithCourse()
+    {
+        await using var context = CreateDbContext();
+        var repo = new ProjectDbRepository(context);
+
+        var existingProject = await repo.GetSingleAsync(_courseCode, "Proj1", _periodId);
+        var loaded = await repo.LoadWithCourseAsync(existingProject.Id);
+
+        Assert.That(loaded, Is.Not.Null);
+        Assert.That(loaded.Course, Is.Not.Null);
+        Assert.That(loaded.Course.Code, Is.EqualTo(_courseCode));
+    }
+
+    [Test]
+    public async Task LoadWithCourseAsync_WhenProjectDoesNotExist_ShouldThrowDataNotFoundException()
+    {
+        await using var context = CreateDbContext();
+        var repo = new ProjectDbRepository(context);
+
+        await Assert.ThatAsync(async () => await repo.LoadWithCourseAsync(-999),
+            Throws.InstanceOf<DataNotFoundException>());
+    }
 }

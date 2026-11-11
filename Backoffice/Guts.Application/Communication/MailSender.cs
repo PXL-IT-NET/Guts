@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Guts.Application.Dtos.Gamification;
+using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 
 namespace Guts.Application.Communication;
@@ -86,6 +87,43 @@ internal class MailSender(ISmtpClient smtpClient, string fromEmail, string webAp
             IsBodyHtml = true
         };
         message.To.Add(new MailAddress(user.Email));
+
+        await smtpClient.SendMailAsync(message);
+    }
+
+    public async Task SendPeerAssessmentReminderEmailAsync(
+        User recipient,
+        string courseName,
+        int courseId,
+        string projectCode,
+        string projectDescription,
+        IProjectAssessment assessment,
+        int teamId)
+    {
+        var subject = $"Reminder: Peer assessment '{assessment.Description}' deadline approaching";
+        string greetingName = !string.IsNullOrWhiteSpace(recipient.FirstName) ? recipient.FirstName : "student";
+        var evaluateUri = new Uri(_webAppBaseUri, $"courses/{courseId}/projects/{projectCode}/assessments/{assessment.Id}/teams/{teamId}/evaluate");
+
+        var bodyBuilder = new StringBuilder();
+        bodyBuilder.AppendLine("<html><body>");
+        bodyBuilder.AppendLine("<p>");
+        bodyBuilder.AppendLine($"Dear {greetingName},<br/><br/>");
+        bodyBuilder.AppendLine($"This is a friendly reminder that the peer assessment <strong>{assessment.Description}</strong> for project <strong>{projectDescription}</strong> in <strong>{courseName}</strong> closes soon.<br/><br/>");
+        bodyBuilder.AppendLine($"<strong>Deadline:</strong> {assessment.DeadlineUtc:yyyy-MM-dd HH:mm} UTC<br/><br/>");
+        bodyBuilder.AppendLine("Please submit your evaluation for yourself and your teammates before the deadline:<br/>");
+        bodyBuilder.AppendLine($"<a href=\"{evaluateUri.AbsoluteUri}\">Fill in Peer Assessment Form</a><br/><br/>");
+        bodyBuilder.AppendLine("Thank you!<br/>");
+        bodyBuilder.AppendLine("</p>");
+        bodyBuilder.AppendLine("</body></html>");
+
+        var message = new MailMessage
+        {
+            From = new MailAddress(fromEmail),
+            Subject = subject,
+            Body = bodyBuilder.ToString(),
+            IsBodyHtml = true
+        };
+        message.To.Add(new MailAddress(recipient.Email));
 
         await smtpClient.SendMailAsync(message);
     }

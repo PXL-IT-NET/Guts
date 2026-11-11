@@ -4,6 +4,7 @@ using Guts.Api.Models.AssignmentModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
 using Guts.Application.Dtos;
+using Guts.Domain;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.PeriodAggregate;
@@ -59,11 +60,14 @@ public partial class Mapper : IMapper
     [MapperIgnoreSource(nameof(Test.Assignment))]
     [MapperIgnoreSource(nameof(Test.AssignmentId))]
     [MapperIgnoreSource(nameof(Test.Results))]
+    [MapperIgnoreSource(nameof(IEntity.IdentityValues))]
     public partial TestModel MapToTestModel(Test source);
 
+    [MapperIgnoreSource(nameof(IEntity.IdentityValues))]
     public partial PeriodOutputModel MapToPeriodOutputModel(IPeriod source);
 
     [MapperIgnoreSource(nameof(IProjectAssessment.ProjectId))]
+    [MapperIgnoreSource(nameof(IEntity.IdentityValues))]
     public partial ProjectAssessmentModel MapToProjectAssessmentModel(IProjectAssessment source);
 
     [MapperIgnoreSource(nameof(IPeerAssessment.ProjectTeamAssessmentId))]

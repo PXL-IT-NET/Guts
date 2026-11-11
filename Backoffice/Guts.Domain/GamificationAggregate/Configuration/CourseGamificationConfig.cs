@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Guts.Common;
 using Guts.Domain.CourseAggregate;
 
@@ -5,6 +6,8 @@ namespace Guts.Domain.GamificationAggregate.Configuration;
 
 public class CourseGamificationConfig : AggregateRoot
 {
+    public int Id { get; set; }
+
     public int CourseId { get; internal set; }
     public Course Course { get; internal set; }
 
@@ -43,5 +46,10 @@ public class CourseGamificationConfig : AggregateRoot
         IsClassCompetitionEnabled = isClassCompetitionEnabled;
         IsTeamSynergyEnabled = isTeamSynergyEnabled;
         IsBadgesEnabled = isBadgesEnabled;
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

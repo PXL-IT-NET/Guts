@@ -10,6 +10,8 @@ namespace Guts.Domain.AssignmentAggregate;
 
 public class Assignment : AggregateRoot
 {
+    public int Id { get; set; }
+
     private string _description;
     private readonly HashSet<TestCodeHash> _testCodeHashes = [];
     private HashSet<Test> _tests;
@@ -159,5 +161,10 @@ public class Assignment : AggregateRoot
         }
 
         return (IsValid: false, HashWasAdded: false);
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

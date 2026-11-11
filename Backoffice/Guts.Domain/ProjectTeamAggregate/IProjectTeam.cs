@@ -6,6 +6,7 @@ namespace Guts.Domain.ProjectTeamAggregate;
 
 public interface IProjectTeam : IEntity
 {
+    int Id { get; }
     string Name { get; set; }
     IProject Project { get; }
     int ProjectId { get; }

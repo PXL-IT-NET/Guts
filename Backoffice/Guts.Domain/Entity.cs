@@ -1,31 +1,24 @@
 using System;
-using Guts.Common;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Guts.Domain;
 
 public abstract class Entity : IEntity, IEquatable<Entity>
 {
-    private int _id;
+    protected abstract IEnumerable<object> GetIdComponents();
 
-    public virtual int Id
-    {
-        get => _id; 
-        protected internal set
-        {
-            Contracts.Require(value >= 0, "Id cannot be negative");
-            _id = value;
-        }
-    }
+#pragma warning disable S2365 // IdentityValues property intentionally materialized as array per IEntity contract
+    public virtual object[] IdentityValues => GetIdComponents()?.ToArray() ?? Array.Empty<object>();
+#pragma warning restore S2365
 
-    protected Entity()
+    public virtual bool IsTransient()
     {
-        _id = 0;
-    }
+        var values = IdentityValues;
+        if (values.Length == 0)
+            return true;
 
-    protected Entity(int id)
-    {
-        Contracts.Require(id > 0, "Id must be positive for existing entities.");
-        _id = id;
+        return values.Any(c => c == null || (c is int i && i == 0) || (c is long l && l == 0));
     }
 
     public override bool Equals(object obj)
@@ -44,10 +37,10 @@ public abstract class Entity : IEntity, IEquatable<Entity>
         if (GetType() != other.GetType())
             return false;
 
-        if (Id == 0 || other.Id == 0)
+        if (IsTransient() || other.IsTransient())
             return false;
 
-        return Id == other.Id;
+        return IdentityValues.SequenceEqual(other.IdentityValues);
     }
 
     public static bool operator ==(Entity a, Entity b)
@@ -68,6 +61,13 @@ public abstract class Entity : IEntity, IEquatable<Entity>
 
     public override int GetHashCode()
     {
-        return (GetType().ToString() + Id).GetHashCode();
+        return IdentityValues
+            .Aggregate(GetType().GetHashCode(), (current, obj) =>
+            {
+                unchecked
+                {
+                    return current * 23 + (obj?.GetHashCode() ?? 0);
+                }
+            });
     }
 }

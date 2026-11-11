@@ -8,6 +8,8 @@ namespace Guts.Domain.PeriodAggregate;
 
 public class Period : AggregateRoot, IPeriod
 {
+    public int Id { get; set; }
+
     private string _description;
 
     [Required]
@@ -80,5 +82,10 @@ public class Period : AggregateRoot, IPeriod
 
             return new Period(description, from, until);
         }
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

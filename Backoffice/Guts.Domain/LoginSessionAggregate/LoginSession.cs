@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Guts.Common;
 
@@ -6,6 +7,8 @@ namespace Guts.Domain.LoginSessionAggregate;
 
 public class LoginSession : AggregateRoot
 {
+    public int Id { get; set; }
+
     public static readonly TimeSpan DefaultExpirationTimeout = TimeSpan.FromHours(1);
 
     [Required]
@@ -61,5 +64,10 @@ public class LoginSession : AggregateRoot
     {
         var effectiveTimeout = timeout ?? DefaultExpirationTimeout;
         return now >= CreateDateTime.Add(effectiveTimeout);
+    }
+
+    protected override IEnumerable<object> GetIdComponents()
+    {
+        yield return Id;
     }
 }

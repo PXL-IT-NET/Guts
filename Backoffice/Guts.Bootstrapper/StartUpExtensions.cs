@@ -123,6 +123,13 @@ public static class StartUpExtensions
             return new MailSender(provider.GetService<ISmtpClient>(), fromEmail, webAppBaseUrl);
         });
 
+        services.AddScoped<IMailThrottler>(provider =>
+        {
+            var mailSection = configuration.GetSection("Mail");
+            var delayInSeconds = mailSection.GetValue<int?>("ThrottleDelayInSeconds") ?? 1;
+            return new MailThrottler(TimeSpan.FromSeconds(delayInSeconds));
+        });
+
         services.AddSingleton<ITokenAccessPassFactory>(provider =>
         {
             var tokenSection = configuration.GetSection("Tokens");

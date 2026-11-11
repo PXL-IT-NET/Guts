@@ -29,9 +29,14 @@ public class StreakReminderService : IStreakReminderService
     private readonly IStudentCourseProfileRepository _profileRepository;
     private readonly IUserRepository _userRepository;
     private readonly IMailSender _mailSender;
+    private readonly IMailThrottler _mailThrottler;
     private readonly ILogger<StreakReminderService> _logger;
 
-    public TimeSpan ThrottleDelay { get; set; } = TimeSpan.FromSeconds(1);
+    public TimeSpan ThrottleDelay
+    {
+        get => _mailThrottler.ThrottleDelay;
+        set => _mailThrottler.ThrottleDelay = value;
+    }
 
     [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
         Justification = "Service coordinates streak reminder workflows across aggregate repositories and mailing infrastructure.")]
@@ -43,6 +48,7 @@ public class StreakReminderService : IStreakReminderService
         IStudentCourseProfileRepository profileRepository,
         IUserRepository userRepository,
         IMailSender mailSender,
+        IMailThrottler mailThrottler,
         ILogger<StreakReminderService> logger)
     {
         _periodRepository = periodRepository;
@@ -52,7 +58,23 @@ public class StreakReminderService : IStreakReminderService
         _profileRepository = profileRepository;
         _userRepository = userRepository;
         _mailSender = mailSender;
+        _mailThrottler = mailThrottler ?? new MailThrottler(TimeSpan.FromSeconds(1));
         _logger = logger;
+    }
+
+    [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
+        Justification = "Overload constructor for DI auto-registration without explicit mail throttler.")]
+    public StreakReminderService(
+        IPeriodRepository periodRepository,
+        ICourseRepository courseRepository,
+        ICourseGamificationConfigRepository configRepository,
+        ITopicRepository topicRepository,
+        IStudentCourseProfileRepository profileRepository,
+        IUserRepository userRepository,
+        IMailSender mailSender,
+        ILogger<StreakReminderService> logger)
+        : this(periodRepository, courseRepository, configRepository, topicRepository, profileRepository, userRepository, mailSender, new MailThrottler(TimeSpan.FromSeconds(1)), logger)
+    {
     }
 
     [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
@@ -67,9 +89,8 @@ public class StreakReminderService : IStreakReminderService
         IMailSender mailSender,
         ILogger<StreakReminderService> logger,
         TimeSpan throttleDelay)
-        : this(periodRepository, courseRepository, configRepository, topicRepository, profileRepository, userRepository, mailSender, logger)
+        : this(periodRepository, courseRepository, configRepository, topicRepository, profileRepository, userRepository, mailSender, new MailThrottler(throttleDelay), logger)
     {
-        ThrottleDelay = throttleDelay;
     }
 
     public async Task<int> SendStreakRemindersAsync(DateTime executionTime, CancellationToken cancellationToken = default)
@@ -278,9 +299,9 @@ public class StreakReminderService : IStreakReminderService
                 _logger.LogError(ex, "Failed to send streak reminder email to user {UserId} for course {CourseId}.", message.Recipient.Id, message.CourseId);
             }
 
-            if (i < messagesToSend.Count - 1 && ThrottleDelay > TimeSpan.Zero)
+            if (i < messagesToSend.Count - 1)
             {
-                await Task.Delay(ThrottleDelay, cancellationToken);
+                await _mailThrottler.ThrottleAsync(cancellationToken);
             }
         }
 
