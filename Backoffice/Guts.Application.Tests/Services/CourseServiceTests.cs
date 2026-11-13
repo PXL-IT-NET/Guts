@@ -20,6 +20,7 @@ public class CourseServiceTests
     private CourseService _service;
 
     private Mock<ICourseRepository> _courseRepositoryMock;
+    private Mock<ICourseFactory> _courseFactoryMock;
     private Mock<IPeriodRepository> _periodRepositoryMock;
     private Mock<IChapterRepository> _chapterRepositoryMock;
     private Mock<ITestResultRepository> _testResultRepositoryMock;
@@ -28,12 +29,14 @@ public class CourseServiceTests
     public void Setup()
     {
         _courseRepositoryMock = new Mock<ICourseRepository>();
+        _courseFactoryMock = new Mock<ICourseFactory>();
         _periodRepositoryMock = new Mock<IPeriodRepository>();
         _chapterRepositoryMock = new Mock<IChapterRepository>();
         _testResultRepositoryMock = new Mock<ITestResultRepository>();
 
         _service = new CourseService(
             _courseRepositoryMock.Object,
+            _courseFactoryMock.Object,
             _periodRepositoryMock.Object,
             _chapterRepositoryMock.Object,
             _testResultRepositoryMock.Object,
@@ -164,5 +167,48 @@ public class CourseServiceTests
         Assert.That(secondStudent.TotalPassedTests, Is.EqualTo(1));
         Assert.That(secondStudent.TotalTests, Is.EqualTo(6));
         Assert.That(secondStudent.CompletionPercentage, Is.EqualTo(16.67));
+    }
+
+    [Test]
+    public async Task CreateCourseAsync_ShouldCreateAndAddCourse()
+    {
+        IReadOnlyList<Course> existing = [new Course("CS101", "Intro") { Id = 1 }];
+        var created = new Course("CS102", "Advanced");
+        var added = new Course("CS102", "Advanced") { Id = 2 };
+
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(existing);
+        _courseFactoryMock.Setup(f => f.CreateNew("CS102", "Advanced", existing)).Returns(created);
+        _courseRepositoryMock.Setup(r => r.AddAsync(created)).ReturnsAsync(added);
+
+        var result = await _service.CreateCourseAsync("CS102", "Advanced");
+
+        Assert.That(result, Is.SameAs(added));
+        _courseRepositoryMock.Verify(r => r.AddAsync(created), Times.Once);
+    }
+
+    [Test]
+    public async Task UpdateCourseAsync_ShouldUpdateCourseInRepository()
+    {
+        var course = new Course("CS101", "Intro") { Id = 1 };
+        IReadOnlyList<Course> allCourses = [course];
+        _courseRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(allCourses);
+        _courseRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(course);
+
+        var result = await _service.UpdateCourseAsync(1, "CS101-B", "Intro Updated");
+
+        Assert.That(result.Code, Is.EqualTo("CS101-B"));
+        Assert.That(result.Name, Is.EqualTo("Intro Updated"));
+        _courseRepositoryMock.Verify(r => r.UpdateAsync(course), Times.Once);
+    }
+
+    [Test]
+    public async Task DeleteCourseAsync_ShouldDeleteCourseFromRepository()
+    {
+        var course = new Course("CS101", "Intro") { Id = 1 };
+        _courseRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(course);
+
+        await _service.DeleteCourseAsync(1);
+
+        _courseRepositoryMock.Verify(r => r.DeleteAsync(course), Times.Once);
     }
 }

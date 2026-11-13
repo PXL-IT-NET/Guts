@@ -10,6 +10,7 @@ namespace Guts.Application.Services;
 
 internal class CourseService(
     ICourseRepository courseRepository,
+    ICourseFactory courseFactory,
     IPeriodRepository periodRepository,
     IChapterRepository chapterRepository,
     ITestResultRepository testResultRepository,
@@ -24,6 +25,28 @@ internal class CourseService(
     public async Task<Course> GetCourseByIdAsync(int courseId)
     {
         return await courseRepository.GetByIdAsync(courseId);
+    }
+
+    public async Task<Course> CreateCourseAsync(string code, string name)
+    {
+        IReadOnlyList<Course> existingCourses = await courseRepository.GetAllAsync();
+        Course course = courseFactory.CreateNew(code, name, existingCourses);
+        return await courseRepository.AddAsync(course);
+    }
+
+    public async Task<Course> UpdateCourseAsync(int courseId, string code, string name)
+    {
+        IReadOnlyList<Course> allCourses = await courseRepository.GetAllAsync();
+        Course course = await courseRepository.GetByIdAsync(courseId);
+        course.Update(code, name, allCourses);
+        await courseRepository.UpdateAsync(course);
+        return course;
+    }
+
+    public async Task DeleteCourseAsync(int courseId)
+    {
+        Course course = await courseRepository.GetByIdAsync(courseId);
+        await courseRepository.DeleteAsync(course);
     }
 
     public async Task<CourseStatisticsDto> GetCourseStatisticsAsync(int courseId, int? periodId = null)

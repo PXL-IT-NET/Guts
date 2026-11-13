@@ -1,4 +1,4 @@
-﻿namespace Guts.Api;
+namespace Guts.Api;
 
 /// <summary>
 /// Contains constants that are used in the API project.
@@ -14,4 +14,14 @@ public static class ApiConstants
     /// Name for the policy that allows only users with the role 'lector'.
     /// </summary>
     public const string LectorsOnlyPolicy = "LectorsOnlyPolicy";
+
+    /// <summary>
+    /// Name for the policy that allows only users with the role 'admin'.
+    /// </summary>
+    public const string AdminOnlyPolicy = "AdminOnlyPolicy";
+
+    /// <summary>
+    /// Name for the policy that allows users with the role 'lector' or 'admin'.
+    /// </summary>
+    public const string LectorOrAdminPolicy = "LectorOrAdminPolicy";
 }

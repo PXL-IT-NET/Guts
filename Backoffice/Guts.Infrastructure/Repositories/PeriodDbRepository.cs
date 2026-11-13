@@ -1,11 +1,12 @@
+using Guts.Application;
+using Guts.Application.Repositories;
+using Guts.Domain.CourseAggregate;
+using Guts.Domain.PeriodAggregate;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Application;
-using Guts.Application.Repositories;
-using Guts.Domain.PeriodAggregate;
-using Microsoft.EntityFrameworkCore;
 
 namespace Guts.Infrastructure.Repositories;
 
@@ -39,5 +40,25 @@ internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRe
             throw new DataNotFoundException();
         }
         return period;
+    }
+
+    public override Task DeleteAsync(IPeriod entityToDelete)
+    {
+        return ExecuteInTransactionAsync(async () =>
+        {
+            int periodId = entityToDelete.Id;
+
+            _context.StudentCourseProfiles.RemoveRange(_context.StudentCourseProfiles.Where(p => p.PeriodId == periodId));
+
+            var classGroups = await _context.CourseClassGroups
+                .Where(cg => cg.PeriodId == periodId)
+                .ToListAsync();
+            _context.CourseClassGroups.RemoveRange(classGroups);
+
+            _context.Topics.RemoveRange(_context.Topics.Where(t => t.PeriodId == periodId));
+
+            _context.Periods.Remove((Period)entityToDelete);
+            await _context.SaveChangesAsync();
+        });
     }
 }

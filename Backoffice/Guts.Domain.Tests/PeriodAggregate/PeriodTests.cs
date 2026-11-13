@@ -100,10 +100,10 @@ public class PeriodTests
     public void Update_ValidPeriod_ShouldUpdatePeriodCorrectly()
     {
         // Arrange
-        Period period = _existingPeriods[0];
+        Period period = _existingPeriods[1];
         string newDescription = Random.Shared.NextString();
-        DateTime newFrom = DateTime.Now.AddMonths(-10);
-        DateTime newUntil = DateTime.Now.AddMonths(-7);
+        DateTime newFrom = DateTime.Now.AddMonths(-5);
+        DateTime newUntil = DateTime.Now.AddMonths(1);
 
         // Act
         period.Update(newDescription, newFrom, newUntil, _existingPeriods);
@@ -144,10 +144,10 @@ public class PeriodTests
     public void Update_NewDatesOverlapWithSelfInExistingPeriods_ShouldUpdateWithoutThrowing()
     {
         // Arrange
-        Period period = _existingPeriods[0];
+        Period period = _existingPeriods[1];
         string newDescription = Random.Shared.NextString();
         DateTime newFrom = period.From.AddDays(1);
-        DateTime newUntil = period.Until.AddDays(-1);
+        DateTime newUntil = period.Until.AddDays(1);
 
         // Act
         period.Update(newDescription, newFrom, newUntil, _existingPeriods);
@@ -156,6 +156,37 @@ public class PeriodTests
         Assert.That(period.Description, Is.EqualTo(newDescription));
         Assert.That(period.From, Is.EqualTo(newFrom));
         Assert.That(period.Until, Is.EqualTo(newUntil));
+    }
+
+    [Test]
+    public void Update_InactivePeriodWithUnchangedDates_ShouldUpdateDescription()
+    {
+        Period period = _existingPeriods[0];
+        string newDescription = Random.Shared.NextString();
+
+        period.Update(newDescription, period.From, period.Until, _existingPeriods);
+
+        Assert.That(period.Description, Is.EqualTo(newDescription));
+    }
+
+    [Test]
+    public void Update_InactivePeriodWithChangedFromDate_ShouldThrowContractException()
+    {
+        Period period = _existingPeriods[0];
+        string newDescription = Random.Shared.NextString();
+
+        Assert.Throws<ContractException>(() =>
+            period.Update(newDescription, period.From.AddDays(1), period.Until, _existingPeriods));
+    }
+
+    [Test]
+    public void Update_InactivePeriodWithChangedUntilDate_ShouldThrowContractException()
+    {
+        Period period = _existingPeriods[0];
+        string newDescription = Random.Shared.NextString();
+
+        Assert.Throws<ContractException>(() =>
+            period.Update(newDescription, period.From, period.Until.AddDays(-1), _existingPeriods));
     }
 
     [Test]
@@ -180,5 +211,29 @@ public class PeriodTests
         // Act & Assert
         Assert.That(pastPeriod.IsActive, Is.False);
         Assert.That(futurePeriod.IsActive, Is.False);
+    }
+
+    [Test]
+    public void EnsureCanBeDeleted_PastPeriod_ShouldNotThrow()
+    {
+        Period pastPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-1)).Build();
+
+        Assert.DoesNotThrow(() => pastPeriod.EnsureCanBeDeleted());
+    }
+
+    [Test]
+    public void EnsureCanBeDeleted_ActivePeriod_ShouldThrowContractException()
+    {
+        Period activePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1)).Build();
+
+        Assert.Throws<ContractException>(() => activePeriod.EnsureCanBeDeleted());
+    }
+
+    [Test]
+    public void EnsureCanBeDeleted_FuturePeriod_ShouldThrowContractException()
+    {
+        Period futurePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(1), DateTime.Today.AddDays(10)).Build();
+
+        Assert.Throws<ContractException>(() => futurePeriod.EnsureCanBeDeleted());
     }
 }

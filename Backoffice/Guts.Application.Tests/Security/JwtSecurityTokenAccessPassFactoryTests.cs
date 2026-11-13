@@ -68,4 +68,19 @@ public class JwtSecurityTokenAccessPassFactoryTests
         Assert.That(jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == role1), Is.True);
         Assert.That(jwtToken.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == role2), Is.True);
     }
+
+    [Test]
+    public void Create_WithImpersonatorId_ShouldIncludeImpersonatorIdClaim()
+    {
+        string key = Guid.NewGuid().ToString();
+        string issuer = Guid.NewGuid().ToString();
+        string audience = Guid.NewGuid().ToString();
+        var factory = new JwtSecurityTokenAccessPassFactory(key, issuer, audience, 60);
+        var user = new User { Id = 22, UserName = "student@student.pxl.be", Email = "student@student.pxl.be" };
+
+        var accessPass = factory.Create(user, [], ["student"], impersonatorId: 5);
+
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(accessPass.Token);
+        Assert.That(token.Claims, Has.Some.Matches<Claim>(c => c.Type == GutsClaimTypes.ImpersonatorId && c.Value == "5"));
+    }
 }

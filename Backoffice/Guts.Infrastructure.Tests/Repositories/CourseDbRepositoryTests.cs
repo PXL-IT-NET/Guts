@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Application;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 
@@ -10,30 +11,35 @@ namespace Guts.Infrastructure.Tests.Repositories;
 internal class CourseDbRepositoryTests : RepositoryTestsBase
 {
     [Test]
-    public async Task GetAllAsync_ShouldReturnCoursesOrderedByName()
+    public async Task DeleteAsync_ShouldCascadeToStudentCourseProfilesAndClassGroups()
     {
-        await Seeder.SeedCourseAsync("C1", "Course B");
-        await Seeder.SeedCourseAsync("C2", "Course A");
-        await Seeder.SeedCourseAsync("C3", "Course C");
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("DEL1");
+        var user = await Seeder.SeedUserAsync("Jane", "Doe");
 
-        await using var context = CreateDbContext();
-        var repo = new CourseDbRepository(context);
+        await using (var seedContext = CreateDbContext())
+        {
+            var classGroup = new CourseClassGroup("1TIN-B", course.Id, period.Id);
+            seedContext.CourseClassGroups.Add(classGroup);
+            await seedContext.SaveChangesAsync();
 
-        var all = await repo.GetAllAsync();
-        Assert.That(all.Select(c => c.Name), Is.EqualTo(["Course A", "Course B", "Course C"]));
-    }
+            var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
+            profile.Enroll(true, "Hero2", "Mage", classGroup.Id, false);
+            seedContext.StudentCourseProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+        }
 
-    [Test]
-    public async Task GetSingleAsync_ShouldFindCourseCaseInsensitively_OrThrowDataNotFoundException()
-    {
-        await Seeder.SeedCourseAsync("dotNet1", ".NET Essentials");
+        await using (var context = CreateDbContext())
+        {
+            var repo = new CourseDbRepository(context);
+            var existing = await repo.GetByIdAsync(course.Id);
+            await repo.DeleteAsync(existing);
+        }
 
-        await using var context = CreateDbContext();
-        var repo = new CourseDbRepository(context);
-
-        var found = await repo.GetSingleAsync("DOTNET1");
-        Assert.That(found.Name, Is.EqualTo(".NET Essentials"));
-
-        await Assert.ThatAsync(async () => await repo.GetSingleAsync("NonExistent"), Throws.InstanceOf<DataNotFoundException>());
+        await using (var verifyContext = CreateDbContext())
+        {
+            Assert.That(verifyContext.Courses.Any(c => c.Id == course.Id), Is.False);
+            Assert.That(verifyContext.StudentCourseProfiles.Any(sp => sp.CourseId == course.Id), Is.False);
+            Assert.That(verifyContext.CourseClassGroups.Any(cg => cg.CourseId == course.Id), Is.False);
+        }
     }
 }

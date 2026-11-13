@@ -1,0 +1,50 @@
+<div class="container-fluid py-3">
+  <h2>Impersonate Student</h2>
+  <p class="text-muted">
+    Select a student to inspect the application in read-only mode through their
+    eyes.
+  </p>
+
+  <form class="row g-2 align-items-end mb-3" (ngSubmit)="search()">
+    <div class="col-md-6">
+      <label class="form-label" for="studentSearch">Search student</label>
+      <input
+        id="studentSearch"
+        type="text"
+        class="form-control"
+        name="searchTerm"
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+  </form>
+
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th class="text-end">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (student of students(); track student.id) {
+        <tr>
+          <td>{{ student.firstName }} {{ student.lastName }}</td>
+          <td>{{ student.email }}</td>
+          <td class="text-end">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              (click)="impersonate(student)"
+            >
+              Impersonate
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

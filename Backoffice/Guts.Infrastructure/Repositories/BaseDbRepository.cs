@@ -146,4 +146,21 @@ internal abstract class BaseDbRepository<T, TConcrete> : IBasicRepository<T> whe
         _context.Set<TConcrete>().RemoveRange((IEnumerable<TConcrete>)entitiesToDelete);
         await _context.SaveChangesAsync();
     }
+
+    protected async Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        if (!_context.Database.IsRelational())
+        {
+            await operation();
+            return;
+        }
+
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await operation();
+            await transaction.CommitAsync();
+        });
+    }
 }

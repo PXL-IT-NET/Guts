@@ -1,3 +1,28 @@
+@if (authService.isImpersonating()) {
+  <div
+    class="alert alert-warning mb-0 rounded-0 d-flex align-items-center justify-content-between px-3 py-2 border-bottom border-warning"
+    role="alert"
+    data-testid="impersonation-banner"
+  >
+    <div>
+      <strong>Impersonation Mode (Read-Only):</strong>
+      @if (authService.impersonatedProfile(); as profile) {
+        <span>
+          Viewing as <strong>{{ profile.email }}</strong>
+          ({{ profile.roles.join(", ") }})
+        </span>
+      }
+      <span class="ms-2 badge text-bg-secondary">Changes disabled</span>
+    </div>
+    <button
+      type="button"
+      class="btn btn-sm btn-dark"
+      (click)="stopImpersonating()"
+    >
+      Stop Impersonating
+    </button>
+  </div>
+}
 <app-nav-menu></app-nav-menu>
 <div class="container-fluid">
   <div class="row">

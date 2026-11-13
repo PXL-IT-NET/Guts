@@ -2,6 +2,7 @@ import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 import * as c from "./components";
 import { authGuard } from "./guards/auth.guard";
+import { adminGuard, lectorOrAdminGuard } from "./guards/admin.guard";
 
 const routes: Routes = [
   { path: "", redirectTo: "home", pathMatch: "full" },
@@ -120,6 +121,38 @@ const routes: Routes = [
     path: "courses/:courseId/config",
     component: c.CourseConfigComponent,
     canActivate: [authGuard],
+  },
+  {
+    path: "admin/periods",
+    loadComponent: () =>
+      import("./components/admin-periods/admin-periods.component").then(
+        (m) => m.AdminPeriodsComponent,
+      ),
+    canActivate: [adminGuard],
+  },
+  {
+    path: "admin/courses",
+    loadComponent: () =>
+      import("./components/admin-courses/admin-courses.component").then(
+        (m) => m.AdminCoursesComponent,
+      ),
+    canActivate: [adminGuard],
+  },
+  {
+    path: "admin/users",
+    loadComponent: () =>
+      import("./components/admin-users/admin-users.component").then(
+        (m) => m.AdminUsersComponent,
+      ),
+    canActivate: [adminGuard],
+  },
+  {
+    path: "impersonate",
+    loadComponent: () =>
+      import(
+        "./components/impersonate-student/impersonate-student.component"
+      ).then((m) => m.ImpersonateStudentComponent),
+    canActivate: [lectorOrAdminGuard],
   },
   { path: "**", redirectTo: "home" },
 ];

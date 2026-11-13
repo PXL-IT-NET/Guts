@@ -7,6 +7,7 @@ using Guts.Domain.UserAggregate;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -18,13 +19,20 @@ internal class GutsDbInitializer
     private readonly ILogger _logger;
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<Role> _roleManager;
+    private readonly IConfiguration _configuration;
 
-    public GutsDbInitializer(GutsContext context, ILogger logger, UserManager<User> userManager, RoleManager<Role> roleManager)
+    public GutsDbInitializer(
+        GutsContext context,
+        ILogger logger,
+        UserManager<User> userManager,
+        RoleManager<Role> roleManager,
+        IConfiguration configuration = null)
     {
         _context = context;
         _logger = logger;
         _userManager = userManager;
         _roleManager = roleManager;
+        _configuration = configuration;
     }
 
     public void DoAutomaticMigrations()
@@ -81,23 +89,40 @@ internal class GutsDbInitializer
 
     private async Task AddRolesIfNotExists()
     {
-        if (await _roleManager.RoleExistsAsync(Role.Constants.Student)) return;
-
-        await _roleManager.CreateAsync(new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpper() });
-        await _roleManager.CreateAsync(new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpper() });
-
-        //link exsting students to the "student" role
-        var students = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToListAsync();
-        foreach (var student in students)
+        if (!await _roleManager.RoleExistsAsync(Role.Constants.Student))
         {
-            await _userManager.AddToRoleAsync(student, Role.Constants.Student);
+            await _roleManager.CreateAsync(new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpper() });
+            var students = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@student.pxl.be")).ToListAsync();
+            foreach (var student in students)
+            {
+                await _userManager.AddToRoleAsync(student, Role.Constants.Student);
+            }
         }
 
-        //link exsting lectors to the "lector" role
-        var lectors = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToListAsync();
-        foreach (var lector in lectors)
+        if (!await _roleManager.RoleExistsAsync(Role.Constants.Lector))
         {
-            await _userManager.AddToRoleAsync(lector, Role.Constants.Lector);
+            await _roleManager.CreateAsync(new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpper() });
+            var lectors = await _context.Users.Where(u => u.Email.ToLower().EndsWith("@pxl.be")).ToListAsync();
+            foreach (var lector in lectors)
+            {
+                await _userManager.AddToRoleAsync(lector, Role.Constants.Lector);
+            }
+        }
+
+        if (!await _roleManager.RoleExistsAsync(Role.Constants.Admin))
+        {
+            await _roleManager.CreateAsync(new Role { Name = Role.Constants.Admin, NormalizedName = Role.Constants.Admin.ToUpper() });
+        }
+
+        string[] adminEmails = _configuration?.GetSection("AdminEmails").Get<string[]>() ?? [];
+        foreach (string email in adminEmails.Where(e => !string.IsNullOrWhiteSpace(e)))
+        {
+            string normalizedEmail = email.Trim().ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+            if (user != null && !await _userManager.IsInRoleAsync(user, Role.Constants.Admin))
+            {
+                await _userManager.AddToRoleAsync(user, Role.Constants.Admin);
+            }
         }
     }
 

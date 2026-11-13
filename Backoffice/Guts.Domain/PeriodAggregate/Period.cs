@@ -48,6 +48,8 @@ public class Period : AggregateRoot, IPeriod
     public void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods)
     {
         Contracts.Require(from < until, "The 'from' date must be before the 'until' date.");
+        Contracts.Require(IsActive || (from.Date == From.Date && until.Date == Until.Date),
+            "Start and end dates of an inactive period cannot be changed.");
 
         //check if the new dates overlap with another period
         List<IPeriod> otherPeriods = allPeriods.Where(p => p.Id != this.Id).ToList();
@@ -67,6 +69,11 @@ public class Period : AggregateRoot, IPeriod
         bool isBefore = Until < from;
         bool isAfter = From > until;
         return !isBefore && !isAfter;
+    }
+
+    public void EnsureCanBeDeleted()
+    {
+        Contracts.Require(Until < DateTime.Today && !IsActive, "Only past periods that are not active can be deleted.");
     }
 
     public class Factory : IPeriodFactory

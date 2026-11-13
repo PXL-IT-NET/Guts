@@ -184,4 +184,48 @@ public class CourseControllerTests
         Assert.That(authAttribute, Is.Not.Null);
         Assert.That(authAttribute.Policy, Is.EqualTo(ApiConstants.LectorsOnlyPolicy));
     }
+
+    [TestCase(nameof(CourseController.CreateCourse))]
+    [TestCase(nameof(CourseController.UpdateCourse))]
+    [TestCase(nameof(CourseController.DeleteCourse))]
+    public void MutationEndpoints_ShouldHaveAdminOnlyPolicy(string methodName)
+    {
+        var method = typeof(CourseController).GetMethod(methodName);
+        var attr = method?.GetCustomAttribute<AuthorizeAttribute>();
+        Assert.That(attr, Is.Not.Null);
+        Assert.That(attr.Policy, Is.EqualTo(ApiConstants.AdminOnlyPolicy));
+    }
+
+    [Test]
+    public async Task CreateCourse_Valid_ReturnsCreated()
+    {
+        var created = new Course("CS101", "Intro") { Id = 1 };
+        _courseServiceMock.Setup(s => s.CreateCourseAsync("CS101", "Intro")).ReturnsAsync(created);
+
+        var result = await _controller.CreateCourse(new CourseSaveModel { Code = "CS101", Name = "Intro" }) as CreatedAtActionResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(created));
+    }
+
+    [Test]
+    public async Task UpdateCourse_Valid_ReturnsOk()
+    {
+        var updated = new Course("CS102", "Advanced") { Id = 1 };
+        _courseServiceMock.Setup(s => s.UpdateCourseAsync(1, "CS102", "Advanced")).ReturnsAsync(updated);
+
+        var result = await _controller.UpdateCourse(1, new CourseSaveModel { Code = "CS102", Name = "Advanced" }) as OkObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(updated));
+    }
+
+    [Test]
+    public async Task DeleteCourse_Valid_ReturnsNoContent()
+    {
+        var result = await _controller.DeleteCourse(1);
+
+        Assert.That(result, Is.InstanceOf<NoContentResult>());
+        _courseServiceMock.Verify(s => s.DeleteCourseAsync(1), Times.Once);
+    }
 }

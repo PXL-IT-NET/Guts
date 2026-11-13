@@ -64,6 +64,14 @@ export class SidebarMenuComponent implements OnInit {
     return this.router.url.includes("/teacher-docs");
   }
 
+  public get isAdminRouteActive(): boolean {
+    return this.router.url.includes("/admin");
+  }
+
+  public get isImpersonating(): boolean {
+    return this.authService.isImpersonating();
+  }
+
   public isCourseRouteActive(courseId: number) {
     return (
       this.router.url.includes("/courses/" + courseId + "/") ||

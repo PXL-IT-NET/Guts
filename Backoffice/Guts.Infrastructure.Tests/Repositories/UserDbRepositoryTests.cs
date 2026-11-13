@@ -47,4 +47,27 @@ internal class UserDbRepositoryTests : RepositoryTestsBase
         Assert.That(result.FirstName, Is.EqualTo("Charlie"));
         Assert.That(result.LastName, Is.EqualTo("Brown"));
     }
+
+    [Test]
+    public async Task SearchUsersAndCourseLinks_ShouldIdentifyLinkedAndOrphanedUsers()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("USR1");
+        var linkedUser = await Seeder.SeedUserAsync("Linked", "Student", "linked@student.pxl.be");
+        var OrphanedUser = await Seeder.SeedUserAsync("Orphaned", "Student", "Orphaned@student.pxl.be");
+        var chapter = await Seeder.SeedChapterAsync(course.Id, period.Id);
+        var assignment = chapter.Assignments.First();
+        var testId = assignment.Tests.First().Id;
+        await Seeder.SeedTestRunAsync(assignment.Id, linkedUser.Id, DateTime.UtcNow, (testId, true));
+
+        await using var context = CreateDbContext();
+        var repo = new UserDbRepository(context);
+
+        var linked = await repo.GetCourseLinksAsync(linkedUser.Id);
+        var Orphaned = await repo.GetCourseLinksAsync(OrphanedUser.Id);
+        var OrphanedResults = await repo.SearchUsersAsync("Orphaned", null, OrphanedOnly: true);
+
+        Assert.That(linked.HasAnyLinks, Is.True);
+        Assert.That(Orphaned.HasAnyLinks, Is.False);
+        Assert.That(OrphanedResults.Select(u => u.User.Id), Is.EquivalentTo([OrphanedUser.Id]));
+    }
 }

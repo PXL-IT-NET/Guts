@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Security.Claims;
+using Guts.Application.Security;
 using Guts.Domain.RoleAggregate;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,6 +59,18 @@ public abstract class ControllerBase : Controller
         if (User == null) return false;
 
         return User.IsInRole(Role.Constants.Lector);
+    }
+
+    protected bool IsAdmin()
+    {
+        if (User == null) return false;
+
+        return User.IsInRole(Role.Constants.Admin);
+    }
+
+    protected bool IsImpersonating()
+    {
+        return User?.HasClaim(c => c.Type == GutsClaimTypes.ImpersonatorId) ?? false;
     }
 
     protected bool IsOwnUserId(int userId)

@@ -74,11 +74,26 @@ public class Startup(IConfiguration configuration)
                 .RequireRole(Role.Constants.Lector)
                 .Build();
             options.AddPolicy(ApiConstants.LectorsOnlyPolicy, lectorsOnlyPolicy);
+
+            var adminOnlyPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .RequireRole(Role.Constants.Admin)
+                .Build();
+            options.AddPolicy(ApiConstants.AdminOnlyPolicy, adminOnlyPolicy);
+
+            var lectorOrAdminPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .RequireRole(Role.Constants.Admin, Role.Constants.Lector)
+                .Build();
+            options.AddPolicy(ApiConstants.LectorOrAdminPolicy, lectorOrAdminPolicy);
         });
 
         services.AddControllers(options =>
         {
             options.Filters.Add(new AuthorizeFilter(ApiConstants.AuthenticatedUsersOnlyPolicy));
+            options.Filters.Add<ImpersonationReadOnlyFilter>();
             options.Filters.Add<ApplicationExceptionFilterAttribute>();
             options.Filters.Add<LogBadRequestFilterAttribute>();
         });

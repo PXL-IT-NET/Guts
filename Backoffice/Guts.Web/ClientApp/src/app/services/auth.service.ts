@@ -21,6 +21,10 @@ export class AuthService {
   private readonly loggedInStateSubject: BehaviorSubject<boolean>;
   private readonly _isLoggedIn = signal<boolean>(false);
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
+  private readonly _isImpersonating = signal<boolean>(false);
+  public readonly isImpersonating = this._isImpersonating.asReadonly();
+  private readonly _impersonatedProfile = signal<UserProfile | null>(null);
+  public readonly impersonatedProfile = this._impersonatedProfile.asReadonly();
   private currentUserProfile: UserProfile = null;
 
   constructor(private readonly http: HttpClient) {
@@ -30,6 +34,9 @@ export class AuthService {
     );
     let isLoggedIn: boolean = Boolean(this.tokenModel?.token);
     this._isLoggedIn.set(isLoggedIn);
+    this._isImpersonating.set(
+      Boolean(localStorage.getItem(LocalStorageKeys.originalToken)),
+    );
     this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
   }
 
@@ -48,9 +55,47 @@ export class AuthService {
   public clearToken(): void {
     this.tokenModel = null;
     localStorage.removeItem(LocalStorageKeys.currentToken);
+    localStorage.removeItem(LocalStorageKeys.originalToken);
 
+    this._isImpersonating.set(false);
+    this._impersonatedProfile.set(null);
     this.setLoggedInState(false);
     this.currentUserProfile = null;
+  }
+
+  public startImpersonation(impersonationToken: TokenModel): void {
+    if (this.tokenModel) {
+      localStorage.setItem(
+        LocalStorageKeys.originalToken,
+        JSON.stringify(this.tokenModel),
+      );
+    }
+    this.tokenModel = impersonationToken;
+    localStorage.setItem(
+      LocalStorageKeys.currentToken,
+      JSON.stringify(impersonationToken),
+    );
+    this.currentUserProfile = null;
+    this._isImpersonating.set(true);
+    this.setLoggedInState(true);
+  }
+
+  public stopImpersonation(): void {
+    const originalRaw = localStorage.getItem(LocalStorageKeys.originalToken);
+    if (!originalRaw) {
+      return;
+    }
+    const originalToken = JSON.parse(originalRaw) as TokenModel;
+    this.tokenModel = originalToken;
+    localStorage.setItem(
+      LocalStorageKeys.currentToken,
+      JSON.stringify(originalToken),
+    );
+    localStorage.removeItem(LocalStorageKeys.originalToken);
+    this.currentUserProfile = null;
+    this._isImpersonating.set(false);
+    this._impersonatedProfile.set(null);
+    this.setLoggedInState(true);
   }
 
   public invalidateUserProfileCache(): void {
@@ -110,6 +155,10 @@ export class AuthService {
       return this.http.get<IUserProfile>("api/users/current/profile").pipe(
         map((profile) => {
           this.currentUserProfile = new UserProfile(profile);
+          if (this.currentUserProfile.isImpersonating || this._isImpersonating()) {
+            this._isImpersonating.set(true);
+            this._impersonatedProfile.set(this.currentUserProfile);
+          }
           return this.currentUserProfile;
         }),
       );

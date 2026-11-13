@@ -1,0 +1,143 @@
+<div class="container-fluid py-3 position-relative">
+  <app-loading-overlay [show]="loading()"></app-loading-overlay>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Manage Periods</h2>
+    <button type="button" class="btn btn-primary" (click)="startCreate()">
+      New Period
+    </button>
+  </div>
+
+  @if (editingPeriodId() !== null) {
+    <div class="card mb-4">
+      <div class="card-header">
+        {{ editingPeriodId() === 0 ? "Create Period" : "Edit Period" }}
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="savePeriod()">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="periodDescription">Description</label>
+              <input
+                id="periodDescription"
+                type="text"
+                class="form-control"
+                name="description"
+                [(ngModel)]="formDescription"
+                required
+              />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="periodFrom">From</label>
+              <input
+                id="periodFrom"
+                type="date"
+                class="form-control"
+                name="from"
+                [(ngModel)]="formFrom"
+                [disabled]="!editingPeriodIsActive()"
+                required
+              />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="periodUntil">Until</label>
+              <input
+                id="periodUntil"
+                type="date"
+                class="form-control"
+                name="until"
+                [(ngModel)]="formUntil"
+                [disabled]="!editingPeriodIsActive()"
+                required
+              />
+            </div>
+            @if (!editingPeriodIsActive()) {
+              <div class="col-12">
+                <small class="text-muted">
+                  Start and end dates cannot be changed for inactive periods.
+                </small>
+              </div>
+            }
+          </div>
+          <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-success">Save</button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="cancelForm()"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <app-danger-delete-modal
+    [show]="periodPendingDelete() !== null"
+    [loading]="loading()"
+    title="Danger: Delete Period"
+    [warningMessage]="
+      'You are about to permanently delete past period ' +
+      (periodPendingDelete()?.description ?? '') +
+      '. This will irreversibly delete all chapters, projects, test runs, test results, assessments, and student gamification profiles for this period!'
+    "
+    [expectedConfirmation]="periodPendingDelete()?.description ?? ''"
+    confirmationLabel="period description"
+    confirmButtonText="Confirm Delete Period"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-danger-delete-modal>
+
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>From</th>
+        <th>Until</th>
+        <th>Status</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (period of periods(); track period.id) {
+        <tr>
+          <td>{{ period.description }}</td>
+          <td>{{ period.from | date: "yyyy-MM-dd" }}</td>
+          <td>{{ period.until | date: "yyyy-MM-dd" }}</td>
+          <td>
+            @if (period.isActive) {
+              <span class="badge text-bg-success">Active</span>
+            } @else if (isPastPeriod(period)) {
+              <span class="badge text-bg-secondary">Past</span>
+            } @else {
+              <span class="badge text-bg-info">Upcoming</span>
+            }
+          </td>
+          <td class="text-end">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary me-2"
+              (click)="startEdit(period)"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              [disabled]="!isPastPeriod(period)"
+              [title]="
+                isPastPeriod(period)
+                  ? 'Delete past period'
+                  : 'Only past non-active periods can be deleted'
+              "
+              (click)="requestDelete(period)"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

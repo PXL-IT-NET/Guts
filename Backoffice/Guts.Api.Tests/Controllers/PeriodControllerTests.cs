@@ -164,4 +164,46 @@ public class PeriodControllerTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Value, Is.InstanceOf<ErrorModel>());
     }
+
+    [TestCase(nameof(PeriodController.CreatePeriod))]
+    [TestCase(nameof(PeriodController.UpdatePeriod))]
+    [TestCase(nameof(PeriodController.DeletePeriod))]
+    public void MutationEndpoints_ShouldHaveAdminOnlyPolicy(string methodName)
+    {
+        var method = typeof(PeriodController).GetMethod(methodName);
+        var attr = method?.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), true)[0]
+            as Microsoft.AspNetCore.Authorization.AuthorizeAttribute;
+        Assert.That(attr, Is.Not.Null);
+        Assert.That(attr.Policy, Is.EqualTo(ApiConstants.AdminOnlyPolicy));
+    }
+
+    [Test]
+    public async Task UpdatePeriod_Valid_ReturnsOk()
+    {
+        var model = new PeriodCreationModel { Description = "2026-2027", From = DateTime.Today, Until = DateTime.Today.AddMonths(6) };
+
+        var result = await _controller.UpdatePeriod(1, model);
+
+        Assert.That(result, Is.InstanceOf<OkResult>());
+        _periodServiceMock.Verify(s => s.UpdatePeriodAsync(1, model.Description, model.From, model.Until), Times.Once);
+    }
+
+    [Test]
+    public async Task DeletePeriod_Valid_ReturnsNoContent()
+    {
+        var result = await _controller.DeletePeriod(1);
+
+        Assert.That(result, Is.InstanceOf<NoContentResult>());
+        _periodServiceMock.Verify(s => s.DeletePeriodAsync(1), Times.Once);
+    }
+
+    [Test]
+    public async Task DeletePeriod_ContractException_ReturnsBadRequest()
+    {
+        _periodServiceMock.Setup(s => s.DeletePeriodAsync(1)).ThrowsAsync(new ContractException("Active"));
+
+        var result = await _controller.DeletePeriod(1);
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
 }

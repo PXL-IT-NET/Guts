@@ -34,6 +34,12 @@ internal class GutsDbInitializerTests : RepositoryTestsBase
         roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Student))
             .ReturnsAsync(false)
             .ReturnsAsync(true);
+        roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Lector))
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
+        roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Admin))
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
         roleManagerMock.Setup(rm => rm.CreateAsync(It.IsAny<Role>()))
             .ReturnsAsync(IdentityResult.Success);
 
@@ -49,12 +55,13 @@ internal class GutsDbInitializerTests : RepositoryTestsBase
 
         roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Student)), Times.Once);
         roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Lector)), Times.Once);
+        roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Admin)), Times.Once);
         userManagerMock.Verify(um => um.AddToRoleAsync(It.Is<User>(u => u.Email == "john@student.pxl.be"), Role.Constants.Student), Times.Once);
         userManagerMock.Verify(um => um.AddToRoleAsync(It.Is<User>(u => u.Email == "jane@pxl.be"), Role.Constants.Lector), Times.Once);
         Assert.That(context.Courses.Select(c => c.Code), Is.EquivalentTo(["dotNet1", "dotNet2"]));
 
         initializer.Seed();
-        roleManagerMock.Verify(rm => rm.CreateAsync(It.IsAny<Role>()), Times.Exactly(2));
+        roleManagerMock.Verify(rm => rm.CreateAsync(It.IsAny<Role>()), Times.Exactly(3));
         Assert.That(context.Courses.Count(), Is.EqualTo(2));
     }
 }

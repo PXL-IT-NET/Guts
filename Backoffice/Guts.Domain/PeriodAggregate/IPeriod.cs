@@ -14,4 +14,6 @@ public interface IPeriod : IEntity
     void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods);
 
     bool OverlapsWith(DateTime from, DateTime until);
+
+    void EnsureCanBeDeleted();
 }

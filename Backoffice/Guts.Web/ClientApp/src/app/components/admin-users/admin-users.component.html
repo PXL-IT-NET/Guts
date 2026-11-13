@@ -1,0 +1,205 @@
+<div class="container-fluid py-3 position-relative">
+  <app-loading-overlay [show]="loading()"></app-loading-overlay>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Users &amp; Impersonation</h2>
+    <button
+      type="button"
+      class="btn btn-outline-danger"
+      (click)="requestBulkDelete()"
+    >
+      Remove All Orphaned Users
+    </button>
+  </div>
+
+  <form class="row g-2 align-items-end mb-3" (ngSubmit)="search()">
+    <div class="col-md-4">
+      <label class="form-label" for="userSearch">Search (name or email)</label>
+      <input
+        id="userSearch"
+        type="text"
+        class="form-control"
+        name="searchTerm"
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="roleFilter">Role</label>
+      <select
+        id="roleFilter"
+        class="form-select"
+        name="roleFilter"
+        [(ngModel)]="roleFilter"
+      >
+        <option value="">All roles</option>
+        <option value="student">Student</option>
+        <option value="lector">Lector</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <div class="form-check">
+        <input
+          id="OrphanedOnly"
+          type="checkbox"
+          class="form-check-input"
+          name="OrphanedOnly"
+          [(ngModel)]="OrphanedOnly"
+        />
+        <label class="form-check-label" for="OrphanedOnly">
+          Orphaned users only
+        </label>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+  </form>
+
+  @if (userPendingDelete(); as target) {
+    <div class="alert alert-danger border-danger mb-4" role="alert">
+      <h5 class="alert-heading">Confirm User Deletion</h5>
+      <p>
+        Are you sure you want to permanently delete user
+        <strong>{{ target.firstName }} {{ target.lastName }}</strong> ({{
+          target.email
+        }})?
+      </p>
+      @if (isLectorUser(target)) {
+        <div
+          class="alert alert-warning border-warning fw-bold"
+          data-testid="teacher-delete-warning"
+        >
+          Warning: This user is a TEACHER (lector)! Even without current course
+          links, they may still be needed for course administration or test
+          provisioning.
+        </div>
+      }
+      <div class="d-flex gap-2">
+        <button
+          type="button"
+          class="btn btn-light text-danger fw-bold"
+          (click)="confirmDelete()"
+        >
+          Confirm Delete User
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          (click)="cancelDelete()"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (bulkDeletePending()) {
+    <div class="alert alert-danger border-danger mb-4" role="alert">
+      <h5 class="alert-heading">Danger: Remove All Orphaned Users</h5>
+      <p>
+        This will permanently delete all non-admin users who are not linked to
+        any test runs, test results, solution files, project teams, gamification
+        profiles, or peer assessments.
+      </p>
+      @if (hasOrphanedLector()) {
+        <div
+          class="alert alert-warning border-warning fw-bold"
+          data-testid="bulk-teacher-delete-warning"
+        >
+          Extra Warning: One or more Orphaned TEACHER (lector) accounts will
+          also be deleted!
+        </div>
+      }
+      <div class="d-flex gap-2">
+        <button
+          type="button"
+          class="btn btn-light text-danger fw-bold"
+          (click)="confirmBulkDelete()"
+        >
+          Confirm Remove All Orphaned
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          (click)="cancelBulkDelete()"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Course Links</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (user of users(); track user.id) {
+        <tr>
+          <td>{{ user.firstName }} {{ user.lastName }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            @for (role of user.roles; track role) {
+              <span class="badge text-bg-secondary me-1">{{ role }}</span>
+            }
+          </td>
+          <td>
+            @if (user.isLinkedToCourse) {
+              <span class="badge text-bg-info">Linked</span>
+            } @else {
+              <span class="badge text-bg-light text-dark">Orphaned</span>
+            }
+          </td>
+          <td class="text-end">
+            @if (user.canPromoteToAdmin) {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-warning me-2"
+                (click)="promoteToAdmin(user)"
+              >
+                Make Admin
+              </button>
+            }
+            @if (user.roles.includes("admin")) {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary me-2"
+                [disabled]="!user.canDemoteFromAdmin"
+                [title]="
+                  user.canDemoteFromAdmin
+                    ? 'Remove admin role'
+                    : 'At least one administrator must remain in the system'
+                "
+                (click)="demoteFromAdmin(user)"
+              >
+                Remove Admin
+              </button>
+            }
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary me-2"
+              [disabled]="!user.canImpersonate"
+              (click)="impersonate(user)"
+            >
+              Impersonate
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              [disabled]="!user.canDelete"
+              (click)="requestDelete(user)"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

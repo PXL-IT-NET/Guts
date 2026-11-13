@@ -9,6 +9,7 @@ using Guts.Application.Repositories;
 using Guts.Application.Services.Period;
 using Guts.Common;
 using Guts.Domain.PeriodAggregate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Guts.Api.Controllers;
@@ -60,8 +61,10 @@ public class PeriodController(
     /// Creates a new period
     /// </summary>
     [HttpPost]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
     [ProducesResponseType(typeof(PeriodOutputModel), (int)HttpStatusCode.Created)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> CreatePeriod([FromBody] PeriodCreationModel model)
     {
@@ -70,6 +73,60 @@ public class PeriodController(
             IPeriod period = await periodService.CreatePeriodAsync(model.Description, model.From, model.Until);
             PeriodOutputModel outputModel = mapper.MapToPeriodOutputModel(period);
             return CreatedAtAction(nameof(GetById), new { id = outputModel.Id }, outputModel);
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing period.
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    public async Task<IActionResult> UpdatePeriod(int id, [FromBody] PeriodCreationModel model)
+    {
+        try
+        {
+            await periodService.UpdatePeriodAsync(id, model.Description, model.From, model.Until);
+            return Ok();
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Deletes a past, non-active period and its associated data.
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.NoContent)]
+    [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    public async Task<IActionResult> DeletePeriod(int id)
+    {
+        try
+        {
+            await periodService.DeletePeriodAsync(id);
+            return NoContent();
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
         }
         catch (ContractException ex)
         {

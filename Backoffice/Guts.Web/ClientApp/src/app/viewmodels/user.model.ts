@@ -9,6 +9,7 @@ export interface IUserProfile {
   roles: string[];
   teams: number[];
   isAuthenticated: boolean;
+  isImpersonating?: boolean;
 }
 
 export class UserProfile implements IUserProfile {
@@ -17,6 +18,7 @@ export class UserProfile implements IUserProfile {
   public roles: string[] = [];
   public teams: number[] = [];
   public isAuthenticated = false;
+  public isImpersonating = false;
 
   constructor(source?: IUserProfile) {
     if (source) {
@@ -25,6 +27,7 @@ export class UserProfile implements IUserProfile {
       this.roles = source.roles;
       this.teams = source.teams;
       this.isAuthenticated = true;
+      this.isImpersonating = Boolean(source.isImpersonating);
     }
   }
 
@@ -34,6 +37,10 @@ export class UserProfile implements IUserProfile {
 
   public isTeacher(): boolean {
     return this.isLector();
+  }
+
+  public isAdmin(): boolean {
+    return this.roles.includes("admin");
   }
 
   public isMemberOf(teamId: number): boolean {

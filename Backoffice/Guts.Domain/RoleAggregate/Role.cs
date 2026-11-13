@@ -11,6 +11,7 @@ public class Role : IdentityRole<int>, IEntity, IEquatable<Role>
     {
         public const string Student = "student";
         public const string Lector = "lector";
+        public const string Admin = "admin";
     }
 
     public object[] IdentityValues => [Id];
