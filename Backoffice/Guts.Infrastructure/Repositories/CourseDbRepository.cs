@@ -2,8 +2,6 @@ using Guts.Application;
 using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
 using Microsoft.EntityFrameworkCore;
-using Polly;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,22 +36,15 @@ internal class CourseDbRepository : BaseDbRepository<Course, Course>, ICourseRep
         {
             int courseId = entityToDelete.Id;
 
-            _context.StudentCourseProfiles.RemoveRange(_context.StudentCourseProfiles.Where(p => p.CourseId == courseId));
-
-            var classGroups = await _context.CourseClassGroups
+            await _context.CourseClassGroups
                 .Where(cg => cg.CourseId == courseId)
-                .ToListAsync();
-            _context.CourseClassGroups.RemoveRange(classGroups);
+                .ExecuteDeleteAsync();
 
-            var gamificationConfigs = await _context.CourseGamificationConfigs
-                .Where(gc => gc.CourseId == courseId)
-                .ToListAsync();
-            _context.CourseGamificationConfigs.RemoveRange(gamificationConfigs);
+            await _context.Courses
+                .Where(c => c.Id == courseId)
+                .ExecuteDeleteAsync();
 
-            _context.Topics.RemoveRange(_context.Topics.Where(t => t.CourseId == courseId));
-
-            _context.Courses.Remove(entityToDelete);
-            await _context.SaveChangesAsync();
+            _context.Entry(entityToDelete).State = EntityState.Detached;
         });
     }
 }

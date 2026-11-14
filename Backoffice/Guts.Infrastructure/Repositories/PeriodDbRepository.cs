@@ -1,6 +1,5 @@
 using Guts.Application;
 using Guts.Application.Repositories;
-using Guts.Domain.CourseAggregate;
 using Guts.Domain.PeriodAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -48,17 +47,15 @@ internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRe
         {
             int periodId = entityToDelete.Id;
 
-            _context.StudentCourseProfiles.RemoveRange(_context.StudentCourseProfiles.Where(p => p.PeriodId == periodId));
-
-            var classGroups = await _context.CourseClassGroups
+            await _context.CourseClassGroups
                 .Where(cg => cg.PeriodId == periodId)
-                .ToListAsync();
-            _context.CourseClassGroups.RemoveRange(classGroups);
+                .ExecuteDeleteAsync();
 
-            _context.Topics.RemoveRange(_context.Topics.Where(t => t.PeriodId == periodId));
+            await _context.Periods
+                .Where(p => p.Id == periodId)
+                .ExecuteDeleteAsync();
 
-            _context.Periods.Remove((Period)entityToDelete);
-            await _context.SaveChangesAsync();
+            _context.Entry((Period)entityToDelete).State = EntityState.Detached;
         });
     }
 }

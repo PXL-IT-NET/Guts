@@ -4,13 +4,17 @@
     tabindex="-1"
     role="dialog"
     aria-modal="true"
+    aria-labelledby="dangerModalTitle"
+    (keydown.escape)="!loading() && onCancel()"
     style="background-color: rgba(0, 0, 0, 0.5)"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-danger position-relative">
         <app-loading-overlay [show]="loading()"></app-loading-overlay>
         <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title fw-bold">{{ title() }}</h5>
+          <h5 id="dangerModalTitle" class="modal-title fw-bold">
+            {{ title() }}
+          </h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -23,21 +27,36 @@
           <div class="alert alert-danger mb-3" role="alert">
             {{ warningMessage() }}
           </div>
-          <label class="form-label" for="dangerConfirmInput">
-            To confirm, type
-            <strong><code>{{ expectedConfirmation() }}</code></strong>
-            ({{ confirmationLabel() }}):
-          </label>
-          <input
-            id="dangerConfirmInput"
-            type="text"
-            class="form-control"
-            [placeholder]="expectedConfirmation()"
-            [disabled]="loading()"
-            [ngModel]="confirmationInput()"
-            (ngModelChange)="confirmationInput.set($event)"
-            data-testid="danger-confirm-input"
-          />
+          @if (extraWarning()) {
+            <div
+              class="alert alert-warning border-warning d-flex align-items-start gap-2 mb-3"
+              role="alert"
+              [attr.data-testid]="extraWarningTestId()"
+            >
+              <i
+                class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"
+                aria-hidden="true"
+              ></i>
+              <div>{{ extraWarning() }}</div>
+            </div>
+          }
+          @if (requireConfirmationInput()) {
+            <label class="form-label" for="dangerConfirmInput">
+              To confirm, type
+              <strong><code>{{ expectedConfirmation() }}</code></strong>
+              ({{ confirmationLabel() }}):
+            </label>
+            <input
+              id="dangerConfirmInput"
+              type="text"
+              class="form-control"
+              [placeholder]="expectedConfirmation()"
+              [disabled]="loading()"
+              [ngModel]="confirmationInput()"
+              (ngModelChange)="confirmationInput.set($event)"
+              data-testid="danger-confirm-input"
+            />
+          }
         </div>
         <div class="modal-footer">
           <button
@@ -53,6 +72,7 @@
             class="btn btn-danger"
             [disabled]="!canConfirm() || loading()"
             (click)="onConfirm()"
+            [attr.data-testid]="confirmButtonTestId()"
           >
             {{ confirmButtonText() }}
           </button>

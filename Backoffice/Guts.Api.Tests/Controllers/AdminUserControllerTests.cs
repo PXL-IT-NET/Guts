@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
+using Guts.Api.Models;
 using Guts.Api.Tests.Builders;
 using Guts.Application;
 using Guts.Application.Dtos;
@@ -39,15 +40,29 @@ public class AdminUserControllerTests
     }
 
     [Test]
-    public async Task SearchUsers_ReturnsOkWithUsers()
+    public async Task SearchUsers_ReturnsOkWithPagedUsers()
     {
-        IReadOnlyList<AdminUserDto> users = [new AdminUserDto { Id = 2, Email = "s@student.pxl.be" }];
-        _serviceMock.Setup(s => s.SearchUsersAsync("s", null, false, 1)).ReturnsAsync(users);
+        var paged = new PagedResult<AdminUserDto>
+        {
+            Items = [new AdminUserDto { Id = 2, Email = "s@student.pxl.be" }],
+            TotalCount = 1,
+            Page = 1,
+            PageSize = 25
+        };
+        _serviceMock.Setup(s => s.SearchUsersAsync("s", null, false, 1, 1, 25)).ReturnsAsync(paged);
 
-        var result = await _controller.SearchUsers("s", null, false) as OkObjectResult;
+        var result = await _controller.SearchUsers("s", null, false, 1, 25) as OkObjectResult;
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Value, Is.SameAs(users));
+        Assert.That(result.Value, Is.SameAs(paged));
+    }
+
+    [Test]
+    public async Task SearchUsers_InvalidPage_ReturnsBadRequest()
+    {
+        var result = await _controller.SearchUsers(page: 0, pageSize: 25);
+
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
     }
 
     [Test]
@@ -80,13 +95,45 @@ public class AdminUserControllerTests
     }
 
     [Test]
-    public async Task DeleteAllOrphanedUsers_ReturnsOkWithCount()
+    public async Task DeleteUsers_Valid_ReturnsOkWithCount()
     {
-        _serviceMock.Setup(s => s.DeleteAllOrphanedUsersAsync(1)).ReturnsAsync(3);
+        var model = new DeleteUsersModel { UserIds = [2, 3] };
+        _serviceMock.Setup(s => s.DeleteUsersAsync(model.UserIds, 1)).ReturnsAsync(2);
 
-        var result = await _controller.DeleteAllOrphanedUsers() as OkObjectResult;
+        var result = await _controller.DeleteUsers(model) as OkObjectResult;
 
         Assert.That(result, Is.Not.Null);
+        _serviceMock.Verify(s => s.DeleteUsersAsync(model.UserIds, 1), Times.Once);
+    }
+
+    [Test]
+    public async Task DeleteUsers_EmptySelection_ReturnsBadRequest()
+    {
+        var result = await _controller.DeleteUsers(new DeleteUsersModel { UserIds = [] });
+
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
+    }
+
+    [Test]
+    public async Task DeleteUsers_NotFound_ReturnsNotFound()
+    {
+        var model = new DeleteUsersModel { UserIds = [2, 999] };
+        _serviceMock.Setup(s => s.DeleteUsersAsync(model.UserIds, 1)).ThrowsAsync(new DataNotFoundException());
+
+        var result = await _controller.DeleteUsers(model);
+
+        Assert.That(result, Is.InstanceOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task DeleteUsers_ContractException_ReturnsBadRequest()
+    {
+        var model = new DeleteUsersModel { UserIds = [2, 3] };
+        _serviceMock.Setup(s => s.DeleteUsersAsync(model.UserIds, 1)).ThrowsAsync(new ContractException("Linked"));
+
+        var result = await _controller.DeleteUsers(model);
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
 
     [Test]

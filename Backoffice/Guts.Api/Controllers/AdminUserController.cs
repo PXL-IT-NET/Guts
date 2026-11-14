@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
@@ -17,14 +18,22 @@ namespace Guts.Api.Controllers;
 public class AdminUserController(IAdminUserService adminUserService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<AdminUserDto>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(PagedResult<AdminUserDto>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
     public async Task<IActionResult> SearchUsers(
         [FromQuery] string search = null,
         [FromQuery] string role = null,
-        [FromQuery] bool OrphanedOnly = false)
+        [FromQuery] bool orphanedOnly = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int? pageSize = null)
     {
-        var users = await adminUserService.SearchUsersAsync(search, role, OrphanedOnly, GetUserId());
+        if (page < 1 || (pageSize.HasValue && pageSize.Value < 1))
+        {
+            return BadRequest();
+        }
+
+        var users = await adminUserService.SearchUsersAsync(search, role, orphanedOnly, GetUserId(), page, pageSize);
         return Ok(users);
     }
 
@@ -51,13 +60,31 @@ public class AdminUserController(IAdminUserService adminUserService) : Controlle
         }
     }
 
-    [HttpDelete("Orphaned")]
+    [HttpPost("delete-batch")]
     [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
-    public async Task<IActionResult> DeleteAllOrphanedUsers()
+    public async Task<IActionResult> DeleteUsers([FromBody] DeleteUsersModel model)
     {
-        int deletedCount = await adminUserService.DeleteAllOrphanedUsersAsync(GetUserId());
-        return Ok(new { deletedCount });
+        if (model == null || !ModelState.IsValid || model.UserIds == null || model.UserIds.Count == 0 || model.UserIds.Any(id => id < 1))
+        {
+            return BadRequest();
+        }
+
+        try
+        {
+            int deletedCount = await adminUserService.DeleteUsersAsync(model.UserIds, GetUserId());
+            return Ok(new { deletedCount });
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
     }
 
     [HttpPost("{userId}/promote-admin")]

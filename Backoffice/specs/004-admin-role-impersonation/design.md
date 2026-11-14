@@ -24,7 +24,7 @@ This feature spans all layers of the GUTS Backoffice:
   - Add `public const string Admin = "admin";` to `Role.Constants`.
 - **`Period`** (`Guts.Domain/PeriodAggregate/Period.cs` & `IPeriod.cs`):
   - Add `void EnsureCanBeDeleted()` (and/or `bool CanBeDeleted()`):
-    - Enforces **[DR-2]**: `Contracts.Require(Until < DateTime.Today && !IsActive, "Only past periods that are not active can be deleted.");`
+    - Enforces **[DR-2]**: `Contracts.Require(!IsActive, "An active period cannot be deleted.");`
 - **`Course`** (`Guts.Domain/CourseAggregate/Course.cs`):
   - Add `Update(string code, string name)`:
     - Enforces **[DR-3]**: `Contracts.Require(!string.IsNullOrWhiteSpace(code), "Course code cannot be empty.");`, `Contracts.Require(code.Trim().Length <= 20, "Course code cannot exceed 20 characters.");`, `Contracts.Require(!string.IsNullOrWhiteSpace(name), "Course name cannot be empty.");`.
@@ -75,9 +75,10 @@ This feature spans all layers of the GUTS Backoffice:
 - **`ICourseRepository`**:
   - Ensure `DeleteAsync(Course course)` removes the course and any dependent records cleanly.
 - **`IUserRepository`**:
-  - `Task<IReadOnlyList<UserSearchResultDto>> SearchUsersAsync(string search, string roleFilter, bool OrphanedOnly, int maxResults = 50);` (or return `User` + roles + `UserCourseLinks` projection).
+  - `Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(string search, string roleFilter, bool orphanedOnly, int page = 1, int? pageSize = 50);` (uses EF Core `Skip`/`Take` when `pageSize` has a value, returns all when `pageSize` is `null`, and hydrates roles and linked courses).
   - `Task<UserCourseLinks> GetCourseLinksAsync(int userId);`
-  - `Task<IReadOnlyList<User>> GetOrphanedNonAdminUsersAsync();`
+  - `Task<IReadOnlyList<UserWithRolesAndLinks>> GetWithRolesAndLinksByIdsAsync(IReadOnlyCollection<int> userIds);`
+  - `Task DeleteRangeAsync(IReadOnlyCollection<User> users);`
 
 ### Application Services (`Guts.Application/Services/`)
 - **`IPeriodService` / `PeriodService`**:
@@ -88,9 +89,9 @@ This feature spans all layers of the GUTS Backoffice:
   - Add `Task<Course> UpdateCourseAsync(int courseId, string code, string name);` (loads course + checks duplicate code via domain, calls `course.Update(...)`, updates).
   - Add `Task DeleteCourseAsync(int courseId);` (loads course, calls `courseRepository.DeleteAsync(course)`).
 - **`IAdminUserService` / `AdminUserService`**:
-  - `Task<IReadOnlyList<AdminUserDto>> SearchUsersAsync(string search, string role, bool OrphanedOnly);`
-  - `Task DeleteUserAsync(int targetUserId, int currentUserId);` (loads user + roles + `UserCourseLinks`, calls `UserDeletionPolicy.EnsureCanBeDeleted(...)`, deletes via `UserManager<User>`).
-  - `Task<int> DeleteAllOrphanedUsersAsync(int currentUserId);` (loads Orphaned non-admin users, validates each via `UserDeletionPolicy.EnsureCanBeDeleted(...)`, deletes).
+  - `Task<PagedResult<AdminUserDto>> SearchUsersAsync(string search, string role, bool orphanedOnly, int currentUserId, int page = 1, int? pageSize = null);`
+  - `Task DeleteUserAsync(int targetUserId, int currentUserId);` (loads user + roles + `UserCourseLinks`, calls `UserDeletionPolicy.EnsureCanBeDeleted(...)`, deletes via `IUserRepository.DeleteAsync`).
+  - `Task<int> DeleteUsersAsync(IReadOnlyCollection<int> targetUserIds, int currentUserId);` (loads selected users with roles + links, validates every user via `UserDeletionPolicy.EnsureCanBeDeleted(...)`, deletes via `IUserRepository.DeleteRangeAsync`).
 - **`IImpersonationService` / `ImpersonationService`**:
   - `Task<IReadOnlyList<ImpersonatableUserDto>> SearchImpersonatableUsersAsync(string search, IReadOnlyCollection<string> callerRoles);`
   - `Task<TokenAccessPass> ImpersonateAsync(int callerUserId, IReadOnlyCollection<string> callerRoles, bool isAlreadyImpersonating, int targetUserId);`
@@ -108,12 +109,11 @@ This feature spans all layers of the GUTS Backoffice:
 
 ### Repository Implementations (`Guts.Infrastructure/Repositories/`)
 - **`PeriodDbRepository`**:
-  - Implement safe deletion of a past `Period` inside a transaction, explicitly deleting all `StudentCourseProfile` records (and their cascaded `Badges` and `Events`) for `PeriodId`—since `StudentCourseProfileConfiguration` uses `DeleteBehavior.NoAction` on `PeriodId`—as well as dependent `TestResult`, `TestRun`, `SolutionFile`, `ProjectTeamAssessment`, `PeerAssessment`, `Chapter`, `Project`, and `CourseClassGroup` rows referencing `PeriodId` (respecting `Restrict`/`NoAction` FK constraints) before removing the `Period`.
+  - Implement safe deletion of a past `Period` inside `ExecuteInTransactionAsync` using `ExecuteDeleteAsync()`: explicitly delete `CourseClassGroup` rows for `PeriodId` (which use `DeleteBehavior.NoAction` to avoid multiple cascade paths in SQL Server), then delete the `Period`, letting database `ON DELETE CASCADE` remove `StudentCourseProfile` (with `StudentBadges` and `GamificationEvents`) and `Topic` hierarchies.
 - **`CourseDbRepository`**:
-  - Implement safe deletion of a `Course` inside a transaction, explicitly deleting `StudentCourseProfile` records for `CourseId` (since `CourseId` also uses `DeleteBehavior.NoAction`) along with dependent `Chapter`, `Project`, `CourseGamificationConfig`, `CourseClassGroup`, etc. before removing the `Course`.
+  - Implement safe deletion of a `Course` inside `ExecuteInTransactionAsync` using `ExecuteDeleteAsync()`: explicitly delete `CourseClassGroup` rows for `CourseId` (which use `DeleteBehavior.NoAction` to avoid multiple cascade paths in SQL Server), then delete the `Course`, letting database `ON DELETE CASCADE` remove `StudentCourseProfile` (with `StudentBadges` and `GamificationEvents`), `CourseGamificationConfig`, and `Topic` hierarchies.
 - **`UserDbRepository`**:
-  - Implement `GetCourseLinksAsync(int userId)` checking `TestRuns`, `TestResults`, `SolutionFiles`, `ProjectTeamUsers`, `StudentCourseProfiles`, and `PeerAssessments` (as evaluator or subject).
-  - Implement `SearchUsersAsync(...)` and `GetOrphanedNonAdminUsersAsync()` with efficient EF Core queries.
+  - Implement `GetCourseLinksAsync(int userId)`, `GetWithRolesAndLinksByIdsAsync(...)`, `DeleteRangeAsync(...)`, and paginated `SearchUsersAsync(...)` using EF Core `Skip`/`Take` and hydrating roles and linked courses (`LinkedCourseDto`) across `TestRuns`, `TestResults`, `SolutionFiles`, `ProjectTeamUsers`, `StudentCourseProfiles`, and `PeerAssessments`.
 
 ---
 
@@ -144,9 +144,9 @@ This feature spans all layers of the GUTS Backoffice:
   - Add `[HttpPut("{courseId}")]` (`AdminOnlyPolicy`) ➔ `courseService.UpdateCourseAsync(...)`.
   - Add `[HttpDelete("{courseId}")]` (`AdminOnlyPolicy`) ➔ `courseService.DeleteCourseAsync(courseId)`.
 - **`AdminUserController`** (`[Route("api/admin/users")]`, `[Authorize(Policy = ApiConstants.AdminOnlyPolicy)]`):
-  - `GET /api/admin/users?search=...&role=...&OrphanedOnly=...`
+  - `GET /api/admin/users?search=...&role=...&orphanedOnly=...&page=...&pageSize=...`
   - `DELETE /api/admin/users/{userId}`
-  - `DELETE /api/admin/users/Orphaned`
+  - `POST /api/admin/users/delete-batch`
 - **`ImpersonationController`** (`[Route("api/impersonation")]`, `[Authorize(Policy = ApiConstants.LectorOrAdminPolicy)]`):
   - `GET /api/impersonation/users?search=...`
   - `POST /api/impersonation/{userId}`
@@ -181,7 +181,7 @@ This feature spans all layers of the GUTS Backoffice:
   - `@if (userProfile.isAdmin() && !isImpersonating)`: Collapsible **Admin** section with **Periods** (`/admin/periods`), **Courses** (`/admin/courses`), **Users & Impersonation** (`/admin/users`).
   - `@if (userProfile.isLector() && !userProfile.isAdmin() && !isImpersonating)`: Collapsible **Teacher tools** section (expanded by default) containing **Impersonate student** (`/impersonate`).
 - **New Components** (`src/app/components/admin/` or `src/app/components/`):
-  - `AdminPeriodsComponent`: Table of periods + Create/Edit form (disables `from`/`until` for inactive periods) + Delete button with centered `DangerDeleteModalComponent` (disabled/blocked if active or future period; requires typing period `description` to confirm).
+  - `AdminPeriodsComponent`: Table of periods + Create/Edit form (validates required fields and disables `from`/`until` for inactive periods) + Delete button with centered `DangerDeleteModalComponent` (disabled/blocked if active period; past and future non-active periods can be deleted; requires typing period `description` to confirm).
   - `AdminCoursesComponent`: Table of courses + Create/Edit form + Delete button with centered `DangerDeleteModalComponent` warning about irreversible data loss (requires typing course `code` to confirm).
   - `AdminUsersComponent`: Search input, role filter, "Orphaned only" toggle, table of users with **Impersonate** button (for non-admins) and **Delete** button (for Orphaned non-admins; shows **extra prominent teacher warning** when the target user has `lector` role), plus **Remove All Orphaned Users** button with confirmation modal (including extra warning if any `lector` accounts are included).
   - `ImpersonateStudentComponent` (for lectors): Search input + table of student accounts with **Impersonate** button.

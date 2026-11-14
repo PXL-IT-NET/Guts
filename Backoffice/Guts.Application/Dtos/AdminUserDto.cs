@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace Guts.Application.Dtos;
 
+public record LinkedCourseDto(int Id, string Code, string Name);
+
 public class AdminUserDto
 {
     public int Id { get; set; }
@@ -10,6 +12,7 @@ public class AdminUserDto
     public string LastName { get; set; }
     public IReadOnlyList<string> Roles { get; set; } = [];
     public bool IsLinkedToCourse { get; set; }
+    public IReadOnlyList<LinkedCourseDto> LinkedCourses { get; set; } = [];
     public bool CanDelete { get; set; }
     public bool CanImpersonate { get; set; }
     public bool CanPromoteToAdmin { get; set; }

@@ -23,19 +23,27 @@ export class DangerDeleteModalComponent {
   public readonly loading = input<boolean>(false);
   public readonly title = input.required<string>();
   public readonly warningMessage = input.required<string>();
-  public readonly expectedConfirmation = input.required<string>();
-  public readonly confirmationLabel = input.required<string>();
+  public readonly extraWarning = input<string | null>(null);
+  public readonly extraWarningTestId = input<string | null>(null);
+  public readonly requireConfirmationInput = input<boolean>(true);
+  public readonly expectedConfirmation = input<string>("");
+  public readonly confirmationLabel = input<string>("");
   public readonly confirmButtonText = input<string>("Confirm Delete");
+  public readonly confirmButtonTestId = input<string | null>(null);
 
   public readonly confirmed = output<void>();
   public readonly cancelled = output<void>();
 
   public readonly confirmationInput = signal<string>("");
-  public readonly canConfirm = computed(
-    () =>
+  public readonly canConfirm = computed(() => {
+    if (!this.requireConfirmationInput()) {
+      return true;
+    }
+    return (
       this.expectedConfirmation().length > 0 &&
-      this.confirmationInput() === this.expectedConfirmation(),
-  );
+      this.confirmationInput() === this.expectedConfirmation()
+    );
+  });
 
   constructor() {
     effect(() => {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
 using Guts.Application.Security;
 using Guts.Application.Services;
@@ -36,11 +37,17 @@ public class ImpersonationServiceTests
         var links = new UserCourseLinks(false, false, false, false, false, false);
 
         _userRepositoryMock
-            .Setup(r => r.SearchUsersAsync("", Role.Constants.Student, false, 50))
-            .ReturnsAsync(new List<UserWithRolesAndLinks>
+            .Setup(r => r.SearchUsersAsync("", Role.Constants.Student, false, 1, 50))
+            .ReturnsAsync(new PagedResult<UserWithRolesAndLinks>
             {
-                new(student, [Role.Constants.Student], links),
-                new(dualRole, [Role.Constants.Student, Role.Constants.Lector], links)
+                Items = new List<UserWithRolesAndLinks>
+                {
+                    new(student, [Role.Constants.Student], links),
+                    new(dualRole, [Role.Constants.Student, Role.Constants.Lector], links)
+                },
+                TotalCount = 2,
+                Page = 1,
+                PageSize = 50
             });
 
         var result = await _service.SearchImpersonatableUsersAsync("", [Role.Constants.Lector]);

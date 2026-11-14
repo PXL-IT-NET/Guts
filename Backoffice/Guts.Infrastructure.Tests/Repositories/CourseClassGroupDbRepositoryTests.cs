@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 
@@ -64,5 +65,40 @@ internal class CourseClassGroupDbRepositoryTests : RepositoryTestsBase
 
         var list = await repo.GetByCourseAndPeriodAsync(course.Id, period.Id);
         Assert.That(list.Select(cg => cg.Name), Is.EqualTo(["1TIN-A", "1TIN-B", "1TIN-C"]));
+    }
+
+    [Test]
+    public async Task DeleteAsync_ShouldSetStudentCourseProfileClassGroupIdToNull()
+    {
+        var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user = await Seeder.SeedUserAsync("Sam", "Student");
+
+        int classGroupId;
+        await using (var seedContext = CreateDbContext())
+        {
+            var classGroup = new CourseClassGroup("1TIN-A", course.Id, period.Id);
+            seedContext.CourseClassGroups.Add(classGroup);
+            await seedContext.SaveChangesAsync();
+            classGroupId = classGroup.Id;
+
+            var profile = new StudentCourseProfile(user.Id, course.Id, period.Id);
+            profile.Enroll(true, "Sammy", "CodeCat", classGroupId, false);
+            seedContext.StudentCourseProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using (var context = CreateDbContext())
+        {
+            var repo = new CourseClassGroupDbRepository(context);
+            var group = await repo.GetByIdAsync(classGroupId);
+            await repo.DeleteAsync(group);
+        }
+
+        await using (var verifyContext = CreateDbContext())
+        {
+            Assert.That(verifyContext.CourseClassGroups.Any(cg => cg.Id == classGroupId), Is.False);
+            var profile = verifyContext.StudentCourseProfiles.Single(sp => sp.UserId == user.Id && sp.CourseId == course.Id && sp.PeriodId == period.Id);
+            Assert.That(profile.ClassGroupId, Is.Null);
+        }
     }
 }

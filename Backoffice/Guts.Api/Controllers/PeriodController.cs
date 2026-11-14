@@ -68,9 +68,24 @@ public class PeriodController(
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> CreatePeriod([FromBody] PeriodCreationModel model)
     {
+        if (model == null)
+        {
+            return BadRequest(ErrorModel.FromString("Period data is required."));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (!model.From.HasValue || !model.Until.HasValue)
+        {
+            return BadRequest(ErrorModel.FromString("From and Until dates are required."));
+        }
+
         try
         {
-            IPeriod period = await periodService.CreatePeriodAsync(model.Description, model.From, model.Until);
+            IPeriod period = await periodService.CreatePeriodAsync(model.Description, model.From.Value, model.Until.Value);
             PeriodOutputModel outputModel = mapper.MapToPeriodOutputModel(period);
             return CreatedAtAction(nameof(GetById), new { id = outputModel.Id }, outputModel);
         }
@@ -92,9 +107,24 @@ public class PeriodController(
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     public async Task<IActionResult> UpdatePeriod(int id, [FromBody] PeriodCreationModel model)
     {
+        if (model == null)
+        {
+            return BadRequest(ErrorModel.FromString("Period data is required."));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (!model.From.HasValue || !model.Until.HasValue)
+        {
+            return BadRequest(ErrorModel.FromString("From and Until dates are required."));
+        }
+
         try
         {
-            await periodService.UpdatePeriodAsync(id, model.Description, model.From, model.Until);
+            await periodService.UpdatePeriodAsync(id, model.Description, model.From.Value, model.Until.Value);
             return Ok();
         }
         catch (DataNotFoundException)
@@ -108,7 +138,7 @@ public class PeriodController(
     }
 
     /// <summary>
-    /// Deletes a past, non-active period and its associated data.
+    /// Deletes a non-active period and its associated data.
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]

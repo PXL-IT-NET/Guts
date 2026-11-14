@@ -22,10 +22,10 @@ internal class ImpersonationService(
         bool isAdmin = callerRoles != null && callerRoles.Contains(Role.Constants.Admin);
         string roleFilter = isAdmin ? null : Role.Constants.Student;
 
-        IReadOnlyList<UserWithRolesAndLinks> results =
-            await userRepository.SearchUsersAsync(search, roleFilter, OrphanedOnly: false);
+        PagedResult<UserWithRolesAndLinks> results =
+            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly: false);
 
-        return results
+        return results.Items
             .Where(entry => !entry.Roles.Contains(Role.Constants.Admin))
             .Where(entry => isAdmin || !entry.Roles.Contains(Role.Constants.Lector))
             .Select(entry => new ImpersonatableUserDto

@@ -73,7 +73,7 @@ public class Period : AggregateRoot, IPeriod
 
     public void EnsureCanBeDeleted()
     {
-        Contracts.Require(Until < DateTime.Today && !IsActive, "Only past periods that are not active can be deleted.");
+        Contracts.Require(!IsActive, "An active period cannot be deleted.");
     }
 
     public class Factory : IPeriodFactory

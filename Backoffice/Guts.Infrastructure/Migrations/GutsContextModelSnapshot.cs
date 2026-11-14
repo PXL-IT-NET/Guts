@@ -932,7 +932,7 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Guts.Domain.PeriodAggregate.Period", "Period")
@@ -989,13 +989,13 @@ namespace Guts.Infrastructure.Migrations
                     b.HasOne("Guts.Domain.CourseAggregate.Course", null)
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Guts.Domain.PeriodAggregate.Period", null)
                         .WithMany()
                         .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Guts.Domain.UserAggregate.User", "User")

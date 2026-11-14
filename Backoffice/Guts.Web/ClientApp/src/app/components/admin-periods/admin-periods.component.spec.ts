@@ -50,4 +50,42 @@ describe("AdminPeriodsComponent", () => {
     expect(component.periods().length).toBe(1);
     expect(component.isPastPeriod(component.periods()[0])).toBeTrue();
   });
+
+  it("should not call createPeriod when dates are empty", () => {
+    component.startCreate();
+    component.formDescription = "2026-2027";
+    component.formFrom = "";
+    component.formUntil = "";
+
+    component.savePeriod();
+
+    expect(periodServiceSpy.createPeriod).not.toHaveBeenCalled();
+    expect(toastrSpy.error).toHaveBeenCalled();
+  });
+
+  it("should allow deleting future non-active periods while disabling delete for active periods", () => {
+    const activePeriod = new PeriodModel({
+      id: 2,
+      description: "Active",
+      from: new Date(Date.now() - 86400000),
+      until: new Date(Date.now() + 86400000),
+      isActive: true,
+    });
+    const futurePeriod = new PeriodModel({
+      id: 3,
+      description: "Future",
+      from: new Date(Date.now() + 86400000 * 30),
+      until: new Date(Date.now() + 86400000 * 60),
+      isActive: false,
+    });
+    component.periods.set([activePeriod, futurePeriod]);
+    fixture.detectChanges();
+
+    const deleteButtons = fixture.nativeElement.querySelectorAll(
+      "tbody tr button.btn-outline-danger",
+    ) as NodeListOf<HTMLButtonElement>;
+    expect(deleteButtons.length).toBe(2);
+    expect(deleteButtons[0].disabled).toBeTrue();
+    expect(deleteButtons[1].disabled).toBeFalse();
+  });
 });

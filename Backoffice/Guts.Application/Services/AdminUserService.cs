@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Application.Dtos;
 using Guts.Application.Repositories;
+using Guts.Common;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -10,17 +11,19 @@ namespace Guts.Application.Services;
 
 internal class AdminUserService(IUserRepository userRepository) : IAdminUserService
 {
-    public async Task<IReadOnlyList<AdminUserDto>> SearchUsersAsync(
+    public async Task<PagedResult<AdminUserDto>> SearchUsersAsync(
         string search,
         string roleFilter,
-        bool OrphanedOnly,
-        int currentUserId)
+        bool orphanedOnly,
+        int currentUserId,
+        int page = 1,
+        int? pageSize = null)
     {
-        IReadOnlyList<UserWithRolesAndLinks> results =
-            await userRepository.SearchUsersAsync(search, roleFilter, OrphanedOnly);
+        PagedResult<UserWithRolesAndLinks> results =
+            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly, page, pageSize);
         int adminCount = await userRepository.CountAdminsAsync();
 
-        return results.Select(entry =>
+        List<AdminUserDto> items = results.Items.Select(entry =>
         {
             bool isAdmin = entry.Roles.Contains(Role.Constants.Admin);
             bool isLector = entry.Roles.Contains(Role.Constants.Lector);
@@ -33,12 +36,21 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
                 LastName = entry.User.LastName,
                 Roles = entry.Roles,
                 IsLinkedToCourse = isLinked,
+                LinkedCourses = entry.LinkedCourses ?? [],
                 CanDelete = !isAdmin && entry.User.Id != currentUserId && !isLinked,
                 CanImpersonate = !isAdmin,
                 CanPromoteToAdmin = isLector && !isAdmin,
                 CanDemoteFromAdmin = isAdmin && adminCount > 1
             };
         }).ToList();
+
+        return new PagedResult<AdminUserDto>
+        {
+            Items = items,
+            TotalCount = results.TotalCount,
+            Page = results.Page,
+            PageSize = results.PageSize
+        };
     }
 
     public async Task DeleteUserAsync(int targetUserId, int currentUserId)
@@ -52,24 +64,24 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
         await userRepository.DeleteAsync(targetUser);
     }
 
-    public async Task<int> DeleteAllOrphanedUsersAsync(int currentUserId)
+    public async Task<int> DeleteUsersAsync(IReadOnlyCollection<int> targetUserIds, int currentUserId)
     {
-        IReadOnlyList<UserWithRolesAndLinks> candidates = await userRepository.GetOrphanedNonAdminUsersAsync();
-        int deletedCount = 0;
+        List<int> distinctIds = (targetUserIds ?? []).Where(id => id > 0).Distinct().ToList();
+        Contracts.Require(distinctIds.Count > 0, "At least one user must be selected.");
+
+        IReadOnlyList<UserWithRolesAndLinks> candidates = await userRepository.GetWithRolesAndLinksByIdsAsync(distinctIds);
+        if (candidates.Count != distinctIds.Count)
+        {
+            throw new DataNotFoundException();
+        }
 
         foreach (UserWithRolesAndLinks candidate in candidates)
         {
-            if (candidate.User.Id == currentUserId)
-            {
-                continue;
-            }
-
             UserDeletionPolicy.EnsureCanBeDeleted(candidate.User, currentUserId, candidate.Roles, candidate.CourseLinks);
-            await userRepository.DeleteAsync(candidate.User);
-            deletedCount++;
         }
 
-        return deletedCount;
+        await userRepository.DeleteRangeAsync(candidates.Select(c => c.User).ToList());
+        return candidates.Count;
     }
 
     public async Task PromoteToAdminAsync(int targetUserId)

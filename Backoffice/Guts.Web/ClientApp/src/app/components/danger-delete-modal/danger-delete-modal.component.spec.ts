@@ -56,4 +56,31 @@ describe("DangerDeleteModalComponent", () => {
     expect(component.cancelled.emit).toHaveBeenCalled();
     expect(component.confirmationInput()).toBe("");
   });
+
+  it("should show extraWarning and allow immediate confirm when requireConfirmationInput is false", () => {
+    fixture.componentRef.setInput("requireConfirmationInput", false);
+    fixture.componentRef.setInput(
+      "extraWarning",
+      "Warning: This user is a TEACHER!",
+    );
+    fixture.componentRef.setInput(
+      "extraWarningTestId",
+      "teacher-delete-warning",
+    );
+    fixture.detectChanges();
+
+    const warning = fixture.nativeElement.querySelector(
+      "[data-testid='teacher-delete-warning']",
+    );
+    expect(warning).toBeTruthy();
+    expect(warning.textContent).toContain("TEACHER");
+    expect(
+      fixture.nativeElement.querySelector("[data-testid='danger-confirm-input']"),
+    ).toBeNull();
+
+    const confirmBtn = fixture.nativeElement.querySelector(
+      "button.btn-danger",
+    ) as HTMLButtonElement;
+    expect(confirmBtn.disabled).toBeFalse();
+  });
 });

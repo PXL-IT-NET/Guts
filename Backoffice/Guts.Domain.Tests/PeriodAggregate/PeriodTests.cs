@@ -230,10 +230,10 @@ public class PeriodTests
     }
 
     [Test]
-    public void EnsureCanBeDeleted_FuturePeriod_ShouldThrowContractException()
+    public void EnsureCanBeDeleted_FuturePeriod_ShouldNotThrow()
     {
         Period futurePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(1), DateTime.Today.AddDays(10)).Build();
 
-        Assert.Throws<ContractException>(() => futurePeriod.EnsureCanBeDeleted());
+        Assert.DoesNotThrow(() => futurePeriod.EnsureCanBeDeleted());
     }
 }

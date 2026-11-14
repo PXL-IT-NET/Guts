@@ -13,7 +13,11 @@
         {{ editingPeriodId() === 0 ? "Create Period" : "Edit Period" }}
       </div>
       <div class="card-body">
-        <form (ngSubmit)="savePeriod()">
+        <form
+          #periodForm="ngForm"
+          (ngSubmit)="periodForm.form.valid && savePeriod()"
+          novalidate
+        >
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label" for="periodDescription">Description</label>
@@ -23,8 +27,11 @@
                 class="form-control"
                 name="description"
                 [(ngModel)]="formDescription"
+                #description="ngModel"
+                [class.is-invalid]="periodForm.submitted && description.invalid"
                 required
               />
+              <div class="invalid-feedback">Description is required.</div>
             </div>
             <div class="col-md-4">
               <label class="form-label" for="periodFrom">From</label>
@@ -34,9 +41,12 @@
                 class="form-control"
                 name="from"
                 [(ngModel)]="formFrom"
+                #from="ngModel"
                 [disabled]="!editingPeriodIsActive()"
+                [class.is-invalid]="periodForm.submitted && from.invalid"
                 required
               />
+              <div class="invalid-feedback">From date is required.</div>
             </div>
             <div class="col-md-4">
               <label class="form-label" for="periodUntil">Until</label>
@@ -46,9 +56,12 @@
                 class="form-control"
                 name="until"
                 [(ngModel)]="formUntil"
+                #until="ngModel"
                 [disabled]="!editingPeriodIsActive()"
+                [class.is-invalid]="periodForm.submitted && until.invalid"
                 required
               />
+              <div class="invalid-feedback">Until date is required.</div>
             </div>
             @if (!editingPeriodIsActive()) {
               <div class="col-12">
@@ -78,7 +91,7 @@
     [loading]="loading()"
     title="Danger: Delete Period"
     [warningMessage]="
-      'You are about to permanently delete past period ' +
+      'You are about to permanently delete period ' +
       (periodPendingDelete()?.description ?? '') +
       '. This will irreversibly delete all chapters, projects, test runs, test results, assessments, and student gamification profiles for this period!'
     "
@@ -125,11 +138,11 @@
             <button
               type="button"
               class="btn btn-sm btn-outline-danger"
-              [disabled]="!isPastPeriod(period)"
+              [disabled]="period.isActive"
               [title]="
-                isPastPeriod(period)
-                  ? 'Delete past period'
-                  : 'Only past non-active periods can be deleted'
+                period.isActive
+                  ? 'Active period cannot be deleted'
+                  : 'Delete period'
               "
               (click)="requestDelete(period)"
             >

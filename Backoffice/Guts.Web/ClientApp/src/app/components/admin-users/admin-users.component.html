@@ -1,205 +1,436 @@
 <div class="container-fluid py-3 position-relative">
   <app-loading-overlay [show]="loading()"></app-loading-overlay>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Users &amp; Impersonation</h2>
-    <button
-      type="button"
-      class="btn btn-outline-danger"
-      (click)="requestBulkDelete()"
-    >
-      Remove All Orphaned Users
-    </button>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Users &amp; Impersonation</h2>
+      <p class="text-muted mb-0 small">
+        Search users, inspect linked courses, impersonate accounts, or remove
+        orphaned users.
+      </p>
+    </div>
+    <span class="badge rounded-pill text-bg-secondary fs-6 fw-normal px-3 py-2">
+      {{ totalCount() }} {{ totalCount() === 1 ? "user" : "users" }}
+    </span>
   </div>
 
-  <form class="row g-2 align-items-end mb-3" (ngSubmit)="search()">
-    <div class="col-md-4">
-      <label class="form-label" for="userSearch">Search (name or email)</label>
-      <input
-        id="userSearch"
-        type="text"
-        class="form-control"
-        name="searchTerm"
-        [(ngModel)]="searchTerm"
-      />
+  <search>
+    <form class="card shadow-sm mb-3" (ngSubmit)="search()">
+      <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-5">
+            <label class="form-label fw-semibold small text-uppercase text-muted mb-1" for="userSearch">
+              Search user
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-body-tertiary">
+                <i class="bi bi-search" aria-hidden="true"></i>
+              </span>
+              <input
+                id="userSearch"
+                type="search"
+                class="form-control"
+                name="searchTerm"
+                placeholder="Name or email..."
+                autocomplete="off"
+                spellcheck="false"
+                [(ngModel)]="searchTerm"
+              />
+              @if (searchTerm.length > 0) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  aria-label="Clear search"
+                  (click)="clearSearchTerm()"
+                >
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <span class="form-label fw-semibold small text-uppercase text-muted mb-1 d-block">
+              Role
+            </span>
+            <div
+              class="btn-group w-100"
+              role="group"
+              aria-label="Filter by role"
+              data-testid="role-filter-group"
+            >
+              @for (option of roleOptions; track option.value) {
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="roleFilter"
+                  [id]="'roleFilter_' + (option.value || 'all')"
+                  [value]="option.value"
+                  [checked]="roleFilter === option.value"
+                  (change)="selectRoleFilter(option.value)"
+                />
+                <label
+                  class="btn btn-outline-secondary"
+                  [for]="'roleFilter_' + (option.value || 'all')"
+                >
+                  {{ option.label }}
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="col-lg-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="form-check form-switch mb-0">
+                <input
+                  id="orphanedOnly"
+                  type="checkbox"
+                  role="switch"
+                  class="form-check-input"
+                  name="orphanedOnly"
+                  [ngModel]="orphanedOnly"
+                  (ngModelChange)="onOrphanedOnlyChange($event)"
+                />
+                <label class="form-check-label fw-medium" for="orphanedOnly">
+                  Orphaned only
+                </label>
+              </div>
+
+              <div class="d-flex gap-2">
+                @if (hasActiveFilters()) {
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="resetFilters()"
+                    data-testid="reset-filters-btn"
+                  >
+                    Reset
+                  </button>
+                }
+                <button type="submit" class="btn btn-primary px-3">
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </search>
+
+  <app-danger-delete-modal
+    [show]="userPendingDelete() !== null"
+    [loading]="loading()"
+    [title]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'Danger: Delete Teacher'
+        : 'Danger: Delete User'
+    "
+    [warningMessage]="
+      'You are about to permanently delete user ' +
+      (userPendingDelete()?.firstName ?? '') +
+      ' ' +
+      (userPendingDelete()?.lastName ?? '') +
+      ' (' +
+      (userPendingDelete()?.email ?? '') +
+      '). This action cannot be undone.'
+    "
+    [extraWarning]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'Warning: This user is a TEACHER (lector)! Even without current course links, they may still be needed for course administration or test provisioning.'
+        : null
+    "
+    extraWarningTestId="teacher-delete-warning"
+    [requireConfirmationInput]="
+      userPendingDelete() !== null && isLectorUser(userPendingDelete()!)
+    "
+    [expectedConfirmation]="userPendingDelete()?.email ?? ''"
+    confirmationLabel="teacher email"
+    confirmButtonText="Confirm Delete User"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-danger-delete-modal>
+
+  <app-danger-delete-modal
+    [show]="batchDeletePending()"
+    [loading]="loading()"
+    title="Danger: Delete Selected Users"
+    [warningMessage]="
+      'You are about to permanently delete ' +
+      selectedCount() +
+      ' selected user(s). This action cannot be undone.'
+    "
+    [extraWarning]="
+      hasSelectedLector()
+        ? 'Warning: One or more selected TEACHER (lector) accounts will also be deleted! Even without current course links, they may still be needed for course administration or test provisioning.'
+        : null
+    "
+    extraWarningTestId="batch-teacher-delete-warning"
+    [requireConfirmationInput]="false"
+    confirmButtonText="Confirm Delete Selected"
+    confirmButtonTestId="confirm-batch-delete-btn"
+    (confirmed)="confirmBatchDelete()"
+    (cancelled)="cancelBatchDelete()"
+  ></app-danger-delete-modal>
+
+  <div class="card shadow-sm">
+    <div
+      class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-2"
+      [class.bg-danger-subtle]="selectedCount() > 0"
+    >
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-danger]="selectedCount() > 0"
+          [class.btn-outline-danger]="selectedCount() === 0"
+          [disabled]="selectedCount() === 0"
+          (click)="requestDeleteSelected()"
+          data-testid="delete-selected-users-btn"
+        >
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>
+          Delete Selected ({{ selectedCount() }})
+        </button>
+        @if (selectedCount() > 0) {
+          <button
+            type="button"
+            class="btn btn-sm btn-link text-decoration-none text-secondary"
+            (click)="clearSelection()"
+            data-testid="clear-selection-btn"
+          >
+            Clear selection
+          </button>
+        } @else if (visibleDeletableUsers().length > 0) {
+          <span class="text-muted small">
+            Select orphaned users below to delete in batch.
+          </span>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <span class="text-muted small">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+      }
     </div>
-    <div class="col-md-3">
-      <label class="form-label" for="roleFilter">Role</label>
-      <select
-        id="roleFilter"
-        class="form-select"
-        name="roleFilter"
-        [(ngModel)]="roleFilter"
+
+    <div
+      class="users-table-wrapper"
+      tabindex="0"
+      role="region"
+      aria-label="Users table"
+    >
+      <table class="table table-hover align-middle mb-0 users-table">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 2.5rem">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                aria-label="Select all visible deletable users"
+                [checked]="allVisibleDeletableSelected()"
+                [indeterminate]="someVisibleDeletableSelected()"
+                [disabled]="visibleDeletableUsers().length === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+                data-testid="select-all-users-checkbox"
+              />
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Course Links</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr [class.table-warning]="isSelected(user)">
+              <td>
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  [attr.aria-label]="'Select ' + user.email"
+                  [checked]="isSelected(user)"
+                  [disabled]="!user.canDelete"
+                  (change)="toggleUserSelection(user, $any($event.target).checked)"
+                  [attr.data-testid]="'select-user-' + user.id"
+                />
+              </td>
+              <td class="fw-medium">{{ user.firstName }} {{ user.lastName }}</td>
+              <td class="text-muted">{{ user.email }}</td>
+              <td>
+                @for (role of user.roles; track role) {
+                  <span class="badge me-1" [ngClass]="getRoleBadgeClass(role)">
+                    {{ role }}
+                  </span>
+                }
+              </td>
+              <td>
+                @if (user.isLinkedToCourse) {
+                  <span
+                    class="badge text-bg-info d-inline-flex align-items-center gap-1"
+                    [attr.title]="getLinkedCoursesTooltip(user)"
+                    [style.cursor]="user.linkedCourses?.length ? 'help' : null"
+                    data-testid="course-links-badge"
+                  >
+                    <i class="bi bi-link-45deg" aria-hidden="true"></i>
+                    {{ getCourseLinksLabel(user) }}
+                  </span>
+                } @else {
+                  <span
+                    class="badge text-bg-light text-dark border"
+                    data-testid="course-links-badge"
+                  >
+                    Orphaned
+                  </span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (user.canPromoteToAdmin) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-warning me-2"
+                    (click)="promoteToAdmin(user)"
+                  >
+                    Make Admin
+                  </button>
+                }
+                @if (user.roles.includes("admin")) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary me-2"
+                    [disabled]="!user.canDemoteFromAdmin"
+                    [title]="
+                      user.canDemoteFromAdmin
+                        ? 'Remove admin role'
+                        : 'At least one administrator must remain in the system'
+                    "
+                    (click)="demoteFromAdmin(user)"
+                  >
+                    Remove Admin
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary me-2"
+                  [disabled]="!user.canImpersonate"
+                  (click)="impersonate(user)"
+                >
+                  Impersonate
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  [disabled]="!user.canDelete"
+                  (click)="requestDelete(user)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-3 d-block mb-2" aria-hidden="true"></i>
+                No users matched the current filters.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer bg-body-tertiary pagination-footer py-2 px-3">
+      <span
+        class="text-muted small pagination-summary"
+        data-testid="users-total-label"
       >
-        <option value="">All roles</option>
-        <option value="student">Student</option>
-        <option value="lector">Lector</option>
-        <option value="admin">Admin</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <div class="form-check">
-        <input
-          id="OrphanedOnly"
-          type="checkbox"
-          class="form-check-input"
-          name="OrphanedOnly"
-          [(ngModel)]="OrphanedOnly"
-        />
-        <label class="form-check-label" for="OrphanedOnly">
-          Orphaned users only
+        {{ displayRangeLabel() }}
+      </span>
+
+      <nav
+        class="pagination-nav"
+        aria-label="Users pagination"
+        data-testid="users-pagination"
+      >
+        <ul class="pagination pagination-sm mb-0 justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage() === 1">
+            <button
+              type="button"
+              class="page-link"
+              aria-label="First page"
+              [disabled]="currentPage() === 1"
+              (click)="goToPage(1)"
+            >
+              &laquo;
+            </button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage() === 1">
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="currentPage() === 1"
+              (click)="goToPage(currentPage() - 1)"
+            >
+              Previous
+            </button>
+          </li>
+          @for (page of visiblePages(); track page) {
+            <li class="page-item" [class.active]="page === currentPage()">
+              <button
+                type="button"
+                class="page-link"
+                [attr.aria-current]="page === currentPage() ? 'page' : null"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            </li>
+          }
+          <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+            <button
+              type="button"
+              class="page-link"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+            >
+              Next
+            </button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+            <button
+              type="button"
+              class="page-link"
+              aria-label="Last page"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToPage(totalPages())"
+            >
+              &raquo;
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="d-flex align-items-center gap-2 pagination-page-size">
+        <label
+          class="form-label mb-0 small text-muted text-nowrap"
+          for="pageSize"
+        >
+          Items per page
         </label>
+        <select
+          id="pageSize"
+          class="form-select form-select-sm w-auto"
+          name="pageSize"
+          [ngModel]="pageSize()"
+          (ngModelChange)="onPageSizeChange($event)"
+          data-testid="page-size-select"
+        >
+          @for (option of pageSizeOptions; track option.label) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
       </div>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary w-100">Search</button>
-    </div>
-  </form>
-
-  @if (userPendingDelete(); as target) {
-    <div class="alert alert-danger border-danger mb-4" role="alert">
-      <h5 class="alert-heading">Confirm User Deletion</h5>
-      <p>
-        Are you sure you want to permanently delete user
-        <strong>{{ target.firstName }} {{ target.lastName }}</strong> ({{
-          target.email
-        }})?
-      </p>
-      @if (isLectorUser(target)) {
-        <div
-          class="alert alert-warning border-warning fw-bold"
-          data-testid="teacher-delete-warning"
-        >
-          Warning: This user is a TEACHER (lector)! Even without current course
-          links, they may still be needed for course administration or test
-          provisioning.
-        </div>
-      }
-      <div class="d-flex gap-2">
-        <button
-          type="button"
-          class="btn btn-light text-danger fw-bold"
-          (click)="confirmDelete()"
-        >
-          Confirm Delete User
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-light"
-          (click)="cancelDelete()"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  }
-
-  @if (bulkDeletePending()) {
-    <div class="alert alert-danger border-danger mb-4" role="alert">
-      <h5 class="alert-heading">Danger: Remove All Orphaned Users</h5>
-      <p>
-        This will permanently delete all non-admin users who are not linked to
-        any test runs, test results, solution files, project teams, gamification
-        profiles, or peer assessments.
-      </p>
-      @if (hasOrphanedLector()) {
-        <div
-          class="alert alert-warning border-warning fw-bold"
-          data-testid="bulk-teacher-delete-warning"
-        >
-          Extra Warning: One or more Orphaned TEACHER (lector) accounts will
-          also be deleted!
-        </div>
-      }
-      <div class="d-flex gap-2">
-        <button
-          type="button"
-          class="btn btn-light text-danger fw-bold"
-          (click)="confirmBulkDelete()"
-        >
-          Confirm Remove All Orphaned
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-light"
-          (click)="cancelBulkDelete()"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  }
-
-  <table class="table table-striped align-middle">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Roles</th>
-        <th>Course Links</th>
-        <th class="text-end">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (user of users(); track user.id) {
-        <tr>
-          <td>{{ user.firstName }} {{ user.lastName }}</td>
-          <td>{{ user.email }}</td>
-          <td>
-            @for (role of user.roles; track role) {
-              <span class="badge text-bg-secondary me-1">{{ role }}</span>
-            }
-          </td>
-          <td>
-            @if (user.isLinkedToCourse) {
-              <span class="badge text-bg-info">Linked</span>
-            } @else {
-              <span class="badge text-bg-light text-dark">Orphaned</span>
-            }
-          </td>
-          <td class="text-end">
-            @if (user.canPromoteToAdmin) {
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-warning me-2"
-                (click)="promoteToAdmin(user)"
-              >
-                Make Admin
-              </button>
-            }
-            @if (user.roles.includes("admin")) {
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary me-2"
-                [disabled]="!user.canDemoteFromAdmin"
-                [title]="
-                  user.canDemoteFromAdmin
-                    ? 'Remove admin role'
-                    : 'At least one administrator must remain in the system'
-                "
-                (click)="demoteFromAdmin(user)"
-              >
-                Remove Admin
-              </button>
-            }
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-primary me-2"
-              [disabled]="!user.canImpersonate"
-              (click)="impersonate(user)"
-            >
-              Impersonate
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-danger"
-              [disabled]="!user.canDelete"
-              (click)="requestDelete(user)"
-            >
-              Delete
-            </button>
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+  </div>
 </div>

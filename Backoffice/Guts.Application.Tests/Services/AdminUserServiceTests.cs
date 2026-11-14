@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
 using Guts.Application.Services;
 using Guts.Common;
@@ -33,24 +34,37 @@ public class AdminUserServiceTests
         var noLinks = new UserCourseLinks(false, false, false, false, false, false);
         var hasLinks = new UserCourseLinks(true, false, false, false, false, false);
 
+        var linkedCourse = new LinkedCourseDto(101, "DOTNET", ".NET Programming");
+
         _userRepositoryMock
-            .Setup(r => r.SearchUsersAsync("q", null, false, 50))
-            .ReturnsAsync(new List<UserWithRolesAndLinks>
+            .Setup(r => r.SearchUsersAsync("q", null, false, 2, 25))
+            .ReturnsAsync(new PagedResult<UserWithRolesAndLinks>
             {
-                new(OrphanedStudent, [Role.Constants.Student], noLinks),
-                new(linkedLector, [Role.Constants.Lector], hasLinks),
-                new(adminUser, [Role.Constants.Admin], noLinks)
+                Items = new List<UserWithRolesAndLinks>
+                {
+                    new(OrphanedStudent, [Role.Constants.Student], noLinks),
+                    new(linkedLector, [Role.Constants.Lector], hasLinks, [linkedCourse]),
+                    new(adminUser, [Role.Constants.Admin], noLinks)
+                },
+                TotalCount = 42,
+                Page = 2,
+                PageSize = 25
             });
 
-        var result = await _service.SearchUsersAsync("q", null, false, currentUserId: 1);
+        var result = await _service.SearchUsersAsync("q", null, false, currentUserId: 1, page: 2, pageSize: 25);
 
-        Assert.That(result, Has.Count.EqualTo(3));
-        Assert.That(result[0].CanDelete, Is.True);
-        Assert.That(result[0].CanImpersonate, Is.True);
-        Assert.That(result[1].CanDelete, Is.False);
-        Assert.That(result[1].CanImpersonate, Is.True);
-        Assert.That(result[2].CanDelete, Is.False);
-        Assert.That(result[2].CanImpersonate, Is.False);
+        Assert.That(result.TotalCount, Is.EqualTo(42));
+        Assert.That(result.Page, Is.EqualTo(2));
+        Assert.That(result.PageSize, Is.EqualTo(25));
+        Assert.That(result.Items, Has.Count.EqualTo(3));
+        Assert.That(result.Items[0].CanDelete, Is.True);
+        Assert.That(result.Items[0].CanImpersonate, Is.True);
+        Assert.That(result.Items[0].LinkedCourses, Is.Empty);
+        Assert.That(result.Items[1].CanDelete, Is.False);
+        Assert.That(result.Items[1].CanImpersonate, Is.True);
+        Assert.That(result.Items[1].LinkedCourses, Is.EqualTo(new[] { linkedCourse }));
+        Assert.That(result.Items[2].CanDelete, Is.False);
+        Assert.That(result.Items[2].CanImpersonate, Is.False);
     }
 
     [Test]
@@ -81,23 +95,63 @@ public class AdminUserServiceTests
     }
 
     [Test]
-    public async Task DeleteAllOrphanedUsersAsync_DeletesEligibleUsersAndReturnsCount()
+    public async Task DeleteUsersAsync_DeletesEligibleUsersAndReturnsCount()
     {
         var u1 = new User { Id = 2, Email = "u1@student.pxl.be" };
         var u2 = new User { Id = 3, Email = "u2@student.pxl.be" };
         var noLinks = new UserCourseLinks(false, false, false, false, false, false);
 
-        _userRepositoryMock.Setup(r => r.GetOrphanedNonAdminUsersAsync()).ReturnsAsync(new List<UserWithRolesAndLinks>
-        {
-            new(u1, [Role.Constants.Student], noLinks),
-            new(u2, [Role.Constants.Lector], noLinks)
-        });
+        _userRepositoryMock
+            .Setup(r => r.GetWithRolesAndLinksByIdsAsync(It.IsAny<IReadOnlyCollection<int>>()))
+            .ReturnsAsync(new List<UserWithRolesAndLinks>
+            {
+                new(u1, [Role.Constants.Student], noLinks),
+                new(u2, [Role.Constants.Student], noLinks)
+            });
 
-        int count = await _service.DeleteAllOrphanedUsersAsync(currentUserId: 1);
+        int count = await _service.DeleteUsersAsync([2, 3, 2], currentUserId: 1);
 
         Assert.That(count, Is.EqualTo(2));
-        _userRepositoryMock.Verify(r => r.DeleteAsync(u1), Times.Once);
-        _userRepositoryMock.Verify(r => r.DeleteAsync(u2), Times.Once);
+        _userRepositoryMock.Verify(
+            r => r.DeleteRangeAsync(It.Is<IReadOnlyCollection<User>>(users => users.Count == 2)),
+            Times.Once);
+    }
+
+    [Test]
+    public void DeleteUsersAsync_WhenAnyUserIsLinked_ThrowsContractExceptionAndDeletesNone()
+    {
+        var u1 = new User { Id = 2, Email = "u1@student.pxl.be" };
+        var u2 = new User { Id = 3, Email = "u2@student.pxl.be" };
+        var noLinks = new UserCourseLinks(false, false, false, false, false, false);
+        var hasLinks = new UserCourseLinks(true, false, false, false, false, false);
+
+        _userRepositoryMock
+            .Setup(r => r.GetWithRolesAndLinksByIdsAsync(It.IsAny<IReadOnlyCollection<int>>()))
+            .ReturnsAsync(new List<UserWithRolesAndLinks>
+            {
+                new(u1, [Role.Constants.Student], noLinks),
+                new(u2, [Role.Constants.Student], hasLinks)
+            });
+
+        Assert.ThrowsAsync<ContractException>(() => _service.DeleteUsersAsync([2, 3], currentUserId: 1));
+        _userRepositoryMock.Verify(r => r.DeleteRangeAsync(It.IsAny<IReadOnlyCollection<User>>()), Times.Never);
+    }
+
+    [Test]
+    public void DeleteUsersAsync_WhenUserMissing_ThrowsDataNotFoundExceptionAndDeletesNone()
+    {
+        var u1 = new User { Id = 2, Email = "u1@student.pxl.be" };
+        var noLinks = new UserCourseLinks(false, false, false, false, false, false);
+
+        _userRepositoryMock
+            .Setup(r => r.GetWithRolesAndLinksByIdsAsync(It.IsAny<IReadOnlyCollection<int>>()))
+            .ReturnsAsync(new List<UserWithRolesAndLinks>
+            {
+                new(u1, [Role.Constants.Student], noLinks)
+            });
+
+        Assert.ThrowsAsync<DataNotFoundException>(() => _service.DeleteUsersAsync([2, 99], currentUserId: 1));
+        _userRepositoryMock.Verify(r => r.DeleteRangeAsync(It.IsAny<IReadOnlyCollection<User>>()), Times.Never);
     }
 
     [Test]

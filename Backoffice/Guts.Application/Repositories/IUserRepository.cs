@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Domain.UserAggregate;
 
 namespace Guts.Application.Repositories;
@@ -8,7 +9,8 @@ namespace Guts.Application.Repositories;
 public record UserWithRolesAndLinks(
     User User,
     IReadOnlyList<string> Roles,
-    UserCourseLinks CourseLinks);
+    UserCourseLinks CourseLinks,
+    IReadOnlyList<LinkedCourseDto> LinkedCourses = null);
 
 public interface IUserRepository
 {
@@ -24,13 +26,14 @@ public interface IUserRepository
 
     Task<UserCourseLinks> GetCourseLinksAsync(int userId);
 
-    Task<IReadOnlyList<UserWithRolesAndLinks>> SearchUsersAsync(
+    Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
         string search,
         string roleFilter,
-        bool OrphanedOnly,
-        int maxResults = 50);
+        bool orphanedOnly,
+        int page = 1,
+        int? pageSize = 50);
 
-    Task<IReadOnlyList<UserWithRolesAndLinks>> GetOrphanedNonAdminUsersAsync();
+    Task<IReadOnlyList<UserWithRolesAndLinks>> GetWithRolesAndLinksByIdsAsync(IReadOnlyCollection<int> userIds);
 
     Task<int> CountAdminsAsync();
 
@@ -39,4 +42,6 @@ public interface IUserRepository
     Task RemoveFromRoleAsync(User user, string roleName);
 
     Task DeleteAsync(User user);
+
+    Task DeleteRangeAsync(IReadOnlyCollection<User> users);
 }

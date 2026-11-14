@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
+using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -93,11 +95,12 @@ internal class UserDbRepository : IUserRepository
             hasPeerAssessments);
     }
 
-    public async Task<IReadOnlyList<UserWithRolesAndLinks>> SearchUsersAsync(
+    public async Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
         string search,
         string roleFilter,
-        bool OrphanedOnly,
-        int maxResults = 50)
+        bool orphanedOnly,
+        int page = 1,
+        int? pageSize = 50)
     {
         IQueryable<User> query = _context.Users.AsNoTracking();
 
@@ -119,28 +122,51 @@ internal class UserDbRepository : IUserRepository
                     _context.Roles.Any(r => r.Id == ur.RoleId && r.Name.ToLower() == normalizedRole)));
         }
 
-        if (OrphanedOnly)
+        if (orphanedOnly)
         {
             query = FilterOrphaned(query);
         }
 
-        List<User> users = await query
+        int totalCount = await query.CountAsync();
+        int normalizedPage = Math.Max(1, page);
+        int? normalizedPageSize = pageSize.HasValue ? Math.Max(1, pageSize.Value) : null;
+
+        IQueryable<User> orderedQuery = query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Take(maxResults)
-            .ToListAsync();
+            .ThenBy(u => u.Id);
 
-        return await HydrateRolesAndLinksAsync(users);
+        if (normalizedPageSize.HasValue)
+        {
+            orderedQuery = orderedQuery
+                .Skip((normalizedPage - 1) * normalizedPageSize.Value)
+                .Take(normalizedPageSize.Value);
+        }
+
+        List<User> users = await orderedQuery.ToListAsync();
+        IReadOnlyList<UserWithRolesAndLinks> items = await HydrateRolesAndLinksAsync(users);
+
+        return new PagedResult<UserWithRolesAndLinks>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = normalizedPage,
+            PageSize = normalizedPageSize
+        };
     }
 
-    public async Task<IReadOnlyList<UserWithRolesAndLinks>> GetOrphanedNonAdminUsersAsync()
+    public async Task<IReadOnlyList<UserWithRolesAndLinks>> GetWithRolesAndLinksByIdsAsync(IReadOnlyCollection<int> userIds)
     {
-        IQueryable<User> query = FilterOrphaned(_context.Users)
-            .Where(u => !_context.UserRoles.Any(ur =>
-                ur.UserId == u.Id &&
-                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == Role.Constants.Admin)));
+        if (userIds == null || userIds.Count == 0)
+        {
+            return [];
+        }
 
-        List<User> users = await query.ToListAsync();
+        List<int> distinctIds = userIds.Distinct().ToList();
+        List<User> users = await _context.Users
+            .Where(u => distinctIds.Contains(u.Id))
+            .ToListAsync();
+
         return await HydrateRolesAndLinksAsync(users);
     }
 
@@ -189,21 +215,33 @@ internal class UserDbRepository : IUserRepository
         }
     }
 
-    public async Task DeleteAsync(User user)
+    public Task DeleteAsync(User user)
     {
-        var userRoles = await _context.UserRoles.Where(ur => ur.UserId == user.Id).ToListAsync();
+        return DeleteRangeAsync([user]);
+    }
+
+    public async Task DeleteRangeAsync(IReadOnlyCollection<User> users)
+    {
+        if (users == null || users.Count == 0)
+        {
+            return;
+        }
+
+        List<int> userIds = users.Select(u => u.Id).ToList();
+
+        var userRoles = await _context.UserRoles.Where(ur => userIds.Contains(ur.UserId)).ToListAsync();
         _context.UserRoles.RemoveRange(userRoles);
 
-        var userClaims = await _context.UserClaims.Where(uc => uc.UserId == user.Id).ToListAsync();
+        var userClaims = await _context.UserClaims.Where(uc => userIds.Contains(uc.UserId)).ToListAsync();
         _context.UserClaims.RemoveRange(userClaims);
 
-        var userLogins = await _context.UserLogins.Where(ul => ul.UserId == user.Id).ToListAsync();
+        var userLogins = await _context.UserLogins.Where(ul => userIds.Contains(ul.UserId)).ToListAsync();
         _context.UserLogins.RemoveRange(userLogins);
 
-        var userTokens = await _context.UserTokens.Where(ut => ut.UserId == user.Id).ToListAsync();
+        var userTokens = await _context.UserTokens.Where(ut => userIds.Contains(ut.UserId)).ToListAsync();
         _context.UserTokens.RemoveRange(userTokens);
 
-        _context.Users.Remove(user);
+        _context.Users.RemoveRange(users);
         await _context.SaveChangesAsync();
     }
 
@@ -211,8 +249,6 @@ internal class UserDbRepository : IUserRepository
     {
         return query.Where(u =>
             !_context.TestRuns.Any(tr => tr.UserId == u.Id) &&
-            !_context.TestResults.Any(tr => tr.UserId == u.Id) &&
-            !_context.SolutionFiles.Any(sf => sf.UserId == u.Id) &&
             !_context.ProjectTeamUsers.Any(ptu => ptu.UserId == u.Id) &&
             !_context.StudentCourseProfiles.Any(sp => sp.UserId == u.Id) &&
             !_context.PeerAssessments.Any(pa => pa.User.Id == u.Id || pa.Subject.Id == u.Id));
@@ -236,13 +272,86 @@ internal class UserDbRepository : IUserRepository
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.Name).ToList());
 
-        var testRunUserIds = await _context.TestRuns.Where(tr => userIds.Contains(tr.UserId)).Select(tr => tr.UserId).Distinct().ToListAsync();
-        var testResultUserIds = await _context.TestResults.Where(tr => userIds.Contains(tr.UserId)).Select(tr => tr.UserId).Distinct().ToListAsync();
-        var solutionFileUserIds = await _context.SolutionFiles.Where(sf => userIds.Contains(sf.UserId)).Select(sf => sf.UserId).Distinct().ToListAsync();
-        var teamUserIds = await _context.ProjectTeamUsers.Where(ptu => userIds.Contains(ptu.UserId)).Select(ptu => ptu.UserId).Distinct().ToListAsync();
-        var profileUserIds = await _context.StudentCourseProfiles.Where(sp => userIds.Contains(sp.UserId)).Select(sp => sp.UserId).Distinct().ToListAsync();
-        var peerEvaluatorIds = await _context.PeerAssessments.Where(pa => userIds.Contains(pa.User.Id)).Select(pa => pa.User.Id).Distinct().ToListAsync();
-        var peerSubjectIds = await _context.PeerAssessments.Where(pa => userIds.Contains(pa.Subject.Id)).Select(pa => pa.Subject.Id).Distinct().ToListAsync();
+        var testRunLinks = await (
+            from tr in _context.TestRuns
+            join a in _context.Assignments on tr.AssignmentId equals a.Id
+            join t in _context.Topics on a.TopicId equals t.Id
+            where userIds.Contains(tr.UserId)
+            select new { tr.UserId, t.CourseId }).Distinct().ToListAsync();
+
+        var testResultLinks = await (
+            from tr in _context.TestResults
+            join tst in _context.Tests on tr.TestId equals tst.Id
+            join a in _context.Assignments on tst.AssignmentId equals a.Id
+            join t in _context.Topics on a.TopicId equals t.Id
+            where userIds.Contains(tr.UserId)
+            select new { tr.UserId, t.CourseId }).Distinct().ToListAsync();
+
+        var solutionFileLinks = await (
+            from sf in _context.SolutionFiles
+            join a in _context.Assignments on sf.AssignmentId equals a.Id
+            join t in _context.Topics on a.TopicId equals t.Id
+            where userIds.Contains(sf.UserId)
+            select new { sf.UserId, t.CourseId }).Distinct().ToListAsync();
+
+        var teamLinks = await (
+            from ptu in _context.ProjectTeamUsers
+            join pt in _context.ProjectTeams on ptu.ProjectTeamId equals pt.Id
+            join t in _context.Topics on pt.ProjectId equals t.Id
+            where userIds.Contains(ptu.UserId)
+            select new { ptu.UserId, t.CourseId }).Distinct().ToListAsync();
+
+        var profileLinks = await (
+            from sp in _context.StudentCourseProfiles
+            where userIds.Contains(sp.UserId)
+            select new { sp.UserId, sp.CourseId }).Distinct().ToListAsync();
+
+        var peerEvaluatorLinks = await (
+            from pa in _context.PeerAssessments
+            join pta in _context.ProjectTeamAssessments on pa.ProjectTeamAssessmentId equals pta.Id
+            join pt in _context.ProjectTeams on EF.Property<int>(pta, "ProjectTeamId") equals pt.Id
+            join t in _context.Topics on pt.ProjectId equals t.Id
+            where userIds.Contains(pa.User.Id)
+            select new { UserId = pa.User.Id, t.CourseId }).Distinct().ToListAsync();
+
+        var peerSubjectLinks = await (
+            from pa in _context.PeerAssessments
+            join pta in _context.ProjectTeamAssessments on pa.ProjectTeamAssessmentId equals pta.Id
+            join pt in _context.ProjectTeams on EF.Property<int>(pta, "ProjectTeamId") equals pt.Id
+            join t in _context.Topics on pt.ProjectId equals t.Id
+            where userIds.Contains(pa.Subject.Id)
+            select new { UserId = pa.Subject.Id, t.CourseId }).Distinct().ToListAsync();
+
+        HashSet<int> testRunUserIds = testRunLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> testResultUserIds = testResultLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> solutionFileUserIds = solutionFileLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> teamUserIds = teamLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> profileUserIds = profileLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> peerEvaluatorIds = peerEvaluatorLinks.Select(x => x.UserId).ToHashSet();
+        HashSet<int> peerSubjectIds = peerSubjectLinks.Select(x => x.UserId).ToHashSet();
+
+        var allUserCoursePairs = testRunLinks
+            .Concat(testResultLinks)
+            .Concat(solutionFileLinks)
+            .Concat(teamLinks)
+            .Concat(profileLinks)
+            .Concat(peerEvaluatorLinks)
+            .Concat(peerSubjectLinks)
+            .Distinct()
+            .ToList();
+
+        List<int> distinctCourseIds = allUserCoursePairs.Select(x => x.CourseId).Distinct().ToList();
+        Dictionary<int, LinkedCourseDto> coursesById = distinctCourseIds.Count == 0
+            ? new Dictionary<int, LinkedCourseDto>()
+            : await _context.Courses
+                .Where(c => distinctCourseIds.Contains(c.Id))
+                .Select(c => new LinkedCourseDto(c.Id, c.Code, c.Name))
+                .ToDictionaryAsync(c => c.Id);
+
+        ILookup<int, LinkedCourseDto> coursesByUser = allUserCoursePairs
+            .Select(x => new { x.UserId, Course = coursesById.GetValueOrDefault(x.CourseId) })
+            .Where(x => x.Course != null)
+            .ToLookup(x => x.UserId, x => x.Course);
 
         return users.Select(u =>
         {
@@ -254,7 +363,11 @@ internal class UserDbRepository : IUserRepository
                 teamUserIds.Contains(u.Id),
                 profileUserIds.Contains(u.Id),
                 peerEvaluatorIds.Contains(u.Id) || peerSubjectIds.Contains(u.Id));
-            return new UserWithRolesAndLinks(u, roles, links);
+            IReadOnlyList<LinkedCourseDto> linkedCourses = coursesByUser[u.Id]
+                .OrderBy(c => c.Code)
+                .ThenBy(c => c.Name)
+                .ToList();
+            return new UserWithRolesAndLinks(u, roles, links, linkedCourses);
         }).ToList();
     }
 }

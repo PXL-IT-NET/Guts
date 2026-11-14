@@ -92,6 +92,14 @@ export class AdminPeriodsComponent implements OnInit {
       return;
     }
 
+    if (!this.formDescription?.trim() || !this.formFrom || !this.formUntil) {
+      this.toastr.error(
+        "Description, from date, and until date are required.",
+        "Error",
+      );
+      return;
+    }
+
     const payload = {
       description: this.formDescription,
       from: this.formFrom,

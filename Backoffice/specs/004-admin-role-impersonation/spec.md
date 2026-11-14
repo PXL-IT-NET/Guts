@@ -22,7 +22,7 @@ Additionally, administrators and lectors need to:
 - **Actors**: `Administrator` (`admin`), `Lector` (`lector`), `Student` (`student`)
 
 - **US-1**: As an **Administrator**, I want a dedicated `admin` role that can be held alongside `lector` or `student` (and seeded/configured via settings/DB), so that administrative privileges are cleanly separated from teaching and student roles.
-- **US-2**: As an **Administrator**, I want to create, view, edit, and delete academic periods (with deletion restricted to past, non-active periods and accompanied by a clear danger warning), so that I can manage the academic calendar safely.
+- **US-2**: As an **Administrator**, I want to create, view, edit, and delete academic periods (with deletion restricted to non-active periods—past or future—and accompanied by a clear danger warning), so that I can manage the academic calendar safely.
 - **US-3**: As an **Administrator**, I want to create, view, edit, and delete courses (with a clear danger warning before deletion), so that I can maintain the course catalog.
 - **US-4**: As an **Administrator**, I want to search users and remove old users who are no longer linked to any course data (individually or in bulk), so that obsolete accounts can be cleaned up safely.
 - **US-5**: As an **Administrator**, I want to impersonate a `lector` or `student` and see a persistent banner with a one-click "Stop Impersonating" action, so that I can inspect the application through their eyes without needing their credentials.
@@ -45,7 +45,7 @@ Additionally, administrators and lectors need to:
   - `GET /api/periods` and `GET /api/periods/{id}` remain readable to authenticated users (as needed for period selection across the app).
   - `POST /api/periods` creates a new period (restricted to `AdminOnlyPolicy`).
   - `PUT /api/periods/{id}` updates an existing period's description, `from`, and `until` dates (restricted to `AdminOnlyPolicy`; start and end dates cannot be changed for inactive periods).
-  - `DELETE /api/periods/{id}` deletes a period (restricted to `AdminOnlyPolicy`) **only if** the period is in the past and not the current/active period.
+  - `DELETE /api/periods/{id}` deletes a period (restricted to `AdminOnlyPolicy`) **only if** the period is not the current/active period (past or future periods are allowed).
   - In the UI, clicking Delete opens a centered dangerous-operation confirmation modal where the admin must type the exact period `description` to enable and execute the delete.
 
 ### AC-3: Course Management (CRUD)
@@ -58,14 +58,18 @@ Additionally, administrators and lectors need to:
   - `DELETE /api/courses/{courseId}` deletes a course and its associated data (restricted to `AdminOnlyPolicy`).
   - In the UI, clicking Delete opens a centered dangerous-operation confirmation modal explaining that deleting the course is irreversible and removes associated course data, requiring the admin to type the exact course `code` to enable and execute the delete.
 
-### AC-4: User Search & Cleanup of Orphaned Users
+### AC-4: Paginated User Search, Course Links Display & Multi-Select User Deletion
 - **Given** an authenticated user with the `admin` role
 - **When** they open the Admin Users view or call `/api/admin/users`
 - **Then**:
-  - `GET /api/admin/users?search=...&role=...&OrphanedOnly=...` returns a paginated/limited list of users with their `id`, `email`, `firstName`, `lastName`, `roles`, and `isLinkedToCourse` (or `canDelete`) status.
+  - `GET /api/admin/users?search=...&role=...&orphanedOnly=...&page=...&pageSize=...` returns a paged result (`items`, `totalCount`, `page`, `pageSize`) using EF Core `Skip` and `Take` (or returning all matching rows when `pageSize` is omitted / `All`).
+  - The UI provides a page size selector supporting `25`, `50`, `100`, and `All`, along with pagination controls and result counts.
+  - Each user entry includes `id`, `email`, `firstName`, `lastName`, `roles`, `isLinkedToCourse`, `linkedCourses` (`id`, `code`, `name`), and `canDelete`.
+  - The Course Links column displays `"Orphaned"` or `"Linked to x course(s)"`, and hovering over a linked badge shows a tooltip listing the linked courses (`code - name`).
   - `DELETE /api/admin/users/{userId}` deletes a single user if they are not an admin, not the current user, and have no course links.
-  - `DELETE /api/admin/users/Orphaned` (or bulk endpoint) deletes all eligible Orphaned non-admin users and returns the count of removed users.
-  - In the UI, both single-user delete and bulk "Remove all Orphaned users" require confirmation warnings, with an **extra prominent warning** whenever a teacher (`lector`) account is about to be deleted (e.g., noting that the user is a teacher and may still be needed for course administration/test provisioning).
+  - `POST /api/admin/users/delete-batch` deletes a selected list of eligible users (validating every user via `UserDeletionPolicy` before deleting) and returns `{ deletedCount }`.
+  - In the UI, admins can check individual eligible users or toggle "Select all" for visible eligible users on the current page and execute "Delete Selected", with confirmation warnings (including an **extra prominent warning** whenever any teacher (`lector`) account is about to be deleted) and toast notifications (`ToastrService`) for operation feedback.
+  - Bulk "Remove all orphaned users" at once is not present.
 
 ### AC-5: User Impersonation (Admin & Lector)
 - **Given** an authenticated user with the `admin` or `lector` role (who is not currently impersonating another user)
@@ -102,7 +106,7 @@ Additionally, administrators and lectors need to:
 ## 4. Domain Rules & Invariants
 
 - **DR-1 (Period Validation)**: `Period` requires non-empty `Description`, `From < Until`, and no date overlap with any other period.
-- **DR-2 (Period Deletion Rule)**: A `Period` can only be deleted if it is in the past and not the current/active period (`Until < DateTime.Today` and `!IsActive`), enforced via `Contracts.Require(...)` in `Period`.
+- **DR-2 (Period Deletion Rule)**: A `Period` can only be deleted if it is not the current/active period (`!IsActive`, i.e., past or future), enforced via `Contracts.Require(...)` in `Period`.
 - **DR-3 (Course Validation)**: `Course` requires non-empty `Code` (max 20 chars), non-empty `Name`, and `Code` must be unique across courses.
 - **DR-4 (User Deletion Eligibility)**: A `User` can only be deleted if:
   1. The target user does **not** hold the `admin` role.
@@ -135,7 +139,7 @@ Additionally, administrators and lectors need to:
 
 | Scenario | Expected Behavior / Error Type | HTTP Status |
 | :--- | :--- | :--- |
-| Delete current or future period | Throws `ContractException` (`Contracts.Require`) | `400 Bad Request` |
+| Delete current active period | Throws `ContractException` (`Contracts.Require`) | `400 Bad Request` |
 | Create/Update period with overlapping dates or `from >= until` | Throws `ContractException` (`Contracts.Require`) | `400 Bad Request` |
 | Create/Update course with duplicate `Code` or empty fields | Throws `ContractException` (`Contracts.Require`) | `400 Bad Request` |
 | Period / Course / User not found | Throws `DataNotFoundException` | `404 Not Found` |

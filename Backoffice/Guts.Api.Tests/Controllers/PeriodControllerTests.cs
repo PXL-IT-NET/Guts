@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Models;
@@ -122,7 +124,7 @@ public class PeriodControllerTests
 
         IPeriod createdPeriod = new PeriodBuilder().WithId().Build();
         _periodServiceMock
-            .Setup(service => service.CreatePeriodAsync(creationModel.Description, creationModel.From, creationModel.Until))
+            .Setup(service => service.CreatePeriodAsync(creationModel.Description, creationModel.From.Value, creationModel.Until.Value))
             .ReturnsAsync(createdPeriod);
 
         var outputModel = new PeriodOutputModel { Id = createdPeriod.Id };
@@ -137,9 +139,61 @@ public class PeriodControllerTests
         Assert.That(result.RouteValues["id"], Is.EqualTo(outputModel.Id));
         Assert.That(result.Value, Is.SameAs(outputModel));
         _periodServiceMock.Verify(
-            service => service.CreatePeriodAsync(creationModel.Description, creationModel.From, creationModel.Until),
+            service => service.CreatePeriodAsync(creationModel.Description, creationModel.From.Value, creationModel.Until.Value),
             Times.Once);
         _mapperMock.Verify(mapper => mapper.MapToPeriodOutputModel(createdPeriod), Times.Once);
+    }
+
+    [Test]
+    public async Task CreatePeriod_NullModel_ShouldReturnBadRequest()
+    {
+        var result = await _controller.CreatePeriod(null) as BadRequestObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.InstanceOf<ErrorModel>());
+        _periodServiceMock.Verify(
+            service => service.CreatePeriodAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task CreatePeriod_InvalidModelState_ShouldReturnBadRequest()
+    {
+        var creationModel = new PeriodCreationModel
+        {
+            Description = "2026-2027",
+            From = null,
+            Until = null
+        };
+        _controller.ModelState.AddModelError(nameof(PeriodCreationModel.From), "The From field is required.");
+
+        var result = await _controller.CreatePeriod(creationModel) as BadRequestObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        _periodServiceMock.Verify(
+            service => service.CreatePeriodAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void PeriodCreationModel_EmptyDateStrings_ShouldDeserializeToNonNullModelWithNullDatesAndFailValidation()
+    {
+        const string json = """{"description":"2026-2027","from":"","until":""}""";
+
+        var model = JsonSerializer.Deserialize<PeriodCreationModel>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.Description, Is.EqualTo("2026-2027"));
+        Assert.That(model.From, Is.Null);
+        Assert.That(model.Until, Is.Null);
+
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(model, new ValidationContext(model), validationResults, validateAllProperties: true);
+        Assert.That(isValid, Is.False);
+        Assert.That(validationResults, Has.Count.EqualTo(2));
     }
 
     [Test]
@@ -185,7 +239,7 @@ public class PeriodControllerTests
         var result = await _controller.UpdatePeriod(1, model);
 
         Assert.That(result, Is.InstanceOf<OkResult>());
-        _periodServiceMock.Verify(s => s.UpdatePeriodAsync(1, model.Description, model.From, model.Until), Times.Once);
+        _periodServiceMock.Verify(s => s.UpdatePeriodAsync(1, model.Description, model.From.Value, model.Until.Value), Times.Once);
     }
 
     [Test]

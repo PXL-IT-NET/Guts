@@ -4,6 +4,12 @@ import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { GetResult, PostResult } from "../util/result";
 
+export interface ILinkedCourse {
+  id: number;
+  code: string;
+  name: string;
+}
+
 export interface IAdminUser {
   id: number;
   email: string;
@@ -11,10 +17,18 @@ export interface IAdminUser {
   lastName: string;
   roles: string[];
   isLinkedToCourse: boolean;
+  linkedCourses: ILinkedCourse[];
   canDelete: boolean;
   canImpersonate: boolean;
   canPromoteToAdmin: boolean;
   canDemoteFromAdmin: boolean;
+}
+
+export interface IPagedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number | null;
 }
 
 @Injectable({
@@ -26,25 +40,36 @@ export class AdminUserService {
   public searchUsers(
     search: string = "",
     role: string = "",
-    OrphanedOnly: boolean = false,
-  ): Observable<GetResult<IAdminUser[]>> {
-    let params = new HttpParams();
+    orphanedOnly: boolean = false,
+    page: number = 1,
+    pageSize: number | null = 25,
+  ): Observable<GetResult<IPagedResult<IAdminUser>>> {
+    let params = new HttpParams().set("page", page.toString());
     if (search.trim()) {
       params = params.set("search", search.trim());
     }
     if (role) {
       params = params.set("role", role);
     }
-    if (OrphanedOnly) {
-      params = params.set("OrphanedOnly", "true");
+    if (orphanedOnly) {
+      params = params.set("orphanedOnly", "true");
+    }
+    if (pageSize !== null) {
+      params = params.set("pageSize", pageSize.toString());
     }
 
-    return this.http.get<IAdminUser[]>("api/admin/users", { params }).pipe(
-      map((users) => GetResult.success(users)),
-      catchError((errorResponse: HttpErrorResponse) =>
-        of(GetResult.fromHttpErrorResponse<IAdminUser[]>(errorResponse)),
-      ),
-    );
+    return this.http
+      .get<IPagedResult<IAdminUser>>("api/admin/users", { params })
+      .pipe(
+        map((result) => GetResult.success(result)),
+        catchError((errorResponse: HttpErrorResponse) =>
+          of(
+            GetResult.fromHttpErrorResponse<IPagedResult<IAdminUser>>(
+              errorResponse,
+            ),
+          ),
+        ),
+      );
   }
 
   public deleteUser(userId: number): Observable<PostResult> {
@@ -56,9 +81,13 @@ export class AdminUserService {
     );
   }
 
-  public deleteAllOrphanedUsers(): Observable<GetResult<{ deletedCount: number }>> {
+  public deleteUsers(
+    userIds: number[],
+  ): Observable<GetResult<{ deletedCount: number }>> {
     return this.http
-      .delete<{ deletedCount: number }>("api/admin/users/Orphaned")
+      .post<{ deletedCount: number }>("api/admin/users/delete-batch", {
+        userIds,
+      })
       .pipe(
         map((res) => GetResult.success(res)),
         catchError((errorResponse: HttpErrorResponse) =>
