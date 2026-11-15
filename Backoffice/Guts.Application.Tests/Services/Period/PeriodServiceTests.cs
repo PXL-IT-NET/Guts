@@ -95,4 +95,29 @@ public class PeriodServiceTests
             Throws.InstanceOf<DataNotFoundException>());
         _periodRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<IPeriod>()), Times.Never);
     }
+
+    [Test]
+    public async Task DeletePeriodAsync_PastPeriod_ShouldValidateAndDelete()
+    {
+        int periodId = Random.Shared.NextPositive();
+        var periodMock = new Mock<IPeriod>();
+        _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
+
+        await _service.DeletePeriodAsync(periodId);
+
+        periodMock.Verify(p => p.EnsureCanBeDeleted(), Times.Once);
+        _periodRepositoryMock.Verify(repo => repo.DeleteAsync(periodMock.Object), Times.Once);
+    }
+
+    [Test]
+    public void DeletePeriodAsync_WhenEnsureCanBeDeletedThrows_ShouldNotDeleteFromRepository()
+    {
+        int periodId = Random.Shared.NextPositive();
+        var periodMock = new Mock<IPeriod>();
+        periodMock.Setup(p => p.EnsureCanBeDeleted()).Throws(new Guts.Common.ContractException("Active"));
+        _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
+
+        Assert.ThrowsAsync<Guts.Common.ContractException>(() => _service.DeletePeriodAsync(periodId));
+        _periodRepositoryMock.Verify(repo => repo.DeleteAsync(It.IsAny<IPeriod>()), Times.Never);
+    }
 }

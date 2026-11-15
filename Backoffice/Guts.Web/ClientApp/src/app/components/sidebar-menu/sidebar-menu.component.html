@@ -93,5 +93,79 @@
         </div>
       </li>
     }
+    @if (userProfile.isAdmin() && !isImpersonating) {
+      <li class="mb-1">
+        <a
+          class="btn btn-toggle d-inline-flex align-items-center rounded border-0"
+          data-bs-toggle="collapse"
+          data-bs-target="#admin-collapse"
+          aria-expanded="false"
+        >
+          <span class="bi bi-shield-lock px-1"></span>
+          <span>Admin</span>
+        </a>
+        <div
+          id="admin-collapse"
+          class="collapse"
+          [ngClass]="{ show: isAdminRouteActive }"
+        >
+          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/admin/periods']"
+                routerLinkActive="active"
+              >
+                <span>Periods</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/admin/courses']"
+                routerLinkActive="active"
+              >
+                <span>Courses</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/admin/users']"
+                routerLinkActive="active"
+              >
+                <span>Users &amp; Impersonation</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+    }
+    @if (userProfile.isLector() && !userProfile.isAdmin() && !isImpersonating) {
+      <li class="mb-1">
+        <a
+          class="btn btn-toggle d-inline-flex align-items-center rounded border-0"
+          data-bs-toggle="collapse"
+          data-bs-target="#teacher-tools-collapse"
+          aria-expanded="true"
+        >
+          <span class="bi bi-tools px-1"></span>
+          <span>Teacher tools</span>
+        </a>
+        <div id="teacher-tools-collapse" class="collapse show">
+          <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                [routerLink]="['/impersonate']"
+                routerLinkActive="active"
+              >
+                <span>Impersonate student</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+    }
   </ul>
 </nav>

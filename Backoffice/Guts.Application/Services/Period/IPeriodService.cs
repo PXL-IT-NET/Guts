@@ -8,4 +8,5 @@ public interface IPeriodService
 {
     Task<IPeriod> CreatePeriodAsync(string description, DateTime from, DateTime until);
     Task UpdatePeriodAsync(int periodId, string newDescription, DateTime newFrom, DateTime newUntil);
+    Task DeletePeriodAsync(int periodId);
 }

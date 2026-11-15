@@ -1,0 +1,92 @@
+<div class="card-footer bg-body-tertiary pagination-footer py-2 px-3">
+  <span
+    class="text-muted small pagination-summary"
+    [attr.data-testid]="totalLabelTestId()"
+  >
+    {{ displayRangeLabel() }}
+  </span>
+
+  <nav
+    class="pagination-nav"
+    [attr.aria-label]="ariaLabel()"
+    [attr.data-testid]="paginationTestId()"
+  >
+    <ul class="pagination pagination-sm mb-0 justify-content-center">
+      <li class="page-item" [class.disabled]="currentPage() === 1">
+        <button
+          type="button"
+          class="page-link"
+          aria-label="First page"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(1)"
+        >
+          &laquo;
+        </button>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage() === 1">
+        <button
+          type="button"
+          class="page-link"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+        >
+          Previous
+        </button>
+      </li>
+      @for (page of visiblePages(); track page) {
+        <li class="page-item" [class.active]="page === currentPage()">
+          <button
+            type="button"
+            class="page-link"
+            [attr.aria-current]="page === currentPage() ? 'page' : null"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </li>
+      }
+      <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+        <button
+          type="button"
+          class="page-link"
+          [disabled]="currentPage() === totalPages()"
+          (click)="goToPage(currentPage() + 1)"
+        >
+          Next
+        </button>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+        <button
+          type="button"
+          class="page-link"
+          aria-label="Last page"
+          [disabled]="currentPage() === totalPages()"
+          (click)="goToPage(totalPages())"
+        >
+          &raquo;
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex align-items-center gap-2 pagination-page-size">
+    <label
+      class="form-label mb-0 small text-muted text-nowrap"
+      [attr.for]="selectId()"
+    >
+      Items per page
+    </label>
+    <select
+      [id]="selectId()"
+      class="form-select form-select-sm w-auto"
+      name="pageSize"
+      [ngModel]="pageSize()"
+      (ngModelChange)="onPageSizeSelected($event)"
+      [attr.data-testid]="pageSizeTestId()"
+    >
+      @for (option of pageSizeOptions(); track option.label) {
+        <option [ngValue]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+</div>

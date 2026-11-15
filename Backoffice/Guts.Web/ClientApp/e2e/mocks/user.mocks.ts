@@ -22,3 +22,11 @@ export const mockStudentProfile: MockUserProfile = {
   isAuthenticated: true,
 };
 
+export const mockAdminProfile: MockUserProfile = {
+  id: 1,
+  email: "admin.guts@pxl.be",
+  roles: ["lector", "admin"],
+  teams: [],
+  isAuthenticated: true,
+};
+

@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Guts.Domain.RoleAggregate;
 using Guts.Domain.UserAggregate;
 using Guts.Infrastructure.Tests.Repositories;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -27,6 +29,9 @@ internal class GutsDbInitializerTests : RepositoryTestsBase
         userManagerMock
             .Setup(um => um.AddToRoleAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Success);
+        userManagerMock
+            .Setup(um => um.IsInRoleAsync(It.Is<User>(u => u.Email == "jane@pxl.be"), Role.Constants.Admin))
+            .ReturnsAsync(false);
 
         var roleStoreMock = new Mock<IRoleStore<Role>>();
         var roleManagerMock = new Mock<RoleManager<Role>>(
@@ -34,8 +39,22 @@ internal class GutsDbInitializerTests : RepositoryTestsBase
         roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Student))
             .ReturnsAsync(false)
             .ReturnsAsync(true);
+        roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Lector))
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
+        roleManagerMock.SetupSequence(rm => rm.RoleExistsAsync(Role.Constants.Admin))
+            .ReturnsAsync(false)
+            .ReturnsAsync(true);
         roleManagerMock.Setup(rm => rm.CreateAsync(It.IsAny<Role>()))
             .ReturnsAsync(IdentityResult.Success);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string>
+            {
+                ["AdminEmails:0"] = "  JANE@PXL.BE  ",
+                ["AdminEmails:1"] = ""
+            })
+            .Build();
 
         var loggerMock = new Mock<ILogger>();
 
@@ -43,18 +62,21 @@ internal class GutsDbInitializerTests : RepositoryTestsBase
             context,
             loggerMock.Object,
             userManagerMock.Object,
-            roleManagerMock.Object);
+            roleManagerMock.Object,
+            config);
 
         initializer.Seed();
 
         roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Student)), Times.Once);
         roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Lector)), Times.Once);
+        roleManagerMock.Verify(rm => rm.CreateAsync(It.Is<Role>(r => r.Name == Role.Constants.Admin)), Times.Once);
         userManagerMock.Verify(um => um.AddToRoleAsync(It.Is<User>(u => u.Email == "john@student.pxl.be"), Role.Constants.Student), Times.Once);
         userManagerMock.Verify(um => um.AddToRoleAsync(It.Is<User>(u => u.Email == "jane@pxl.be"), Role.Constants.Lector), Times.Once);
+        userManagerMock.Verify(um => um.AddToRoleAsync(It.Is<User>(u => u.Email == "jane@pxl.be"), Role.Constants.Admin), Times.Once);
         Assert.That(context.Courses.Select(c => c.Code), Is.EquivalentTo(["dotNet1", "dotNet2"]));
 
         initializer.Seed();
-        roleManagerMock.Verify(rm => rm.CreateAsync(It.IsAny<Role>()), Times.Exactly(2));
+        roleManagerMock.Verify(rm => rm.CreateAsync(It.IsAny<Role>()), Times.Exactly(3));
         Assert.That(context.Courses.Count(), Is.EqualTo(2));
     }
 }

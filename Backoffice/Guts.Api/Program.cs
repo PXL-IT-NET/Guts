@@ -1,4 +1,4 @@
-﻿using Guts.Infrastructure;
+using Guts.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,10 +27,11 @@ public static class Program
             var logger = loggerFactory.CreateLogger("Program");
             var userManager = services.GetRequiredService<UserManager<User>>();
             var roleManager = services.GetRequiredService<RoleManager<Role>>();
+            var configuration = services.GetService<Microsoft.Extensions.Configuration.IConfiguration>();
             logger.LogInformation(1,"Starting Guts Api...");
             try
             {
-                var initializer = new GutsDbInitializer(context, logger, userManager, roleManager);
+                var initializer = new GutsDbInitializer(context, logger, userManager, roleManager, configuration);
 
                 initializer.DoAutomaticMigrations();
                 initializer.Seed();

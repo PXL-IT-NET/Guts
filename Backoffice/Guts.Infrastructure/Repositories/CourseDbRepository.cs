@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Guts.Application;
 using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Guts.Infrastructure.Repositories;
 
@@ -28,5 +28,23 @@ internal class CourseDbRepository : BaseDbRepository<Course, Course>, ICourseRep
     public override async Task<IReadOnlyList<Course>> GetAllAsync()
     {
         return await _context.Set<Course>().OrderBy(c => c.Name).ToListAsync();
+    }
+
+    public override Task DeleteAsync(Course entityToDelete)
+    {
+        return ExecuteInTransactionAsync(async () =>
+        {
+            int courseId = entityToDelete.Id;
+
+            await _context.CourseClassGroups
+                .Where(cg => cg.CourseId == courseId)
+                .ExecuteDeleteAsync();
+
+            await _context.Courses
+                .Where(c => c.Id == courseId)
+                .ExecuteDeleteAsync();
+
+            _context.Entry(entityToDelete).State = EntityState.Detached;
+        });
     }
 }

@@ -37,6 +37,18 @@ internal class MailSender(ISmtpClient smtpClient, string fromEmail, string webAp
             ignoreCondition: "indicated that you forgot your password");
     }
 
+    public Task SendLectorVerificationEmailMessageAsync(User user, string verificationToken)
+    {
+        return SendUserTokenMailAsync(
+            user,
+            subject: "Verify your PXL lector account",
+            callbackPath: "verify-lector",
+            token: verificationToken,
+            messageIntro: "Your GUTS lector account requires annual verification of your @pxl.be email address.",
+            ignoreCondition: "attempted to log in",
+            greeting: "Dear lector,");
+    }
+
     public async Task SendStreakReminderEmailAsync(
         User user,
         string courseName,
@@ -134,14 +146,15 @@ internal class MailSender(ISmtpClient smtpClient, string fromEmail, string webAp
         string callbackPath,
         string token,
         string messageIntro,
-        string ignoreCondition)
+        string ignoreCondition,
+        string greeting = "Dear student,")
     {
         var callbackUri = new Uri(_webAppBaseUri, $"{callbackPath}?userId={user.Id}&token={HttpUtility.UrlEncode(token)}");
 
         var bodyBuilder = new StringBuilder();
         bodyBuilder.AppendLine("<html><body>");
         bodyBuilder.AppendLine("<p>");
-        bodyBuilder.AppendLine("Dear student,<br/><br/>");
+        bodyBuilder.AppendLine($"{greeting}<br/><br/>");
         bodyBuilder.AppendLine($"{messageIntro}<br/>");
         bodyBuilder.AppendLine("You can do this by following the link below:<br/><br/>");
         bodyBuilder.AppendLine($"<a href=\"{callbackUri.AbsoluteUri}\">{callbackUri.AbsoluteUri}</a><br/><br/>");

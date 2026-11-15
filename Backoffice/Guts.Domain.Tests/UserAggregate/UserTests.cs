@@ -1,4 +1,5 @@
 using System;
+using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.UserAggregate;
@@ -109,5 +110,62 @@ public class UserTests
     {
         var user = new User { FirstName = first, LastName = last };
         Assert.That(user.FullName, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void MarkEmailVerified_DefaultTimestamp_ThrowsContractException()
+    {
+        var user = new UserBuilder().WithId().Build();
+
+        Assert.Throws<ContractException>(() => user.MarkEmailVerified(default));
+    }
+
+    [Test]
+    public void MarkEmailVerified_ValidTimestamp_SetsUtcTimestamp()
+    {
+        var user = new UserBuilder().WithId().Build();
+        var timestamp = new DateTime(2026, 6, 15, 10, 30, 0, DateTimeKind.Unspecified);
+
+        user.MarkEmailVerified(timestamp);
+
+        Assert.That(user.LastVerifiedOnUtc, Is.EqualTo(new DateTime(2026, 6, 15, 10, 30, 0, DateTimeKind.Utc)));
+        Assert.That(user.LastVerifiedOnUtc!.Value.Kind, Is.EqualTo(DateTimeKind.Utc));
+    }
+
+    [Test]
+    public void RequiresAnnualVerification_NeverVerified_ReturnsTrue()
+    {
+        var user = new UserBuilder().WithId().Build();
+
+        Assert.That(user.RequiresAnnualVerification(new DateTime(2026, 11, 15, 10, 0, 0, DateTimeKind.Utc)), Is.True);
+    }
+
+    [Test]
+    public void RequiresAnnualVerification_VerifiedLessThanOneYearAgo_ReturnsFalse()
+    {
+        var utcNow = new DateTime(2026, 11, 15, 10, 0, 0, DateTimeKind.Utc);
+        var user = new UserBuilder()
+            .WithId()
+            .WithLastVerifiedOnUtc(utcNow.AddYears(-1).AddSeconds(1))
+            .Build();
+
+        Assert.That(user.RequiresAnnualVerification(utcNow), Is.False);
+    }
+
+    [Test]
+    public void RequiresAnnualVerification_VerifiedOneYearOrLongerAgo_ReturnsTrue()
+    {
+        var utcNow = new DateTime(2026, 11, 15, 10, 0, 0, DateTimeKind.Utc);
+        var exactBoundaryUser = new UserBuilder()
+            .WithId()
+            .WithLastVerifiedOnUtc(utcNow.AddYears(-1))
+            .Build();
+        var olderUser = new UserBuilder()
+            .WithId()
+            .WithLastVerifiedOnUtc(utcNow.AddYears(-2))
+            .Build();
+
+        Assert.That(exactBoundaryUser.RequiresAnnualVerification(utcNow), Is.True);
+        Assert.That(olderUser.RequiresAnnualVerification(utcNow), Is.True);
     }
 }

@@ -4,7 +4,6 @@ import {
   provideHttpClientTesting,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import { PeriodModel } from "../viewmodels/period.model";
 import { PeriodService } from "./period.service";
 
 describe("PeriodService", () => {
@@ -27,26 +26,71 @@ describe("PeriodService", () => {
     httpMock.verify();
   });
 
-  it("getAll should map PeriodModels and handle error", () => {
-    let res: any;
-    service.getAll().subscribe((r) => (res = r));
+  it("should getAll periods and handle error", () => {
+    service.getAll().subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.length).toBe(1);
+    });
     httpMock.expectOne("api/periods").flush([
       {
         id: 1,
-        description: "25-26",
-        from: "2025-09-01",
-        until: "2026-08-31",
+        description: "2026-2027",
+        from: "2026-09-01",
+        until: "2027-08-31",
         isActive: true,
       },
     ]);
-    expect(res.success).toBeTrue();
-    expect(res.value[0] instanceof PeriodModel).toBeTrue();
 
-    service.getAll().subscribe((r) => (res = r));
+    service.getAll().subscribe((res) => expect(res.success).toBeFalse());
     httpMock
       .expectOne("api/periods")
-      .flush("Err", { status: 500, statusText: "Error" });
-    expect(res.success).toBeFalse();
+      .flush("Err", { status: 500, statusText: "Err" });
+  });
+
+  it("should create, update, delete period and handle errors", () => {
+    const payload = {
+      description: "2027-2028",
+      from: "2027-09-01",
+      until: "2028-08-31",
+    };
+
+    service.createPeriod(payload).subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.id).toBe(2);
+    });
+    httpMock
+      .expectOne((r) => r.method === "POST" && r.url === "api/periods")
+      .flush({ id: 2, ...payload, isActive: false });
+
+    service
+      .createPeriod(payload)
+      .subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/periods")
+      .flush("Bad", { status: 400, statusText: "Bad" });
+
+    service
+      .updatePeriod(2, payload)
+      .subscribe((res) => expect(res.success).toBeTrue());
+    httpMock
+      .expectOne((r) => r.method === "PUT" && r.url === "api/periods/2")
+      .flush(null);
+
+    service
+      .updatePeriod(2, payload)
+      .subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/periods/2")
+      .flush("Bad", { status: 400, statusText: "Bad" });
+
+    service.deletePeriod(2).subscribe((res) => expect(res.success).toBeTrue());
+    httpMock
+      .expectOne((r) => r.method === "DELETE" && r.url === "api/periods/2")
+      .flush(null);
+
+    service.deletePeriod(2).subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/periods/2")
+      .flush("Err", { status: 404, statusText: "Not Found" });
   });
 });
-

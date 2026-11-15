@@ -198,6 +198,20 @@ public class ControllerBaseTests
         Assert.That(_controller.IsOwnUserId(userId + 1), Is.False);
     }
 
+    [Test]
+    public void IsAdmin_And_IsImpersonating_ShouldReflectPrincipalState()
+    {
+        Assert.That(_controller.IsAdmin(), Is.False);
+        Assert.That(_controller.IsImpersonating(), Is.False);
+
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser("1")
+            .WithRole(Role.Constants.Admin)
+            .Build();
+        Assert.That(_controller.IsAdmin(), Is.True);
+        Assert.That(_controller.IsImpersonating(), Is.False);
+    }
+
     private class TestableControllerBase : ControllerBase
     {
         public new int GetUserId()
@@ -223,6 +237,16 @@ public class ControllerBaseTests
         public new bool IsLector()
         {
             return base.IsLector();
+        }
+
+        public new bool IsAdmin()
+        {
+            return base.IsAdmin();
+        }
+
+        public new bool IsImpersonating()
+        {
+            return base.IsImpersonating();
         }
 
         public new bool IsOwnUserId(int userId)

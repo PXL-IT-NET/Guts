@@ -44,8 +44,8 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
    - Phase 2: `Guts.Application.Tests` ➔ `Guts.Application`
    - Phase 3: `Guts.Infrastructure.Tests` ➔ `Guts.Infrastructure` (including EF Core migrations if needed)
    - Phase 4: `Guts.Api.Tests` ➔ `Guts.Api`
-   - Phase 5: `Guts.Web/ClientApp` (`*.spec.ts` ➔ Angular components/services)
-   - Phase 6: Full test suite & SonarQube verification
+   - Phase 5: `Guts.Web/ClientApp` (`*.spec.ts` for all new/changed components, services, guards, and utilities ➔ Angular implementation ➔ Playwright E2E tests for new/updated flows ➔ lint/build/E2E)
+   - Phase 6: Full test suite, Playwright E2E verification, SonarCloud Quality Gate, and maximum new-code line/branch coverage verification
 3. Tag each task with the corresponding `[AC-*]` / `[DR-*]` identifiers.
 
 ### Phase 4: TDD Execution
@@ -55,5 +55,5 @@ Use this skill to guide features in `Backoffice/` through the 4-phase Spec-Drive
    - Implement the production code to make the test pass.
    - Run the targeted test project (`dotnet test ...` or `npm test -- --watch=false`).
    - Mark the task as `[x]` in `tasks.md`.
-3. Once all tasks are complete, run the full verification suite (`dotnet test Backoffice/Guts.slnx`) and update the status in `spec.md` and `design.md` to `Implemented`.
+3. Once all tasks are complete, run the full verification suite (`dotnet test Backoffice/Guts.slnx`, frontend checks) and `.\run-sonarqube.ps1 -UseSonarCloud`. Inspect SonarCloud per-file new-code coverage and add tests for any uncovered lines/branches until as much new code as possible is covered (`Quality Gate = OK`, `>= 80%` aiming as close to `100%` as possible, `0` open issues). Update the status in `spec.md` and `design.md` to `Implemented`.
 

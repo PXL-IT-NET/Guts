@@ -10,6 +10,7 @@ public interface IMailSender
 {
     Task SendConfirmUserEmailMessageAsync(User user, string confirmationToken);
     Task SendForgotPasswordMessageAsync(User user, string forgotPasswordToken);
+    Task SendLectorVerificationEmailMessageAsync(User user, string verificationToken);
     Task SendStreakReminderEmailAsync(
         User user,
         string courseName,

@@ -45,15 +45,16 @@
 
 ## Phase 5: Frontend SPA (`Guts.Web/ClientApp`) _(if applicable)_
 
-- [ ] **[T5.1]** `[AC-1]` Write failing Jasmine unit tests (`*.spec.ts`) for the Angular service and component(s).
-- [ ] **[T5.2]** `[AC-1]` Implement Angular service methods, viewmodels, and component template/logic in `Guts.Web/ClientApp/src/app/`.
-- [ ] **[T5.3]** Run `npm test -- --watch=false` in `Backoffice/Guts.Web/ClientApp` and verify all tests pass.
+- [ ] **[T5.1]** `[AC-1]` Write failing Jasmine unit tests (`*.spec.ts`) covering as many lines and branches as possible for every new or modified Angular component, service, guard, viewmodel helper, and utility.
+- [ ] **[T5.2]** `[AC-1]` Implement Angular service methods, viewmodels, guards, and component template/logic in `Guts.Web/ClientApp/src/app/`.
+- [ ] **[T5.3]** `[AC-1]` Add/update Playwright E2E tests in `Backoffice/Guts.Web/ClientApp/e2e/tests/` covering all new and updated user workflows.
+- [ ] **[T5.4]** Run `npm run lint`, `npm test -- --watch=false`, `npm run build`, and Playwright E2E tests in `Backoffice/Guts.Web/ClientApp` and verify all pass.
 
 ---
 
 ## Phase 6: Final Verification & Quality Gate
 
-- [ ] **[T6.1]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`
-- [ ] **[T6.2]** Run frontend production build & test check (if frontend was modified): `npm run build`
-- [ ] **[T6.3]** Run SonarQube analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and resolve any reported bugs, code smells, or coverage gaps.
+- [ ] **[T6.1]** Run full backend test suite: `dotnet test Backoffice/Guts.slnx`.
+- [ ] **[T6.2]** Run frontend production build, lint, unit tests, and relevant Playwright E2E tests (if frontend was modified).
+- [ ] **[T6.3]** Run SonarCloud analysis (`.\run-sonarqube.ps1 -UseSonarCloud` from `Backoffice/`) and inspect per-file new-code coverage; add missing tests for uncovered lines/branches across backend and frontend until Quality Gate is `OK` (with maximum achievable new-code line & branch coverage, `0` open issues, and `0` unreviewed hotspots).
 - [ ] **[T6.4]** Update `spec.md` and `design.md` status to `Implemented`.

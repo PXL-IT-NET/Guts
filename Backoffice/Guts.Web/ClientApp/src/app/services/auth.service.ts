@@ -6,11 +6,13 @@ import { LoginModel } from "../viewmodels/login.model";
 import { TokenModel } from "../viewmodels/token.model";
 import { RegisterModel } from "../viewmodels/register.model";
 import { LocalStorageKeys } from "../util/localstorage.keys";
-import { PostResult } from "../util/result";
+import { LoginResult, PostResult } from "../util/result";
 import { ConfirmEmailModel } from "../viewmodels/confirmemail.model";
 import { ForgotPasswordModel } from "../viewmodels/forgotpassword.model";
 import { ResetPasswordModel } from "../viewmodels/resetpassword.model";
 import { ChangePasswordModel } from "../viewmodels/changepassword.model";
+import { VerifyLectorModel } from "../viewmodels/verify-lector.model";
+import { ResendLectorVerificationModel } from "../viewmodels/resend-lector-verification.model";
 import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 
 @Injectable({
@@ -21,6 +23,10 @@ export class AuthService {
   private readonly loggedInStateSubject: BehaviorSubject<boolean>;
   private readonly _isLoggedIn = signal<boolean>(false);
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
+  private readonly _isImpersonating = signal<boolean>(false);
+  public readonly isImpersonating = this._isImpersonating.asReadonly();
+  private readonly _impersonatedProfile = signal<UserProfile | null>(null);
+  public readonly impersonatedProfile = this._impersonatedProfile.asReadonly();
   private currentUserProfile: UserProfile = null;
 
   constructor(private readonly http: HttpClient) {
@@ -30,6 +36,9 @@ export class AuthService {
     );
     let isLoggedIn: boolean = Boolean(this.tokenModel?.token);
     this._isLoggedIn.set(isLoggedIn);
+    this._isImpersonating.set(
+      Boolean(localStorage.getItem(LocalStorageKeys.originalToken)),
+    );
     this.loggedInStateSubject = new BehaviorSubject<boolean>(isLoggedIn);
   }
 
@@ -48,16 +57,54 @@ export class AuthService {
   public clearToken(): void {
     this.tokenModel = null;
     localStorage.removeItem(LocalStorageKeys.currentToken);
+    localStorage.removeItem(LocalStorageKeys.originalToken);
 
+    this._isImpersonating.set(false);
+    this._impersonatedProfile.set(null);
     this.setLoggedInState(false);
     this.currentUserProfile = null;
+  }
+
+  public startImpersonation(impersonationToken: TokenModel): void {
+    if (this.tokenModel) {
+      localStorage.setItem(
+        LocalStorageKeys.originalToken,
+        JSON.stringify(this.tokenModel),
+      );
+    }
+    this.tokenModel = impersonationToken;
+    localStorage.setItem(
+      LocalStorageKeys.currentToken,
+      JSON.stringify(impersonationToken),
+    );
+    this.currentUserProfile = null;
+    this._isImpersonating.set(true);
+    this.setLoggedInState(true);
+  }
+
+  public stopImpersonation(): void {
+    const originalRaw = localStorage.getItem(LocalStorageKeys.originalToken);
+    if (!originalRaw) {
+      return;
+    }
+    const originalToken = JSON.parse(originalRaw) as TokenModel;
+    this.tokenModel = originalToken;
+    localStorage.setItem(
+      LocalStorageKeys.currentToken,
+      JSON.stringify(originalToken),
+    );
+    localStorage.removeItem(LocalStorageKeys.originalToken);
+    this.currentUserProfile = null;
+    this._isImpersonating.set(false);
+    this._impersonatedProfile.set(null);
+    this.setLoggedInState(true);
   }
 
   public invalidateUserProfileCache(): void {
     this.currentUserProfile = null;
   }
 
-  public login(model: LoginModel): Observable<PostResult> {
+  public login(model: LoginModel): Observable<LoginResult> {
     return this.http.post("api/auth/token", model).pipe(
       map((object: Object) => {
         const tokenModel = object as TokenModel;
@@ -77,7 +124,7 @@ export class AuthService {
         } else {
           // return false to indicate failed login
           this.setLoggedInState(false);
-          const result = new PostResult();
+          const result = new LoginResult();
           result.isAuthenticated = false;
           result.message = "No token present in returned token model";
           return result;
@@ -85,6 +132,27 @@ export class AuthService {
       }),
       catchError((errorResponse: HttpErrorResponse) => {
         this.setLoggedInState(false);
+        const errorBody = errorResponse.error as {
+          code?: string;
+          userId?: number;
+          email?: string;
+          resendToken?: string;
+          message?: string;
+        } | null;
+        if (
+          errorResponse.status === 403 &&
+          errorBody?.code === "LectorVerificationRequired"
+        ) {
+          const result = new LoginResult();
+          result.success = false;
+          result.isAuthenticated = true;
+          result.requiresLectorVerification = true;
+          result.verificationUserId = errorBody.userId;
+          result.verificationEmail = errorBody.email;
+          result.resendToken = errorBody.resendToken;
+          result.message = errorBody.message;
+          return of(result);
+        }
         return of(PostResult.fromHttpErrorResponse(errorResponse));
       }),
     );
@@ -110,6 +178,10 @@ export class AuthService {
       return this.http.get<IUserProfile>("api/users/current/profile").pipe(
         map((profile) => {
           this.currentUserProfile = new UserProfile(profile);
+          if (this.currentUserProfile.isImpersonating || this._isImpersonating()) {
+            this._isImpersonating.set(true);
+            this._impersonatedProfile.set(this.currentUserProfile);
+          }
           return this.currentUserProfile;
         }),
       );
@@ -123,64 +195,46 @@ export class AuthService {
   }
 
   public register(model: RegisterModel): Observable<PostResult> {
-    return this.http.post("api/auth/register", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/register", model);
   }
 
   public confirmEmail(model: ConfirmEmailModel): Observable<PostResult> {
-    return this.http.post("api/auth/confirmemail", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/confirmemail", model);
+  }
+
+  public verifyLector(model: VerifyLectorModel): Observable<PostResult> {
+    return this.postSimple("api/auth/verifylector", model);
+  }
+
+  public resendLectorVerification(
+    model: ResendLectorVerificationModel,
+  ): Observable<PostResult> {
+    return this.postSimple("api/auth/resend-lector-verification", model);
   }
 
   public sendForgotPasswordMail(
     model: ForgotPasswordModel,
   ): Observable<PostResult> {
-    return this.http.post("api/auth/forgotpassword", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/forgotpassword", model);
   }
 
   public resetPassword(model: ResetPasswordModel): Observable<PostResult> {
-    return this.http.post("api/auth/resetpassword", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/resetpassword", model);
   }
 
   public changePassword(model: ChangePasswordModel): Observable<PostResult> {
-    return this.http
-      .post("api/auth/changepassword", {
-        currentPassword: model.currentPassword,
-        newPassword: model.newPassword,
-      })
-      .pipe(
-        map(() => {
-          return PostResult.success();
-        }),
-        catchError((errorResponse: HttpErrorResponse) => {
-          return of(PostResult.fromHttpErrorResponse(errorResponse));
-        }),
-      );
+    return this.postSimple("api/auth/changepassword", {
+      currentPassword: model.currentPassword,
+      newPassword: model.newPassword,
+    });
+  }
+
+  private postSimple(url: string, body: unknown): Observable<PostResult> {
+    return this.http.post(url, body).pipe(
+      map(() => PostResult.success()),
+      catchError((errorResponse: HttpErrorResponse) =>
+        of(PostResult.fromHttpErrorResponse(errorResponse)),
+      ),
+    );
   }
 }

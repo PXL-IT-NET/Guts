@@ -19,6 +19,7 @@ import { AppRoutingModule } from "./app-routing.module";
 import * as c from "./components";
 import { tokenInterceptor } from "./interceptors/tokeninterceptor";
 import { relativeInterceptor } from "./interceptors/relative.interceptor";
+import { impersonationReadOnlyInterceptor } from "./interceptors/impersonation-readonly.interceptor";
 import { PositiveNumberValidatorDirective } from "./util/positive-number.directive";
 import { NgDatetimeComponent } from "./components/ng-datetime/ng-datetime.component";
 import { RecaptchaDirective } from "./directives/recaptcha.directive";
@@ -103,7 +104,11 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     NgbTypeaheadConfig,
     provideHttpClient(
       withXhr(),
-      withInterceptors([relativeInterceptor, tokenInterceptor]),
+      withInterceptors([
+        relativeInterceptor,
+        tokenInterceptor,
+        impersonationReadOnlyInterceptor,
+      ]),
     ),
     provideCharts(withDefaultRegisterables()),
   ],

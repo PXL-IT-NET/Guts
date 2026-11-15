@@ -1,0 +1,138 @@
+<div class="container-fluid py-3 position-relative">
+  <app-loading-overlay [show]="loading()"></app-loading-overlay>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Impersonate Student</h2>
+      <p class="text-muted mb-0 small">
+        Select a student to inspect the application in read-only mode through
+        their eyes.
+      </p>
+    </div>
+    <span class="badge rounded-pill text-bg-secondary fs-6 fw-normal px-3 py-2">
+      {{ totalCount() }} {{ totalCount() === 1 ? "user" : "users" }}
+    </span>
+  </div>
+
+  <search>
+    <form class="card shadow-sm mb-3" (ngSubmit)="search()">
+      <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-7 col-lg-6">
+            <label
+              class="form-label fw-semibold small text-uppercase text-muted mb-1"
+              for="studentSearch"
+            >
+              Search student
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-body-tertiary">
+                <i class="bi bi-search" aria-hidden="true"></i>
+              </span>
+              <input
+                id="studentSearch"
+                type="search"
+                class="form-control"
+                name="searchTerm"
+                placeholder="Name or email..."
+                autocomplete="off"
+                spellcheck="false"
+                [(ngModel)]="searchTerm"
+              />
+              @if (searchTerm.length > 0) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  aria-label="Clear search"
+                  (click)="clearSearchTerm()"
+                >
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+          </div>
+          <div class="col-md-5 col-lg-6 d-flex gap-2">
+            @if (hasActiveFilters()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="clearSearchTerm()"
+                data-testid="reset-impersonate-search-btn"
+              >
+                Reset
+              </button>
+            }
+            <button type="submit" class="btn btn-primary">Search</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </search>
+
+  <div class="card shadow-sm">
+    @if (totalPages() > 1) {
+      <div class="card-header bg-body-tertiary d-flex justify-content-end py-2 px-3">
+        <span class="text-muted small">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+      </div>
+    }
+
+    <section
+      class="users-table-wrapper"
+      aria-label="Impersonatable students table"
+    >
+      <table class="table table-hover align-middle mb-0 users-table">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (student of students(); track student.id) {
+            <tr>
+              <td class="fw-medium">
+                {{ student.firstName }} {{ student.lastName }}
+              </td>
+              <td class="text-muted">{{ student.email }}</td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  (click)="impersonate(student)"
+                >
+                  Impersonate
+                </button>
+              </td>
+            </tr>
+          }
+          @if (students().length === 0 && !loading()) {
+            <tr>
+              <td colspan="3" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-3 d-block mb-2" aria-hidden="true"></i>
+                No students matched the current search.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <app-pagination-footer
+      [totalCount]="totalCount()"
+      [currentItemCount]="students().length"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      itemLabel="users"
+      ariaLabel="Impersonatable users pagination"
+      totalLabelTestId="impersonate-total-label"
+      paginationTestId="impersonate-pagination"
+      pageSizeTestId="impersonate-page-size-select"
+      selectId="impersonatePageSize"
+      (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination-footer>
+  </div>
+</div>

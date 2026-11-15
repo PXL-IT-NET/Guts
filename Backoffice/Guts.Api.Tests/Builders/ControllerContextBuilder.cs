@@ -63,9 +63,14 @@ internal class ControllerContextBuilder
 
     public ControllerContextBuilder WithEmail(string email)
     {
+        return WithClaim(ClaimTypes.Email, email);
+    }
+
+    public ControllerContextBuilder WithClaim(string claimType, string claimValue)
+    {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Email, email)
+            new(claimType, claimValue)
         };
         _context.HttpContext.User = new(new ClaimsIdentity(claims.Union(_context.HttpContext.User.Claims)));
         return this;

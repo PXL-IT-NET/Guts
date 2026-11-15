@@ -21,7 +21,8 @@ public class UserController(IProjectTeamRepository projectTeamRepository) : Cont
             Id = GetUserId(),
             Email = GetUserEmail(),
             Roles = GetUserRoles(),
-            Teams = (await projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList()
+            Teams = (await projectTeamRepository.GetByUserAsync(GetUserId())).Select(team => team.Id).ToList(),
+            IsImpersonating = IsImpersonating()
         };
         return Ok(model);
     }

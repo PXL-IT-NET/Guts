@@ -53,11 +53,12 @@ The repository is organized into three main areas:
 4. **Test-Driven Verification (TDD)**:
    - Always run relevant automated test suites after making changes and ensure all tests pass before completing a task.
    - When fixing a bug, write a failing reproduction test first.
-5. **Frontend Testing Standards**:
+5. **Frontend Testing & E2E Standards**:
    - Every Angular component, service, guard, or pipe must include unit tests (`*.spec.ts`) verified via Karma/Jasmine.
-   - Integration journeys and user flows are verified with Playwright E2E tests (`e2e/tests/`).
-6. **Code Quality & Security (SonarQube/SonarCloud)**:
-   - Run quality analysis locally or via SonarCloud (`PXL-IT-NET_Guts`) and resolve all reported bugs, vulnerabilities, and code smells.
+   - Integration journeys and user flows for all **new and updated functionality** must be covered by **Playwright E2E tests** (`e2e/tests/`) and verified passing.
+6. **Code Quality, Coverage & Security (SonarQube/SonarCloud)**:
+   - Run quality analysis locally or via SonarCloud (`PXL-IT-NET_Guts`) and resolve all reported bugs, vulnerabilities, security hotspots, and code smells.
+   - **Maximum New-Code Coverage Quality Gate**: Cover as many lines and branches of new or modified code as possible across both backend (`.NET` unit/integration tests) and frontend (`*.spec.ts` unit tests for every component, service, guard, and utility). Passing the SonarCloud new-code coverage quality gate (`>= 80%`, targeting `~100%` excluding only unreachable defensive scaffolding) is mandatory before considering a feature or PR complete.
 
 ---
 

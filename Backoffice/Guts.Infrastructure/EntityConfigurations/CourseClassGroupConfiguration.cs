@@ -15,6 +15,11 @@ internal class CourseClassGroupConfiguration : IEntityTypeConfiguration<CourseCl
 
         builder.HasIndex(ccg => new { ccg.CourseId, ccg.PeriodId, ccg.Name }).IsUnique();
 
+        builder.HasOne(ccg => ccg.Course)
+            .WithMany()
+            .HasForeignKey(ccg => ccg.CourseId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         builder.HasOne(ccg => ccg.Period)
             .WithMany()
             .HasForeignKey(ccg => ccg.PeriodId)

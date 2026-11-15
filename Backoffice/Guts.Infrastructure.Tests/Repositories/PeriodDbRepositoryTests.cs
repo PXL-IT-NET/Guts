@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Guts.Application;
+using Guts.Domain.GamificationAggregate.Configuration;
+using Guts.Domain.GamificationAggregate.Profiles;
+using Guts.Domain.PeriodAggregate;
 using Guts.Infrastructure.Repositories;
 using NUnit.Framework;
 
@@ -11,42 +13,59 @@ namespace Guts.Infrastructure.Tests.Repositories;
 internal class PeriodDbRepositoryTests : RepositoryTestsBase
 {
     [Test]
-    public async Task GetAllAsync_ShouldReturnPeriodsOrderedByFromDate()
+    public async Task DeleteAsync_ShouldCascadeToStudentCourseProfilesAndClassGroups()
     {
-        await Seeder.SeedPeriodAsync(DateTime.Today.AddDays(10), DateTime.Today.AddDays(20), "Later");
-        await Seeder.SeedPeriodAsync(DateTime.Today.AddDays(-20), DateTime.Today.AddDays(-10), "Earlier");
+        var (course, activePeriod) = await Seeder.SeedCourseAndActivePeriodAsync("NET1");
+        var user = await Seeder.SeedUserAsync("John", "Doe");
 
-        await using var context = CreateDbContext();
-        var repo = new PeriodDbRepository(context);
-
-        var periods = await repo.GetAllAsync();
-        Assert.That(periods.Select(p => p.Description), Is.EqualTo(["Earlier", "Later"]));
-    }
-
-    [Test]
-    public async Task GetPeriodAsync_ShouldReturnById_OrActivePeriod_OrThrowWhenNotFound()
-    {
-        var past = await Seeder.SeedPeriodAsync(DateTime.Today.AddDays(-30), DateTime.Today.AddDays(-10), "Past");
-
-        await using (var context = CreateDbContext())
+        int pastPeriodId;
+        await using (var seedContext = CreateDbContext())
         {
-            var repo = new PeriodDbRepository(context);
-            await Assert.ThatAsync(() => repo.GetPeriodAsync(null), Throws.InstanceOf<DataNotFoundException>());
+            var factory = new Period.Factory();
+            var pastPeriod = factory.CreateNew(
+                "Past 2020",
+                DateTime.Today.AddYears(-2),
+                DateTime.Today.AddYears(-1),
+                []);
+            seedContext.Periods.Add(pastPeriod);
+            await seedContext.SaveChangesAsync();
+            pastPeriodId = pastPeriod.Id;
+
+            var pastClassGroup = new CourseClassGroup("1TIN-A", course.Id, pastPeriodId);
+            var activeClassGroup = new CourseClassGroup("1TIN-A", course.Id, activePeriod.Id);
+            seedContext.CourseClassGroups.AddRange(pastClassGroup, activeClassGroup);
+            await seedContext.SaveChangesAsync();
+
+            var pastProfile = new StudentCourseProfile(user.Id, course.Id, pastPeriodId);
+            pastProfile.Enroll(true, "Hero", "Wizard", pastClassGroup.Id, false);
+            pastProfile.AwardPassedTestXp(1, DateTime.UtcNow);
+
+            var activeProfile = new StudentCourseProfile(user.Id, course.Id, activePeriod.Id);
+            activeProfile.Enroll(true, "Hero", "Wizard", activeClassGroup.Id, false);
+
+            seedContext.StudentCourseProfiles.AddRange(pastProfile, activeProfile);
+            await seedContext.SaveChangesAsync();
         }
 
-        var active = await Seeder.SeedPeriodAsync(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(10), "Active");
+        await Seeder.SeedChapterAsync(course.Id, pastPeriodId, "Ch01", "Past Chapter");
 
         await using (var context = CreateDbContext())
         {
             var repo = new PeriodDbRepository(context);
+            var period = await repo.GetPeriodAsync(pastPeriodId);
+            await repo.DeleteAsync(period);
+        }
 
-            var byId = await repo.GetPeriodAsync(past.Id);
-            Assert.That(byId.Description, Is.EqualTo("Past"));
+        await using (var verifyContext = CreateDbContext())
+        {
+            Assert.That(verifyContext.Periods.Any(p => p.Id == pastPeriodId), Is.False);
+            Assert.That(verifyContext.StudentCourseProfiles.Any(sp => sp.PeriodId == pastPeriodId), Is.False);
+            Assert.That(verifyContext.CourseClassGroups.Any(cg => cg.PeriodId == pastPeriodId), Is.False);
+            Assert.That(verifyContext.Topics.Any(t => t.PeriodId == pastPeriodId), Is.False);
 
-            var current = await repo.GetPeriodAsync(null);
-            Assert.That(current.Id, Is.EqualTo(active.Id));
-
-            await Assert.ThatAsync(async () => await repo.GetPeriodAsync(99999), Throws.InstanceOf<DataNotFoundException>());
+            Assert.That(verifyContext.Periods.Any(p => p.Id == activePeriod.Id), Is.True);
+            Assert.That(verifyContext.StudentCourseProfiles.Any(sp => sp.PeriodId == activePeriod.Id), Is.True);
+            Assert.That(verifyContext.CourseClassGroups.Any(cg => cg.PeriodId == activePeriod.Id), Is.True);
         }
     }
 }

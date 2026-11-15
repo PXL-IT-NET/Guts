@@ -1,0 +1,473 @@
+<div class="container-fluid py-3 position-relative">
+  <app-loading-overlay [show]="loading()"></app-loading-overlay>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Users &amp; Impersonation</h2>
+      <p class="text-muted mb-0 small">
+        Search users, inspect linked courses, impersonate accounts, or delete
+        users.
+      </p>
+    </div>
+    <span class="badge rounded-pill text-bg-secondary fs-6 fw-normal px-3 py-2">
+      {{ totalCount() }} {{ totalCount() === 1 ? "user" : "users" }}
+    </span>
+  </div>
+
+  <search>
+    <form class="card shadow-sm mb-3" (ngSubmit)="search()">
+      <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-5">
+            <label class="form-label fw-semibold small text-uppercase text-muted mb-1" for="userSearch">
+              Search user
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-body-tertiary">
+                <i class="bi bi-search" aria-hidden="true"></i>
+              </span>
+              <input
+                id="userSearch"
+                type="search"
+                class="form-control"
+                name="searchTerm"
+                placeholder="Name or email..."
+                autocomplete="off"
+                spellcheck="false"
+                [(ngModel)]="searchTerm"
+              />
+              @if (searchTerm.length > 0) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  aria-label="Clear search"
+                  (click)="clearSearchTerm()"
+                >
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <span class="form-label fw-semibold small text-uppercase text-muted mb-1 d-block">
+              Role
+            </span>
+            <fieldset
+              class="btn-group w-100 border-0 p-0 m-0"
+              aria-label="Filter by role"
+              data-testid="role-filter-group"
+            >
+              @for (option of roleOptions; track option.value) {
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="roleFilter"
+                  [id]="'roleFilter_' + (option.value || 'all')"
+                  [value]="option.value"
+                  [checked]="roleFilter === option.value"
+                  (change)="selectRoleFilter(option.value)"
+                />
+                <label
+                  class="btn btn-outline-secondary"
+                  [for]="'roleFilter_' + (option.value || 'all')"
+                >
+                  {{ option.label }}
+                </label>
+              }
+            </fieldset>
+          </div>
+
+          <div class="col-lg-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="form-check form-switch mb-0">
+                  <input
+                    id="orphanedOnly"
+                    type="checkbox"
+                    role="switch"
+                    class="form-check-input"
+                    name="orphanedOnly"
+                    [attr.aria-checked]="orphanedOnly"
+                    [ngModel]="orphanedOnly"
+                    (ngModelChange)="onOrphanedOnlyChange($event)"
+                  />
+                  <label class="form-check-label fw-medium" for="orphanedOnly">
+                    Orphaned only
+                  </label>
+                </div>
+
+                <div class="form-check form-switch mb-0">
+                  <input
+                    id="lockedOnly"
+                    type="checkbox"
+                    role="switch"
+                    class="form-check-input"
+                    name="lockedOnly"
+                    [attr.aria-checked]="lockedOnly"
+                    [ngModel]="lockedOnly"
+                    (ngModelChange)="onLockedOnlyChange($event)"
+                    data-testid="locked-only-switch"
+                  />
+                  <label class="form-check-label fw-medium" for="lockedOnly">
+                    Locked only
+                  </label>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                @if (hasActiveFilters()) {
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="resetFilters()"
+                    data-testid="reset-filters-btn"
+                  >
+                    Reset
+                  </button>
+                }
+                <button type="submit" class="btn btn-primary px-3">
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </search>
+
+  <app-danger-delete-modal
+    [show]="userPendingDelete() !== null"
+    [loading]="loading()"
+    [title]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'Danger: Delete Teacher'
+        : 'Danger: Delete User'
+    "
+    [warningMessage]="
+      'You are about to permanently delete user ' +
+      (userPendingDelete()?.firstName ?? '') +
+      ' ' +
+      (userPendingDelete()?.lastName ?? '') +
+      ' (' +
+      (userPendingDelete()?.email ?? '') +
+      '). This action cannot be undone.'
+    "
+    [extraWarning]="getSingleDeleteExtraWarning(userPendingDelete())"
+    [extraWarningTestId]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'teacher-delete-warning'
+        : 'linked-delete-warning'
+    "
+    [requireConfirmationInput]="
+      requiresSingleDeleteConfirmation(userPendingDelete())
+    "
+    [expectedConfirmation]="userPendingDelete()?.email ?? ''"
+    [confirmationLabel]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'teacher email'
+        : 'user email'
+    "
+    confirmButtonText="Confirm Delete User"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  ></app-danger-delete-modal>
+
+  <app-danger-delete-modal
+    [show]="batchDeletePending()"
+    [loading]="loading()"
+    title="Danger: Delete Selected Users"
+    [warningMessage]="
+      'You are about to permanently delete ' +
+      selectedCount() +
+      ' selected user(s). This action cannot be undone.'
+    "
+    [extraWarning]="getBatchDeleteExtraWarning()"
+    extraWarningTestId="batch-teacher-delete-warning"
+    [requireConfirmationInput]="false"
+    confirmButtonText="Confirm Delete Selected"
+    confirmButtonTestId="confirm-batch-delete-btn"
+    (confirmed)="confirmBatchDelete()"
+    (cancelled)="cancelBatchDelete()"
+  ></app-danger-delete-modal>
+
+  @if (userPendingUnlock(); as unlockTarget) {
+    <dialog
+      open
+      class="modal fade show d-block border-0 p-0 text-body"
+      aria-modal="true"
+      aria-labelledby="unlockLectorModalTitle"
+      (keydown.escape)="!loading() && cancelUnlock()"
+      style="background-color: rgba(0, 0, 0, 0.5)"
+      data-testid="unlock-lector-modal"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content position-relative">
+          <app-loading-overlay [show]="loading()"></app-loading-overlay>
+          <div class="modal-header bg-warning-subtle">
+            <h5 id="unlockLectorModalTitle" class="modal-title fw-bold">
+              Confirm Unlock Lector
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              [disabled]="loading()"
+              (click)="cancelUnlock()"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-2">
+              Are you sure you want to manually unlock
+              <strong>{{ unlockTarget.firstName }} {{ unlockTarget.lastName }}</strong>
+              (<code>{{ unlockTarget.email }}</code>)?
+            </p>
+            <p class="text-muted small mb-0">
+              Unlocking marks this lector account as verified as of today for
+              one year, restoring access without requiring them to click the
+              &#64;pxl.be confirmation email link first.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="loading()"
+              (click)="cancelUnlock()"
+              data-testid="cancel-unlock-lector-btn"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              [disabled]="loading()"
+              (click)="confirmUnlock()"
+              data-testid="confirm-unlock-lector-btn"
+            >
+              Confirm Unlock
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  }
+
+  <div class="card shadow-sm">
+    <div
+      class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-2"
+      [class.bg-danger-subtle]="selectedCount() > 0"
+    >
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-danger]="selectedCount() > 0"
+          [class.btn-outline-danger]="selectedCount() === 0"
+          [disabled]="selectedCount() === 0"
+          (click)="requestDeleteSelected()"
+          data-testid="delete-selected-users-btn"
+        >
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>
+          Delete Selected ({{ selectedCount() }})
+        </button>
+        @if (selectedCount() > 0) {
+          <button
+            type="button"
+            class="btn btn-sm btn-link text-decoration-none text-secondary"
+            (click)="clearSelection()"
+            data-testid="clear-selection-btn"
+          >
+            Clear selection
+          </button>
+        } @else if (visibleDeletableUsers().length > 0) {
+          <span class="text-muted small">
+            Select users below to delete in batch.
+          </span>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <span class="text-muted small">
+          Page {{ currentPage() }} of {{ totalPages() }}
+        </span>
+      }
+    </div>
+
+    <section
+      class="users-table-wrapper"
+      aria-label="Users table"
+    >
+      <table class="table table-hover align-middle mb-0 users-table">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 2.5rem">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                aria-label="Select all visible deletable users"
+                [checked]="allVisibleDeletableSelected()"
+                [indeterminate]="someVisibleDeletableSelected()"
+                [disabled]="visibleDeletableUsers().length === 0"
+                (change)="$any($event.target).checked ? selectAllVisible() : clearSelection()"
+                data-testid="select-all-users-checkbox"
+              />
+            </th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Course Links</th>
+            <th>Verification</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr [class.table-warning]="isSelected(user)">
+              <td>
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  [attr.aria-label]="'Select ' + user.email"
+                  [checked]="isSelected(user)"
+                  [disabled]="!user.canDelete"
+                  (change)="toggleUserSelection(user, $any($event.target).checked)"
+                  [attr.data-testid]="'select-user-' + user.id"
+                />
+              </td>
+              <td class="fw-medium">{{ user.firstName }} {{ user.lastName }}</td>
+              <td class="text-muted">{{ user.email }}</td>
+              <td>
+                @for (role of user.roles; track role) {
+                  <span class="badge me-1" [ngClass]="getRoleBadgeClass(role)">
+                    {{ role }}
+                  </span>
+                }
+              </td>
+              <td>
+                @if (user.isLinkedToCourse) {
+                  <span
+                    class="badge text-bg-info d-inline-flex align-items-center gap-1"
+                    [attr.title]="getLinkedCoursesTooltip(user)"
+                    [style.cursor]="user.linkedCourses?.length ? 'help' : null"
+                    data-testid="course-links-badge"
+                  >
+                    <i class="bi bi-link-45deg" aria-hidden="true"></i>
+                    {{ getCourseLinksLabel(user) }}
+                  </span>
+                } @else {
+                  <span
+                    class="badge text-bg-light text-dark border"
+                    data-testid="course-links-badge"
+                  >
+                    Orphaned
+                  </span>
+                }
+              </td>
+              <td>
+                @if (isLectorUser(user)) {
+                  @if (user.isLockedLector) {
+                    <span
+                      class="badge text-bg-danger d-inline-flex align-items-center gap-1"
+                      [attr.title]="getVerificationTooltip(user)"
+                      data-testid="lector-verification-badge"
+                    >
+                      <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                      Locked
+                    </span>
+                  } @else {
+                    <span
+                      class="badge text-bg-success d-inline-flex align-items-center gap-1"
+                      [attr.title]="getVerificationTooltip(user)"
+                      data-testid="lector-verification-badge"
+                    >
+                      <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                      Verified
+                    </span>
+                  }
+                } @else {
+                  <span class="text-muted small">—</span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (user.canUnlockLector) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success me-2"
+                    (click)="requestUnlock(user)"
+                    [attr.data-testid]="'unlock-lector-btn-' + user.id"
+                  >
+                    Unlock
+                  </button>
+                }
+                @if (user.canPromoteToAdmin) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-warning me-2"
+                    (click)="promoteToAdmin(user)"
+                  >
+                    Make Admin
+                  </button>
+                }
+                @if (user.roles.includes("admin")) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary me-2"
+                    [disabled]="!user.canDemoteFromAdmin"
+                    [title]="
+                      user.canDemoteFromAdmin
+                        ? 'Remove admin role'
+                        : 'At least one administrator must remain in the system'
+                    "
+                    (click)="demoteFromAdmin(user)"
+                  >
+                    Remove Admin
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary me-2"
+                  [disabled]="!user.canImpersonate"
+                  (click)="impersonate(user)"
+                >
+                  Impersonate
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  [disabled]="!user.canDelete"
+                  (click)="requestDelete(user)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-3 d-block mb-2" aria-hidden="true"></i>
+                No users matched the current filters.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <app-pagination-footer
+      [totalCount]="totalCount()"
+      [currentItemCount]="users().length"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      itemLabel="users"
+      ariaLabel="Users pagination"
+      totalLabelTestId="users-total-label"
+      paginationTestId="users-pagination"
+      pageSizeTestId="page-size-select"
+      selectId="pageSize"
+      (pageChange)="goToPage($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination-footer>
+  </div>
+</div>

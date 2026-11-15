@@ -1969,6 +1969,37 @@ public class GamificationServiceTests
     }
 
     [Test]
+    public async Task GetStudentCourseProfileAsync_WhenImpersonating_ShouldNotUpdateLastVisitDate()
+    {
+        const int studentUserId = 42;
+        const int courseId = 10;
+        const int periodId = 1;
+        var originalVisit = DateTime.UtcNow.AddHours(-5);
+
+        var profile = new StudentCourseProfile(studentUserId, courseId, periodId)
+        {
+            User = new User { FirstName = "Student", LastName = "Target" }
+        };
+        profile.RecordLeaderboardVisit(originalVisit);
+
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(studentUserId, courseId, periodId))
+            .ReturnsAsync(profile);
+
+        var result = await _service.GetStudentCourseProfileAsync(
+            studentUserId,
+            courseId,
+            periodId,
+            isLector: false,
+            perspectiveUserId: null,
+            isImpersonating: true);
+
+        Assert.That(result.UserId, Is.EqualTo(studentUserId));
+        Assert.That(result.LastLeaderboardVisitDate, Is.EqualTo(originalVisit));
+        Assert.That(profile.LastLeaderboardVisitDate, Is.EqualTo(originalVisit));
+        _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<StudentCourseProfile>()), Times.Never);
+    }
+
+    [Test]
     public async Task GetStudentCourseProfileAsync_WhenUserIsStudentWithPerspectiveUserId_ShouldIgnorePerspectiveUserIdAndReturnOwnProfile()
     {
         const int studentUserId = 10;

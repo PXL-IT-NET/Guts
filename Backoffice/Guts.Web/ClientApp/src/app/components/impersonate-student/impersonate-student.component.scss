@@ -1,0 +1,10 @@
+.users-table-wrapper {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+
+.users-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+}

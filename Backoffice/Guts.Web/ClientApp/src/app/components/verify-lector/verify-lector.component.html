@@ -1,0 +1,40 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title h3 mb-3">Lector Account Verification</h2>
+
+          <div
+            class="alert"
+            [ngClass]="{
+              'alert-success': verified(),
+              'alert-danger': !verified() && !loading(),
+              'alert-info': loading(),
+            }"
+            role="alert"
+            data-testid="verify-lector-status"
+          >
+            {{ message() }}
+          </div>
+
+          @if (!loading()) {
+            <div class="mt-3">
+              <a
+                routerLink="/login"
+                class="btn btn-primary"
+                data-testid="verify-lector-login-link"
+              >
+                @if (verified()) {
+                  Log in
+                } @else {
+                  Back to Login
+                }
+              </a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

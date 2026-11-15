@@ -3,6 +3,7 @@ import {
   MockUserProfile,
   mockTeacherProfile,
   mockStudentProfile,
+  mockAdminProfile,
 } from "../mocks/user.mocks";
 
 /**
@@ -58,6 +59,7 @@ export async function authenticatePage(
 type AuthFixtures = {
   teacherPage: Page;
   studentPage: Page;
+  adminPage: Page;
   loginAs: (profile: MockUserProfile) => Promise<Page>;
 };
 
@@ -69,6 +71,11 @@ export const test = base.extend<AuthFixtures>({
 
   studentPage: async ({ page }, use) => {
     await authenticatePage(page, mockStudentProfile);
+    await use(page);
+  },
+
+  adminPage: async ({ page }, use) => {
+    await authenticatePage(page, mockAdminProfile);
     await use(page);
   },
 

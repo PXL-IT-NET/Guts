@@ -41,12 +41,12 @@ internal class StudentCourseProfileConfiguration : IEntityTypeConfiguration<Stud
         builder.HasOne<Course>()
             .WithMany()
             .HasForeignKey(sp => sp.CourseId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne<Period>()
             .WithMany()
             .HasForeignKey(sp => sp.PeriodId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(sp => sp.ClassGroup)
             .WithMany()

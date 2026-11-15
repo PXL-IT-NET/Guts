@@ -65,6 +65,27 @@ public class MailSenderTests
     }
 
     [Test]
+    public async Task SendLectorVerificationEmailMessageAsync_ShouldSendMailWithVerifyLectorLinkAndLectorGreeting()
+    {
+        // Arrange
+        var verificationToken = Guid.NewGuid().ToString();
+
+        // Act
+        await _mailSender.SendLectorVerificationEmailMessageAsync(_user, verificationToken);
+
+        // Assert
+        _smtpClientMock.Verify(client => client.SendMailAsync(It.Is((MailMessage message) =>
+            VerifyMailMessage(
+                message,
+                _fromEmail,
+                _webAppBaseUrl,
+                "verify-lector",
+                _user.Id.ToString(),
+                verificationToken,
+                "Dear lector"))), Times.Once);
+    }
+
+    [Test]
     public void SendStreakReminderEmailAsync_ShouldSendPersonalizedMailWithStreakAndCourseData()
     {
         //Arrange

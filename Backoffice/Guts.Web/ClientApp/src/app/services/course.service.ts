@@ -7,7 +7,12 @@ import {
   ICourseContentsModel,
   ICourseStatisticsModel,
 } from "../viewmodels/course.model";
-import { GetResult } from "../util/result";
+import { GetResult, PostResult } from "../util/result";
+
+export interface ISaveCourseRequest {
+  code: string;
+  name: string;
+}
 
 @Injectable({
   providedIn: "root",
@@ -59,6 +64,38 @@ export class CourseService {
           GetResult.fromHttpErrorResponse<ICourseStatisticsModel>(errorResponse),
         );
       }),
+    );
+  }
+
+  public createCourse(
+    model: ISaveCourseRequest,
+  ): Observable<GetResult<ICourseModel>> {
+    return this.http.post<ICourseModel>("api/courses", model).pipe(
+      map((created) => GetResult.success(created)),
+      catchError((errorResponse: HttpErrorResponse) =>
+        of(GetResult.fromHttpErrorResponse<ICourseModel>(errorResponse)),
+      ),
+    );
+  }
+
+  public updateCourse(
+    courseId: number,
+    model: ISaveCourseRequest,
+  ): Observable<GetResult<ICourseModel>> {
+    return this.http.put<ICourseModel>(`api/courses/${courseId}`, model).pipe(
+      map((updated) => GetResult.success(updated)),
+      catchError((errorResponse: HttpErrorResponse) =>
+        of(GetResult.fromHttpErrorResponse<ICourseModel>(errorResponse)),
+      ),
+    );
+  }
+
+  public deleteCourse(courseId: number): Observable<PostResult> {
+    return this.http.delete(`api/courses/${courseId}`).pipe(
+      map(() => PostResult.success()),
+      catchError((errorResponse: HttpErrorResponse) =>
+        of(PostResult.fromHttpErrorResponse(errorResponse)),
+      ),
     );
   }
 }

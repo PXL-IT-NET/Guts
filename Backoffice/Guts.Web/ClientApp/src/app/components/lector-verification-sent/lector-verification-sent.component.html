@@ -1,0 +1,66 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title h3 mb-3">
+            <i class="bi bi-envelope-check text-primary me-2" aria-hidden="true"></i>
+            Verification Email Sent
+          </h2>
+
+          <div class="alert alert-warning" role="alert" data-testid="lector-locked-notice">
+            Your lector account requires annual verification of your
+            <strong>&#64;pxl.be</strong> email address. Access to GUTS is locked
+            until you verify your email address.
+          </div>
+
+          <p class="mb-3" data-testid="verification-email-target">
+            @if (email()) {
+              We have sent a verification link to
+              <strong>{{ email() }}</strong>.
+            } @else {
+              We have sent a verification link to your &#64;pxl.be email
+              address.
+            }
+            Please open your mailbox and click the link to unlock your account.
+          </p>
+
+          @if (resent()) {
+            <div class="alert alert-success" role="alert" data-testid="resend-success-alert">
+              A new verification email has been sent. Please check your inbox.
+            </div>
+          }
+
+          @if (error()) {
+            <div class="alert alert-danger" role="alert" data-testid="resend-error-alert">
+              {{ error() }}
+            </div>
+          }
+
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            @if (canResend()) {
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                [disabled]="loading()"
+                (click)="resendVerificationEmail()"
+                data-testid="resend-verification-btn"
+              >
+                <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
+                Resend verification email
+              </button>
+            }
+
+            <a
+              routerLink="/login"
+              class="btn btn-primary"
+              data-testid="back-to-login-link"
+            >
+              Back to Login
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -16,7 +16,7 @@ internal class JwtSecurityTokenAccessPassFactory(
     int expirationTimeInMinutes)
     : ITokenAccessPassFactory
 {
-    public TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles)
+    public TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles, int? impersonatorId = null)
     {
         var allClaims = new[]
         {
@@ -30,6 +30,11 @@ internal class JwtSecurityTokenAccessPassFactory(
         {
             var roleClaim = new Claim(ClaimTypes.Role, role);
             allClaims.Add(roleClaim);
+        }
+
+        if (impersonatorId.HasValue)
+        {
+            allClaims.Add(new Claim(GutsClaimTypes.ImpersonatorId, impersonatorId.Value.ToString()));
         }
 
         var keyBytes = Encoding.UTF8.GetBytes(key);

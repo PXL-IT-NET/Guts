@@ -2,6 +2,7 @@ using Guts.Api.Models;
 using Guts.Api.Models.Converters;
 using Guts.Application;
 using Guts.Application.Services;
+using Guts.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -81,6 +82,79 @@ public class CourseController(
             var statsDto = await courseService.GetCourseStatisticsAsync(courseId, periodId);
             var model = courseConverter.ToCourseStatisticsModel(statsDto);
             return Ok(model);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Creates a new course.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
+    [ProducesResponseType(typeof(Course), (int)HttpStatusCode.Created)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> CreateCourse([FromBody] CourseSaveModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        try
+        {
+            Course course = await courseService.CreateCourseAsync(model.Code, model.Name);
+            return CreatedAtAction(nameof(GetCourseContents), new { courseId = course.Id }, course);
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing course.
+    /// </summary>
+    [HttpPut("{courseId}")]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
+    [ProducesResponseType(typeof(Course), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> UpdateCourse(int courseId, [FromBody] CourseSaveModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (courseId < 1) return BadRequest();
+        try
+        {
+            Course course = await courseService.UpdateCourseAsync(courseId, model.Code, model.Name);
+            return Ok(course);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
+        }
+    }
+
+    /// <summary>
+    /// Deletes a course and all its associated data.
+    /// </summary>
+    [HttpDelete("{courseId}")]
+    [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
+    [ProducesResponseType((int)HttpStatusCode.NoContent)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> DeleteCourse(int courseId)
+    {
+        if (courseId < 1) return BadRequest();
+        try
+        {
+            await courseService.DeleteCourseAsync(courseId);
+            return NoContent();
         }
         catch (DataNotFoundException)
         {

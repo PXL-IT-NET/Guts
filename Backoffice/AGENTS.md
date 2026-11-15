@@ -22,8 +22,10 @@ For a high-level overview of the entire GUTS repository, see the root [`../AGENT
    - When changes are made to existing features, update the corresponding `spec.md` and `design.md` files to reflect the new behavior and design decisions.
 4. **Test-Driven Development (TDD) & Quality Gate**:
    - Write unit tests before implementing new functionality or fixing bugs (write a failing reproduction test first).
-   - Ensure all tests pass across `Guts.slnx` before considering tasks complete.
-   - Verify code quality locally with `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported issues.
+   - Ensure all tests pass across `Guts.slnx`, ESLint, Karma/Jasmine, Angular build, and Playwright E2E tests before considering tasks complete.
+   - **Playwright E2E Quality Gate**: Every new or updated user-facing workflow must have Playwright E2E tests in `Guts.Web/ClientApp/e2e/tests/` exercising the happy path, validation/error states, and UI interactions.
+   - **Maximum New-Code Coverage Quality Gate**: Cover as many lines and branches of new/modified code as possible in every layer (including `Guts.Domain`, `Guts.Application`, `Guts.Infrastructure` repositories, `Guts.Api` controllers/converters/filters, and every new or modified Angular component, service, guard, model helper, and utility). Inspect per-file uncovered lines/branches in SonarCloud and add targeted tests until SonarCloud new-code coverage passes (`>= 80%`, aiming as close to `100%` as possible) with `0` open issues and `0` unreviewed hotspots.
+   - Verify code quality locally with `.\run-sonarqube.ps1 -UseSonarCloud` and resolve any reported issues or coverage gaps.
 
 ---
 
@@ -125,7 +127,7 @@ Guts.Common         ──► Design-by-Contract primitives (Contracts.Require) 
 
 ### SonarQube / SonarCloud Analysis
 
-- Run quality & security analysis from `Backoffice/` and resolve all reported bugs, vulnerabilities, and code smells. Also aim for 100% code coverage on new features and critical bug fixes:
+- Run quality & security analysis from `Backoffice/` and resolve all reported bugs, vulnerabilities, security hotspots, and code smells. Cover as many lines and branches as possible on new and modified code across backend and frontend, checking per-file SonarCloud coverage until the Quality Gate passes (`>= 80%`, targeting `~100%` excluding only unreachable defensive scaffolding):
   ```powershell
   .\run-sonarqube.ps1 -UseSonarCloud
   ```

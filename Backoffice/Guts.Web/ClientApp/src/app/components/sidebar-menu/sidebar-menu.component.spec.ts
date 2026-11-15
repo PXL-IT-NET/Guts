@@ -21,6 +21,7 @@ describe("SidebarMenuComponent", () => {
     authServiceSpy = jasmine.createSpyObj<AuthService>("AuthService", [
       "getLoggedInState",
       "getUserProfile",
+      "isImpersonating",
     ]);
     authServiceSpy.getLoggedInState.and.returnValue(
       loggedInSubject.asObservable(),
@@ -77,6 +78,12 @@ describe("SidebarMenuComponent", () => {
     (routerSpy as any).url = "/courses/1/chapters/2";
     expect(component.isCourseRouteActive(1)).toBeTrue();
     expect(component.isCourseRouteActive(2)).toBeFalse();
+
+    (routerSpy as any).url = "/admin/users";
+    expect(component.isAdminRouteActive).toBeTrue();
+
+    authServiceSpy.isImpersonating.and.returnValue(true);
+    expect(component.isImpersonating).toBeTrue();
   });
 });
 

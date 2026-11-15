@@ -23,4 +23,11 @@ public class PeriodService(IPeriodFactory factory, IPeriodRepository repository)
         period.Update(newDescription, newFrom, newUntil, allPeriods);
         await repository.UpdateAsync(period);
     }
+
+    public async Task DeletePeriodAsync(int periodId)
+    {
+        IPeriod period = await repository.GetPeriodAsync(periodId);
+        period.EnsureCanBeDeleted();
+        await repository.DeleteAsync(period);
+    }
 }
