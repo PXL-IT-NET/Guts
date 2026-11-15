@@ -38,7 +38,7 @@ describe("AdminCoursesComponent", () => {
   });
 
   it("should load courses on init", () => {
-    expect(component.courses().length).toBe(1);
+    expect(component.courses()).toHaveSize(1);
     expect(component.courses()[0].code).toBe("NET1");
   });
 });

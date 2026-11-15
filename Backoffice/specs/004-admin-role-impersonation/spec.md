@@ -80,7 +80,7 @@ Additionally, administrators and lectors need to:
   - The API issues a `TokenAccessPass` for the target user containing the target user's identity/role claims plus an `impersonator_id` claim with the caller's user ID.
   - The Angular `AuthService` stores the original `TokenModel` in `localStorage`, activates the impersonation token, invalidates/reloads the user profile and sidebar/courses, and navigates to `/`.
   - A persistent top banner is displayed throughout the app showing the impersonated user's email/roles, a **Read-Only Mode** indicator, and a **"Stop Impersonating"** button.
-  - While impersonating, the UI is **read-only** (state-changing actions are disabled/blocked) and the backend rejects any state-changing HTTP requests (`POST`, `PUT`, `PATCH`, `DELETE`) with `403 Forbidden`.
+  - While impersonating, the UI is **read-only** (state-changing actions are disabled/blocked), the backend rejects any state-changing HTTP requests (`POST`, `PUT`, `PATCH`, `DELETE`) with `403 Forbidden`, and read requests do not update the impersonated student's `LastLeaderboardVisitDate`.
   - Clicking **"Stop Impersonating"** restores the original `TokenModel`, invalidates/reloads the user profile and sidebar/courses, removes the banner, and returns the caller to their own session without re-logging in.
 
 ### AC-6: Angular Navigation & Guards

@@ -16,6 +16,8 @@ import { ImpersonationService } from "../../services/impersonation.service";
 import { AuthService } from "../../services/auth.service";
 import { LoadingOverlayComponent } from "../loading-overlay/loading-overlay.component";
 import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete-modal.component";
+import { PaginationFooterComponent } from "../pagination-footer/pagination-footer.component";
+import { calculateTotalPages } from "../../util/paged-result";
 
 @Component({
   standalone: true,
@@ -24,6 +26,7 @@ import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete
     FormsModule,
     LoadingOverlayComponent,
     DangerDeleteModalComponent,
+    PaginationFooterComponent,
   ],
   selector: "app-admin-users",
   templateUrl: "./admin-users.component.html",
@@ -42,13 +45,6 @@ export class AdminUsersComponent implements OnInit {
     { label: "Student", value: "student" },
     { label: "Lector", value: "lector" },
     { label: "Admin", value: "admin" },
-  ];
-
-  public readonly pageSizeOptions: Array<{ label: string; value: number | null }> = [
-    { label: "25", value: 25 },
-    { label: "50", value: 50 },
-    { label: "100", value: 100 },
-    { label: "All", value: null },
   ];
 
   public readonly users = signal<IAdminUser[]>([]);
@@ -95,41 +91,9 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUsers().some((u) => this.isLectorUser(u)),
   );
 
-  public readonly totalPages = computed(() => {
-    const size = this.pageSize();
-    if (size === null || size <= 0) {
-      return 1;
-    }
-    return Math.max(1, Math.ceil(this.totalCount() / size));
-  });
-
-  public readonly visiblePages = computed<number[]>(() => {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const maxButtons = 7;
-    if (total <= maxButtons) {
-      return Array.from({ length: total }, (_, i) => i + 1);
-    }
-    let start = Math.max(1, current - 3);
-    const end = Math.min(total, start + maxButtons - 1);
-    start = Math.max(1, end - maxButtons + 1);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  });
-
-  public readonly displayRangeLabel = computed(() => {
-    const total = this.totalCount();
-    const count = this.users().length;
-    if (total === 0) {
-      return "0 users";
-    }
-    const size = this.pageSize();
-    if (size === null) {
-      return `Showing 1-${total} of ${total} users`;
-    }
-    const start = (this.currentPage() - 1) * size + 1;
-    const end = Math.min(total, start + Math.max(0, count - 1));
-    return `Showing ${start}-${end} of ${total} users`;
-  });
+  public readonly totalPages = computed(() =>
+    calculateTotalPages(this.totalCount(), this.pageSize()),
+  );
 
   public ngOnInit(): void {
     this.loadUsers();
@@ -273,14 +237,10 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUserIds.set(next);
   }
 
-  public toggleSelectAllVisible(checked: boolean): void {
-    if (checked) {
-      this.selectedUserIds.set(
-        new Set(this.visibleDeletableUsers().map((u) => u.id)),
-      );
-    } else {
-      this.selectedUserIds.set(new Set());
-    }
+  public selectAllVisible(): void {
+    this.selectedUserIds.set(
+      new Set(this.visibleDeletableUsers().map((u) => u.id)),
+    );
   }
 
   public impersonate(user: IAdminUser): void {

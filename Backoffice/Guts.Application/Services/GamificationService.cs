@@ -204,7 +204,8 @@ public class GamificationService(
         int courseId,
         int? periodId = null,
         bool isLector = false,
-        int? perspectiveUserId = null)
+        int? perspectiveUserId = null,
+        bool isImpersonating = false)
     {
         int targetUserId = isLector && perspectiveUserId.HasValue ? perspectiveUserId.Value : userId;
         var period = await periodRepository.GetPeriodAsync(periodId);
@@ -243,7 +244,7 @@ public class GamificationService(
 
         DateTime now = DateTime.UtcNow;
         bool streakUpdated = await EvaluateSingleProfileWeeklyStreakIfNeededAsync(profile, courseId, period.Id, now);
-        bool visitUpdated = (!isLector || !perspectiveUserId.HasValue) && profile.RecordLeaderboardVisit(now);
+        bool visitUpdated = (!isLector || !perspectiveUserId.HasValue) && !isImpersonating && profile.RecordLeaderboardVisit(now);
 
         if (streakUpdated || visitUpdated)
         {

@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Domain.RoleAggregate;
 using Guts.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using NUnit.Framework;
 
 namespace Guts.Infrastructure.Tests.Repositories;
@@ -117,5 +119,52 @@ internal class UserDbRepositoryTests : RepositoryTestsBase
 
         Assert.That(await repo.GetByIdAsync(user1.Id), Is.Null);
         Assert.That(await repo.GetByIdAsync(user2.Id), Is.Null);
+    }
+
+    [Test]
+    public async Task SearchUsersAsync_WithExcludedRoles_ShouldExcludeMatchingUsersBeforeCountingAndPaging()
+    {
+        string prefix = "Excl_" + Guid.NewGuid().ToString("N")[..6];
+        var student1 = await Seeder.SeedUserAsync("Alice", prefix + "_A", prefix + "a@student.pxl.be");
+        var student2 = await Seeder.SeedUserAsync("Bob", prefix + "_B", prefix + "b@student.pxl.be");
+        var dualRole = await Seeder.SeedUserAsync("Carl", prefix + "_C", prefix + "c@pxl.be");
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var studentRole = new Role { Name = Role.Constants.Student, NormalizedName = Role.Constants.Student.ToUpperInvariant() };
+            var lectorRole = new Role { Name = Role.Constants.Lector, NormalizedName = Role.Constants.Lector.ToUpperInvariant() };
+            seedContext.Roles.AddRange(studentRole, lectorRole);
+            await seedContext.SaveChangesAsync();
+
+            seedContext.UserRoles.AddRange(
+                new IdentityUserRole<int> { UserId = student1.Id, RoleId = studentRole.Id },
+                new IdentityUserRole<int> { UserId = student2.Id, RoleId = studentRole.Id },
+                new IdentityUserRole<int> { UserId = dualRole.Id, RoleId = studentRole.Id },
+                new IdentityUserRole<int> { UserId = dualRole.Id, RoleId = lectorRole.Id });
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new UserDbRepository(context);
+
+        var page1 = await repo.SearchUsersAsync(
+            prefix,
+            Role.Constants.Student,
+            orphanedOnly: false,
+            excludedRoles: [Role.Constants.Admin, Role.Constants.Lector],
+            page: 1,
+            pageSize: 1);
+        var page2 = await repo.SearchUsersAsync(
+            prefix,
+            Role.Constants.Student,
+            orphanedOnly: false,
+            excludedRoles: [Role.Constants.Admin, Role.Constants.Lector],
+            page: 2,
+            pageSize: 1);
+
+        Assert.That(page1.TotalCount, Is.EqualTo(2));
+        Assert.That(page1.Items.Select(x => x.User.Id), Is.EqualTo([student1.Id]));
+        Assert.That(page2.TotalCount, Is.EqualTo(2));
+        Assert.That(page2.Items.Select(x => x.User.Id), Is.EqualTo([student2.Id]));
     }
 }

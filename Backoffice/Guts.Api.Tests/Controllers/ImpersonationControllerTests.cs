@@ -41,16 +41,58 @@ public class ImpersonationControllerTests
     }
 
     [Test]
-    public async Task SearchImpersonatableUsers_ReturnsOk()
+    public async Task SearchImpersonatableUsers_ReturnsOkWithPagedResult()
     {
-        IReadOnlyList<ImpersonatableUserDto> users = [new ImpersonatableUserDto { Id = 5, Email = "stu@student.pxl.be" }];
-        _serviceMock.Setup(s => s.SearchImpersonatableUsersAsync("stu", It.IsAny<IReadOnlyCollection<string>>()))
-            .ReturnsAsync(users);
+        var paged = new PagedResult<ImpersonatableUserDto>
+        {
+            Items = [new ImpersonatableUserDto { Id = 5, Email = "stu@student.pxl.be" }],
+            TotalCount = 1,
+            Page = 2,
+            PageSize = 25
+        };
+        _serviceMock.Setup(s => s.SearchImpersonatableUsersAsync("stu", It.IsAny<IReadOnlyCollection<string>>(), 2, 25))
+            .ReturnsAsync(paged);
 
-        var result = await _controller.SearchImpersonatableUsers("stu") as OkObjectResult;
+        var result = await _controller.SearchImpersonatableUsers("stu", 2, 25) as OkObjectResult;
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Value, Is.SameAs(users));
+        Assert.That(result.Value, Is.SameAs(paged));
+    }
+
+    [Test]
+    public async Task SearchImpersonatableUsers_WhenPageSizeOmitted_PassesNullForAll()
+    {
+        var paged = new PagedResult<ImpersonatableUserDto>
+        {
+            Items = [new ImpersonatableUserDto { Id = 5, Email = "stu@student.pxl.be" }],
+            TotalCount = 1,
+            Page = 1,
+            PageSize = null
+        };
+        _serviceMock.Setup(s => s.SearchImpersonatableUsersAsync(null, It.IsAny<IReadOnlyCollection<string>>(), 1, null))
+            .ReturnsAsync(paged);
+
+        var result = await _controller.SearchImpersonatableUsers() as OkObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(paged));
+        _serviceMock.Verify(s => s.SearchImpersonatableUsersAsync(null, It.IsAny<IReadOnlyCollection<string>>(), 1, null), Times.Once);
+    }
+
+    [Test]
+    public async Task SearchImpersonatableUsers_InvalidPage_ReturnsBadRequest()
+    {
+        var result = await _controller.SearchImpersonatableUsers("stu", page: 0, pageSize: 25);
+
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
+    }
+
+    [Test]
+    public async Task SearchImpersonatableUsers_InvalidPageSize_ReturnsBadRequest()
+    {
+        var result = await _controller.SearchImpersonatableUsers("stu", page: 1, pageSize: 0);
+
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
     }
 
     [Test]

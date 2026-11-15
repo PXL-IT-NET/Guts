@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Guts.Api.Controllers;
 using Guts.Api.Tests.Builders;
 using Guts.Application.Dtos.Gamification;
+using Guts.Application.Security;
 using Guts.Application.Services;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Competitions;
@@ -101,7 +102,7 @@ public class GamificationControllerTests
             PeriodId = PeriodId,
             TotalXp = 100
         };
-        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null))
+        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null, false))
             .ReturnsAsync(profileDto);
 
         var actionResult = await _controller.GetProfile(CourseId, PeriodId, attemptedPerspectiveUserId);
@@ -109,6 +110,33 @@ public class GamificationControllerTests
         var okResult = actionResult as OkObjectResult;
         Assert.That(okResult, Is.Not.Null);
         Assert.That(okResult.Value, Is.EqualTo(profileDto));
+    }
+
+    [Test]
+    public async Task GetProfile_WhenImpersonating_ShouldPassIsImpersonatingTrueToService()
+    {
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(UserId.ToString())
+            .WithRole(Role.Constants.Student)
+            .WithClaim(GutsClaimTypes.ImpersonatorId, "999")
+            .Build();
+
+        var profileDto = new StudentGamificationProfileDto
+        {
+            UserId = UserId,
+            CourseId = CourseId,
+            PeriodId = PeriodId,
+            TotalXp = 100
+        };
+        _gamificationServiceMock.Setup(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null, true))
+            .ReturnsAsync(profileDto);
+
+        var actionResult = await _controller.GetProfile(CourseId, PeriodId);
+
+        var okResult = actionResult as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        Assert.That(okResult.Value, Is.EqualTo(profileDto));
+        _gamificationServiceMock.Verify(s => s.GetStudentCourseProfileAsync(UserId, CourseId, PeriodId, false, null, true), Times.Once);
     }
 
     [Test]

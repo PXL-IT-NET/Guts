@@ -32,12 +32,14 @@ public class GamificationController(
     {
         int userId = GetUserId();
         bool isLector = IsLector();
+        bool isImpersonating = IsImpersonating();
         var profile = await gamificationService.GetStudentCourseProfileAsync(
             userId,
             courseId,
             periodId,
             isLector,
-            isLector ? perspectiveUserId : null);
+            isLector ? perspectiveUserId : null,
+            isImpersonating);
         return Ok(profile);
     }
 

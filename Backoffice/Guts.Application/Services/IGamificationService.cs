@@ -16,7 +16,8 @@ public interface IGamificationService
         int courseId,
         int? periodId = null,
         bool isLector = false,
-        int? perspectiveUserId = null);
+        int? perspectiveUserId = null,
+        bool isImpersonating = false);
     Task<StudentGamificationProfileDto> EnrollStudentAsync(int userId, int courseId, EnrollStudentDto enrollDto, int? periodId = null);
     Task<IReadOnlyList<LeaderboardEntryDto>> GetWeeklySprintLeaderboardAsync(int courseId, int currentUserId, int? periodId = null);
     Task<HallOfFameLeaderboardDto> GetHallOfFameLeaderboardAsync(

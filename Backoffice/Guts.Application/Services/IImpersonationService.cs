@@ -7,9 +7,11 @@ namespace Guts.Application.Services;
 
 public interface IImpersonationService
 {
-    Task<IReadOnlyList<ImpersonatableUserDto>> SearchImpersonatableUsersAsync(
+    Task<PagedResult<ImpersonatableUserDto>> SearchImpersonatableUsersAsync(
         string search,
-        IReadOnlyCollection<string> callerRoles);
+        IReadOnlyCollection<string> callerRoles,
+        int page = 1,
+        int? pageSize = null);
 
     Task<TokenAccessPass> ImpersonateAsync(
         int callerUserId,

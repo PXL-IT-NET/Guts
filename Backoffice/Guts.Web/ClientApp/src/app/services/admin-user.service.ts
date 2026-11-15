@@ -1,8 +1,11 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { GetResult, PostResult } from "../util/result";
+import { createPagedSearchParams, IPagedResult } from "../util/paged-result";
+
+export type { IPagedResult } from "../util/paged-result";
 
 export interface ILinkedCourse {
   id: number;
@@ -24,13 +27,6 @@ export interface IAdminUser {
   canDemoteFromAdmin: boolean;
 }
 
-export interface IPagedResult<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number | null;
-}
-
 @Injectable({
   providedIn: "root",
 })
@@ -44,18 +40,12 @@ export class AdminUserService {
     page: number = 1,
     pageSize: number | null = 25,
   ): Observable<GetResult<IPagedResult<IAdminUser>>> {
-    let params = new HttpParams().set("page", page.toString());
-    if (search.trim()) {
-      params = params.set("search", search.trim());
-    }
+    let params = createPagedSearchParams(search, page, pageSize);
     if (role) {
       params = params.set("role", role);
     }
     if (orphanedOnly) {
       params = params.set("orphanedOnly", "true");
-    }
-    if (pageSize !== null) {
-      params = params.set("pageSize", pageSize.toString());
     }
 
     return this.http

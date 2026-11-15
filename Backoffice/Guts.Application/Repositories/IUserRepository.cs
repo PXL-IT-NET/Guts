@@ -33,6 +33,14 @@ public interface IUserRepository
         int page = 1,
         int? pageSize = 50);
 
+    Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+        string search,
+        string roleFilter,
+        bool orphanedOnly,
+        IReadOnlyCollection<string> excludedRoles,
+        int page = 1,
+        int? pageSize = 50);
+
     Task<IReadOnlyList<UserWithRolesAndLinks>> GetWithRolesAndLinksByIdsAsync(IReadOnlyCollection<int> userIds);
 
     Task<int> CountAdminsAsync();

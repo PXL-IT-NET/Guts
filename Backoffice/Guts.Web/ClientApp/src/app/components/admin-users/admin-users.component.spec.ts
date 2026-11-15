@@ -218,7 +218,7 @@ describe("AdminUsersComponent", () => {
     const badges = fixture.nativeElement.querySelectorAll(
       "[data-testid='course-links-badge']",
     ) as NodeListOf<HTMLElement>;
-    expect(badges.length).toBe(3);
+    expect(badges).toHaveSize(3);
     expect(badges[0].textContent?.trim()).toBe("Orphaned");
     expect(badges[2].textContent?.trim()).toBe("Linked to 2 courses");
     expect(badges[2].getAttribute("title")).toBe(

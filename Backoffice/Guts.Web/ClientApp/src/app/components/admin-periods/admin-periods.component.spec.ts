@@ -47,7 +47,7 @@ describe("AdminPeriodsComponent", () => {
   });
 
   it("should load periods on init and identify past periods", () => {
-    expect(component.periods().length).toBe(1);
+    expect(component.periods()).toHaveSize(1);
     expect(component.isPastPeriod(component.periods()[0])).toBeTrue();
   });
 
@@ -84,7 +84,7 @@ describe("AdminPeriodsComponent", () => {
     const deleteButtons = fixture.nativeElement.querySelectorAll(
       "tbody tr button.btn-outline-danger",
     ) as NodeListOf<HTMLButtonElement>;
-    expect(deleteButtons.length).toBe(2);
+    expect(deleteButtons).toHaveSize(2);
     expect(deleteButtons[0].disabled).toBeTrue();
     expect(deleteButtons[1].disabled).toBeFalse();
   });

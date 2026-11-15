@@ -95,32 +95,28 @@ internal class UserDbRepository : IUserRepository
             hasPeerAssessments);
     }
 
-    public async Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+    public Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
         string search,
         string roleFilter,
         bool orphanedOnly,
         int page = 1,
         int? pageSize = 50)
     {
+        return SearchUsersAsync(search, roleFilter, orphanedOnly, excludedRoles: null, page, pageSize);
+    }
+
+    public async Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+        string search,
+        string roleFilter,
+        bool orphanedOnly,
+        IReadOnlyCollection<string> excludedRoles,
+        int page = 1,
+        int? pageSize = 50)
+    {
         IQueryable<User> query = _context.Users.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            string term = search.Trim().ToLower();
-            query = query.Where(u =>
-                (u.Email != null && u.Email.ToLower().Contains(term)) ||
-                (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
-                (u.LastName != null && u.LastName.ToLower().Contains(term)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(roleFilter))
-        {
-            string normalizedRole = roleFilter.Trim().ToLower();
-            query = query.Where(u =>
-                _context.UserRoles.Any(ur =>
-                    ur.UserId == u.Id &&
-                    _context.Roles.Any(r => r.Id == ur.RoleId && r.Name.ToLower() == normalizedRole)));
-        }
+        query = FilterBySearch(query, search);
+        query = FilterByRole(query, roleFilter);
+        query = FilterExcludedRoles(query, excludedRoles);
 
         if (orphanedOnly)
         {
@@ -245,6 +241,61 @@ internal class UserDbRepository : IUserRepository
         await _context.SaveChangesAsync();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
+    private static IQueryable<User> FilterBySearch(IQueryable<User> query, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return query;
+        }
+
+        string term = search.Trim().ToLower();
+        return query.Where(u =>
+            (u.Email != null && u.Email.ToLower().Contains(term)) ||
+            (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
+            (u.LastName != null && u.LastName.ToLower().Contains(term)));
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
+    private IQueryable<User> FilterByRole(IQueryable<User> query, string roleFilter)
+    {
+        if (string.IsNullOrWhiteSpace(roleFilter))
+        {
+            return query;
+        }
+
+        string normalizedRole = roleFilter.Trim().ToLower();
+        return query.Where(u =>
+            _context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name.ToLower() == normalizedRole)));
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
+    private IQueryable<User> FilterExcludedRoles(IQueryable<User> query, IReadOnlyCollection<string> excludedRoles)
+    {
+        if (excludedRoles is not { Count: > 0 })
+        {
+            return query;
+        }
+
+        List<string> normalizedExcludedRoles = excludedRoles
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r.Trim().ToLower())
+            .Distinct()
+            .ToList();
+
+        if (normalizedExcludedRoles.Count == 0)
+        {
+            return query;
+        }
+
+        return query.Where(u =>
+            !_context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && normalizedExcludedRoles.Contains(r.Name.ToLower()))));
+    }
+
     private IQueryable<User> FilterOrphaned(IQueryable<User> query)
     {
         return query.Where(u =>
@@ -254,7 +305,7 @@ internal class UserDbRepository : IUserRepository
             !_context.PeerAssessments.Any(pa => pa.User.Id == u.Id || pa.Subject.Id == u.Id));
     }
 
-    private async Task<IReadOnlyList<UserWithRolesAndLinks>> HydrateRolesAndLinksAsync(IReadOnlyCollection<User> users)
+    private async Task<IReadOnlyList<UserWithRolesAndLinks>> HydrateRolesAndLinksAsync(List<User> users)
     {
         if (users.Count == 0)
         {

@@ -242,19 +242,29 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
       });
     });
 
+    const requestedPageSizes: string[] = [];
     await teacherPage.route("**/api/impersonation/users**", async (route) => {
+      const url = new URL(route.request().url());
+      requestedPageSizes.push(url.searchParams.get("pageSize") ?? "ALL");
+      const pageSizeParam = url.searchParams.get("pageSize");
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([
-          {
-            id: 202,
-            email: "student.guts@student.pxl.be",
-            firstName: "Stu",
-            lastName: "Dent",
-            roles: ["student"],
-          },
-        ]),
+        body: JSON.stringify({
+          items: [
+            {
+              id: 202,
+              email: "student.guts@student.pxl.be",
+              firstName: "Stu",
+              lastName: "Dent",
+              roles: ["student"],
+            },
+          ],
+          totalCount: 1,
+          page: Number(url.searchParams.get("page") ?? "1"),
+          pageSize: pageSizeParam ? Number(pageSizeParam) : null,
+        }),
       });
     });
 
@@ -271,6 +281,14 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
     });
 
     await teacherPage.goto("/impersonate");
+    await expect(
+      teacherPage.locator("[data-testid='impersonate-total-label']"),
+    ).toHaveText("Showing 1-1 of 1 users");
+    await teacherPage
+      .locator("[data-testid='impersonate-page-size-select']")
+      .selectOption({ label: "All" });
+    await expect.poll(() => requestedPageSizes.at(-1)).toBe("ALL");
+
     await teacherPage.getByRole("button", { name: "Impersonate" }).click();
 
     const banner = teacherPage.locator("[data-testid='impersonation-banner']");

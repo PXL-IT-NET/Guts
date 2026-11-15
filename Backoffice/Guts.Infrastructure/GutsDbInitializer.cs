@@ -87,6 +87,7 @@ internal class GutsDbInitializer
         _context.SaveChanges();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
     private async Task AddRolesIfNotExists()
     {
         if (!await _roleManager.RoleExistsAsync(Role.Constants.Student))

@@ -15,17 +15,22 @@ internal class ImpersonationService(
     ITokenAccessPassFactory tokenAccessPassFactory)
     : IImpersonationService
 {
-    public async Task<IReadOnlyList<ImpersonatableUserDto>> SearchImpersonatableUsersAsync(
+    public async Task<PagedResult<ImpersonatableUserDto>> SearchImpersonatableUsersAsync(
         string search,
-        IReadOnlyCollection<string> callerRoles)
+        IReadOnlyCollection<string> callerRoles,
+        int page = 1,
+        int? pageSize = null)
     {
         bool isAdmin = callerRoles != null && callerRoles.Contains(Role.Constants.Admin);
         string roleFilter = isAdmin ? null : Role.Constants.Student;
+        IReadOnlyCollection<string> excludedRoles = isAdmin
+            ? [Role.Constants.Admin]
+            : [Role.Constants.Admin, Role.Constants.Lector];
 
         PagedResult<UserWithRolesAndLinks> results =
-            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly: false);
+            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly: false, excludedRoles, page, pageSize);
 
-        return results.Items
+        List<ImpersonatableUserDto> items = results.Items
             .Where(entry => !entry.Roles.Contains(Role.Constants.Admin))
             .Where(entry => isAdmin || !entry.Roles.Contains(Role.Constants.Lector))
             .Select(entry => new ImpersonatableUserDto
@@ -37,6 +42,14 @@ internal class ImpersonationService(
                 Roles = entry.Roles
             })
             .ToList();
+
+        return new PagedResult<ImpersonatableUserDto>
+        {
+            Items = items,
+            TotalCount = results.TotalCount,
+            Page = results.Page,
+            PageSize = results.PageSize
+        };
     }
 
     public async Task<TokenAccessPass> ImpersonateAsync(

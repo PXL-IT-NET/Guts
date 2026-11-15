@@ -1,8 +1,9 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { GetResult } from "../util/result";
+import { createPagedSearchParams, IPagedResult } from "../util/paged-result";
 import { TokenModel } from "../viewmodels/token.model";
 
 export interface IImpersonatableUser {
@@ -21,19 +22,20 @@ export class ImpersonationService {
 
   public searchUsers(
     search: string = "",
-  ): Observable<GetResult<IImpersonatableUser[]>> {
-    let params = new HttpParams();
-    if (search.trim()) {
-      params = params.set("search", search.trim());
-    }
+    page: number = 1,
+    pageSize: number | null = 25,
+  ): Observable<GetResult<IPagedResult<IImpersonatableUser>>> {
+    const params = createPagedSearchParams(search, page, pageSize);
 
     return this.http
-      .get<IImpersonatableUser[]>("api/impersonation/users", { params })
+      .get<IPagedResult<IImpersonatableUser>>("api/impersonation/users", {
+        params,
+      })
       .pipe(
         map((users) => GetResult.success(users)),
         catchError((errorResponse: HttpErrorResponse) =>
           of(
-            GetResult.fromHttpErrorResponse<IImpersonatableUser[]>(
+            GetResult.fromHttpErrorResponse<IPagedResult<IImpersonatableUser>>(
               errorResponse,
             ),
           ),

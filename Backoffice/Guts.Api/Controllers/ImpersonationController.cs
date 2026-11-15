@@ -18,11 +18,20 @@ namespace Guts.Api.Controllers;
 public class ImpersonationController(IImpersonationService impersonationService) : ControllerBase
 {
     [HttpGet("users")]
-    [ProducesResponseType(typeof(IReadOnlyList<ImpersonatableUserDto>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(PagedResult<ImpersonatableUserDto>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
-    public async Task<IActionResult> SearchImpersonatableUsers([FromQuery] string search = null)
+    public async Task<IActionResult> SearchImpersonatableUsers(
+        [FromQuery] string search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int? pageSize = null)
     {
-        var users = await impersonationService.SearchImpersonatableUsersAsync(search, [.. GetUserRoles()]);
+        if (page < 1 || (pageSize.HasValue && pageSize.Value < 1))
+        {
+            return BadRequest();
+        }
+
+        var users = await impersonationService.SearchImpersonatableUsersAsync(search, [.. GetUserRoles()], page, pageSize);
         return Ok(users);
     }
 

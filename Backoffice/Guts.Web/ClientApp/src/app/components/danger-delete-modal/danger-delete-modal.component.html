@@ -1,8 +1,7 @@
 @if (show()) {
-  <div
-    class="modal fade show d-block"
-    tabindex="-1"
-    role="dialog"
+  <dialog
+    open
+    class="modal fade show d-block border-0 p-0 text-body"
     aria-modal="true"
     aria-labelledby="dangerModalTitle"
     (keydown.escape)="!loading() && onCancel()"
@@ -79,5 +78,5 @@
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 }
