@@ -291,4 +291,45 @@ describe("AuthService", () => {
     service.logout();
     expect(service.isLoggedIn()).toBeFalse();
   });
+
+  it("should startImpersonation, load impersonated profile, and stopImpersonation", () => {
+    service.stopImpersonation();
+    expect(service.isImpersonating()).toBeFalse();
+
+    const loginModel = new LoginModel();
+    loginModel.email = "admin@pxl.be";
+    loginModel.password = "Secret123!";
+    service.login(loginModel).subscribe();
+    httpMock.expectOne("api/auth/token").flush({ token: "admin-jwt" });
+
+    service.startImpersonation({
+      token: "student-jwt",
+      expiration: "2026-12-01",
+    } as any);
+    expect(service.isImpersonating()).toBeTrue();
+    expect(
+      localStorage.getItem(LocalStorageKeys.originalToken),
+    ).toContain("admin-jwt");
+
+    service.getUserProfile().subscribe((profile) => {
+      expect(profile.email).toBe("student@pxl.be");
+      expect(service.impersonatedProfile()?.email).toBe("student@pxl.be");
+    });
+    httpMock.expectOne("api/users/current/profile").flush({
+      id: 7,
+      email: "student@pxl.be",
+      roles: ["student"],
+      teams: [],
+      isAuthenticated: true,
+      isImpersonating: true,
+    });
+
+    service.stopImpersonation();
+    expect(service.isImpersonating()).toBeFalse();
+    expect(service.impersonatedProfile()).toBeNull();
+    expect(localStorage.getItem(LocalStorageKeys.originalToken)).toBeNull();
+    expect(localStorage.getItem(LocalStorageKeys.currentToken)).toContain(
+      "admin-jwt",
+    );
+  });
 });

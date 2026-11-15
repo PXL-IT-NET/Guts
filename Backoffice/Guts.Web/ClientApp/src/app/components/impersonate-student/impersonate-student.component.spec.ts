@@ -164,4 +164,66 @@ describe("ImpersonateStudentComponent", () => {
       footer.querySelector("[data-testid='impersonate-page-size-select']"),
     ).toBeTruthy();
   });
+
+  it("should ignore invalid goToPage, clamp empty out-of-range page, and impersonate success/error", () => {
+    impersonationServiceSpy.searchUsers.calls.reset();
+    component.goToPage(0);
+    component.goToPage(1);
+    component.goToPage(99);
+    expect(impersonationServiceSpy.searchUsers).not.toHaveBeenCalled();
+
+    impersonationServiceSpy.searchUsers.and.returnValues(
+      of(
+        GetResult.success({
+          items: [],
+          totalCount: 5,
+          page: 2,
+          pageSize: 2,
+        }),
+      ),
+      of(
+        GetResult.success({
+          items: [
+            {
+              id: 5,
+              email: "s@student.pxl.be",
+              firstName: "Sam",
+              lastName: "Student",
+              roles: ["student"],
+            },
+          ],
+          totalCount: 5,
+          page: 3,
+          pageSize: 2,
+        }),
+      ),
+    );
+    component.pageSize.set(2);
+    component.currentPage.set(2);
+    component.loadUsers();
+    expect(component.totalCount()).toBe(5);
+
+    const student = {
+      id: 5,
+      email: "s@student.pxl.be",
+      firstName: "Sam",
+      lastName: "Student",
+      roles: ["student"],
+    };
+    impersonationServiceSpy.impersonate.and.returnValue(
+      of(GetResult.success({ token: "imp-jwt", expiration: "2026-12-01" })),
+    );
+    component.impersonate(student);
+    expect(authServiceSpy.startImpersonation).toHaveBeenCalled();
+
+    impersonationServiceSpy.impersonate.and.returnValue(
+      of(
+        GetResult.fromHttpErrorResponse<never>(
+          new HttpErrorResponse({ status: 400, error: "Impersonate denied" }),
+        ),
+      ),
+    );
+    component.impersonate(student);
+    expect(toastrSpy.error).toHaveBeenCalledWith("Impersonate denied", "Error");
+  });
 });

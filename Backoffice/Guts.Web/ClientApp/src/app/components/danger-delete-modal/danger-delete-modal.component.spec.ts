@@ -83,4 +83,11 @@ describe("DangerDeleteModalComponent", () => {
     ) as HTMLButtonElement;
     expect(confirmBtn.disabled).toBeFalse();
   });
+
+  it("should not emit confirmed when onConfirm is called before confirmation text matches", () => {
+    spyOn(component.confirmed, "emit");
+    component.confirmationInput.set("WRONG");
+    component.onConfirm();
+    expect(component.confirmed.emit).not.toHaveBeenCalled();
+  });
 });

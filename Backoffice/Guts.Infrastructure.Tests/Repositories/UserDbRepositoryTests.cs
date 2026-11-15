@@ -307,4 +307,63 @@ internal class UserDbRepositoryTests : RepositoryTestsBase
             Assert.That(lockedAfterUnlock.Items.Single().User.Id, Is.EqualTo(lockedExpiredLector.Id));
         }
     }
+
+    [Test]
+    public async Task RoleClaimAdminCountUpdateAndEdgeCases_ShouldBehaveAsExpected()
+    {
+        var (courseB, period) = await Seeder.SeedCourseAndActivePeriodAsync("Z_COURSE");
+        var courseA = await Seeder.SeedCourseAsync("A_COURSE", "Alpha");
+        var chapterA = await Seeder.SeedChapterAsync(courseA.Id, period.Id);
+        var chapterB = await Seeder.SeedChapterAsync(courseB.Id, period.Id);
+
+        var user = await Seeder.SeedUserAsync("Role", "User", "role.user@pxl.be");
+        await Seeder.SeedTestRunAsync(chapterA.Assignments.First().Id, user.Id, DateTime.UtcNow, (chapterA.Assignments.First().Tests.First().Id, true));
+        await Seeder.SeedTestRunAsync(chapterB.Assignments.First().Id, user.Id, DateTime.UtcNow, (chapterB.Assignments.First().Tests.First().Id, true));
+
+        await using (var setupContext = CreateDbContext())
+        {
+            var adminRole = new Role { Name = Role.Constants.Admin, NormalizedName = Role.Constants.Admin.ToUpperInvariant() };
+            setupContext.Roles.Add(adminRole);
+            setupContext.UserClaims.Add(new IdentityUserClaim<int> { UserId = user.Id, ClaimType = "dept", ClaimValue = "it" });
+            await setupContext.SaveChangesAsync();
+        }
+
+        await using (var repoContext = CreateDbContext())
+        {
+            var repo = new UserDbRepository(repoContext);
+
+            Assert.That(await repo.GetWithRolesAndLinksByIdsAsync(null), Is.Empty);
+            Assert.That(await repo.GetWithRolesAndLinksByIdsAsync([]), Is.Empty);
+            await repo.DeleteRangeAsync(null);
+            await repo.DeleteRangeAsync([]);
+
+            await repo.AddToRoleAsync(user, "nonexistent-role");
+            await repo.AddToRoleAsync(user, Role.Constants.Admin);
+            await repo.AddToRoleAsync(user, Role.Constants.Admin);
+
+            Assert.That(await repo.CountAdminsAsync(), Is.EqualTo(1));
+            Assert.That(await repo.GetRolesAsync(user), Is.EquivalentTo([Role.Constants.Admin]));
+            var claims = await repo.GetClaimsAsync(user);
+            Assert.That(claims.Select(c => c.Type), Is.EquivalentTo(["dept"]));
+
+            var searchEmptyExclude = await repo.SearchUsersAsync("no-match-xyz", null, false, excludedRoles: ["  "]);
+            Assert.That(searchEmptyExclude.Items, Is.Empty);
+
+            var searchMultiCourse = await repo.SearchUsersAsync("role.user@pxl.be", null, orphanedOnly: false);
+            Assert.That(searchMultiCourse.Items.Single().LinkedCourses.Select(c => c.Code), Is.EqualTo(["A_COURSE", "Z_COURSE"]));
+
+            user.FirstName = "DetachedUpdated";
+            await repo.UpdateAsync(user);
+
+            await repo.RemoveFromRoleAsync(user, "nonexistent-role");
+            await repo.RemoveFromRoleAsync(user, Role.Constants.Admin);
+            Assert.That(await repo.CountAdminsAsync(), Is.EqualTo(0));
+        }
+
+        await using (var verifyContext = CreateDbContext())
+        {
+            var loaded = await verifyContext.Users.FindAsync(user.Id);
+            Assert.That(loaded.FirstName, Is.EqualTo("DetachedUpdated"));
+        }
+    }
 }

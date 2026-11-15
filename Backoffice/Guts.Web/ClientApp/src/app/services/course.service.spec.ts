@@ -26,44 +26,81 @@ describe("CourseService", () => {
     httpMock.verify();
   });
 
-  it("getCourses should fetch courses and handle error", () => {
-    let res: any;
-    service.getCourses().subscribe((r) => (res = r));
-    httpMock.expectOne("api/courses").flush([{ id: 1, code: "C1", name: "N" }]);
-    expect(res.success).toBeTrue();
-    expect(res.value).toHaveSize(1);
+  it("should get courses, contents, and statistics and handle errors", () => {
+    service.getCourses().subscribe((res) => expect(res.success).toBeTrue());
+    httpMock.expectOne("api/courses").flush([]);
 
-    service.getCourses().subscribe((r) => (res = r));
+    service.getCourses().subscribe((res) => expect(res.success).toBeFalse());
     httpMock
       .expectOne("api/courses")
-      .flush("Err", { status: 500, statusText: "Error" });
-    expect(res.success).toBeFalse();
-  });
+      .flush("Err", { status: 500, statusText: "Err" });
 
-  it("getCourseContentsById should optionally append periodId and handle error", () => {
-    let res: any;
-    service.getCourseContentsById(5).subscribe((r) => (res = r));
-    httpMock.expectOne("api/courses/5").flush({ id: 5 });
-    expect(res.success).toBeTrue();
+    service
+      .getCourseContentsById(5, 2)
+      .subscribe((res) => expect(res.success).toBeTrue());
+    httpMock.expectOne("api/courses/5?periodId=2").flush({});
 
-    service.getCourseContentsById(5, 3).subscribe((r) => (res = r));
+    service
+      .getCourseContentsById(5)
+      .subscribe((res) => expect(res.success).toBeFalse());
     httpMock
-      .expectOne("api/courses/5?periodId=3")
+      .expectOne("api/courses/5")
       .flush("Err", { status: 404, statusText: "Not Found" });
-    expect(res.success).toBeFalse();
+
+    service
+      .getCourseStatistics(5, 2)
+      .subscribe((res) => expect(res.success).toBeTrue());
+    httpMock.expectOne("api/courses/5/statistics?periodId=2").flush({});
+
+    service
+      .getCourseStatistics(5)
+      .subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/courses/5/statistics")
+      .flush("Err", { status: 500, statusText: "Err" });
   });
 
-  it("getCourseStatistics should optionally append periodId and handle error", () => {
-    let res: any;
-    service.getCourseStatistics(10).subscribe((r) => (res = r));
-    httpMock.expectOne("api/courses/10/statistics").flush({ courseId: 10, students: [] });
-    expect(res.success).toBeTrue();
-    expect(res.value.courseId).toBe(10);
+  it("should create, update, delete course and handle errors", () => {
+    const model = { code: "CS101", name: "Intro" };
 
-    service.getCourseStatistics(10, 2).subscribe((r) => (res = r));
+    service.createCourse(model).subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.id).toBe(10);
+    });
     httpMock
-      .expectOne("api/courses/10/statistics?periodId=2")
-      .flush("Err", { status: 500, statusText: "Error" });
-    expect(res.success).toBeFalse();
+      .expectOne((r) => r.method === "POST" && r.url === "api/courses")
+      .flush({ id: 10, ...model });
+
+    service
+      .createCourse(model)
+      .subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/courses")
+      .flush("Bad", { status: 400, statusText: "Bad" });
+
+    service.updateCourse(10, model).subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.name).toBe("Intro");
+    });
+    httpMock
+      .expectOne((r) => r.method === "PUT" && r.url === "api/courses/10")
+      .flush({ id: 10, ...model });
+
+    service
+      .updateCourse(10, model)
+      .subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/courses/10")
+      .flush("Bad", { status: 400, statusText: "Bad" });
+
+    service.deleteCourse(10).subscribe((res) => expect(res.success).toBeTrue());
+    httpMock
+      .expectOne((r) => r.method === "DELETE" && r.url === "api/courses/10")
+      .flush(null);
+
+    service.deleteCourse(10).subscribe((res) => expect(res.success).toBeFalse());
+    httpMock
+      .expectOne("api/courses/10")
+      .flush("NotFound", { status: 404, statusText: "Not Found" });
   });
 });

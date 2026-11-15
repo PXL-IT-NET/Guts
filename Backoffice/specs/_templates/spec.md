@@ -62,13 +62,21 @@ _List business rules that must be enforced by the domain model (`Guts.Domain`) v
 
 ---
 
-## 7. Out of Scope
+## 7. Non-Functional & Quality Gate Requirements
+
+- **Test Coverage**: Unit and/or integration tests must cover as many lines and branches of all new and modified code as possible across every touched layer (`.NET` domain, application, infrastructure, API controllers/models/filters, and Angular components, services, guards, and utilities), satisfying the SonarCloud new-code coverage Quality Gate (`>= 80%`, targeting maximum achievable coverage).
+- **Playwright E2E Coverage**: New or updated UI flows and acceptance criteria (`AC-*`) must have corresponding Playwright E2E test scenarios in `Backoffice/Guts.Web/ClientApp/e2e/tests/`.
+- **Static Analysis & Security**: SonarCloud / SonarAnalyzer checks must pass with `0` open issues, `0` unreviewed security hotspots, and `0` ESLint errors.
+
+---
+
+## 8. Out of Scope
 
 - [Explicitly list related items that will NOT be addressed in this spec]
 
 ---
 
-## 8. Open Questions
+## 9. Open Questions
 
 - [ ] **Q1**: [Question needing clarification] — *Decision: [Pending]*
 

@@ -377,4 +377,90 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
       adminPage.locator("[data-testid='lector-verification-badge']"),
     ).toHaveText("Verified");
   });
+
+  test("admin courses page supports creating, editing, and deleting a course with confirmation modal", async ({
+    adminPage,
+  }) => {
+    const courses = [
+      { id: 1, code: "NET1", name: ".NET Essentials" },
+    ];
+
+    await adminPage.route("**/api/courses**", async (route) => {
+      const request = route.request();
+      const method = request.method();
+      if (method === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(courses),
+        });
+      } else if (method === "POST") {
+        const body = request.postDataJSON() as { code: string; name: string };
+        const created = { id: 2, code: body.code, name: body.name };
+        courses.push(created);
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify(created),
+        });
+      } else if (method === "PUT") {
+        const body = request.postDataJSON() as { code: string; name: string };
+        const target = courses.find((c) => request.url().endsWith(`/${c.id}`));
+        if (target) {
+          target.code = body.code;
+          target.name = body.name;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(target ?? body),
+        });
+      } else if (method === "DELETE") {
+        const idx = courses.findIndex((c) =>
+          request.url().endsWith(`/${c.id}`),
+        );
+        if (idx >= 0) {
+          courses.splice(idx, 1);
+        }
+        await route.fulfill({ status: 204, body: "" });
+      }
+    });
+
+    await adminPage.goto("/admin/courses");
+    await expect(adminPage.locator("tbody tr")).toHaveCount(1);
+
+    await adminPage.getByRole("button", { name: "New Course" }).click();
+    await adminPage.locator("#courseCode").fill("JAVA1");
+    await adminPage.locator("#courseName").fill("Java Basics");
+    await adminPage.getByRole("button", { name: "Save" }).click();
+    await expect(adminPage.locator("tbody tr")).toHaveCount(2);
+
+    await adminPage
+      .locator("tbody tr")
+      .nth(1)
+      .getByRole("button", { name: "Edit" })
+      .click();
+    await adminPage.locator("#courseName").fill("Java Programming");
+    await adminPage.getByRole("button", { name: "Save" }).click();
+    await expect(adminPage.locator("tbody tr").nth(1)).toContainText(
+      "Java Programming",
+    );
+
+    await adminPage
+      .locator("tbody tr")
+      .nth(1)
+      .getByRole("button", { name: "Delete" })
+      .click();
+    await expect(adminPage.getByText("Danger: Delete Course")).toBeVisible();
+    const confirmDeleteBtn = adminPage.getByRole("button", {
+      name: "Confirm Delete Course",
+    });
+    await expect(confirmDeleteBtn).toBeDisabled();
+    await adminPage
+      .locator("[data-testid='danger-confirm-input']")
+      .fill("JAVA1");
+    await expect(confirmDeleteBtn).toBeEnabled();
+    await confirmDeleteBtn.click();
+    await expect(adminPage.locator("tbody tr")).toHaveCount(1);
+  });
 });

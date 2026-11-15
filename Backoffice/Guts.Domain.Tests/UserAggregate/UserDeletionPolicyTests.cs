@@ -71,4 +71,25 @@ public class UserDeletionPolicyTests
         Assert.DoesNotThrow(() =>
             UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, new List<string> { Role.Constants.Student }));
     }
+
+    [Test]
+    public void EnsureCanBeDeleted_NullRoles_DoesNotThrow()
+    {
+        var target = new User { Id = 42, Email = "noroles@student.pxl.be" };
+
+        Assert.DoesNotThrow(() =>
+            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, targetRoles: null));
+    }
+
+    [Test]
+    public void UserCourseLinks_ValueObjectEquality_ComparesAllFlags()
+    {
+        var linksA = new UserCourseLinks(true, false, true, false, true, false);
+        var linksB = new UserCourseLinks(true, false, true, false, true, false);
+        var linksDifferent = new UserCourseLinks(true, false, true, false, false, false);
+
+        Assert.That(linksA, Is.EqualTo(linksB));
+        Assert.That(linksA.GetHashCode(), Is.EqualTo(linksB.GetHashCode()));
+        Assert.That(linksA, Is.Not.EqualTo(linksDifferent));
+    }
 }

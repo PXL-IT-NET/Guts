@@ -228,4 +228,32 @@ public class CourseControllerTests
         Assert.That(result, Is.InstanceOf<NoContentResult>());
         _courseServiceMock.Verify(s => s.DeleteCourseAsync(1), Times.Once);
     }
+
+    [Test]
+    public async Task Mutations_InvalidOrErrorCases_ReturnExpectedResponses()
+    {
+        var model = new CourseSaveModel { Code = "CS101", Name = "Intro" };
+
+        _courseServiceMock.Setup(s => s.CreateCourseAsync("CS101", "Intro"))
+            .ThrowsAsync(new Guts.Common.ContractException("Duplicate"));
+        Assert.That(await _controller.CreateCourse(model), Is.InstanceOf<BadRequestObjectResult>());
+
+        Assert.That(await _controller.UpdateCourse(0, model), Is.InstanceOf<BadRequestResult>());
+        Assert.That(await _controller.DeleteCourse(0), Is.InstanceOf<BadRequestResult>());
+
+        _courseServiceMock.Setup(s => s.UpdateCourseAsync(99, "CS101", "Intro"))
+            .ThrowsAsync(new DataNotFoundException());
+        Assert.That(await _controller.UpdateCourse(99, model), Is.InstanceOf<NotFoundResult>());
+
+        _courseServiceMock.Setup(s => s.UpdateCourseAsync(98, "CS101", "Intro"))
+            .ThrowsAsync(new Guts.Common.ContractException("Invalid"));
+        Assert.That(await _controller.UpdateCourse(98, model), Is.InstanceOf<BadRequestObjectResult>());
+
+        _courseServiceMock.Setup(s => s.DeleteCourseAsync(99)).ThrowsAsync(new DataNotFoundException());
+        Assert.That(await _controller.DeleteCourse(99), Is.InstanceOf<NotFoundResult>());
+
+        _controller.ModelState.AddModelError("Code", "Required");
+        Assert.That(await _controller.CreateCourse(model), Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(await _controller.UpdateCourse(1, model), Is.InstanceOf<BadRequestObjectResult>());
+    }
 }

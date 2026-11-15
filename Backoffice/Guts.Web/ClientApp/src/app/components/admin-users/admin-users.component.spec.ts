@@ -348,4 +348,193 @@ describe("AdminUsersComponent", () => {
       footer.querySelector("[data-testid='page-size-select']"),
     ).toBeTruthy();
   });
+
+  it("should handle search/filter helpers, page bounds clamping, and load error", () => {
+    adminUserServiceSpy.searchUsers.calls.reset();
+    component.selectRoleFilter("");
+    expect(adminUserServiceSpy.searchUsers).not.toHaveBeenCalled();
+
+    component.searchTerm = "abc";
+    component.clearSearchTerm();
+    expect(component.searchTerm).toBe("");
+
+    component.goToPage(0);
+    component.goToPage(1);
+    component.goToPage(99);
+    expect(adminUserServiceSpy.searchUsers).toHaveBeenCalledTimes(1);
+
+    adminUserServiceSpy.searchUsers.and.returnValues(
+      of(
+        GetResult.success({
+          items: [],
+          totalCount: 5,
+          page: 2,
+          pageSize: 2,
+        }),
+      ),
+      of(
+        GetResult.success({
+          items: [student1],
+          totalCount: 5,
+          page: 3,
+          pageSize: 2,
+        }),
+      ),
+    );
+    component.pageSize.set(2);
+    component.currentPage.set(2);
+    component.loadUsers();
+    expect(component.totalCount()).toBe(5);
+
+    adminUserServiceSpy.searchUsers.and.returnValue(
+      of(
+        GetResult.fromHttpErrorResponse<never>(
+          new HttpErrorResponse({ status: 400, error: "Server fail" }),
+        ),
+      ),
+    );
+    component.loadUsers();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Server fail", "Error");
+  });
+
+  it("should format role badges, verification tooltips, course links, selection, and delete warnings", () => {
+    expect(component.getRoleBadgeClass("admin")).toBe("text-bg-dark");
+    expect(component.getRoleBadgeClass("lector")).toBe("text-bg-warning");
+    expect(component.getRoleBadgeClass("student")).toBe("text-bg-secondary");
+
+    expect(
+      component.getVerificationTooltip({
+        ...lectorUser,
+        lastVerifiedOnUtc: "2026-01-15T10:00:00Z",
+      }),
+    ).toBe("Last verified: 2026-01-15 (UTC)");
+
+    expect(component.getCourseLinksLabel(student1)).toBe("Linked");
+    expect(component.getLinkedCoursesTooltip(student1)).toBeNull();
+    expect(
+      component.getCourseLinksLabel({
+        ...linkedStudent,
+        linkedCourses: [{ id: 1, code: "C1", name: "Course 1" }],
+      }),
+    ).toBe("Linked to 1 course");
+
+    const lockedStudent: IAdminUser = { ...student1, canDelete: false };
+    component.toggleUserSelection(lockedStudent, true);
+    expect(component.isSelected(lockedStudent)).toBeFalse();
+    component.toggleUserSelection(student1, true);
+    component.toggleUserSelection(student1, false);
+    expect(component.isSelected(student1)).toBeFalse();
+    component.clearSelection();
+    expect(component.selectedCount()).toBe(0);
+
+    expect(component.getSingleDeleteExtraWarning(null)).toBeNull();
+    expect(
+      component.getSingleDeleteExtraWarning({
+        ...lectorUser,
+        isLinkedToCourse: true,
+      }),
+    ).toContain("TEACHER (lector) linked to course data");
+    expect(component.getSingleDeleteExtraWarning(student1)).toBeNull();
+
+    component.toggleUserSelection(lectorUser, true);
+    expect(component.getBatchDeleteExtraWarning()).toContain(
+      "TEACHER (lector) accounts",
+    );
+    component.clearSelection();
+    component.toggleUserSelection(linkedStudent, true);
+    expect(component.getBatchDeleteExtraWarning()).toContain(
+      "linked to course data",
+    );
+  });
+
+  it("should handle impersonate, delete, unlock, promote, and demote success and failure paths", () => {
+    impersonationServiceSpy.impersonate.and.returnValue(
+      of(GetResult.success({ token: "imp", expiration: "2026-12-01" })),
+    );
+    component.impersonate(student1);
+    expect(authServiceSpy.startImpersonation).toHaveBeenCalled();
+
+    impersonationServiceSpy.impersonate.and.returnValue(
+      of(
+        GetResult.fromHttpErrorResponse<never>(
+          new HttpErrorResponse({ status: 403, error: "Forbidden" }),
+        ),
+      ),
+    );
+    component.impersonate(student1);
+    expect(toastrSpy.error).toHaveBeenCalledWith("Forbidden", "Error");
+
+    component.requestDelete(student1);
+    component.cancelDelete();
+    component.confirmDelete();
+    expect(adminUserServiceSpy.deleteUser).not.toHaveBeenCalled();
+
+    adminUserServiceSpy.deleteUser.and.returnValues(
+      of(PostResult.success()),
+      of(
+        PostResult.fromHttpErrorResponse(
+          new HttpErrorResponse({ status: 400, error: "Cannot delete" }),
+        ),
+      ),
+    );
+    component.requestDelete(student1);
+    component.confirmDelete();
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "User 'student1@student.pxl.be' deleted.",
+      "Success",
+    );
+    component.requestDelete(student1);
+    component.confirmDelete();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Cannot delete", "Error");
+
+    component.clearSelection();
+    component.requestDeleteSelected();
+    expect(toastrSpy.warning).toHaveBeenCalled();
+    component.cancelBatchDelete();
+    component.confirmBatchDelete();
+
+    adminUserServiceSpy.unlockLector.and.returnValue(
+      of(
+        PostResult.fromHttpErrorResponse(
+          new HttpErrorResponse({ status: 400, error: "Unlock failed" }),
+        ),
+      ),
+    );
+    component.confirmUnlock();
+    component.requestUnlock(lectorUser);
+    component.confirmUnlock();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Unlock failed", "Error");
+
+    adminUserServiceSpy.promoteToAdmin.and.returnValues(
+      of(PostResult.success()),
+      of(
+        PostResult.fromHttpErrorResponse(
+          new HttpErrorResponse({ status: 400, error: "Promote fail" }),
+        ),
+      ),
+    );
+    component.promoteToAdmin(lectorUser);
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "'teacher@pxl.be' is now an administrator.",
+      "Success",
+    );
+    component.promoteToAdmin(lectorUser);
+    expect(toastrSpy.error).toHaveBeenCalledWith("Promote fail", "Error");
+
+    adminUserServiceSpy.demoteFromAdmin.and.returnValues(
+      of(PostResult.success()),
+      of(
+        PostResult.fromHttpErrorResponse(
+          new HttpErrorResponse({ status: 400, error: "Demote fail" }),
+        ),
+      ),
+    );
+    component.demoteFromAdmin(lectorUser);
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "Removed administrator role from 'teacher@pxl.be'.",
+      "Success",
+    );
+    component.demoteFromAdmin(lectorUser);
+    expect(toastrSpy.error).toHaveBeenCalledWith("Demote fail", "Error");
+  });
 });

@@ -88,4 +88,74 @@ describe("AdminPeriodsComponent", () => {
     expect(deleteButtons[0].disabled).toBeTrue();
     expect(deleteButtons[1].disabled).toBeFalse();
   });
+
+  it("should handle load error and cancel/guard no-ops", () => {
+    periodServiceSpy.getAll.and.returnValue(
+      of({ success: false, isAuthenticated: true, message: "Load failed" } as GetResult<PeriodModel[]>),
+    );
+    component.loadPeriods();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Load failed", "Error");
+
+    component.savePeriod();
+    expect(periodServiceSpy.createPeriod).not.toHaveBeenCalled();
+
+    component.startCreate();
+    component.cancelForm();
+    expect(component.editingPeriodId()).toBeNull();
+
+    component.confirmDelete();
+    expect(periodServiceSpy.deletePeriod).not.toHaveBeenCalled();
+  });
+
+  it("should create, edit, update, and delete periods on success and error", () => {
+    const existing = component.periods()[0];
+    periodServiceSpy.createPeriod.and.returnValue(of(GetResult.success(existing)));
+    component.startCreate();
+    component.formDescription = "2026-2027";
+    component.formFrom = "2026-09-01";
+    component.formUntil = "2027-06-30";
+    component.savePeriod();
+    expect(toastrSpy.success).toHaveBeenCalledWith("Period created.", "Success");
+
+    periodServiceSpy.createPeriod.and.returnValue(
+      of({ success: false, isAuthenticated: true, message: "Create err" } as GetResult<PeriodModel>),
+    );
+    component.startCreate();
+    component.formDescription = "2026-2027";
+    component.formFrom = "2026-09-01";
+    component.formUntil = "2027-06-30";
+    component.savePeriod();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Create err", "Error");
+
+    periodServiceSpy.updatePeriod.and.returnValue(of(PostResult.success()));
+    component.startEdit(existing);
+    expect(component.formFrom).toBe("2020-09-01");
+    component.savePeriod();
+    expect(toastrSpy.success).toHaveBeenCalledWith("Period updated.", "Success");
+
+    periodServiceSpy.updatePeriod.and.returnValue(
+      of({ success: false, isAuthenticated: true, message: "Update err" }),
+    );
+    component.startEdit(existing);
+    component.savePeriod();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Update err", "Error");
+
+    component.requestDelete(existing);
+    component.cancelDelete();
+    expect(component.periodPendingDelete()).toBeNull();
+
+    component.requestDelete(existing);
+    component.confirmDelete();
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "Period '2020-2021' deleted.",
+      "Success",
+    );
+
+    periodServiceSpy.deletePeriod.and.returnValue(
+      of({ success: false, isAuthenticated: true, message: "Delete err" }),
+    );
+    component.requestDelete(existing);
+    component.confirmDelete();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Delete err", "Error");
+  });
 });

@@ -260,4 +260,48 @@ public class PeriodControllerTests
 
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
+
+    [Test]
+    public async Task CreateAndUpdateAndDelete_InvalidOrNotFoundCases_ReturnExpectedResponses()
+    {
+        Assert.That(await _controller.CreatePeriod(null), Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(await _controller.UpdatePeriod(1, null), Is.InstanceOf<BadRequestObjectResult>());
+
+        var missingDates = new PeriodCreationModel { Description = "2026-2027", From = null, Until = null };
+        Assert.That(await _controller.CreatePeriod(missingDates), Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(await _controller.UpdatePeriod(1, missingDates), Is.InstanceOf<BadRequestObjectResult>());
+
+        _controller.ModelState.AddModelError("Description", "Required");
+        Assert.That(await _controller.CreatePeriod(missingDates), Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(await _controller.UpdatePeriod(1, missingDates), Is.InstanceOf<BadRequestObjectResult>());
+        _controller.ModelState.Clear();
+
+        var valid = new PeriodCreationModel { Description = "2026-2027", From = DateTime.Today, Until = DateTime.Today.AddDays(5) };
+        _periodServiceMock.Setup(s => s.UpdatePeriodAsync(99, valid.Description, valid.From.Value, valid.Until.Value))
+            .ThrowsAsync(new DataNotFoundException());
+        Assert.That(await _controller.UpdatePeriod(99, valid), Is.InstanceOf<NotFoundResult>());
+
+        _periodServiceMock.Setup(s => s.UpdatePeriodAsync(98, valid.Description, valid.From.Value, valid.Until.Value))
+            .ThrowsAsync(new ContractException("Bad range"));
+        Assert.That(await _controller.UpdatePeriod(98, valid), Is.InstanceOf<BadRequestObjectResult>());
+
+        _periodServiceMock.Setup(s => s.DeletePeriodAsync(99)).ThrowsAsync(new DataNotFoundException());
+        Assert.That(await _controller.DeletePeriod(99), Is.InstanceOf<NotFoundResult>());
+    }
+
+    [Test]
+    public void NullableDateTimeJsonConverter_ShouldReadAndWriteNullAndDateValues()
+    {
+        const string json = """{"description":"2026-2027","from":null,"until":"2027-06-30T00:00:00Z"}""";
+        var model = JsonSerializer.Deserialize<PeriodCreationModel>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        Assert.That(model.From, Is.Null);
+        Assert.That(model.Until, Is.Not.Null);
+
+        string serialized = JsonSerializer.Serialize(model);
+        Assert.That(serialized, Does.Contain("\"From\":null"));
+        Assert.That(serialized, Does.Contain("2027-06-30"));
+    }
 }

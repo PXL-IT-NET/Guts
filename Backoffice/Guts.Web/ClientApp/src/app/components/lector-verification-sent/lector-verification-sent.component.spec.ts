@@ -95,5 +95,8 @@ describe("LectorVerificationSentComponent", () => {
         "[data-testid='resend-verification-btn']",
       ),
     ).toBeNull();
+
+    emptyFixture.componentInstance.resendVerificationEmail();
+    expect(authServiceSpy.resendLectorVerification).toHaveBeenCalledTimes(1);
   });
 });

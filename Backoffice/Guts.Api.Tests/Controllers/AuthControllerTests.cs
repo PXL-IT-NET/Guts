@@ -1125,4 +1125,33 @@ public class AuthControllerTests
         // Assert
         Assert.That(result, Is.Not.Null);
     }
+
+    [Test]
+    public async Task VerifyLector_And_ResendLectorVerification_InvalidModelStateOrUpdateFailure_ReturnExpectedResponses()
+    {
+        _controller.ModelState.AddModelError("Token", "Required");
+        Assert.That(await _controller.VerifyLector(new VerifyLectorModel()), Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(await _controller.ResendLectorVerification(new ResendLectorVerificationModel()), Is.InstanceOf<BadRequestObjectResult>());
+        _controller.ModelState.Clear();
+
+        _userManagerMock.Setup(m => m.FindByIdAsync("999")).ReturnsAsync((User)null);
+        Assert.That(
+            await _controller.ResendLectorVerification(new ResendLectorVerificationModel { UserId = "999", ResendToken = "tok" }),
+            Is.InstanceOf<OkResult>());
+
+        var user = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = false };
+        _userManagerMock.Setup(m => m.FindByIdAsync("42")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.VerifyUserTokenAsync(
+                user,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationTokenPurpose,
+                "valid-tok"))
+            .ReturnsAsync(true);
+        _userManagerMock.Setup(m => m.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "UpdateErr", Description = "Update failed" }));
+
+        var badResult = await _controller.VerifyLector(new VerifyLectorModel { UserId = "42", Token = "valid-tok" })
+            as BadRequestObjectResult;
+        Assert.That(badResult, Is.Not.Null);
+    }
 }

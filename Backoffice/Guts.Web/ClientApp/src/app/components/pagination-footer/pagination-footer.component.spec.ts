@@ -53,4 +53,17 @@ describe("PaginationFooterComponent", () => {
     expect(component.totalPages()).toBe(1);
     expect(component.displayRangeLabel()).toBe("Showing 1-12 of 12 users");
   });
+
+  it("should window visible pages when totalPages exceeds 7 and format zero totalCount", () => {
+    fixture.componentRef.setInput("totalCount", 250);
+    fixture.componentRef.setInput("pageSize", 25);
+    fixture.componentRef.setInput("currentPage", 6);
+    fixture.detectChanges();
+    expect(component.visiblePages()).toEqual([3, 4, 5, 6, 7, 8, 9]);
+
+    fixture.componentRef.setInput("totalCount", 0);
+    fixture.componentRef.setInput("currentItemCount", 0);
+    fixture.detectChanges();
+    expect(component.displayRangeLabel()).toBe("0 users");
+  });
 });
