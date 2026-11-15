@@ -80,6 +80,13 @@ export class PostResult extends Result {
   }
 }
 
+export class LoginResult extends PostResult {
+  public requiresLectorVerification?: boolean;
+  public verificationUserId?: number;
+  public verificationEmail?: string;
+  public resendToken?: string;
+}
+
 export class CreateResult<T> extends Result {
   public value: T;
 

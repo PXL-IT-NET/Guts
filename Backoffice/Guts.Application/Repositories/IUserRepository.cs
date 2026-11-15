@@ -37,6 +37,14 @@ public interface IUserRepository
         string search,
         string roleFilter,
         bool orphanedOnly,
+        bool lockedOnly,
+        int page = 1,
+        int? pageSize = 50);
+
+    Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+        string search,
+        string roleFilter,
+        bool orphanedOnly,
         IReadOnlyCollection<string> excludedRoles,
         int page = 1,
         int? pageSize = 50);
@@ -48,6 +56,8 @@ public interface IUserRepository
     Task AddToRoleAsync(User user, string roleName);
 
     Task RemoveFromRoleAsync(User user, string roleName);
+
+    Task UpdateAsync(User user);
 
     Task DeleteAsync(User user);
 

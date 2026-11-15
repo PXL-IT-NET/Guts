@@ -56,9 +56,11 @@ export class AdminUsersComponent implements OnInit {
   public searchTerm = "";
   public roleFilter = "";
   public orphanedOnly = false;
+  public lockedOnly = false;
 
   public readonly selectedUserIds = signal<Set<number>>(new Set());
   public readonly userPendingDelete = signal<IAdminUser | null>(null);
+  public readonly userPendingUnlock = signal<IAdminUser | null>(null);
   public readonly batchDeletePending = signal<boolean>(false);
 
   public readonly visibleDeletableUsers = computed(() =>
@@ -91,6 +93,10 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUsers().some((u) => this.isLectorUser(u)),
   );
 
+  public readonly hasSelectedLinkedUsers = computed(() =>
+    this.selectedUsers().some((u) => u.isLinkedToCourse),
+  );
+
   public readonly totalPages = computed(() =>
     calculateTotalPages(this.totalCount(), this.pageSize()),
   );
@@ -117,6 +123,11 @@ export class AdminUsersComponent implements OnInit {
     this.search();
   }
 
+  public onLockedOnlyChange(value: boolean): void {
+    this.lockedOnly = value;
+    this.search();
+  }
+
   public clearSearchTerm(): void {
     this.searchTerm = "";
     this.search();
@@ -126,6 +137,7 @@ export class AdminUsersComponent implements OnInit {
     this.searchTerm = "";
     this.roleFilter = "";
     this.orphanedOnly = false;
+    this.lockedOnly = false;
     this.search();
   }
 
@@ -133,7 +145,8 @@ export class AdminUsersComponent implements OnInit {
     return (
       this.searchTerm.trim().length > 0 ||
       this.roleFilter.length > 0 ||
-      this.orphanedOnly
+      this.orphanedOnly ||
+      this.lockedOnly
     );
   }
 
@@ -178,6 +191,7 @@ export class AdminUsersComponent implements OnInit {
         this.orphanedOnly,
         this.currentPage(),
         this.pageSize(),
+        this.lockedOnly,
       )
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((result) => {
@@ -203,6 +217,13 @@ export class AdminUsersComponent implements OnInit {
 
   public isLectorUser(user: IAdminUser): boolean {
     return user.roles.includes("lector");
+  }
+
+  public getVerificationTooltip(user: IAdminUser): string {
+    if (!user.lastVerifiedOnUtc) {
+      return "Never verified — re-verification required on next login.";
+    }
+    return `Last verified: ${user.lastVerifiedOnUtc.slice(0, 10)} (UTC)`;
   }
 
   public getCourseLinksLabel(user: IAdminUser): string {
@@ -263,6 +284,42 @@ export class AdminUsersComponent implements OnInit {
     this.userPendingDelete.set(null);
   }
 
+  public getSingleDeleteExtraWarning(user: IAdminUser | null): string | null {
+    if (!user) {
+      return null;
+    }
+    const isLector = this.isLectorUser(user);
+    if (isLector && user.isLinkedToCourse) {
+      return "Warning: This user is a TEACHER (lector) linked to course data! Deleting them will permanently remove their test runs, solutions, team memberships, and peer assessments, and remove course staff access.";
+    }
+    if (isLector) {
+      return "Warning: This user is a TEACHER (lector)! Even without current course links, they may still be needed for course administration or test provisioning.";
+    }
+    if (user.isLinkedToCourse) {
+      return "Warning: This user is linked to course data! Deleting this user will permanently remove their test runs, test results, solutions, project team memberships, gamification progress, and peer assessments.";
+    }
+    return null;
+  }
+
+  public requiresSingleDeleteConfirmation(user: IAdminUser | null): boolean {
+    return user !== null && (this.isLectorUser(user) || user.isLinkedToCourse);
+  }
+
+  public getBatchDeleteExtraWarning(): string | null {
+    const hasLector = this.hasSelectedLector();
+    const hasLinked = this.hasSelectedLinkedUsers();
+    if (hasLector && hasLinked) {
+      return "Warning: Selected users include TEACHER (lector) accounts and users linked to course data! Deleting them will permanently remove all associated test runs, solutions, team memberships, gamification progress, and peer assessments.";
+    }
+    if (hasLector) {
+      return "Warning: One or more selected TEACHER (lector) accounts will also be deleted! Even without current course links, they may still be needed for course administration or test provisioning.";
+    }
+    if (hasLinked) {
+      return "Warning: One or more selected users are linked to course data! Deleting them will permanently remove all of their test runs, test results, solutions, project team memberships, gamification progress, and peer assessments.";
+    }
+    return null;
+  }
+
   public confirmDelete(): void {
     const user = this.userPendingDelete();
     if (!user) {
@@ -319,6 +376,40 @@ export class AdminUsersComponent implements OnInit {
         } else {
           this.toastr.error(
             result.message || "Could not delete selected users.",
+            "Error",
+          );
+        }
+      });
+  }
+
+  public requestUnlock(user: IAdminUser): void {
+    this.userPendingDelete.set(null);
+    this.batchDeletePending.set(false);
+    this.userPendingUnlock.set(user);
+  }
+
+  public cancelUnlock(): void {
+    this.userPendingUnlock.set(null);
+  }
+
+  public confirmUnlock(): void {
+    const user = this.userPendingUnlock();
+    if (!user) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.adminUserService
+      .unlockLector(user.id)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe((result) => {
+        this.userPendingUnlock.set(null);
+        if (result.success) {
+          this.toastr.success(`Lector '${user.email}' unlocked.`, "Success");
+          this.loadUsers();
+        } else {
+          this.toastr.error(
+            result.message || "Could not unlock lector account.",
             "Error",
           );
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using Guts.Api.Models;
@@ -30,6 +31,8 @@ public class AuthController(
     ILogger<AuthController> logger)
     : Controller
 {
+    internal const string LectorVerificationTokenPurpose = "LectorVerification";
+    internal const string LectorVerificationResendTokenPurpose = "LectorVerificationResend";
     /// <summary>
     /// Registers a new user in the system.
     /// If successful, a confirmation email is send to the users email address, the user can prove he or she owns the email address.
@@ -102,14 +105,83 @@ public class AuthController(
 
         if (result.Succeeded)
         {
+            return await CompleteEmailVerificationAsync(user);
+        }
+
+        AddIdentityErrorsToModelState(result);
+        return BadRequest(ModelState);
+    }
+
+    /// <summary>
+    /// Verifies a lector's @pxl.be email address using a verification token and unlocks annual access.
+    /// </summary>
+    [HttpPost("verifylector")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> VerifyLector([FromBody] VerifyLectorModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+        {
+            //don't reveal if the user does not exist
             return Ok();
         }
 
-        foreach (var error in result.Errors)
+        bool isValidToken = await userManager.VerifyUserTokenAsync(
+            user,
+            TokenOptions.DefaultProvider,
+            LectorVerificationTokenPurpose,
+            model.Token);
+
+        if (!isValidToken)
         {
-            ModelState.AddModelError(error.Code, error.Description);
+            ModelState.AddModelError("InvalidToken", "Invalid or expired verification token.");
+            return BadRequest(ModelState);
         }
-        return BadRequest(ModelState);
+
+        user.EmailConfirmed = true;
+        return await CompleteEmailVerificationAsync(user);
+    }
+
+    /// <summary>
+    /// Re-sends the annual lector verification email using the signed resend token returned during locked login.
+    /// </summary>
+    [HttpPost("resend-lector-verification")]
+    [AllowAnonymous]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    public async Task<IActionResult> ResendLectorVerification([FromBody] ResendLectorVerificationModel model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+        {
+            return Ok();
+        }
+
+        bool isValidResendToken = await userManager.VerifyUserTokenAsync(
+            user,
+            TokenOptions.DefaultProvider,
+            LectorVerificationResendTokenPurpose,
+            model.ResendToken);
+
+        if (!isValidResendToken)
+        {
+            ModelState.AddModelError("InvalidToken", "Invalid or expired resend token.");
+            return BadRequest(ModelState);
+        }
+
+        var userRoles = await userManager.GetRolesAsync(user);
+        if (LectorVerificationPolicy.IsLocked(user, userRoles, DateTime.UtcNow))
+        {
+            await SendLectorVerificationEmailAsync(user);
+        }
+
+        return Ok();
     }
 
     /// <summary>
@@ -173,13 +245,10 @@ public class AuthController(
 
         if (result.Succeeded)
         {
-            return Ok();
+            return await CompleteEmailVerificationAsync(user);
         }
 
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(error.Code, error.Description);
-        }
+        AddIdentityErrorsToModelState(result);
         return BadRequest(ModelState);
     }
 
@@ -218,6 +287,7 @@ public class AuthController(
     [HttpPost("token")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(TokenAccessPass), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(LectorVerificationRequiredModel), (int)HttpStatusCode.Forbidden)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     public async Task<IActionResult> CreateToken([FromBody] LoginModel model)
@@ -247,8 +317,29 @@ public class AuthController(
             return BadRequest(ModelState);
         }
 
-        var currentClaims = await userManager.GetClaimsAsync(user);
         var userRoles = await userManager.GetRolesAsync(user);
+        if (LectorVerificationPolicy.IsLocked(user, userRoles, DateTime.UtcNow))
+        {
+            logger.LogWarning("Lector account '{Email}' requires annual verification.", user.Email);
+            await SendLectorVerificationEmailAsync(user);
+            var resendToken = await userManager.GenerateUserTokenAsync(
+                user,
+                TokenOptions.DefaultProvider,
+                LectorVerificationResendTokenPurpose);
+
+            return StatusCode(
+                (int)HttpStatusCode.Forbidden,
+                new LectorVerificationRequiredModel
+                {
+                    Code = "LectorVerificationRequired",
+                    UserId = user.Id,
+                    Email = user.Email,
+                    ResendToken = resendToken,
+                    Message = $"Annual lector verification is required. A confirmation mail has been sent to {user.Email}."
+                });
+        }
+
+        var currentClaims = await userManager.GetClaimsAsync(user);
         var tokenAccessPass = tokenAccessPassFactory.Create(user, currentClaims, userRoles);
 
         if (!string.IsNullOrEmpty(model.LoginSessionPublicIdentifier))
@@ -309,6 +400,36 @@ public class AuthController(
     {
         var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
         await mailSender.SendConfirmUserEmailMessageAsync(user, confirmationToken);
+    }
+
+    private async Task SendLectorVerificationEmailAsync(User user)
+    {
+        var verificationToken = await userManager.GenerateUserTokenAsync(
+            user,
+            TokenOptions.DefaultProvider,
+            LectorVerificationTokenPurpose);
+        await mailSender.SendLectorVerificationEmailMessageAsync(user, verificationToken);
+    }
+
+    private async Task<IActionResult> CompleteEmailVerificationAsync(User user)
+    {
+        user.MarkEmailVerified(DateTime.UtcNow);
+        var updateResult = await userManager.UpdateAsync(user);
+        if (updateResult.Succeeded)
+        {
+            return Ok();
+        }
+
+        AddIdentityErrorsToModelState(updateResult);
+        return BadRequest(ModelState);
+    }
+
+    private void AddIdentityErrorsToModelState(IdentityResult result)
+    {
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(error.Code, error.Description);
+        }
     }
 
 }

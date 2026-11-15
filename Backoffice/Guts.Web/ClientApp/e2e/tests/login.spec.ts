@@ -66,5 +66,58 @@ test.describe("Login Flow", () => {
 
     await expect(page).toHaveURL(/.*\/home/);
   });
+
+  test("should redirect locked lector to verification-sent page, allow resend, and unlock via verify-lector link", async ({
+    page,
+  }) => {
+    let resent = false;
+    let verified = false;
+
+    await page.route("**/api/auth/token", async (route) => {
+      await route.fulfill({
+        status: 403,
+        contentType: "application/json",
+        body: JSON.stringify({
+          code: "LectorVerificationRequired",
+          userId: 42,
+          email: "locked.lector@pxl.be",
+          resendToken: "resend-tok-1",
+          message: "Annual lector verification required",
+        }),
+      });
+    });
+
+    await page.route("**/api/auth/resend-lector-verification", async (route) => {
+      resent = true;
+      await route.fulfill({ status: 200, body: "{}" });
+    });
+
+    await page.route("**/api/auth/verifylector", async (route) => {
+      verified = true;
+      await route.fulfill({ status: 200, body: "{}" });
+    });
+
+    await loginPage.login("locked.lector@pxl.be", "Password123!");
+
+    await expect(page).toHaveURL(/.*\/lector-verification-sent/);
+    await expect(
+      page.locator("[data-testid='verification-email-target']"),
+    ).toContainText("locked.lector@pxl.be");
+
+    await page.locator("[data-testid='resend-verification-btn']").click();
+    await expect.poll(() => resent).toBe(true);
+    await expect(
+      page.locator("[data-testid='resend-success-alert']"),
+    ).toBeVisible();
+
+    await page.goto("/verify-lector?userId=42&token=verify-tok-1");
+    await expect.poll(() => verified).toBe(true);
+    await expect(
+      page.locator("[data-testid='verify-lector-status']"),
+    ).toContainText("unlocked");
+
+    await page.locator("[data-testid='verify-lector-login-link']").click();
+    await expect(page).toHaveURL(/.*\/login/);
+  });
 });
 

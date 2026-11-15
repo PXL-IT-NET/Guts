@@ -10,6 +10,7 @@ public interface IAdminUserService
         string search,
         string roleFilter,
         bool orphanedOnly,
+        bool lockedOnly,
         int currentUserId,
         int page = 1,
         int? pageSize = null);
@@ -18,4 +19,5 @@ public interface IAdminUserService
     Task<int> DeleteUsersAsync(IReadOnlyCollection<int> targetUserIds, int currentUserId);
     Task PromoteToAdminAsync(int targetUserId);
     Task DemoteFromAdminAsync(int targetUserId);
+    Task UnlockLectorAsync(int targetUserId);
 }

@@ -11,6 +11,8 @@ import { ForgotPasswordModel } from "../viewmodels/forgotpassword.model";
 import { LoginModel } from "../viewmodels/login.model";
 import { RegisterModel } from "../viewmodels/register.model";
 import { ResetPasswordModel } from "../viewmodels/resetpassword.model";
+import { VerifyLectorModel } from "../viewmodels/verify-lector.model";
+import { ResendLectorVerificationModel } from "../viewmodels/resend-lector-verification.model";
 import { AuthService } from "./auth.service";
 
 describe("AuthService", () => {
@@ -83,6 +85,33 @@ describe("AuthService", () => {
 
     expect(actualResult.success).toBeFalse();
     expect(actualResult.isAuthenticated).toBeFalse();
+  });
+
+  it("login should return requiresLectorVerification details when api returns 403 LectorVerificationRequired", () => {
+    const model = new LoginModel();
+    model.email = "lector@pxl.be";
+    model.password = "Secret123!";
+    let actualResult: any;
+
+    service.login(model).subscribe((result) => (actualResult = result));
+
+    httpMock.expectOne("api/auth/token").flush(
+      {
+        code: "LectorVerificationRequired",
+        userId: 42,
+        email: "lector@pxl.be",
+        resendToken: "resend-tok",
+        message: "Annual verification required",
+      },
+      { status: 403, statusText: "Forbidden" },
+    );
+
+    expect(actualResult.success).toBeFalse();
+    expect(actualResult.isAuthenticated).toBeTrue();
+    expect(actualResult.requiresLectorVerification).toBeTrue();
+    expect(actualResult.verificationUserId).toBe(42);
+    expect(actualResult.verificationEmail).toBe("lector@pxl.be");
+    expect(actualResult.resendToken).toBe("resend-tok");
   });
 
   it("login should handle HTTP error response", () => {
@@ -162,6 +191,15 @@ describe("AuthService", () => {
       {
         invoke: () => service.confirmEmail(new ConfirmEmailModel()),
         url: "api/auth/confirmemail",
+      },
+      {
+        invoke: () => service.verifyLector(new VerifyLectorModel()),
+        url: "api/auth/verifylector",
+      },
+      {
+        invoke: () =>
+          service.resendLectorVerification(new ResendLectorVerificationModel()),
+        url: "api/auth/resend-lector-verification",
       },
       {
         invoke: () => service.sendForgotPasswordMail(new ForgotPasswordModel()),

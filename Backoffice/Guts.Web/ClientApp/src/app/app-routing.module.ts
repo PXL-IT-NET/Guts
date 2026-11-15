@@ -7,6 +7,20 @@ import { adminGuard, lectorOrAdminGuard } from "./guards/admin.guard";
 const routes: Routes = [
   { path: "", redirectTo: "home", pathMatch: "full" },
   { path: "login", component: c.LoginComponent },
+  {
+    path: "lector-verification-sent",
+    loadComponent: () =>
+      import(
+        "./components/lector-verification-sent/lector-verification-sent.component"
+      ).then((m) => m.LectorVerificationSentComponent),
+  },
+  {
+    path: "verify-lector",
+    loadComponent: () =>
+      import("./components/verify-lector/verify-lector.component").then(
+        (m) => m.VerifyLectorComponent,
+      ),
+  },
   { path: "register", component: c.RegisterComponent },
   { path: "confirmemail", component: c.ConfirmEmailComponent },
   { path: "forgotpassword", component: c.ForgotPasswordComponent },

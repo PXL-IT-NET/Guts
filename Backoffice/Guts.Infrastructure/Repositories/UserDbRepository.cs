@@ -102,16 +102,39 @@ internal class UserDbRepository : IUserRepository
         int page = 1,
         int? pageSize = 50)
     {
-        return SearchUsersAsync(search, roleFilter, orphanedOnly, excludedRoles: null, page, pageSize);
+        return SearchUsersInternalAsync(search, roleFilter, orphanedOnly, lockedOnly: false, excludedRoles: null, page, pageSize);
     }
 
-    public async Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+    public Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
+        string search,
+        string roleFilter,
+        bool orphanedOnly,
+        bool lockedOnly,
+        int page = 1,
+        int? pageSize = 50)
+    {
+        return SearchUsersInternalAsync(search, roleFilter, orphanedOnly, lockedOnly, excludedRoles: null, page, pageSize);
+    }
+
+    public Task<PagedResult<UserWithRolesAndLinks>> SearchUsersAsync(
         string search,
         string roleFilter,
         bool orphanedOnly,
         IReadOnlyCollection<string> excludedRoles,
         int page = 1,
         int? pageSize = 50)
+    {
+        return SearchUsersInternalAsync(search, roleFilter, orphanedOnly, lockedOnly: false, excludedRoles, page, pageSize);
+    }
+
+    private async Task<PagedResult<UserWithRolesAndLinks>> SearchUsersInternalAsync(
+        string search,
+        string roleFilter,
+        bool orphanedOnly,
+        bool lockedOnly,
+        IReadOnlyCollection<string> excludedRoles,
+        int page,
+        int? pageSize)
     {
         IQueryable<User> query = _context.Users.AsNoTracking();
         query = FilterBySearch(query, search);
@@ -121,6 +144,12 @@ internal class UserDbRepository : IUserRepository
         if (orphanedOnly)
         {
             query = FilterOrphaned(query);
+        }
+
+        if (lockedOnly)
+        {
+            DateTime cutoffUtc = LectorVerificationPolicy.GetVerificationExpirationCutoffUtc(DateTime.UtcNow);
+            query = FilterLockedLectors(query, cutoffUtc);
         }
 
         int totalCount = await query.CountAsync();
@@ -211,6 +240,15 @@ internal class UserDbRepository : IUserRepository
         }
     }
 
+    public async Task UpdateAsync(User user)
+    {
+        if (_context.Entry(user).State == EntityState.Detached)
+        {
+            _context.Users.Update(user);
+        }
+        await _context.SaveChangesAsync();
+    }
+
     public Task DeleteAsync(User user)
     {
         return DeleteRangeAsync([user]);
@@ -223,22 +261,42 @@ internal class UserDbRepository : IUserRepository
             return;
         }
 
-        List<int> userIds = users.Select(u => u.Id).ToList();
+        List<int> userIds = users.Select(u => u.Id).Distinct().ToList();
 
-        var userRoles = await _context.UserRoles.Where(ur => userIds.Contains(ur.UserId)).ToListAsync();
-        _context.UserRoles.RemoveRange(userRoles);
+        await ExecuteInTransactionAsync(async () =>
+        {
+            // Only remove FKs without cascade delete (or with Restrict blocking User cascade):
+            // - TestResults -> TestRun is Restrict, which blocks Users -> TestRuns cascade
+            // - PeerAssessments -> User is NoAction (SubjectId cascades from Users)
+            // - StudentCourseProfiles -> User is NoAction (cascades GamificationEvents & StudentBadges)
+            await _context.TestResults.Where(tr => userIds.Contains(tr.UserId)).ExecuteDeleteAsync();
+            await _context.PeerAssessments.Where(pa => userIds.Contains(pa.User.Id)).ExecuteDeleteAsync();
+            await _context.StudentCourseProfiles.Where(sp => userIds.Contains(sp.UserId)).ExecuteDeleteAsync();
 
-        var userClaims = await _context.UserClaims.Where(uc => userIds.Contains(uc.UserId)).ToListAsync();
-        _context.UserClaims.RemoveRange(userClaims);
+            await _context.Users.Where(u => userIds.Contains(u.Id)).ExecuteDeleteAsync();
 
-        var userLogins = await _context.UserLogins.Where(ul => userIds.Contains(ul.UserId)).ToListAsync();
-        _context.UserLogins.RemoveRange(userLogins);
+            foreach (User user in users)
+            {
+                _context.Entry(user).State = EntityState.Detached;
+            }
+        });
+    }
 
-        var userTokens = await _context.UserTokens.Where(ut => userIds.Contains(ut.UserId)).ToListAsync();
-        _context.UserTokens.RemoveRange(userTokens);
+    private async Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        if (!_context.Database.IsRelational())
+        {
+            await operation();
+            return;
+        }
 
-        _context.Users.RemoveRange(users);
-        await _context.SaveChangesAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await operation();
+            await transaction.CommitAsync();
+        });
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
@@ -303,6 +361,12 @@ internal class UserDbRepository : IUserRepository
             !_context.ProjectTeamUsers.Any(ptu => ptu.UserId == u.Id) &&
             !_context.StudentCourseProfiles.Any(sp => sp.UserId == u.Id) &&
             !_context.PeerAssessments.Any(pa => pa.User.Id == u.Id || pa.Subject.Id == u.Id));
+    }
+
+    private IQueryable<User> FilterLockedLectors(IQueryable<User> query, DateTime cutoffUtc)
+    {
+        return FilterByRole(query, Role.Constants.Lector)
+            .Where(u => u.LastVerifiedOnUtc == null || u.LastVerifiedOnUtc <= cutoffUtc);
     }
 
     private async Task<IReadOnlyList<UserWithRolesAndLinks>> HydrateRolesAndLinksAsync(List<User> users)

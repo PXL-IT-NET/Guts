@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Guts.Common;
 using Guts.Domain.ProjectTeamAggregate;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,11 +17,30 @@ public class User : IdentityUser<int>, IEntity, IEquatable<User>
     [Required]
     public string LastName { get; set; }
 
+    public DateTime? LastVerifiedOnUtc { get; private set; }
+
     public string FullName => $"{FirstName} {LastName}".Trim();
 
     public object[] IdentityValues => [Id];
 
     public virtual ICollection<ProjectTeamUser> TeamUsers { get; set; } = new HashSet<ProjectTeamUser>();
+
+    public void MarkEmailVerified(DateTime verifiedOnUtc)
+    {
+        Contracts.Require(verifiedOnUtc != default, "Verification timestamp cannot be default.");
+        LastVerifiedOnUtc = LectorVerificationPolicy.NormalizeToUtc(verifiedOnUtc);
+    }
+
+    public bool RequiresAnnualVerification(DateTime utcNow)
+    {
+        if (!LastVerifiedOnUtc.HasValue)
+        {
+            return true;
+        }
+
+        DateTime cutoffUtc = LectorVerificationPolicy.GetVerificationExpirationCutoffUtc(utcNow);
+        return LastVerifiedOnUtc.Value <= cutoffUtc;
+    }
 
     public override bool Equals(object obj)
     {

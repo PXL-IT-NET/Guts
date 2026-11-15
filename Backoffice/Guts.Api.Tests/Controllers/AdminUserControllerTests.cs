@@ -49,9 +49,9 @@ public class AdminUserControllerTests
             Page = 1,
             PageSize = 25
         };
-        _serviceMock.Setup(s => s.SearchUsersAsync("s", null, false, 1, 1, 25)).ReturnsAsync(paged);
+        _serviceMock.Setup(s => s.SearchUsersAsync("s", null, false, true, 1, 1, 25)).ReturnsAsync(paged);
 
-        var result = await _controller.SearchUsers("s", null, false, 1, 25) as OkObjectResult;
+        var result = await _controller.SearchUsers("s", null, false, true, 1, 25) as OkObjectResult;
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Value, Is.SameAs(paged));
@@ -161,6 +161,44 @@ public class AdminUserControllerTests
         _serviceMock.Setup(s => s.DemoteFromAdminAsync(1)).ThrowsAsync(new ContractException("Last admin"));
 
         var result = await _controller.DemoteFromAdmin(1);
+
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public async Task UnlockLector_Valid_ReturnsNoContent()
+    {
+        var result = await _controller.UnlockLector(12);
+
+        Assert.That(result, Is.InstanceOf<NoContentResult>());
+        _serviceMock.Verify(s => s.UnlockLectorAsync(12), Times.Once);
+    }
+
+    [Test]
+    public async Task UnlockLector_InvalidId_ReturnsBadRequest()
+    {
+        var result = await _controller.UnlockLector(0);
+
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
+        _serviceMock.Verify(s => s.UnlockLectorAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Test]
+    public async Task UnlockLector_NotFound_ReturnsNotFound()
+    {
+        _serviceMock.Setup(s => s.UnlockLectorAsync(999)).ThrowsAsync(new DataNotFoundException());
+
+        var result = await _controller.UnlockLector(999);
+
+        Assert.That(result, Is.InstanceOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task UnlockLector_ContractException_ReturnsBadRequest()
+    {
+        _serviceMock.Setup(s => s.UnlockLectorAsync(12)).ThrowsAsync(new ContractException("Not locked"));
+
+        var result = await _controller.UnlockLector(12);
 
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }

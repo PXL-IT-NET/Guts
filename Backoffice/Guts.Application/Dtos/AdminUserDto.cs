@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Guts.Application.Dtos;
@@ -17,6 +18,9 @@ public class AdminUserDto
     public bool CanImpersonate { get; set; }
     public bool CanPromoteToAdmin { get; set; }
     public bool CanDemoteFromAdmin { get; set; }
+    public DateTime? LastVerifiedOnUtc { get; set; }
+    public bool IsLockedLector { get; set; }
+    public bool CanUnlockLector { get; set; }
 }
 
 public class ImpersonatableUserDto

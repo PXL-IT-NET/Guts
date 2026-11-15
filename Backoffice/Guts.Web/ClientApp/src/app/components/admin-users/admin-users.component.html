@@ -5,8 +5,8 @@
     <div>
       <h2 class="mb-1">Users &amp; Impersonation</h2>
       <p class="text-muted mb-0 small">
-        Search users, inspect linked courses, impersonate accounts, or remove
-        orphaned users.
+        Search users, inspect linked courses, impersonate accounts, or delete
+        users.
       </p>
     </div>
     <span class="badge rounded-pill text-bg-secondary fs-6 fw-normal px-3 py-2">
@@ -80,20 +80,39 @@
 
           <div class="col-lg-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-              <div class="form-check form-switch mb-0">
-                <input
-                  id="orphanedOnly"
-                  type="checkbox"
-                  role="switch"
-                  class="form-check-input"
-                  name="orphanedOnly"
-                  [attr.aria-checked]="orphanedOnly"
-                  [ngModel]="orphanedOnly"
-                  (ngModelChange)="onOrphanedOnlyChange($event)"
-                />
-                <label class="form-check-label fw-medium" for="orphanedOnly">
-                  Orphaned only
-                </label>
+              <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="form-check form-switch mb-0">
+                  <input
+                    id="orphanedOnly"
+                    type="checkbox"
+                    role="switch"
+                    class="form-check-input"
+                    name="orphanedOnly"
+                    [attr.aria-checked]="orphanedOnly"
+                    [ngModel]="orphanedOnly"
+                    (ngModelChange)="onOrphanedOnlyChange($event)"
+                  />
+                  <label class="form-check-label fw-medium" for="orphanedOnly">
+                    Orphaned only
+                  </label>
+                </div>
+
+                <div class="form-check form-switch mb-0">
+                  <input
+                    id="lockedOnly"
+                    type="checkbox"
+                    role="switch"
+                    class="form-check-input"
+                    name="lockedOnly"
+                    [attr.aria-checked]="lockedOnly"
+                    [ngModel]="lockedOnly"
+                    (ngModelChange)="onLockedOnlyChange($event)"
+                    data-testid="locked-only-switch"
+                  />
+                  <label class="form-check-label fw-medium" for="lockedOnly">
+                    Locked only
+                  </label>
+                </div>
               </div>
 
               <div class="d-flex gap-2">
@@ -135,17 +154,21 @@
       (userPendingDelete()?.email ?? '') +
       '). This action cannot be undone.'
     "
-    [extraWarning]="
+    [extraWarning]="getSingleDeleteExtraWarning(userPendingDelete())"
+    [extraWarningTestId]="
       userPendingDelete() && isLectorUser(userPendingDelete()!)
-        ? 'Warning: This user is a TEACHER (lector)! Even without current course links, they may still be needed for course administration or test provisioning.'
-        : null
+        ? 'teacher-delete-warning'
+        : 'linked-delete-warning'
     "
-    extraWarningTestId="teacher-delete-warning"
     [requireConfirmationInput]="
-      userPendingDelete() !== null && isLectorUser(userPendingDelete()!)
+      requiresSingleDeleteConfirmation(userPendingDelete())
     "
     [expectedConfirmation]="userPendingDelete()?.email ?? ''"
-    confirmationLabel="teacher email"
+    [confirmationLabel]="
+      userPendingDelete() && isLectorUser(userPendingDelete()!)
+        ? 'teacher email'
+        : 'user email'
+    "
     confirmButtonText="Confirm Delete User"
     (confirmed)="confirmDelete()"
     (cancelled)="cancelDelete()"
@@ -160,11 +183,7 @@
       selectedCount() +
       ' selected user(s). This action cannot be undone.'
     "
-    [extraWarning]="
-      hasSelectedLector()
-        ? 'Warning: One or more selected TEACHER (lector) accounts will also be deleted! Even without current course links, they may still be needed for course administration or test provisioning.'
-        : null
-    "
+    [extraWarning]="getBatchDeleteExtraWarning()"
     extraWarningTestId="batch-teacher-delete-warning"
     [requireConfirmationInput]="false"
     confirmButtonText="Confirm Delete Selected"
@@ -172,6 +191,68 @@
     (confirmed)="confirmBatchDelete()"
     (cancelled)="cancelBatchDelete()"
   ></app-danger-delete-modal>
+
+  @if (userPendingUnlock(); as unlockTarget) {
+    <dialog
+      open
+      class="modal fade show d-block border-0 p-0 text-body"
+      aria-modal="true"
+      aria-labelledby="unlockLectorModalTitle"
+      (keydown.escape)="!loading() && cancelUnlock()"
+      style="background-color: rgba(0, 0, 0, 0.5)"
+      data-testid="unlock-lector-modal"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content position-relative">
+          <app-loading-overlay [show]="loading()"></app-loading-overlay>
+          <div class="modal-header bg-warning-subtle">
+            <h5 id="unlockLectorModalTitle" class="modal-title fw-bold">
+              Confirm Unlock Lector
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              [disabled]="loading()"
+              (click)="cancelUnlock()"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-2">
+              Are you sure you want to manually unlock
+              <strong>{{ unlockTarget.firstName }} {{ unlockTarget.lastName }}</strong>
+              (<code>{{ unlockTarget.email }}</code>)?
+            </p>
+            <p class="text-muted small mb-0">
+              Unlocking marks this lector account as verified as of today for
+              one year, restoring access without requiring them to click the
+              &#64;pxl.be confirmation email link first.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="loading()"
+              (click)="cancelUnlock()"
+              data-testid="cancel-unlock-lector-btn"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              [disabled]="loading()"
+              (click)="confirmUnlock()"
+              data-testid="confirm-unlock-lector-btn"
+            >
+              Confirm Unlock
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  }
 
   <div class="card shadow-sm">
     <div
@@ -202,7 +283,7 @@
           </button>
         } @else if (visibleDeletableUsers().length > 0) {
           <span class="text-muted small">
-            Select orphaned users below to delete in batch.
+            Select users below to delete in batch.
           </span>
         }
       </div>
@@ -237,6 +318,7 @@
             <th>Email</th>
             <th>Roles</th>
             <th>Course Links</th>
+            <th>Verification</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
@@ -283,7 +365,42 @@
                   </span>
                 }
               </td>
+              <td>
+                @if (isLectorUser(user)) {
+                  @if (user.isLockedLector) {
+                    <span
+                      class="badge text-bg-danger d-inline-flex align-items-center gap-1"
+                      [attr.title]="getVerificationTooltip(user)"
+                      data-testid="lector-verification-badge"
+                    >
+                      <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                      Locked
+                    </span>
+                  } @else {
+                    <span
+                      class="badge text-bg-success d-inline-flex align-items-center gap-1"
+                      [attr.title]="getVerificationTooltip(user)"
+                      data-testid="lector-verification-badge"
+                    >
+                      <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                      Verified
+                    </span>
+                  }
+                } @else {
+                  <span class="text-muted small">—</span>
+                }
+              </td>
               <td class="text-end text-nowrap">
+                @if (user.canUnlockLector) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success me-2"
+                    (click)="requestUnlock(user)"
+                    [attr.data-testid]="'unlock-lector-btn-' + user.id"
+                  >
+                    Unlock
+                  </button>
+                }
                 @if (user.canPromoteToAdmin) {
                   <button
                     type="button"
@@ -328,7 +445,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="text-center text-muted py-5">
+              <td colspan="7" class="text-center text-muted py-5">
                 <i class="bi bi-people fs-3 d-block mb-2" aria-hidden="true"></i>
                 No users matched the current filters.
               </td>

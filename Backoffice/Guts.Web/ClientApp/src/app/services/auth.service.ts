@@ -6,11 +6,13 @@ import { LoginModel } from "../viewmodels/login.model";
 import { TokenModel } from "../viewmodels/token.model";
 import { RegisterModel } from "../viewmodels/register.model";
 import { LocalStorageKeys } from "../util/localstorage.keys";
-import { PostResult } from "../util/result";
+import { LoginResult, PostResult } from "../util/result";
 import { ConfirmEmailModel } from "../viewmodels/confirmemail.model";
 import { ForgotPasswordModel } from "../viewmodels/forgotpassword.model";
 import { ResetPasswordModel } from "../viewmodels/resetpassword.model";
 import { ChangePasswordModel } from "../viewmodels/changepassword.model";
+import { VerifyLectorModel } from "../viewmodels/verify-lector.model";
+import { ResendLectorVerificationModel } from "../viewmodels/resend-lector-verification.model";
 import { IUserProfile, UserProfile } from "../viewmodels/user.model";
 
 @Injectable({
@@ -102,7 +104,7 @@ export class AuthService {
     this.currentUserProfile = null;
   }
 
-  public login(model: LoginModel): Observable<PostResult> {
+  public login(model: LoginModel): Observable<LoginResult> {
     return this.http.post("api/auth/token", model).pipe(
       map((object: Object) => {
         const tokenModel = object as TokenModel;
@@ -122,7 +124,7 @@ export class AuthService {
         } else {
           // return false to indicate failed login
           this.setLoggedInState(false);
-          const result = new PostResult();
+          const result = new LoginResult();
           result.isAuthenticated = false;
           result.message = "No token present in returned token model";
           return result;
@@ -130,6 +132,27 @@ export class AuthService {
       }),
       catchError((errorResponse: HttpErrorResponse) => {
         this.setLoggedInState(false);
+        const errorBody = errorResponse.error as {
+          code?: string;
+          userId?: number;
+          email?: string;
+          resendToken?: string;
+          message?: string;
+        } | null;
+        if (
+          errorResponse.status === 403 &&
+          errorBody?.code === "LectorVerificationRequired"
+        ) {
+          const result = new LoginResult();
+          result.success = false;
+          result.isAuthenticated = true;
+          result.requiresLectorVerification = true;
+          result.verificationUserId = errorBody.userId;
+          result.verificationEmail = errorBody.email;
+          result.resendToken = errorBody.resendToken;
+          result.message = errorBody.message;
+          return of(result);
+        }
         return of(PostResult.fromHttpErrorResponse(errorResponse));
       }),
     );
@@ -172,64 +195,46 @@ export class AuthService {
   }
 
   public register(model: RegisterModel): Observable<PostResult> {
-    return this.http.post("api/auth/register", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/register", model);
   }
 
   public confirmEmail(model: ConfirmEmailModel): Observable<PostResult> {
-    return this.http.post("api/auth/confirmemail", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/confirmemail", model);
+  }
+
+  public verifyLector(model: VerifyLectorModel): Observable<PostResult> {
+    return this.postSimple("api/auth/verifylector", model);
+  }
+
+  public resendLectorVerification(
+    model: ResendLectorVerificationModel,
+  ): Observable<PostResult> {
+    return this.postSimple("api/auth/resend-lector-verification", model);
   }
 
   public sendForgotPasswordMail(
     model: ForgotPasswordModel,
   ): Observable<PostResult> {
-    return this.http.post("api/auth/forgotpassword", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/forgotpassword", model);
   }
 
   public resetPassword(model: ResetPasswordModel): Observable<PostResult> {
-    return this.http.post("api/auth/resetpassword", model).pipe(
-      map(() => {
-        return PostResult.success();
-      }),
-      catchError((errorResponse: HttpErrorResponse) => {
-        return of(PostResult.fromHttpErrorResponse(errorResponse));
-      }),
-    );
+    return this.postSimple("api/auth/resetpassword", model);
   }
 
   public changePassword(model: ChangePasswordModel): Observable<PostResult> {
-    return this.http
-      .post("api/auth/changepassword", {
-        currentPassword: model.currentPassword,
-        newPassword: model.newPassword,
-      })
-      .pipe(
-        map(() => {
-          return PostResult.success();
-        }),
-        catchError((errorResponse: HttpErrorResponse) => {
-          return of(PostResult.fromHttpErrorResponse(errorResponse));
-        }),
-      );
+    return this.postSimple("api/auth/changepassword", {
+      currentPassword: model.currentPassword,
+      newPassword: model.newPassword,
+    });
+  }
+
+  private postSimple(url: string, body: unknown): Observable<PostResult> {
+    return this.http.post(url, body).pipe(
+      map(() => PostResult.success()),
+      catchError((errorResponse: HttpErrorResponse) =>
+        of(PostResult.fromHttpErrorResponse(errorResponse)),
+      ),
+    );
   }
 }

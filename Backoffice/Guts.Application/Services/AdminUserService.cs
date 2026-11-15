@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,19 +16,22 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
         string search,
         string roleFilter,
         bool orphanedOnly,
+        bool lockedOnly,
         int currentUserId,
         int page = 1,
         int? pageSize = null)
     {
         PagedResult<UserWithRolesAndLinks> results =
-            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly, page, pageSize);
+            await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly, lockedOnly, page, pageSize);
         int adminCount = await userRepository.CountAdminsAsync();
+        DateTime utcNow = DateTime.UtcNow;
 
         List<AdminUserDto> items = results.Items.Select(entry =>
         {
             bool isAdmin = entry.Roles.Contains(Role.Constants.Admin);
             bool isLector = entry.Roles.Contains(Role.Constants.Lector);
             bool isLinked = entry.CourseLinks.HasAnyLinks;
+            bool isLockedLector = LectorVerificationPolicy.IsLocked(entry.User, entry.Roles, utcNow);
             return new AdminUserDto
             {
                 Id = entry.User.Id,
@@ -37,10 +41,13 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
                 Roles = entry.Roles,
                 IsLinkedToCourse = isLinked,
                 LinkedCourses = entry.LinkedCourses ?? [],
-                CanDelete = !isAdmin && entry.User.Id != currentUserId && !isLinked,
+                CanDelete = !isAdmin && entry.User.Id != currentUserId,
                 CanImpersonate = !isAdmin,
                 CanPromoteToAdmin = isLector && !isAdmin,
-                CanDemoteFromAdmin = isAdmin && adminCount > 1
+                CanDemoteFromAdmin = isAdmin && adminCount > 1,
+                LastVerifiedOnUtc = entry.User.LastVerifiedOnUtc,
+                IsLockedLector = isLockedLector,
+                CanUnlockLector = isLockedLector
             };
         }).ToList();
 
@@ -57,9 +64,8 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
     {
         User targetUser = await userRepository.GetByIdAsync(targetUserId) ?? throw new DataNotFoundException();
         IReadOnlyList<string> targetRoles = await userRepository.GetRolesAsync(targetUser);
-        UserCourseLinks links = await userRepository.GetCourseLinksAsync(targetUserId);
 
-        UserDeletionPolicy.EnsureCanBeDeleted(targetUser, currentUserId, targetRoles, links);
+        UserDeletionPolicy.EnsureCanBeDeleted(targetUser, currentUserId, targetRoles);
 
         await userRepository.DeleteAsync(targetUser);
     }
@@ -77,7 +83,7 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
 
         foreach (UserWithRolesAndLinks candidate in candidates)
         {
-            UserDeletionPolicy.EnsureCanBeDeleted(candidate.User, currentUserId, candidate.Roles, candidate.CourseLinks);
+            UserDeletionPolicy.EnsureCanBeDeleted(candidate.User, currentUserId, candidate.Roles);
         }
 
         await userRepository.DeleteRangeAsync(candidates.Select(c => c.User).ToList());
@@ -103,5 +109,17 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
         AdminRolePolicy.EnsureCanDemoteFromAdmin(targetRoles, currentAdminCount);
 
         await userRepository.RemoveFromRoleAsync(targetUser, Role.Constants.Admin);
+    }
+
+    public async Task UnlockLectorAsync(int targetUserId)
+    {
+        User targetUser = await userRepository.GetByIdAsync(targetUserId) ?? throw new DataNotFoundException();
+        IReadOnlyList<string> targetRoles = await userRepository.GetRolesAsync(targetUser);
+        DateTime utcNow = DateTime.UtcNow;
+
+        LectorVerificationPolicy.EnsureCanUnlock(targetUser, targetRoles, utcNow);
+
+        targetUser.MarkEmailVerified(utcNow);
+        await userRepository.UpdateAsync(targetUser);
     }
 }

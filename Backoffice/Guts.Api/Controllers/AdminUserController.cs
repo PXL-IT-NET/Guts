@@ -25,6 +25,7 @@ public class AdminUserController(IAdminUserService adminUserService) : Controlle
         [FromQuery] string search = null,
         [FromQuery] string role = null,
         [FromQuery] bool orphanedOnly = false,
+        [FromQuery] bool lockedOnly = false,
         [FromQuery] int page = 1,
         [FromQuery] int? pageSize = null)
     {
@@ -33,7 +34,7 @@ public class AdminUserController(IAdminUserService adminUserService) : Controlle
             return BadRequest();
         }
 
-        var users = await adminUserService.SearchUsersAsync(search, role, orphanedOnly, GetUserId(), page, pageSize);
+        var users = await adminUserService.SearchUsersAsync(search, role, orphanedOnly, lockedOnly, GetUserId(), page, pageSize);
         return Ok(users);
     }
 
@@ -92,22 +93,9 @@ public class AdminUserController(IAdminUserService adminUserService) : Controlle
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
-    public async Task<IActionResult> PromoteToAdmin(int userId)
+    public Task<IActionResult> PromoteToAdmin(int userId)
     {
-        if (userId < 1) return BadRequest();
-        try
-        {
-            await adminUserService.PromoteToAdminAsync(userId);
-            return NoContent();
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ContractException ex)
-        {
-            return BadRequest(ErrorModel.FromException(ex));
-        }
+        return ExecuteUserActionAsync(userId, () => adminUserService.PromoteToAdminAsync(userId));
     }
 
     [HttpPost("{userId}/demote-admin")]
@@ -115,12 +103,27 @@ public class AdminUserController(IAdminUserService adminUserService) : Controlle
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
-    public async Task<IActionResult> DemoteFromAdmin(int userId)
+    public Task<IActionResult> DemoteFromAdmin(int userId)
+    {
+        return ExecuteUserActionAsync(userId, () => adminUserService.DemoteFromAdminAsync(userId));
+    }
+
+    [HttpPost("{userId}/unlock")]
+    [ProducesResponseType((int)HttpStatusCode.NoContent)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public Task<IActionResult> UnlockLector(int userId)
+    {
+        return ExecuteUserActionAsync(userId, () => adminUserService.UnlockLectorAsync(userId));
+    }
+
+    private async Task<IActionResult> ExecuteUserActionAsync(int userId, System.Func<Task> action)
     {
         if (userId < 1) return BadRequest();
         try
         {
-            await adminUserService.DemoteFromAdminAsync(userId);
+            await action();
             return NoContent();
         }
         catch (DataNotFoundException)

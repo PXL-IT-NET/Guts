@@ -25,6 +25,9 @@ export interface IAdminUser {
   canImpersonate: boolean;
   canPromoteToAdmin: boolean;
   canDemoteFromAdmin: boolean;
+  lastVerifiedOnUtc: string | null;
+  isLockedLector: boolean;
+  canUnlockLector: boolean;
 }
 
 @Injectable({
@@ -39,6 +42,7 @@ export class AdminUserService {
     orphanedOnly: boolean = false,
     page: number = 1,
     pageSize: number | null = 25,
+    lockedOnly: boolean = false,
   ): Observable<GetResult<IPagedResult<IAdminUser>>> {
     let params = createPagedSearchParams(search, page, pageSize);
     if (role) {
@@ -46,6 +50,9 @@ export class AdminUserService {
     }
     if (orphanedOnly) {
       params = params.set("orphanedOnly", "true");
+    }
+    if (lockedOnly) {
+      params = params.set("lockedOnly", "true");
     }
 
     return this.http
@@ -91,16 +98,19 @@ export class AdminUserService {
   }
 
   public promoteToAdmin(userId: number): Observable<PostResult> {
-    return this.http.post(`api/admin/users/${userId}/promote-admin`, {}).pipe(
-      map(() => PostResult.success()),
-      catchError((errorResponse: HttpErrorResponse) =>
-        of(PostResult.fromHttpErrorResponse(errorResponse)),
-      ),
-    );
+    return this.postUserAction(`api/admin/users/${userId}/promote-admin`);
   }
 
   public demoteFromAdmin(userId: number): Observable<PostResult> {
-    return this.http.post(`api/admin/users/${userId}/demote-admin`, {}).pipe(
+    return this.postUserAction(`api/admin/users/${userId}/demote-admin`);
+  }
+
+  public unlockLector(userId: number): Observable<PostResult> {
+    return this.postUserAction(`api/admin/users/${userId}/unlock`);
+  }
+
+  private postUserAction(url: string): Observable<PostResult> {
+    return this.http.post(url, {}).pipe(
       map(() => PostResult.success()),
       catchError((errorResponse: HttpErrorResponse) =>
         of(PostResult.fromHttpErrorResponse(errorResponse)),

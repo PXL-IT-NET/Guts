@@ -3,7 +3,7 @@ import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal 
 import { Router, ActivatedRoute } from "@angular/router";
 import { AuthService } from "../../services/auth.service";
 import { LoginModel } from "../../viewmodels/login.model";
-import { PostResult } from "../../util/result";
+import { LoginResult } from "../../util/result";
 
 @Component({
   standalone: false,
@@ -72,9 +72,17 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  private handleLoginResult(result: PostResult) {
+  private handleLoginResult(result: LoginResult) {
     if (result.success) {
       void this.router.navigate(["/"]);
+    } else if (result.requiresLectorVerification) {
+      void this.router.navigate(["/lector-verification-sent"], {
+        state: {
+          email: result.verificationEmail ?? this.model.email,
+          userId: result.verificationUserId,
+          resendToken: result.resendToken,
+        },
+      });
     } else if (!result.isAuthenticated) {
       this.error = "Wrong email-password combination";
     } else {

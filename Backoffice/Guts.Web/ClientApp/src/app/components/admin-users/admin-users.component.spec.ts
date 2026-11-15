@@ -29,6 +29,9 @@ describe("AdminUsersComponent", () => {
     canImpersonate: true,
     canPromoteToAdmin: true,
     canDemoteFromAdmin: false,
+    lastVerifiedOnUtc: null,
+    isLockedLector: true,
+    canUnlockLector: true,
   };
 
   const student1: IAdminUser = {
@@ -43,6 +46,9 @@ describe("AdminUsersComponent", () => {
     canImpersonate: true,
     canPromoteToAdmin: false,
     canDemoteFromAdmin: false,
+    lastVerifiedOnUtc: null,
+    isLockedLector: false,
+    canUnlockLector: false,
   };
 
   const linkedStudent: IAdminUser = {
@@ -56,10 +62,13 @@ describe("AdminUsersComponent", () => {
       { id: 1, code: "DOTNET1", name: ".NET Essentials" },
       { id: 2, code: "JAVA1", name: "Java Programming" },
     ],
-    canDelete: false,
+    canDelete: true,
     canImpersonate: true,
     canPromoteToAdmin: false,
     canDemoteFromAdmin: false,
+    lastVerifiedOnUtc: null,
+    isLockedLector: false,
+    canUnlockLector: false,
   };
 
   beforeEach(async () => {
@@ -69,6 +78,7 @@ describe("AdminUsersComponent", () => {
       "deleteUsers",
       "promoteToAdmin",
       "demoteFromAdmin",
+      "unlockLector",
     ]);
     impersonationServiceSpy = jasmine.createSpyObj("ImpersonationService", [
       "impersonate",
@@ -89,6 +99,7 @@ describe("AdminUsersComponent", () => {
     adminUserServiceSpy.deleteUsers.and.returnValue(
       of(GetResult.success({ deletedCount: 2 })),
     );
+    adminUserServiceSpy.unlockLector.and.returnValue(of(PostResult.success()));
     toastrSpy = createToastrSpy();
 
     await TestBed.configureTestingModule({
@@ -117,15 +128,27 @@ describe("AdminUsersComponent", () => {
     expect(warning.textContent).toContain("TEACHER");
   });
 
-  it("should allow selecting all visible deletable users and deleting them with toast confirmation", () => {
+  it("should show extra linked data warning and require confirmation when requesting deletion of a linked student", () => {
+    component.requestDelete(linkedStudent);
+    fixture.detectChanges();
+
+    const warning = fixture.nativeElement.querySelector(
+      "[data-testid='linked-delete-warning']",
+    );
+    expect(warning).toBeTruthy();
+    expect(warning.textContent).toContain("linked to course data");
+    expect(component.requiresSingleDeleteConfirmation(linkedStudent)).toBeTrue();
+  });
+
+  it("should allow selecting all visible deletable users including linked users and deleting them with toast confirmation", () => {
     const selectAllCheckbox = fixture.nativeElement.querySelector(
       "[data-testid='select-all-users-checkbox']",
     ) as HTMLInputElement;
     selectAllCheckbox.click();
     fixture.detectChanges();
 
-    expect(component.selectedCount()).toBe(2);
-    expect(component.isSelected(linkedStudent)).toBeFalse();
+    expect(component.selectedCount()).toBe(3);
+    expect(component.isSelected(linkedStudent)).toBeTrue();
 
     const deleteSelectedBtn = fixture.nativeElement.querySelector(
       "[data-testid='delete-selected-users-btn']",
@@ -139,7 +162,7 @@ describe("AdminUsersComponent", () => {
     confirmBtn.click();
     fixture.detectChanges();
 
-    expect(adminUserServiceSpy.deleteUsers).toHaveBeenCalledWith([10, 20]);
+    expect(adminUserServiceSpy.deleteUsers).toHaveBeenCalledWith([10, 20, 21]);
     expect(toastrSpy.success).toHaveBeenCalledWith(
       "Deleted 2 user(s).",
       "Success",
@@ -154,6 +177,7 @@ describe("AdminUsersComponent", () => {
       false,
       1,
       100,
+      false,
     );
 
     component.onPageSizeChange(null);
@@ -163,6 +187,7 @@ describe("AdminUsersComponent", () => {
       false,
       1,
       null,
+      false,
     );
   });
 
@@ -189,6 +214,7 @@ describe("AdminUsersComponent", () => {
       false,
       2,
       25,
+      false,
     );
   });
 
@@ -226,7 +252,7 @@ describe("AdminUsersComponent", () => {
     );
   });
 
-  it("should filter immediately when selecting a role or toggling orphaned only and reset filters", () => {
+  it("should filter immediately when selecting a role or toggling orphaned/locked only and reset filters", () => {
     component.selectRoleFilter("student");
     expect(adminUserServiceSpy.searchUsers).toHaveBeenCalledWith(
       "",
@@ -234,6 +260,7 @@ describe("AdminUsersComponent", () => {
       false,
       1,
       25,
+      false,
     );
 
     component.onOrphanedOnlyChange(true);
@@ -243,6 +270,17 @@ describe("AdminUsersComponent", () => {
       true,
       1,
       25,
+      false,
+    );
+
+    component.onLockedOnlyChange(true);
+    expect(adminUserServiceSpy.searchUsers).toHaveBeenCalledWith(
+      "",
+      "student",
+      true,
+      1,
+      25,
+      true,
     );
 
     component.searchTerm = "alice";
@@ -250,12 +288,53 @@ describe("AdminUsersComponent", () => {
     expect(component.searchTerm).toBe("");
     expect(component.roleFilter).toBe("");
     expect(component.orphanedOnly).toBeFalse();
+    expect(component.lockedOnly).toBeFalse();
     expect(adminUserServiceSpy.searchUsers).toHaveBeenCalledWith(
       "",
       "",
       false,
       1,
       25,
+      false,
+    );
+  });
+
+  it("should display locked verification badge for locked lector and require confirmation modal before unlocking", () => {
+    const verificationBadges = fixture.nativeElement.querySelectorAll(
+      "[data-testid='lector-verification-badge']",
+    ) as NodeListOf<HTMLElement>;
+    expect(verificationBadges).toHaveSize(1);
+    expect(verificationBadges[0].textContent?.trim()).toBe("Locked");
+
+    const unlockBtn = fixture.nativeElement.querySelector(
+      "[data-testid='unlock-lector-btn-10']",
+    ) as HTMLButtonElement;
+    unlockBtn.click();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("[data-testid='unlock-lector-modal']"),
+    ).toBeTruthy();
+
+    const cancelBtn = fixture.nativeElement.querySelector(
+      "[data-testid='cancel-unlock-lector-btn']",
+    ) as HTMLButtonElement;
+    cancelBtn.click();
+    fixture.detectChanges();
+    expect(adminUserServiceSpy.unlockLector).not.toHaveBeenCalled();
+
+    unlockBtn.click();
+    fixture.detectChanges();
+    const confirmBtn = fixture.nativeElement.querySelector(
+      "[data-testid='confirm-unlock-lector-btn']",
+    ) as HTMLButtonElement;
+    confirmBtn.click();
+    fixture.detectChanges();
+
+    expect(adminUserServiceSpy.unlockLector).toHaveBeenCalledWith(10);
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "Lector 'teacher@pxl.be' unlocked.",
+      "Success",
     );
   });
 

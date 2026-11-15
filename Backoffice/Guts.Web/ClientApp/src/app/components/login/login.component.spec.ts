@@ -62,6 +62,28 @@ describe("LoginComponent", () => {
     expect(component.error).toBe("Wrong email-password combination");
 
     authServiceSpy.login.and.returnValue(
+      of({
+        success: false,
+        isAuthenticated: true,
+        requiresLectorVerification: true,
+        verificationUserId: 42,
+        verificationEmail: "lector@pxl.be",
+        resendToken: "resend-tok",
+      }),
+    );
+    component.login();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(
+      ["/lector-verification-sent"],
+      {
+        state: {
+          email: "lector@pxl.be",
+          userId: 42,
+          resendToken: "resend-tok",
+        },
+      },
+    );
+
+    authServiceSpy.login.and.returnValue(
       of({ success: false, isAuthenticated: true, message: "Locked out" }),
     );
     component.login();

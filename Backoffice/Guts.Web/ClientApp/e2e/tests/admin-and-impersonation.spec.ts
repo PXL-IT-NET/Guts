@@ -95,6 +95,9 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
               canImpersonate: true,
               canPromoteToAdmin: true,
               canDemoteFromAdmin: false,
+              lastVerifiedOnUtc: null,
+              isLockedLector: true,
+              canUnlockLector: true,
             },
           ],
           totalCount: 1,
@@ -154,6 +157,9 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
           canImpersonate: true,
           canPromoteToAdmin: false,
           canDemoteFromAdmin: false,
+          lastVerifiedOnUtc: null,
+          isLockedLector: false,
+          canUnlockLector: false,
         },
         {
           id: 21,
@@ -166,10 +172,13 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
             { id: 1, code: "DOTNET1", name: ".NET Essentials" },
             { id: 2, code: "JAVA1", name: "Java Programming" },
           ],
-          canDelete: false,
+          canDelete: true,
           canImpersonate: true,
           canPromoteToAdmin: false,
           canDemoteFromAdmin: false,
+          lastVerifiedOnUtc: null,
+          isLockedLector: false,
+          canUnlockLector: false,
         },
       ].filter((u) => !batchDeletedIds.includes(u.id));
 
@@ -209,7 +218,7 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
       .click();
     await adminPage.locator("[data-testid='confirm-batch-delete-btn']").click();
 
-    await expect.poll(() => batchDeletedIds).toEqual([20]);
+    await expect.poll(() => batchDeletedIds).toEqual([20, 21]);
 
     await adminPage
       .locator("[data-testid='page-size-select']")
@@ -299,5 +308,73 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
     impersonating = false;
     await banner.getByRole("button", { name: "Stop Impersonating" }).click();
     await expect(banner).toHaveCount(0);
+  });
+
+  test("admin can filter locked lectors and manually unlock a lector via confirmation modal", async ({
+    adminPage,
+  }) => {
+    let unlocked = false;
+    const requestedLockedFlags: string[] = [];
+
+    await adminPage.route("**/api/admin/users/10/unlock", async (route) => {
+      unlocked = true;
+      await route.fulfill({ status: 204, body: "" });
+    });
+
+    await adminPage.route("**/api/admin/users?**", async (route) => {
+      const url = new URL(route.request().url());
+      requestedLockedFlags.push(url.searchParams.get("lockedOnly") ?? "false");
+
+      const items = [
+        {
+          id: 10,
+          email: "locked.teacher@pxl.be",
+          firstName: "Locked",
+          lastName: "Teacher",
+          roles: ["lector"],
+          isLinkedToCourse: false,
+          linkedCourses: [],
+          canDelete: true,
+          canImpersonate: true,
+          canPromoteToAdmin: true,
+          canDemoteFromAdmin: false,
+          lastVerifiedOnUtc: unlocked ? new Date().toISOString() : null,
+          isLockedLector: !unlocked,
+          canUnlockLector: !unlocked,
+        },
+      ];
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items,
+          totalCount: items.length,
+          page: 1,
+          pageSize: 25,
+        }),
+      });
+    });
+
+    await adminPage.goto("/admin/users");
+    await expect(
+      adminPage.locator("[data-testid='lector-verification-badge']"),
+    ).toHaveText("Locked");
+
+    await adminPage.locator("[data-testid='locked-only-switch']").check();
+    await expect.poll(() => requestedLockedFlags.at(-1)).toBe("true");
+
+    await adminPage.locator("[data-testid='unlock-lector-btn-10']").click();
+    await expect(
+      adminPage.locator("[data-testid='unlock-lector-modal']"),
+    ).toBeVisible();
+    await adminPage
+      .locator("[data-testid='confirm-unlock-lector-btn']")
+      .click();
+
+    await expect.poll(() => unlocked).toBe(true);
+    await expect(
+      adminPage.locator("[data-testid='lector-verification-badge']"),
+    ).toHaveText("Verified");
   });
 });

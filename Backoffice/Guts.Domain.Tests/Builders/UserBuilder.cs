@@ -42,6 +42,22 @@ public class UserBuilder
         return this;
     }
 
+    public UserBuilder WithEmail(string email)
+    {
+        _user.Email = email;
+        _user.UserName = email;
+        return this;
+    }
+
+    public UserBuilder WithLastVerifiedOnUtc(DateTime? verifiedOnUtc)
+    {
+        if (verifiedOnUtc.HasValue)
+        {
+            _user.MarkEmailVerified(verifiedOnUtc.Value);
+        }
+        return this;
+    }
+
     public User Build()
     {
         return _user;

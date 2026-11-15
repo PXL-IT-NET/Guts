@@ -37,42 +37,38 @@ public class UserDeletionPolicyTests
     }
 
     [Test]
-    public void EnsureCanBeDeleted_OrphanedNonAdminNotSelf_DoesNotThrow()
+    public void EnsureCanBeDeleted_NonAdminNotSelf_DoesNotThrow()
     {
         var target = new User { Id = 42, Email = "old@student.pxl.be" };
-        var links = new UserCourseLinks(false, false, false, false, false, false);
 
         Assert.DoesNotThrow(() =>
-            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Student], links));
+            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Student]));
     }
 
     [Test]
     public void EnsureCanBeDeleted_Self_ThrowsContractException()
     {
         var target = new User { Id = 1, Email = "me@pxl.be" };
-        var links = new UserCourseLinks(false, false, false, false, false, false);
 
         Assert.Throws<ContractException>(() =>
-            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Lector], links));
+            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Lector]));
     }
 
     [Test]
     public void EnsureCanBeDeleted_AdminUser_ThrowsContractException()
     {
         var target = new User { Id = 42, Email = "admin@pxl.be" };
-        var links = new UserCourseLinks(false, false, false, false, false, false);
 
         Assert.Throws<ContractException>(() =>
-            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Admin], links));
+            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, [Role.Constants.Admin]));
     }
 
     [Test]
-    public void EnsureCanBeDeleted_UserWithCourseLinks_ThrowsContractException()
+    public void EnsureCanBeDeleted_LinkedNonAdminUser_DoesNotThrow()
     {
         var target = new User { Id = 42, Email = "active@student.pxl.be" };
-        var links = new UserCourseLinks(false, true, false, false, false, false);
 
-        Assert.Throws<ContractException>(() =>
-            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, new List<string> { Role.Constants.Student }, links));
+        Assert.DoesNotThrow(() =>
+            UserDeletionPolicy.EnsureCanBeDeleted(target, currentUserId: 1, new List<string> { Role.Constants.Student }));
     }
 }

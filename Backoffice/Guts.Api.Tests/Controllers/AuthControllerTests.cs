@@ -1,4 +1,5 @@
 using Guts.Api.Controllers;
+using Guts.Api.Models;
 using Guts.Api.Tests.Builders;
 using Guts.Application.Captcha;
 using Guts.Application.Communication;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Guts.Application;
 using Guts.Domain.LoginSessionAggregate;
 using Guts.Domain.RoleAggregate;
@@ -53,6 +55,8 @@ public class AuthControllerTests
 
         _userManagerMock.Setup(manager => manager.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(new IdentityResult());
+        _userManagerMock.Setup(manager => manager.UpdateAsync(It.IsAny<User>()))
+            .ReturnsAsync(IdentityResult.Success);
 
         var expectedCaptchaResult = new CaptchaVerificationResult { Success = true };
         _captchaValidatorMock = new();
@@ -528,8 +532,10 @@ public class AuthControllerTests
 
         //Assert
         Assert.That(result, Is.Not.Null);
+        Assert.That(existingUser.LastVerifiedOnUtc, Is.Not.Null);
         _userManagerMock.Verify(manager => manager.FindByIdAsync(model.UserId), Times.Once);
         _userManagerMock.Verify(manager => manager.ConfirmEmailAsync(existingUser, model.Token), Times.Once);
+        _userManagerMock.Verify(manager => manager.UpdateAsync(existingUser), Times.Once);
     }
 
     [Test]
@@ -676,8 +682,10 @@ public class AuthControllerTests
 
         //Assert
         Assert.That(result, Is.Not.Null);
+        Assert.That(existingUser.LastVerifiedOnUtc, Is.Not.Null);
         _userManagerMock.Verify(manager => manager.FindByIdAsync(model.UserId), Times.Once);
         _userManagerMock.Verify(manager => manager.ResetPasswordAsync(existingUser, model.Token, model.Password), Times.Once);
+        _userManagerMock.Verify(manager => manager.UpdateAsync(existingUser), Times.Once);
     }
 
     [Test]
@@ -918,5 +926,203 @@ public class AuthControllerTests
         //Assert
         Assert.That(result, Is.Not.Null);
         _loginSessionServiceMock.Verify(service => service.CancelSessionAsync(somePublicIdentifier, clientIp), Times.Once);
+    }
+
+    [TestCase(Role.Constants.Lector)]
+    [TestCase(Role.Constants.Lector, Role.Constants.Admin)]
+    public async Task CreateToken_LockedLectorWithValidPassword_ReturnsForbiddenSendsEmailAndSkipsLoginSession(params string[] roles)
+    {
+        // Arrange
+        var model = new LoginModelBuilder().WithSession().Build();
+        var lockedLector = new User
+        {
+            Id = 42,
+            Email = "lector@pxl.be",
+            UserName = "lector@pxl.be",
+            EmailConfirmed = true
+        };
+        _userManagerMock.Setup(m => m.FindByNameAsync(model.Email)).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(lockedLector, model.Password)).ReturnsAsync(true);
+        _userManagerMock.Setup(m => m.GetRolesAsync(lockedLector)).ReturnsAsync([.. roles]);
+        _userManagerMock.Setup(m => m.GenerateUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationTokenPurpose))
+            .ReturnsAsync("verify-token-123");
+        _userManagerMock.Setup(m => m.GenerateUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationResendTokenPurpose))
+            .ReturnsAsync("resend-token-456");
+
+        // Act
+        var result = await _controller.CreateToken(model) as ObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.StatusCode, Is.EqualTo((int)HttpStatusCode.Forbidden));
+        var payload = result.Value as LectorVerificationRequiredModel;
+        Assert.That(payload, Is.Not.Null);
+        Assert.That(payload.Code, Is.EqualTo("LectorVerificationRequired"));
+        Assert.That(payload.UserId, Is.EqualTo(42));
+        Assert.That(payload.Email, Is.EqualTo("lector@pxl.be"));
+        Assert.That(payload.ResendToken, Is.EqualTo("resend-token-456"));
+
+        _mailSenderMock.Verify(s => s.SendLectorVerificationEmailMessageAsync(lockedLector, "verify-token-123"), Times.Once);
+        _accessPassFactoryMock.Verify(f => f.Create(It.IsAny<User>(), It.IsAny<IList<Claim>>(), It.IsAny<IList<string>>()), Times.Never);
+        _loginSessionServiceMock.Verify(s => s.SetLoginTokenForSessionAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateToken_LockedLectorWithWrongPassword_ReturnsUnauthorizedWithoutSendingEmail()
+    {
+        // Arrange
+        var model = new LoginModelBuilder().Build();
+        var lockedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = true };
+        _userManagerMock.Setup(m => m.FindByNameAsync(model.Email)).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(lockedLector, model.Password)).ReturnsAsync(false);
+        _userManagerMock.Setup(m => m.GetRolesAsync(lockedLector)).ReturnsAsync([Role.Constants.Lector]);
+
+        // Act
+        var result = await _controller.CreateToken(model) as UnauthorizedResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        _mailSenderMock.Verify(s => s.SendLectorVerificationEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task CreateToken_RecentlyVerifiedLector_ReturnsOkWithToken()
+    {
+        // Arrange
+        var model = new LoginModelBuilder().Build();
+        var verifiedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = true };
+        verifiedLector.MarkEmailVerified(DateTime.UtcNow.AddDays(-10));
+        var accessPass = new TokenAccessPass { Token = "jwt-token" };
+
+        _userManagerMock.Setup(m => m.FindByNameAsync(model.Email)).ReturnsAsync(verifiedLector);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(verifiedLector, model.Password)).ReturnsAsync(true);
+        _userManagerMock.Setup(m => m.GetRolesAsync(verifiedLector)).ReturnsAsync([Role.Constants.Lector]);
+        _userManagerMock.Setup(m => m.GetClaimsAsync(verifiedLector)).ReturnsAsync([]);
+        _accessPassFactoryMock.Setup(f => f.Create(verifiedLector, It.IsAny<IList<Claim>>(), It.IsAny<IList<string>>())).Returns(accessPass);
+
+        // Act
+        var result = await _controller.CreateToken(model) as OkObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Value, Is.SameAs(accessPass));
+        _mailSenderMock.Verify(s => s.SendLectorVerificationEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ResendLectorVerification_ValidResendToken_SendsFreshEmailAndReturnsOk()
+    {
+        // Arrange
+        var lockedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = true };
+        var model = new ResendLectorVerificationModel { UserId = "42", ResendToken = "resend-token" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("42")).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.VerifyUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationResendTokenPurpose,
+                "resend-token"))
+            .ReturnsAsync(true);
+        _userManagerMock.Setup(m => m.GetRolesAsync(lockedLector)).ReturnsAsync([Role.Constants.Lector]);
+        _userManagerMock.Setup(m => m.GenerateUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationTokenPurpose))
+            .ReturnsAsync("fresh-verify-token");
+
+        // Act
+        var result = await _controller.ResendLectorVerification(model) as OkResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        _mailSenderMock.Verify(s => s.SendLectorVerificationEmailMessageAsync(lockedLector, "fresh-verify-token"), Times.Once);
+    }
+
+    [Test]
+    public async Task ResendLectorVerification_InvalidResendToken_ReturnsBadRequest()
+    {
+        // Arrange
+        var lockedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = true };
+        var model = new ResendLectorVerificationModel { UserId = "42", ResendToken = "bad-token" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("42")).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.VerifyUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationResendTokenPurpose,
+                "bad-token"))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.ResendLectorVerification(model) as BadRequestObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        _mailSenderMock.Verify(s => s.SendLectorVerificationEmailMessageAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task VerifyLector_ValidToken_MarksEmailVerifiedAndConfirmedAndReturnsOk()
+    {
+        // Arrange
+        var lockedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = false };
+        var model = new VerifyLectorModel { UserId = "42", Token = "verify-token" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("42")).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.VerifyUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationTokenPurpose,
+                "verify-token"))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.VerifyLector(model) as OkResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(lockedLector.EmailConfirmed, Is.True);
+        Assert.That(lockedLector.LastVerifiedOnUtc, Is.Not.Null);
+        _userManagerMock.Verify(m => m.UpdateAsync(lockedLector), Times.Once);
+    }
+
+    [Test]
+    public async Task VerifyLector_InvalidToken_ReturnsBadRequest()
+    {
+        // Arrange
+        var lockedLector = new User { Id = 42, Email = "lector@pxl.be", EmailConfirmed = true };
+        var model = new VerifyLectorModel { UserId = "42", Token = "expired" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("42")).ReturnsAsync(lockedLector);
+        _userManagerMock.Setup(m => m.VerifyUserTokenAsync(
+                lockedLector,
+                TokenOptions.DefaultProvider,
+                AuthController.LectorVerificationTokenPurpose,
+                "expired"))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.VerifyLector(model) as BadRequestObjectResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(lockedLector.LastVerifiedOnUtc, Is.Null);
+        _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    [Test]
+    public async Task VerifyLector_UserNotFound_ReturnsOkWithoutLeaking()
+    {
+        // Arrange
+        var model = new VerifyLectorModel { UserId = "999", Token = "any" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("999")).ReturnsAsync((User)null);
+
+        // Act
+        var result = await _controller.VerifyLector(model) as OkResult;
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
     }
 }
