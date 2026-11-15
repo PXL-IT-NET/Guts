@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
+using Guts.Application.Services.Deletion;
 using Guts.Application.Services.Period;
 using Guts.Common.Extensions;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.Tests.Builders;
 using Moq;
@@ -17,14 +20,16 @@ public class PeriodServiceTests
     private PeriodService _service;
     private Mock<IPeriodFactory> _periodFactoryMock;
     private Mock<IPeriodRepository> _periodRepositoryMock;
+    private Mock<IDeletionJobService> _deletionJobServiceMock;
 
     [SetUp]
     public void Setup()
     {
         _periodFactoryMock = new Mock<IPeriodFactory>();
         _periodRepositoryMock = new Mock<IPeriodRepository>();
+        _deletionJobServiceMock = new Mock<IDeletionJobService>();
 
-        _service = new PeriodService(_periodFactoryMock.Object, _periodRepositoryMock.Object);
+        _service = new PeriodService(_periodFactoryMock.Object, _periodRepositoryMock.Object, _deletionJobServiceMock.Object);
     }
 
     [Test]
@@ -97,27 +102,43 @@ public class PeriodServiceTests
     }
 
     [Test]
-    public async Task DeletePeriodAsync_PastPeriod_ShouldValidateAndDelete()
+    public async Task DeletePeriodAsync_PastPeriod_ShouldMarkAsDeletingAndQueueDeletionJob()
     {
         int periodId = Random.Shared.NextPositive();
         var periodMock = new Mock<IPeriod>();
+        periodMock.Setup(p => p.Id).Returns(periodId);
+        periodMock.Setup(p => p.Description).Returns("2020-2021");
+        var job = new DeletionJobBuilder().WithTarget(DeletionTargetType.Period, periodId, "2020-2021").Build();
+        var expectedDto = new DeletionJobDto { JobId = job.Id, TargetId = periodId };
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
+        _deletionJobServiceMock
+            .Setup(s => s.QueueDeletionJobAsync(
+                DeletionTargetType.Period,
+                periodId,
+                "2020-2021",
+                It.IsAny<Func<DeletionJob, Task>>()))
+            .Returns<DeletionTargetType, int, string, Func<DeletionJob, Task>>(async (_, _, _, persist) =>
+            {
+                await persist(job);
+                return expectedDto;
+            });
 
-        await _service.DeletePeriodAsync(periodId);
+        var result = await _service.DeletePeriodAsync(periodId);
 
-        periodMock.Verify(p => p.EnsureCanBeDeleted(), Times.Once);
-        _periodRepositoryMock.Verify(repo => repo.DeleteAsync(periodMock.Object), Times.Once);
+        periodMock.Verify(p => p.MarkAsDeleting(), Times.Once);
+        _periodRepositoryMock.Verify(repo => repo.QueueDeletionAsync(periodMock.Object, job), Times.Once);
+        Assert.That(result, Is.SameAs(expectedDto));
     }
 
     [Test]
-    public void DeletePeriodAsync_WhenEnsureCanBeDeletedThrows_ShouldNotDeleteFromRepository()
+    public void DeletePeriodAsync_WhenMarkAsDeletingThrows_ShouldNotQueueDeletion()
     {
         int periodId = Random.Shared.NextPositive();
         var periodMock = new Mock<IPeriod>();
-        periodMock.Setup(p => p.EnsureCanBeDeleted()).Throws(new Guts.Common.ContractException("Active"));
+        periodMock.Setup(p => p.MarkAsDeleting()).Throws(new Guts.Common.ContractException("Active"));
         _periodRepositoryMock.Setup(repo => repo.GetPeriodAsync(periodId)).ReturnsAsync(periodMock.Object);
 
         Assert.ThrowsAsync<Guts.Common.ContractException>(() => _service.DeletePeriodAsync(periodId));
-        _periodRepositoryMock.Verify(repo => repo.DeleteAsync(It.IsAny<IPeriod>()), Times.Never);
+        _periodRepositoryMock.Verify(repo => repo.QueueDeletionAsync(It.IsAny<IPeriod>(), It.IsAny<DeletionJob>()), Times.Never);
     }
 }

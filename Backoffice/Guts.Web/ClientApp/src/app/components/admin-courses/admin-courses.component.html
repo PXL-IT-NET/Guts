@@ -55,9 +55,20 @@
   }
 
   <app-danger-delete-modal
-    [show]="coursePendingDelete() !== null"
+    [show]="coursePendingDelete() !== null || deletionTracker.inProgress()"
     [loading]="loading()"
-    title="Danger: Delete Course"
+    [deletionInProgress]="deletionTracker.inProgress()"
+    [progressPercentage]="deletionTracker.percentage()"
+    [progressLabel]="deletionTracker.currentPhase()"
+    [progressDetails]="deletionTracker.progressDetails()"
+    [title]="
+      deletionTracker.inProgress()
+        ? 'Deleting Course: ' +
+          (coursePendingDelete()?.name ??
+            deletionTracker.activeJob()?.targetLabel ??
+            '')
+        : 'Danger: Delete Course'
+    "
     [warningMessage]="
       'You are about to permanently delete course ' +
       (coursePendingDelete()?.code ?? '') +

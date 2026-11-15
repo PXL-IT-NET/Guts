@@ -27,6 +27,8 @@ public class Period : AggregateRoot, IPeriod
 
     public DateTime Until { get; private set; }
 
+    public bool IsDeleting { get; private set; }
+
     public bool IsActive
     {
         get
@@ -47,6 +49,7 @@ public class Period : AggregateRoot, IPeriod
 
     public void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods)
     {
+        Contracts.Require(!IsDeleting, "A period that is being deleted cannot be updated.");
         Contracts.Require(from < until, "The 'from' date must be before the 'until' date.");
         Contracts.Require(IsActive || (from.Date == From.Date && until.Date == Until.Date),
             "Start and end dates of an inactive period cannot be changed.");
@@ -74,6 +77,13 @@ public class Period : AggregateRoot, IPeriod
     public void EnsureCanBeDeleted()
     {
         Contracts.Require(!IsActive, "An active period cannot be deleted.");
+    }
+
+    public void MarkAsDeleting()
+    {
+        EnsureCanBeDeleted();
+        Contracts.Require(!IsDeleting, "This period is already queued for deletion.");
+        IsDeleting = true;
     }
 
     public class Factory : IPeriodFactory

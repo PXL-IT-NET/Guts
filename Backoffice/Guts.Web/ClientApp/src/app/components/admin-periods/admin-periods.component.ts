@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   inject,
   signal,
@@ -10,6 +11,7 @@ import { FormsModule } from "@angular/forms";
 import { finalize } from "rxjs";
 import { ToastrService } from "ngx-toastr";
 import { PeriodService } from "../../services/period.service";
+import { DeletionJobService } from "../../services/deletion-job.service";
 import { PeriodModel } from "../../viewmodels/period.model";
 import { LoadingOverlayComponent } from "../loading-overlay/loading-overlay.component";
 import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete-modal.component";
@@ -28,6 +30,8 @@ import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete
 })
 export class AdminPeriodsComponent implements OnInit {
   private readonly periodService = inject(PeriodService);
+  private readonly deletionJobService = inject(DeletionJobService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly toastr = inject(ToastrService);
 
   public readonly periods = signal<PeriodModel[]>([]);
@@ -41,8 +45,28 @@ export class AdminPeriodsComponent implements OnInit {
 
   public readonly periodPendingDelete = signal<PeriodModel | null>(null);
 
+  public readonly deletionTracker = this.deletionJobService.createTracker({
+    destroyRef: this.destroyRef,
+    targetType: "Period",
+    entityNoun: "Period",
+    onCompleted: (job) => {
+      const period = this.periodPendingDelete();
+      this.periodPendingDelete.set(null);
+      this.toastr.success(
+        `Period '${period?.description ?? job.targetLabel}' deleted.`,
+        "Success",
+      );
+      this.loadPeriods();
+    },
+    onFailed: (message) => {
+      this.periodPendingDelete.set(null);
+      this.toastr.error(message, "Error");
+    },
+  });
+
   public ngOnInit(): void {
     this.loadPeriods();
+    this.deletionTracker.resumeActive();
   }
 
   public loadPeriods(): void {
@@ -155,12 +179,14 @@ export class AdminPeriodsComponent implements OnInit {
       .deletePeriod(period.id)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((result) => {
-        this.periodPendingDelete.set(null);
         if (result.success) {
-          this.toastr.success(`Period '${period.description}' deleted.`, "Success");
-          this.loadPeriods();
+          this.deletionTracker.trackJob(result.value);
         } else {
-          this.toastr.error(result.message || "Could not delete period.", "Error");
+          this.periodPendingDelete.set(null);
+          this.toastr.error(
+            result.message || "Could not delete period.",
+            "Error",
+          );
         }
       });
   }

@@ -10,10 +10,13 @@ public interface IPeriod : IEntity
     DateTime From { get; }
     DateTime Until { get; }
     bool IsActive { get; }
+    bool IsDeleting { get; }
 
     void Update(string description, DateTime from, DateTime until, IReadOnlyList<IPeriod> allPeriods);
 
     bool OverlapsWith(DateTime from, DateTime until);
 
     void EnsureCanBeDeleted();
+
+    void MarkAsDeleting();
 }

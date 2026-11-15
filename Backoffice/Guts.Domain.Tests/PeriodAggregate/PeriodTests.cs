@@ -236,4 +236,41 @@ public class PeriodTests
 
         Assert.DoesNotThrow(() => futurePeriod.EnsureCanBeDeleted());
     }
+
+    [Test]
+    public void MarkAsDeleting_InactivePeriod_SetsIsDeletingTrue()
+    {
+        Period pastPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-1)).Build();
+
+        pastPeriod.MarkAsDeleting();
+
+        Assert.That(pastPeriod.IsDeleting, Is.True);
+    }
+
+    [Test]
+    public void MarkAsDeleting_ActivePeriod_ThrowsContractException()
+    {
+        Period activePeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1)).Build();
+
+        Assert.Throws<ContractException>(() => activePeriod.MarkAsDeleting());
+    }
+
+    [Test]
+    public void MarkAsDeleting_AlreadyDeleting_ThrowsContractException()
+    {
+        Period pastPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-1)).Build();
+        pastPeriod.MarkAsDeleting();
+
+        Assert.Throws<ContractException>(() => pastPeriod.MarkAsDeleting());
+    }
+
+    [Test]
+    public void Update_WhenDeleting_ThrowsContractException()
+    {
+        Period pastPeriod = new PeriodBuilder().WithId().WithRange(DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-1)).Build();
+        pastPeriod.MarkAsDeleting();
+
+        Assert.Throws<ContractException>(() =>
+            pastPeriod.Update("Updated", pastPeriod.From, pastPeriod.Until, _existingPeriods));
+    }
 }

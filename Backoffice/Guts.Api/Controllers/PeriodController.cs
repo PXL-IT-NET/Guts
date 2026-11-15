@@ -138,11 +138,11 @@ public class PeriodController(
     }
 
     /// <summary>
-    /// Deletes a non-active period and its associated data.
+    /// Queues deletion of a non-active period and its associated data in the background.
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
-    [ProducesResponseType((int)HttpStatusCode.NoContent)]
+    [ProducesResponseType(typeof(DeletionJobStatusModel), (int)HttpStatusCode.Accepted)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -151,8 +151,8 @@ public class PeriodController(
     {
         try
         {
-            await periodService.DeletePeriodAsync(id);
-            return NoContent();
+            var job = await periodService.DeletePeriodAsync(id);
+            return Accepted(mapper.MapToDeletionJobStatusModel(job));
         }
         catch (DataNotFoundException)
         {

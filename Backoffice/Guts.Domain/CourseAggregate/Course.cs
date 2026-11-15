@@ -17,6 +17,8 @@ public class Course : AggregateRoot
     [Required]
     public string Name { get; set; }
 
+    public bool IsDeleting { get; private set; }
+
     public Course()
     {
     }
@@ -28,11 +30,13 @@ public class Course : AggregateRoot
 
     public void Update(string code, string name)
     {
+        EnsureNotDeleting("A course that is being deleted cannot be updated.");
         SetCodeAndName(code, name);
     }
 
     public void Update(string code, string name, IReadOnlyCollection<Course> allCourses)
     {
+        EnsureNotDeleting("A course that is being deleted cannot be updated.");
         SetCodeAndName(code, name);
         if (allCourses != null)
         {
@@ -40,6 +44,17 @@ public class Course : AggregateRoot
                 c.Id != Id && string.Equals(c.Code, Code, StringComparison.OrdinalIgnoreCase));
             Contracts.Require(!duplicateExists, $"A course with code '{Code}' already exists.");
         }
+    }
+
+    public void MarkAsDeleting()
+    {
+        EnsureNotDeleting("This course is already queued for deletion.");
+        IsDeleting = true;
+    }
+
+    private void EnsureNotDeleting(string message)
+    {
+        Contracts.Require(!IsDeleting, message);
     }
 
     private void SetCodeAndName(string code, string name)

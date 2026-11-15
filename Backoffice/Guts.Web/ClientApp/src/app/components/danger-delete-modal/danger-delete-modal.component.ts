@@ -21,6 +21,10 @@ import { LoadingOverlayComponent } from "../loading-overlay/loading-overlay.comp
 export class DangerDeleteModalComponent {
   public readonly show = input<boolean>(false);
   public readonly loading = input<boolean>(false);
+  public readonly deletionInProgress = input<boolean>(false);
+  public readonly progressPercentage = input<number>(0);
+  public readonly progressLabel = input<string>("");
+  public readonly progressDetails = input<string | null>(null);
   public readonly title = input.required<string>();
   public readonly warningMessage = input.required<string>();
   public readonly extraWarning = input<string | null>(null);
@@ -35,6 +39,10 @@ export class DangerDeleteModalComponent {
   public readonly cancelled = output<void>();
 
   public readonly confirmationInput = signal<string>("");
+
+  public readonly isBusy = computed(
+    () => this.loading() || this.deletionInProgress(),
+  );
   public readonly canConfirm = computed(() => {
     if (!this.requireConfirmationInput()) {
       return true;
@@ -54,7 +62,7 @@ export class DangerDeleteModalComponent {
   }
 
   public onConfirm(): void {
-    if (!this.canConfirm()) {
+    if (!this.canConfirm() || this.isBusy()) {
       return;
     }
     this.confirmationInput.set("");
@@ -62,6 +70,9 @@ export class DangerDeleteModalComponent {
   }
 
   public onCancel(): void {
+    if (this.isBusy()) {
+      return;
+    }
     this.confirmationInput.set("");
     this.cancelled.emit();
   }

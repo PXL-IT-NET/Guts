@@ -1,5 +1,6 @@
 using Guts.Application;
 using Guts.Application.Repositories;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.PeriodAggregate;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -18,7 +19,10 @@ internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRe
 
     public override async Task<IReadOnlyList<IPeriod>> GetAllAsync()
     {
-        return await _context.Periods.OrderBy(p => p.From).ToListAsync();
+        return await _context.Periods
+            .Where(p => !p.IsDeleting)
+            .OrderBy(p => p.From)
+            .ToListAsync();
     }
 
     public async Task<IPeriod> GetPeriodAsync(int? periodId = null)
@@ -26,12 +30,12 @@ internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRe
         Period period = null;
         if (periodId.HasValue)
         {
-            period = await _context.Periods.FirstOrDefaultAsync(p => p.Id == periodId);
+            period = await _context.Periods.FirstOrDefaultAsync(p => !p.IsDeleting && p.Id == periodId);
         }
         else
         {
             DateTime today = DateTime.Today;
-            period = await _context.Periods.FirstOrDefaultAsync(p => p.From <= today && p.Until >= today);
+            period = await _context.Periods.FirstOrDefaultAsync(p => !p.IsDeleting && p.From <= today && p.Until >= today);
         }
 
         if (period == null)
@@ -39,6 +43,16 @@ internal class PeriodDbRepository : BaseDbRepository<IPeriod, Period>, IPeriodRe
             throw new DataNotFoundException();
         }
         return period;
+    }
+
+    public Task QueueDeletionAsync(IPeriod period, DeletionJob job)
+    {
+        return ExecuteInTransactionAsync(async () =>
+        {
+            _context.Periods.Update((Period)period);
+            await _context.DeletionJobs.AddAsync(job);
+            await _context.SaveChangesAsync();
+        });
     }
 
     public override Task DeleteAsync(IPeriod entityToDelete)

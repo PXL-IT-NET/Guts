@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   inject,
   signal,
@@ -10,6 +11,7 @@ import { FormsModule } from "@angular/forms";
 import { finalize } from "rxjs";
 import { ToastrService } from "ngx-toastr";
 import { CourseService } from "../../services/course.service";
+import { DeletionJobService } from "../../services/deletion-job.service";
 import { ICourseModel } from "../../viewmodels/course.model";
 import { LoadingOverlayComponent } from "../loading-overlay/loading-overlay.component";
 import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete-modal.component";
@@ -28,6 +30,8 @@ import { DangerDeleteModalComponent } from "../danger-delete-modal/danger-delete
 })
 export class AdminCoursesComponent implements OnInit {
   private readonly courseService = inject(CourseService);
+  private readonly deletionJobService = inject(DeletionJobService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly toastr = inject(ToastrService);
 
   public readonly courses = signal<ICourseModel[]>([]);
@@ -39,8 +43,28 @@ export class AdminCoursesComponent implements OnInit {
 
   public readonly coursePendingDelete = signal<ICourseModel | null>(null);
 
+  public readonly deletionTracker = this.deletionJobService.createTracker({
+    destroyRef: this.destroyRef,
+    targetType: "Course",
+    entityNoun: "Course",
+    onCompleted: (job) => {
+      const course = this.coursePendingDelete();
+      this.coursePendingDelete.set(null);
+      this.toastr.success(
+        `Course '${course?.name ?? job.targetLabel}' deleted.`,
+        "Success",
+      );
+      this.loadCourses();
+    },
+    onFailed: (message) => {
+      this.coursePendingDelete.set(null);
+      this.toastr.error(message, "Error");
+    },
+  });
+
   public ngOnInit(): void {
     this.loadCourses();
+    this.deletionTracker.resumeActive();
   }
 
   public loadCourses(): void {
@@ -129,12 +153,14 @@ export class AdminCoursesComponent implements OnInit {
       .deleteCourse(course.id)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((result) => {
-        this.coursePendingDelete.set(null);
         if (result.success) {
-          this.toastr.success(`Course '${course.name}' deleted.`, "Success");
-          this.loadCourses();
+          this.deletionTracker.trackJob(result.value);
         } else {
-          this.toastr.error(result.message || "Could not delete course.", "Error");
+          this.coursePendingDelete.set(null);
+          this.toastr.error(
+            result.message || "Could not delete course.",
+            "Error",
+          );
         }
       });
   }

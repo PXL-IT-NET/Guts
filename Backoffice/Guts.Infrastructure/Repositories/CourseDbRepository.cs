@@ -1,6 +1,7 @@
 using Guts.Application;
 using Guts.Application.Repositories;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.DeletionJobAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +15,20 @@ internal class CourseDbRepository : BaseDbRepository<Course, Course>, ICourseRep
     {
     }
 
+    public override async Task<Course> GetByIdAsync(params object[] idValues)
+    {
+        Course course = await base.GetByIdAsync(idValues);
+        if (course.IsDeleting)
+        {
+            throw new DataNotFoundException();
+        }
+        return course;
+    }
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons", Justification = "EF Core SQL translation does not support StringComparison overloads.")]
     public async Task<Course> GetSingleAsync(string courseCode)
     {
-        var course = await _context.Courses.FirstOrDefaultAsync(c => c.Code.ToLower() == courseCode.ToLower());
+        var course = await _context.Courses.FirstOrDefaultAsync(c => !c.IsDeleting && c.Code.ToLower() == courseCode.ToLower());
         if (course == null)
         {
             throw new DataNotFoundException();
@@ -27,7 +38,20 @@ internal class CourseDbRepository : BaseDbRepository<Course, Course>, ICourseRep
 
     public override async Task<IReadOnlyList<Course>> GetAllAsync()
     {
-        return await _context.Set<Course>().OrderBy(c => c.Name).ToListAsync();
+        return await _context.Set<Course>()
+            .Where(c => !c.IsDeleting)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    public Task QueueDeletionAsync(Course course, DeletionJob job)
+    {
+        return ExecuteInTransactionAsync(async () =>
+        {
+            _context.Courses.Update(course);
+            await _context.DeletionJobs.AddAsync(job);
+            await _context.SaveChangesAsync();
+        });
     }
 
     public override Task DeleteAsync(Course entityToDelete)

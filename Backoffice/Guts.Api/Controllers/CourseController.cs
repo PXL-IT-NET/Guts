@@ -20,7 +20,8 @@ public class CourseController(
     ICourseService courseService,
     IChapterService chapterService,
     IProjectService projectService,
-    ICourseConverter courseConverter)
+    ICourseConverter courseConverter,
+    IMapper mapper)
     : ControllerBase
 {
     /// <summary>
@@ -140,11 +141,11 @@ public class CourseController(
     }
 
     /// <summary>
-    /// Deletes a course and all its associated data.
+    /// Queues deletion of a course and all its associated data in the background.
     /// </summary>
     [HttpDelete("{courseId}")]
     [Authorize(Policy = ApiConstants.AdminOnlyPolicy)]
-    [ProducesResponseType((int)HttpStatusCode.NoContent)]
+    [ProducesResponseType(typeof(DeletionJobStatusModel), (int)HttpStatusCode.Accepted)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [ProducesResponseType((int)HttpStatusCode.Forbidden)]
@@ -153,12 +154,16 @@ public class CourseController(
         if (courseId < 1) return BadRequest();
         try
         {
-            await courseService.DeleteCourseAsync(courseId);
-            return NoContent();
+            var job = await courseService.DeleteCourseAsync(courseId);
+            return Accepted(mapper.MapToDeletionJobStatusModel(job));
         }
         catch (DataNotFoundException)
         {
             return NotFound();
+        }
+        catch (ContractException ex)
+        {
+            return BadRequest(ErrorModel.FromException(ex));
         }
     }
 }

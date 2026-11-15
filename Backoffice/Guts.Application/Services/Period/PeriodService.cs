@@ -1,12 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
+using Guts.Application.Services.Deletion;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.PeriodAggregate;
 
 namespace Guts.Application.Services.Period;
 
-public class PeriodService(IPeriodFactory factory, IPeriodRepository repository) : IPeriodService
+public class PeriodService(
+    IPeriodFactory factory,
+    IPeriodRepository repository,
+    IDeletionJobService deletionJobService) : IPeriodService
 {
     public async Task<IPeriod> CreatePeriodAsync(string description, DateTime from, DateTime until)
     {
@@ -24,10 +30,14 @@ public class PeriodService(IPeriodFactory factory, IPeriodRepository repository)
         await repository.UpdateAsync(period);
     }
 
-    public async Task DeletePeriodAsync(int periodId)
+    public async Task<DeletionJobDto> DeletePeriodAsync(int periodId)
     {
         IPeriod period = await repository.GetPeriodAsync(periodId);
-        period.EnsureCanBeDeleted();
-        await repository.DeleteAsync(period);
+        period.MarkAsDeleting();
+        return await deletionJobService.QueueDeletionJobAsync(
+            DeletionTargetType.Period,
+            period.Id,
+            period.Description,
+            job => repository.QueueDeletionAsync(period, job));
     }
 }

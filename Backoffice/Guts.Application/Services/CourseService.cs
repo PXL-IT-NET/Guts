@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Guts.Application.Dtos;
 using Guts.Application.Repositories;
+using Guts.Application.Services.Deletion;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.TestRunAggregate;
 
 namespace Guts.Application.Services;
@@ -14,7 +16,8 @@ internal class CourseService(
     IPeriodRepository periodRepository,
     IChapterRepository chapterRepository,
     ITestResultRepository testResultRepository,
-    ICourseProgressCalculator courseProgressCalculator)
+    ICourseProgressCalculator courseProgressCalculator,
+    IDeletionJobService deletionJobService)
     : ICourseService
 {
     public async Task<IReadOnlyList<Course>> GetAllCoursesAsync()
@@ -43,10 +46,15 @@ internal class CourseService(
         return course;
     }
 
-    public async Task DeleteCourseAsync(int courseId)
+    public async Task<DeletionJobDto> DeleteCourseAsync(int courseId)
     {
         Course course = await courseRepository.GetByIdAsync(courseId);
-        await courseRepository.DeleteAsync(course);
+        course.MarkAsDeleting();
+        return await deletionJobService.QueueDeletionJobAsync(
+            DeletionTargetType.Course,
+            course.Id,
+            $"{course.Code} - {course.Name}",
+            job => courseRepository.QueueDeletionAsync(course, job));
     }
 
     public async Task<CourseStatisticsDto> GetCourseStatisticsAsync(int courseId, int? periodId = null)

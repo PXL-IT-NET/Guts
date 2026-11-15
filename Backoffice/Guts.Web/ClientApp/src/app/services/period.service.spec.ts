@@ -29,7 +29,7 @@ describe("PeriodService", () => {
   it("should getAll periods and handle error", () => {
     service.getAll().subscribe((res) => {
       expect(res.success).toBeTrue();
-      expect(res.value.length).toBe(1);
+      expect(res.value).toHaveSize(1);
     });
     httpMock.expectOne("api/periods").flush([
       {
@@ -83,10 +83,28 @@ describe("PeriodService", () => {
       .expectOne("api/periods/2")
       .flush("Bad", { status: 400, statusText: "Bad" });
 
-    service.deletePeriod(2).subscribe((res) => expect(res.success).toBeTrue());
+    service.deletePeriod(2).subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.jobId).toBe("job-2");
+      expect(res.value.targetType).toBe("Period");
+    });
     httpMock
       .expectOne((r) => r.method === "DELETE" && r.url === "api/periods/2")
-      .flush(null);
+      .flush(
+        {
+          jobId: "job-2",
+          targetType: "Period",
+          targetId: 2,
+          targetLabel: "2027-2028",
+          status: "Pending",
+          totalRows: 10,
+          deletedRows: 0,
+          percentage: 0,
+          currentPhase: "Queued",
+          createdAtUtc: "2026-11-15T12:00:00Z",
+        },
+        { status: 202, statusText: "Accepted" },
+      );
 
     service.deletePeriod(2).subscribe((res) => expect(res.success).toBeFalse());
     httpMock

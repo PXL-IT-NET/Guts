@@ -55,6 +55,28 @@ public partial class Mapper : IMapper
         };
     }
 
+    public DeletionJobStatusModel MapToDeletionJobStatusModel(DeletionJobDto source)
+    {
+        if (source == null) return null;
+
+        return new DeletionJobStatusModel
+        {
+            JobId = source.JobId,
+            TargetType = source.TargetType.ToString(),
+            TargetId = source.TargetId,
+            TargetLabel = source.TargetLabel,
+            Status = source.Status.ToString(),
+            TotalRows = source.TotalRows,
+            DeletedRows = source.DeletedRows,
+            Percentage = source.Percentage,
+            CurrentPhase = source.CurrentPhase,
+            ErrorMessage = source.ErrorMessage,
+            CreatedAtUtc = source.CreatedAtUtc,
+            StartedAtUtc = source.StartedAtUtc,
+            CompletedAtUtc = source.CompletedAtUtc
+        };
+    }
+
     // ── Mapperly source-generated mappings ───────────────────────────────────
 
     [MapperIgnoreSource(nameof(Test.Assignment))]
@@ -64,6 +86,7 @@ public partial class Mapper : IMapper
     public partial TestModel MapToTestModel(Test source);
 
     [MapperIgnoreSource(nameof(IEntity.IdentityValues))]
+    [MapperIgnoreSource(nameof(IPeriod.IsDeleting))]
     public partial PeriodOutputModel MapToPeriodOutputModel(IPeriod source);
 
     [MapperIgnoreSource(nameof(IProjectAssessment.ProjectId))]

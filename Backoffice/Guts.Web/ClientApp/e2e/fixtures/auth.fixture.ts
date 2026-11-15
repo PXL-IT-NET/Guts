@@ -54,6 +54,14 @@ export async function authenticatePage(
       body: JSON.stringify([]),
     });
   });
+
+  await page.route("**/api/deletion-jobs/active**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    });
+  });
 }
 
 type AuthFixtures = {

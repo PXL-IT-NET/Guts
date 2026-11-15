@@ -4,6 +4,7 @@ import { Observable, of } from "rxjs";
 import { map, catchError } from "rxjs/operators";
 import { GetResult, PostResult } from "../util/result";
 import { IPeriodModel, PeriodModel } from "../viewmodels/period.model";
+import { IDeletionJobStatusModel } from "../viewmodels/deletion-job.model";
 
 export interface ISavePeriodRequest {
   description: string;
@@ -53,12 +54,20 @@ export class PeriodService {
     );
   }
 
-  public deletePeriod(periodId: number): Observable<PostResult> {
-    return this.http.delete(`api/periods/${periodId}`).pipe(
-      map(() => PostResult.success()),
-      catchError((errorResponse: HttpErrorResponse) =>
-        of(PostResult.fromHttpErrorResponse(errorResponse)),
-      ),
-    );
+  public deletePeriod(
+    periodId: number,
+  ): Observable<GetResult<IDeletionJobStatusModel>> {
+    return this.http
+      .delete<IDeletionJobStatusModel>(`api/periods/${periodId}`)
+      .pipe(
+        map((model) => GetResult.success<IDeletionJobStatusModel>(model)),
+        catchError((errorResponse: HttpErrorResponse) =>
+          of(
+            GetResult.fromHttpErrorResponse<IDeletionJobStatusModel>(
+              errorResponse,
+            ),
+          ),
+        ),
+      );
   }
 }

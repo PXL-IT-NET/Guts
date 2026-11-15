@@ -30,6 +30,7 @@ public class CourseControllerTests
     private Mock<IChapterService> _chapterServiceMock;
     private Mock<ICourseConverter> _courseConverterMock;
     private Mock<IProjectService> _projectServiceMock;
+    private Mock<IMapper> _mapperMock;
 
     [SetUp]
     public void Setup()
@@ -38,10 +39,12 @@ public class CourseControllerTests
         _chapterServiceMock = new();
         _projectServiceMock = new();
         _courseConverterMock = new();
+        _mapperMock = new();
         _controller = new(_courseServiceMock.Object, 
             _chapterServiceMock.Object,
             _projectServiceMock.Object,
-            _courseConverterMock.Object);
+            _courseConverterMock.Object,
+            _mapperMock.Object);
     }
 
     [Test]
@@ -221,12 +224,29 @@ public class CourseControllerTests
     }
 
     [Test]
-    public async Task DeleteCourse_Valid_ReturnsNoContent()
+    public async Task DeleteCourse_Valid_ReturnsAcceptedWithStatusModel()
     {
+        var dto = new DeletionJobDto { JobId = Guid.NewGuid(), TargetId = 1 };
+        var model = new DeletionJobStatusModel { JobId = dto.JobId, TargetId = 1, Status = "Pending" };
+        _courseServiceMock.Setup(s => s.DeleteCourseAsync(1)).ReturnsAsync(dto);
+        _mapperMock.Setup(m => m.MapToDeletionJobStatusModel(dto)).Returns(model);
+
+        var result = await _controller.DeleteCourse(1) as AcceptedResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Value, Is.SameAs(model));
+        _courseServiceMock.Verify(s => s.DeleteCourseAsync(1), Times.Once);
+    }
+
+    [Test]
+    public async Task DeleteCourse_ContractException_ReturnsBadRequest()
+    {
+        _courseServiceMock.Setup(s => s.DeleteCourseAsync(1))
+            .ThrowsAsync(new Guts.Common.ContractException("Already deleting"));
+
         var result = await _controller.DeleteCourse(1);
 
-        Assert.That(result, Is.InstanceOf<NoContentResult>());
-        _courseServiceMock.Verify(s => s.DeleteCourseAsync(1), Times.Once);
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
 
     [Test]

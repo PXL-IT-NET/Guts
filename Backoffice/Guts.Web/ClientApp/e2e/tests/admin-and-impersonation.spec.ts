@@ -419,10 +419,24 @@ test.describe("Admin Role, CRUD, User Cleanup & Impersonation", () => {
         const idx = courses.findIndex((c) =>
           request.url().endsWith(`/${c.id}`),
         );
-        if (idx >= 0) {
-          courses.splice(idx, 1);
-        }
-        await route.fulfill({ status: 204, body: "" });
+        const deleted = idx >= 0 ? courses.splice(idx, 1)[0] : null;
+        await route.fulfill({
+          status: 202,
+          contentType: "application/json",
+          body: JSON.stringify({
+            jobId: "e2e-course-del-1",
+            targetType: "Course",
+            targetId: deleted?.id ?? 0,
+            targetLabel: deleted ? `${deleted.code} - ${deleted.name}` : "",
+            status: "Completed",
+            totalRows: 1,
+            deletedRows: 1,
+            percentage: 100,
+            currentPhase: "Completed",
+            createdAtUtc: "2026-11-15T12:00:00Z",
+            completedAtUtc: "2026-11-15T12:00:01Z",
+          }),
+        });
       }
     });
 

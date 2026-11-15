@@ -24,4 +24,5 @@ public interface IMapper
     PeerAssessmentDto MapToPeerAssessmentDto(PeerAssessmentModel source);
     AssessmentSubResultModel MapToAssessmentSubResultModel(IAssessmentSubResult source);
     AssessmentResultModel MapToAssessmentResultModel(IAssessmentResult source);
+    DeletionJobStatusModel MapToDeletionJobStatusModel(DeletionJobDto source);
 }

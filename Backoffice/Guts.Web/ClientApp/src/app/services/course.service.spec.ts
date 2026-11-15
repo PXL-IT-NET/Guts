@@ -93,10 +93,28 @@ describe("CourseService", () => {
       .expectOne("api/courses/10")
       .flush("Bad", { status: 400, statusText: "Bad" });
 
-    service.deleteCourse(10).subscribe((res) => expect(res.success).toBeTrue());
+    service.deleteCourse(10).subscribe((res) => {
+      expect(res.success).toBeTrue();
+      expect(res.value.jobId).toBe("job-1");
+      expect(res.value.status).toBe("Pending");
+    });
     httpMock
       .expectOne((r) => r.method === "DELETE" && r.url === "api/courses/10")
-      .flush(null);
+      .flush(
+        {
+          jobId: "job-1",
+          targetType: "Course",
+          targetId: 10,
+          targetLabel: "CS101 - Intro",
+          status: "Pending",
+          totalRows: 50,
+          deletedRows: 0,
+          percentage: 0,
+          currentPhase: "Queued",
+          createdAtUtc: "2026-11-15T12:00:00Z",
+        },
+        { status: 202, statusText: "Accepted" },
+      );
 
     service.deleteCourse(10).subscribe((res) => expect(res.success).toBeFalse());
     httpMock

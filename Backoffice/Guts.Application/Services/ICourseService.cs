@@ -11,6 +11,6 @@ public interface ICourseService
     Task<Course> GetCourseByIdAsync(int courseId);
     Task<Course> CreateCourseAsync(string code, string name);
     Task<Course> UpdateCourseAsync(int courseId, string code, string name);
-    Task DeleteCourseAsync(int courseId);
+    Task<DeletionJobDto> DeleteCourseAsync(int courseId);
     Task<CourseStatisticsDto> GetCourseStatisticsAsync(int courseId, int? periodId = null);
 }

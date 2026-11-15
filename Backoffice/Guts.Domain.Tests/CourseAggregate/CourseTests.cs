@@ -87,6 +87,7 @@ public class CourseTests
 
         Assert.That(created.Code, Is.EqualTo("CS102"));
         Assert.That(created.Name, Is.EqualTo("Advanced"));
+        Assert.That(created.IsDeleting, Is.False);
     }
 
     [Test]
@@ -96,6 +97,35 @@ public class CourseTests
         var existing = new[] { new Course("CS101", "Intro") { Id = 1 } };
 
         Assert.Throws<ContractException>(() => factory.CreateNew("cs101", "Other", existing));
+    }
+
+    [Test]
+    public void MarkAsDeleting_ValidCourse_SetsIsDeletingTrue()
+    {
+        var course = new Course("CS101", "Intro");
+
+        course.MarkAsDeleting();
+
+        Assert.That(course.IsDeleting, Is.True);
+    }
+
+    [Test]
+    public void MarkAsDeleting_AlreadyDeleting_ThrowsContractException()
+    {
+        var course = new Course("CS101", "Intro");
+        course.MarkAsDeleting();
+
+        Assert.Throws<ContractException>(() => course.MarkAsDeleting());
+    }
+
+    [Test]
+    public void Update_WhenDeleting_ThrowsContractException()
+    {
+        var course = new Course("CS101", "Intro");
+        course.MarkAsDeleting();
+
+        Assert.Throws<ContractException>(() => course.Update("CS102", "Updated"));
+        Assert.Throws<ContractException>(() => course.Update("CS102", "Updated", []));
     }
 }
 

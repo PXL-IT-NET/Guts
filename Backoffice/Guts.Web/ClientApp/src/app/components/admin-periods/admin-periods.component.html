@@ -87,9 +87,20 @@
   }
 
   <app-danger-delete-modal
-    [show]="periodPendingDelete() !== null"
+    [show]="periodPendingDelete() !== null || deletionTracker.inProgress()"
     [loading]="loading()"
-    title="Danger: Delete Period"
+    [deletionInProgress]="deletionTracker.inProgress()"
+    [progressPercentage]="deletionTracker.percentage()"
+    [progressLabel]="deletionTracker.currentPhase()"
+    [progressDetails]="deletionTracker.progressDetails()"
+    [title]="
+      deletionTracker.inProgress()
+        ? 'Deleting Period: ' +
+          (periodPendingDelete()?.description ??
+            deletionTracker.activeJob()?.targetLabel ??
+            '')
+        : 'Danger: Delete Period'
+    "
     [warningMessage]="
       'You are about to permanently delete period ' +
       (periodPendingDelete()?.description ?? '') +

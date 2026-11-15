@@ -7,7 +7,8 @@ import {
   ICourseContentsModel,
   ICourseStatisticsModel,
 } from "../viewmodels/course.model";
-import { GetResult, PostResult } from "../util/result";
+import { GetResult } from "../util/result";
+import { IDeletionJobStatusModel } from "../viewmodels/deletion-job.model";
 
 export interface ISaveCourseRequest {
   code: string;
@@ -18,7 +19,7 @@ export interface ISaveCourseRequest {
   providedIn: "root",
 })
 export class CourseService {
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) { }
 
   public getCourses(): Observable<GetResult<ICourseModel[]>> {
     return this.http.get<ICourseModel[]>("api/courses").pipe(
@@ -90,12 +91,20 @@ export class CourseService {
     );
   }
 
-  public deleteCourse(courseId: number): Observable<PostResult> {
-    return this.http.delete(`api/courses/${courseId}`).pipe(
-      map(() => PostResult.success()),
-      catchError((errorResponse: HttpErrorResponse) =>
-        of(PostResult.fromHttpErrorResponse(errorResponse)),
-      ),
-    );
+  public deleteCourse(
+    courseId: number,
+  ): Observable<GetResult<IDeletionJobStatusModel>> {
+    return this.http
+      .delete<IDeletionJobStatusModel>(`api/courses/${courseId}`)
+      .pipe(
+        map((model) => GetResult.success<IDeletionJobStatusModel>(model)),
+        catchError((errorResponse: HttpErrorResponse) =>
+          of(
+            GetResult.fromHttpErrorResponse<IDeletionJobStatusModel>(
+              errorResponse,
+            ),
+          ),
+        ),
+      );
   }
 }

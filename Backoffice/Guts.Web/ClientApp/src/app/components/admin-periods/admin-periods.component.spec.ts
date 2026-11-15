@@ -1,16 +1,41 @@
+import { provideHttpClient } from "@angular/common/http";
+import { provideHttpClientTesting } from "@angular/common/http/testing";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { ToastrService } from "ngx-toastr";
 import { AdminPeriodsComponent } from "./admin-periods.component";
 import { PeriodService } from "../../services/period.service";
+import { DeletionJobService } from "../../services/deletion-job.service";
+import { IDeletionJobStatusModel } from "../../viewmodels/deletion-job.model";
 import { PeriodModel } from "../../viewmodels/period.model";
 import { GetResult, PostResult } from "../../util/result";
 import { createToastrSpy } from "../../testing/test-helpers";
+
+function createPeriodJob(
+  overrides: Partial<IDeletionJobStatusModel> = {},
+): IDeletionJobStatusModel {
+  return {
+    jobId: "period-job-1",
+    targetType: "Period",
+    targetId: 1,
+    targetLabel: "2020-2021",
+    status: "Pending",
+    totalRows: 50,
+    deletedRows: 0,
+    percentage: 0,
+    currentPhase: "Queued for deletion",
+    createdAtUtc: "2026-11-15T12:00:00Z",
+    ...overrides,
+  };
+}
 
 describe("AdminPeriodsComponent", () => {
   let component: AdminPeriodsComponent;
   let fixture: ComponentFixture<AdminPeriodsComponent>;
   let periodServiceSpy: jasmine.SpyObj<PeriodService>;
+  let deletionJobService: DeletionJobService;
+  let getActiveJobsSpy: jasmine.Spy;
+  let pollUntilCompleteSpy: jasmine.Spy;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   beforeEach(async () => {
@@ -30,16 +55,26 @@ describe("AdminPeriodsComponent", () => {
     periodServiceSpy.getAll.and.returnValue(
       of(GetResult.success([pastPeriod])),
     );
-    periodServiceSpy.deletePeriod.and.returnValue(of(PostResult.success()));
+    periodServiceSpy.deletePeriod.and.returnValue(
+      of(GetResult.success(createPeriodJob())),
+    );
     toastrSpy = createToastrSpy();
 
     await TestBed.configureTestingModule({
       imports: [AdminPeriodsComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: PeriodService, useValue: periodServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
       ],
     }).compileComponents();
+
+    deletionJobService = TestBed.inject(DeletionJobService);
+    getActiveJobsSpy = spyOn(deletionJobService, "getActiveJobs").and.returnValue(
+      of(GetResult.success([])),
+    );
+    pollUntilCompleteSpy = spyOn(deletionJobService, "pollUntilComplete");
 
     fixture = TestBed.createComponent(AdminPeriodsComponent);
     component = fixture.componentInstance;
@@ -49,6 +84,7 @@ describe("AdminPeriodsComponent", () => {
   it("should load periods on init and identify past periods", () => {
     expect(component.periods()).toHaveSize(1);
     expect(component.isPastPeriod(component.periods()[0])).toBeTrue();
+    expect(getActiveJobsSpy).toHaveBeenCalledWith("Period");
   });
 
   it("should not call createPeriod when dates are empty", () => {
@@ -91,7 +127,11 @@ describe("AdminPeriodsComponent", () => {
 
   it("should handle load error and cancel/guard no-ops", () => {
     periodServiceSpy.getAll.and.returnValue(
-      of({ success: false, isAuthenticated: true, message: "Load failed" } as GetResult<PeriodModel[]>),
+      of({
+        success: false,
+        isAuthenticated: true,
+        message: "Load failed",
+      } as GetResult<PeriodModel[]>),
     );
     component.loadPeriods();
     expect(toastrSpy.error).toHaveBeenCalledWith("Load failed", "Error");
@@ -107,7 +147,7 @@ describe("AdminPeriodsComponent", () => {
     expect(periodServiceSpy.deletePeriod).not.toHaveBeenCalled();
   });
 
-  it("should create, edit, update, and delete periods on success and error", () => {
+  it("should create, edit, update, and delete periods with progress polling and errors", () => {
     const existing = component.periods()[0];
     periodServiceSpy.createPeriod.and.returnValue(of(GetResult.success(existing)));
     component.startCreate();
@@ -118,7 +158,11 @@ describe("AdminPeriodsComponent", () => {
     expect(toastrSpy.success).toHaveBeenCalledWith("Period created.", "Success");
 
     periodServiceSpy.createPeriod.and.returnValue(
-      of({ success: false, isAuthenticated: true, message: "Create err" } as GetResult<PeriodModel>),
+      of({
+        success: false,
+        isAuthenticated: true,
+        message: "Create err",
+      } as GetResult<PeriodModel>),
     );
     component.startCreate();
     component.formDescription = "2026-2027";
@@ -144,18 +188,97 @@ describe("AdminPeriodsComponent", () => {
     component.cancelDelete();
     expect(component.periodPendingDelete()).toBeNull();
 
+    const pollSubject = new Subject<GetResult<IDeletionJobStatusModel>>();
+    pollUntilCompleteSpy.and.returnValue(pollSubject.asObservable());
+
     component.requestDelete(existing);
     component.confirmDelete();
+    fixture.detectChanges();
+    expect(component.deletionTracker.inProgress()).toBeTrue();
+
+    pollSubject.next(
+      GetResult.success(
+        createPeriodJob({
+          status: "Completed",
+          deletedRows: 50,
+          percentage: 100,
+          currentPhase: "Completed",
+        }),
+      ),
+    );
+    pollSubject.complete();
+    fixture.detectChanges();
+
+    expect(component.deletionTracker.inProgress()).toBeFalse();
+    expect(component.periodPendingDelete()).toBeNull();
     expect(toastrSpy.success).toHaveBeenCalledWith(
       "Period '2020-2021' deleted.",
       "Success",
     );
 
     periodServiceSpy.deletePeriod.and.returnValue(
-      of({ success: false, isAuthenticated: true, message: "Delete err" }),
+      of({
+        success: false,
+        isAuthenticated: true,
+        message: "Delete err",
+      } as GetResult<IDeletionJobStatusModel>),
     );
     component.requestDelete(existing);
     component.confirmDelete();
+    expect(component.periodPendingDelete()).toBeNull();
     expect(toastrSpy.error).toHaveBeenCalledWith("Delete err", "Error");
+
+    const failSubject = new Subject<GetResult<IDeletionJobStatusModel>>();
+    pollUntilCompleteSpy.and.returnValue(failSubject.asObservable());
+    periodServiceSpy.deletePeriod.and.returnValue(
+      of(GetResult.success(createPeriodJob())),
+    );
+    component.requestDelete(existing);
+    component.confirmDelete();
+    failSubject.next(
+      GetResult.success(
+        createPeriodJob({ status: "Failed", errorMessage: "Period cleanup failed" }),
+      ),
+    );
+    failSubject.complete();
+    expect(component.periodPendingDelete()).toBeNull();
+    expect(toastrSpy.error).toHaveBeenCalledWith("Period cleanup failed", "Error");
+  });
+
+  it("should resume active period deletion job on reload", () => {
+    const activeSubject = new Subject<GetResult<IDeletionJobStatusModel>>();
+    getActiveJobsSpy.and.returnValue(
+      of(
+        GetResult.success([
+          createPeriodJob({
+            status: "InProgress",
+            deletedRows: 25,
+            percentage: 50,
+            currentPhase: "Deleting chapters",
+          }),
+        ]),
+      ),
+    );
+    pollUntilCompleteSpy.and.returnValue(activeSubject.asObservable());
+
+    const reloadedFixture = TestBed.createComponent(AdminPeriodsComponent);
+    const reloadedComponent = reloadedFixture.componentInstance;
+    reloadedFixture.detectChanges();
+
+    expect(reloadedComponent.deletionTracker.inProgress()).toBeTrue();
+    expect(reloadedComponent.deletionTracker.percentage()).toBe(50);
+
+    activeSubject.next(
+      GetResult.success(
+        createPeriodJob({ status: "Completed", deletedRows: 50, percentage: 100 }),
+      ),
+    );
+    activeSubject.complete();
+
+    expect(reloadedComponent.deletionTracker.inProgress()).toBeFalse();
+    expect(toastrSpy.success).toHaveBeenCalledWith(
+      "Period '2020-2021' deleted.",
+      "Success",
+    );
   });
 });

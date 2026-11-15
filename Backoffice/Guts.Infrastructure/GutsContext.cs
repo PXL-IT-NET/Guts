@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
@@ -65,6 +66,7 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
     public DbSet<StudentBadge> StudentBadges { get; set; }
     public DbSet<GamificationEvent> GamificationEvents { get; set; }
     public DbSet<MessageTracker> MessageTrackers { get; set; }
+    public DbSet<DeletionJob> DeletionJobs { get; set; }
 
     public GutsContext(DbContextOptions<GutsContext> options) : base(options)
     {
@@ -99,6 +101,15 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
         builder.ApplyConfiguration(new StudentBadgeConfiguration());
         builder.ApplyConfiguration(new GamificationEventConfiguration());
         builder.ApplyConfiguration(new MessageTrackerConfiguration());
+        builder.ApplyConfiguration(new DeletionJobConfiguration());
+
+        builder.Entity<Course>()
+            .Property(c => c.IsDeleting)
+            .HasDefaultValue(false);
+
+        builder.Entity<Period>()
+            .Property(p => p.IsDeleting)
+            .HasDefaultValue(false);
 
         ApplyUtcDateTimeConverters(builder);
     }

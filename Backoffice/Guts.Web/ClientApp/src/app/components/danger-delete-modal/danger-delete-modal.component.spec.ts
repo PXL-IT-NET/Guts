@@ -90,4 +90,42 @@ describe("DangerDeleteModalComponent", () => {
     component.onConfirm();
     expect(component.confirmed.emit).not.toHaveBeenCalled();
   });
+
+  it("should lock controls and show progress bar when deletionInProgress is true", () => {
+    fixture.componentRef.setInput("deletionInProgress", true);
+    fixture.componentRef.setInput("progressPercentage", 42);
+    fixture.componentRef.setInput("progressLabel", "Deleting test runs...");
+    fixture.componentRef.setInput("progressDetails", "420 / 1000 rows removed");
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("[data-testid='danger-confirm-input']"),
+    ).toBeNull();
+
+    const progressBar = fixture.nativeElement.querySelector(
+      "progress[data-testid='deletion-progress-bar']",
+    ) as HTMLProgressElement;
+    expect(progressBar).toBeTruthy();
+    expect(progressBar.value).toBe(42);
+    expect(fixture.nativeElement.textContent).toContain("42%");
+    expect(fixture.nativeElement.textContent).toContain("Deleting test runs...");
+    expect(fixture.nativeElement.textContent).toContain("420 / 1000 rows removed");
+
+    const closeBtn = fixture.nativeElement.querySelector(
+      "button.btn-close",
+    ) as HTMLButtonElement;
+    const cancelBtn = fixture.nativeElement.querySelector(
+      "button.btn-secondary",
+    ) as HTMLButtonElement;
+    const confirmBtn = fixture.nativeElement.querySelector(
+      "button.btn-danger",
+    ) as HTMLButtonElement;
+    expect(closeBtn.disabled).toBeTrue();
+    expect(cancelBtn.disabled).toBeTrue();
+    expect(confirmBtn.disabled).toBeTrue();
+
+    spyOn(component.cancelled, "emit");
+    component.onCancel();
+    expect(component.cancelled.emit).not.toHaveBeenCalled();
+  });
 });

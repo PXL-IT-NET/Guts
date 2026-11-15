@@ -1,9 +1,12 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Application;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 
 namespace Guts.Infrastructure.Tests.Repositories;
@@ -60,6 +63,36 @@ internal class CourseDbRepositoryTests : RepositoryTestsBase
             Assert.That(verifyContext.StudentCourseProfiles.Any(sp => sp.CourseId == otherCourse.Id), Is.True);
             Assert.That(verifyContext.CourseClassGroups.Any(cg => cg.CourseId == otherCourse.Id), Is.True);
             Assert.That(verifyContext.CourseGamificationConfigs.Any(gc => gc.CourseId == otherCourse.Id), Is.True);
+        }
+    }
+
+    [Test]
+    public async Task QueueDeletionAsync_ShouldMarkCourseDeletingPersistJobAndExcludeFromNormalReads()
+    {
+        var deletingCourse = await Seeder.SeedCourseAsync("DEL1", "Deleting Course");
+        var activeCourse = await Seeder.SeedCourseAsync("ACT1", "Active Course");
+        var job = new DeletionJobFactory().CreateNew(
+            DeletionTargetType.Course,
+            deletingCourse.Id,
+            "DEL1 - Deleting Course",
+            DateTime.UtcNow);
+
+        await using (var context = CreateDbContext())
+        {
+            var repo = new CourseDbRepository(context);
+            var loaded = await repo.GetByIdAsync(deletingCourse.Id);
+            loaded.MarkAsDeleting();
+            await repo.QueueDeletionAsync(loaded, job);
+        }
+
+        await using (var verifyContext = CreateDbContext())
+        {
+            var repo = new CourseDbRepository(verifyContext);
+            var allCourses = await repo.GetAllAsync();
+            Assert.That(allCourses.Select(c => c.Id), Is.EqualTo([activeCourse.Id]));
+            await Assert.ThatAsync(() => repo.GetByIdAsync(deletingCourse.Id), Throws.InstanceOf<DataNotFoundException>());
+            await Assert.ThatAsync(() => repo.GetSingleAsync("DEL1"), Throws.InstanceOf<DataNotFoundException>());
+            Assert.That(await verifyContext.DeletionJobs.AnyAsync(j => j.Id == job.Id), Is.True);
         }
     }
 }

@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Guts.Application.Dtos;
 using Guts.Application.Repositories;
 using Guts.Application.Services;
+using Guts.Application.Services.Deletion;
 using Guts.Application.Tests.Builders;
+using Guts.Domain.DeletionJobAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.TestRunAggregate;
@@ -24,6 +27,7 @@ public class CourseServiceTests
     private Mock<IPeriodRepository> _periodRepositoryMock;
     private Mock<IChapterRepository> _chapterRepositoryMock;
     private Mock<ITestResultRepository> _testResultRepositoryMock;
+    private Mock<IDeletionJobService> _deletionJobServiceMock;
 
     [SetUp]
     public void Setup()
@@ -33,6 +37,7 @@ public class CourseServiceTests
         _periodRepositoryMock = new Mock<IPeriodRepository>();
         _chapterRepositoryMock = new Mock<IChapterRepository>();
         _testResultRepositoryMock = new Mock<ITestResultRepository>();
+        _deletionJobServiceMock = new Mock<IDeletionJobService>();
 
         _service = new CourseService(
             _courseRepositoryMock.Object,
@@ -40,7 +45,8 @@ public class CourseServiceTests
             _periodRepositoryMock.Object,
             _chapterRepositoryMock.Object,
             _testResultRepositoryMock.Object,
-            new CourseProgressCalculator());
+            new CourseProgressCalculator(),
+            _deletionJobServiceMock.Object);
     }
 
     [Test]
@@ -202,13 +208,28 @@ public class CourseServiceTests
     }
 
     [Test]
-    public async Task DeleteCourseAsync_ShouldDeleteCourseFromRepository()
+    public async Task DeleteCourseAsync_ShouldMarkAsDeletingAndQueueDeletionJob()
     {
         var course = new Course("CS101", "Intro") { Id = 1 };
+        var job = new DeletionJobBuilder().WithTarget(DeletionTargetType.Course, 1, "CS101 - Intro").Build();
+        var expectedDto = new DeletionJobDto { JobId = job.Id, TargetId = 1 };
         _courseRepositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(course);
+        _deletionJobServiceMock
+            .Setup(s => s.QueueDeletionJobAsync(
+                DeletionTargetType.Course,
+                1,
+                "CS101 - Intro",
+                It.IsAny<System.Func<DeletionJob, Task>>()))
+            .Returns<DeletionTargetType, int, string, System.Func<DeletionJob, Task>>(async (_, _, _, persist) =>
+            {
+                await persist(job);
+                return expectedDto;
+            });
 
-        await _service.DeleteCourseAsync(1);
+        var result = await _service.DeleteCourseAsync(1);
 
-        _courseRepositoryMock.Verify(r => r.DeleteAsync(course), Times.Once);
+        Assert.That(course.IsDeleting, Is.True);
+        Assert.That(result, Is.SameAs(expectedDto));
+        _courseRepositoryMock.Verify(r => r.QueueDeletionAsync(course, job), Times.Once);
     }
 }

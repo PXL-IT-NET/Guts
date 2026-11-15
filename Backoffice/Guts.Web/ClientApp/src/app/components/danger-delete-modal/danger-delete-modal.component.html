@@ -4,12 +4,14 @@
     class="modal fade show d-block border-0 p-0 text-body"
     aria-modal="true"
     aria-labelledby="dangerModalTitle"
-    (keydown.escape)="!loading() && onCancel()"
+    (keydown.escape)="!isBusy() && onCancel()"
     style="background-color: rgba(0, 0, 0, 0.5)"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-danger position-relative">
-        <app-loading-overlay [show]="loading()"></app-loading-overlay>
+        <app-loading-overlay
+          [show]="loading() && !deletionInProgress()"
+        ></app-loading-overlay>
         <div class="modal-header bg-danger text-white">
           <h5 id="dangerModalTitle" class="modal-title fw-bold">
             {{ title() }}
@@ -18,50 +20,76 @@
             type="button"
             class="btn-close btn-close-white"
             aria-label="Close"
-            [disabled]="loading()"
+            [disabled]="isBusy()"
             (click)="onCancel()"
           ></button>
         </div>
         <div class="modal-body">
-          <div class="alert alert-danger mb-3" role="alert">
-            {{ warningMessage() }}
-          </div>
-          @if (extraWarning()) {
-            <div
-              class="alert alert-warning border-warning d-flex align-items-start gap-2 mb-3"
-              role="alert"
-              [attr.data-testid]="extraWarningTestId()"
-            >
-              <i
-                class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"
-                aria-hidden="true"
-              ></i>
-              <div>{{ extraWarning() }}</div>
+          @if (!deletionInProgress()) {
+            <div class="alert alert-danger mb-3" role="alert">
+              {{ warningMessage() }}
             </div>
-          }
-          @if (requireConfirmationInput()) {
-            <label class="form-label" for="dangerConfirmInput">
-              To confirm, type
-              <strong><code>{{ expectedConfirmation() }}</code></strong>
-              ({{ confirmationLabel() }}):
-            </label>
-            <input
-              id="dangerConfirmInput"
-              type="text"
-              class="form-control"
-              [placeholder]="expectedConfirmation()"
-              [disabled]="loading()"
-              [ngModel]="confirmationInput()"
-              (ngModelChange)="confirmationInput.set($event)"
-              data-testid="danger-confirm-input"
-            />
+            @if (extraWarning()) {
+              <div
+                class="alert alert-warning border-warning d-flex align-items-start gap-2 mb-3"
+                role="alert"
+                [attr.data-testid]="extraWarningTestId()"
+              >
+                <i
+                  class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"
+                  aria-hidden="true"
+                ></i>
+                <div>{{ extraWarning() }}</div>
+              </div>
+            }
+            @if (requireConfirmationInput()) {
+              <label class="form-label" for="dangerConfirmInput">
+                To confirm, type
+                <strong><code>{{ expectedConfirmation() }}</code></strong>
+                ({{ confirmationLabel() }}):
+              </label>
+              <input
+                id="dangerConfirmInput"
+                type="text"
+                class="form-control"
+                [placeholder]="expectedConfirmation()"
+                [disabled]="isBusy()"
+                [ngModel]="confirmationInput()"
+                (ngModelChange)="confirmationInput.set($event)"
+                data-testid="danger-confirm-input"
+              />
+            }
+          } @else {
+            <output
+              class="mb-2 d-flex justify-content-between align-items-center w-100"
+              data-testid="deletion-progress-status"
+            >
+              <span class="fw-semibold">{{ progressLabel() }}</span>
+              <span class="badge text-bg-danger">{{ progressPercentage() }}%</span>
+            </output>
+            <progress
+              class="w-100 d-block"
+              style="height: 1.5rem; accent-color: var(--bs-danger)"
+              max="100"
+              [value]="progressPercentage()"
+              [attr.aria-label]="progressLabel() || 'Deletion progress'"
+              data-testid="deletion-progress-bar"
+            ></progress>
+            @if (progressDetails()) {
+              <div
+                class="small text-muted mt-2"
+                data-testid="deletion-progress-details"
+              >
+                {{ progressDetails() }}
+              </div>
+            }
           }
         </div>
         <div class="modal-footer">
           <button
             type="button"
             class="btn btn-secondary"
-            [disabled]="loading()"
+            [disabled]="isBusy()"
             (click)="onCancel()"
           >
             Cancel
@@ -69,7 +97,7 @@
           <button
             type="button"
             class="btn btn-danger"
-            [disabled]="!canConfirm() || loading()"
+            [disabled]="!canConfirm() || isBusy()"
             (click)="onConfirm()"
             [attr.data-testid]="confirmButtonTestId()"
           >

@@ -243,11 +243,17 @@ public class PeriodControllerTests
     }
 
     [Test]
-    public async Task DeletePeriod_Valid_ReturnsNoContent()
+    public async Task DeletePeriod_Valid_ReturnsAcceptedWithStatusModel()
     {
-        var result = await _controller.DeletePeriod(1);
+        var dto = new Guts.Application.Dtos.DeletionJobDto { JobId = Guid.NewGuid(), TargetId = 1 };
+        var model = new Guts.Api.Models.DeletionJobStatusModel { JobId = dto.JobId, TargetId = 1, Status = "Pending" };
+        _periodServiceMock.Setup(s => s.DeletePeriodAsync(1)).ReturnsAsync(dto);
+        _mapperMock.Setup(m => m.MapToDeletionJobStatusModel(dto)).Returns(model);
 
-        Assert.That(result, Is.InstanceOf<NoContentResult>());
+        var result = await _controller.DeletePeriod(1) as AcceptedResult;
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Value, Is.SameAs(model));
         _periodServiceMock.Verify(s => s.DeletePeriodAsync(1), Times.Once);
     }
 

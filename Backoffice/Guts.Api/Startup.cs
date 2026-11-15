@@ -1,5 +1,6 @@
 using Guts.Api.BackgroundServices;
 using Guts.Api.Extensions;
+using Guts.Application.Services.Deletion;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -131,9 +132,11 @@ public class Startup(IConfiguration configuration)
         services.AddSingleton<IMapper, Mapper>();
 
         services.AddApplicationServices(Configuration);
+        services.AddSingleton<IDeletionJobQueue, InMemoryDeletionJobQueue>();
         services.AddHostedService<SprintLeaderboardBackgroundService>();
         services.AddHostedService<StreakReminderBackgroundService>();
         services.AddHostedService<PeerAssessmentReminderBackgroundService>();
+        services.AddHostedService<DeletionBackgroundService>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

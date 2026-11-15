@@ -18,7 +18,7 @@ internal abstract class BaseDbRepository<T, TConcrete> : IBasicRepository<T> whe
         _context = context;
     }
 
-    public async Task<T> GetByIdAsync(params object[] idValues)
+    public virtual async Task<T> GetByIdAsync(params object[] idValues)
     {
         var entity = await _context.Set<TConcrete>().FindAsync(idValues);
         if (entity == null)
@@ -147,20 +147,29 @@ internal abstract class BaseDbRepository<T, TConcrete> : IBasicRepository<T> whe
         await _context.SaveChangesAsync();
     }
 
-    protected async Task ExecuteInTransactionAsync(Func<Task> operation)
+    protected Task ExecuteInTransactionAsync(Func<Task> operation)
+    {
+        return ExecuteInTransactionAsync(async () =>
+        {
+            await operation();
+            return true;
+        });
+    }
+
+    protected async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> operation)
     {
         if (!_context.Database.IsRelational())
         {
-            await operation();
-            return;
+            return await operation();
         }
 
         var strategy = _context.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
+        return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
-            await operation();
+            TResult result = await operation();
             await transaction.CommitAsync();
+            return result;
         });
     }
 }
