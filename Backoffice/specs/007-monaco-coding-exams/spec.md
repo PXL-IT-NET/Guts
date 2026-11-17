@@ -1,7 +1,7 @@
 # Specification: Secure In-Browser Monaco Coding Exams
 
 - **Feature ID**: `007-monaco-coding-exams`
-- **Status**: `Draft`
+- **Status**: `Approved`
 - **Created**: `2026-11-17`
 
 ---
