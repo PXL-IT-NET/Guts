@@ -10,58 +10,58 @@
 
 ## Phase 1: Domain Layer (`Guts.Domain.Tests` ➔ `Guts.Domain`)
 
-- [ ] **[T1.1]** `[AC-1, AC-2, DR-1, DR-2, DR-3]` Write failing unit tests in `Guts.Domain.Tests/ExamAggregate/` for value objects and catalog:
+- [x] **[T1.1]** `[AC-1, AC-2, DR-1, DR-2, DR-3]` Write failing unit tests in `Guts.Domain.Tests/ExamAggregate/` for value objects and catalog:
   - `ExamAccessCodeTests.cs` (trimming, length bounds `4..32`, constant-time `Matches`, immutability)
   - `ExamFilePathTests.cs` (backslash-to-slash normalization, `./` trimming, `..` traversal rejection, leading `/` rejection, `bin/`/`obj/`/`.git/` rejection, immutability)
   - `ExamTemplateCatalogTests.cs` (`IsSupported`, `GetByKey`, `SupportsWasmExecution` flags)
-- [ ] **[T1.2]** `[AC-1, AC-2, DR-1, DR-2, DR-3]` Implement `ExamStatus`, `ExamFileRole`, `ExamTemplateProfile`, `ExamTemplateCatalog`, `ExamAccessCode`, and `ExamFilePath` in `Guts.Domain/ExamAggregate/`.
-- [ ] **[T1.3]** `[AC-1, AC-2, AC-3, DR-1, DR-2, DR-3, DR-4]` Create `ExamBuilder` in `Guts.Domain.Tests/Builders/` and write failing unit tests in `Guts.Domain.Tests/ExamAggregate/ExamTests.cs`, `ExamQuestionTests.cs`, and `ExamFactoryTests.cs` covering:
+- [x] **[T1.2]** `[AC-1, AC-2, DR-1, DR-2, DR-3]` Implement `ExamStatus`, `ExamFileRole`, `ExamTemplateProfile`, `ExamTemplateCatalog`, `ExamAccessCode`, and `ExamFilePath` in `Guts.Domain/ExamAggregate/`.
+- [x] **[T1.3]** `[AC-1, AC-2, AC-3, DR-1, DR-2, DR-3, DR-4]` Create `ExamBuilder` in `Guts.Domain.Tests/Builders/` and write failing unit tests in `Guts.Domain.Tests/ExamAggregate/ExamTests.cs`, `ExamQuestionTests.cs`, and `ExamFactoryTests.cs` covering:
   - Factory creation invariants (`ContractException` on invalid `CourseId`, `PeriodId`, `CreatedByUserId`, empty `Title`, invalid `TemplateKey`, invalid `AccessCode`, non-UTC dates)
   - Question management (`AddQuestion`, `UpdateDetails`, `UpsertFile`, `SetFileRole`, `ReplaceFiles`, `RemoveFile`, duplicate path prevention)
   - Status transitions (`Draft -> Open`, `Open -> Closed`, `Closed -> Open`), rejecting `Open` when no questions or missing `Editable` file
   - `EnsureCanEnter(suppliedAccessCode)` rejecting `Draft` / `Closed` exams or mismatched access codes
-- [ ] **[T1.4]** `[AC-1, AC-2, AC-3, DR-1, DR-2, DR-3, DR-4]` Implement `ExamQuestionFile`, `ExamQuestion`, `Exam`, `IExamFactory`, and stateless `ExamFactory` in `Guts.Domain/ExamAggregate/`.
-- [ ] **[T1.5]** Run `dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj` and verify all tests pass.
+- [x] **[T1.4]** `[AC-1, AC-2, AC-3, DR-1, DR-2, DR-3, DR-4]` Implement `ExamQuestionFile`, `ExamQuestion`, `Exam`, `IExamFactory`, and stateless `ExamFactory` in `Guts.Domain/ExamAggregate/`.
+- [x] **[T1.5]** Run `dotnet test Backoffice/Guts.Domain.Tests/Guts.Domain.Tests.csproj` and verify all tests pass.
 
 ---
 
 ## Phase 2: Business Layer (`Guts.Application.Tests` ➔ `Guts.Application`)
 
-- [ ] **[T2.1]** `[AC-1, AC-2, AC-3]` Define `GutsClaimTypes.ExamGuest` / `GutsClaimTypes.ExamId`, `CreateExamGuestToken(int examId, int expirationMinutes)` on `ITokenAccessPassFactory`, `IExamRepository`, `IExamProjectImporter`, `Exam` DTOs (`ExamSummaryDto`, `ExamDetailDto`, `ExamQuestionDto`, `ExamQuestionFileDto`, `ExamWorkspaceDto`, `ImportedProjectFileDto`, `ExamEntryResultDto`, `FileRoleAssignmentDto`), `IExamConverter`, and `IExamService`.
-- [ ] **[T2.2]** `[AC-3]` Write failing unit tests in `Guts.Application.Tests/Security/JwtSecurityTokenAccessPassFactoryTests.cs` verifying exam guest tokens contain `exam_guest = "true"`, `exam_id`, `jti`, and **no** user `NameId`, `Sub`, `Email`, or `Role` claims.
-- [ ] **[T2.3]** `[AC-1, AC-2, AC-3]` Write failing unit tests in `Guts.Application.Tests/Converters/ExamConverterTests.cs` and `Guts.Application.Tests/Services/Exam/ExamServiceTests.cs` covering:
+- [x] **[T2.1]** `[AC-1, AC-2, AC-3]` Define `GutsClaimTypes.ExamGuest` / `GutsClaimTypes.ExamId`, `CreateExamGuestToken(int examId, int expirationMinutes)` on `ITokenAccessPassFactory`, `IExamRepository`, `IExamProjectImporter`, `Exam` DTOs (`ExamSummaryDto`, `ExamDetailDto`, `ExamQuestionDto`, `ExamQuestionFileDto`, `ExamWorkspaceDto`, `ImportedProjectFileDto`, `ExamEntryResultDto`, `FileRoleAssignmentDto`), `IExamConverter`, and `IExamService`.
+- [x] **[T2.2]** `[AC-3]` Write failing unit tests in `Guts.Application.Tests/Security/JwtSecurityTokenAccessPassFactoryTests.cs` verifying exam guest tokens contain `exam_guest = "true"`, `exam_id`, `jti`, and **no** user `NameId`, `Sub`, `Email`, or `Role` claims.
+- [x] **[T2.3]** `[AC-1, AC-2, AC-3]` Write failing unit tests in `Guts.Application.Tests/Converters/ExamConverterTests.cs` and `Guts.Application.Tests/Services/Exam/ExamServiceTests.cs` covering:
   - CRUD, Open/Close orchestration, Question CRUD, Zip/Git import orchestration, File role updates
   - `EnterExamAsync` (delegating to `exam.EnsureCanEnter(...)` and issuing exam guest token without exposing `AccessCode`)
   - `GetExamWorkspaceAsync` (verifying `Open` check for guest vs preview for Lector, excluding `AccessCode`)
-- [ ] **[T2.4]** `[AC-1, AC-2, AC-3]` Implement `JwtSecurityTokenAccessPassFactory.CreateExamGuestToken`, `ExamConverter`, and `ExamService` in `Guts.Application/`.
-- [ ] **[T2.5]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
+- [x] **[T2.4]** `[AC-1, AC-2, AC-3]` Implement `JwtSecurityTokenAccessPassFactory.CreateExamGuestToken`, `ExamConverter`, and `ExamService` in `Guts.Application/`.
+- [x] **[T2.5]** Run `dotnet test Backoffice/Guts.Application.Tests/Guts.Application.Tests.csproj` and verify all tests pass.
 
 ---
 
 ## Phase 3: Infrastructure Layer (`Guts.Infrastructure.Tests` ➔ `Guts.Infrastructure`)
 
-- [ ] **[T3.1]** `[AC-1, AC-2]` Add `internal` `ExamConfiguration`, `ExamQuestionConfiguration`, and `ExamQuestionFileConfiguration` in `Guts.Infrastructure/EntityConfigurations/`, add `DbSet<Exam> Exams` to `GutsContext`, and scaffold `AddCodingExams` EF Core migration.
-- [ ] **[T3.2]** `[AC-1, AC-2]` Write failing integration/unit tests in `Guts.Infrastructure.Tests/Repositories/ExamDbRepositoryTests.cs` and `Guts.Infrastructure.Tests/Exam/ExamProjectImporterTests.cs` covering:
+- [x] **[T3.1]** `[AC-1, AC-2]` Add `internal` `ExamConfiguration`, `ExamQuestionConfiguration`, and `ExamQuestionFileConfiguration` in `Guts.Infrastructure/EntityConfigurations/`, add `DbSet<Exam> Exams` to `GutsContext`, and scaffold `AddCodingExams` EF Core migration.
+- [x] **[T3.2]** `[AC-1, AC-2]` Write failing integration/unit tests in `Guts.Infrastructure.Tests/Repositories/ExamDbRepositoryTests.cs` and `Guts.Infrastructure.Tests/Exam/ExamProjectImporterTests.cs` covering:
   - `ExamDbRepository` CRUD, course/period filtering, eager loading of ordered questions & files
   - `ExamProjectImporter.ExtractFromZipAsync` (normalizing paths, filtering `bin/`/`obj/`/`.git/` and binary files, auto-classifying `*Tests*`, `.csproj`/`.sln`, and `.cs` files, rejecting zip-slip `../`, oversized archives, and excess file counts)
   - `ExamProjectImporter.CloneFromGitAsync` (rejecting non-HTTPS schemes, `file://`, and private/loopback URLs)
-- [ ] **[T3.3]** `[AC-1, AC-2]` Implement `ExamDbRepository`, `ExamProjectImporter`, and explicit DI registration for `IExamProjectImporter` in `Guts.Bootstrapper/StartUpExtensions.cs`.
-- [ ] **[T3.4]** Run `dotnet test Backoffice/Guts.Infrastructure.Tests/Guts.Infrastructure.Tests.csproj` and verify all tests pass.
+- [x] **[T3.3]** `[AC-1, AC-2]` Implement `ExamDbRepository`, `ExamProjectImporter`, and explicit DI registration for `IExamProjectImporter` in `Guts.Bootstrapper/StartUpExtensions.cs`.
+- [x] **[T3.4]** Run `dotnet test Backoffice/Guts.Infrastructure.Tests/Guts.Infrastructure.Tests.csproj` and verify all tests pass.
 
 ---
 
 ## Phase 4: API Layer (`Guts.Api.Tests` ➔ `Guts.Api`) & WASM Compiler (`Guts.ExamCompiler.Wasm`)
 
-- [ ] **[T4.1]** `[AC-3]` Write failing unit tests in `Guts.Api.Tests/Filters/ExamGuestLockdownFilterTests.cs` verifying:
+- [x] **[T4.1]** `[AC-3]` Write failing unit tests in `Guts.Api.Tests/Filters/ExamGuestLockdownFilterTests.cs` verifying:
   - Regular user JWTs pass untouched
   - Exam guest JWTs (`exam_guest = "true"`) are blocked (`403 Forbidden`) on endpoints without `[AllowExamGuest]`
   - Exam guest JWTs are blocked (`403 Forbidden`) when route `examId` does not match `exam_id` claim
   - Exam guest JWTs succeed on `[AllowExamGuest]` endpoints with matching `examId`
-- [ ] **[T4.2]** `[AC-3]` Implement `AllowExamGuestAttribute` and `ExamGuestLockdownFilter` in `Guts.Api/Filters/` and register globally in `Guts.Api/Startup.cs`.
-- [ ] **[T4.3]** `[AC-1, AC-2, AC-3]` Write failing unit tests in `Guts.Api.Tests/Controllers/ExamControllerTests.cs` and `Guts.Api.Tests/Controllers/ExamSessionControllerTests.cs` covering authorization policies (`LectorOrAdminPolicy`, course ownership checks, `[AllowAnonymous]` enter, `[AllowExamGuest]` workspace), validation errors, and `IMapper` model conversions.
-- [ ] **[T4.4]** `[AC-1, AC-2, AC-3]` Implement request/response models, `IMapper` mappings, `ExamController`, and `ExamSessionController` in `Guts.Api/`.
+- [x] **[T4.2]** `[AC-3]` Implement `AllowExamGuestAttribute` and `ExamGuestLockdownFilter` in `Guts.Api/Filters/` and register globally in `Guts.Api/Startup.cs`.
+- [x] **[T4.3]** `[AC-1, AC-2, AC-3]` Write failing unit tests in `Guts.Api.Tests/Controllers/ExamControllerTests.cs` and `Guts.Api.Tests/Controllers/ExamSessionControllerTests.cs` covering authorization policies (`LectorOrAdminPolicy`, course ownership checks, `[AllowAnonymous]` enter, `[AllowExamGuest]` workspace), validation errors, and `IMapper` model conversions.
+- [x] **[T4.4]** `[AC-1, AC-2, AC-3]` Implement request/response models, `IMapper` mappings, `ExamController`, and `ExamSessionController` in `Guts.Api/`.
 - [ ] **[T4.5]** `[AC-4, AC-5]` Write failing unit tests in `Guts.ExamCompiler.Wasm.Tests/` for Roslyn completion, signature help, hover, diagnostics, C# compilation, and pure `.NET` test/Main execution; implement `Guts.ExamCompiler.Wasm` (`[JSExport]` bridge + curated `.NET 10` reference assembly bundle) and configure build output into `Guts.Web/ClientApp/src/assets/wasm-compiler/` and `wasm-refs/`.
-- [ ] **[T4.6]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and `dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj` and verify all tests pass.
+- [x] **[T4.6]** Run `dotnet test Backoffice/Guts.Api.Tests/Guts.Api.Tests.csproj` and `dotnet test Backoffice/Guts.Architecture.Tests/Guts.Architecture.Tests.csproj` and verify all tests pass.
 
 ---
 

@@ -1,9 +1,11 @@
 #pragma warning disable RMG089 // Implicit user-defined conversion on AssessmentScore value object is intentional
 using System.Linq;
 using Guts.Api.Models.AssignmentModels;
+using Guts.Api.Models.ExamModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
 using Guts.Application.Dtos;
+using Guts.Application.Dtos.Exam;
 using Guts.Domain;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
@@ -74,6 +76,92 @@ public partial class Mapper : IMapper
             CreatedAtUtc = source.CreatedAtUtc,
             StartedAtUtc = source.StartedAtUtc,
             CompletedAtUtc = source.CompletedAtUtc
+        };
+    }
+
+    public ExamSummaryModel MapToExamSummaryModel(ExamSummaryDto source)
+    {
+        if (source == null) return null;
+
+        return new ExamSummaryModel
+        {
+            Id = source.Id,
+            Title = source.Title,
+            CourseId = source.CourseId,
+            PeriodId = source.PeriodId,
+            TemplateKey = source.TemplateKey,
+            Status = source.Status.ToString(),
+            QuestionCount = source.QuestionCount,
+            CreatedAtUtc = source.CreatedAtUtc,
+            UpdatedAtUtc = source.UpdatedAtUtc
+        };
+    }
+
+    public ExamDetailModel MapToExamDetailModel(ExamDetailDto source)
+    {
+        if (source == null) return null;
+
+        return new ExamDetailModel
+        {
+            Id = source.Id,
+            Title = source.Title,
+            Description = source.Description,
+            CourseId = source.CourseId,
+            PeriodId = source.PeriodId,
+            AccessCode = source.AccessCode,
+            TemplateKey = source.TemplateKey,
+            Status = source.Status.ToString(),
+            CreatedByUserId = source.CreatedByUserId,
+            QuestionCount = source.QuestionCount,
+            CreatedAtUtc = source.CreatedAtUtc,
+            UpdatedAtUtc = source.UpdatedAtUtc,
+            Questions = source.Questions.Select(MapToExamQuestionModel).ToList()
+        };
+    }
+
+    public ExamWorkspaceModel MapToExamWorkspaceModel(ExamWorkspaceDto source)
+    {
+        if (source == null) return null;
+
+        return new ExamWorkspaceModel
+        {
+            ExamId = source.ExamId,
+            Title = source.Title,
+            Description = source.Description,
+            TemplateKey = source.TemplateKey,
+            Status = source.Status.ToString(),
+            Questions = source.Questions.Select(MapToExamQuestionModel).ToList()
+        };
+    }
+
+    public ExamEntryResponseModel MapToExamEntryResponseModel(ExamEntryResultDto source)
+    {
+        if (source == null) return null;
+
+        return new ExamEntryResponseModel
+        {
+            Token = source.AccessPass?.Token,
+            Expiration = source.AccessPass?.Expiration ?? default,
+            Workspace = MapToExamWorkspaceModel(source.Workspace)
+        };
+    }
+
+    private static ExamQuestionModel MapToExamQuestionModel(ExamQuestionDto source)
+    {
+        return new ExamQuestionModel
+        {
+            Id = source.Id,
+            Title = source.Title,
+            InstructionsMarkdown = source.InstructionsMarkdown,
+            OrderIndex = source.OrderIndex,
+            TemplateKey = source.TemplateKey,
+            Files = source.Files.Select(f => new ExamQuestionFileModel
+            {
+                Id = f.Id,
+                RelativePath = f.RelativePath,
+                Content = f.Content,
+                Role = f.Role
+            }).ToList()
         };
     }
 

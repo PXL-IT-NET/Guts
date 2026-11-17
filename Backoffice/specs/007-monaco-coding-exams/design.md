@@ -119,9 +119,9 @@ All new domain types live under `Guts.Domain/ExamAggregate/` (pure C#, zero EF C
 All EF Core types and configurations are `internal` per `ArchitectureTests.InfrastructureDbContextAndEntityConfigurations_ShouldBeInternal`:
 - **`GutsContext`**: Add `public DbSet<Exam> Exams { get; set; }` (`ExamQuestions` and `ExamQuestionFiles` mapped via owned/child entity configurations).
 - **Entity Configurations** (`Guts.Infrastructure/EntityConfigurations/`):
-  - `ExamConfiguration` (`internal`): Table `"Exams"`, PK `Id`, `Title` (`MaxLength(200)`, required), `Description` (nvarchar(max)), `AccessCode` value conversion on `ExamAccessCode.Value` (`MaxLength(64)`, required), `TemplateKey` (`MaxLength(100)`), `Status` (`int`), FK to `Course` (`DeleteBehavior.Cascade`) and `Period` (`DeleteBehavior.Restrict`), index on `(CourseId, PeriodId)`.
-  - `ExamQuestionConfiguration` (`internal`): Table `"ExamQuestions"`, PK `Id`, `Title` (`MaxLength(200)`), `InstructionsMarkdown`, `OrderIndex`, `TemplateKey` (`MaxLength(100)`), FK to `Exam` (`DeleteBehavior.Cascade`), index on `(ExamId, OrderIndex)`.
-  - `ExamQuestionFileConfiguration` (`internal`): Table `"ExamQuestionFiles"`, PK `Id`, `RelativePath` value conversion on `ExamFilePath.Value` (`MaxLength(260)`), `Content` (nvarchar(max)), `Role` (`int`), unique index on `(ExamQuestionId, RelativePath)`, FK to `ExamQuestion` (`DeleteBehavior.Cascade`).
+  - `ExamConfiguration` (`internal`): Table `"CodingExams"`, PK `Id`, `Title` (`MaxLength(200)`, required), `Description` (nvarchar(max)), `AccessCode` value conversion on `ExamAccessCode.Value` (`MaxLength(64)`, required), `TemplateKey` (`MaxLength(100)`), `Status` (`int`), FK to `Course` (`DeleteBehavior.Cascade`) and `Period` (`DeleteBehavior.Restrict`), index on `(CourseId, PeriodId)`.
+  - `ExamQuestionConfiguration` (`internal`): Table `"CodingExamQuestions"`, PK `Id`, `Title` (`MaxLength(200)`), `InstructionsMarkdown`, `OrderIndex`, `TemplateKey` (`MaxLength(100)`), FK to `Exam` (`DeleteBehavior.Cascade`), index on `(ExamId, OrderIndex)`.
+  - `ExamQuestionFileConfiguration` (`internal`): Table `"CodingExamQuestionFiles"`, PK `Id`, `RelativePath` value conversion on `ExamFilePath.Value` (`MaxLength(260)`), `Content` (nvarchar(max)), `Role` (`int`), unique index on `(ExamQuestionId, RelativePath)`, FK to `ExamQuestion` (`DeleteBehavior.Cascade`).
 - **Migration Required**: `Yes` — `AddCodingExams`
 
 ### Repository & Importer Implementations (`Guts.Infrastructure/`)

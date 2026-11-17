@@ -54,4 +54,31 @@ internal class JwtSecurityTokenAccessPassFactory(
             Expiration = jwtSecurityToken.ValidTo
         };
     }
+
+    public TokenAccessPass CreateExamGuestToken(int examId, int expirationMinutes = 480)
+    {
+        var guestClaims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(GutsClaimTypes.ExamGuest, "true"),
+            new Claim(GutsClaimTypes.ExamId, examId.ToString())
+        };
+
+        var keyBytes = Encoding.UTF8.GetBytes(key);
+        var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
+        var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+
+        var jwtSecurityToken = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: guestClaims,
+            expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+            signingCredentials: signingCredentials);
+
+        return new TokenAccessPass
+        {
+            Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+            Expiration = jwtSecurityToken.ValidTo
+        };
+    }
 }

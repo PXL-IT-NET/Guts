@@ -5,6 +5,8 @@ using Guts.Application.Captcha;
 using Guts.Application.Communication;
 using Guts.Application.Security;
 using Guts.Application.Services;
+using Guts.Application.Services.Exam;
+using Guts.Infrastructure.Exams;
 using Guts.Infrastructure.Repositories;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.RoleAggregate;
@@ -80,6 +82,7 @@ public static class StartUpExtensions
 
         //register repositories
         services.RegisterTypesWhoseNameEndsWith("Repository", dataAssembly, ServiceLifetime.Scoped);
+        services.AddScoped<IExamProjectImporter, ExamProjectImporter>();
     }
 
     public static void AddApplicationLayerServices(this IServiceCollection services, IConfiguration configuration)

@@ -7,4 +7,5 @@ namespace Guts.Application.Security;
 public interface ITokenAccessPassFactory
 {
     TokenAccessPass Create(User user, IList<Claim> currentUserClaims, IList<string> userRoles, int? impersonatorId = null);
+    TokenAccessPass CreateExamGuestToken(int examId, int expirationMinutes = 480);
 }

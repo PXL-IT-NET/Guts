@@ -147,6 +147,128 @@ namespace Guts.Infrastructure.Migrations
                     b.ToTable("DeletionJobs", (string)null);
                 });
 
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PeriodId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.HasIndex("CourseId", "PeriodId");
+
+                    b.ToTable("CodingExams", (string)null);
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InstructionsMarkdown")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId", "OrderIndex");
+
+                    b.ToTable("CodingExamQuestions", (string)null);
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamQuestionFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ExamQuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamQuestionId", "RelativePath")
+                        .IsUnique();
+
+                    b.ToTable("CodingExamQuestionFiles", (string)null);
+                });
+
             modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseClassGroup", b =>
                 {
                     b.Property<int>("Id")
@@ -990,6 +1112,45 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("Assignment");
                 });
 
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
+                {
+                    b.HasOne("Guts.Domain.CourseAggregate.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Guts.Domain.PeriodAggregate.Period", null)
+                        .WithMany()
+                        .HasForeignKey("PeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamQuestion", b =>
+                {
+                    b.HasOne("Guts.Domain.ExamAggregate.Exam", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamQuestionFile", b =>
+                {
+                    b.HasOne("Guts.Domain.ExamAggregate.ExamQuestion", null)
+                        .WithMany("Files")
+                        .HasForeignKey("ExamQuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Guts.Domain.GamificationAggregate.Configuration.CourseClassGroup", b =>
                 {
                     b.HasOne("Guts.Domain.CourseAggregate.Course", "Course")
@@ -1352,6 +1513,16 @@ namespace Guts.Infrastructure.Migrations
                     b.Navigation("TestRuns");
 
                     b.Navigation("Tests");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.Exam", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Guts.Domain.ExamAggregate.ExamQuestion", b =>
+                {
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("Guts.Domain.GamificationAggregate.Profiles.StudentCourseProfile", b =>

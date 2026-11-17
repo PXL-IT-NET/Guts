@@ -1,7 +1,9 @@
 using Guts.Api.Models.AssignmentModels;
+using Guts.Api.Models.ExamModels;
 using Guts.Api.Models.PeriodModels;
 using Guts.Api.Models.ProjectModels;
 using Guts.Application.Dtos;
+using Guts.Application.Dtos.Exam;
 using Guts.Domain.AssessmentResultAggregate;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.PeriodAggregate;
@@ -25,4 +27,8 @@ public interface IMapper
     AssessmentSubResultModel MapToAssessmentSubResultModel(IAssessmentSubResult source);
     AssessmentResultModel MapToAssessmentResultModel(IAssessmentResult source);
     DeletionJobStatusModel MapToDeletionJobStatusModel(DeletionJobDto source);
+    ExamSummaryModel MapToExamSummaryModel(ExamSummaryDto source);
+    ExamDetailModel MapToExamDetailModel(ExamDetailDto source);
+    ExamWorkspaceModel MapToExamWorkspaceModel(ExamWorkspaceDto source);
+    ExamEntryResponseModel MapToExamEntryResponseModel(ExamEntryResultDto source);
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.DeletionJobAggregate;
+using Guts.Domain.ExamAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
@@ -67,6 +68,7 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
     public DbSet<GamificationEvent> GamificationEvents { get; set; }
     public DbSet<MessageTracker> MessageTrackers { get; set; }
     public DbSet<DeletionJob> DeletionJobs { get; set; }
+    public DbSet<Exam> Exams { get; set; }
 
     public GutsContext(DbContextOptions<GutsContext> options) : base(options)
     {
@@ -102,6 +104,9 @@ internal class GutsContext : IdentityDbContext<User, Role, int>
         builder.ApplyConfiguration(new GamificationEventConfiguration());
         builder.ApplyConfiguration(new MessageTrackerConfiguration());
         builder.ApplyConfiguration(new DeletionJobConfiguration());
+        builder.ApplyConfiguration(new ExamConfiguration());
+        builder.ApplyConfiguration(new ExamQuestionConfiguration());
+        builder.ApplyConfiguration(new ExamQuestionFileConfiguration());
 
         builder.Entity<Course>()
             .Property(c => c.IsDeleting)

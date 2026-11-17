@@ -83,4 +83,27 @@ public class JwtSecurityTokenAccessPassFactoryTests
         var token = new JwtSecurityTokenHandler().ReadJwtToken(accessPass.Token);
         Assert.That(token.Claims, Has.Some.Matches<Claim>(c => c.Type == GutsClaimTypes.ImpersonatorId && c.Value == "5"));
     }
+
+    [Test]
+    public void CreateExamGuestToken_ShouldIssueGuestLockedTokenWithoutUserOrRoleClaims()
+    {
+        string key = Guid.NewGuid().ToString();
+        string issuer = Guid.NewGuid().ToString();
+        string audience = Guid.NewGuid().ToString();
+        var factory = new JwtSecurityTokenAccessPassFactory(key, issuer, audience, 60);
+
+        var accessPass = factory.CreateExamGuestToken(examId: 42, expirationMinutes: 240);
+
+        Assert.That(accessPass.Token, Is.Not.Null.And.Not.Empty);
+        Assert.That(accessPass.Expiration, Is.EqualTo(DateTime.UtcNow.AddMinutes(240)).Within(20).Seconds);
+
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(accessPass.Token);
+        Assert.That(token.Claims, Has.Some.Matches<Claim>(c => c.Type == GutsClaimTypes.ExamGuest && c.Value == "true"));
+        Assert.That(token.Claims, Has.Some.Matches<Claim>(c => c.Type == GutsClaimTypes.ExamId && c.Value == "42"));
+        Assert.That(token.Claims, Has.None.Matches<Claim>(c =>
+            c.Type == JwtRegisteredClaimNames.NameId ||
+            c.Type == JwtRegisteredClaimNames.Sub ||
+            c.Type == JwtRegisteredClaimNames.Email ||
+            c.Type == ClaimTypes.Role));
+    }
 }

@@ -94,6 +94,7 @@ public class Startup(IConfiguration configuration)
         services.AddControllers(options =>
         {
             options.Filters.Add(new AuthorizeFilter(ApiConstants.AuthenticatedUsersOnlyPolicy));
+            options.Filters.Add<ExamGuestLockdownFilter>();
             options.Filters.Add<ImpersonationReadOnlyFilter>();
             options.Filters.Add<ApplicationExceptionFilterAttribute>();
             options.Filters.Add<LogBadRequestFilterAttribute>();
