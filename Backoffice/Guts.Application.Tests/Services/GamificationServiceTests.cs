@@ -146,6 +146,62 @@ public class GamificationServiceTests
         _studentCourseProfileRepositoryMock.Verify(r => r.UpdateAsync(profile), Times.Once);
     }
 
+    [TestCase(2026, 11, 16, 23, 30, true, false, TestName = "ProcessTestRunAsync_CET_00_30_ShouldAwardNightOwl")]
+    [TestCase(2026, 11, 17, 4, 30, false, true, TestName = "ProcessTestRunAsync_CET_05_30_ShouldAwardEarlyBird")]
+    [TestCase(2026, 11, 17, 7, 30, false, false, TestName = "ProcessTestRunAsync_CET_08_30_ShouldAwardNeither")]
+    public async Task ProcessTestRunAsync_UtcTestRunAtLocalBoundary_ShouldEvaluateTimeBadgesInLocalTime(
+        int utcYear,
+        int utcMonth,
+        int utcDay,
+        int utcHour,
+        int utcMinute,
+        bool expectNightOwl,
+        bool expectEarlyBird)
+    {
+        const int assignmentId = 42;
+        const int courseId = 10;
+        const int periodId = 1;
+        const int userId = 5;
+
+        var testRun = new TestRun
+        {
+            AssignmentId = assignmentId,
+            UserId = userId,
+            CreateDateTime = new DateTime(utcYear, utcMonth, utcDay, utcHour, utcMinute, 0, DateTimeKind.Utc),
+            TestResults = (List<TestResult>)[new() { TestId = 101, Passed = true }]
+        };
+
+        var chapter = new Chapter { Id = 7, CourseId = courseId, PeriodId = periodId };
+        var assignment = new Assignment
+        {
+            Id = assignmentId,
+            TopicId = 7,
+            Topic = chapter,
+            Tests = (List<Test>)[new() { Id = 101 }, new() { Id = 102 }]
+        };
+
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignmentId)).ReturnsAsync(assignment);
+        _courseGamificationConfigRepositoryMock.Setup(r => r.GetByCourseIdAsync(courseId))
+            .ReturnsAsync(new CourseGamificationConfig(courseId)
+            {
+                IsGamificationEnabled = true,
+                IsBadgesEnabled = true,
+                IsWeeklyStreakEnabled = true
+            });
+
+        var profile = new StudentCourseProfile(userId, courseId, periodId)
+        {
+            User = new User { FirstName = "Bob", LastName = "Builder" }
+        };
+        _studentCourseProfileRepositoryMock.Setup(r => r.GetByUserCourseAndPeriodAsync(userId, courseId, periodId))
+            .ReturnsAsync(profile);
+
+        await _service.ProcessTestRunAsync(testRun);
+
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.EqualTo(expectNightOwl));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.EqualTo(expectEarlyBird));
+    }
+
     [Test]
     public async Task ProcessTestRunAsync_ComponentAllTestsGreenAndAllTeamMembersContributed_ShouldAwardTeamSynergyBonusToAllMembers()
     {

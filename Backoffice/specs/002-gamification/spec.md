@@ -87,9 +87,9 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
   - `HighFive` (`22`, `"High Five"`, `🖐️`): Completed 100% of all tests in 5 assignments ($\ge 5$ `AssignmentCompleted` events in the course).
   - `SpeedDemon` (`2`, `"Speed Demon"`, `⚡`): Top-10 fastest completion of all tests in an assignment.
   - `CleanSweep` (`4`, `"Clean Sweep"`, `🧹`): Passed 100% of tests across all assignments in a chapter/topic.
-  - `NightOwl` (`5`, `"Night Owl"`, `🦉`): Passing test submitted between `00:00` and `04:59` (`Hour >= 0 && Hour < 5`).
-  - `EarlyBird` (`6`, `"Early Bird"`, `🌅`): Passing test submitted between `05:00` and `07:59` (`Hour >= 5 && Hour < 8`).
-  - `WeekendWarrior` (`7`, `"Weekend Warrior"`, `⚔️`): Passing test submitted on `Saturday` or `Sunday`.
+  - `NightOwl` (`5`, `"Night Owl"`, `🦉`): Passing test submitted between `00:00` and `04:59` (`Hour >= 0 && Hour < 5`) in `Europe/Brussels` local time.
+  - `EarlyBird` (`6`, `"Early Bird"`, `🌅`): Passing test submitted between `05:00` and `07:59` (`Hour >= 5 && Hour < 8`) in `Europe/Brussels` local time.
+  - `WeekendWarrior` (`7`, `"Weekend Warrior"`, `⚔️`): Passing test submitted on `Saturday` or `Sunday` in `Europe/Brussels` local time.
   - `WarmingUp` (`17`, `"Warming Up"`, `🕯️`): Reached a `CurrentStreak` of $\ge 2$ consecutive ISO weeks.
   - `OnFire` (`9`, `"On Fire"`, `🔥`): Reached a `CurrentStreak` of $\ge 4$ consecutive ISO weeks.
   - `Unstoppable` (`18`, `"Unstoppable"`, `☄️`): Reached a `CurrentStreak` of $\ge 6$ consecutive ISO weeks.

@@ -367,17 +367,74 @@ public class StudentCourseProfileTests
     {
         var profile = _factory.CreateNew(1, 2, 3);
 
-        // Night Owl (02:00)
-        profile.AwardPassedTestXp(1, new DateTime(2026, 10, 21, 2, 30, 0, DateTimeKind.Utc));
+        // Night Owl (02:30 CEST = 00:30 UTC)
+        profile.AwardPassedTestXp(1, new DateTime(2026, 10, 21, 0, 30, 0, DateTimeKind.Utc));
         Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.True);
 
-        // Early Bird (06:00)
-        profile.AwardPassedTestXp(2, new DateTime(2026, 10, 21, 6, 30, 0, DateTimeKind.Utc));
+        // Early Bird (06:30 CEST = 04:30 UTC)
+        profile.AwardPassedTestXp(2, new DateTime(2026, 10, 21, 4, 30, 0, DateTimeKind.Utc));
         Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.True);
 
         // Weekend Warrior (Saturday)
         profile.AwardPassedTestXp(3, new DateTime(2026, 10, 24, 14, 0, 0, DateTimeKind.Utc));
         Assert.That(profile.Badges.Any(b => b.Badge == Badge.WeekendWarrior), Is.True);
+    }
+
+    [TestCase(2026, 11, 16, 23, 30, true, false, TestName = "CET_00_30_ShouldAwardNightOwl_NotEarlyBird")]
+    [TestCase(2026, 11, 17, 4, 30, false, true, TestName = "CET_05_30_ShouldAwardEarlyBird_NotNightOwl")]
+    [TestCase(2026, 11, 17, 7, 30, false, false, TestName = "CET_08_30_ShouldAwardNeitherNightOwlNorEarlyBird")]
+    [TestCase(2026, 7, 14, 22, 30, true, false, TestName = "CEST_00_30_ShouldAwardNightOwl_NotEarlyBird")]
+    [TestCase(2026, 7, 15, 3, 30, false, true, TestName = "CEST_05_30_ShouldAwardEarlyBird_NotNightOwl")]
+    [TestCase(2026, 7, 15, 6, 30, false, false, TestName = "CEST_08_30_ShouldAwardNeitherNightOwlNorEarlyBird")]
+    public void AwardPassedTestXp_UtcTimestampAtLocalTimeBoundary_ShouldEvaluateInLocalTime(
+        int utcYear,
+        int utcMonth,
+        int utcDay,
+        int utcHour,
+        int utcMinute,
+        bool expectNightOwl,
+        bool expectEarlyBird)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var utcTimestamp = new DateTime(utcYear, utcMonth, utcDay, utcHour, utcMinute, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(1, utcTimestamp);
+
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.EqualTo(expectNightOwl));
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.EqualTo(expectEarlyBird));
+    }
+
+    [TestCase(2026, 11, 20, 23, 30, true, TestName = "CET_Saturday_00_30_ShouldAwardWeekendWarrior")]
+    [TestCase(2026, 11, 22, 23, 30, false, TestName = "CET_Monday_00_30_ShouldNotAwardWeekendWarrior")]
+    public void AwardPassedTestXp_UtcTimestampAtWeekendBoundary_ShouldEvaluateInLocalTime(
+        int utcYear,
+        int utcMonth,
+        int utcDay,
+        int utcHour,
+        int utcMinute,
+        bool expectWeekendWarrior)
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var utcTimestamp = new DateTime(utcYear, utcMonth, utcDay, utcHour, utcMinute, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(1, utcTimestamp);
+
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.WeekendWarrior), Is.EqualTo(expectWeekendWarrior));
+    }
+
+    [Test]
+    public void AwardPassedTestXp_LocalTimestamp_ShouldConvertToBrusselsTimeBeforeEvaluatingBadges()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var brusselsTz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Brussels");
+        var brussels0030 = new DateTime(2026, 11, 17, 0, 30, 0, DateTimeKind.Unspecified);
+        var utcTimestamp = TimeZoneInfo.ConvertTimeToUtc(brussels0030, brusselsTz);
+        var localTimestamp = utcTimestamp.ToLocalTime();
+
+        profile.AwardPassedTestXp(1, localTimestamp);
+
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.NightOwl), Is.True);
+        Assert.That(profile.Badges.Any(b => b.Badge == Badge.EarlyBird), Is.False);
     }
 
     [Test]

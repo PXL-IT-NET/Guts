@@ -12,6 +12,8 @@ namespace Guts.Domain.GamificationAggregate.Profiles;
 
 public class StudentCourseProfile : AggregateRoot
 {
+    private static readonly TimeZoneInfo BadgeEvaluationTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Brussels");
+
     public int Id { get; set; }
 
     private readonly HashSet<StudentBadge> _badges = [];
@@ -165,16 +167,21 @@ public class StudentCourseProfile : AggregateRoot
             AwardBadge(Badge.CenturyClub, timestamp);
         }
 
-        if (timestamp.Hour is >= 0 and < 5)
+        DateTime utcTimestamp = timestamp.Kind == DateTimeKind.Local
+            ? timestamp.ToUniversalTime()
+            : DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+        DateTime localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(utcTimestamp, BadgeEvaluationTimeZone);
+
+        if (localTimestamp.Hour is >= 0 and < 5)
         {
             AwardBadge(Badge.NightOwl, timestamp);
         }
-        else if (timestamp.Hour is >= 5 and < 8)
+        else if (localTimestamp.Hour is >= 5 and < 8)
         {
             AwardBadge(Badge.EarlyBird, timestamp);
         }
 
-        if (timestamp.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        if (localTimestamp.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
             AwardBadge(Badge.WeekendWarrior, timestamp);
         }
