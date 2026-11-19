@@ -49,4 +49,22 @@ public class AdminRolePolicyTests
         Assert.Throws<ContractException>(() =>
             AdminRolePolicy.EnsureCanDemoteFromAdmin([Role.Constants.Lector], currentAdminCount: 2));
     }
+
+    [Test]
+    public void CanPromoteToAdmin_ShouldReturnTrueOnlyForLectorNotYetAdmin()
+    {
+        Assert.That(AdminRolePolicy.CanPromoteToAdmin([Role.Constants.Lector]), Is.True);
+        Assert.That(AdminRolePolicy.CanPromoteToAdmin([Role.Constants.Student]), Is.False);
+        Assert.That(AdminRolePolicy.CanPromoteToAdmin([Role.Constants.Lector, Role.Constants.Admin]), Is.False);
+        Assert.That(AdminRolePolicy.CanPromoteToAdmin(null), Is.False);
+    }
+
+    [Test]
+    public void CanDemoteFromAdmin_ShouldReturnTrueOnlyForAdminWhenMoreThanOneAdminExists()
+    {
+        Assert.That(AdminRolePolicy.CanDemoteFromAdmin([Role.Constants.Admin], currentAdminCount: 2), Is.True);
+        Assert.That(AdminRolePolicy.CanDemoteFromAdmin([Role.Constants.Admin], currentAdminCount: 1), Is.False);
+        Assert.That(AdminRolePolicy.CanDemoteFromAdmin([Role.Constants.Lector], currentAdminCount: 2), Is.False);
+        Assert.That(AdminRolePolicy.CanDemoteFromAdmin(null, currentAdminCount: 2), Is.False);
+    }
 }

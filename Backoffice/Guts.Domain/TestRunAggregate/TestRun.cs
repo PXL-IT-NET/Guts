@@ -24,6 +24,21 @@ public class TestRun : AggregateRoot
     public int PassedTestsCount => TestResults?.Count(r => r.Passed) ?? 0;
     public int FailedTestsCount => TestResults?.Count(r => !r.Passed) ?? 0;
 
+    public TestResult AddTestResult(int testId, bool passed, string message, int userId, DateTime createDateTime)
+    {
+        TestResults ??= new HashSet<TestResult>();
+        var testResult = new TestResult
+        {
+            TestId = testId,
+            Passed = passed,
+            Message = message,
+            UserId = userId,
+            CreateDateTime = createDateTime
+        };
+        TestResults.Add(testResult);
+        return testResult;
+    }
+
     protected override IEnumerable<object> GetIdComponents()
     {
         yield return Id;

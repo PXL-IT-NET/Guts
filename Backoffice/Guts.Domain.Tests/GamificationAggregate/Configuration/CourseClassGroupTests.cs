@@ -199,4 +199,13 @@ public class CourseClassGroupTests
         Assert.That(result.ClassScore, Is.EqualTo(762));
         Assert.That(result.CurrentUserContribution, Is.EqualTo(7));
     }
+
+    [Test]
+    public void BelongsToCourse_ShouldReturnTrueOnlyForMatchingCourseId()
+    {
+        var group = new CourseClassGroup("1TIN-A", 10, 20);
+
+        Assert.That(group.BelongsToCourse(10), Is.True);
+        Assert.That(group.BelongsToCourse(99), Is.False);
+    }
 }

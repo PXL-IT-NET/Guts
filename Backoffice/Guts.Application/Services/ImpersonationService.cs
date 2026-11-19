@@ -21,18 +21,13 @@ internal class ImpersonationService(
         int page = 1,
         int? pageSize = null)
     {
-        bool isAdmin = callerRoles != null && callerRoles.Contains(Role.Constants.Admin);
-        string roleFilter = isAdmin ? null : Role.Constants.Student;
-        IReadOnlyCollection<string> excludedRoles = isAdmin
-            ? [Role.Constants.Admin]
-            : [Role.Constants.Admin, Role.Constants.Lector];
+        var (roleFilter, excludedRoles) = ImpersonationPolicy.GetSearchFilterForCaller(callerRoles);
 
         PagedResult<UserWithRolesAndLinks> results =
             await userRepository.SearchUsersAsync(search, roleFilter, orphanedOnly: false, excludedRoles, page, pageSize);
 
         List<ImpersonatableUserDto> items = results.Items
-            .Where(entry => !entry.Roles.Contains(Role.Constants.Admin))
-            .Where(entry => isAdmin || !entry.Roles.Contains(Role.Constants.Lector))
+            .Where(entry => ImpersonationPolicy.CanCallerImpersonateTarget(callerRoles, entry.Roles))
             .Select(entry => new ImpersonatableUserDto
             {
                 Id = entry.User.Id,

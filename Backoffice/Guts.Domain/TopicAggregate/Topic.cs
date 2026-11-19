@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Guts.Common;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
@@ -64,5 +65,12 @@ public abstract class Topic : AggregateRoot, ITopic
     {
         Contracts.Require(assignments != null, "Assignments cannot be null.");
         Assignments = [.. assignments];
+    }
+
+    public HashSet<int> GetTestIds()
+    {
+        return (Assignments ?? Enumerable.Empty<Assignment>())
+            .SelectMany(a => a.GetTestIds())
+            .ToHashSet();
     }
 }
