@@ -140,10 +140,10 @@
                         <span class="bi bi-person-badge me-1"></span>
                         <span>Assignment breakdown for <strong>{{ student.lastName }} {{ student.firstName }}</strong></span>
                       </h6>
-                      @for (chapter of student.chapters; track chapter.chapterId) {
+                      @for (chapter of getSortedChapters(student); track chapter.chapterId) {
                         <div class="mb-3">
                           <div class="fw-bold mb-2 pb-1 border-bottom text-primary">
-                            <span>{{ chapter.description }}</span>
+                            <span>{{ getChapterTitle(chapter) }}</span>
                           </div>
                           @if (chapter.assignments.length === 0) {
                             <p class="text-muted small ms-3">No assignments in this chapter.</p>
@@ -159,7 +159,7 @@
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  @for (assignment of chapter.assignments; track assignment.assignmentId) {
+                                  @for (assignment of getSortedAssignments(chapter); track assignment.assignmentId) {
                                     <tr>
                                       <td>
                                         <strong>{{ assignment.code }}</strong>

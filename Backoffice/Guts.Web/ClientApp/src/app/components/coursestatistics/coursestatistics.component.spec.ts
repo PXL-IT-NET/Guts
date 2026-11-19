@@ -301,4 +301,164 @@ describe("CourseStatisticsComponent", () => {
     expect(courseServiceSpy.getCourseStatistics).toHaveBeenCalledWith(1, 6);
     expect(courseServiceSpy.getCourseStatistics).toHaveBeenCalledTimes(2);
   });
+
+  it("should sort chapters by description (case-insensitive) with code fallback and tie-breaker", () => {
+    const student = {
+      ...mockStats.students[0],
+      chapters: [
+        { chapterId: 1, code: "ch01", description: "Zeta", assignments: [] },
+        { chapterId: 2, code: "ch02", description: "beta", assignments: [] },
+        { chapterId: 3, code: "ch03", description: "   ", assignments: [] },
+        { chapterId: 4, code: "ch04", description: "", assignments: [] },
+        { chapterId: 5, code: "ch05", description: "Alpha", assignments: [] },
+        { chapterId: 6, code: "ch00", description: "Alpha", assignments: [] },
+      ],
+    };
+
+    const sorted = component.getSortedChapters(student);
+    expect(sorted.map((c) => c.code)).toEqual([
+      "ch00",
+      "ch05",
+      "ch02",
+      "ch03",
+      "ch04",
+      "ch01",
+    ]);
+    expect(component.getSortedChapters({ ...student, chapters: [] })).toEqual([]);
+    expect(
+      component.getSortedChapters({
+        ...student,
+        chapters: undefined as unknown as typeof student.chapters,
+      }),
+    ).toEqual([]);
+  });
+
+  it("should sort assignments by description (case-insensitive) with code fallback and tie-breaker", () => {
+    const chapter = {
+      chapterId: 10,
+      code: "ch01",
+      description: "Chapter 1",
+      assignments: [
+        { assignmentId: 1, code: "ex01", description: "Zebra", numberOfPassedTests: 1, numberOfTests: 2 },
+        { assignmentId: 2, code: "ex02", description: "apple", numberOfPassedTests: 2, numberOfTests: 2 },
+        { assignmentId: 3, code: "ex03", description: "", numberOfPassedTests: 0, numberOfTests: 2 },
+        { assignmentId: 4, code: "ex04", description: "   ", numberOfPassedTests: 0, numberOfTests: 0 },
+        { assignmentId: 5, code: "ex05", description: "Banana", numberOfPassedTests: 1, numberOfTests: 2 },
+        { assignmentId: 6, code: "ex00", description: "Banana", numberOfPassedTests: 1, numberOfTests: 2 },
+      ],
+    };
+
+    const sorted = component.getSortedAssignments(chapter);
+    expect(sorted.map((a) => a.code)).toEqual([
+      "ex02",
+      "ex00",
+      "ex05",
+      "ex03",
+      "ex04",
+      "ex01",
+    ]);
+    expect(component.getSortedAssignments({ ...chapter, assignments: [] })).toEqual([]);
+    expect(
+      component.getSortedAssignments({
+        ...chapter,
+        assignments: undefined as unknown as typeof chapter.assignments,
+      }),
+    ).toEqual([]);
+    expect(
+      component.getSortedAssignments({
+        ...chapter,
+        assignments: [
+          { assignmentId: 1, code: undefined as unknown as string, description: "", numberOfPassedTests: 0, numberOfTests: 0 },
+          { assignmentId: 2, code: undefined as unknown as string, description: "", numberOfPassedTests: 0, numberOfTests: 0 },
+        ],
+      }),
+    ).toHaveSize(2);
+  });
+
+  it("should return trimmed chapter description or fallback to code in getChapterTitle", () => {
+    expect(
+      component.getChapterTitle({
+        chapterId: 1,
+        code: "ch01",
+        description: "  Chapter 1: Intro  ",
+        assignments: [],
+      }),
+    ).toBe("Chapter 1: Intro");
+
+    expect(
+      component.getChapterTitle({
+        chapterId: 2,
+        code: "ch02",
+        description: "   ",
+        assignments: [],
+      }),
+    ).toBe("ch02");
+
+    expect(
+      component.getChapterTitle({
+        chapterId: 3,
+        code: "ch03",
+        description: "",
+        assignments: [],
+      }),
+    ).toBe("ch03");
+  });
+
+  it("should render sorted chapters, fallback chapter title, and sorted assignments in expanded accordion", () => {
+    const unsortedStats: ICourseStatisticsModel = {
+      ...mockStats,
+      students: [
+        {
+          ...mockStats.students[0],
+          studentId: 42,
+          chapters: [
+            {
+              chapterId: 20,
+              code: "ch01",
+              description: "Zeta Chapter",
+              assignments: [
+                { assignmentId: 1, code: "ex01", description: "Second Task", numberOfPassedTests: 1, numberOfTests: 2 },
+                { assignmentId: 2, code: "ex02", description: "First Task", numberOfPassedTests: 2, numberOfTests: 2 },
+              ],
+            },
+            {
+              chapterId: 21,
+              code: "ch02",
+              description: "",
+              assignments: [
+                { assignmentId: 3, code: "ex09", description: "", numberOfPassedTests: 0, numberOfTests: 1 },
+                { assignmentId: 4, code: "ex03", description: "Alpha Task", numberOfPassedTests: 1, numberOfTests: 1 },
+              ],
+            },
+            {
+              chapterId: 22,
+              code: "ch03",
+              description: "Alpha Chapter",
+              assignments: [],
+            },
+          ],
+        },
+      ],
+    };
+
+    courseServiceSpy.getCourseStatistics.and.returnValue(
+      of(GetResult.success(unsortedStats)),
+    );
+    fixture.detectChanges();
+
+    component.toggleStudent(42);
+    fixture.detectChanges();
+
+    const chapterHeaders = Array.from(
+      fixture.nativeElement.querySelectorAll(".text-primary span") as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim());
+    expect(chapterHeaders).toEqual(["Alpha Chapter", "ch02", "Zeta Chapter"]);
+
+    const assignmentCodes = Array.from(
+      fixture.nativeElement.querySelectorAll("td strong") as NodeListOf<HTMLElement>,
+    )
+      .map((el) => el.textContent?.trim())
+      .filter((text) => text?.startsWith("ex"));
+    expect(assignmentCodes).toEqual(["ex03", "ex09", "ex02", "ex01"]);
+  });
 });

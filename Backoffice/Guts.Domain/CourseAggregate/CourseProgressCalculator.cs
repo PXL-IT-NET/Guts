@@ -44,6 +44,11 @@ public class CourseProgressCalculator : ICourseProgressCalculator
             .GroupBy(tr => tr.UserId)
             .ToList();
 
+        var orderedChapters = chapters
+            .OrderBy(c => GetSortKey(c.Description, c.Code), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(c => (string)c.Code, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         var studentProgressList = new List<CourseStudentProgress>();
 
         foreach (var userGroup in userGroups)
@@ -55,11 +60,14 @@ public class CourseProgressCalculator : ICourseProgressCalculator
             int totalPassedTests = 0;
             var chapterProgressList = new List<CourseChapterProgress>();
 
-            foreach (var chapter in chapters.OrderBy(c => (string)c.Code))
+            foreach (var chapter in orderedChapters)
             {
                 var assignmentProgressList = new List<CourseAssignmentProgress>();
+                var orderedAssignments = (chapter.Assignments ?? Enumerable.Empty<Assignment>())
+                    .OrderBy(a => GetSortKey(a.Description, a.Code), StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(a => a.Code, StringComparer.OrdinalIgnoreCase);
 
-                foreach (var assignment in (chapter.Assignments ?? Enumerable.Empty<Assignment>()).OrderBy(a => a.Code))
+                foreach (var assignment in orderedAssignments)
                 {
                     var tests = assignment.Tests ?? [];
                     var assignmentTestIds = new HashSet<int>(tests.Select(t => t.Id));
@@ -117,5 +125,10 @@ public class CourseProgressCalculator : ICourseProgressCalculator
             totalAssignments,
             totalTests,
             sortedStudents);
+    }
+
+    private static string GetSortKey(string description, string code)
+    {
+        return string.IsNullOrWhiteSpace(description) ? code : description;
     }
 }
