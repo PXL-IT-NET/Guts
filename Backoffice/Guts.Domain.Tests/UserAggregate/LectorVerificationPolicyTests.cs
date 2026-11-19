@@ -114,4 +114,14 @@ public class LectorVerificationPolicyTests
         Assert.DoesNotThrow(() =>
             LectorVerificationPolicy.EnsureCanUnlock(lockedLector, [Role.Constants.Lector], UtcNow));
     }
+
+    [Test]
+    public void CanUnlock_ShouldMatchIsLockedState()
+    {
+        var lockedLector = new UserBuilder().WithId().Build();
+        var verifiedLector = new UserBuilder().WithId().WithLastVerifiedOnUtc(UtcNow.AddDays(-5)).Build();
+
+        Assert.That(LectorVerificationPolicy.CanUnlock(lockedLector, [Role.Constants.Lector], UtcNow), Is.True);
+        Assert.That(LectorVerificationPolicy.CanUnlock(verifiedLector, [Role.Constants.Lector], UtcNow), Is.False);
+    }
 }

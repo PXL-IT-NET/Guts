@@ -28,9 +28,6 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
 
         List<AdminUserDto> items = results.Items.Select(entry =>
         {
-            bool isAdmin = entry.Roles.Contains(Role.Constants.Admin);
-            bool isLector = entry.Roles.Contains(Role.Constants.Lector);
-            bool isLinked = entry.CourseLinks.HasAnyLinks;
             bool isLockedLector = LectorVerificationPolicy.IsLocked(entry.User, entry.Roles, utcNow);
             return new AdminUserDto
             {
@@ -39,15 +36,15 @@ internal class AdminUserService(IUserRepository userRepository) : IAdminUserServ
                 FirstName = entry.User.FirstName,
                 LastName = entry.User.LastName,
                 Roles = entry.Roles,
-                IsLinkedToCourse = isLinked,
+                IsLinkedToCourse = entry.CourseLinks.HasAnyLinks,
                 LinkedCourses = entry.LinkedCourses ?? [],
-                CanDelete = !isAdmin && entry.User.Id != currentUserId,
-                CanImpersonate = !isAdmin,
-                CanPromoteToAdmin = isLector && !isAdmin,
-                CanDemoteFromAdmin = isAdmin && adminCount > 1,
+                CanDelete = UserDeletionPolicy.CanBeDeleted(entry.User, currentUserId, entry.Roles),
+                CanImpersonate = ImpersonationPolicy.CanBeImpersonated(entry.Roles),
+                CanPromoteToAdmin = AdminRolePolicy.CanPromoteToAdmin(entry.Roles),
+                CanDemoteFromAdmin = AdminRolePolicy.CanDemoteFromAdmin(entry.Roles, adminCount),
                 LastVerifiedOnUtc = entry.User.LastVerifiedOnUtc,
                 IsLockedLector = isLockedLector,
-                CanUnlockLector = isLockedLector
+                CanUnlockLector = LectorVerificationPolicy.CanUnlock(entry.User, entry.Roles, utcNow)
             };
         }).ToList();
 

@@ -72,4 +72,24 @@ public class TopicTests
 
         Assert.That(topic.Id, Is.EqualTo(id));
     }
+
+    [Test]
+    public void GetTestIds_ShouldAggregateTestIdsAcrossAllAssignments()
+    {
+        var topic = new DummyTopic(1);
+        var a1 = new Guts.Domain.AssignmentAggregate.Assignment { Id = 10 };
+        a1.AddTest("T1", id: 101);
+        a1.AddTest("T2", id: 102);
+
+        var a2 = new Guts.Domain.AssignmentAggregate.Assignment { Id = 20 };
+        a2.AddTest("T3", id: 201);
+
+        topic.AddAssignment(a1);
+        topic.AddAssignment(a2);
+
+        Assert.That(topic.GetTestIds(), Is.EquivalentTo(new[] { 101, 102, 201 }));
+
+        topic.Assignments = null;
+        Assert.That(topic.GetTestIds(), Is.Empty);
+    }
 }

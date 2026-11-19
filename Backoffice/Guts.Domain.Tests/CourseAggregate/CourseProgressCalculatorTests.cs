@@ -156,5 +156,75 @@ public class CourseProgressCalculatorTests
         Assert.That(a2Progress.NumberOfPassedTests, Is.EqualTo(0));
         Assert.That(a2Progress.NumberOfTests, Is.EqualTo(2));
     }
+
+    [Test]
+    public void CalculateProgress_SortsChaptersByDescriptionCaseInsensitiveWithCodeFallbackAndTieBreaker()
+    {
+        var course = new CourseBuilder().WithId(1).Build();
+        var student = new User { Id = 1, FirstName = "Jane", LastName = "Doe" };
+
+        var a1 = new AssignmentBuilder().WithId(1).WithCode("ex1").WithDescription("Ex 1").WithRandomTests(1).Build();
+        var a2 = new AssignmentBuilder().WithId(2).WithCode("ex2").WithDescription("Ex 2").WithRandomTests(1).Build();
+        var a3 = new AssignmentBuilder().WithId(3).WithCode("ex3").WithDescription("Ex 3").WithRandomTests(1).Build();
+        var a4 = new AssignmentBuilder().WithId(4).WithCode("ex4").WithDescription("Ex 4").WithRandomTests(1).Build();
+        var a5 = new AssignmentBuilder().WithId(5).WithCode("ex5").WithDescription("Ex 5").WithRandomTests(1).Build();
+        var a6 = new AssignmentBuilder().WithId(6).WithCode("ex6").WithDescription("Ex 6").WithRandomTests(1).Build();
+
+        var chZeta = new Chapter { Id = 1, Code = "ch01", Description = "Zeta", Assignments = [a1] };
+        var chBetaLower = new Chapter { Id = 2, Code = "ch02", Description = "beta", Assignments = [a2] };
+        var chWhitespace = new Chapter { Id = 3, Code = "ch03", Description = "   ", Assignments = [a3] };
+        var chNull = new Chapter { Id = 4, Code = "ch04", Description = null, Assignments = [a4] };
+        var chAlphaTie2 = new Chapter { Id = 5, Code = "ch05", Description = "Alpha", Assignments = [a5] };
+        var chAlphaTie1 = new Chapter { Id = 6, Code = "ch00", Description = "Alpha", Assignments = [a6] };
+
+        var firstTest = a1.Tests.First();
+        List<TestResult> results =
+        [
+            new() { UserId = student.Id, User = student, TestId = firstTest.Id, Test = firstTest, Passed = true }
+        ];
+
+        var report = _calculator.CalculateProgress(
+            course,
+            [chZeta, chBetaLower, chWhitespace, chNull, chAlphaTie2, chAlphaTie1],
+            results);
+
+        Assert.That(report.Students, Has.Count.EqualTo(1));
+        var chapterCodes = report.Students[0].Chapters.Select(c => c.Code).ToList();
+        Assert.That(chapterCodes, Is.EqualTo(new[] { "ch00", "ch05", "ch02", "ch03", "ch04", "ch01" }));
+    }
+
+    [Test]
+    public void CalculateProgress_SortsAssignmentsByDescriptionCaseInsensitiveWithCodeFallbackAndTieBreaker()
+    {
+        var course = new CourseBuilder().WithId(1).Build();
+        var student = new User { Id = 1, FirstName = "Jane", LastName = "Doe" };
+
+        var exZebra = new AssignmentBuilder().WithId(1).WithCode("ex01").WithDescription("Zebra").WithRandomTests(1).Build();
+        var exAppleLower = new AssignmentBuilder().WithId(2).WithCode("ex02").WithDescription("apple").WithRandomTests(1).Build();
+        var exEmptyDesc = new AssignmentBuilder().WithId(3).WithCode("ex03").WithDescription("").WithRandomTests(1).Build();
+        var exWhitespaceDesc = new AssignmentBuilder().WithId(4).WithCode("ex04").WithDescription("   ").WithRandomTests(1).Build();
+        var exBananaTie2 = new AssignmentBuilder().WithId(5).WithCode("ex05").WithDescription("Banana").WithRandomTests(1).Build();
+        var exBananaTie1 = new AssignmentBuilder().WithId(6).WithCode("ex00").WithDescription("Banana").WithRandomTests(1).Build();
+
+        var chapter = new Chapter
+        {
+            Id = 10,
+            Code = "ch01",
+            Description = "Chapter 1",
+            Assignments = [exZebra, exAppleLower, exEmptyDesc, exWhitespaceDesc, exBananaTie2, exBananaTie1]
+        };
+
+        var firstTest = exZebra.Tests.First();
+        List<TestResult> results =
+        [
+            new() { UserId = student.Id, User = student, TestId = firstTest.Id, Test = firstTest, Passed = true }
+        ];
+
+        var report = _calculator.CalculateProgress(course, [chapter], results);
+
+        Assert.That(report.Students, Has.Count.EqualTo(1));
+        var assignmentCodes = report.Students[0].Chapters[0].Assignments.Select(a => a.Code).ToList();
+        Assert.That(assignmentCodes, Is.EqualTo(new[] { "ex02", "ex00", "ex05", "ex03", "ex04", "ex01" }));
+    }
 }
 

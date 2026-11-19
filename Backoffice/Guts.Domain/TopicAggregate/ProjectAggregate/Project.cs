@@ -66,12 +66,17 @@ public class Project : Topic, IProject
         _teams.Add(team);
     }
 
-    public IReadOnlyList<IProjectTeam> GenerateTeams(string teamBaseName, int teamNumberFrom, int teamNumberTo)
+    public static void ValidateTeamGenerationRange(int teamNumberFrom, int teamNumberTo)
     {
-        Contracts.Require(!string.IsNullOrWhiteSpace(teamBaseName), "The team base name is required.");
         Contracts.Require(teamNumberFrom > 0, "The start team number must be greater than zero.");
         Contracts.Require(teamNumberTo >= teamNumberFrom, "The end team number must be greater than or equal to the start team number.");
         Contracts.Require(teamNumberTo - teamNumberFrom <= 100, "Cannot generate more than 100 teams in a single request.");
+    }
+
+    public IReadOnlyList<IProjectTeam> GenerateTeams(string teamBaseName, int teamNumberFrom, int teamNumberTo)
+    {
+        Contracts.Require(!string.IsNullOrWhiteSpace(teamBaseName), "The team base name is required.");
+        ValidateTeamGenerationRange(teamNumberFrom, teamNumberTo);
 
         var generated = new List<IProjectTeam>();
         for (int teamNumber = teamNumberFrom; teamNumber <= teamNumberTo; teamNumber++)

@@ -23,6 +23,11 @@ public static class LectorVerificationPolicy
         return user.RequiresAnnualVerification(utcNow);
     }
 
+    public static bool CanUnlock(User targetUser, IEnumerable<string> targetRoles, DateTime utcNow)
+    {
+        return IsLocked(targetUser, targetRoles, utcNow);
+    }
+
     public static void EnsureCanUnlock(User targetUser, IEnumerable<string> targetRoles, DateTime utcNow)
     {
         Contracts.Require(targetUser is not null, "Target user cannot be null.");

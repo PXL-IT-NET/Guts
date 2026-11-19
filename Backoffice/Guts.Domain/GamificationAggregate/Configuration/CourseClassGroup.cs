@@ -45,6 +45,8 @@ public class CourseClassGroup : AggregateRoot
         PeriodId = periodId;
     }
 
+    public bool BelongsToCourse(int courseId) => CourseId == courseId;
+
     public static double GetContributionWeightForRank(int withinClassRank)
     {
         Contracts.Require(withinClassRank > 0, "Within-class rank must be positive.");

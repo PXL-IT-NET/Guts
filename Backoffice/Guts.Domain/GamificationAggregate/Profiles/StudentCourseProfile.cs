@@ -110,6 +110,27 @@ public class StudentCourseProfile : AggregateRoot
         ShowInLeaderBoard = true;
     }
 
+    public string GetDisplayName(User fallbackUser = null)
+    {
+        if (UsePseudonym && !string.IsNullOrWhiteSpace(Pseudonym))
+        {
+            return Pseudonym;
+        }
+
+        var effectiveUser = User ?? fallbackUser;
+        string fullName = $"{effectiveUser?.FirstName} {effectiveUser?.LastName}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? Pseudonym : fullName;
+    }
+
+    public RecentGainsSummary GetRecentGainsSummary()
+    {
+        var recentEvents = LastLeaderboardVisitDate.HasValue
+            ? _events.Where(e => e.CreatedAt > LastLeaderboardVisitDate.Value).ToList()
+            : _events.ToList();
+
+        return new RecentGainsSummary(LastLeaderboardVisitDate, recentEvents);
+    }
+
     public bool RecordLeaderboardVisit(DateTime visitDateTime)
     {
         if (LastLeaderboardVisitDate.HasValue && (visitDateTime - LastLeaderboardVisitDate.Value) <= TimeSpan.FromMinutes(10))

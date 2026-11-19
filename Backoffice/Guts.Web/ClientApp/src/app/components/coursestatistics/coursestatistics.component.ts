@@ -14,6 +14,8 @@ import { AuthService } from "../../services/auth.service";
 import { PeriodProvider } from "../../services/period.provider";
 import {
   ICourseStatisticsModel,
+  ICourseStudentAssignmentStatisticsModel,
+  ICourseStudentChapterStatisticsModel,
   ICourseStudentStatisticsModel,
 } from "../../viewmodels/course.model";
 import { IPeriodModel } from "../../viewmodels/period.model";
@@ -256,5 +258,48 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     if (percentage >= 50) return "bg-primary";
     if (percentage > 0) return "bg-warning";
     return "bg-secondary";
+  }
+
+  public getSortedChapters(
+    student: ICourseStudentStatisticsModel,
+  ): ICourseStudentChapterStatisticsModel[] {
+    return [...(student.chapters ?? [])].sort((a, b) =>
+      this.compareByDescriptionThenCode(a, b),
+    );
+  }
+
+  public getSortedAssignments(
+    chapter: ICourseStudentChapterStatisticsModel,
+  ): ICourseStudentAssignmentStatisticsModel[] {
+    return [...(chapter.assignments ?? [])].sort((a, b) =>
+      this.compareByDescriptionThenCode(a, b),
+    );
+  }
+
+  public getChapterTitle(
+    chapter: ICourseStudentChapterStatisticsModel,
+  ): string {
+    return this.getSortKey(chapter);
+  }
+
+  private getSortKey(item: { description?: string; code?: string }): string {
+    return item.description?.trim() || item.code || "";
+  }
+
+  private compareByDescriptionThenCode(
+    a: { description?: string; code?: string },
+    b: { description?: string; code?: string },
+  ): number {
+    const comparison = this.getSortKey(a).localeCompare(
+      this.getSortKey(b),
+      undefined,
+      { sensitivity: "base" },
+    );
+    if (comparison !== 0) {
+      return comparison;
+    }
+    return (a.code ?? "").localeCompare(b.code ?? "", undefined, {
+      sensitivity: "base",
+    });
   }
 }

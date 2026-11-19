@@ -12,32 +12,8 @@ public class TestRunConverter : ITestRunConverter
     {
         ArgumentNullException.ThrowIfNull(assignment);
 
-        var testRun = new TestRun
-        {
-            UserId = userId,
-            AssignmentId = assignment.Id,
-            CreateDateTime = DateTime.UtcNow,
-            TestResults = new List<TestResult>()
-        };
-
-        testResultModels ??= new List<TestResultModel>();
-
-        foreach (var testResultModel in testResultModels)
-        {
-            var test = assignment.Tests.FirstOrDefault(t => string.Equals(t.TestName, testResultModel.TestName, StringComparison.OrdinalIgnoreCase));
-            if (test == null) continue;
-
-            var testResult = new TestResult
-            {
-                TestId = test.Id,
-                Passed = testResultModel.Passed,
-                Message = testResultModel.Message,
-                UserId = userId,
-                CreateDateTime = DateTime.UtcNow
-            };
-            testRun.TestResults.Add(testResult);
-        }
-        return testRun;
+        var incomingResults = testResultModels?.Select(m => (m.TestName, m.Passed, m.Message));
+        return assignment.CreateTestRun(userId, incomingResults, DateTime.UtcNow);
     }
 
     public SavedTestRunModel ToTestRunModel(TestRun testRun)

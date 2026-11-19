@@ -38,6 +38,12 @@ internal class AssignmentBuilder : BaseBuilder<Assignment>
         return this;
     }
 
+    public AssignmentBuilder WithDescription(string description)
+    {
+        Item.Description = description;
+        return this;
+    }
+
     public AssignmentBuilder WithRandomTests(int numberOfTests)
     {
         for (int i = 0; i < numberOfTests; i++)

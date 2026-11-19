@@ -96,10 +96,144 @@ export const mockChapterStatistics = {
   assignmentStatistics: [],
 };
 
+export const mockCourseStatistics = {
+  courseId: 1,
+  courseCode: "NET-ADV",
+  courseName: ".NET Advanced",
+  totalAssignments: 4,
+  totalTests: 10,
+  students: [
+    {
+      studentId: 1,
+      firstName: "Bob",
+      lastName: "Zeta",
+      fullName: "Bob Zeta",
+      assignmentsWorkedOn: 2,
+      totalPassedTests: 4,
+      totalTests: 10,
+      completionPercentage: 40,
+      chapters: [
+        {
+          chapterId: 30,
+          code: "ch01",
+          description: "Zeta Chapter",
+          assignments: [
+            {
+              assignmentId: 301,
+              code: "ex01",
+              description: "Second Exercise",
+              numberOfPassedTests: 1,
+              numberOfTests: 3,
+            },
+            {
+              assignmentId: 302,
+              code: "ex02",
+              description: "First Exercise",
+              numberOfPassedTests: 2,
+              numberOfTests: 2,
+            },
+          ],
+        },
+        {
+          chapterId: 20,
+          code: "ch02",
+          description: "",
+          assignments: [
+            {
+              assignmentId: 201,
+              code: "ex09",
+              description: "",
+              numberOfPassedTests: 0,
+              numberOfTests: 3,
+            },
+            {
+              assignmentId: 202,
+              code: "ex03",
+              description: "Alpha Exercise",
+              numberOfPassedTests: 1,
+              numberOfTests: 2,
+            },
+          ],
+        },
+        {
+          chapterId: 10,
+          code: "ch03",
+          description: "Alpha Chapter",
+          assignments: [],
+        },
+      ],
+    },
+    {
+      studentId: 2,
+      firstName: "Alice",
+      lastName: "Alpha",
+      fullName: "Alice Alpha",
+      assignmentsWorkedOn: 4,
+      totalPassedTests: 10,
+      totalTests: 10,
+      completionPercentage: 100,
+      chapters: [
+        {
+          chapterId: 30,
+          code: "ch01",
+          description: "Zeta Chapter",
+          assignments: [
+            {
+              assignmentId: 301,
+              code: "ex01",
+              description: "Second Exercise",
+              numberOfPassedTests: 3,
+              numberOfTests: 3,
+            },
+            {
+              assignmentId: 302,
+              code: "ex02",
+              description: "First Exercise",
+              numberOfPassedTests: 2,
+              numberOfTests: 2,
+            },
+          ],
+        },
+        {
+          chapterId: 20,
+          code: "ch02",
+          description: "",
+          assignments: [
+            {
+              assignmentId: 201,
+              code: "ex09",
+              description: "",
+              numberOfPassedTests: 3,
+              numberOfTests: 3,
+            },
+            {
+              assignmentId: 202,
+              code: "ex03",
+              description: "Alpha Exercise",
+              numberOfPassedTests: 2,
+              numberOfTests: 2,
+            },
+          ],
+        },
+        {
+          chapterId: 10,
+          code: "ch03",
+          description: "Alpha Chapter",
+          assignments: [],
+        },
+      ],
+    },
+  ],
+};
+
 /**
  * Registers network route mocks for courses, periods, chapters, and exercise summaries.
  */
-export async function setupCourseApiMocks(page: Page) {
+export async function setupCourseApiMocks(
+  page: Page,
+  courseStatisticsOverride?: typeof mockCourseStatistics,
+) {
+  const courseStatistics = courseStatisticsOverride ?? mockCourseStatistics;
   await page.route("**/api/periods", async (route) => {
     await route.fulfill({
       status: 200,
@@ -128,6 +262,15 @@ export async function setupCourseApiMocks(page: Page) {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ isGamificationEnabled: false }),
+      });
+      return;
+    }
+
+    if (url.includes("/api/courses/1/statistics")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(courseStatistics),
       });
       return;
     }

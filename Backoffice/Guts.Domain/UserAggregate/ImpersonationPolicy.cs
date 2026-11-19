@@ -7,6 +7,49 @@ namespace Guts.Domain.UserAggregate;
 
 public static class ImpersonationPolicy
 {
+    public static bool CanBeImpersonated(IReadOnlyCollection<string> targetRoles)
+    {
+        return targetRoles == null || !targetRoles.Contains(Role.Constants.Admin);
+    }
+
+    public static bool CanCallerImpersonateTarget(
+        IReadOnlyCollection<string> callerRoles,
+        IReadOnlyCollection<string> targetRoles)
+    {
+        if (!CanBeImpersonated(targetRoles))
+        {
+            return false;
+        }
+
+        bool isAdmin = callerRoles != null && callerRoles.Contains(Role.Constants.Admin);
+        if (isAdmin)
+        {
+            return true;
+        }
+
+        bool isLector = callerRoles != null && callerRoles.Contains(Role.Constants.Lector);
+        if (!isLector)
+        {
+            return false;
+        }
+
+        bool targetIsStudent = targetRoles != null && targetRoles.Contains(Role.Constants.Student);
+        bool targetIsLector = targetRoles != null && targetRoles.Contains(Role.Constants.Lector);
+        return targetIsStudent && !targetIsLector;
+    }
+
+    public static (string RoleFilter, IReadOnlyCollection<string> ExcludedRoles) GetSearchFilterForCaller(
+        IReadOnlyCollection<string> callerRoles)
+    {
+        bool isAdmin = callerRoles != null && callerRoles.Contains(Role.Constants.Admin);
+        string roleFilter = isAdmin ? null : Role.Constants.Student;
+        IReadOnlyCollection<string> excludedRoles = isAdmin
+            ? [Role.Constants.Admin]
+            : [Role.Constants.Admin, Role.Constants.Lector];
+
+        return (roleFilter, excludedRoles);
+    }
+
     public static void EnsureCanImpersonate(
         IReadOnlyCollection<string> callerRoles,
         bool isAlreadyImpersonating,

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -102,6 +103,53 @@ public class Assignment : AggregateRoot
     public void ClearTests()
     {
         _tests = null;
+    }
+
+    public HashSet<int> GetTestIds()
+    {
+        return _tests?.Select(t => t.Id).ToHashSet() ?? [];
+    }
+
+    public Test FindTestByName(string testName)
+    {
+        if (string.IsNullOrWhiteSpace(testName) || _tests == null)
+        {
+            return null;
+        }
+
+        return _tests.FirstOrDefault(t => string.Equals(t.TestName, testName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public TestRun CreateTestRun(
+        int userId,
+        IEnumerable<(string TestName, bool Passed, string Message)> incomingResults,
+        DateTime createDateTime)
+    {
+        var testRun = new TestRun
+        {
+            UserId = userId,
+            AssignmentId = Id,
+            CreateDateTime = createDateTime,
+            TestResults = new List<TestResult>()
+        };
+
+        if (incomingResults == null)
+        {
+            return testRun;
+        }
+
+        foreach (var result in incomingResults)
+        {
+            var test = FindTestByName(result.TestName);
+            if (test == null)
+            {
+                continue;
+            }
+
+            testRun.AddTestResult(test.Id, result.Passed, result.Message, userId, createDateTime);
+        }
+
+        return testRun;
     }
 
     public IReadOnlyList<Test> AddMissingTests(IEnumerable<string> testNames)

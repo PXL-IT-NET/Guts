@@ -75,5 +75,29 @@ public class TestRunTests
         Assert.That(run.PassedTestsCount, Is.Zero);
         Assert.That(run.FailedTestsCount, Is.Zero);
     }
+
+    [Test]
+    public void AddTestResult_ShouldCreateAndAddTestResultToCollection()
+    {
+        var timestamp = new DateTime(2026, 11, 19, 14, 0, 0, DateTimeKind.Utc);
+        var run = new TestRun
+        {
+            Id = 5,
+            AssignmentId = 10,
+            UserId = 20,
+            CreateDateTime = timestamp,
+            TestResults = null
+        };
+
+        var result = run.AddTestResult(testId: 101, passed: true, message: "OK", userId: 20, createDateTime: timestamp);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.TestId, Is.EqualTo(101));
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.Message, Is.EqualTo("OK"));
+        Assert.That(result.UserId, Is.EqualTo(20));
+        Assert.That(result.CreateDateTime, Is.EqualTo(timestamp));
+        Assert.That(run.TestResults, Has.Count.EqualTo(1));
+    }
 }
 
