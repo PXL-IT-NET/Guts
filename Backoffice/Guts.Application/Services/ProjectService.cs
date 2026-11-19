@@ -153,9 +153,7 @@ internal class ProjectService(
 
     public async Task GenerateTeamsForProject(int courseId, string projectCode, string teamBaseName, int teamNumberFrom, int teamNumberTo)
     {
-        Contracts.Require(teamNumberFrom > 0, "The start team number must be greater than zero.");
-        Contracts.Require(teamNumberTo >= teamNumberFrom, "The end team number must be greater than or equal to the start team number.");
-        Contracts.Require(teamNumberTo - teamNumberFrom <= 100, "Cannot generate more than 100 teams in a single request.");
+        Project.ValidateTeamGenerationRange(teamNumberFrom, teamNumberTo);
 
         IPeriod period = await periodRepository.GetPeriodAsync(null);
         IProject project = await projectRepository.LoadWithAssignmentsAndTeamsAsync(courseId, projectCode, period.Id);

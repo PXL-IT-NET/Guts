@@ -92,4 +92,16 @@ public class UserDeletionPolicyTests
         Assert.That(linksA.GetHashCode(), Is.EqualTo(linksB.GetHashCode()));
         Assert.That(linksA, Is.Not.EqualTo(linksDifferent));
     }
+
+    [Test]
+    public void CanBeDeleted_ShouldReturnTrueOnlyForNonAdminOtherUser()
+    {
+        var user = new User { Id = 42, Email = "user@pxl.be" };
+
+        Assert.That(UserDeletionPolicy.CanBeDeleted(user, currentUserId: 1, [Role.Constants.Student]), Is.True);
+        Assert.That(UserDeletionPolicy.CanBeDeleted(user, currentUserId: 1, null), Is.True);
+        Assert.That(UserDeletionPolicy.CanBeDeleted(user, currentUserId: 42, [Role.Constants.Student]), Is.False);
+        Assert.That(UserDeletionPolicy.CanBeDeleted(user, currentUserId: 1, [Role.Constants.Admin]), Is.False);
+        Assert.That(UserDeletionPolicy.CanBeDeleted(null, currentUserId: 1, [Role.Constants.Student]), Is.False);
+    }
 }

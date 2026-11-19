@@ -18,4 +18,5 @@ public interface ITopic : IEntity
     int PeriodId { get; }
     Assignment AddAssignment(Assignment assignment);
     void LoadAssignments(IEnumerable<Assignment> assignments);
+    HashSet<int> GetTestIds();
 }

@@ -238,6 +238,42 @@ public class HallOfFameLeagueTests
         Assert.Throws<ContractException>(() => HallOfFameLeague.DetermineRankProgression(null, 10, null, new List<StudentCourseProfile>()));
     }
 
+    [Test]
+    public void FindCompetitorAbove_ShouldReturnImmediatelyPrecedingOptedInCompetitorOrNull()
+    {
+        var now = DateTime.UtcNow;
+        var first = new StudentCourseProfile(1, 10, 1) { Id = 1 };
+        SetTotalXp(first, 100, now);
+
+        var hidden = new StudentCourseProfile(2, 10, 1) { Id = 2 };
+        SetTotalXp(hidden, 80, now);
+        hidden.HideFromLeaderboard();
+
+        var second = new StudentCourseProfile(3, 10, 1) { Id = 3 };
+        SetTotalXp(second, 50, now);
+
+        var profiles = new[] { second, hidden, first };
+
+        // First-place student has no competitor above
+        Assert.That(HallOfFameLeague.FindCompetitorAbove(profiles, 1), Is.Null);
+
+        // Hidden student is not on the leaderboard
+        Assert.That(HallOfFameLeague.FindCompetitorAbove(profiles, 2), Is.Null);
+
+        // Second opted-in student has first-place student directly above (skipping hidden)
+        var competitorAboveSecond = HallOfFameLeague.FindCompetitorAbove(profiles, 3);
+        Assert.That(competitorAboveSecond, Is.SameAs(first));
+
+        // Unknown user returns null
+        Assert.That(HallOfFameLeague.FindCompetitorAbove(profiles, 999), Is.Null);
+    }
+
+    [Test]
+    public void FindCompetitorAbove_NullProfiles_ShouldThrowContractException()
+    {
+        Assert.Throws<ContractException>(() => HallOfFameLeague.FindCompetitorAbove(null, 1));
+    }
+
     private static void SetTotalXp(StudentCourseProfile profile, int targetXp, DateTime timestamp)
     {
         int currentXp = profile.TotalXp;

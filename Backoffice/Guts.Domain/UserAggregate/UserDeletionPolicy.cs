@@ -7,6 +7,16 @@ namespace Guts.Domain.UserAggregate;
 
 public static class UserDeletionPolicy
 {
+    public static bool CanBeDeleted(
+        User targetUser,
+        int currentUserId,
+        IReadOnlyCollection<string> targetRoles)
+    {
+        return targetUser is not null &&
+               targetUser.Id != currentUserId &&
+               (targetRoles == null || !targetRoles.Contains(Role.Constants.Admin));
+    }
+
     public static void EnsureCanBeDeleted(
         User targetUser,
         int currentUserId,

@@ -755,4 +755,49 @@ public class StudentCourseProfileTests
 
         Assert.That(profile.Events, Does.Contain(evt));
     }
+
+    [Test]
+    public void GetDisplayName_ShouldRespectUsePseudonymAndFallbackToUserOrPseudonym()
+    {
+        var user = new Guts.Domain.UserAggregate.User { Id = 1, FirstName = "Ada", LastName = "Lovelace" };
+        var profile = new StudentCourseProfile(1, 2, 3) { User = user };
+
+        // UsePseudonym = false -> uses User full name
+        profile.Enroll(true, "CyberAda", "CodeCat", null, usePseudonym: false);
+        Assert.That(profile.GetDisplayName(), Is.EqualTo("Ada Lovelace"));
+
+        // UsePseudonym = true -> uses Pseudonym
+        profile.Enroll(true, "CyberAda", "CodeCat", null, usePseudonym: true);
+        Assert.That(profile.GetDisplayName(), Is.EqualTo("CyberAda"));
+
+        // UsePseudonym = false and User is null, but fallbackUser provided
+        var profileWithoutNav = new StudentCourseProfile(1, 2, 3);
+        profileWithoutNav.Enroll(true, "CyberAda", "CodeCat", null, usePseudonym: false);
+        Assert.That(profileWithoutNav.GetDisplayName(user), Is.EqualTo("Ada Lovelace"));
+
+        // UsePseudonym = false and both User and fallbackUser have empty name -> falls back to Pseudonym
+        var blankUser = new Guts.Domain.UserAggregate.User { Id = 1, FirstName = " ", LastName = "" };
+        Assert.That(profileWithoutNav.GetDisplayName(blankUser), Is.EqualTo("CyberAda"));
+    }
+
+    [Test]
+    public void GetRecentGainsSummary_ShouldIncludeAllEventsWhenNeverVisitedAndOnlyNewerEventsAfterVisit()
+    {
+        var profile = _factory.CreateNew(1, 2, 3);
+        var t1 = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+        var visitTime = new DateTime(2026, 3, 1, 11, 0, 0, DateTimeKind.Utc);
+        var t2 = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc);
+
+        profile.AwardPassedTestXp(101, t1);
+        var beforeVisitSummary = profile.GetRecentGainsSummary();
+        Assert.That(beforeVisitSummary.PreviousVisitDate, Is.Null);
+        Assert.That(beforeVisitSummary.TotalXpGained, Is.EqualTo(10));
+
+        profile.RecordLeaderboardVisit(visitTime);
+        profile.AwardPassedTestXp(102, t2);
+
+        var afterVisitSummary = profile.GetRecentGainsSummary();
+        Assert.That(afterVisitSummary.PreviousVisitDate, Is.EqualTo(visitTime));
+        Assert.That(afterVisitSummary.TotalXpGained, Is.EqualTo(10));
+    }
 }

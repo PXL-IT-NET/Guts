@@ -7,6 +7,20 @@ namespace Guts.Domain.UserAggregate;
 
 public static class AdminRolePolicy
 {
+    public static bool CanPromoteToAdmin(IReadOnlyCollection<string> targetRoles)
+    {
+        return targetRoles != null &&
+               targetRoles.Contains(Role.Constants.Lector) &&
+               !targetRoles.Contains(Role.Constants.Admin);
+    }
+
+    public static bool CanDemoteFromAdmin(IReadOnlyCollection<string> targetRoles, int currentAdminCount)
+    {
+        return targetRoles != null &&
+               targetRoles.Contains(Role.Constants.Admin) &&
+               currentAdminCount > 1;
+    }
+
     public static void EnsureCanPromoteToAdmin(IReadOnlyCollection<string> targetRoles)
     {
         Contracts.Require(targetRoles != null && targetRoles.Contains(Role.Constants.Lector),

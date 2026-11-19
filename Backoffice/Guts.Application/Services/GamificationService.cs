@@ -68,17 +68,17 @@ public class GamificationService(
 
             AwardPassedTestsXp(profile, testRun, config);
 
-            var allAssignmentTestIds = assignment.Tests.Select(t => t.Id).ToHashSet();
+            var allAssignmentTestIds = assignment.GetTestIds();
 
             bool allTestsOfAssignmentPassed = await CheckAssignmentAndTopicCompletionAsync(
                 profile, assignment, courseId, periodId, testRun.CreateDateTime, config, allAssignmentTestIds);
 
-            if (config.IsTeamSynergyEnabled && allTestsOfAssignmentPassed)
+            if (config.IsTeamSynergyActive && allTestsOfAssignmentPassed)
             {
                 await CheckTeamSynergyBonusAsync(profile, assignment, allAssignmentTestIds, courseId, periodId, testRun, config);
             }
 
-            if (config.IsLeaderboardEnabled && profile.ShowInLeaderBoard && profile.TotalXp > xpBefore)
+            if (config.IsHallOfFameActive && profile.ShowInLeaderBoard && profile.TotalXp > xpBefore)
             {
                 await EvaluateHallOfFameRankingAfterTestRunAsync(
                     profile, courseId, periodId, xpBefore, lastXpBefore, testRun.CreateDateTime);
@@ -148,7 +148,7 @@ public class GamificationService(
             profile.AwardAssignmentBonus(assignment.Id, testRunDateTime, previousCompletions, config.IsBadgesEnabled);
 
             var topicAssignments = await assignmentRepository.GetByTopicWithTests(assignment.TopicId);
-            var allTopicTestIds = topicAssignments.SelectMany(a => a.Tests).Select(t => t.Id).ToHashSet();
+            var allTopicTestIds = topicAssignments.SelectMany(a => a.GetTestIds()).ToHashSet();
             if (allTopicTestIds.Count > 0 && profile.HasPassedAllTests(allTopicTestIds))
             {
                 profile.AwardChapterBonus(assignment.TopicId, testRunDateTime, config.IsBadgesEnabled);
@@ -223,12 +223,7 @@ public class GamificationService(
         }
 
         var previousVisit = profile.LastLeaderboardVisitDate;
-
-        var recentEvents = previousVisit.HasValue
-            ? profile.Events.Where(e => e.CreatedAt > previousVisit.Value).ToList()
-            : profile.Events.ToList();
-
-        var recentGainsSummary = new RecentGainsSummary(previousVisit, recentEvents);
+        var recentGainsSummary = profile.GetRecentGainsSummary();
 
         var recentGains = new RecentXpGainDto
         {
@@ -317,7 +312,7 @@ public class GamificationService(
     public async Task<IReadOnlyList<LeaderboardEntryDto>> GetWeeklySprintLeaderboardAsync(int courseId, int currentUserId, int? periodId = null)
     {
         var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
-        if (config != null && (!config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled))
+        if (config != null && !config.IsWeeklySprintActive)
         {
             return new List<LeaderboardEntryDto>();
         }
@@ -334,7 +329,7 @@ public class GamificationService(
         {
             Rank = item.Rank,
             UserId = item.Profile.UserId,
-            DisplayName = GetDisplayName(item.Profile),
+            DisplayName = item.Profile.GetDisplayName(),
             Avatar = item.Profile.Avatar,
             ClassGroupName = item.Profile.ClassGroup?.Name ?? "Unassigned",
             Score = item.Score,
@@ -354,7 +349,7 @@ public class GamificationService(
         HallOfFameTier? selectedTier = null)
     {
         var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
-        if (config != null && (!config.IsGamificationEnabled || !config.IsLeaderboardEnabled))
+        if (config != null && !config.IsHallOfFameActive)
         {
             return new HallOfFameLeaderboardDto();
         }
@@ -410,7 +405,7 @@ public class GamificationService(
             {
                 Rank = rankEntry.TierRank,
                 UserId = profile.UserId,
-                DisplayName = GetDisplayName(profile),
+                DisplayName = profile.GetDisplayName(),
                 Avatar = profile.Avatar,
                 ClassGroupName = profile.ClassGroup?.Name ?? "Unassigned",
                 Score = profile.TotalXp,
@@ -532,22 +527,13 @@ public class GamificationService(
         };
     }
 
-    private static string GetDisplayName(StudentCourseProfile profile)
-    {
-        string displayName = profile.UsePseudonym
-            ? profile.Pseudonym
-            : $"{profile.User?.FirstName} {profile.User?.LastName}".Trim();
-
-        return string.IsNullOrWhiteSpace(displayName) ? profile.Pseudonym : displayName;
-    }
-
     public async Task<IReadOnlyList<ClassGroupLeaderboardEntryDto>> GetClassGroupLeaderboardAsync(
         int courseId,
         int? periodId = null,
         int? currentUserId = null)
     {
         var config = await courseGamificationConfigRepository.GetByCourseIdAsync(courseId);
-        if (config != null && (!config.IsGamificationEnabled || !config.IsClassCompetitionEnabled))
+        if (config != null && !config.IsClassCompetitionActive)
         {
             return new List<ClassGroupLeaderboardEntryDto>();
         }
@@ -672,7 +658,7 @@ public class GamificationService(
     public async Task DeleteCourseClassGroupAsync(int courseId, int classGroupId)
     {
         var group = await courseClassGroupRepository.GetByIdAsync(classGroupId);
-        if (group.CourseId != courseId)
+        if (!group.BelongsToCourse(courseId))
         {
             throw new DataNotFoundException("Class group not found for this course.");
         }
@@ -717,7 +703,7 @@ public class GamificationService(
         CourseGamificationConfig config,
         Func<Task<IReadOnlyList<int>>> getCourseTestIdsAsync)
     {
-        if (config == null || !config.IsGamificationEnabled || !config.IsLeaderboardEnabled)
+        if (config == null || !config.IsHallOfFameActive)
         {
             return;
         }
@@ -753,7 +739,7 @@ public class GamificationService(
             return;
         }
 
-        if (!config.IsWeeklyStreakEnabled || !config.IsLeaderboardEnabled || !config.IsBadgesEnabled)
+        if (!config.CanAwardWeeklySprintBadges)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
@@ -786,7 +772,7 @@ public class GamificationService(
         CourseGamificationConfig config,
         Func<Task<IReadOnlyList<int>>> getCourseTestIdsAsync)
     {
-        if (config == null || !config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled)
+        if (config == null || !config.IsWeeklyStreakActive)
         {
             return;
         }

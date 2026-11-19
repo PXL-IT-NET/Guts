@@ -10,6 +10,7 @@ using Guts.Application.Repositories;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
+using Guts.Domain.GamificationAggregate.Competitions;
 using Guts.Domain.GamificationAggregate.Profiles;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
@@ -116,7 +117,7 @@ public class StreakReminderService : IStreakReminderService
         IsoWeek currentWeek)
     {
         var config = await _configRepository.GetByCourseIdAsync(course.Id);
-        if (config == null || !config.IsGamificationEnabled || !config.IsWeeklyStreakEnabled)
+        if (config == null || !config.IsWeeklyStreakActive)
         {
             return new List<StreakReminderEmailMessage>();
         }
@@ -140,11 +141,10 @@ public class StreakReminderService : IStreakReminderService
             return new List<StreakReminderEmailMessage>();
         }
 
-        var optedInProfiles = GetOptedInLeaderboardProfiles(profiles);
         var messages = new List<StreakReminderEmailMessage>();
         foreach (var profile in eligibleProfiles)
         {
-            var message = await CreateReminderMessageAsync(profile, course, topics, optedInProfiles);
+            var message = await CreateReminderMessageAsync(profile, course, topics, profiles);
             if (message != null)
             {
                 messages.Add(message);
@@ -158,8 +158,7 @@ public class StreakReminderService : IStreakReminderService
     {
         return topics
             .SelectMany(t => t.Assignments ?? Enumerable.Empty<Assignment>())
-            .SelectMany(a => a.Tests ?? Enumerable.Empty<Test>())
-            .Select(t => t.Id)
+            .SelectMany(a => a.GetTestIds())
             .ToHashSet();
     }
 
@@ -185,21 +184,11 @@ public class StreakReminderService : IStreakReminderService
         return eligible;
     }
 
-    private static List<StudentCourseProfile> GetOptedInLeaderboardProfiles(IReadOnlyList<StudentCourseProfile> profiles)
-    {
-        return profiles
-            .Where(p => p.ShowInLeaderBoard)
-            .OrderByDescending(p => p.TotalXp)
-            .ThenBy(p => p.LastXpEarnedAt)
-            .ThenBy(p => p.Id)
-            .ToList();
-    }
-
     private async Task<StreakReminderEmailMessage> CreateReminderMessageAsync(
         StudentCourseProfile profile,
         Course course,
         IReadOnlyList<ITopic> topics,
-        List<StudentCourseProfile> optedInProfiles)
+        IReadOnlyList<StudentCourseProfile> profiles)
     {
         var user = profile.User ?? await _userRepository.GetByIdAsync(profile.UserId);
         if (user == null || string.IsNullOrWhiteSpace(user.Email))
@@ -207,7 +196,7 @@ public class StreakReminderService : IStreakReminderService
             return null;
         }
 
-        string targetStudentName = await ResolveTargetStudentNameAsync(profile, optedInProfiles);
+        string targetStudentName = await ResolveTargetStudentNameAsync(profile, profiles);
         var passedTestIds = profile.GetPassedTestIds();
         var recommended = BuildRecommendedAssignments(topics, passedTestIds);
 
@@ -224,35 +213,26 @@ public class StreakReminderService : IStreakReminderService
 
     private async Task<string> ResolveTargetStudentNameAsync(
         StudentCourseProfile profile,
-        List<StudentCourseProfile> optedInProfiles)
+        IReadOnlyList<StudentCourseProfile> profiles)
     {
         if (!profile.ShowInLeaderBoard)
         {
             return null;
         }
 
-        int index = optedInProfiles.FindIndex(p => p.UserId == profile.UserId);
-        if (index <= 0)
+        var targetProfile = HallOfFameLeague.FindCompetitorAbove(profiles, profile.UserId);
+        if (targetProfile == null)
         {
             return null;
         }
 
-        var targetProfile = optedInProfiles[index - 1];
-        string targetStudentName = targetProfile.UsePseudonym && !string.IsNullOrWhiteSpace(targetProfile.Pseudonym)
-            ? targetProfile.Pseudonym
-            : $"{targetProfile.User?.FirstName} {targetProfile.User?.LastName}".Trim();
-
-        if (string.IsNullOrWhiteSpace(targetStudentName))
+        User fallbackUser = null;
+        if (!targetProfile.UsePseudonym && targetProfile.User == null)
         {
-            var targetUser = targetProfile.User ?? await _userRepository.GetByIdAsync(targetProfile.UserId);
-            targetStudentName = $"{targetUser?.FirstName} {targetUser?.LastName}".Trim();
-            if (string.IsNullOrWhiteSpace(targetStudentName))
-            {
-                targetStudentName = targetProfile.Pseudonym;
-            }
+            fallbackUser = await _userRepository.GetByIdAsync(targetProfile.UserId);
         }
 
-        return targetStudentName;
+        return targetProfile.GetDisplayName(fallbackUser);
     }
 
     private static List<StreakReminderAssignmentDto> BuildRecommendedAssignments(

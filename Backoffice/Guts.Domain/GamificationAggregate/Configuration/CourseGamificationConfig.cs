@@ -18,6 +18,13 @@ public class CourseGamificationConfig : AggregateRoot
     public bool IsTeamSynergyEnabled { get; internal set; } = true;
     public bool IsBadgesEnabled { get; internal set; } = true;
 
+    public bool IsWeeklyStreakActive => IsGamificationEnabled && IsWeeklyStreakEnabled;
+    public bool IsHallOfFameActive => IsGamificationEnabled && IsLeaderboardEnabled;
+    public bool IsWeeklySprintActive => IsGamificationEnabled && IsWeeklyStreakEnabled && IsLeaderboardEnabled;
+    public bool CanAwardWeeklySprintBadges => IsWeeklySprintActive && IsBadgesEnabled;
+    public bool IsClassCompetitionActive => IsGamificationEnabled && IsClassCompetitionEnabled;
+    public bool IsTeamSynergyActive => IsGamificationEnabled && IsTeamSynergyEnabled;
+
     public CourseGamificationConfig() { }
 
     public CourseGamificationConfig(int courseId)

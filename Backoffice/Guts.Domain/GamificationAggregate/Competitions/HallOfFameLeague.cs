@@ -137,6 +137,15 @@ public static class HallOfFameLeague
         return Math.Max(1, (competitorAboveScore - targetScore) + 1);
     }
 
+    public static StudentCourseProfile FindCompetitorAbove(IEnumerable<StudentCourseProfile> profiles, int targetUserId)
+    {
+        Contracts.Require(profiles != null, "Profiles cannot be null.");
+
+        var orderedOptedIn = OrderProfiles(profiles.Where(p => p.ShowInLeaderBoard));
+        int index = orderedOptedIn.FindIndex(p => p.UserId == targetUserId);
+        return index > 0 ? orderedOptedIn[index - 1] : null;
+    }
+
     public static IReadOnlyList<StudentCourseProfile> EvaluateWeeklyRankDefense(
         IEnumerable<StudentCourseProfile> optedInProfiles,
         int year,

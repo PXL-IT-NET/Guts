@@ -286,4 +286,66 @@ public class AssignmentTests
         Assert.That(added.Select(t => t.TestName), Is.EquivalentTo(new[] { "New_2", "New_3" }));
         Assert.That(assignment.Tests, Has.Count.EqualTo(3));
     }
+
+    [Test]
+    public void GetTestIds_ShouldReturnAllLoadedTestIdsOrEmptyWhenNull()
+    {
+        var assignment = new Assignment();
+        Assert.That(assignment.GetTestIds(), Is.Empty);
+
+        assignment.AddTest("Test1", id: 11);
+        assignment.AddTest("Test2", id: 22);
+
+        Assert.That(assignment.GetTestIds(), Is.EquivalentTo(new[] { 11, 22 }));
+    }
+
+    [Test]
+    public void FindTestByName_ShouldMatchCaseInsensitivelyAndReturnNullWhenNotFoundOrUnloaded()
+    {
+        var assignment = new Assignment();
+        Assert.That(assignment.FindTestByName("AnyTest"), Is.Null);
+
+        var test = assignment.AddTest("ShouldPassWhenValid", id: 77);
+
+        Assert.That(assignment.FindTestByName("shouldpasswhenvalid"), Is.SameAs(test));
+        Assert.That(assignment.FindTestByName("UnknownTest"), Is.Null);
+        Assert.That(assignment.FindTestByName(null), Is.Null);
+    }
+
+    [Test]
+    public void CreateTestRun_ShouldCreateRunAndMatchTestsCaseInsensitivelyWhileIgnoringUnknownTests()
+    {
+        var assignment = new Assignment { Id = 15 };
+        assignment.AddTest("Test_One", id: 101);
+        assignment.AddTest("Test_Two", id: 102);
+        var timestamp = new DateTime(2026, 11, 19, 12, 0, 0, DateTimeKind.Utc);
+
+        var incoming = new (string TestName, bool Passed, string Message)[]
+        {
+            ("test_one", true, null),
+            ("TEST_TWO", false, "Expected 5 but was 4"),
+            ("NonExistentTest", true, null)
+        };
+
+        var testRun = assignment.CreateTestRun(userId: 42, incoming, timestamp);
+
+        Assert.That(testRun.AssignmentId, Is.EqualTo(15));
+        Assert.That(testRun.UserId, Is.EqualTo(42));
+        Assert.That(testRun.CreateDateTime, Is.EqualTo(timestamp));
+        Assert.That(testRun.TestResults, Has.Count.EqualTo(2));
+        Assert.That(testRun.TestResults.Any(r => r.TestId == 101 && r.Passed && r.UserId == 42), Is.True);
+        Assert.That(testRun.TestResults.Any(r => r.TestId == 102 && !r.Passed && r.Message == "Expected 5 but was 4"), Is.True);
+    }
+
+    [Test]
+    public void CreateTestRun_WhenIncomingResultsIsNull_ShouldReturnRunWithEmptyTestResults()
+    {
+        var assignment = new Assignment { Id = 15 };
+        assignment.AddTest("Test_One", id: 101);
+        var timestamp = new DateTime(2026, 11, 19, 12, 0, 0, DateTimeKind.Utc);
+
+        var testRun = assignment.CreateTestRun(userId: 42, null, timestamp);
+
+        Assert.That(testRun.TestResults, Is.Empty);
+    }
 }
