@@ -31,7 +31,23 @@ public static class ApiConstants
     public const string QuartzDashboardCookieScheme = "QuartzDashboardCookie";
 
     /// <summary>
+    /// Cookie name prefix for the Admin-only Quartz Dashboard authentication cookie.
+    /// </summary>
+    public const string QuartzDashboardCookieNamePrefix = ".Guts.QuartzDashboard";
+
+    /// <summary>
     /// Authorization policy restricting the Quartz Dashboard to authenticated administrators.
     /// </summary>
     public const string QuartzDashboardAdminPolicy = "QuartzDashboardAdminPolicy";
+
+    /// <summary>
+    /// Builds an environment-scoped cookie name so co-hosted environments on the same host
+    /// (e.g., Production at '/' and Staging at '/staging') never collide on Request.Cookies.
+    /// </summary>
+    public static string GetQuartzDashboardCookieName(string environmentName)
+    {
+        return string.IsNullOrWhiteSpace(environmentName)
+            ? QuartzDashboardCookieNamePrefix
+            : $"{QuartzDashboardCookieNamePrefix}.{environmentName.Trim()}";
+    }
 }

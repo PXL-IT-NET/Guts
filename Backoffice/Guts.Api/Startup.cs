@@ -27,9 +27,10 @@ using Quartz;
 namespace Guts.Api;
 
 [ExcludeFromCodeCoverage]
-public class Startup(IConfiguration configuration)
+public class Startup(IConfiguration configuration, IWebHostEnvironment environment)
 {
     public IConfiguration Configuration { get; } = configuration;
+    public IWebHostEnvironment Environment { get; } = environment;
 
     // This method gets called by the runtime. Use this method to add services to the container.
     [SuppressMessage("Security", "S6781:JWT secret keys should not be disclosed", Justification = "Local development docker-compose override uses a dummy test secret; production and staging use environment variables.")]
@@ -63,8 +64,9 @@ public class Startup(IConfiguration configuration)
             })
             .AddCookie(ApiConstants.QuartzDashboardCookieScheme, options =>
             {
-                options.Cookie.Name = ".Guts.QuartzDashboard";
+                options.Cookie.Name = ApiConstants.GetQuartzDashboardCookieName(Environment.EnvironmentName);
                 options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(30);

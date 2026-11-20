@@ -114,4 +114,16 @@ public class ScheduledJobsControllerTests
             It.IsAny<ClaimsPrincipal>(),
             It.IsAny<AuthenticationProperties>()), Times.Never);
     }
+
+    [TestCase("Staging", ".Guts.QuartzDashboard.Staging")]
+    [TestCase("Production", ".Guts.QuartzDashboard.Production")]
+    [TestCase(" Development ", ".Guts.QuartzDashboard.Development")]
+    [TestCase("", ".Guts.QuartzDashboard")]
+    [TestCase(null, ".Guts.QuartzDashboard")]
+    public void GetQuartzDashboardCookieName_ShouldScopeCookieNameByEnvironment(string environmentName, string expectedCookieName)
+    {
+        string cookieName = ApiConstants.GetQuartzDashboardCookieName(environmentName);
+
+        Assert.That(cookieName, Is.EqualTo(expectedCookieName));
+    }
 }
