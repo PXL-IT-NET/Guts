@@ -41,7 +41,7 @@ public class ScheduledJobsControllerTests
         };
         httpContext.Request.Scheme = "https";
         httpContext.Request.Host = new HostString("guts-api.pxl.be");
-        httpContext.Request.PathBase = new PathString("/v1");
+        httpContext.Request.PathBase = new PathString("/staging");
 
         _controller = new ScheduledJobsController(_ticketStoreMock.Object)
         {
@@ -52,9 +52,14 @@ public class ScheduledJobsControllerTests
         };
     }
 
-    [Test]
-    public void CreateDashboardTicket_ShouldReturnOkWithLoginUrl()
+    [TestCase("", "https://guts-api.pxl.be/api/scheduled-jobs/dashboard-login?ticket=abc123")]
+    [TestCase("/staging", "https://guts-api.pxl.be/staging/api/scheduled-jobs/dashboard-login?ticket=abc123")]
+    [TestCase("/staging/", "https://guts-api.pxl.be/staging/api/scheduled-jobs/dashboard-login?ticket=abc123")]
+    public void CreateDashboardTicket_ShouldReturnOkWithLoginUrlRespectingPathBase(string pathBase, string expectedUrl)
     {
+        _controller.HttpContext.Request.PathBase = string.IsNullOrEmpty(pathBase)
+            ? PathString.Empty
+            : new PathString(pathBase);
         _ticketStoreMock.Setup(s => s.CreateTicket(_controller.User)).Returns("abc123");
 
         var result = _controller.CreateDashboardTicket() as OkObjectResult;
@@ -62,12 +67,20 @@ public class ScheduledJobsControllerTests
         Assert.That(result, Is.Not.Null);
         var model = result.Value as QuartzDashboardTicketModel;
         Assert.That(model, Is.Not.Null);
-        Assert.That(model.LoginUrl, Is.EqualTo("https://guts-api.pxl.be/v1/api/scheduled-jobs/dashboard-login?ticket=abc123"));
+        Assert.That(model.LoginUrl, Is.EqualTo(expectedUrl));
     }
 
-    [Test]
-    public async Task LoginToDashboard_WhenTicketValid_ShouldSignInCookieAndRedirectToQuartz()
+    [TestCase("", "/quartz")]
+    [TestCase("/staging", "/staging/quartz")]
+    [TestCase("/staging/", "/staging/quartz")]
+    public async Task LoginToDashboard_WhenTicketValid_ShouldSignInCookieAndRedirectRespectingPathBase(
+        string pathBase,
+        string expectedRedirectUrl)
     {
+        _controller.HttpContext.Request.PathBase = string.IsNullOrEmpty(pathBase)
+            ? PathString.Empty
+            : new PathString(pathBase);
+
         var dashboardPrincipal = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.NameIdentifier, "1"),
@@ -79,7 +92,7 @@ public class ScheduledJobsControllerTests
         var result = await _controller.LoginToDashboard("valid-ticket") as RedirectResult;
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Url, Is.EqualTo("/quartz"));
+        Assert.That(result.Url, Is.EqualTo(expectedRedirectUrl));
         _authServiceMock.Verify(a => a.SignInAsync(
             _controller.HttpContext,
             ApiConstants.QuartzDashboardCookieScheme,
