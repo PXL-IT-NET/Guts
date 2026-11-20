@@ -79,5 +79,25 @@ internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
         Assert.That(teamLatest, Has.Count.EqualTo(1));
         Assert.That(teamLatest[0].Content, Is.EqualTo("v2"));
     }
+
+    [Test]
+    public async Task GetModifyDateTimesForUserAndTeamAsync_ShouldReturnOrderedTimestampsRespectingDateCutoff()
+    {
+        await using var context = CreateDbContext();
+        var repo = new SolutionFileDbRepository(context);
+
+        var userAll = await repo.GetModifyDateTimesForUserAsync(_assignmentId, _user1Id, null);
+        Assert.That(userAll, Is.EqualTo(new[] { _t1, _t2 }));
+
+        var userAtT1 = await repo.GetModifyDateTimesForUserAsync(_assignmentId, _user1Id, _t1);
+        Assert.That(userAtT1, Is.EqualTo(new[] { _t1 }));
+
+        var teamAll = await repo.GetModifyDateTimesForTeamAsync(_assignmentId, _teamId, null);
+        Assert.That(teamAll, Has.Count.EqualTo(3));
+        Assert.That(teamAll, Is.EqualTo(new[] { _t1, _t1, _t2 }));
+
+        var teamAtT1 = await repo.GetModifyDateTimesForTeamAsync(_assignmentId, _teamId, _t1);
+        Assert.That(teamAtT1, Has.Count.EqualTo(2));
+    }
 }
 

@@ -198,5 +198,32 @@ internal class TestRunDbRepositoryTests : RepositoryTestsBase
             Assert.That(await verifyCtx.SolutionFiles.CountAsync(sf => sf.AssignmentId == _assignmentId), Is.EqualTo(1));
         }
     }
+
+    [Test]
+    public async Task GetUserAndTeamTestRunSnapshotsForAssignmentAsync_ShouldProjectLightweightSnapshotsAndRespectDateCutoff()
+    {
+        await using var context = CreateDbContext();
+        var repo = new TestRunDbRepository(context);
+
+        var userAtT1 = await repo.GetUserTestRunSnapshotsForAssignmentAsync(_assignmentId, _user1Id, _t1);
+        Assert.That(userAtT1, Has.Count.EqualTo(1));
+        Assert.That(userAtT1[0].Results, Has.Count.EqualTo(1));
+        Assert.That(userAtT1[0].Results[0].Passed, Is.False);
+
+        var userAll = await repo.GetUserTestRunSnapshotsForAssignmentAsync(_assignmentId, _user1Id, null);
+        Assert.That(userAll, Has.Count.EqualTo(2));
+
+        var userEmpty = await repo.GetUserTestRunSnapshotsForAssignmentAsync(_assignmentId, _user1Id, _t1.AddMinutes(-1));
+        Assert.That(userEmpty, Is.Empty);
+
+        var teamAtT1 = await repo.GetTeamTestRunSnapshotsForAssignmentAsync(_assignmentId, _teamId, _t1);
+        Assert.That(teamAtT1, Has.Count.EqualTo(1));
+
+        var teamAll = await repo.GetTeamTestRunSnapshotsForAssignmentAsync(_assignmentId, _teamId, null);
+        Assert.That(teamAll, Has.Count.EqualTo(3));
+
+        var teamEmpty = await repo.GetTeamTestRunSnapshotsForAssignmentAsync(_assignmentId, _teamId, _t1.AddMinutes(-1));
+        Assert.That(teamEmpty, Is.Empty);
+    }
 }
 

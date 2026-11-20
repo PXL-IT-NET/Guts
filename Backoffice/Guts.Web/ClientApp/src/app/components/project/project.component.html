@@ -18,8 +18,9 @@
               }
             </select>
           </div>
-          <label for="date" class="col-lg-1 col-md-2 col-form-label"
-            >Status on</label
+          @if (selectedAssignmentId <= 0) {
+            <label for="date" class="col-lg-1 col-md-2 col-form-label"
+              >Status on</label
             >
             <div class="col-lg-3 col-md-4">
               <app-ng-datetime
@@ -27,6 +28,7 @@
                 [(date)]="selectedDate"
               ></app-ng-datetime>
             </div>
+          }
           </div>
         </form>
       }
@@ -54,7 +56,6 @@
           <app-assignment-detail
             [assignmentId]="selectedAssignmentId"
             [teamId]="selectedTeamId"
-            [statusDate]="selectedDate"
             >
           </app-assignment-detail>
         }

@@ -182,4 +182,79 @@ internal class TestRunDbRepository : BaseDbRepository<TestRun, TestRun>, ITestRu
 
         return new TestRunBatchDeletionResult(runsDeleted, resultsDeleted);
     }
+
+    public async Task<IReadOnlyList<TestRunSnapshot>> GetUserTestRunSnapshotsForAssignmentAsync(
+        int assignmentId,
+        int userId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var runs = await _context.TestRuns
+            .AsNoTracking()
+            .Where(r => r.AssignmentId == assignmentId
+                        && r.UserId == userId
+                        && (dateUtc == null || r.CreateDateTime <= dateUtc))
+            .OrderBy(r => r.CreateDateTime)
+            .ThenBy(r => r.Id)
+            .Select(r => new { r.Id, r.UserId, r.CreateDateTime })
+            .ToListAsync(cancellationToken);
+
+        if (runs.Count == 0)
+        {
+            return [];
+        }
+
+        var results = await _context.TestResults
+            .AsNoTracking()
+            .Where(tr => tr.TestRun.AssignmentId == assignmentId
+                         && tr.TestRun.UserId == userId
+                         && (dateUtc == null || tr.TestRun.CreateDateTime <= dateUtc))
+            .Select(tr => new { tr.TestRunId, tr.TestId, tr.Passed })
+            .ToListAsync(cancellationToken);
+
+        ILookup<int, TestResultSnapshot> resultsByRunId = results.ToLookup(
+            r => r.TestRunId,
+            r => new TestResultSnapshot(r.TestId, r.Passed));
+
+        return runs
+            .Select(r => new TestRunSnapshot(r.Id, r.UserId, r.CreateDateTime, resultsByRunId[r.Id].ToList()))
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<TestRunSnapshot>> GetTeamTestRunSnapshotsForAssignmentAsync(
+        int assignmentId,
+        int teamId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var runs = await (from testrun in _context.TestRuns.AsNoTracking()
+            join teamUser in _context.ProjectTeamUsers.AsNoTracking() on testrun.UserId equals teamUser.UserId
+            where testrun.AssignmentId == assignmentId
+                  && teamUser.ProjectTeamId == teamId
+                  && (dateUtc == null || testrun.CreateDateTime <= dateUtc)
+            orderby testrun.CreateDateTime, testrun.Id
+            select new { testrun.Id, testrun.UserId, testrun.CreateDateTime })
+            .ToListAsync(cancellationToken);
+
+        if (runs.Count == 0)
+        {
+            return [];
+        }
+
+        var results = await (from tr in _context.TestResults.AsNoTracking()
+            join teamUser in _context.ProjectTeamUsers.AsNoTracking() on tr.TestRun.UserId equals teamUser.UserId
+            where tr.TestRun.AssignmentId == assignmentId
+                  && teamUser.ProjectTeamId == teamId
+                  && (dateUtc == null || tr.TestRun.CreateDateTime <= dateUtc)
+            select new { tr.TestRunId, tr.TestId, tr.Passed })
+            .ToListAsync(cancellationToken);
+
+        ILookup<int, TestResultSnapshot> resultsByRunId = results.ToLookup(
+            r => r.TestRunId,
+            r => new TestResultSnapshot(r.TestId, r.Passed));
+
+        return runs
+            .Select(r => new TestRunSnapshot(r.Id, r.UserId, r.CreateDateTime, resultsByRunId[r.Id].ToList()))
+            .ToList();
+    }
 }

@@ -35,4 +35,16 @@ public interface ITestRunRepository : IBasicRepository<TestRun>
     Task<TestRunBatchDeletionResult> DeleteTestRunsBatchAsync(
         IReadOnlyCollection<int> testRunIds,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TestRunSnapshot>> GetUserTestRunSnapshotsForAssignmentAsync(
+        int assignmentId,
+        int userId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TestRunSnapshot>> GetTeamTestRunSnapshotsForAssignmentAsync(
+        int assignmentId,
+        int teamId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default);
 }

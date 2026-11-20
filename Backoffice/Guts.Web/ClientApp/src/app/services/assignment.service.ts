@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, of } from "rxjs";
 import { IAssignmentDetailModel } from "../viewmodels/assignmentdetail.model";
+import { IAssignmentTimelineModel } from "../viewmodels/assignment-timeline.model";
 import { ITopicAssignmentModel } from "../viewmodels/assignment.model";
 import { GetResult, PostResult } from "../util/result";
 import { map, catchError } from "rxjs/operators";
@@ -29,6 +30,34 @@ export class AssignmentService {
       url += "?date=" + dateIso;
     }
     return this.http.get<IAssignmentDetailModel>(url);
+  }
+
+  public getAssignmentTimeline(
+    assignmentId: number,
+    userId: number,
+    teamId: number,
+    date?: Date | string,
+  ): Observable<GetResult<IAssignmentTimelineModel>> {
+    let url = "api/assignments/" + assignmentId;
+    if (userId && userId > 0) {
+      url += "/foruser/" + userId + "/timeline";
+    } else if (teamId && teamId > 0) {
+      url += "/forteam/" + teamId + "/timeline";
+    }
+    if (date) {
+      const dateIso = date instanceof Date ? date.toISOString() : date;
+      url += "?date=" + encodeURIComponent(dateIso);
+    }
+    return this.http.get<IAssignmentTimelineModel>(url).pipe(
+      map((model) => GetResult.success<IAssignmentTimelineModel>(model)),
+      catchError((errorResponse: HttpErrorResponse) => {
+        return of(
+          GetResult.fromHttpErrorResponse<IAssignmentTimelineModel>(
+            errorResponse,
+          ),
+        );
+      }),
+    );
   }
 
   public getAssignmentsOfCourse(

@@ -90,6 +90,7 @@ import { TooltipModule } from "ngx-bootstrap/tooltip";
     RecaptchaDirective,
     c.EmptyComponent,
     c.LoadingOverlayComponent,
+    c.AssignmentTimelineComponent,
     FormsModule,
     ReactiveFormsModule,
     NgbModule,

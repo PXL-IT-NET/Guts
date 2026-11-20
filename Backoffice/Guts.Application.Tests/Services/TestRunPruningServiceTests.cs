@@ -154,7 +154,7 @@ public class TestRunPruningServiceTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        Assert.That(
+        await Assert.ThatAsync(
             async () => await _service.PruneRedundantTestRunsAsync(500, cts.Token),
             Throws.TypeOf<OperationCanceledException>());
     }

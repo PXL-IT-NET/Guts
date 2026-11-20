@@ -42,6 +42,32 @@ describe("AssignmentService", () => {
     teamReq.flush({});
   });
 
+  it("getAssignmentTimeline should build user/team timeline URLs and handle errors", () => {
+    const date = new Date("2026-05-01T10:00:00Z");
+
+    let userResult: any;
+    service
+      .getAssignmentTimeline(5, 12, 0, date)
+      .subscribe((res) => (userResult = res));
+    const userReq = httpMock.expectOne(
+      `api/assignments/5/foruser/12/timeline?date=${encodeURIComponent(date.toISOString())}`,
+    );
+    expect(userReq.request.method).toBe("GET");
+    userReq.flush({ assignmentId: 5, totalTestsCount: 3, runs: [] });
+    expect(userResult.success).toBeTrue();
+    expect(userResult.value.assignmentId).toBe(5);
+
+    let teamResult: any;
+    service
+      .getAssignmentTimeline(5, 0, 8, "2026-05-01T10:00:00Z")
+      .subscribe((res) => (teamResult = res));
+    const teamReq = httpMock.expectOne(
+      `api/assignments/5/forteam/8/timeline?date=${encodeURIComponent("2026-05-01T10:00:00Z")}`,
+    );
+    teamReq.flush("Server Error", { status: 500, statusText: "Server Error" });
+    expect(teamResult.success).toBeFalse();
+  });
+
   it("getAssignmentsOfCourse should handle success and error", () => {
     let successResult: any;
     service

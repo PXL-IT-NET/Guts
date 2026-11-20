@@ -1,33 +1,35 @@
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
-    <form>
-      <div class="mb-2 row">
-        @if (model.users.length > 1) {
-          <label for="users" class="col-lg-2 col-md-3 col-form-label"
-            >User</label
-          >
-        }
-        @if (model.users.length > 1) {
-          <div class="col-lg-4 col-md-3">
-            <app-typeahead
-              id="users"
-              name="users"
-              [data]="model.users"
-              [(ngModel)]="selectedUser"
-              [formatItem]="formatUser"
-              [readonly]="model.users.length <= 1"
-            ></app-typeahead>
-          </div>
-        }
+    @if (model.users.length > 1 || selectedAssignmentId <= 0) {
+      <form>
+        <div class="mb-2 row">
+          @if (model.users.length > 1) {
+            <label for="users" class="col-lg-2 col-md-3 col-form-label"
+              >User</label
+            >
+            <div class="col-lg-4 col-md-3">
+              <app-typeahead
+                id="users"
+                name="users"
+                [data]="model.users"
+                [(ngModel)]="selectedUser"
+                [formatItem]="formatUser"
+                [readonly]="model.users.length <= 1"
+              ></app-typeahead>
+            </div>
+          }
 
-        <label for="date" class="col-lg-2 col-md-3 col-form-label"
-          >Status on</label
-        >
-        <div class="col-lg-4 col-md-3">
-          <app-ng-datetime [(date)]="selectedDate"></app-ng-datetime>
+          @if (selectedAssignmentId <= 0) {
+            <label for="date" class="col-lg-2 col-md-3 col-form-label"
+              >Status on</label
+            >
+            <div class="col-lg-4 col-md-3">
+              <app-ng-datetime [(date)]="selectedDate"></app-ng-datetime>
+            </div>
+          }
         </div>
-      </div>
-    </form>
+      </form>
+    }
     <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
 </div>
@@ -45,7 +47,6 @@
       <app-assignment-detail
         [assignmentId]="selectedAssignmentId"
         [userId]="$safeNavigationMigration(selectedUser?.id)"
-        [statusDate]="selectedDate"
       >
       </app-assignment-detail>
     }

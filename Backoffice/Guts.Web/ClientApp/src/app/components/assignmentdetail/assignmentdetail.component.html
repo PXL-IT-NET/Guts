@@ -1,146 +1,129 @@
 @if (model.assignmentId > 0) {
-  <div class="col-md-10 col-md-offset-1">
-    <div class="mb-2 row">
-      <label for="firstrun" class="col-lg-2 col-md-3 col-form-label"
-        >First test run</label
-      >
-      <div class="col-lg-10 col-md-9">
-        <input
-          type="text"
-          class="form-control"
-          readonly
-          id="firstrun"
-          value="{{ model.firstRun }}"
-        />
-      </div>
+<div class="col-md-10 col-md-offset-1">
+  @if (timelineLoading()) {
+  <div class="card mb-2" data-testid="timeline-loading" aria-live="polite">
+    <div class="card-body py-2 px-3 d-flex align-items-center gap-2 text-muted small">
+      <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
+      <span>Loading test run timeline...</span>
     </div>
-    <div class="mb-2 row">
-      <label for="lastrun" class="col-lg-2 col-md-3 col-form-label"
-        >Last test run</label
-      >
-      <div class="col-lg-10 col-md-9">
-        <input
-          type="text"
-          class="form-control"
-          readonly
-          id="lastrun"
-          value="{{ model.lastRun }}"
-        />
-      </div>
+  </div>
+  }
+
+  @if (timelineError()) {
+  <div class="alert alert-warning py-2 px-3 mb-2 small" role="alert" data-testid="timeline-error">
+    <span class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></span>
+    {{ timelineError() }}
+  </div>
+  }
+
+  @if (showTimeline) {
+  <app-assignment-timeline [timeline]="timeline()" [selectedIndex]="selectedRunIndex()"
+    [isLoadingSnapshot]="snapshotLoading()"
+    (selectedIndexChange)="onTimelineRunSelected($event)"></app-assignment-timeline>
+  }
+
+  @if (isViewingHistorical && selectedRunPoint) {
+  <output
+    class="alert alert-info py-2 px-3 mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2 w-100"
+    data-testid="historical-snapshot-banner">
+    <div>
+      <span class="bi bi-clock-history me-1" aria-hidden="true"></span>
+      <strong>Viewing historical snapshot:</strong>
+      Run #{{ selectedRunPoint.runNumber }} of
+      {{ timeline()?.runs?.length }} — {{ selectedRunTimestampFormatted }}
     </div>
-    <div class="mb-2 row">
-      <label for="numberofruns" class="col-lg-2 col-md-3 col-form-label"
-        >Number of test runs</label
-      >
-      <div class="col-lg-10 col-md-9">
-        <input
-          type="number"
-          class="form-control"
-          readonly
-          id="numberofruns"
-          value="{{ model.numberOfRuns }}"
-        />
-      </div>
-    </div>
-    @if (model.solutionFiles.length > 0) {
-      <div class="mb-2 row">
-        <div class="col-12">
-          <div class="card">
-            <h5 class="card-header">Source code</h5>
-            <ul class="list-group list-group-flush">
-              @for (solutionFile of model.solutionFiles; track solutionFile) {
-                <li class="list-group-item">
-                  <div class="mb-2">
-                    <span>{{ solutionFile.filePath }}</span>
-                    <button
-                      class="btn btn-sm ms-2 btn-outline-primary"
-                      type="button"
-                      (click)="
+    <button type="button" class="btn btn-sm btn-primary" data-testid="back-to-latest-btn" (click)="backToLatest()">
+      Back to latest
+    </button>
+  </output>
+  }
+
+  @if (model.solutionFiles.length > 0) {
+  <div class="mb-2 row">
+    <div class="col-12">
+      <div class="card">
+        <h5 class="card-header">Source code</h5>
+        <ul class="list-group list-group-flush">
+          @for (
+          solutionFile of model.solutionFiles;
+          track solutionFile.filePath
+          ) {
+          <li class="list-group-item">
+            <div class="mb-2">
+              <span>{{ solutionFile.filePath }}</span>
+              <button class="btn btn-sm ms-2 btn-outline-primary" type="button" (click)="
                         solutionFile.isCollapsed = !solutionFile.isCollapsed
-                      "
-                    >
-                      @if (solutionFile.isCollapsed) {
-                        <span class="bi bi-plus-lg"></span>
-                      }
-                      @if (!solutionFile.isCollapsed) {
-                        <span class="bi bi-dash-lg"></span>
-                      }
-                    </button>
-                  </div>
-                  <div [ngbCollapse]="solutionFile.isCollapsed">
-                    <div class="card card-body">
-                      <label for="solutionFileContent" class="visually-hidden"
-                        >Solution file content</label
-                      >
-                      <textarea
-                        id="solutionFileContent"
-                        class="form-control"
-                        readonly
-                        rows="10"
-                        >{{ solutionFile.content }}</textarea
-                      >
-                    </div>
-                  </div>
-                </li>
-              }
-            </ul>
-          </div>
-        </div>
+                      ">
+                @if (solutionFile.isCollapsed) {
+                <span class="bi bi-plus-lg"></span>
+                }
+                @if (!solutionFile.isCollapsed) {
+                <span class="bi bi-dash-lg"></span>
+                }
+              </button>
+            </div>
+            <div [ngbCollapse]="solutionFile.isCollapsed">
+              <div class="card card-body">
+                <label for="solutionFileContent" class="visually-hidden">Solution file content</label>
+                <textarea id="solutionFileContent" class="form-control" readonly
+                  rows="10">{{ solutionFile.content }}</textarea>
+              </div>
+            </div>
+          </li>
+          }
+        </ul>
       </div>
-    }
-    <div class="row">
-      <div class="col-sm-12">
-        <div class="card">
-          <h5 class="card-header">Test results</h5>
-          <div class="card card-body">
-            <div class="table-responsive">
-              <table
-                class="table table-bordered table-sm"
-                aria-label="test results"
-              >
-                <thead>
-                  <tr>
-                    <th class="col-greedy">Test</th>
-                    <th>Message</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (testResult of model.testResults; track testResult) {
-                    <tr>
-                      <td>
-                        @if (!testResult.runned) {
-                          <span class="bi bi-circle-fill text-warning"></span>
-                        }
-                        @if (testResult.runned && testResult.passed) {
-                          <span class="bi bi-check-circle-fill text-success"></span>
-                        }
-                        @if (testResult.runned && !testResult.passed) {
-                          <span class="bi bi-x-circle-fill text-danger"></span>
-                        }
-                        <span class="ms-2">{{ testResult.testName }}</span>
-                      </td>
-                      <td>
-                        <pre class="text-danger pre-wrap">{{
+    </div>
+  </div>
+  }
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <h5 class="card-header">Test results</h5>
+        <div class="card card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm" aria-label="test results">
+              <thead>
+                <tr>
+                  <th class="col-greedy">Test</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (testResult of model.testResults; track testResult.testName) {
+                <tr>
+                  <td>
+                    @if (!testResult.runned) {
+                    <span class="bi bi-circle-fill text-warning"></span>
+                    }
+                    @if (testResult.runned && testResult.passed) {
+                    <span class="bi bi-check-circle-fill text-success"></span>
+                    }
+                    @if (testResult.runned && !testResult.passed) {
+                    <span class="bi bi-x-circle-fill text-danger"></span>
+                    }
+                    <span class="ms-2">{{ testResult.testName }}</span>
+                  </td>
+                  <td>
+                    <pre class="text-danger pre-wrap">{{
                           testResult.message
                         }}</pre>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
-    <app-loading-overlay [show]="loading"></app-loading-overlay>
   </div>
+  <app-loading-overlay [show]="loading"></app-loading-overlay>
+</div>
 }
-@if (!loading && model.assignmentId <= 0) {
-  <div class="col-md-10 col-md-offset-1">
-    <div class="alert alert-warning" role="alert">
-      Results could not be loaded. Make sure a status date is provided and a
-      user or a team is selected.
-    </div>
+@if (!loading && model.assignmentId <= 0) { <div class="col-md-10 col-md-offset-1">
+  <div class="alert alert-warning" role="alert">
+    Results could not be loaded. Make sure a user or a team is selected.
   </div>
-}
+  </div>
+  }

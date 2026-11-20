@@ -105,6 +105,73 @@ public class AssignmentController(
         return Ok(model);
     }
 
+    [HttpGet("{assignmentId}/foruser/{userId}/timeline")]
+    [ProducesResponseType(typeof(AssignmentTimelineModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> GetAssignmentTimelineForUser(int assignmentId, int userId, [FromQuery] DateTime? date)
+    {
+        if (IsStudent())
+        {
+            if (!IsOwnUserId(userId)) return Forbid();
+        }
+        else if (!IsLector())
+        {
+            return Forbid();
+        }
+
+        var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
+        var dateUtc = date?.ToUniversalTime();
+        var timelineDto = await assignmentService.GetTimelineForUserAsync(assignmentId, userId, assignment.Tests.Count, dateUtc);
+
+        return Ok(MapToTimelineModel(timelineDto));
+    }
+
+    [HttpGet("{assignmentId}/forteam/{teamId}/timeline")]
+    [ProducesResponseType(typeof(AssignmentTimelineModel), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> GetAssignmentTimelineForTeam(int assignmentId, int teamId, [FromQuery] DateTime? date)
+    {
+        var team = await projectTeamRepository.LoadByIdAsync(teamId);
+        if (IsStudent())
+        {
+            if (!team.HasMember(GetUserId()))
+            {
+                return Forbid();
+            }
+        }
+        else if (!IsLector())
+        {
+            return Forbid();
+        }
+
+        var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
+        var dateUtc = date?.ToUniversalTime();
+        var timelineDto = await assignmentService.GetTimelineForTeamAsync(assignmentId, teamId, assignment.Tests.Count, dateUtc);
+
+        return Ok(MapToTimelineModel(timelineDto));
+    }
+
+    private static AssignmentTimelineModel MapToTimelineModel(AssignmentTimelineDto dto)
+    {
+        return new AssignmentTimelineModel
+        {
+            AssignmentId = dto.AssignmentId,
+            TotalTestsCount = dto.TotalTestsCount,
+            Runs = dto.Runs.Select(r => new AssignmentTimelinePointModel
+            {
+                TestRunId = r.TestRunId,
+                RunNumber = r.RunNumber,
+                CreateDateTimeUtc = r.CreateDateTimeUtc,
+                PassedTestsCount = r.PassedTestsCount,
+                FailedTestsCount = r.FailedTestsCount,
+                TotalTestsCount = r.TotalTestsCount,
+                TestResultsChanged = r.TestResultsChanged,
+                SolutionFilesChanged = r.SolutionFilesChanged,
+                TestResultsDelta = r.TestResultsDelta
+            }).ToList()
+        };
+    }
+
     [HttpGet("{assignmentId}/getsourcecodezip")]
     [Authorize(Policy = ApiConstants.LectorsOnlyPolicy)]
     public async Task<IActionResult> DownloadSourceCodesAsZip(int assignmentId)

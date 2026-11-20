@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Guts.Application.Repositories;
 using Guts.Domain.ValueObjects;
@@ -70,6 +71,33 @@ internal class SolutionFileDbRepository : ISolutionFileRepository
         var entry = await _context.SolutionFiles.AddAsync(newSolutionFile);
         await _context.SaveChangesAsync();
         return entry.Entity;
+    }
+
+    public async Task<IReadOnlyList<DateTime>> GetModifyDateTimesForUserAsync(
+        int assignmentId,
+        int userId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await FilterByAssignmentAndDate(assignmentId, dateUtc)
+            .AsNoTracking()
+            .Where(sf => sf.UserId == userId)
+            .OrderBy(sf => sf.ModifyDateTime)
+            .Select(sf => sf.ModifyDateTime)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DateTime>> GetModifyDateTimesForTeamAsync(
+        int assignmentId,
+        int teamId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await FilterByTeam(FilterByAssignmentAndDate(assignmentId, dateUtc), teamId)
+            .AsNoTracking()
+            .OrderBy(sf => sf.ModifyDateTime)
+            .Select(sf => sf.ModifyDateTime)
+            .ToListAsync(cancellationToken);
     }
 
     private IQueryable<SolutionFile> FilterByAssignmentAndDate(int assignmentId, DateTime? dateUtc = null)
