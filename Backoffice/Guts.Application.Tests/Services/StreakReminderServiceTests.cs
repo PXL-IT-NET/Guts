@@ -13,10 +13,12 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Configuration;
 using Guts.Domain.GamificationAggregate.Profiles;
+using Guts.Domain.MessageTrackerAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;
 using Guts.Domain.UserAggregate;
+using Guts.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -32,6 +34,8 @@ public class StreakReminderServiceTests
     private Mock<ITopicRepository> _topicRepositoryMock;
     private Mock<IStudentCourseProfileRepository> _profileRepositoryMock;
     private Mock<IUserRepository> _userRepositoryMock;
+    private Mock<IMessageTrackerRepository> _messageTrackerRepositoryMock;
+    private Mock<IMessageTrackerFactory> _messageTrackerFactoryMock;
     private Mock<IMailSender> _mailSenderMock;
     private Mock<ILogger<StreakReminderService>> _loggerMock;
     private StreakReminderService _service;
@@ -51,8 +55,16 @@ public class StreakReminderServiceTests
         _topicRepositoryMock = new Mock<ITopicRepository>();
         _profileRepositoryMock = new Mock<IStudentCourseProfileRepository>();
         _userRepositoryMock = new Mock<IUserRepository>();
+        _messageTrackerRepositoryMock = new Mock<IMessageTrackerRepository>();
+        _messageTrackerFactoryMock = new Mock<IMessageTrackerFactory>();
         _mailSenderMock = new Mock<IMailSender>();
         _loggerMock = new Mock<ILogger<StreakReminderService>>();
+
+        var realTrackerFactory = new MessageTrackerFactory();
+        _messageTrackerFactoryMock
+            .Setup(f => f.CreateNew(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<Email>(), It.IsAny<DateTime>()))
+            .Returns((string entityType, int entityId, Email email, DateTime nowUtc) =>
+                realTrackerFactory.CreateNew(entityType, entityId, email, nowUtc));
 
         _service = new StreakReminderService(
             _periodRepositoryMock.Object,
@@ -61,9 +73,11 @@ public class StreakReminderServiceTests
             _topicRepositoryMock.Object,
             _profileRepositoryMock.Object,
             _userRepositoryMock.Object,
+            _messageTrackerRepositoryMock.Object,
+            _messageTrackerFactoryMock.Object,
             _mailSenderMock.Object,
-            _loggerMock.Object,
-            TimeSpan.Zero); // zero throttle delay for tests
+            new MailThrottler(TimeSpan.Zero),
+            _loggerMock.Object);
 
         _period = Mock.Of<IPeriod>(p => p.Id == 1);
         _periodRepositoryMock.Setup(r => r.GetPeriodAsync(null)).ReturnsAsync(_period);
@@ -334,7 +348,7 @@ public class StreakReminderServiceTests
     }
 
     [Test]
-    public void Constructors_ShouldInitializeThrottleDelay()
+    public void Constructor_WhenThrottlerNull_ShouldInitializeDefaultThrottleDelay()
     {
         var serviceDefault = new StreakReminderService(
             _periodRepositoryMock.Object,
@@ -343,7 +357,10 @@ public class StreakReminderServiceTests
             _topicRepositoryMock.Object,
             _profileRepositoryMock.Object,
             _userRepositoryMock.Object,
+            _messageTrackerRepositoryMock.Object,
+            _messageTrackerFactoryMock.Object,
             _mailSenderMock.Object,
+            null,
             _loggerMock.Object);
 
         Assert.That(serviceDefault.ThrottleDelay, Is.EqualTo(TimeSpan.FromSeconds(1)));
@@ -365,6 +382,8 @@ public class StreakReminderServiceTests
             _topicRepositoryMock.Object,
             _profileRepositoryMock.Object,
             _userRepositoryMock.Object,
+            _messageTrackerRepositoryMock.Object,
+            _messageTrackerFactoryMock.Object,
             _mailSenderMock.Object,
             throttlerMock.Object,
             _loggerMock.Object);
@@ -674,6 +693,136 @@ public class StreakReminderServiceTests
         await _service.SendStreakRemindersAsync(_thursdayExecution);
 
         Assert.That(capturedTarget, Is.EqualTo("Repo User"));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_ShouldCreateAndMarkMessageTrackerSucceeded()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(42, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        student.User = new User { Id = 42, FirstName = "Alice", Email = "alice@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
+
+        IMessageTracker persistedTracker = null;
+        _messageTrackerRepositoryMock.Setup(r => r.AddAsync(It.IsAny<IMessageTracker>()))
+            .Callback<IMessageTracker>(t => persistedTracker = t)
+            .ReturnsAsync((IMessageTracker t) => t);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(1));
+        Assert.That(persistedTracker, Is.Not.Null);
+        Assert.That(persistedTracker.EntityType, Is.EqualTo("StreakReminder:2026-W44"));
+        Assert.That(persistedTracker.EntityId, Is.EqualTo(10));
+        Assert.That(persistedTracker.Email.Value, Is.EqualTo("alice@test.com"));
+        Assert.That(persistedTracker.Status, Is.EqualTo(MessageStatus.Succeeded));
+        _messageTrackerRepositoryMock.Verify(r => r.AddAsync(persistedTracker), Times.Once);
+        _messageTrackerRepositoryMock.Verify(r => r.UpdateAsync(persistedTracker), Times.Once);
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenTrackerAlreadySucceededOrSendingOrMaxRetriesReached_ShouldSkipSending()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var s1 = new StudentCourseProfile(1, 10, 1);
+        s1.RecordWeeklyActivity(previousWeekDate);
+        s1.User = new User { Id = 1, Email = "succeeded@test.com" };
+
+        var s2 = new StudentCourseProfile(2, 10, 1);
+        s2.RecordWeeklyActivity(previousWeekDate);
+        s2.User = new User { Id = 2, Email = "sending@test.com" };
+
+        var s3 = new StudentCourseProfile(3, 10, 1);
+        s3.RecordWeeklyActivity(previousWeekDate);
+        s3.User = new User { Id = 3, Email = "exhausted@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync((List<StudentCourseProfile>)[s1, s2, s3]);
+
+        var factory = new MessageTrackerFactory();
+        var succeededTracker = factory.CreateNew("StreakReminder:2026-W44", 10, new Email("succeeded@test.com"), _thursdayExecution);
+        succeededTracker.MarkSucceeded();
+
+        var sendingTracker = factory.CreateNew("StreakReminder:2026-W44", 10, new Email("sending@test.com"), _thursdayExecution);
+
+        var exhaustedTracker = factory.CreateNew("StreakReminder:2026-W44", 10, new Email("exhausted@test.com"), _thursdayExecution);
+        exhaustedTracker.MarkFailed("err1");
+        exhaustedTracker.Retry(_thursdayExecution);
+        exhaustedTracker.MarkFailed("err2");
+        exhaustedTracker.Retry(_thursdayExecution);
+        exhaustedTracker.MarkFailed("err3");
+
+        _messageTrackerRepositoryMock.Setup(r => r.FindByEntityAndEmailAsync("StreakReminder:2026-W44", 10, new Email("succeeded@test.com")))
+            .ReturnsAsync(succeededTracker);
+        _messageTrackerRepositoryMock.Setup(r => r.FindByEntityAndEmailAsync("StreakReminder:2026-W44", 10, new Email("sending@test.com")))
+            .ReturnsAsync(sendingTracker);
+        _messageTrackerRepositoryMock.Setup(r => r.FindByEntityAndEmailAsync("StreakReminder:2026-W44", 10, new Email("exhausted@test.com")))
+            .ReturnsAsync(exhaustedTracker);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(0));
+        _mailSenderMock.Verify(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()), Times.Never);
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenTrackerFailedAndCanRetry_ShouldRetryAndMarkSucceeded()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(1, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        student.User = new User { Id = 1, Email = "retry@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
+
+        var factory = new MessageTrackerFactory();
+        var failedTracker = factory.CreateNew("StreakReminder:2026-W44", 10, new Email("retry@test.com"), _thursdayExecution.AddMinutes(-15));
+        failedTracker.MarkFailed("Transient SMTP error");
+
+        _messageTrackerRepositoryMock.Setup(r => r.FindByEntityAndEmailAsync("StreakReminder:2026-W44", 10, new Email("retry@test.com")))
+            .ReturnsAsync(failedTracker);
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(1));
+        Assert.That(failedTracker.Status, Is.EqualTo(MessageStatus.Succeeded));
+        _messageTrackerRepositoryMock.Verify(r => r.AddAsync(It.IsAny<IMessageTracker>()), Times.Never);
+        _messageTrackerRepositoryMock.Verify(r => r.UpdateAsync(failedTracker), Times.Exactly(2));
+    }
+
+    [Test]
+    public async Task SendStreakRemindersAsync_WhenSendFails_ShouldMarkTrackerFailed()
+    {
+        var previousWeekDate = _thursdayExecution.AddDays(-7);
+        var student = new StudentCourseProfile(1, 10, 1);
+        student.RecordWeeklyActivity(previousWeekDate);
+        student.User = new User { Id = 1, Email = "fail@test.com" };
+
+        _profileRepositoryMock.Setup(r => r.GetByCourseAndPeriodAsync(10, 1))
+            .ReturnsAsync((List<StudentCourseProfile>)[student]);
+
+        IMessageTracker persistedTracker = null;
+        _messageTrackerRepositoryMock.Setup(r => r.AddAsync(It.IsAny<IMessageTracker>()))
+            .Callback<IMessageTracker>(t => persistedTracker = t)
+            .ReturnsAsync((IMessageTracker t) => t);
+
+        _mailSenderMock.Setup(m => m.SendStreakReminderEmailAsync(
+            It.IsAny<User>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<StreakReminderAssignmentDto>>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP timeout"));
+
+        int sent = await _service.SendStreakRemindersAsync(_thursdayExecution);
+
+        Assert.That(sent, Is.EqualTo(0));
+        Assert.That(persistedTracker, Is.Not.Null);
+        Assert.That(persistedTracker.Status, Is.EqualTo(MessageStatus.Failed));
+        Assert.That(persistedTracker.RetryCount, Is.EqualTo(1));
+        Assert.That(persistedTracker.FailureReason, Is.EqualTo("SMTP timeout"));
+        _messageTrackerRepositoryMock.Verify(r => r.UpdateAsync(persistedTracker), Times.Once);
     }
 }
 

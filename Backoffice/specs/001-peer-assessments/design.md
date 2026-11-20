@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-The Peer Assessments feature spans five domain aggregates/value-object clusters (`ProjectAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, `AssessmentResultAggregate`, and `MessageTrackerAggregate`), orchestrated by `ProjectTeamAssessmentService`, `ProjectService`, and `PeerAssessmentReminderService`, persisted via EF Core repositories, and exposed through REST controllers plus a dedicated background service (`PeerAssessmentReminderBackgroundService`), consumed by the Angular SPA and email notifications.
+The Peer Assessments feature spans five domain aggregates/value-object clusters (`ProjectAggregate`, `ProjectTeamAggregate`, `ProjectTeamAssessmentAggregate`, `AssessmentResultAggregate`, and `MessageTrackerAggregate`), orchestrated by `ProjectTeamAssessmentService`, `ProjectService`, and `PeerAssessmentReminderService`, persisted via EF Core repositories, and exposed through REST controllers plus a scheduled Quartz.NET recurring job (`PeerAssessmentReminderJob`; see `009-scheduled-jobs`), consumed by the Angular SPA and email notifications.
 
 ```mermaid
 flowchart TD
@@ -28,7 +28,7 @@ flowchart TD
     PTA --> PA["PeerAssessment (Entity)"]
     ARF --> AR["AssessmentResult & AssessmentSubResult"]
 
-    PARBS["PeerAssessmentReminderBackgroundService (Guts.Api)"] --> PARS["PeerAssessmentReminderService (Guts.Application)"]
+    PARJ["PeerAssessmentReminderJob (Quartz.NET, Guts.Api)"] --> PARS["PeerAssessmentReminderService (Guts.Application)"]
     PARS --> PAR["IProjectAssessmentRepository"]
     PARS --> PR["IProjectRepository"]
     PARS --> PTR
@@ -291,18 +291,21 @@ flowchart TD
      - Request Body: `[FromBody] bool isIncluded`
      - Calls `projectTeamAssessmentService.SetPeerInclusionAsync(projectAssessmentId, teamId, userId, isIncluded)` and returns `200 OK`.
 
-### Background Services (`Guts.Api/BackgroundServices/`)
-- **`PeerAssessmentReminderBackgroundService`** (`[AC-10]`):
-  - Inherits from `Microsoft.Extensions.Hosting.BackgroundService`.
-  - Constructor injects `IServiceScopeFactory`, `IConfiguration`, `ILogger<PeerAssessmentReminderBackgroundService>`, and optional `TimeProvider`.
-  - Reads check interval from configuration: `Configuration.GetValue<int>("PeerAssessmentReminders:CheckIntervalInHours", 2)`.
-  - While running, awaits the delay interval, creates a service scope, resolves `IPeerAssessmentReminderService`, and executes `SendAssessmentRemindersAsync(executionTime, stoppingToken)`.
-- **Hosted Service Registration (`Guts.Api/Startup.cs`)**:
-  - `services.AddHostedService<PeerAssessmentReminderBackgroundService>();`
+### Scheduled Job (`Guts.Api/ScheduledJobs/Jobs/`)
+- **`PeerAssessmentReminderJob`** (`[AC-10]`, see `009-scheduled-jobs`):
+  - Implements `IRecurringJob` (Quartz.NET `[DisallowConcurrentExecution]`), auto-discovered and synced to the clustered Quartz SQL Server store on startup.
+  - Default cron expression: `0 0 */2 ? * *` (every 2 hours, `Europe/Brussels`), misfire policy `DoNothing`, max 3 retries with backoff.
+  - Delegates directly to `IPeerAssessmentReminderService.SendAssessmentRemindersAsync(context.FireTimeUtc.UtcDateTime, context.CancellationToken)`.
 - **Configuration (`Guts.Api/appsettings.json`)**:
   ```json
-  "PeerAssessmentReminders": {
-    "CheckIntervalInHours": 2
+  "ScheduledJobs": {
+    "DefaultTimeZoneId": "Europe/Brussels",
+    "Jobs": {
+      "PeerAssessmentReminder": {
+        "Enabled": true,
+        "CronExpression": "0 0 */2 ? * *"
+      }
+    }
   },
   "Mail": {
     "ThrottleDelayInSeconds": 1

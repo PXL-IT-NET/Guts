@@ -1,5 +1,6 @@
 using Guts.Api.BackgroundServices;
 using Guts.Api.Extensions;
+using Guts.Api.ScheduledJobs;
 using Guts.Application.Services.Deletion;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +14,7 @@ using NSwag;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Threading.Tasks;
 using Guts.Api.Filters;
 using Guts.Api.Models;
 using Guts.Domain.RoleAggregate;
@@ -20,6 +22,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Hosting;
 using NSwag.Generation.Processors.Security;
+using Quartz;
 
 namespace Guts.Api;
 
@@ -57,6 +60,25 @@ public class Startup(IConfiguration configuration)
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
 #pragma warning restore S6781
                 };
+            })
+            .AddCookie(ApiConstants.QuartzDashboardCookieScheme, options =>
+            {
+                options.Cookie.Name = ".Guts.QuartzDashboard";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.SlidingExpiration = true;
+                options.Events.OnRedirectToLogin = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
             });
 
         services.AddAuthorization(options =>
@@ -89,6 +111,13 @@ public class Startup(IConfiguration configuration)
                 .RequireRole(Role.Constants.Admin, Role.Constants.Lector)
                 .Build();
             options.AddPolicy(ApiConstants.LectorOrAdminPolicy, lectorOrAdminPolicy);
+
+            var quartzDashboardAdminPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(ApiConstants.QuartzDashboardCookieScheme)
+                .RequireAuthenticatedUser()
+                .RequireRole(Role.Constants.Admin)
+                .Build();
+            options.AddPolicy(ApiConstants.QuartzDashboardAdminPolicy, quartzDashboardAdminPolicy);
         });
 
         services.AddControllers(options =>
@@ -132,10 +161,8 @@ public class Startup(IConfiguration configuration)
         services.AddSingleton<IMapper, Mapper>();
 
         services.AddApplicationServices(Configuration);
+        services.AddScheduledJobs(Configuration);
         services.AddSingleton<IDeletionJobQueue, InMemoryDeletionJobQueue>();
-        services.AddHostedService<SprintLeaderboardBackgroundService>();
-        services.AddHostedService<StreakReminderBackgroundService>();
-        services.AddHostedService<PeerAssessmentReminderBackgroundService>();
         services.AddHostedService<DeletionBackgroundService>();
     }
 
@@ -179,11 +206,13 @@ public class Startup(IConfiguration configuration)
 
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseAntiforgery();
 
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
             endpoints.MapMcp("/mcp");
+            endpoints.MapQuartzDashboard().RequireAuthorization(ApiConstants.QuartzDashboardAdminPolicy);
         });
     }
 }

@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <UserSecretsId>3b8574b3-f5fc-4eb7-8a3a-a21391aa7bf3</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -25,6 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Quartz" Version="4.7.3" />
+    <PackageReference Include="Quartz.Dashboard" Version="4.7.3" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="4.7.3" />
+    <PackageReference Include="Quartz.Serialization.SystemTextJson" Version="4.7.3" />
     <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />

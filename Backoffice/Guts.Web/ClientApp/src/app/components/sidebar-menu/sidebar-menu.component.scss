@@ -33,10 +33,20 @@
   transform: rotate(90deg);
 }
 
-.btn-toggle-nav a {
+.btn-toggle-nav a,
+.btn-toggle-nav .sidebar-action-link {
   padding: 0.1875rem 0.5rem;
   margin-top: 0.125rem;
   margin-left: 1.25rem;
+}
+
+.btn-toggle-nav .sidebar-action-link {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-weight: inherit;
+  text-transform: none;
+  cursor: pointer;
 }
 
 .btn-toggle-nav .active {

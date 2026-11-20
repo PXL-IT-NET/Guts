@@ -3,8 +3,10 @@ import { Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, signal 
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
 import { CourseService } from "../../services/course.service";
+import { ScheduledJobsService } from "../../services/scheduled-jobs.service";
 import { ICourseModel } from "../../viewmodels/course.model";
 import { UserProfile } from "src/app/viewmodels/user.model";
+import { ToastrService } from "ngx-toastr";
 
 @Component({
   standalone: false,
@@ -32,10 +34,17 @@ export class SidebarMenuComponent implements OnInit {
     this._userProfile.set(v);
   }
 
+  private readonly _isOpeningScheduledJobs = signal<boolean>(false);
+  public get isOpeningScheduledJobs(): boolean {
+    return this._isOpeningScheduledJobs();
+  }
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly courseService: CourseService,
+    private readonly scheduledJobsService: ScheduledJobsService,
+    private readonly toastr: ToastrService,
   ) {}
 
   ngOnInit(): void {
@@ -77,6 +86,28 @@ export class SidebarMenuComponent implements OnInit {
       this.router.url.includes("/courses/" + courseId + "/") ||
       this.router.url.endsWith("/courses/" + courseId)
     );
+  }
+
+  public openScheduledJobsDashboard(): void {
+    if (this._isOpeningScheduledJobs()) {
+      return;
+    }
+
+    this._isOpeningScheduledJobs.set(true);
+    this.scheduledJobsService
+      .createDashboardTicket()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        this._isOpeningScheduledJobs.set(false);
+        if (result.success && result.value?.loginUrl) {
+          window.open(result.value.loginUrl, "_blank", "noopener,noreferrer");
+        } else {
+          this.toastr.error(
+            result.message || "Could not open Scheduled Jobs dashboard.",
+            "Error",
+          );
+        }
+      });
   }
 
   private loadCourses() {

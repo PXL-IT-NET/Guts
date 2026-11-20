@@ -21,7 +21,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 
 ## 2. User Stories & Actors
 
-- **Actors**: `Student`, `Lector (Teacher)`, `Background Scheduler (SprintLeaderboardBackgroundService, StreakReminderBackgroundService)`
+- **Actors**: `Student`, `Lector (Teacher)`, `Background Scheduler (Quartz.NET: SprintLeaderboardJob, StreakReminderJob; see 009-scheduled-jobs)`
 
 - **US-1 (Configure Course Gamification & Class Groups)**: As a **Lector**, I want to toggle gamification and its individual sub-features (Weekly Streaks, Leaderboards, Class Competition, Team Synergy, Badges) per course, and manage `CourseClassGroup` entities so I can tailor the experience to my course structure.
 - **US-2 (Manage Student Profile & Privacy)**: As a **Student**, I want to customize my avatar, pseudonym, class group membership, and leaderboard visibility (`ShowInLeaderBoard`, `UsePseudonym`) so I can participate comfortably.
@@ -30,7 +30,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 - **US-5 (Compete on Tiered Hall of Fame, View Leaderboards & Teacher Inspection of Student Perspective)**:
   - As a **Student**, I want to view the **Weekly Sprint Leaderboard**, the **Class Championship Leaderboard**, and **only my current league tier** of the **Hall of Fame Leaderboard** where rankings always start at #1 (with gold/silver/bronze medals for the top 3 in my tier and no demotivating global rank displayed), alongside a tier progression header (showing up to 2 previous tiers, my current tier enlarged, and only the next tier to reach unless in the two lowest levels, filtering out any tiers without students) and a motivational callout to overtake the student directly above me.
   - As a **Lector (Teacher)**, I want to be excluded from all rankings and not have a personal Hero Summary card; instead, I want to browse **all Hall of Fame levels** (teacher overview) with tier-relative ranks (no global ranks) AND **select a student** to inspect the **Hero Summary card** and **earned badges** of that student and see the **leaderboards** (Weekly Sprint and Hall of Fame tier) from that student's perspective (in read-only mode).
-- **US-6 (Automated Weekly Sprint Badge Awarding & Hall of Fame Rank Defense Evaluation)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 UTC` (using a Friday `23:59:59 UTC` cutoff) to award top-5 sprint badges (`SprintGold` through `SprintTop5`), and evaluate the Hall of Fame Leaderboard at the end of the completed week to award a `+5 XP` **Weekly Rank Defense** bonus (`HallOfFameRankDefended`) and the `RankDefender` badge (after 3 defended weeks) to active students who held their `BestHallOfFameRank` without being overtaken.
+- **US-6 (Automated Weekly Sprint Badge Awarding & Hall of Fame Rank Defense Evaluation)**: As the **Background Scheduler**, I want to evaluate the previous ISO week's Sprint Leaderboard every Monday at `00:01 Europe/Brussels` (using a Friday `23:59:59 UTC` cutoff) to award top-5 sprint badges (`SprintGold` through `SprintTop5`), and evaluate the Hall of Fame Leaderboard at the end of the completed week to award a `+5 XP` **Weekly Rank Defense** bonus (`HallOfFameRankDefended`) and the `RankDefender` badge (after 3 defended weeks) to active students who held their `BestHallOfFameRank` without being overtaken.
 - **US-7 (Weekly Streak Loss & All-Tests-Passed Protection)**: As a **Student**, I want my weekly coding streak (`CurrentStreak`) to be lost if I earn no XP in the last ISO week, **except** when I have already passed all currently available tests in the course, in which case my streak is kept so I am not penalized for having no remaining tests to solve.
 - **US-8 (Thursday Midday Streak Reminder Notification & Throttled Queue)**:
   - As a **Student** with an active streak (`CurrentStreak > 0`), I want to receive an encouraging and supportive reminder email every Thursday around midday if I haven't earned any XP yet in the current week, highlighting my current streak, my next Hall of Fame target to beat, and smart assignment suggestions (focusing on exercises I've started but not yet completed), so that I am motivated to practice and keep my streak alive before the week ends.
@@ -163,7 +163,7 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
 
 ### AC-7: Thursday Streak Reminder Notifications & Throttled Queue
 - **Given** active courses in the current academic period where `IsGamificationEnabled == true` and `IsWeeklyStreakEnabled == true`
-- **When** the scheduled execution occurs each **Thursday around midday** (`12:00 UTC`):
+- **When** the scheduled Quartz.NET execution (`StreakReminderJob`; see `009-scheduled-jobs`) occurs each **Thursday around midday** (`12:00 Europe/Brussels`):
   - **Eligibility Filter**: Evaluates each student profile (`StudentCourseProfile`) in the course. A student is eligible to receive a streak reminder email **if and only if**:
     1. The user has the `Student` role (lectors are strictly excluded).
     2. The student has an active streak (`CurrentStreak > 0`).
@@ -180,11 +180,12 @@ Teachers (`Lector`) are completely excluded from all rankings and do not have a 
     3. Each recommended assignment includes its title and a direct link to the assignment in the GUTS web application.
   - **Language**: English (matching existing GUTS email templates).
 - **And** the emails are dispatched using an asynchronous background queue via `IMailSender`:
+  - **Idempotent Delivery Tracking (`MessageTracker`)**: Each reminder is tracked in `MessageTracker` with `EntityType = "StreakReminder:{year}-W{weekNumber:D2}"`, `EntityId = course.Id`, and `Email = student.Email` (see `009-scheduled-jobs`), preventing duplicate emails on retries or manual triggers and allowing up to 3 attempts for failed sends.
   - **Throttling / Anti-Spam Rate Limiting**: The queue dispatches emails sequentially with an enforced throttle delay (e.g. 1 second between consecutive emails) to ensure the SMTP server does not flag or throttle the messages as bulk spam.
-  - **Resilience**: An exception when sending an email to a single recipient is logged via `ILogger` and does not terminate the background processing for the remaining queue items.
+  - **Resilience**: An exception when sending an email to a single recipient is logged via `ILogger`, recorded on its `MessageTracker` (`Status = Failed`, `RetryCount++`), and does not terminate the background processing for the remaining queue items.
 
 ### AC-8: Weekly Hall of Fame Rank Defense Bonus & Badge
-- **Given** a course where `IsGamificationEnabled == true` and `IsLeaderboardEnabled == true` when `AwardWeeklySprintBadgesAsync(year, weekNumber)` executes on Monday at `00:01 UTC` for the completed ISO week `(year, weekNumber)`
+- **Given** a course where `IsGamificationEnabled == true` and `IsLeaderboardEnabled == true` when `AwardWeeklySprintBadgesAsync(year, weekNumber)` executes on Monday at `00:01 Europe/Brussels` (via `SprintLeaderboardJob`; see `009-scheduled-jobs`) for the completed ISO week `(year, weekNumber)`
 - **When** the Hall of Fame ranking of opted-in students (`ShowInLeaderBoard == true`, excluding Lectors) with `TotalXp > 0` is evaluated at the end of the completed week (`sundayEndOfWeek = startOfWeek.AddDays(7).AddSeconds(-1)`):
   - A ranked student at 1-based global rank `currentRank` (out of `totalRankedStudents` opted-in students with `TotalXp > 0`) is eligible for the Weekly Rank Defense bonus if and only if:
     1. `BestHallOfFameRank.HasValue && currentRank <= BestHallOfFameRank.Value` (the student held or improved their personal best rank and finished the week without being overtaken below their best rank).

@@ -117,7 +117,7 @@ The **Project Team Peer Assessments** feature enables:
 ### AC-10: Automated Peer Assessment Deadline Reminders
 - **Given** an open `ProjectAssessment` (`OpenOnUtc <= DateTime.UtcNow < DeadlineUtc`) where the total assessment window (`DeadlineUtc - OpenOnUtc`) is at least 48 hours
 - **When** the current time is within the final 24-hour window before the deadline (`(DeadlineUtc - DateTime.UtcNow) <= TimeSpan.FromHours(24)`)
-- **Then** the background reminder task evaluates all teams within the project (lazily provisioning any missing `ProjectTeamAssessment` entities via `GetOrCreateTeamAssessmentAsync`)
+- **Then** the scheduled Quartz.NET recurring job (`PeerAssessmentReminderJob`, configured under `ScheduledJobs:Jobs:PeerAssessmentReminder`; see `009-scheduled-jobs`) evaluates all teams within the project (lazily provisioning any missing `ProjectTeamAssessment` entities via `GetOrCreateTeamAssessmentAsync`)
 - **And** for each student in `teamAssessment.GetPeersThatNeedToEvaluateOthers()`, a reminder email is queued/dispatched if no successful reminder has already been tracked in `MessageTracker` for that assessment and student email.
 
 ### AC-11: Idempotent Reminder Tracking & Retry Policy

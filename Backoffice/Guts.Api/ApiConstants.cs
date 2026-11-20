@@ -24,4 +24,14 @@ public static class ApiConstants
     /// Name for the policy that allows users with the role 'lector' or 'admin'.
     /// </summary>
     public const string LectorOrAdminPolicy = "LectorOrAdminPolicy";
+
+    /// <summary>
+    /// Cookie authentication scheme dedicated to the Admin-only Quartz Dashboard.
+    /// </summary>
+    public const string QuartzDashboardCookieScheme = "QuartzDashboardCookie";
+
+    /// <summary>
+    /// Authorization policy restricting the Quartz Dashboard to authenticated administrators.
+    /// </summary>
+    public const string QuartzDashboardAdminPolicy = "QuartzDashboardAdminPolicy";
 }

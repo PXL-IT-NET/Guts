@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs hosted background workers: `SprintLeaderboardBackgroundService` (to award weekly sprint medals and evaluate weekly streak resets) and `StreakReminderBackgroundService` (to queue and dispatch throttled Thursday midday streak reminder emails via `IMailSender`).
+The Course Gamification subsystem hooks into test-run registration (`TestRunService.RegisterRunAsync`), exposes a REST API (`GamificationController`) for the Angular dashboard, and runs recurring Quartz.NET scheduled jobs (`009-scheduled-jobs`): `SprintLeaderboardJob` (to award weekly sprint medals and evaluate weekly streak resets) and `StreakReminderJob` (to dispatch idempotent, throttled Thursday midday streak reminder emails via `IMailSender` and `MessageTracker`).
 
 ```mermaid
 flowchart TD
@@ -16,8 +16,8 @@ flowchart TD
     TRS -->|ProcessTestRunAsync| GS["GamificationService"]
     SPA["Angular SPA (course-gamification)"] --> GC["GamificationController"]
     GC --> GS
-    BG["SprintLeaderboardBackgroundService"] -->|AwardWeeklySprintBadgesAsync| GS
-    SRBG["StreakReminderBackgroundService"] -->|SendStreakRemindersAsync| SRS["StreakReminderService"]
+    BG["SprintLeaderboardJob (Quartz.NET)"] -->|AwardWeeklySprintBadgesAsync| GS
+    SRBG["StreakReminderJob (Quartz.NET)"] -->|SendStreakRemindersAsync| SRS["StreakReminderService"]
     SRS --> SCPR["IStudentCourseProfileRepository"]
     SRS --> TR["ITopicRepository"]
     SRS --> MS["IMailSender"]
@@ -233,10 +233,11 @@ flowchart TD
            - Primary: In-progress assignments where student has passed $\ge 1$ test but $< 100\%$ tests.
            - Secondary: Earliest unattempted assignments (0 tests passed).
          - Enqueues `StreakReminderEmailMessage` into a send queue.
-    4. Throttled Queue Processing (`[DR-12]`):
-       - Sequentially dequeues each message and calls `_mailSender.SendStreakReminderEmailAsync(...)`.
-       - Enforces an asynchronous throttle delay between consecutive dispatches (`Task.Delay(throttleDelay, cancellationToken)`, defaulting to 1 second; configurable/zeroable in unit tests) to protect SMTP reputation and avoid spam categorization.
-       - Wraps each individual send in a `try/catch` block: logs errors with `ILogger<StreakReminderService>` and continues draining the queue for subsequent students.
+    4. Idempotent & Throttled Queue Processing (`[DR-12]`, `009-scheduled-jobs`):
+       - Tracks each recipient per `(course, ISO week)` via `IMessageTrackerRepository` & `IMessageTrackerFactory` (`EntityType = "StreakReminder:{year}-W{weekNumber:D2}"`, `EntityId = course.Id`, `Email = student.Email`), skipping already-succeeded or max-retried entries and marking `Sending` ➔ `Succeeded` / `Failed`.
+       - Sequentially dequeues each eligible message and calls `_mailSender.SendStreakReminderEmailAsync(...)`.
+       - Enforces an asynchronous throttle delay between consecutive dispatches (`IMailThrottler.ThrottleAsync(cancellationToken)`) to protect SMTP reputation and avoid spam categorization.
+       - Wraps each individual send in a `try/catch` block: marks the tracker failed, logs errors with `ILogger<StreakReminderService>`, and continues draining the queue for subsequent students.
        - Returns total count of successfully sent reminder emails.
 
 ### Application Services (`Guts.Application/Services/`)
@@ -450,6 +451,6 @@ flowchart TD
 
 ## 7. Dependency Injection (`Guts.Bootstrapper`)
 
-- `IStreakReminderService` / `StreakReminderService` automatically registered via standard convention (`services.AddScoped<IStreakReminderService, StreakReminderService>()` or `RegisterTypesWhoseNameEndsWith("Service")` in `StartUpExtensions.cs`).
-- `StreakReminderBackgroundService` registered as hosted service in `Guts.Api/Startup.cs` (`services.AddHostedService<StreakReminderBackgroundService>()`).
+- `IStreakReminderService` / `StreakReminderService` automatically registered via standard convention (`RegisterTypesWhoseNameEndsWith("Service")` in `StartUpExtensions.cs`).
+- `SprintLeaderboardJob` and `StreakReminderJob` are auto-discovered and registered via `services.AddScheduledJobs(Configuration)` in `Guts.Api/Startup.cs` (see `009-scheduled-jobs`).
 - `IMailSender` / `MailSender` already registered in `StartUpExtensions.cs` with `ISmtpClient` and `webappbaseurl` configuration.

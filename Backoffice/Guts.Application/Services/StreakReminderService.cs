@@ -12,6 +12,7 @@ using Guts.Domain.CourseAggregate;
 using Guts.Domain.GamificationAggregate;
 using Guts.Domain.GamificationAggregate.Competitions;
 using Guts.Domain.GamificationAggregate.Profiles;
+using Guts.Domain.MessageTrackerAggregate;
 using Guts.Domain.PeriodAggregate;
 using Guts.Domain.TestAggregate;
 using Guts.Domain.TopicAggregate;
@@ -29,6 +30,8 @@ public class StreakReminderService : IStreakReminderService
     private readonly ITopicRepository _topicRepository;
     private readonly IStudentCourseProfileRepository _profileRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IMessageTrackerRepository _messageTrackerRepository;
+    private readonly IMessageTrackerFactory _messageTrackerFactory;
     private readonly IMailSender _mailSender;
     private readonly IMailThrottler _mailThrottler;
     private readonly ILogger<StreakReminderService> _logger;
@@ -40,7 +43,7 @@ public class StreakReminderService : IStreakReminderService
     }
 
     [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
-        Justification = "Service coordinates streak reminder workflows across aggregate repositories and mailing infrastructure.")]
+        Justification = "Service coordinates streak reminder workflows across aggregate repositories, message tracking, and mailing infrastructure.")]
     public StreakReminderService(
         IPeriodRepository periodRepository,
         ICourseRepository courseRepository,
@@ -48,6 +51,8 @@ public class StreakReminderService : IStreakReminderService
         ITopicRepository topicRepository,
         IStudentCourseProfileRepository profileRepository,
         IUserRepository userRepository,
+        IMessageTrackerRepository messageTrackerRepository,
+        IMessageTrackerFactory messageTrackerFactory,
         IMailSender mailSender,
         IMailThrottler mailThrottler,
         ILogger<StreakReminderService> logger)
@@ -58,48 +63,23 @@ public class StreakReminderService : IStreakReminderService
         _topicRepository = topicRepository;
         _profileRepository = profileRepository;
         _userRepository = userRepository;
+        _messageTrackerRepository = messageTrackerRepository;
+        _messageTrackerFactory = messageTrackerFactory;
         _mailSender = mailSender;
         _mailThrottler = mailThrottler ?? new MailThrottler(TimeSpan.FromSeconds(1));
         _logger = logger;
     }
 
-    [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
-        Justification = "Overload constructor for DI auto-registration without explicit mail throttler.")]
-    public StreakReminderService(
-        IPeriodRepository periodRepository,
-        ICourseRepository courseRepository,
-        ICourseGamificationConfigRepository configRepository,
-        ITopicRepository topicRepository,
-        IStudentCourseProfileRepository profileRepository,
-        IUserRepository userRepository,
-        IMailSender mailSender,
-        ILogger<StreakReminderService> logger)
-        : this(periodRepository, courseRepository, configRepository, topicRepository, profileRepository, userRepository, mailSender, new MailThrottler(TimeSpan.FromSeconds(1)), logger)
-    {
-    }
-
-    [SuppressMessage("Major Code Smell", "S107:Methods should not have too many parameters",
-        Justification = "Overload constructor enabling custom throttle delay for testing.")]
-    public StreakReminderService(
-        IPeriodRepository periodRepository,
-        ICourseRepository courseRepository,
-        ICourseGamificationConfigRepository configRepository,
-        ITopicRepository topicRepository,
-        IStudentCourseProfileRepository profileRepository,
-        IUserRepository userRepository,
-        IMailSender mailSender,
-        ILogger<StreakReminderService> logger,
-        TimeSpan throttleDelay)
-        : this(periodRepository, courseRepository, configRepository, topicRepository, profileRepository, userRepository, mailSender, new MailThrottler(throttleDelay), logger)
-    {
-    }
-
     public async Task<int> SendStreakRemindersAsync(DateTime executionTime, CancellationToken cancellationToken = default)
     {
+        DateTime executionTimeUtc = executionTime.Kind == DateTimeKind.Utc
+            ? executionTime
+            : executionTime.ToUniversalTime();
+
         var currentPeriod = await _periodRepository.GetPeriodAsync();
         var allCourses = await _courseRepository.GetAllAsync();
 
-        var currentWeek = IsoWeek.From(executionTime);
+        var currentWeek = IsoWeek.From(executionTimeUtc);
 
         var messagesToSend = new List<StreakReminderEmailMessage>();
         foreach (var course in allCourses)
@@ -108,7 +88,7 @@ public class StreakReminderService : IStreakReminderService
             messagesToSend.AddRange(courseMessages);
         }
 
-        return await SendMessagesAsync(messagesToSend, cancellationToken);
+        return await SendMessagesAsync(messagesToSend, currentWeek, executionTimeUtc, cancellationToken);
     }
 
     private async Task<List<StreakReminderEmailMessage>> BuildMessagesForCourseAsync(
@@ -254,37 +234,74 @@ public class StreakReminderService : IStreakReminderService
 
     private async Task<int> SendMessagesAsync(
         List<StreakReminderEmailMessage> messagesToSend,
+        IsoWeek currentWeek,
+        DateTime executionTimeUtc,
         CancellationToken cancellationToken)
     {
+        string entityType = $"StreakReminder:{currentWeek.Year}-W{currentWeek.WeekNumber:D2}";
         int sentCount = 0;
-        for (int i = 0; i < messagesToSend.Count; i++)
+
+        foreach (var message in messagesToSend)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var message = messagesToSend[i];
 
-            try
+            bool sent = await TrySendReminderMessageAsync(message, entityType, executionTimeUtc, cancellationToken);
+            if (sent)
             {
-                await _mailSender.SendStreakReminderEmailAsync(
-                    message.Recipient,
-                    message.CourseName,
-                    message.CourseId,
-                    message.CurrentStreak,
-                    message.TargetStudentName,
-                    message.RecommendedAssignments);
-
                 sentCount++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send streak reminder email to user {UserId} for course {CourseId}.", message.Recipient.Id, message.CourseId);
-            }
-
-            if (i < messagesToSend.Count - 1)
-            {
-                await _mailThrottler.ThrottleAsync(cancellationToken);
             }
         }
 
         return sentCount;
+    }
+
+    private async Task<bool> TrySendReminderMessageAsync(
+        StreakReminderEmailMessage message,
+        string entityType,
+        DateTime executionTimeUtc,
+        CancellationToken cancellationToken)
+    {
+        Email recipientEmail = new Email(message.Recipient.Email);
+        var tracker = await _messageTrackerRepository.FindByEntityAndEmailAsync(entityType, message.CourseId, recipientEmail);
+
+        if (tracker != null)
+        {
+            if (tracker.Status == MessageStatus.Succeeded || !tracker.CanRetry)
+            {
+                return false;
+            }
+
+            tracker.Retry(executionTimeUtc);
+            await _messageTrackerRepository.UpdateAsync(tracker);
+        }
+        else
+        {
+            tracker = _messageTrackerFactory.CreateNew(entityType, message.CourseId, recipientEmail, executionTimeUtc);
+            await _messageTrackerRepository.AddAsync(tracker);
+        }
+
+        try
+        {
+            await _mailSender.SendStreakReminderEmailAsync(
+                message.Recipient,
+                message.CourseName,
+                message.CourseId,
+                message.CurrentStreak,
+                message.TargetStudentName,
+                message.RecommendedAssignments);
+
+            tracker.MarkSucceeded();
+            await _messageTrackerRepository.UpdateAsync(tracker);
+
+            await _mailThrottler.ThrottleAsync(cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send streak reminder email to user {UserId} for course {CourseId}.", message.Recipient.Id, message.CourseId);
+            tracker.MarkFailed(ex.Message);
+            await _messageTrackerRepository.UpdateAsync(tracker);
+            return false;
+        }
     }
 }
