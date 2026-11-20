@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Guts.Domain.ValueObjects;
 
@@ -16,4 +17,16 @@ public interface ISolutionFileRepository
     Task<IList<SolutionFile>> GetAllLatestOfAssignmentForTeamAsync(int assignmentId, int teamId, DateTime? dateUtc);
 
     Task<SolutionFile> AddAsync(SolutionFile newSolutionFile);
+
+    Task<IReadOnlyList<DateTime>> GetModifyDateTimesForUserAsync(
+        int assignmentId,
+        int userId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DateTime>> GetModifyDateTimesForTeamAsync(
+        int assignmentId,
+        int teamId,
+        DateTime? dateUtc,
+        CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,92 @@
+.timeline-chart-container {
+  position: relative;
+  height: 170px;
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  &.is-dragging {
+    cursor: grabbing;
+  }
+}
+
+.timeline-change-badge {
+  font-weight: 500;
+
+  &.tier-test-improved {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+
+  &.tier-test-regressed {
+    background-color: #f8d7da;
+    color: #842029;
+  }
+
+  &.tier-test-neutral {
+    background-color: #cfe2ff;
+    color: #084298;
+  }
+
+  &.tier-code-only {
+    background-color: #fff3cd;
+    color: #664d03;
+  }
+
+  &.tier-unchanged {
+    background-color: #e9ecef;
+    color: #495057;
+  }
+}
+
+.timeline-legend {
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-improved {
+    width: 11px;
+    height: 11px;
+    background-color: #198754;
+  }
+
+  .dot-regressed {
+    width: 11px;
+    height: 11px;
+    background-color: #dc3545;
+  }
+
+  .dot-neutral {
+    width: 11px;
+    height: 11px;
+    background-color: #0d6efd;
+  }
+
+  .dot-code-only {
+    width: 10px;
+    height: 10px;
+    background-color: #ffffff;
+    border: 2.5px solid #f59e0b;
+  }
+
+  .dot-unchanged {
+    width: 7px;
+    height: 7px;
+    background-color: #adb5bd;
+    border: 1px solid #6c757d;
+  }
+}

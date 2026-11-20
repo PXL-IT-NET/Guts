@@ -480,4 +480,80 @@ public class AssignmentControllerTests
         _assignmentServiceMock.Verify(service => service.GetAllSolutions(assignmentId), Times.Once);
         _solutionFileServiceMock.Verify(service => service.CreateZipFromFiles(solutions), Times.Once);
     }
+
+    [Test]
+    public async Task GetAssignmentTimelineForUser_WhenAuthorized_ShouldReturnTimelineModel()
+    {
+        var userId = _random.NextPositive();
+        var assignment = new AssignmentBuilder().WithId().Build();
+        assignment.AddTest("T1", 1);
+        assignment.AddTest("T2", 2);
+        var queryDate = new DateTime(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
+
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser(userId.ToString()).WithRole(Role.Constants.Student).Build();
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignment.Id)).ReturnsAsync(assignment);
+        _assignmentServiceMock
+            .Setup(s => s.GetTimelineForUserAsync(assignment.Id, userId, 2, queryDate))
+            .ReturnsAsync(new AssignmentTimelineDto(
+                assignment.Id,
+                2,
+                [new TestRunTimelinePoint(10, 1, queryDate, 1, 1, 2, true, true, 0)]));
+
+        var result = await _controller.GetAssignmentTimelineForUser(assignment.Id, userId, queryDate) as OkObjectResult;
+
+        Assert.That(result, Is.Not.Null);
+        var model = result.Value as AssignmentTimelineModel;
+        Assert.That(model, Is.Not.Null);
+        Assert.That(model.AssignmentId, Is.EqualTo(assignment.Id));
+        Assert.That(model.TotalTestsCount, Is.EqualTo(2));
+        Assert.That(model.Runs, Has.Count.EqualTo(1));
+        Assert.That(model.Runs[0].TestRunId, Is.EqualTo(10));
+        Assert.That(model.Runs[0].SolutionFilesChanged, Is.True);
+    }
+
+    [Test]
+    public async Task GetAssignmentTimelineForUser_WhenForbidden_ShouldReturnForbid()
+    {
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("1").WithRole(Role.Constants.Student).Build();
+        var studentOtherResult = await _controller.GetAssignmentTimelineForUser(5, 2, null);
+        Assert.That(studentOtherResult, Is.InstanceOf<ForbidResult>());
+
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("1").Build(); // neither student nor lector
+        var unknownRoleResult = await _controller.GetAssignmentTimelineForUser(5, 1, null);
+        Assert.That(unknownRoleResult, Is.InstanceOf<ForbidResult>());
+    }
+
+    [Test]
+    public async Task GetAssignmentTimelineForTeam_WhenAuthorizedAndWhenForbidden_ShouldEnforceMembershipAndRoles()
+    {
+        var assignment = new AssignmentBuilder().WithId().Build();
+        assignment.AddTest("T1", 1);
+        var team = new ProjectTeamBuilder().WithId().WithUser(10).Build();
+
+        _projectTeamRepositoryMock.Setup(r => r.LoadByIdAsync(team.Id)).ReturnsAsync(team);
+        _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignment.Id)).ReturnsAsync(assignment);
+        _assignmentServiceMock
+            .Setup(s => s.GetTimelineForTeamAsync(assignment.Id, team.Id, 1, null))
+            .ReturnsAsync(new AssignmentTimelineDto(assignment.Id, 1, []));
+
+        // Lector allowed
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("99").WithRole(Role.Constants.Lector).Build();
+        var lectorResult = await _controller.GetAssignmentTimelineForTeam(assignment.Id, team.Id, null) as OkObjectResult;
+        Assert.That(lectorResult, Is.Not.Null);
+
+        // Student team member allowed
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("10").WithRole(Role.Constants.Student).Build();
+        var memberResult = await _controller.GetAssignmentTimelineForTeam(assignment.Id, team.Id, null) as OkObjectResult;
+        Assert.That(memberResult, Is.Not.Null);
+
+        // Student non-member forbidden
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("20").WithRole(Role.Constants.Student).Build();
+        var nonMemberResult = await _controller.GetAssignmentTimelineForTeam(assignment.Id, team.Id, null);
+        Assert.That(nonMemberResult, Is.InstanceOf<ForbidResult>());
+
+        // No role forbidden
+        _controller.ControllerContext = new ControllerContextBuilder().WithUser("20").Build();
+        var noRoleResult = await _controller.GetAssignmentTimelineForTeam(assignment.Id, team.Id, null);
+        Assert.That(noRoleResult, Is.InstanceOf<ForbidResult>());
+    }
 }

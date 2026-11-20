@@ -1,6 +1,7 @@
 
 export * from "./sidebar-menu/sidebar-menu.component";
 export * from "./assignmentdetail/assignmentdetail.component";
+export * from "./assignment-timeline/assignment-timeline.component";
 export * from "./assignmentstatistics/assignmentstatistics.component";
 export * from "./assignmentsummary/assignmentsummary.component";
 export * from "./chapter/chapter.component";

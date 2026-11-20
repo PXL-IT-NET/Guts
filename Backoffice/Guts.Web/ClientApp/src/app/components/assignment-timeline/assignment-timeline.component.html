@@ -1,0 +1,169 @@
+@if (runs.length > 0) {
+  <div class="card mb-2 timeline-card" data-testid="assignment-timeline">
+    <div
+      class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2 py-2"
+    >
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0 fs-6 fw-semibold">
+          <span class="bi bi-clock-history me-1" aria-hidden="true"></span>
+          Test run timeline
+        </h5>
+        @if (isLoadingSnapshot) {
+          <output
+            class="spinner-border spinner-border-sm text-primary"
+            aria-label="Loading snapshot"
+          ></output>
+        }
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <fieldset
+          class="btn-group btn-group-sm border-0 p-0 m-0"
+          aria-label="Step through test runs"
+        >
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-testid="timeline-prev-btn"
+            [disabled]="!canGoPrev"
+            (click)="selectPrev()"
+          >
+            <span class="bi bi-chevron-left" aria-hidden="true"></span> Prev
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-testid="timeline-next-btn"
+            [disabled]="!canGoNext"
+            (click)="selectNext()"
+          >
+            Next <span class="bi bi-chevron-right" aria-hidden="true"></span>
+          </button>
+        </fieldset>
+
+        <fieldset
+          class="btn-group btn-group-sm border-0 p-0 m-0"
+          aria-label="Timeline X-axis scale"
+        >
+          <button
+            type="button"
+            class="btn"
+            data-testid="timeline-scale-sequence"
+            [class.btn-primary]="scaleMode() === 'sequence'"
+            [class.btn-outline-secondary]="scaleMode() !== 'sequence'"
+            [attr.aria-pressed]="scaleMode() === 'sequence'"
+            (click)="setScaleMode('sequence')"
+          >
+            Sequence
+          </button>
+          <button
+            type="button"
+            class="btn"
+            data-testid="timeline-scale-realtime"
+            [class.btn-primary]="scaleMode() === 'realtime'"
+            [class.btn-outline-secondary]="scaleMode() !== 'realtime'"
+            [attr.aria-pressed]="scaleMode() === 'realtime'"
+            [disabled]="!canUseRealtimeScale"
+            (click)="setScaleMode('realtime')"
+          >
+            Real-time
+          </button>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="card-body py-2 px-3">
+      @if (activePoint) {
+        <div
+          class="d-flex flex-wrap align-items-center justify-content-between gap-2 small mb-2 timeline-readout"
+          data-testid="timeline-readout"
+        >
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-semibold">
+              Run #{{ activePoint.runNumber }} of {{ runs.length }}
+            </span>
+            <span class="text-muted">{{ activeTimestampFormatted }}</span>
+            <span class="badge text-bg-light border">
+              {{ activePoint.passedTestsCount }} /
+              {{ activePoint.totalTestsCount }} passing
+              @if (activeDeltaLabel) {
+                <span
+                  [class.text-success]="activePoint.testResultsDelta > 0"
+                  [class.text-danger]="activePoint.testResultsDelta < 0"
+                >
+                  ({{ activeDeltaLabel }})
+                </span>
+              }
+            </span>
+          </div>
+          <span
+            class="badge timeline-change-badge"
+            [ngClass]="'tier-' + activeDotTier"
+          >
+            {{ activeChangeSummary }}
+          </span>
+        </div>
+      }
+
+      <input
+        type="range"
+        class="visually-hidden"
+        data-testid="timeline-slider"
+        aria-label="Test run timeline scrubber"
+        [min]="1"
+        [max]="runs.length"
+        [value]="activeIndex + 1"
+        [attr.aria-valuetext]="activeAriaValueText"
+        (input)="onRangeInput($event)"
+        (keydown)="onKeyDown($event)"
+      />
+
+      <div
+        class="timeline-chart-container"
+        [class.is-dragging]="isDragging()"
+        data-testid="timeline-chart-area"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerCancel()"
+      >
+        <canvas
+          baseChart
+          [type]="'line'"
+          [data]="chartData"
+          [options]="chartOptions"
+          [plugins]="chartPlugins"
+        ></canvas>
+      </div>
+
+      <div
+        class="d-flex flex-wrap align-items-center gap-3 mt-2 pt-2 border-top small text-muted timeline-legend"
+        data-testid="timeline-legend"
+      >
+        <span class="legend-item">
+          <span class="legend-dot dot-improved"></span>
+          Improved / All pass
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-regressed"></span>
+          Regressed
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-neutral"></span>
+          Tests changed
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-code-only"></span>
+          Source code only
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot dot-unchanged"></span>
+          No change
+        </span>
+        <span class="ms-auto fst-italic">
+          Drag beam, click a dot, or use arrow keys to inspect past runs
+        </span>
+      </div>
+    </div>
+  </div>
+}

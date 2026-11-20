@@ -172,7 +172,7 @@ No new aggregates or domain types are needed. Existing domain primitives are reu
     - Accepts `[FromQuery] string ticket`.
     - Calls `_ticketStore.ConsumeTicket(ticket)`. If `null`, returns `401 Unauthorized`.
     - Calls `await HttpContext.SignInAsync(ApiConstants.QuartzDashboardCookieScheme, principal, new AuthenticationProperties { IsPersistent = false, ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30) })`.
-    - Returns `Redirect("/quartz")`.
+    - Returns `Redirect($"{GetNormalizedPathBase()}/quartz")` so sub-path deployments (e.g. `/staging`) redirect to `/staging/quartz` instead of root `/quartz`.
 
 ### Startup & Pipeline Registration (`Guts.Api/Startup.cs` & `ScheduledJobsServiceCollectionExtensions.cs`)
 - **Authentication & Authorization**:

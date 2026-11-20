@@ -527,4 +527,78 @@ public class AssignmentServiceTests
         Assert.That(assignment.TestCodeHashes, Has.Count.EqualTo(1));
         _assignmentRepositoryMock.Verify(repo => repo.UpdateAsync(It.IsAny<Assignment>()), Times.Never);
     }
+
+    [Test]
+    public async System.Threading.Tasks.Task GetTimelineForUserAsync_ShouldBuildTimelineFromSnapshotsAndFileModifyTimes()
+    {
+        var assignmentId = _random.NextPositive();
+        var userId = _random.NextPositive();
+        var t1 = new DateTime(2026, 11, 20, 10, 0, 0, DateTimeKind.Utc);
+        var t2 = t1.AddMinutes(5);
+
+        _testRunRepositoryMock
+            .Setup(r => r.GetUserTestRunSnapshotsForAssignmentAsync(assignmentId, userId, t2, default))
+            .ReturnsAsync(new List<TestRunSnapshot>
+            {
+                new(1, userId, t1, [new TestResultSnapshot(10, false)]),
+                new(2, userId, t2, [new TestResultSnapshot(10, true)])
+            });
+        _solutionFileRepositoryMock
+            .Setup(r => r.GetModifyDateTimesForUserAsync(assignmentId, userId, t2, default))
+            .ReturnsAsync(new List<DateTime> { t1.AddMilliseconds(-50) });
+
+        var timeline = await _service.GetTimelineForUserAsync(assignmentId, userId, 2, t2);
+
+        Assert.That(timeline.AssignmentId, Is.EqualTo(assignmentId));
+        Assert.That(timeline.TotalTestsCount, Is.EqualTo(2));
+        Assert.That(timeline.Runs, Has.Count.EqualTo(2));
+        Assert.That(timeline.Runs[0].SolutionFilesChanged, Is.True);
+        Assert.That(timeline.Runs[1].TestResultsDelta, Is.EqualTo(1));
+        Assert.That(timeline.Runs[1].SolutionFilesChanged, Is.False);
+    }
+
+    [Test]
+    public async System.Threading.Tasks.Task GetTimelineForUserAsync_WhenNoRuns_ShouldReturnEmptyWithoutQueryingSolutionFiles()
+    {
+        var assignmentId = _random.NextPositive();
+        var userId = _random.NextPositive();
+        _testRunRepositoryMock
+            .Setup(r => r.GetUserTestRunSnapshotsForAssignmentAsync(assignmentId, userId, null, default))
+            .ReturnsAsync(new List<TestRunSnapshot>());
+
+        var timeline = await _service.GetTimelineForUserAsync(assignmentId, userId, 3, null);
+
+        Assert.That(timeline.Runs, Is.Empty);
+        _solutionFileRepositoryMock.Verify(
+            r => r.GetModifyDateTimesForUserAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>(), default),
+            Times.Never);
+    }
+
+    [Test]
+    public async System.Threading.Tasks.Task GetTimelineForTeamAsync_ShouldBuildTimelineAndShortCircuitWhenEmpty()
+    {
+        var assignmentId = _random.NextPositive();
+        var teamId = _random.NextPositive();
+        var t1 = new DateTime(2026, 11, 20, 10, 0, 0, DateTimeKind.Utc);
+
+        _testRunRepositoryMock
+            .Setup(r => r.GetTeamTestRunSnapshotsForAssignmentAsync(assignmentId, teamId, null, default))
+            .ReturnsAsync(new List<TestRunSnapshot>
+            {
+                new(1, 5, t1, [new TestResultSnapshot(10, true)])
+            });
+        _solutionFileRepositoryMock
+            .Setup(r => r.GetModifyDateTimesForTeamAsync(assignmentId, teamId, null, default))
+            .ReturnsAsync(new List<DateTime> { t1 });
+
+        var timeline = await _service.GetTimelineForTeamAsync(assignmentId, teamId, 1, null);
+        Assert.That(timeline.Runs, Has.Count.EqualTo(1));
+        Assert.That(timeline.Runs[0].PassedTestsCount, Is.EqualTo(1));
+
+        _testRunRepositoryMock
+            .Setup(r => r.GetTeamTestRunSnapshotsForAssignmentAsync(assignmentId, teamId, t1, default))
+            .ReturnsAsync(new List<TestRunSnapshot>());
+        var emptyTimeline = await _service.GetTimelineForTeamAsync(assignmentId, teamId, 1, t1);
+        Assert.That(emptyTimeline.Runs, Is.Empty);
+    }
 }

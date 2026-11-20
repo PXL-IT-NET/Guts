@@ -25,7 +25,8 @@ public class ScheduledJobsController(IQuartzDashboardTicketStore ticketStore) : 
     public IActionResult CreateDashboardTicket()
     {
         string ticket = ticketStore.CreateTicket(User);
-        string loginUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/scheduled-jobs/dashboard-login?ticket={Uri.EscapeDataString(ticket)}";
+        string pathBase = GetNormalizedPathBase();
+        string loginUrl = $"{Request.Scheme}://{Request.Host}{pathBase}/api/scheduled-jobs/dashboard-login?ticket={Uri.EscapeDataString(ticket)}";
 
         return Ok(new QuartzDashboardTicketModel
         {
@@ -34,7 +35,7 @@ public class ScheduledJobsController(IQuartzDashboardTicketStore ticketStore) : 
     }
 
     /// <summary>
-    /// Exchanges a single-use dashboard ticket for an Admin-only HttpOnly cookie and redirects to /quartz.
+    /// Exchanges a single-use dashboard ticket for an Admin-only HttpOnly cookie and redirects to the Quartz dashboard.
     /// </summary>
     [HttpGet("dashboard-login")]
     [AllowAnonymous]
@@ -57,6 +58,11 @@ public class ScheduledJobsController(IQuartzDashboardTicketStore ticketStore) : 
                 ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30)
             });
 
-        return Redirect("/quartz");
+        return Redirect($"{GetNormalizedPathBase()}/quartz");
+    }
+
+    private string GetNormalizedPathBase()
+    {
+        return Request.PathBase.Value?.TrimEnd('/') ?? string.Empty;
     }
 }

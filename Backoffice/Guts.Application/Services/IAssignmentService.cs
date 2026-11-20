@@ -27,4 +27,7 @@ public interface IAssignmentService
 
     Task<AssignmentStatisticsDto> GetAssignmentUserStatisticsAsync(int assignmentId, DateTime? dateUtc);
     Task<AssignmentStatisticsDto> GetAssignmentTeamStatisticsAsync(int projectId, int assignmentId, DateTime? dateUtc);
+
+    Task<AssignmentTimelineDto> GetTimelineForUserAsync(int assignmentId, int userId, int totalTestsCount, DateTime? dateUtc);
+    Task<AssignmentTimelineDto> GetTimelineForTeamAsync(int assignmentId, int teamId, int totalTestsCount, DateTime? dateUtc);
 }

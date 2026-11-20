@@ -138,6 +138,40 @@ internal class AssignmentService(
         return assignmentWithResultsConverter.ToAssignmentStatisticsDto(assignmentId, testResults);
     }
 
+    public async Task<AssignmentTimelineDto> GetTimelineForUserAsync(int assignmentId, int userId, int totalTestsCount, DateTime? dateUtc)
+    {
+        IReadOnlyList<TestRunSnapshot> runs =
+            await testRunRepository.GetUserTestRunSnapshotsForAssignmentAsync(assignmentId, userId, dateUtc);
+
+        if (runs.Count == 0)
+        {
+            return new AssignmentTimelineDto(assignmentId, totalTestsCount, []);
+        }
+
+        IReadOnlyList<DateTime> fileModifyTimes =
+            await solutionFileRepository.GetModifyDateTimesForUserAsync(assignmentId, userId, dateUtc);
+
+        IReadOnlyList<TestRunTimelinePoint> points = TestRunTimelineBuilder.Build(runs, fileModifyTimes, totalTestsCount);
+        return new AssignmentTimelineDto(assignmentId, totalTestsCount, points);
+    }
+
+    public async Task<AssignmentTimelineDto> GetTimelineForTeamAsync(int assignmentId, int teamId, int totalTestsCount, DateTime? dateUtc)
+    {
+        IReadOnlyList<TestRunSnapshot> runs =
+            await testRunRepository.GetTeamTestRunSnapshotsForAssignmentAsync(assignmentId, teamId, dateUtc);
+
+        if (runs.Count == 0)
+        {
+            return new AssignmentTimelineDto(assignmentId, totalTestsCount, []);
+        }
+
+        IReadOnlyList<DateTime> fileModifyTimes =
+            await solutionFileRepository.GetModifyDateTimesForTeamAsync(assignmentId, teamId, dateUtc);
+
+        IReadOnlyList<TestRunTimelinePoint> points = TestRunTimelineBuilder.Build(runs, fileModifyTimes, totalTestsCount);
+        return new AssignmentTimelineDto(assignmentId, totalTestsCount, points);
+    }
+
     private static AssignmentTestRunInfoDto ConstructTestRunInfoFromTestRuns(IList<TestRun> testRuns)
     {
         var summary = TestRunSummary.FromTestRuns(testRuns as IReadOnlyList<TestRun> ?? testRuns.ToList());
