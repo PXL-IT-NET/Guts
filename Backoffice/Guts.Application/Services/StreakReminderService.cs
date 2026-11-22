@@ -81,6 +81,16 @@ public class StreakReminderService : IStreakReminderService
 
         var currentWeek = IsoWeek.From(executionTimeUtc);
 
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Checking streak reminders for period {PeriodId}, ISO week {Year}-W{WeekNumber:D2} across {CourseCount} course(s).",
+                currentPeriod.Id,
+                currentWeek.Year,
+                currentWeek.WeekNumber,
+                allCourses.Count);
+        }
+
         var messagesToSend = new List<StreakReminderEmailMessage>();
         foreach (var course in allCourses)
         {
@@ -116,6 +126,16 @@ public class StreakReminderService : IStreakReminderService
 
         var profiles = await _profileRepository.GetByCourseAndPeriodAsync(course.Id, periodId);
         var eligibleProfiles = await FilterEligibleProfilesAsync(profiles, allCourseTestIds, currentWeek);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Course {CourseCode} (Id: {CourseId}): found {EligibleCount} at-risk student(s) out of {ProfileCount} profile(s).",
+                course.Code,
+                course.Id,
+                eligibleProfiles.Count,
+                profiles.Count);
+        }
+
         if (eligibleProfiles.Count == 0)
         {
             return new List<StreakReminderEmailMessage>();
@@ -232,6 +252,13 @@ public class StreakReminderService : IStreakReminderService
         }).ToList();
     }
 
+    private enum SendOutcome
+    {
+        Sent,
+        Skipped,
+        Failed
+    }
+
     private async Task<int> SendMessagesAsync(
         List<StreakReminderEmailMessage> messagesToSend,
         IsoWeek currentWeek,
@@ -240,22 +267,43 @@ public class StreakReminderService : IStreakReminderService
     {
         string entityType = $"StreakReminder:{currentWeek.Year}-W{currentWeek.WeekNumber:D2}";
         int sentCount = 0;
+        int skippedCount = 0;
+        int failedCount = 0;
 
         foreach (var message in messagesToSend)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            bool sent = await TrySendReminderMessageAsync(message, entityType, executionTimeUtc, cancellationToken);
-            if (sent)
+            SendOutcome outcome = await TrySendReminderMessageAsync(message, entityType, executionTimeUtc, cancellationToken);
+            switch (outcome)
             {
-                sentCount++;
+                case SendOutcome.Sent:
+                    sentCount++;
+                    break;
+                case SendOutcome.Skipped:
+                    skippedCount++;
+                    break;
+                case SendOutcome.Failed:
+                    failedCount++;
+                    break;
             }
+        }
+
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Streak reminder delivery for {EntityType}: {TotalCandidates} candidate(s) — {SentCount} sent, {SkippedCount} skipped (already sent or max retries reached), {FailedCount} failed.",
+                entityType,
+                messagesToSend.Count,
+                sentCount,
+                skippedCount,
+                failedCount);
         }
 
         return sentCount;
     }
 
-    private async Task<bool> TrySendReminderMessageAsync(
+    private async Task<SendOutcome> TrySendReminderMessageAsync(
         StreakReminderEmailMessage message,
         string entityType,
         DateTime executionTimeUtc,
@@ -268,7 +316,7 @@ public class StreakReminderService : IStreakReminderService
         {
             if (tracker.Status == MessageStatus.Succeeded || !tracker.CanRetry)
             {
-                return false;
+                return SendOutcome.Skipped;
             }
 
             tracker.Retry(executionTimeUtc);
@@ -294,14 +342,14 @@ public class StreakReminderService : IStreakReminderService
             await _messageTrackerRepository.UpdateAsync(tracker);
 
             await _mailThrottler.ThrottleAsync(cancellationToken);
-            return true;
+            return SendOutcome.Sent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send streak reminder email to user {UserId} for course {CourseId}.", message.Recipient.Id, message.CourseId);
             tracker.MarkFailed(ex.Message);
             await _messageTrackerRepository.UpdateAsync(tracker);
-            return false;
+            return SendOutcome.Failed;
         }
     }
 }

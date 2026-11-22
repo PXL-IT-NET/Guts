@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Guts.Application.Dtos;
 using Guts.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -27,15 +26,11 @@ public class TestRunPruningJob(
         int batchSize = configuration?.GetValue<int?>("TestRunPruning:BatchSize")
                         ?? ITestRunPruningService.DefaultBatchSize;
 
-        TestRunPruningResult result = await testRunPruningService.PruneRedundantTestRunsAsync(batchSize, cancellationToken);
-
         if (logger.IsEnabled(LogLevel.Information))
         {
-            logger.LogInformation(
-                "TestRunPruningJob finished: scanned {AssignmentsScanned} assignments, deleted {TestRunsDeleted} test runs and {TestResultsDeleted} test results.",
-                result.AssignmentsScanned,
-                result.TestRunsDeleted,
-                result.TestResultsDeleted);
+            logger.LogInformation("Starting TestRunPruningJob (batch size: {BatchSize}).", batchSize);
         }
+
+        await testRunPruningService.PruneRedundantTestRunsAsync(batchSize, cancellationToken);
     }
 }

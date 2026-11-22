@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Guts.Api.ScheduledJobs;
 using Guts.Api.ScheduledJobs.Jobs;
 using Guts.Application.Services;
 using Guts.Application.Services.Assessment;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -131,5 +135,22 @@ public class RecurringJobsTests
         Assert.Throws<ArgumentNullException>(() => RecurringJobDescriptor.FromType(null));
         Assert.Throws<ArgumentException>(() => RecurringJobDescriptor.FromType(typeof(string)));
         Assert.Throws<ArgumentException>(() => RecurringJobDescriptor.FromType(typeof(IRecurringJob)));
+    }
+
+    [Test]
+    public void AddScheduledJobs_ShouldRegisterExecutionLogCaptureProvider()
+    {
+        var services = new ServiceCollection();
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string>())
+            .Build();
+
+        services.AddScheduledJobs(configuration);
+
+        bool hasLogCaptureProvider = services.Any(sd =>
+            sd.ServiceType == typeof(ILoggerProvider) &&
+            sd.ImplementationType?.Name == "ExecutionLogCaptureProvider");
+
+        Assert.That(hasLogCaptureProvider, Is.True);
     }
 }

@@ -57,6 +57,14 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
             .Where(a => PeerAssessmentReminderPolicy.IsAssessmentEligibleForReminders(a, executionTime))
             .ToList();
 
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Found {OpenCount} open peer assessment(s); {EligibleCount} eligible for reminders.",
+                openAssessments.Count,
+                eligibleAssessments.Count);
+        }
+
         if (eligibleAssessments.Count == 0)
         {
             return 0;
@@ -94,7 +102,7 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
         string projectCode = project.Code?.Value ?? string.Empty;
         string projectDescription = project.Description ?? string.Empty;
 
-        int sentCount = 0;
+        var counts = new ReminderDeliveryCounts();
         foreach (var team in teams)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -103,9 +111,6 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
             {
                 continue;
             }
-
-            var teamAssessment = await _projectTeamAssessmentService.GetOrCreateTeamAssessmentAsync(assessment.Id, team.Id);
-            var pendingPeers = teamAssessment.GetPeersThatNeedToEvaluateOthers();
 
             var reminderContext = new ReminderContext(
                 assessment,
@@ -116,33 +121,90 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
                 projectDescription,
                 executionTime);
 
-            foreach (var peer in pendingPeers)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrWhiteSpace(peer.Email))
-                {
-                    continue;
-                }
-
-                Email peerEmail = new Email(peer.Email);
-                bool sent = await TrySendReminderToPeerAsync(
-                    peer,
-                    peerEmail,
-                    reminderContext,
-                    cancellationToken);
-
-                if (sent)
-                {
-                    sentCount++;
-                }
-            }
+            await ProcessTeamRemindersAsync(reminderContext, counts, cancellationToken);
         }
 
-        return sentCount;
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Assessment {AssessmentId} (Course {CourseName}, Project {ProjectCode}): checked {TeamCount} team(s), {PendingCount} pending evaluator(s) — {SentCount} sent, {SkippedCount} skipped, {FailedCount} failed.",
+                assessment.Id,
+                courseName,
+                projectCode,
+                teams.Count,
+                counts.PendingEvaluators,
+                counts.Sent,
+                counts.Skipped,
+                counts.Failed);
+        }
+
+        return counts.Sent;
     }
 
-    private async Task<bool> TrySendReminderToPeerAsync(
+    private async Task ProcessTeamRemindersAsync(
+        ReminderContext reminderContext,
+        ReminderDeliveryCounts counts,
+        CancellationToken cancellationToken)
+    {
+        var teamAssessment = await _projectTeamAssessmentService.GetOrCreateTeamAssessmentAsync(
+            reminderContext.Assessment.Id,
+            reminderContext.TeamId);
+        var pendingPeers = teamAssessment.GetPeersThatNeedToEvaluateOthers();
+        counts.PendingEvaluators += pendingPeers.Count;
+
+        foreach (var peer in pendingPeers)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(peer.Email))
+            {
+                counts.Skipped++;
+                continue;
+            }
+
+            Email peerEmail = new Email(peer.Email);
+            SendOutcome outcome = await TrySendReminderToPeerAsync(
+                peer,
+                peerEmail,
+                reminderContext,
+                cancellationToken);
+
+            counts.Record(outcome);
+        }
+    }
+
+    private sealed class ReminderDeliveryCounts
+    {
+        public int PendingEvaluators { get; set; }
+        public int Sent { get; private set; }
+        public int Skipped { get; set; }
+        public int Failed { get; private set; }
+
+        public void Record(SendOutcome outcome)
+        {
+            switch (outcome)
+            {
+                case SendOutcome.Sent:
+                    Sent++;
+                    break;
+                case SendOutcome.Skipped:
+                    Skipped++;
+                    break;
+                case SendOutcome.Failed:
+                    Failed++;
+                    break;
+            }
+        }
+    }
+
+    private enum SendOutcome
+    {
+        Sent,
+        Skipped,
+        Failed
+    }
+
+    private async Task<SendOutcome> TrySendReminderToPeerAsync(
         User peer,
         Email peerEmail,
         ReminderContext context,
@@ -154,7 +216,7 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
         {
             if (tracker.Status == MessageStatus.Succeeded || !tracker.CanRetry)
             {
-                return false;
+                return SendOutcome.Skipped;
             }
 
             tracker.Retry(context.ExecutionTime);
@@ -181,14 +243,14 @@ public class PeerAssessmentReminderService : IPeerAssessmentReminderService
             await _messageTrackerRepository.UpdateAsync(tracker);
 
             await _mailThrottler.ThrottleAsync(cancellationToken);
-            return true;
+            return SendOutcome.Sent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send peer assessment reminder email to {Email} for assessment {AssessmentId}.", peer.Email, context.Assessment.Id);
             tracker.MarkFailed(ex.Message);
             await _messageTrackerRepository.UpdateAsync(tracker);
-            return false;
+            return SendOutcome.Failed;
         }
     }
 

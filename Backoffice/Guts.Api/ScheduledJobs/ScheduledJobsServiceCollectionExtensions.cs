@@ -34,6 +34,7 @@ public static class ScheduledJobsServiceCollectionExtensions
         services.AddQuartz(q =>
         {
             q.AddJobListener<RecurringJobListener>();
+            q.UseExecutionLogCapture();
 
             if (!string.IsNullOrWhiteSpace(connectionString))
             {

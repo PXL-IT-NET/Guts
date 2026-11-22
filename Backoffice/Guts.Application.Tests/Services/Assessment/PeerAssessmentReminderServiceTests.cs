@@ -47,6 +47,7 @@ public class PeerAssessmentReminderServiceTests
         _mailSenderMock = new Mock<IMailSender>();
         _mailThrottlerMock = new Mock<IMailThrottler>();
         _loggerMock = new Mock<ILogger<PeerAssessmentReminderService>>();
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         _executionTime = new DateTime(2026, 11, 11, 10, 0, 0, DateTimeKind.Utc);
 

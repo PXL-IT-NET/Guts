@@ -672,9 +672,28 @@ public class GamificationService(
         DateTime nextMonday = sprintWeek.Next().StartOfWeek;
 
         var period = await periodRepository.GetPeriodAsync(periodId);
-        if (period == null) return;
+        if (period == null)
+        {
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Skipping weekly gamification evaluation for {Year}-W{WeekNumber:D2}: no active period found.",
+                    year,
+                    weekNumber);
+            }
+            return;
+        }
 
         var courses = await courseRepository.GetAllAsync();
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Evaluating weekly gamification for period {PeriodId}, ISO week {Year}-W{WeekNumber:D2} across {CourseCount} course(s).",
+                period.Id,
+                year,
+                weekNumber,
+                courses.Count);
+        }
 
         foreach (var course in courses)
         {
@@ -691,13 +710,13 @@ public class GamificationService(
                 return cachedCourseTestIds;
             }
 
-            await EvaluateWeeklyRankDefenseForCourseAsync(course.Id, period.Id, sprintWeek, config, GetCourseTestIdsAsync);
-            await EvaluateWeeklyStreaksForCourseAsync(course.Id, period.Id, nextMonday, config, GetCourseTestIdsAsync);
+            await EvaluateWeeklyRankDefenseForCourseAsync(course, period.Id, sprintWeek, config, GetCourseTestIdsAsync);
+            await EvaluateWeeklyStreaksForCourseAsync(course, period.Id, nextMonday, config, GetCourseTestIdsAsync);
         }
     }
 
     private async Task EvaluateWeeklyRankDefenseForCourseAsync(
-        int courseId,
+        Course course,
         int periodId,
         IsoWeek sprintWeek,
         CourseGamificationConfig config,
@@ -708,7 +727,7 @@ public class GamificationService(
             return;
         }
 
-        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(courseId, periodId);
+        var optedInProfiles = await studentCourseProfileRepository.GetForLeaderboardByCourseAndPeriodAsync(course.Id, periodId);
         if (optedInProfiles == null || optedInProfiles.Count == 0)
         {
             return;
@@ -725,6 +744,16 @@ public class GamificationService(
         if (modifiedProfiles.Count > 0)
         {
             await studentCourseProfileRepository.UpdateRangeAsync(modifiedProfiles);
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Course {CourseCode} (Id: {CourseId}): evaluated Hall of Fame rank defense for {ProfileCount} profile(s), updated {UpdatedCount}.",
+                course.Code,
+                course.Id,
+                optedInProfiles.Count,
+                modifiedProfiles.Count);
         }
     }
 
@@ -766,7 +795,7 @@ public class GamificationService(
     }
 
     private async Task EvaluateWeeklyStreaksForCourseAsync(
-        int courseId,
+        Course course,
         int periodId,
         DateTime evaluationTimestamp,
         CourseGamificationConfig config,
@@ -777,7 +806,7 @@ public class GamificationService(
             return;
         }
 
-        var profiles = await studentCourseProfileRepository.GetByCourseAndPeriodAsync(courseId, periodId);
+        var profiles = await studentCourseProfileRepository.GetByCourseAndPeriodAsync(course.Id, periodId);
         if (profiles == null || profiles.Count == 0)
         {
             return;
@@ -801,6 +830,16 @@ public class GamificationService(
         if (modifiedProfiles.Count > 0)
         {
             await studentCourseProfileRepository.UpdateRangeAsync(modifiedProfiles);
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Course {CourseCode} (Id: {CourseId}): evaluated weekly streaks for {CandidateCount} candidate(s), updated {UpdatedCount} profile(s).",
+                course.Code,
+                course.Id,
+                candidates.Count,
+                modifiedProfiles.Count);
         }
     }
 

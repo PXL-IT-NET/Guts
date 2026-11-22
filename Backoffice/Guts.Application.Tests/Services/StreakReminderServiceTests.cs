@@ -59,6 +59,7 @@ public class StreakReminderServiceTests
         _messageTrackerFactoryMock = new Mock<IMessageTrackerFactory>();
         _mailSenderMock = new Mock<IMailSender>();
         _loggerMock = new Mock<ILogger<StreakReminderService>>();
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 
         var realTrackerFactory = new MessageTrackerFactory();
         _messageTrackerFactoryMock

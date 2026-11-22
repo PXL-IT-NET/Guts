@@ -38,6 +38,15 @@ internal class TestRunPruningService(
         IReadOnlyList<PruningAssignmentTarget> targets =
             await testRunRepository.GetPruningAssignmentTargetsForPeriodAsync(activePeriod.Id, cancellationToken);
 
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Scanning {TargetCount} assignment(s) with multiple test runs in active period {PeriodId} (batch size: {BatchSize}).",
+                targets.Count,
+                activePeriod.Id,
+                batchSize);
+        }
+
         var projectTeamMaps = new Dictionary<int, IReadOnlyDictionary<int, int>>();
         int assignmentsScanned = 0;
         int totalRunsDeleted = 0;
@@ -48,33 +57,11 @@ internal class TestRunPruningService(
             cancellationToken.ThrowIfCancellationRequested();
             assignmentsScanned++;
 
-            IReadOnlyList<TestRunSnapshot> snapshots =
-                await testRunRepository.GetTestRunSnapshotsForAssignmentAsync(target.AssignmentId, cancellationToken);
+            TestRunBatchDeletionResult assignmentResult =
+                await PruneAssignmentAsync(target, batchSize, projectTeamMaps, cancellationToken);
 
-            if (snapshots.Count <= 1)
-            {
-                continue;
-            }
-
-            IReadOnlyDictionary<int, int> teamMap = target.IsProject
-                ? await GetOrLoadTeamMapAsync(target.TopicId, projectTeamMaps, cancellationToken)
-                : null;
-
-            IReadOnlyList<int> redundantRunIds = TestRunPruningPolicy.FindRedundantTestRunIds(snapshots, teamMap);
-            if (redundantRunIds.Count == 0)
-            {
-                continue;
-            }
-
-            foreach (int[] batch in redundantRunIds.Chunk(batchSize))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                TestRunBatchDeletionResult batchResult =
-                    await testRunRepository.DeleteTestRunsBatchAsync(batch, cancellationToken);
-
-                totalRunsDeleted += batchResult.TestRunsDeleted;
-                totalResultsDeleted += batchResult.TestResultsDeleted;
-            }
+            totalRunsDeleted += assignmentResult.TestRunsDeleted;
+            totalResultsDeleted += assignmentResult.TestResultsDeleted;
         }
 
         stopwatch.Stop();
@@ -91,6 +78,55 @@ internal class TestRunPruningService(
         }
 
         return new TestRunPruningResult(assignmentsScanned, totalRunsDeleted, totalResultsDeleted);
+    }
+
+    private async Task<TestRunBatchDeletionResult> PruneAssignmentAsync(
+        PruningAssignmentTarget target,
+        int batchSize,
+        Dictionary<int, IReadOnlyDictionary<int, int>> projectTeamMaps,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<TestRunSnapshot> snapshots =
+            await testRunRepository.GetTestRunSnapshotsForAssignmentAsync(target.AssignmentId, cancellationToken);
+
+        if (snapshots.Count <= 1)
+        {
+            return new TestRunBatchDeletionResult(0, 0);
+        }
+
+        IReadOnlyDictionary<int, int> teamMap = target.IsProject
+            ? await GetOrLoadTeamMapAsync(target.TopicId, projectTeamMaps, cancellationToken)
+            : null;
+
+        IReadOnlyList<int> redundantRunIds = TestRunPruningPolicy.FindRedundantTestRunIds(snapshots, teamMap);
+        if (redundantRunIds.Count == 0)
+        {
+            return new TestRunBatchDeletionResult(0, 0);
+        }
+
+        int assignmentRunsDeleted = 0;
+        int assignmentResultsDeleted = 0;
+        foreach (int[] batch in redundantRunIds.Chunk(batchSize))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            TestRunBatchDeletionResult batchResult =
+                await testRunRepository.DeleteTestRunsBatchAsync(batch, cancellationToken);
+
+            assignmentRunsDeleted += batchResult.TestRunsDeleted;
+            assignmentResultsDeleted += batchResult.TestResultsDeleted;
+        }
+
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Assignment {AssignmentId}: deleted {TestRunsDeleted} redundant test run(s) and {TestResultsDeleted} test result(s) out of {TotalRuns} run(s).",
+                target.AssignmentId,
+                assignmentRunsDeleted,
+                assignmentResultsDeleted,
+                snapshots.Count);
+        }
+
+        return new TestRunBatchDeletionResult(assignmentRunsDeleted, assignmentResultsDeleted);
     }
 
     private async Task<IPeriod> TryGetActivePeriodAsync()
