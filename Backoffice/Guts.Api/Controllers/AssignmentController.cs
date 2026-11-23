@@ -91,6 +91,7 @@ public class AssignmentController(
         }
 
         var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
+        team.EnsureOwnsAssignment(assignment);
         var dateUtc = date?.ToUniversalTime();
 
         var testRunInfo = await assignmentService.GetTeamTestRunInfoForAssignment(assignmentId, teamId, dateUtc);
@@ -145,6 +146,7 @@ public class AssignmentController(
         }
 
         var assignment = await assignmentRepository.GetSingleWithTestsAndCourseAsync(assignmentId);
+        team.EnsureOwnsAssignment(assignment);
         var dateUtc = date?.ToUniversalTime();
         var timelineDto = await assignmentService.GetTimelineForTeamAsync(assignmentId, teamId, assignment.Tests.Count, dateUtc);
 

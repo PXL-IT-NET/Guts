@@ -10,6 +10,7 @@ using Guts.Application.Dtos;
 using Guts.Application.Repositories;
 using Guts.Application.Services;
 using Guts.Application.Tests.Builders;
+using Guts.Common;
 using Guts.Common.Extensions;
 using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.RoleAggregate;
@@ -162,10 +163,11 @@ public class AssignmentControllerTests
         //Arrange
         var userId = _random.NextPositive();
         var teamId = _random.NextPositive();
-        var existingTeam = new ProjectTeamBuilder().WithId().WithUser(userId).Build();
+        var project = new ProjectBuilder().WithId().Build();
+        var existingTeam = new ProjectTeamBuilder().WithId().WithProject(project).WithUser(userId).Build();
         _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(It.IsAny<int>())).ReturnsAsync(existingTeam);
 
-        var existingAssignment = new AssignmentBuilder().WithId().Build();
+        var existingAssignment = new AssignmentBuilder().WithId().WithTopic(project).Build();
         _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(It.IsAny<int>()))
             .ReturnsAsync(existingAssignment);
 
@@ -387,10 +389,11 @@ public class AssignmentControllerTests
         // Arrange
         var lectorId = _random.NextPositive();
         var studentId = lectorId + 1;
-        var existingTeam = new ProjectTeamBuilder().WithId().WithUser(studentId).Build();
+        var project = new ProjectBuilder().WithId().Build();
+        var existingTeam = new ProjectTeamBuilder().WithId().WithProject(project).WithUser(studentId).Build();
         _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(existingTeam.Id)).ReturnsAsync(existingTeam);
 
-        var existingAssignment = new AssignmentBuilder().WithId().Build();
+        var existingAssignment = new AssignmentBuilder().WithId().WithTopic(project).Build();
         _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(existingAssignment.Id))
             .ReturnsAsync(existingAssignment);
 
@@ -526,9 +529,10 @@ public class AssignmentControllerTests
     [Test]
     public async Task GetAssignmentTimelineForTeam_WhenAuthorizedAndWhenForbidden_ShouldEnforceMembershipAndRoles()
     {
-        var assignment = new AssignmentBuilder().WithId().Build();
+        var project = new ProjectBuilder().WithId().Build();
+        var assignment = new AssignmentBuilder().WithId().WithTopic(project).Build();
         assignment.AddTest("T1", 1);
-        var team = new ProjectTeamBuilder().WithId().WithUser(10).Build();
+        var team = new ProjectTeamBuilder().WithId().WithProject(project).WithUser(10).Build();
 
         _projectTeamRepositoryMock.Setup(r => r.LoadByIdAsync(team.Id)).ReturnsAsync(team);
         _assignmentRepositoryMock.Setup(r => r.GetSingleWithTestsAndCourseAsync(assignment.Id)).ReturnsAsync(assignment);
@@ -555,5 +559,80 @@ public class AssignmentControllerTests
         _controller.ControllerContext = new ControllerContextBuilder().WithUser("20").Build();
         var noRoleResult = await _controller.GetAssignmentTimelineForTeam(assignment.Id, team.Id, null);
         Assert.That(noRoleResult, Is.InstanceOf<ForbidResult>());
+    }
+
+    [Test]
+    public void GetAssignmentResultsForTeam_WhenAssignmentDoesNotBelongToTeamsProject_ShouldThrowContractExceptionAndNotLeakData()
+    {
+        // Arrange
+        var studentId = _random.NextPositive();
+        var teammateId = studentId + 1;
+        var project = new ProjectBuilder().WithId().Build();
+        var chapter = new ChapterBuilder().WithId().Build();
+        while (chapter.Id == project.Id)
+        {
+            chapter = new ChapterBuilder().WithId().Build();
+        }
+
+        var team = new ProjectTeamBuilder().WithId().WithProject(project).WithUser(studentId).WithUser(teammateId).Build();
+        var individualChapterAssignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
+
+        _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(team.Id)).ReturnsAsync(team);
+        _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(individualChapterAssignment.Id))
+            .ReturnsAsync(individualChapterAssignment);
+
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(studentId.ToString())
+            .WithRole(Role.Constants.Student)
+            .Build();
+
+        // Act & Assert
+        Assert.That(
+            async () => await _controller.GetAssignmentResultsForTeam(individualChapterAssignment.Id, team.Id, null),
+            Throws.InstanceOf<ContractException>());
+
+        _assignmentServiceMock.Verify(
+            service => service.GetTeamTestRunInfoForAssignment(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()),
+            Times.Never);
+        _assignmentServiceMock.Verify(
+            service => service.GetResultsForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()),
+            Times.Never);
+        _solutionFileRepositoryMock.Verify(
+            repo => repo.GetAllLatestOfAssignmentForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void GetAssignmentTimelineForTeam_WhenAssignmentDoesNotBelongToTeamsProject_ShouldThrowContractExceptionAndNotLeakData()
+    {
+        // Arrange
+        var studentId = _random.NextPositive();
+        var project = new ProjectBuilder().WithId().Build();
+        var chapter = new ChapterBuilder().WithId().Build();
+        while (chapter.Id == project.Id)
+        {
+            chapter = new ChapterBuilder().WithId().Build();
+        }
+
+        var team = new ProjectTeamBuilder().WithId().WithProject(project).WithUser(studentId).Build();
+        var individualChapterAssignment = new AssignmentBuilder().WithId().WithTopic(chapter).Build();
+
+        _projectTeamRepositoryMock.Setup(repo => repo.LoadByIdAsync(team.Id)).ReturnsAsync(team);
+        _assignmentRepositoryMock.Setup(repo => repo.GetSingleWithTestsAndCourseAsync(individualChapterAssignment.Id))
+            .ReturnsAsync(individualChapterAssignment);
+
+        _controller.ControllerContext = new ControllerContextBuilder()
+            .WithUser(studentId.ToString())
+            .WithRole(Role.Constants.Student)
+            .Build();
+
+        // Act & Assert
+        Assert.That(
+            async () => await _controller.GetAssignmentTimelineForTeam(individualChapterAssignment.Id, team.Id, null),
+            Throws.InstanceOf<ContractException>());
+
+        _assignmentServiceMock.Verify(
+            service => service.GetTimelineForTeamAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime?>()),
+            Times.Never);
     }
 }

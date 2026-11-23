@@ -119,3 +119,20 @@ The repository is organized into three main areas:
   ```powershell
   ./gradlew test
   ```
+
+---
+
+## Security Auditing & Hardening (`security-audit` Skill)
+
+GUTS includes a workspace security skill ([`.agent/skills/security-audit/SKILL.md`](.agent/skills/security-audit/SKILL.md)) anchored on **OWASP Top 10**, **OWASP API Security Top 10**, **OWASP ASVS**, **CWE**, and the **GUTS threat model** across **Backoffice** (.NET 10 API, MCP server, Angular SPA), **DotNetClient**, **JavaClients**, and **DevOps/CI**.
+
+- **Two-Stage Workflow**: Stage 1 runs automated pre-scans (`security-prescan.ps1`, dependency audits, `Guts.Architecture.Tests`) + deep manual code review and produces an **ephemeral** Security Audit Report artifact (never committing unpatched findings to Git). Stage 2 fixes approved findings using **TDD abuse-case tests**, adds systemic guardrails (`ArchitectureTests.cs`, ESLint/analyzers), and verifies with full test suites + SonarCloud.
+- **Copy-Pasteable Prompts**:
+  - **Full Backoffice Audit**:
+    > *"Use the `security-audit` skill to audit the `Backoffice` (.NET API, MCP server, and Angular SPA). Present the prioritized Security Audit Report artifact and wait for my approval before fixing anything."*
+  - **Client Libraries Audit**:
+    > *"Use the `security-audit` skill to audit `DotNetClient` and `JavaClients` (token caching, TLS, file extraction, hashing, and dependencies). Present the report and pause before editing."*
+  - **PR / Diff Security Review**:
+    > *"Use the `security-audit` skill in `Diff` scope to review my current changes for OWASP/API vulnerabilities and missing authorization checks."*
+  - **DevOps & CI/CD Hardening**:
+    > *"Use the `security-audit` skill on `DevOps` scope to audit Dockerfiles, docker-compose files, GitHub Actions workflows, and repo secret hygiene."*

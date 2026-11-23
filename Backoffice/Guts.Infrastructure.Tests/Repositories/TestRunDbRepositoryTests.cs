@@ -225,5 +225,23 @@ internal class TestRunDbRepositoryTests : RepositoryTestsBase
         var teamEmpty = await repo.GetTeamTestRunSnapshotsForAssignmentAsync(_assignmentId, _teamId, _t1.AddMinutes(-1));
         Assert.That(teamEmpty, Is.Empty);
     }
+
+    [Test]
+    public async Task TeamQueries_WhenAssignmentBelongsToIndividualChapter_ShouldReturnEmptyAndNotLeakTeammateTestRuns()
+    {
+        var chapter = await Seeder.SeedChapterAsync(_courseId, _periodId, "ChSec", "Security Chapter", "ExSec", "TSec");
+        int chapterAssignmentId = chapter.Assignments.First().Id;
+        int chapterTestId = chapter.Assignments.First().Tests.First().Id;
+        await Seeder.SeedTestRunAsync(chapterAssignmentId, _user2Id, _t1, (chapterTestId, true));
+
+        await using var context = CreateDbContext();
+        var repo = new TestRunDbRepository(context);
+
+        var leakedRuns = await repo.GetTeamTestRunsForAssignmentAsync(chapterAssignmentId, _teamId, null);
+        Assert.That(leakedRuns, Is.Empty);
+
+        var leakedSnapshots = await repo.GetTeamTestRunSnapshotsForAssignmentAsync(chapterAssignmentId, _teamId, null);
+        Assert.That(leakedSnapshots, Is.Empty);
+    }
 }
 

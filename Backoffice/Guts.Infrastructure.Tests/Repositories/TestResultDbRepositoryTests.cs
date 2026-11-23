@@ -9,6 +9,8 @@ namespace Guts.Infrastructure.Tests.Repositories;
 [TestFixture]
 internal class TestResultDbRepositoryTests : RepositoryTestsBase
 {
+    private int _courseId;
+    private int _periodId;
     private int _projectId;
     private int _assignmentId;
     private int _test1Id;
@@ -26,6 +28,8 @@ internal class TestResultDbRepositoryTests : RepositoryTestsBase
         _t2 = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
 
         var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync();
+        _courseId = course.Id;
+        _periodId = period.Id;
         var user1 = await Seeder.SeedUserAsync("Alice");
         var user2 = await Seeder.SeedUserAsync("Bob");
 
@@ -84,5 +88,23 @@ internal class TestResultDbRepositoryTests : RepositoryTestsBase
         Assert.That(ofAssignments, Has.Count.EqualTo(3));
         Assert.That(ofAssignments.All(r => r.Test != null), Is.True);
         Assert.That(ofAssignments.All(r => r.User != null), Is.True);
+    }
+
+    [Test]
+    public async Task TeamQueries_WhenAssignmentBelongsToIndividualChapter_ShouldReturnEmptyAndNotLeakTeammateTestResults()
+    {
+        var chapter = await Seeder.SeedChapterAsync(_courseId, _periodId, "ChSec", "Security Chapter", "ExSec", "TSec");
+        int chapterAssignmentId = chapter.Assignments.First().Id;
+        int chapterTestId = chapter.Assignments.First().Tests.First().Id;
+        await Seeder.SeedTestRunAsync(chapterAssignmentId, _user2Id, _t1, (chapterTestId, true));
+
+        await using var context = CreateDbContext();
+        var repo = new TestResultDbRepository(context);
+
+        var leakedTeamResults = await repo.GetLastTestResultsOfTeam(_projectId, chapterAssignmentId, _teamId, null);
+        Assert.That(leakedTeamResults, Is.Empty);
+
+        var leakedAllTeamResults = await repo.GetLastTestResultsOfAllTeams(_projectId, chapterAssignmentId, null);
+        Assert.That(leakedAllTeamResults, Is.Empty);
     }
 }

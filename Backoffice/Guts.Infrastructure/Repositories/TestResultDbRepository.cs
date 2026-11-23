@@ -66,6 +66,7 @@ internal class TestResultDbRepository : BaseDbRepository<TestResult, TestResult>
         var lastResultKeys = from testresult in _context.TestResults
             from projectTeamUser in _context.ProjectTeamUsers //on testresult.UserId equals projectTeamUser.UserId
             where (testresult.Test.AssignmentId == assignmentId)
+                  && (testresult.Test.Assignment.TopicId == projectId)
                   && (testresult.UserId == projectTeamUser.UserId)
                   && (dateUtc == null || testresult.CreateDateTime <= dateUtc)
                   && (teamId == null || projectTeamUser.ProjectTeamId == teamId)
@@ -86,6 +87,7 @@ internal class TestResultDbRepository : BaseDbRepository<TestResult, TestResult>
                   && projectTeamUser.ProjectTeam.ProjectId == projectId
                   && testresult.CreateDateTime == key.CreatDateTime
                   && testresult.Test.AssignmentId == assignmentId
+                  && testresult.Test.Assignment.TopicId == projectId
             select testresult;
 
         return await lastResultsQuery.AsNoTracking().ToListAsync();

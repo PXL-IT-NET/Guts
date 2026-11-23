@@ -92,15 +92,17 @@ jobs:
         run: dotnet test Backoffice/Guts.slnx --no-build -c Release --logger "console;verbosity=normal"
 
       # ---------------------------------------------------------------------
-      # Package Artifacts (Production configuration)
+      # Package Artifacts (Production configuration — main/master branch only)
       # ---------------------------------------------------------------------
       - name: Publish Guts.Api
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: >
           dotnet publish Backoffice/Guts.Api/Guts.Api.csproj
           -c Release
           -o publish/api
 
       - name: Publish Guts.Web (Production configuration)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: >
           dotnet publish Backoffice/Guts.Web/Guts.Web.csproj
           -c Release
@@ -108,6 +110,7 @@ jobs:
           -o publish/web
 
       - name: Upload Guts.Api Production Artifact
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: guts-api-production
@@ -115,6 +118,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Guts.Web Production Artifact
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: guts-web-production
@@ -122,6 +126,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Deployment Scripts
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: deploy-scripts
@@ -134,13 +139,19 @@ jobs:
   deploy-production:
     name: Deploy to Production (IIS)
     needs: build-and-test
-    runs-on: [self-hosted, Windows]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    # Runs exclusively on the least-privilege production runner account (guts-runner-prod)
+    runs-on: [self-hosted, Windows, production]
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     environment:
       name: production
       url: https://guts-web.pxl.be/
 
     steps:
       - name: Download Deployment Scripts
+        if: vars.DEPLOY_SCRIPT_PATH == ''
         uses: actions/download-artifact@v4
         with:
           name: deploy-scripts
@@ -160,8 +171,18 @@ jobs:
 
       - name: Deploy Guts.Api to IIS Production
         shell: powershell
+        env:
+          DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
         run: |
-          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
+          $deployScript = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SCRIPT_PATH)) {
+            Join-Path $env:GITHUB_WORKSPACE "deploy\deploy-to-iis.ps1"
+          } else {
+            $env:DEPLOY_SCRIPT_PATH
+          }
+          if (-not (Test-Path -LiteralPath $deployScript -PathType Leaf)) {
+            throw "Deployment script not found: $deployScript"
+          }
+          & $deployScript `
             -AppType "Api" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\api" `
             -DestinationPath "C:\Guts\Guts-Api" `
@@ -170,13 +191,34 @@ jobs:
 
       - name: Deploy Guts.Web to IIS Production
         shell: powershell
+        env:
+          DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
         run: |
-          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
+          $deployScript = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SCRIPT_PATH)) {
+            Join-Path $env:GITHUB_WORKSPACE "deploy\deploy-to-iis.ps1"
+          } else {
+            $env:DEPLOY_SCRIPT_PATH
+          }
+          if (-not (Test-Path -LiteralPath $deployScript -PathType Leaf)) {
+            throw "Deployment script not found: $deployScript"
+          }
+          & $deployScript `
             -AppType "Web" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\web" `
             -DestinationPath "C:\Guts\Guts-Web" `
             -AppPoolName "WebCorePool" `
             -EnvironmentName "Production"
+
+      - name: Clean Up Runner Workspace Artifacts
+        if: always()
+        shell: powershell
+        run: |
+          foreach ($dir in @("artifacts", "deploy")) {
+            $target = Join-Path $env:GITHUB_WORKSPACE $dir
+            if (Test-Path -LiteralPath $target) {
+              Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
 
       - name: Verify Production Health (Smoke Test)
         shell: powershell

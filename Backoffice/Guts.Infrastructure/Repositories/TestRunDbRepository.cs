@@ -86,6 +86,7 @@ internal class TestRunDbRepository : BaseDbRepository<TestRun, TestRun>, ITestRu
             join teamUser in _context.ProjectTeamUsers on testrun.UserId equals teamUser.UserId
             where (assignment.Id == assignmentId) &&
                   (teamUser.ProjectTeamId == teamId) &&
+                  (assignment.TopicId == teamUser.ProjectTeam.ProjectId) &&
                   (dateUtc == null || testrun.CreateDateTime <= dateUtc)
             orderby testrun.CreateDateTime
             select testrun;
@@ -231,6 +232,7 @@ internal class TestRunDbRepository : BaseDbRepository<TestRun, TestRun>, ITestRu
             join teamUser in _context.ProjectTeamUsers.AsNoTracking() on testrun.UserId equals teamUser.UserId
             where testrun.AssignmentId == assignmentId
                   && teamUser.ProjectTeamId == teamId
+                  && testrun.Assignment.TopicId == teamUser.ProjectTeam.ProjectId
                   && (dateUtc == null || testrun.CreateDateTime <= dateUtc)
             orderby testrun.CreateDateTime, testrun.Id
             select new { testrun.Id, testrun.UserId, testrun.CreateDateTime })
@@ -245,6 +247,7 @@ internal class TestRunDbRepository : BaseDbRepository<TestRun, TestRun>, ITestRu
             join teamUser in _context.ProjectTeamUsers.AsNoTracking() on tr.TestRun.UserId equals teamUser.UserId
             where tr.TestRun.AssignmentId == assignmentId
                   && teamUser.ProjectTeamId == teamId
+                  && tr.TestRun.Assignment.TopicId == teamUser.ProjectTeam.ProjectId
                   && (dateUtc == null || tr.TestRun.CreateDateTime <= dateUtc)
             select new { tr.TestRunId, tr.TestId, tr.Passed })
             .ToListAsync(cancellationToken);

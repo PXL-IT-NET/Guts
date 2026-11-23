@@ -10,6 +10,8 @@ namespace Guts.Infrastructure.Tests.Repositories;
 [TestFixture]
 internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
 {
+    private int _courseId;
+    private int _periodId;
     private int _assignmentId;
     private int _teamId;
     private int _user1Id;
@@ -24,6 +26,8 @@ internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
         _t2 = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
 
         var (course, period) = await Seeder.SeedCourseAndActivePeriodAsync();
+        _courseId = course.Id;
+        _periodId = period.Id;
         var user1 = await Seeder.SeedUserAsync("Alice");
         var user2 = await Seeder.SeedUserAsync("Bob");
 
@@ -98,6 +102,28 @@ internal class SolutionFileDbRepositoryTests : RepositoryTestsBase
 
         var teamAtT1 = await repo.GetModifyDateTimesForTeamAsync(_assignmentId, _teamId, _t1);
         Assert.That(teamAtT1, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task TeamQueries_WhenAssignmentBelongsToIndividualChapter_ShouldReturnEmptyAndNotLeakTeammateFiles()
+    {
+        var chapter = await Seeder.SeedChapterAsync(_courseId, _periodId, "ChSec", "Security Chapter", "ExSec", "TSec");
+        int chapterAssignmentId = chapter.Assignments.First().Id;
+
+        await using (var seedContext = CreateDbContext())
+        {
+            var seedRepo = new SolutionFileDbRepository(seedContext);
+            await seedRepo.AddAsync(TestDataSeeder.CreateSolutionFile(chapterAssignmentId, _user2Id, "Private/ExamSolution.cs", _t1, "secret individual solution"));
+        }
+
+        await using var context = CreateDbContext();
+        var repo = new SolutionFileDbRepository(context);
+
+        var leakedFiles = await repo.GetAllLatestOfAssignmentForTeamAsync(chapterAssignmentId, _teamId, null);
+        Assert.That(leakedFiles, Is.Empty);
+
+        var leakedDates = await repo.GetModifyDateTimesForTeamAsync(chapterAssignmentId, _teamId, null);
+        Assert.That(leakedDates, Is.Empty);
     }
 }
 

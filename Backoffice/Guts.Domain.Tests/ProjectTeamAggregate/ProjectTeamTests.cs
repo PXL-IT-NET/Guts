@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Guts.Common;
 using Guts.Common.Extensions;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.ProjectTeamAggregate;
 using Guts.Domain.Tests.Builders;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
@@ -158,5 +159,27 @@ public class ProjectTeamTests
 
         Assert.Throws<ContractException>(() => team.EnsureBelongsTo(999, "Proj1"));
         Assert.Throws<ContractException>(() => team.EnsureBelongsTo(10, "WrongProject"));
+    }
+
+    [Test]
+    public void EnsureOwnsAssignment_AssignmentBelongsToTeamProject_ShouldSucceed()
+    {
+        var team = new ProjectTeam { Id = 1, ProjectId = 42 };
+        var assignment = new Assignment { Id = 7, TopicId = 42 };
+
+        Assert.DoesNotThrow(() => team.EnsureOwnsAssignment(assignment));
+    }
+
+    [Test]
+    public void EnsureOwnsAssignment_NullOrDifferentTopicOrUnlinkedTeam_ShouldThrowContractException()
+    {
+        var team = new ProjectTeam { Id = 1, ProjectId = 42 };
+        var otherTopicAssignment = new Assignment { Id = 7, TopicId = 99 };
+        var unlinkedTeam = new ProjectTeam { Id = 2, ProjectId = 0 };
+        var zeroTopicAssignment = new Assignment { Id = 8, TopicId = 0 };
+
+        Assert.Throws<ContractException>(() => team.EnsureOwnsAssignment(null));
+        Assert.Throws<ContractException>(() => team.EnsureOwnsAssignment(otherTopicAssignment));
+        Assert.Throws<ContractException>(() => unlinkedTeam.EnsureOwnsAssignment(zeroTopicAssignment));
     }
 }

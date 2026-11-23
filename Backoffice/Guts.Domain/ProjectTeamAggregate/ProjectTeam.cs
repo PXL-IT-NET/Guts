@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Guts.Common;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -75,6 +76,14 @@ public class ProjectTeam : AggregateRoot, IProjectTeam
     {
         Contracts.Require(Project != null && Project.CourseId == courseId, $"Team with id '{Id}' is not linked to course with id '{courseId}'");
         Contracts.Require(string.Equals((string)Project.Code, projectCode, StringComparison.OrdinalIgnoreCase), $"Team with id '{Id}' is not linked to project with code '{projectCode}'");
+    }
+
+    public void EnsureOwnsAssignment(Assignment assignment)
+    {
+        Contracts.Require(assignment != null, "Assignment cannot be null.");
+        Contracts.Require(
+            ProjectId > 0 && assignment.TopicId == ProjectId,
+            $"Assignment with id '{assignment.Id}' does not belong to project with id '{ProjectId}' of team '{Id}'.");
     }
 
     protected override IEnumerable<object> GetIdComponents()

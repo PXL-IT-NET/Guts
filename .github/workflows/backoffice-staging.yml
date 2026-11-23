@@ -198,15 +198,23 @@ jobs:
           dotnet tool run dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
       # ---------------------------------------------------------------------
-      # Package Artifacts (Staging configuration)
+      # Package Artifacts (Staging configuration — develop branch only)
       # ---------------------------------------------------------------------
       - name: Publish Guts.Api
+        if: >
+          github.ref == 'refs/heads/develop' &&
+          (github.event_name == 'push' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
         run: >
           dotnet publish Backoffice/Guts.Api/Guts.Api.csproj
           -c Release
           -o publish/api
 
       - name: Publish Guts.Web (Staging configuration)
+        if: >
+          github.ref == 'refs/heads/develop' &&
+          (github.event_name == 'push' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
         run: >
           dotnet publish Backoffice/Guts.Web/Guts.Web.csproj
           -c Release
@@ -214,6 +222,10 @@ jobs:
           -o publish/web
 
       - name: Upload Guts.Api Staging Artifact
+        if: >
+          github.ref == 'refs/heads/develop' &&
+          (github.event_name == 'push' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
         uses: actions/upload-artifact@v4
         with:
           name: guts-api-staging
@@ -221,6 +233,10 @@ jobs:
           retention-days: 7
 
       - name: Upload Guts.Web Staging Artifact
+        if: >
+          github.ref == 'refs/heads/develop' &&
+          (github.event_name == 'push' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
         uses: actions/upload-artifact@v4
         with:
           name: guts-web-staging
@@ -228,6 +244,10 @@ jobs:
           retention-days: 7
 
       - name: Upload Deployment Scripts
+        if: >
+          github.ref == 'refs/heads/develop' &&
+          (github.event_name == 'push' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
         uses: actions/upload-artifact@v4
         with:
           name: deploy-scripts
@@ -241,12 +261,21 @@ jobs:
     name: Deploy to Staging (IIS)
     needs: build-and-test
     if: >
-      (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true)
-    runs-on: [self-hosted, Windows]
+      github.ref == 'refs/heads/develop' &&
+      (github.event_name == 'push' ||
+       (github.event_name == 'workflow_dispatch' && inputs.deploy_to_staging == true))
+    # Runs exclusively on the least-privilege staging runner account (guts-runner-staging)
+    runs-on: [self-hosted, Windows, staging]
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    environment:
+      name: staging
+      url: https://guts-web.pxl.be/staging/
 
     steps:
       - name: Download Deployment Scripts
+        if: vars.DEPLOY_SCRIPT_PATH == ''
         uses: actions/download-artifact@v4
         with:
           name: deploy-scripts
@@ -266,23 +295,54 @@ jobs:
 
       - name: Deploy Guts.Api to IIS Staging
         shell: powershell
+        env:
+          DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
         run: |
-          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
+          $deployScript = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SCRIPT_PATH)) {
+            Join-Path $env:GITHUB_WORKSPACE "deploy\deploy-to-iis.ps1"
+          } else {
+            $env:DEPLOY_SCRIPT_PATH
+          }
+          if (-not (Test-Path -LiteralPath $deployScript -PathType Leaf)) {
+            throw "Deployment script not found: $deployScript"
+          }
+          & $deployScript `
             -AppType "Api" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\api" `
             -DestinationPath "C:\Guts_Staging\Guts-Api" `
-            -AppPoolName "StagingApiPool" `
+            -AppPoolName "StagingApiCorePool" `
             -EnvironmentName "Staging"
 
       - name: Deploy Guts.Web to IIS Staging
         shell: powershell
+        env:
+          DEPLOY_SCRIPT_PATH: ${{ vars.DEPLOY_SCRIPT_PATH }}
         run: |
-          & "$env:GITHUB_WORKSPACE\deploy\deploy-to-iis.ps1" `
+          $deployScript = if ([string]::IsNullOrWhiteSpace($env:DEPLOY_SCRIPT_PATH)) {
+            Join-Path $env:GITHUB_WORKSPACE "deploy\deploy-to-iis.ps1"
+          } else {
+            $env:DEPLOY_SCRIPT_PATH
+          }
+          if (-not (Test-Path -LiteralPath $deployScript -PathType Leaf)) {
+            throw "Deployment script not found: $deployScript"
+          }
+          & $deployScript `
             -AppType "Web" `
             -SourcePath "$env:GITHUB_WORKSPACE\artifacts\web" `
             -DestinationPath "C:\Guts_Staging\Guts-Web" `
-            -AppPoolName "StagingWebPool" `
+            -AppPoolName "StagingWebCorePool" `
             -EnvironmentName "Staging"
+
+      - name: Clean Up Runner Workspace Artifacts
+        if: always()
+        shell: powershell
+        run: |
+          foreach ($dir in @("artifacts", "deploy")) {
+            $target = Join-Path $env:GITHUB_WORKSPACE $dir
+            if (Test-Path -LiteralPath $target) {
+              Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
 
       - name: Verify Staging Health (Smoke Test)
         shell: powershell

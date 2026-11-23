@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Guts.Domain.AssignmentAggregate;
 using Guts.Domain.TopicAggregate.ProjectAggregate;
 using Guts.Domain.UserAggregate;
 
@@ -19,4 +20,5 @@ public interface IProjectTeam : IEntity
     void RemoveUser(int userId);
     void Rename(string newName);
     void EnsureBelongsTo(int courseId, string projectCode);
+    void EnsureOwnsAssignment(Assignment assignment);
 }

@@ -110,8 +110,10 @@ internal class SolutionFileDbRepository : ISolutionFileRepository
     private IQueryable<SolutionFile> FilterByTeam(IQueryable<SolutionFile> solutionFiles, int teamId)
     {
         return from solutionFile in solutionFiles
+            join assignment in _context.Assignments on solutionFile.AssignmentId equals assignment.Id
             join teamUser in _context.ProjectTeamUsers on solutionFile.UserId equals teamUser.UserId
-            where teamUser.ProjectTeamId == teamId
+            where teamUser.ProjectTeamId == teamId &&
+                  assignment.TopicId == teamUser.ProjectTeam.ProjectId
             select solutionFile;
     }
 
